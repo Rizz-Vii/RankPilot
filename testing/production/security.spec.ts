@@ -23,7 +23,7 @@ test.describe('Security Validation', () => {
     });
 
     test('CSP headers validation', async ({ page }) => {
-        const response = await page.goto('/');
+        const _response = await page.goto('/');
         const headers = response?.headers() || {};
 
         expect(headers['content-security-policy']).toBeDefined();
@@ -65,7 +65,7 @@ test.describe('Security Validation', () => {
             test.skip();
         }
 
-        const response = await page.goto('/');
+        const _response = await page.goto('/');
         expect(page.url()).toMatch(/^https:/);
     });
 });

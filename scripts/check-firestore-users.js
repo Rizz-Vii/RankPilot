@@ -33,7 +33,7 @@ async function checkUsers() {
             console.log('   ---');
         });
 
-    } catch (error) {
+    } catch (_error) {
         console.error('❌ Error checking users:', error.message);
     }
 }
@@ -42,6 +42,6 @@ checkUsers().then(() => {
     console.log('✅ User check complete');
     process.exit(0);
 }).catch(error => {
-    console.error('❌ Script failed:', error);
+    console.error('❌ Script failed:', _error);
     process.exit(1);
 });

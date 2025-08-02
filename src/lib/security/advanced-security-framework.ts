@@ -66,7 +66,7 @@ export interface SecurityAuditLog {
     details: {
         ip: string;
         userAgent?: string;
-        payload?: any;
+        payload?: unknown;
         threatLevel?: string;
         policyViolations?: string[];
     };
@@ -105,8 +105,8 @@ export class AdvancedSecurityFramework extends EventEmitter {
     // ML-based threat detection patterns
     private threatPatterns = {
         sqlInjection: [
-            /(union|select|insert|update|delete|drop|create|alter|exec|execute)/i,
-            /(\bunion\b.*\bselect\b)|(\bselect\b.*\bunion\b)/i,
+            /(union|select|insert|update|delete|drop|create|alter|exec|execute)/_i,
+            /(\bunion\b.*\bselect\b)|(\bselect\b.*\bunion\b)/_i,
             /'[^']*'[^']*'/,
             /\b(or|and)\b\s*['"]\s*['"]\s*[=<>]/i
         ],
@@ -118,15 +118,15 @@ export class AdvancedSecurityFramework extends EventEmitter {
             /eval\s*\(/gi
         ],
         csrfAttack: [
-            /referer.*localhost|127\.0\.0\.1|0\.0\.0\.0/i,
+            /referer.*localhost|127\.0\.0\.1|0\.0\.0\.0/_i,
             /origin.*null/i
         ],
         bruteForce: {
             maxAttempts: 5,
             timeWindow: 300000, // 5 minutes
             patterns: [
-                /password/i,
-                /login/i,
+                /password/_i,
+                /login/_i,
                 /auth/i
             ]
         }
@@ -142,12 +142,12 @@ export class AdvancedSecurityFramework extends EventEmitter {
     /**
      * Validate incoming request for security threats
      */
-    async validateRequest(request: {
+    async validateRequest(_request: {
         ip: string;
         method: string;
         url: string;
         headers: Record<string, string>;
-        body?: any;
+        body?: unknown;
         userId?: string;
     }): Promise<{
         allowed: boolean;
@@ -181,31 +181,31 @@ export class AdvancedSecurityFramework extends EventEmitter {
             }
 
             // SQL Injection detection
-            const sqlThreat = this.detectSQLInjection(request);
+            const sqlThreat = this.detectSQLInjection(_request);
             if (sqlThreat) {
                 threats.push(sqlThreat);
             }
 
             // XSS detection
-            const xssThreat = this.detectXSS(request);
+            const xssThreat = this.detectXSS(_request);
             if (xssThreat) {
                 threats.push(xssThreat);
             }
 
             // CSRF detection
-            const csrfThreat = this.detectCSRF(request);
+            const csrfThreat = this.detectCSRF(_request);
             if (csrfThreat) {
                 threats.push(csrfThreat);
             }
 
             // Brute force detection
-            const bruteForceThreat = this.detectBruteForce(request);
+            const bruteForceThreat = this.detectBruteForce(_request);
             if (bruteForceThreat) {
                 threats.push(bruteForceThreat);
             }
 
             // Advanced threat analysis
-            const advancedThreats = await this.advancedThreatAnalysis(request);
+            const advancedThreats = await this.advancedThreatAnalysis(_request);
             threats.push(...advancedThreats);
 
             // Evaluate threats and determine action
@@ -224,7 +224,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
 
             if (highThreats.length > 0) {
                 warnings.push('High-severity security threats detected - request monitored');
-                await this.logSecurityEvent(request, 'high-threat-detected', threats);
+                await this.logSecurityEvent(_request, 'high-threat-detected', threats);
             }
 
             // Log all security events
@@ -254,8 +254,8 @@ export class AdvancedSecurityFramework extends EventEmitter {
                 warnings
             };
 
-        } catch (error) {
-            console.error('[SecurityFramework] Request validation error:', error);
+        } catch (_error) {
+            console.error('[SecurityFramework] Request validation _error:', _error);
             return {
                 allowed: false,
                 threats,
@@ -268,24 +268,24 @@ export class AdvancedSecurityFramework extends EventEmitter {
     /**
      * Encrypt sensitive data
      */
-    async encryptData(data: string, keyId: string = 'default'): Promise<string> {
+    async encryptData(_data: string, keyId: string = 'default'): Promise<string> {
         try {
             const key = this.encryptionKeys.get(keyId);
-            if (!key) {
+            if (!_key) {
                 throw new Error('Encryption key not found');
             }
 
             const iv = randomBytes(16);
-            const cipher = require('crypto').createCipher('aes-256-gcm', key);
+            const cipher = require('crypto').createCipher('aes-256-gcm', _key);
 
-            let encrypted = cipher.update(data, 'utf8', 'hex');
+            let encrypted = cipher.update(_data, 'utf8', 'hex');
             encrypted += cipher.final('hex');
 
             const tag = cipher.getAuthTag();
 
             return `${iv.toString('hex')}:${tag.toString('hex')}:${encrypted}`;
-        } catch (error) {
-            console.error('[SecurityFramework] Encryption error:', error);
+        } catch (_error) {
+            console.error('[SecurityFramework] Encryption _error:', _error);
             throw new Error('Data encryption failed');
         }
     }
@@ -296,7 +296,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
     async decryptData(encryptedData: string, keyId: string = 'default'): Promise<string> {
         try {
             const key = this.encryptionKeys.get(keyId);
-            if (!key) {
+            if (!_key) {
                 throw new Error('Decryption key not found');
             }
 
@@ -309,15 +309,15 @@ export class AdvancedSecurityFramework extends EventEmitter {
             const tag = Buffer.from(parts[1], 'hex');
             const encrypted = parts[2];
 
-            const decipher = require('crypto').createDecipher('aes-256-gcm', key);
+            const decipher = require('crypto').createDecipher('aes-256-gcm', _key);
             decipher.setAuthTag(tag);
 
             let decrypted = decipher.update(encrypted, 'hex', 'utf8');
             decrypted += decipher.final('utf8');
 
             return decrypted;
-        } catch (error) {
-            console.error('[SecurityFramework] Decryption error:', error);
+        } catch (_error) {
+            console.error('[SecurityFramework] Decryption _error:', _error);
             throw new Error('Data decryption failed');
         }
     }
@@ -458,10 +458,10 @@ export class AdvancedSecurityFramework extends EventEmitter {
         const windowSize = 60000; // 1 minute window
         const maxRequests = 100; // Max requests per window
 
-        const existing = this.rateLimits.get(key);
+        const existing = this.rateLimits.get(_key);
 
         if (!existing || now > existing.resetTime) {
-            this.rateLimits.set(key, { count: 1, resetTime: now + windowSize });
+            this.rateLimits.set(_key, { count: 1, resetTime: now + windowSize });
             return { allowed: true, remaining: maxRequests - 1 };
         }
 
@@ -473,7 +473,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
         return { allowed: true, remaining: maxRequests - existing.count };
     }
 
-    private detectSQLInjection(request: any): SecurityThreat | null {
+    private detectSQLInjection(_request: unknown): SecurityThreat | null {
         const testString = JSON.stringify(request.body || '') + request.url;
 
         for (const pattern of this.threatPatterns.sqlInjection) {
@@ -502,7 +502,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
         return null;
     }
 
-    private detectXSS(request: any): SecurityThreat | null {
+    private detectXSS(_request: unknown): SecurityThreat | null {
         const testString = JSON.stringify(request.body || '') + request.url;
 
         for (const pattern of this.threatPatterns.xssAttack) {
@@ -531,7 +531,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
         return null;
     }
 
-    private detectCSRF(request: any): SecurityThreat | null {
+    private detectCSRF(_request: unknown): SecurityThreat | null {
         const referer = request.headers['referer'] || '';
         const origin = request.headers['origin'] || '';
 
@@ -561,9 +561,9 @@ export class AdvancedSecurityFramework extends EventEmitter {
         return null;
     }
 
-    private detectBruteForce(request: any): SecurityThreat | null {
+    private detectBruteForce(_request: unknown): SecurityThreat | null {
         const key = `brute_force:${request.ip}`;
-        const attempts = this.suspiciousPatterns.get(key) || 0;
+        const attempts = this.suspiciousPatterns.get(_key) || 0;
 
         // Check if this looks like an authentication endpoint
         const isAuthEndpoint = this.threatPatterns.bruteForce.patterns.some(pattern =>
@@ -571,7 +571,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
         );
 
         if (isAuthEndpoint) {
-            this.suspiciousPatterns.set(key, attempts + 1);
+            this.suspiciousPatterns.set(_key, attempts + 1);
 
             if (attempts + 1 > this.threatPatterns.bruteForce.maxAttempts) {
                 return {
@@ -597,11 +597,11 @@ export class AdvancedSecurityFramework extends EventEmitter {
         return null;
     }
 
-    private async advancedThreatAnalysis(request: any): Promise<SecurityThreat[]> {
+    private async advancedThreatAnalysis(_request: unknown): Promise<SecurityThreat[]> {
         const threats: SecurityThreat[] = [];
 
         // Anomaly detection based on request patterns
-        const anomalyScore = this.calculateAnomalyScore(request);
+        const anomalyScore = this.calculateAnomalyScore(_request);
         if (anomalyScore > 0.8) {
             threats.push({
                 id: this.generateId(),
@@ -625,7 +625,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
         return threats;
     }
 
-    private calculateAnomalyScore(request: any): number {
+    private calculateAnomalyScore(_request: unknown): number {
         // Simplified anomaly detection
         let score = 0;
 
@@ -665,7 +665,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
         console.log(`[SecurityFramework] Critical threats detected and mitigated for IP: ${ip}`);
     }
 
-    private async logSecurityEvent(request: any, eventType: string, threats: SecurityThreat[]): Promise<void> {
+    private async logSecurityEvent(_request: unknown, eventType: string, threats: SecurityThreat[]): Promise<void> {
         const logEntry: SecurityAuditLog = {
             id: this.generateId(),
             timestamp: Date.now(),
@@ -697,17 +697,17 @@ export class AdvancedSecurityFramework extends EventEmitter {
         this.monitoringInterval = setInterval(() => {
             // Clean up old rate limit entries
             const now = Date.now();
-            for (const [key, data] of this.rateLimits.entries()) {
+            for (const [_key, data] of this.rateLimits.entries()) {
                 if (now > data.resetTime) {
-                    this.rateLimits.delete(key);
+                    this.rateLimits.delete(_key);
                 }
             }
 
             // Clean up old suspicious patterns
             const cleanupTime = now - (24 * 60 * 60 * 1000); // 24 hours
-            for (const [key, timestamp] of this.suspiciousPatterns.entries()) {
+            for (const [_key, timestamp] of this.suspiciousPatterns.entries()) {
                 if (timestamp < cleanupTime) {
-                    this.suspiciousPatterns.delete(key);
+                    this.suspiciousPatterns.delete(_key);
                 }
             }
 

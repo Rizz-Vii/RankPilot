@@ -126,7 +126,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
     /**
      * Create or update zero-trust session
      */
-    async createSession(request: {
+    async createSession(_request: {
         userId: string;
         ipAddress: string;
         userAgent: string;
@@ -173,7 +173,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
                     activityPattern: []
                 },
                 verification: {
-                    factors: request.authenticationFactors as any[],
+                    factors: request.authenticationFactors as unknown[],
                     strength: this.calculateAuthStrength(request.authenticationFactors),
                     lastVerification: Date.now()
                 },
@@ -203,8 +203,8 @@ export class ZeroTrustOrchestrator extends EventEmitter {
             console.log(`[ZeroTrustOrchestrator] Session created: ${sessionId} (risk: ${riskScore}, trust: ${trustLevel})`);
             return session;
 
-        } catch (error) {
-            console.error('[ZeroTrustOrchestrator] Session creation failed:', error);
+        } catch (_error) {
+            console.error('[ZeroTrustOrchestrator] Session creation failed:', _error);
             throw new Error('Failed to create zero-trust session');
         }
     }
@@ -212,7 +212,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
     /**
      * Validate access request against zero-trust policies
      */
-    async validateAccess(sessionId: string, request: {
+    async validateAccess(sessionId: string, _request: {
         resource: string;
         action: string;
         context?: Record<string, any>;
@@ -238,7 +238,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
             session.context.lastActivity = Date.now();
 
             // Behavioral analysis
-            const behaviorAnalysis = await this.analyzeBehavior(session, request);
+            const behaviorAnalysis = await this.analyzeBehavior(session, _request);
             if (behaviorAnalysis.anomalyScore > 0.8) {
                 session.riskScore = Math.min(session.riskScore + 20, 100);
                 this.emit('anomaly-detected', {
@@ -261,7 +261,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
             }
 
             // Evaluate policies
-            const policyResults = await this.evaluatePolicies(session, request);
+            const policyResults = await this.evaluatePolicies(session, _request);
             if (policyResults.violations.length > 0) {
                 return {
                     allowed: false,
@@ -310,8 +310,8 @@ export class ZeroTrustOrchestrator extends EventEmitter {
                 newRiskScore: session.riskScore
             };
 
-        } catch (error) {
-            console.error('[ZeroTrustOrchestrator] Access validation failed:', error);
+        } catch (_error) {
+            console.error('[ZeroTrustOrchestrator] Access validation failed:', _error);
             return {
                 allowed: false,
                 reason: 'Validation error',
@@ -516,8 +516,8 @@ export class ZeroTrustOrchestrator extends EventEmitter {
             }
 
             return Math.min(riskScore, 100);
-        } catch (error) {
-            console.error('[ZeroTrustOrchestrator] Error during risk score calculation:', error);
+        } catch (_error) {
+            console.error('[ZeroTrustOrchestrator] Error during risk score calculation:', _error);
             throw new Error('Failed to calculate risk score due to threat intelligence lookup error');
         }
     }
@@ -581,7 +581,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
         }
     }
 
-    private async analyzeBehavior(session: ZeroTrustSession, request: {
+    private async analyzeBehavior(session: ZeroTrustSession, _request: {
         resource: string;
         action: string;
         context?: Record<string, any>;
@@ -614,7 +614,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
         return { anomalyScore, reasons };
     }
 
-    private async evaluatePolicies(session: ZeroTrustSession, request: {
+    private async evaluatePolicies(session: ZeroTrustSession, _request: {
         resource: string;
         action: string;
         context?: Record<string, any>;

@@ -44,7 +44,7 @@ class EnvironmentVerifier {
     // Validate environment variables
     try {
       this.env = EnvSchema.parse(process.env);
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof z.ZodError) {
         console.error("❌ Environment validation failed:");
         error.errors.forEach((err) => {
@@ -73,7 +73,7 @@ class EnvironmentVerifier {
     try {
       await this.adminAuth.listUsers(1);
       console.log("✅ Firebase Admin SDK: Connected successfully");
-    } catch (error) {
+    } catch (_error) {
       console.error(
         "❌ Firebase Admin SDK:",
         error instanceof Error ? error.message : "Unknown error"
@@ -89,7 +89,7 @@ class EnvironmentVerifier {
       });
       await openai.models.list();
       console.log("✅ OpenAI API: Connected successfully");
-    } catch (error) {
+    } catch (_error) {
       console.error(
         "❌ OpenAI API:",
         error instanceof Error ? error.message : "Unknown error"
@@ -100,14 +100,14 @@ class EnvironmentVerifier {
 
   private async verifyGoogleAI(): Promise<void> {
     try {
-      const response = await fetch(
+      const _response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models?key=${this.env.GOOGLE_AI_API_KEY}`
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       console.log("✅ Google AI API: Connected successfully");
-    } catch (error) {
+    } catch (_error) {
       console.error(
         "❌ Google AI API:",
         error instanceof Error ? error.message : "Unknown error"
@@ -120,7 +120,7 @@ class EnvironmentVerifier {
     try {
       await this.adminAuth.getUserByEmail(this.env.TEST_USER_EMAIL);
       console.log("✅ Test User: Account exists");
-    } catch (error) {
+    } catch (_error) {
       console.error(
         "❌ Test User:",
         error instanceof Error ? error.message : "Unknown error"
@@ -131,7 +131,7 @@ class EnvironmentVerifier {
     try {
       await this.adminAuth.getUserByEmail(this.env.TEST_ADMIN_EMAIL);
       console.log("✅ Admin User: Account exists");
-    } catch (error) {
+    } catch (_error) {
       console.error(
         "❌ Admin User:",
         error instanceof Error ? error.message : "Unknown error"
@@ -149,7 +149,7 @@ class EnvironmentVerifier {
       await this.verifyGoogleAI();
       await this.verifyTestUsers();
       console.log("\n✅ All verifications completed successfully");
-    } catch (error) {
+    } catch (_error) {
       console.error("\n❌ Verification failed. Please check the errors above.");
       process.exit(1);
     }
@@ -158,7 +158,7 @@ class EnvironmentVerifier {
 
 // Run the verification
 const verifier = new EnvironmentVerifier();
-verifier.verifyAll().catch((error) => {
-  console.error("Unexpected error:", error);
+verifier.verifyAll().catch((_error) => {
+  console.error("Unexpected _error:", _error);
   process.exit(1);
 });

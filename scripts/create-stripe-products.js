@@ -121,7 +121,7 @@ async function createTierProduct(tierKey, config) {
             priceId: price.id
         };
 
-    } catch (error) {
+    } catch (_error) {
         log(`❌ Error creating ${config.name}: ${error.message}`, 'red');
         throw error;
     }
@@ -139,9 +139,9 @@ function generateTierUpdates(results) {
         log(`        price: ${TIER_CONFIGS[result.tier].price / 100},`);
         log(`        priceId: '${result.priceId}', // ← NEW REAL PRICE ID`, 'green');
         log('        features: {');
-        Object.entries(TIER_CONFIGS[result.tier].metadata).forEach(([key, value]) => {
+        Object.entries(TIER_CONFIGS[result.tier].metadata).forEach(([_key, value]) => {
             if (key !== 'tier') {
-                const displayValue = isNaN(value) ? `'${value}'` : value;
+                const displayValue = isNaN(_value) ? `'${value}'` : value;
                 log(`            ${key}: ${displayValue},`);
             }
         });
@@ -168,10 +168,10 @@ function generateTestCommands(results) {
 
     results.forEach(result => {
         log(`\n# Test ${TIER_CONFIGS[result.tier].name} checkout:`, 'yellow');
-        log(`stripe checkout sessions create \\`, 'green');
-        log(`  --success-url="http://localhost:3000/success" \\`, 'green');
-        log(`  --cancel-url="http://localhost:3000/cancel" \\`, 'green');
-        log(`  --mode=subscription \\`, 'green');
+        log(`stripe checkout sessions create \`, 'green');
+        log(`  --success-url="http://localhost:3000/success" \`, 'green');
+        log(`  --cancel-url="http://localhost:3000/cancel" \`, 'green');
+        log(`  --mode=subscription \`, 'green');
         log(`  --line-items="price=${result.priceId},quantity=1"`, 'green');
     });
 }
@@ -202,7 +202,7 @@ async function main() {
 
         for (const [tierKey, config] of Object.entries(TIER_CONFIGS)) {
             const result = await createTierProduct(tierKey, config);
-            results.push(result);
+            results.push(_result);
         }
 
         // Generate configuration updates
@@ -226,9 +226,9 @@ async function main() {
 
         log('🚀 Ready to update your RankPilot configuration!', 'bright');
 
-    } catch (error) {
+    } catch (_error) {
         log(`\n❌ Script failed: ${error.message}`, 'red');
-        console.error(error);
+        console.error(_error);
         process.exit(1);
     }
 }
@@ -259,4 +259,4 @@ if (args.includes('--dry-run')) {
 }
 
 // Run the main function
-main().catch(console.error);
+main().catch(console._error);

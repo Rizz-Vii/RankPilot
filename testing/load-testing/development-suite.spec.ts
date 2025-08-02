@@ -23,7 +23,7 @@ test.describe('RankPilot Performance Testing - Development Phase', () => {
         const frontendUrl = baseURL || 'https://rankpilot-h3jpc--performance-testing-mw0cwov5.web.app';
 
         const startTime = Date.now();
-        const response = await page.goto(frontendUrl, {
+        const _response = await page.goto(frontendUrl, {
             waitUntil: 'networkidle',
             timeout: 30000
         });
@@ -51,7 +51,7 @@ test.describe('RankPilot Performance Testing - Development Phase', () => {
         for (const pageTest of pages) {
             try {
                 const startTime = Date.now();
-                const response = await page.goto(`${frontendUrl}${pageTest.path}`, {
+                const _response = await page.goto(`${frontendUrl}${pageTest.path}`, {
                     timeout: 15000,
                     waitUntil: 'domcontentloaded'
                 });
@@ -62,7 +62,7 @@ test.describe('RankPilot Performance Testing - Development Phase', () => {
                 // Accept 200 (success) or 302/307 (redirects for auth)
                 expect([200, 302, 307, 401]).toContain(response?.status() || 0);
 
-            } catch (error) {
+            } catch (_error) {
                 console.log(`   ${pageTest.name}: ⚠️ ${error instanceof Error ? error.message : 'Unknown error'}`);
                 // Don't fail the test for individual pages during development
             }
@@ -78,7 +78,7 @@ test.describe('RankPilot Performance Testing - Development Phase', () => {
         const loadTimes: number[] = [];
         const testRuns = 3;
 
-        for (let i = 0; i < testRuns; i++) {
+        for (let _i = 0; i < testRuns; i++) {
             const startTime = Date.now();
             await page.goto(frontendUrl, {
                 waitUntil: 'networkidle',

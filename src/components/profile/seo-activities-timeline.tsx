@@ -26,8 +26,8 @@ interface Activity {
   url?: string;
   keywords?: string[];
   score?: number;
-  timestamp: any; // Firestore Timestamp
-  metadata?: any;
+  timestamp: unknown; // Firestore Timestamp
+  metadata?: unknown;
 }
 
 interface SEOActivitiesTimelineProps {
@@ -123,7 +123,7 @@ export default function SEOActivitiesTimeline({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {activities.slice(0, 20).map((activity, index) => (
+          {activities.slice(0, 20).map((activity, _index) => (
             <div
               key={activity.id}
               className="flex items-start space-x-4 pb-4 border-b last:border-b-0"

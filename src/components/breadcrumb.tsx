@@ -69,7 +69,7 @@ export default function Breadcrumb({
       className={cn("flex items-center space-x-1 text-sm", className)}
     >
       <ol className="flex items-center space-x-1">
-        {finalItems.map((item, index) => {
+        {finalItems.map((_item, _index) => {
           const isLast = index === finalItems.length - 1;
           const isCurrent = item.current || isLast;
 
@@ -135,7 +135,7 @@ function generateBreadcrumbs(pathname: string): BreadcrumbItem[] {
   // Build breadcrumbs from path segments
   let currentPath = "";
 
-  segments.forEach((segment, index) => {
+  segments.forEach((segment, _index) => {
     currentPath += `/${segment}`;
     const mapping = routeMappings[currentPath];
 

@@ -51,7 +51,7 @@ console.log('📋 Step 4: Performing clean rebuild...');
 try {
     execSync('npm run build', { stdio: 'inherit' });
     console.log('✅ Build successful');
-} catch (error) {
+} catch (_error) {
     console.log('❌ Build failed');
     process.exit(1);
 }

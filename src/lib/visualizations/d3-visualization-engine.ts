@@ -8,20 +8,20 @@
  * - Interactive charts with zoom, pan, and filtering
  * - Real-time data updates and animations
  * - Export capabilities (PNG, SVG, PDF)
- * - Respon            .attr('fill', (d: ChartDataPoint, i: number) => colors[((typeof d.category === 'number' ? d.category : i) % colors.length)]);ive design with mobile optimization
+ * - Respon            .attr('fill', (d: ChartDataPoint, _i: number) => colors[((typeof d.category === 'number' ? d.category : _i) % colors.length)]);ive design with mobile optimization
  */
 
 import * as d3 from 'd3';
 
 export interface ChartDataPoint {
-    x: any;
-    y: any;
+    x: unknown;
+    y: unknown;
     value?: number;
     size?: number;
     series?: string;
     category?: string;
     label?: string;
-    [key: string]: any;
+    [_key: string]: unknown;
 }
 
 export interface ChartConfig {
@@ -35,7 +35,7 @@ export interface ChartConfig {
         bottom: number;
         left: number;
     };
-    data: ChartDataPoint[];
+    _data: ChartDataPoint[];
     options: {
         title?: string;
         subtitle?: string;
@@ -122,11 +122,11 @@ export class D3VisualizationEngine {
 
         // Setup scales
         const xScale = d3.scaleTime()
-            .domain(d3.extent(config.data, d => new Date(d.x)) as [Date, Date])
+            .domain(d3.extent(config._data, d => new Date(d.x)) as [Date, Date])
             .range([0, width]);
 
         const yScale = d3.scaleLinear()
-            .domain(d3.extent(config.data, d => d.y) as [number, number])
+            .domain(d3.extent(config._data, d => d.y) as [number, number])
             .nice()
             .range([height, 0]);
 
@@ -145,7 +145,7 @@ export class D3VisualizationEngine {
         this.addYAxis(svg, yScale, config.options.yAxis);
 
         // Group data by series
-        const series = d3.group(config.data, d => d.series || 'default');
+        const series = d3.group(config._data, d => d.series || 'default');
 
         // Add lines
         series.forEach((seriesData, seriesName) => {
@@ -177,7 +177,7 @@ export class D3VisualizationEngine {
                     .attr('cy', d => yScale(d.y))
                     .attr('r', 4)
                     .attr('fill', colors[Array.from(series.keys()).indexOf(seriesName) % colors.length])
-                    .on('mouseover', (event, d) => this.showTooltip(event, d, config))
+                    .on('mouseover', (_event, d) => this.showTooltip(_event, d, config))
                     .on('mouseout', () => this.hideTooltip());
             }
         });
@@ -209,7 +209,7 @@ export class D3VisualizationEngine {
             .padding(0.1);
 
         const yScale = d3.scaleLinear()
-            .domain([0, d3.max(config.data, d => d.y) as number])
+            .domain([0, d3.max(config._data, d => d.y) as number])
             .nice()
             .range([height, 0]);
 
@@ -223,14 +223,14 @@ export class D3VisualizationEngine {
 
         // Add bars
         const bars = svg.selectAll('.bar')
-            .data(config.data)
+            .data(config._data)
             .enter().append('rect')
             .attr('class', 'bar')
             .attr('x', d => xScale(d.x)!)
             .attr('width', xScale.bandwidth())
             .attr('y', height)
             .attr('height', 0)
-            .attr('fill', (d, i) => colors[i % colors.length]);
+            .attr('fill', (d, _i) => colors[i % colors.length]);
 
         if (config.options.animations) {
             bars.transition()
@@ -245,9 +245,9 @@ export class D3VisualizationEngine {
 
         if (config.options.interactive) {
             bars
-                .on('mouseover', (event, d) => this.showTooltip(event, d, config))
+                .on('mouseover', (_event, d) => this.showTooltip(_event, d, config))
                 .on('mouseout', () => this.hideTooltip())
-                .on('click', (event, d) => this.handleBarClick(event, d, config));
+                .on('click', (_event, d) => this.handleBarClick(_event, d, config));
         }
 
         // Add title
@@ -273,7 +273,7 @@ export class D3VisualizationEngine {
 
         // Create pie generator
         const pie = d3.pie<any>()
-            .value(d => d.value)
+            .value(d => d._value)
             .sort(null);
 
         // Create arc generator
@@ -287,13 +287,13 @@ export class D3VisualizationEngine {
 
         // Add pie slices
         const slices = g.selectAll('.slice')
-            .data(pie(config.data))
+            .data(pie(config._data))
             .enter().append('g')
             .attr('class', 'slice');
 
         const paths = slices.append('path')
             .attr('d', arc as any)
-            .attr('fill', (d, i) => colors[i % colors.length])
+            .attr('fill', (d, _i) => colors[i % colors.length])
             .attr('stroke', '#fff')
             .attr('stroke-width', 2);
 
@@ -312,7 +312,7 @@ export class D3VisualizationEngine {
 
         if (config.options.interactive) {
             paths
-                .on('mouseover', (event, d) => this.showTooltip(event, d.data, config))
+                .on('mouseover', (_event, d) => this.showTooltip(_event, d._data, config))
                 .on('mouseout', () => this.hideTooltip());
         }
 
@@ -354,17 +354,17 @@ export class D3VisualizationEngine {
 
         // Setup scales
         const xScale = d3.scaleLinear()
-            .domain(d3.extent(config.data, d => d.x) as [number, number])
+            .domain(d3.extent(config._data, d => d.x) as [number, number])
             .nice()
             .range([0, width]);
 
         const yScale = d3.scaleLinear()
-            .domain(d3.extent(config.data, d => d.y) as [number, number])
+            .domain(d3.extent(config._data, d => d.y) as [number, number])
             .nice()
             .range([height, 0]);
 
         const sizeScale = d3.scaleSqrt()
-            .domain(d3.extent(config.data, d => d.size || 1) as [number, number])
+            .domain(d3.extent(config._data, d => d.size || 1) as [number, number])
             .range([3, 20]);
 
         // Add axes
@@ -377,13 +377,13 @@ export class D3VisualizationEngine {
 
         // Add points
         const points = svg.selectAll('.point')
-            .data(config.data)
+            .data(config._data)
             .enter().append('circle')
             .attr('class', 'point')
             .attr('cx', d => xScale(d.x))
             .attr('cy', d => yScale(d.y))
             .attr('r', d => sizeScale(d.size || 1))
-            .attr('fill', (d: ChartDataPoint, i: number) => colors[((typeof d.category === 'number' ? d.category : i) % colors.length)])
+            .attr('fill', (d: ChartDataPoint, _i: number) => colors[((typeof d.category === 'number' ? d.category : _i) % colors.length)])
             .attr('opacity', 0.7);
 
         if (config.options.animations) {
@@ -391,13 +391,13 @@ export class D3VisualizationEngine {
                 .attr('r', 0)
                 .transition()
                 .duration(1000)
-                .delay((d, i) => i * 50)
+                .delay((d, _i) => i * 50)
                 .attr('r', d => sizeScale(d.size || 1));
         }
 
         if (config.options.interactive) {
             points
-                .on('mouseover', (event, d) => this.showTooltip(event, d, config))
+                .on('mouseover', (_event, d) => this.showTooltip(_event, d, config))
                 .on('mouseout', () => this.hideTooltip());
         }
 
@@ -433,11 +433,11 @@ export class D3VisualizationEngine {
             .padding(0.1);
 
         const colorScale = d3.scaleSequential(d3.interpolateYlOrRd)
-            .domain(d3.extent(config.data, d => d.value) as [number, number]);
+            .domain(d3.extent(config._data, d => d._value) as [number, number]);
 
         // Add rectangles
         const cells = svg.selectAll('.cell')
-            .data(config.data)
+            .data(config._data)
             .enter().append('rect')
             .attr('class', 'cell')
             .attr('x', (d: ChartDataPoint) => xScale(d.x)!)
@@ -451,13 +451,13 @@ export class D3VisualizationEngine {
                 .attr('opacity', 0)
                 .transition()
                 .duration(1000)
-                .delay((d, i) => i * 10)
+                .delay((d, _i) => i * 10)
                 .attr('opacity', 1);
         }
 
         if (config.options.interactive) {
             cells
-                .on('mouseover', (event, d) => this.showTooltip(event, d, config))
+                .on('mouseover', (_event, d) => this.showTooltip(_event, d, config))
                 .on('mouseout', () => this.hideTooltip());
         }
 
@@ -559,7 +559,7 @@ export class D3VisualizationEngine {
         d3.select(`#${containerId}`).selectAll('*').remove();
     }
 
-    private addXAxis(svg: any, scale: any, height: number, axisConfig?: AxisConfig): void {
+    private addXAxis(svg: unknown, scale: unknown, height: number, axisConfig?: AxisConfig): void {
         const axis = d3.axisBottom(scale);
 
         if (axisConfig?.tickCount) {
@@ -567,7 +567,7 @@ export class D3VisualizationEngine {
         }
 
         if (axisConfig?.tickFormat) {
-            axis.tickFormat((d: any) => d3.format(axisConfig.tickFormat!)(d));
+            axis.tickFormat((d: unknown) => d3.format(axisConfig.tickFormat!)(d));
         }
 
         const xAxis = svg.append('g')
@@ -586,7 +586,7 @@ export class D3VisualizationEngine {
         }
     }
 
-    private addYAxis(svg: any, scale: any, axisConfig?: AxisConfig): void {
+    private addYAxis(svg: unknown, scale: unknown, axisConfig?: AxisConfig): void {
         const axis = d3.axisLeft(scale);
 
         if (axisConfig?.tickCount) {
@@ -594,7 +594,7 @@ export class D3VisualizationEngine {
         }
 
         if (axisConfig?.tickFormat) {
-            axis.tickFormat((d: any) => d3.format(axisConfig.tickFormat!)(d));
+            axis.tickFormat((d: unknown) => d3.format(axisConfig.tickFormat!)(d));
         }
 
         const yAxis = svg.append('g')
@@ -611,7 +611,7 @@ export class D3VisualizationEngine {
                 .style('fill', 'black')
                 .text(axisConfig.label);
         }
-    } private addGrid(svg: any, xScale: any, yScale: any, width: number, height: number): void {
+    } private addGrid(svg: unknown, xScale: unknown, yScale: unknown, width: number, height: number): void {
         // Add X grid lines
         svg.append('g')
             .attr('class', 'grid')
@@ -634,7 +634,7 @@ export class D3VisualizationEngine {
             .style('opacity', 0.3);
     }
 
-    private addTitle(svg: any, config: ChartConfig): void {
+    private addTitle(svg: unknown, config: ChartConfig): void {
         if (config.options.title) {
             svg.append('text')
                 .attr('class', 'chart-title')
@@ -659,7 +659,7 @@ export class D3VisualizationEngine {
         }
     }
 
-    private addLegend(svg: any, series: string[], colors: string[], config: ChartConfig): void {
+    private addLegend(svg: unknown, series: string[], colors: string[], config: ChartConfig): void {
         const legend = svg.append('g')
             .attr('class', 'legend')
             .attr('transform', `translate(${config.width - config.margin.right + 20}, 20)`);
@@ -668,12 +668,12 @@ export class D3VisualizationEngine {
             .data(series)
             .enter().append('g')
             .attr('class', 'legend-item')
-            .attr('transform', (_d: any, i: number) => `translate(0, ${i * 20})`);
+            .attr('transform', (_d: unknown, _i: number) => `translate(0, ${i * 20})`);
 
         legendItems.append('rect')
             .attr('width', 12)
             .attr('height', 12)
-            .attr('fill', (_d: any, i: number) => colors[i % colors.length]);
+            .attr('fill', (_d: unknown, _i: number) => colors[i % colors.length]);
 
         legendItems.append('text')
             .attr('x', 18)
@@ -683,7 +683,7 @@ export class D3VisualizationEngine {
             .text((d: string) => d);
     }
 
-    private showTooltip(event: any, data: any, config: ChartConfig): void {
+    private showTooltip(_event: unknown, _data: unknown, config: ChartConfig): void {
         if (!config.options.tooltip) return;
 
         const tooltip = d3.select('body')
@@ -698,7 +698,7 @@ export class D3VisualizationEngine {
             .style('pointer-events', 'none')
             .style('opacity', 0);
 
-        const content = this.formatTooltipContent(data);
+        const content = this.formatTooltipContent(_data);
 
         tooltip.html(content)
             .style('left', (event.pageX + 10) + 'px')
@@ -712,19 +712,19 @@ export class D3VisualizationEngine {
         d3.selectAll('.chart-tooltip').remove();
     }
 
-    private formatTooltipContent(data: any): string {
-        const entries = Object.entries(data)
-            .filter(([key]) => !['series', 'category'].includes(key))
-            .map(([key, value]) => `<strong>${key}:</strong> ${value}`)
+    private formatTooltipContent(_data: unknown): string {
+        const entries = Object.entries(_data)
+            .filter(([key]) => !['series', 'category'].includes(_key))
+            .map(([_key, value]) => `<strong>${key}:</strong> ${value}`)
             .join('<br>');
 
-        return entries || JSON.stringify(data);
+        return entries || JSON.stringify(_data);
     }
 
-    private handleBarClick(event: any, data: any, config: ChartConfig): void {
+    private handleBarClick(_event: unknown, _data: unknown, config: ChartConfig): void {
         // Emit custom event for bar click
         const customEvent = new CustomEvent('barClick', {
-            detail: { data, config, element: event.target }
+            detail: { _data, config, _element: event.target }
         });
 
         event.target.dispatchEvent(customEvent);
@@ -738,7 +738,7 @@ export class D3VisualizationEngine {
             svgString = svgString.replace('<svg', `<svg style="background-color: ${config.background}"`);
         }
 
-        return `data:image/svg+xml;base64,${btoa(svgString)}`;
+        return `_data:image/svg+xml;base64,${btoa(svgString)}`;
     }
 
     private async exportAsPNG(svg: SVGElement, config: ChartExportConfig): Promise<string> {
@@ -775,10 +775,10 @@ export class D3VisualizationEngine {
         const pngData = await this.exportAsPNG(svg, config);
 
         // Mock PDF generation
-        return `data:application/pdf;base64,${btoa('PDF content would be here')}`;
+        return `_data:application/pdf;base64,${btoa('PDF content would be here')}`;
     }
 
-    private exportAsJSON(chart: any, config: ChartExportConfig): string {
+    private exportAsJSON(chart: unknown, config: ChartExportConfig): string {
         const exportData = {
             type: chart.type,
             config: chart.config,
@@ -786,7 +786,7 @@ export class D3VisualizationEngine {
             timestamp: Date.now()
         };
 
-        return `data:application/json;base64,${btoa(JSON.stringify(exportData, null, 2))}`;
+        return `_data:application/json;base64,${btoa(JSON.stringify(exportData, null, 2))}`;
     }
 
     /**

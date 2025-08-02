@@ -16,7 +16,7 @@ test.describe("Authentication - Comprehensive Suite", () => {
 
       // Check form elements exist and are accessible - Use specific selectors to avoid strict mode violations
       const emailField = page.locator('form').getByRole("textbox", { name: /email/i }).first();
-      const passwordField = page.locator('form').getByLabel(/password/i).first();
+      const passwordField = page.locator('form').getByLabel(/password/_i).first();
       const submitButton = page.locator('form')
         .getByRole("button", { name: /^login$/i })
         .or(page.locator('form').getByRole("button", { name: /^sign in$/i }));
@@ -38,7 +38,7 @@ test.describe("Authentication - Comprehensive Suite", () => {
       await page.goto("/login", { waitUntil: "networkidle" });
 
       const emailField = page.locator('form').getByRole("textbox", { name: /email/i }).first();
-      const passwordField = page.locator('form').getByLabel(/password/i).first();
+      const passwordField = page.locator('form').getByLabel(/password/_i).first();
       const submitButton = page.locator('form')
         .getByRole("button", { name: /^login$/i })
         .or(page.locator('form').getByRole("button", { name: /^sign in$/i }));
@@ -74,7 +74,7 @@ test.describe("Authentication - Comprehensive Suite", () => {
 
       await page.goto("/login", { waitUntil: "networkidle" });
 
-      const passwordField = page.getByLabel(/password/i);
+      const passwordField = page.getByLabel(/password/_i);
       const toggleButton = page
         .locator('[data-testid="password-toggle"]')
         .or(page.locator('button[aria-label*="password"]'))
@@ -104,9 +104,9 @@ test.describe("Authentication - Comprehensive Suite", () => {
 
       // Check basic form elements - Use specific selectors to avoid strict mode violations
       const emailField = page.locator('form').getByRole("textbox", { name: /email/i }).first();
-      const passwordField = page.locator('form').getByLabel(/password/i).first();
+      const passwordField = page.locator('form').getByLabel(/password/_i).first();
       const submitButton = page.locator('form').getByRole("button", {
-        name: /register|sign up/i,
+        name: /register|sign up/_i,
       });
 
       await expect(emailField).toBeVisible();
@@ -122,7 +122,7 @@ test.describe("Authentication - Comprehensive Suite", () => {
       await page.goto("/register", { waitUntil: "networkidle" });
 
       const submitButton = page.getByRole("button", {
-        name: /register|sign up/i,
+        name: /register|sign up/_i,
       });
 
       // Test empty form submission
@@ -203,7 +203,7 @@ test.describe("Authentication - Comprehensive Suite", () => {
       await page.goto("/login", { waitUntil: "networkidle" });
 
       const emailField = page.locator('form').getByRole("textbox", { name: /email/i }).first();
-      const passwordField = page.locator('form').getByLabel(/password/i).first();
+      const passwordField = page.locator('form').getByLabel(/password/_i).first();
       const submitButton = page.locator('form').getByRole("button", { name: /login|sign in/i });
 
       // Check elements are still accessible on mobile
@@ -227,7 +227,7 @@ test.describe("Authentication - Comprehensive Suite", () => {
 
       // Check for proper labels - Use specific selectors to avoid strict mode violations
       const emailField = page.locator('form').getByRole("textbox", { name: /email/i }).first();
-      const passwordField = page.locator('form').getByLabel(/password/i).first();
+      const passwordField = page.locator('form').getByLabel(/password/_i).first();
 
       await expect(emailField).toBeVisible();
       await expect(passwordField).toBeVisible();
@@ -259,7 +259,7 @@ test.describe("Authentication - Integration Tests", () => {
 
     // Verify form elements are present and functional
     const emailField = page.locator('form').getByRole("textbox", { name: /email/i }).first();
-    const passwordField = page.locator('form').getByLabel(/password/i).first();
+    const passwordField = page.locator('form').getByLabel(/password/_i).first();
     const loginButton = page.locator('[data-testid="login-button"]')
       .or(page.locator('form button[type="submit"]:has-text("Login")'));
 
@@ -301,7 +301,7 @@ test.describe("Authentication - Integration Tests", () => {
     await page.goto("/login", { waitUntil: "networkidle" });
 
     const emailField = page.locator('form').getByRole("textbox", { name: /email/i }).first();
-    const passwordField = page.locator('form').getByLabel(/password/i).first();
+    const passwordField = page.locator('form').getByLabel(/password/_i).first();
     const loginButton = page.locator('[data-testid="login-button"]')
       .or(page.locator('form button[type="submit"]:has-text("Login")'));
 
@@ -352,7 +352,7 @@ test.describe("Authentication - Integration Tests", () => {
     await page.goto("/login", { waitUntil: "networkidle" });
 
     const emailField = page.locator('form').getByRole("textbox", { name: /email/i }).first();
-    const passwordField = page.locator('form').getByLabel(/password/i).first();
+    const passwordField = page.locator('form').getByLabel(/password/_i).first();
     const loginButton = page.locator('[data-testid="login-button"]')
       .or(page.locator('form button[type="submit"]:has-text("Login")'));
 
@@ -392,16 +392,16 @@ test.describe("Authentication - Integration Tests", () => {
               sessionStorage.clear();
             }
           });
-        } catch (error) {
+        } catch (_error) {
           console.log("⚠️ Storage clearing skipped during logout");
         }
       } else {
         console.log("⚠️ Logout button not found");
       }
-    } catch (error) {
+    } catch (_error) {
       // Enhanced error handling - same pattern as successful role-based tests
       const hasFirebaseError = await page.locator('text=/Firebase.*network-request-failed/i').count() > 0;
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(_error);
 
       if (hasFirebaseError || errorMessage.includes('Timeout') || errorMessage.includes('network-request-failed')) {
         console.log(`⚠️ Logout test skipped due to login issues: ${errorMessage}`);

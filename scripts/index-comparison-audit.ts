@@ -20,7 +20,7 @@ interface FirestoreIndex {
 
 interface IndexConfig {
     indexes: FirestoreIndex[];
-    fieldOverrides?: any[];
+    fieldOverrides?: unknown[];
 }
 
 class IndexComparisonAuditor {
@@ -70,7 +70,7 @@ class IndexComparisonAuditor {
             this.deployedIndexes = deployedConfig.indexes || [];
 
             console.log(`✅ Loaded ${this.deployedIndexes.length} deployed indexes`);
-        } catch (error) {
+        } catch (_error) {
             throw new Error(`Failed to fetch deployed indexes: ${error}`);
         }
     } private async compareIndexes() {
@@ -135,14 +135,14 @@ class IndexComparisonAuditor {
         await this.generateRecommendations(onlyLocal, onlyDeployed);
     }
 
-    private createIndexSignature(index: FirestoreIndex): string {
+    private createIndexSignature(_index: FirestoreIndex): string {
         const fields = index.fields
             .map(f => `${f.fieldPath}:${f.order}`)
             .join(',');
         return `${index.collectionGroup}|${fields}`;
     }
 
-    private getFieldsDescription(index: FirestoreIndex): string {
+    private getFieldsDescription(_index: FirestoreIndex): string {
         return index.fields
             .map(f => `${f.fieldPath} (${f.order.toLowerCase()})`)
             .join(', ');
@@ -218,8 +218,8 @@ async function main() {
         const auditor = new IndexComparisonAuditor();
         await auditor.runAudit();
         process.exit(0);
-    } catch (error) {
-        console.error('❌ Index audit failed:', error);
+    } catch (_error) {
+        console.error('❌ Index audit failed:', _error);
         process.exit(1);
     }
 }

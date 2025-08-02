@@ -17,7 +17,7 @@ test.describe('Mobile - Responsive Design', () => {
         const count = await buttons.count();
         
         for (let i = 0; i < Math.min(count, 10); i++) {
-            const button = buttons.nth(i);
+            const button = buttons.nth(_i);
             const box = await button.boundingBox();
             if (box) {
                 expect(box.height).toBeGreaterThanOrEqual(48);
@@ -41,7 +41,7 @@ test.describe('Mobile - Responsive Design', () => {
         const count = await images.count();
         
         for (let i = 0; i < Math.min(count, 5); i++) {
-            const img = images.nth(i);
+            const img = images.nth(_i);
             const src = await img.getAttribute('src');
             expect(src).toBeTruthy();
         }

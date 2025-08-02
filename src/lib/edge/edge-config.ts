@@ -54,7 +54,7 @@ const PERFORMANCE_RULES: Record<string, CacheConfig> = {
 /**
  * Determine the best edge location based on request origin
  */
-function getOptimalEdgeLocation(request: NextRequest): string {
+function getOptimalEdgeLocation(_request: NextRequest): string {
     const countryCode = request.headers.get('cf-ipcountry') ||
         request.headers.get('x-country-code') || 'US';
 
@@ -84,7 +84,7 @@ function getOptimalEdgeLocation(request: NextRequest): string {
 /**
  * Apply intelligent caching headers based on request type
  */
-function applyCachingStrategy(request: NextRequest, response: NextResponse): NextResponse {
+function applyCachingStrategy(_request: NextRequest, _response: NextResponse): NextResponse {
     const pathname = request.nextUrl.pathname;
 
     // Determine caching strategy
@@ -112,7 +112,7 @@ function applyCachingStrategy(request: NextRequest, response: NextResponse): Nex
     response.headers.set('Cache-Control', cacheControl);
 
     // Add performance headers
-    response.headers.set('X-Edge-Location', getOptimalEdgeLocation(request));
+    response.headers.set('X-Edge-Location', getOptimalEdgeLocation(_request));
     response.headers.set('X-Cache-Strategy', Object.keys(PERFORMANCE_RULES).find(
         key => PERFORMANCE_RULES[key] === cacheConfig
     ) || 'DEFAULT');
@@ -123,7 +123,7 @@ function applyCachingStrategy(request: NextRequest, response: NextResponse): Nex
 /**
  * Global performance optimization for static assets
  */
-export function optimizeStaticAssets(request: NextRequest): NextResponse | null {
+export function optimizeStaticAssets(_request: NextRequest): NextResponse | null {
     const pathname = request.nextUrl.pathname;
 
     // Check if this is a static asset
@@ -147,7 +147,7 @@ export function optimizeStaticAssets(request: NextRequest): NextResponse | null 
     response.headers.set('Vary', 'Accept-Encoding');
 
     // Add edge location for monitoring
-    response.headers.set('X-Edge-Location', getOptimalEdgeLocation(request));
+    response.headers.set('X-Edge-Location', getOptimalEdgeLocation(_request));
     response.headers.set('X-Performance-Optimized', 'static-assets');
 
     return response;
@@ -156,7 +156,7 @@ export function optimizeStaticAssets(request: NextRequest): NextResponse | null 
 /**
  * API response optimization with intelligent caching
  */
-export function optimizeAPIResponses(request: NextRequest): NextResponse | null {
+export function optimizeAPIResponses(_request: NextRequest): NextResponse | null {
     const pathname = request.nextUrl.pathname;
 
     if (!pathname.startsWith('/api/')) {
@@ -201,7 +201,7 @@ export function optimizeAPIResponses(request: NextRequest): NextResponse | null 
     }
 
     // Add API optimization headers
-    response.headers.set('X-Edge-Location', getOptimalEdgeLocation(request));
+    response.headers.set('X-Edge-Location', getOptimalEdgeLocation(_request));
     response.headers.set('X-API-Optimized', 'true');
 
     return response;
@@ -210,9 +210,9 @@ export function optimizeAPIResponses(request: NextRequest): NextResponse | null 
 /**
  * Geographic performance optimization
  */
-export function optimizeByGeography(request: NextRequest): NextResponse {
+export function optimizeByGeography(_request: NextRequest): NextResponse {
     const response = NextResponse.next();
-    const edgeLocation = getOptimalEdgeLocation(request);
+    const edgeLocation = getOptimalEdgeLocation(_request);
 
     // Add geographic optimization headers
     response.headers.set('X-Edge-Location', edgeLocation);
@@ -234,7 +234,7 @@ export function optimizeByGeography(request: NextRequest): NextResponse {
 /**
  * Performance monitoring and analytics
  */
-export function addPerformanceMonitoring(request: NextRequest, response: NextResponse): NextResponse {
+export function addPerformanceMonitoring(_request: NextRequest, _response: NextResponse): NextResponse {
     const startTime = Date.now();
 
     // Add performance timing headers
@@ -251,20 +251,20 @@ export function addPerformanceMonitoring(request: NextRequest, response: NextRes
 /**
  * Main edge computing middleware
  */
-export function edgeMiddleware(request: NextRequest): NextResponse {
+export function edgeMiddleware(_request: NextRequest): NextResponse {
     const startTime = Date.now();
 
     // Try optimizations in order of priority
-    let response = optimizeStaticAssets(request) ||
-        optimizeAPIResponses(request) ||
-        optimizeByGeography(request) ||
+    let response = optimizeStaticAssets(_request) ||
+        optimizeAPIResponses(_request) ||
+        optimizeByGeography(_request) ||
         NextResponse.next(); // Fallback to default response
 
     // Apply performance monitoring
-    response = addPerformanceMonitoring(request, response);
+    response = addPerformanceMonitoring(_request, _response);
 
     // Apply intelligent caching
-    response = applyCachingStrategy(request, response);
+    response = applyCachingStrategy(_request, _response);
 
     // Add global performance headers
     response.headers.set('X-Edge-Optimized', 'true');

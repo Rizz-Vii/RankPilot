@@ -91,8 +91,8 @@ export function UsageAnalytics() {
         storage: userData?.usage?.storage || 0,
         users: userData?.usage?.users || 1,
       });
-    } catch (error) {
-      console.error("Error fetching usage data:", error);
+    } catch (_error) {
+      console.error("Error fetching usage _data:", _error);
     } finally {
       setLoading(false);
     }
@@ -173,7 +173,7 @@ export function UsageAnalytics() {
     return (
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
+          {[...Array(4)].map((_, _i) => (
             <Card key={i}>
               <CardHeader className="animate-pulse">
                 <div className="h-4 bg-gray-200 rounded w-3/4"></div>
@@ -216,7 +216,7 @@ export function UsageAnalytics() {
 
       {/* Usage Overview */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {usageLimits.map((item) => {
+        {usageLimits.map((_item) => {
           const percentage = getUsagePercentage(item.current, item.limit);
           const status = getUsageStatus(item.current, item.limit);
 
@@ -261,7 +261,7 @@ export function UsageAnalytics() {
 
       {/* Warnings and Recommendations */}
       {usageLimits.some(
-        (item) =>
+        (_item) =>
           getUsageStatus(item.current, item.limit) === "warning" ||
           getUsageStatus(item.current, item.limit) === "exceeded"
       ) && (
@@ -275,11 +275,11 @@ export function UsageAnalytics() {
           <CardContent className="space-y-2">
             {usageLimits
               .filter(
-                (item) =>
+                (_item) =>
                   getUsageStatus(item.current, item.limit) !== "normal" &&
                   getUsageStatus(item.current, item.limit) !== "unlimited"
               )
-              .map((item) => (
+              .map((_item) => (
                 <div
                   key={item.name}
                   className="flex items-center justify-between text-sm"

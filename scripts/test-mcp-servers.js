@@ -15,4 +15,4 @@ async function testMcpServers() {
     console.log('✅ All MCP servers tested successfully!');
 }
 
-testMcpServers().catch(console.error);
+testMcpServers().catch(console._error);

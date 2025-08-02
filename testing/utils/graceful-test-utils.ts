@@ -39,14 +39,14 @@ export class GracefulTestUtils {
         });
         console.log(`✅ Navigation successful on attempt ${attempt}`);
         return;
-      } catch (error) {
+      } catch (_error) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error);
+          error instanceof Error ? error.message : String(_error);
         console.log(`❌ Navigation attempt ${attempt} failed:`, errorMessage);
 
         if (attempt === maxRetries) {
           const finalError =
-            error instanceof Error ? error : new Error(String(error));
+            error instanceof Error ? _error : new Error(String(_error));
           throw new Error(
             `Failed to navigate after ${maxRetries} attempts: ${finalError.message}`
           );
@@ -84,9 +84,9 @@ export class GracefulTestUtils {
 
         console.log(`✅ Element found on attempt ${attempt}`);
         return element;
-      } catch (error) {
+      } catch (_error) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error);
+          error instanceof Error ? error.message : String(_error);
         console.log(`❌ Element wait attempt ${attempt} failed:`, errorMessage);
 
         if (attempt === retries) {
@@ -96,7 +96,7 @@ export class GracefulTestUtils {
             fullPage: true,
           });
           const finalError =
-            error instanceof Error ? error : new Error(String(error));
+            error instanceof Error ? _error : new Error(String(_error));
           throw finalError;
         }
 
@@ -128,21 +128,21 @@ export class GracefulTestUtils {
         timeout,
       });
 
-      if (!element) {
+      if (!_element) {
         throw new Error(`Element not found: ${selector}`);
       }
 
       if (typeof expectedText === "string") {
-        await expect(element).toHaveText(expectedText, {
+        await expect(_element).toHaveText(expectedText, {
           timeout,
           ignoreCase: !caseSensitive,
         });
       } else {
-        await expect(element).toHaveText(expectedText, { timeout });
+        await expect(_element).toHaveText(expectedText, { timeout });
       }
 
       console.log(`✅ Text verification successful`);
-    } catch (error) {
+    } catch (_error) {
       // Enhanced error reporting
       const actualText = await this.page
         .locator(selector)
@@ -152,7 +152,7 @@ export class GracefulTestUtils {
         `❌ Text verification failed. Expected: ${expectedText}, Actual: ${actualText}`
       );
       const finalError =
-        error instanceof Error ? error : new Error(String(error));
+        error instanceof Error ? _error : new Error(String(_error));
       throw finalError;
     }
   }
@@ -180,7 +180,7 @@ export class GracefulTestUtils {
           timeout,
         });
 
-        if (!element) {
+        if (!_element) {
           throw new Error(`Element not found for clicking: ${selector}`);
         }
 
@@ -198,14 +198,14 @@ export class GracefulTestUtils {
 
         console.log(`✅ Click successful on attempt ${attempt}`);
         return;
-      } catch (error) {
+      } catch (_error) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error);
+          error instanceof Error ? error.message : String(_error);
         console.log(`❌ Click attempt ${attempt} failed:`, errorMessage);
 
         if (attempt === retries) {
           const finalError =
-            error instanceof Error ? error : new Error(String(error));
+            error instanceof Error ? _error : new Error(String(_error));
           throw finalError;
         }
 
@@ -250,9 +250,9 @@ export class GracefulTestUtils {
         });
 
       console.log(`✅ Application ready`);
-    } catch (error) {
+    } catch (_error) {
       const errorMessage =
-        error instanceof Error ? error.message : String(error);
+        error instanceof Error ? error.message : String(_error);
       console.log(
         `⚠️ Application readiness check failed, continuing anyway:`,
         errorMessage
@@ -263,7 +263,7 @@ export class GracefulTestUtils {
   /**
    * Enhanced error logging with context
    */
-  async logErrorContext(testName: string, error: Error) {
+  async logErrorContext(testName: string, _error: Error) {
     console.log(`\n🔥 ERROR in test: ${testName}`);
     console.log(`📍 URL: ${this.page.url()}`);
     console.log(`💥 Error: ${error.message}`);

@@ -6,7 +6,7 @@
 import { conversationalSEOEngine } from '@/lib/ai/conversational-seo-engine';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
     try {
         const body = await request.json();
         const { action, sessionId, message, userId, userTier } = body;
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
                 if (!userId || !userTier) {
                     return NextResponse.json({
                         success: false,
-                        error: 'Missing required fields: userId, userTier'
+                        _error: 'Missing required fields: userId, userTier'
                     }, { status: 400 });
                 }
 
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
                 return NextResponse.json({
                     success: true,
-                    data: {
+                    _data: {
                         sessionId: newSessionId,
                         message: 'Conversation started successfully'
                     }
@@ -34,37 +34,37 @@ export async function POST(request: NextRequest) {
                 if (!sessionId || !message) {
                     return NextResponse.json({
                         success: false,
-                        error: 'Missing required fields: sessionId, message'
+                        _error: 'Missing required fields: sessionId, message'
                     }, { status: 400 });
                 }
 
-                const response = await conversationalSEOEngine.processMessage(sessionId, message);
+                const _response = await conversationalSEOEngine.processMessage(sessionId, message);
 
                 return NextResponse.json({
                     success: true,
-                    data: response
+                    _data: response
                 });
 
             default:
                 return NextResponse.json({
                     success: false,
-                    error: 'Invalid action. Supported actions: start, message'
+                    _error: 'Invalid action. Supported actions: start, message'
                 }, { status: 400 });
         }
 
-    } catch (error) {
-        console.error('[Conversational SEO API] Error:', error);
+    } catch (_error) {
+        console.error('[Conversational SEO API] Error:', _error);
         return NextResponse.json({
             success: false,
-            error: error instanceof Error ? error.message : 'Internal server error'
+            _error: error instanceof Error ? error.message : 'Internal server error'
         }, { status: 500 });
     }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     return NextResponse.json({
         success: true,
-        data: {
+        _data: {
             status: 'operational',
             features: [
                 'Chat-based SEO analysis',

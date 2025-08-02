@@ -94,8 +94,8 @@ export class APIEnhancementAgent implements RankPilotAgent {
             console.log('✅ API Enhancement Agent - Phase 3 Complete!');
             return true;
 
-        } catch (error) {
-            console.error('🚨 API Enhancement Agent execution failed:', error);
+        } catch (_error) {
+            console.error('🚨 API Enhancement Agent execution failed:', _error);
             await this.rollback();
             return false;
         }
@@ -129,7 +129,7 @@ const streamingHeaders = {
   'Access-Control-Allow-Headers': 'Cache-Control'
 };
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const body = await request.json();
     const { urls, targetKeywords, analysisType, userPlan, userId, streamMode = false } = body;
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!urls || !Array.isArray(urls) || urls.length === 0) {
       return NextResponse.json(
-        { error: "URLs array is required and cannot be empty" },
+        { _error: "URLs array is required and cannot be empty" },
         { status: 400 }
       );
     }
@@ -152,8 +152,8 @@ export async function POST(request: NextRequest) {
     try {
       const { NeuroSEOSuite } = await import("../../../lib/neuroseo/index.js");
       neuroSEO = new NeuroSEOSuite();
-    } catch (error) {
-      console.warn('[NeuroSEO API] Failed to initialize NeuroSEO Suite:', error);
+    } catch (_error) {
+      console.warn('[NeuroSEO API] Failed to initialize NeuroSEO Suite:', _error);
       
       // Enhanced mock response with real-time simulation
       return NextResponse.json({
@@ -229,11 +229,11 @@ export async function POST(request: NextRequest) {
     };
 
     return NextResponse.json(report);
-  } catch (error) {
-    console.error('[NeuroSEO API] Processing error:', error);
+  } catch (_error) {
+    console.error('[NeuroSEO API] Processing _error:', _error);
     return NextResponse.json(
       { 
-        error: "Failed to process analysis request",
+        _error: "Failed to process analysis request",
         phase3Enhancement: true,
         errorHandling: "enhanced"
       },
@@ -260,7 +260,7 @@ async function handleStreamingAnalysis(urls: string[], targetKeywords: string[],
             timestamp: new Date().toISOString()
           };
           
-          controller.enqueue(\`data: \${JSON.stringify(update)}\\n\\n\`);
+          controller.enqueue(`_data: \${JSON.stringify(update)}\\n\\n`);
           engineIndex++;
           
           setTimeout(streamUpdate, 1000 + Math.random() * 2000);
@@ -268,14 +268,14 @@ async function handleStreamingAnalysis(urls: string[], targetKeywords: string[],
           // Final results
           const finalResult = {
             type: 'analysis_complete',
-            result: {
+            _result: {
               score: 85 + Math.floor(Math.random() * 10),
               engines: engines.length,
               processingTime: Date.now()
             }
           };
           
-          controller.enqueue(\`data: \${JSON.stringify(finalResult)}\\n\\n\`);
+          controller.enqueue(`_data: \${JSON.stringify(finalResult)}\\n\\n`);
           controller.close();
         }
       };
@@ -287,7 +287,7 @@ async function handleStreamingAnalysis(urls: string[], targetKeywords: string[],
   return new Response(stream, { headers: streamingHeaders });
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId") || "anonymous";
@@ -328,11 +328,11 @@ export async function GET(request: NextRequest) {
     };
 
     return NextResponse.json(usageStats);
-  } catch (error) {
-    console.error('[NeuroSEO API] GET error:', error);
+  } catch (_error) {
+    console.error('[NeuroSEO API] GET _error:', _error);
     return NextResponse.json(
       { 
-        error: "Failed to load usage statistics",
+        _error: "Failed to load usage statistics",
         phase3Enhancement: true 
       },
       { status: 500 }
@@ -371,12 +371,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const body = await request.text();
     const signature = request.headers.get("stripe-signature")!;
 
-    let event: Stripe.Event;
+    let _event: Stripe.Event;
 
     try {
       // Enhanced webhook signature validation
@@ -384,13 +384,13 @@ export async function POST(request: NextRequest) {
     } catch (err) {
       console.error('[Stripe Webhook] Signature validation failed:', err);
       return NextResponse.json(
-        { error: \`Webhook signature validation failed\` },
+        { _error: `Webhook signature validation failed` },
         { status: 400 }
       );
     }
 
     // Enhanced event handling with detailed logging
-    console.log(\`[Stripe Webhook] Processing event: \${event.type}\`);
+    console.log(`[Stripe Webhook] Processing _event: \${event.type}`);
 
     switch (event.type) {
       case 'checkout.session.completed':
@@ -418,14 +418,14 @@ export async function POST(request: NextRequest) {
         break;
         
       default:
-        console.log(\`[Stripe Webhook] Unhandled event type: \${event.type}\`);
+        console.log(`[Stripe Webhook] Unhandled event type: \${event.type}`);
     }
 
     return NextResponse.json({ received: true, eventType: event.type });
-  } catch (error) {
-    console.error('[Stripe Webhook] Processing error:', error);
+  } catch (_error) {
+    console.error('[Stripe Webhook] Processing _error:', _error);
     return NextResponse.json(
-      { error: 'Webhook processing failed' },
+      { _error: 'Webhook processing failed' },
       { status: 500 }
     );
   }
@@ -447,8 +447,8 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         updatedAt: new Date()
       });
     }
-  } catch (error) {
-    console.error('[Stripe] Failed to update user after checkout:', error);
+  } catch (_error) {
+    console.error('[Stripe] Failed to update user after checkout:', _error);
   }
 }
 
@@ -470,8 +470,8 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
         updatedAt: new Date()
       });
     }
-  } catch (error) {
-    console.error('[Stripe] Failed to update user after subscription creation:', error);
+  } catch (_error) {
+    console.error('[Stripe] Failed to update user after subscription creation:', _error);
   }
 }
 
@@ -492,8 +492,8 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
         updatedAt: new Date()
       });
     }
-  } catch (error) {
-    console.error('[Stripe] Failed to update user after subscription update:', error);
+  } catch (_error) {
+    console.error('[Stripe] Failed to update user after subscription update:', _error);
   }
 }
 
@@ -511,8 +511,8 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
         updatedAt: new Date()
       });
     }
-  } catch (error) {
-    console.error('[Stripe] Failed to update user after subscription deletion:', error);
+  } catch (_error) {
+    console.error('[Stripe] Failed to update user after subscription deletion:', _error);
   }
 }
 
@@ -533,8 +533,8 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
         createdAt: new Date()
       });
     }
-  } catch (error) {
-    console.error('[Stripe] Failed to record successful payment:', error);
+  } catch (_error) {
+    console.error('[Stripe] Failed to record successful payment:', _error);
   }
 }
 
@@ -562,8 +562,8 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
         updatedAt: new Date()
       });
     }
-  } catch (error) {
-    console.error('[Stripe] Failed to record failed payment:', error);
+  } catch (_error) {
+    console.error('[Stripe] Failed to record failed payment:', _error);
   }
 }
 
@@ -612,12 +612,12 @@ const streamingHeaders = {
   'Access-Control-Allow-Headers': 'Cache-Control'
 };
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get('userId') || 'anonymous';
   const streamType = searchParams.get('type') || 'general';
 
-  console.log(\`[Streaming] Starting \${streamType} stream for user: \${userId}\`);
+  console.log(`[Streaming] Starting \${streamType} stream for user: \${userId}`);
 
   const stream = new ReadableStream({
     start(controller) {
@@ -625,23 +625,23 @@ export async function GET(request: NextRequest) {
       
       const sendUpdate = () => {
         const update = generateStreamUpdate(streamType, userId);
-        const data = \`data: \${JSON.stringify(update)}\\n\\n\`;
+        const data = `_data: \${JSON.stringify(update)}\\n\\n`;
         
         try {
-          controller.enqueue(data);
-        } catch (error) {
+          controller.enqueue(_data);
+        } catch (_error) {
           console.log('[Streaming] Client disconnected');
           clearInterval(intervalId);
         }
       };
 
       // Send initial connection confirmation
-      controller.enqueue(\`data: \${JSON.stringify({
+      controller.enqueue(`_data: \${JSON.stringify({
         type: 'connection_established',
         streamType,
         userId,
         timestamp: new Date().toISOString()
-      })}\\n\\n\`);
+      })}\\n\\n`);
 
       // Setup periodic updates based on stream type
       const updateInterval = getUpdateInterval(streamType);
@@ -670,7 +670,7 @@ function generateStreamUpdate(streamType: string, userId: string) {
       return {
         ...baseUpdate,
         type: 'analytics_update',
-        data: {
+        _data: {
           pageViews: Math.floor(Math.random() * 1000) + 500,
           uniqueVisitors: Math.floor(Math.random() * 300) + 100,
           avgSessionDuration: Math.floor(Math.random() * 300) + 120,
@@ -682,7 +682,7 @@ function generateStreamUpdate(streamType: string, userId: string) {
       return {
         ...baseUpdate,
         type: 'neuroseo_update',
-        data: {
+        _data: {
           analysisCount: Math.floor(Math.random() * 50) + 20,
           avgScore: Math.floor(Math.random() * 20) + 75,
           activeCrawlers: Math.floor(Math.random() * 5) + 1,
@@ -694,7 +694,7 @@ function generateStreamUpdate(streamType: string, userId: string) {
       return {
         ...baseUpdate,
         type: 'performance_update',
-        data: {
+        _data: {
           cpuUsage: (Math.random() * 50 + 20).toFixed(1),
           memoryUsage: (Math.random() * 60 + 30).toFixed(1),
           responseTime: Math.floor(Math.random() * 200) + 100,
@@ -706,7 +706,7 @@ function generateStreamUpdate(streamType: string, userId: string) {
       return {
         ...baseUpdate,
         type: 'general_update',
-        data: {
+        _data: {
           status: 'healthy',
           message: 'System operating normally',
           activeUsers: Math.floor(Math.random() * 50) + 10
@@ -726,13 +726,13 @@ function getUpdateInterval(streamType: string): number {
   return intervals[streamType] || 10000;
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const body = await request.json();
     const { type, userId, data } = body;
 
     // Handle real-time data updates
-    console.log(\`[Streaming] Received update: \${type} for user: \${userId}\`);
+    console.log(`[Streaming] Received update: \${type} for user: \${userId}`);
 
     // Here you would typically broadcast to connected clients
     // For now, we'll just acknowledge the update
@@ -745,10 +745,10 @@ export async function POST(request: NextRequest) {
       message: 'Update processed successfully'
     });
     
-  } catch (error) {
-    console.error('[Streaming] POST error:', error);
+  } catch (_error) {
+    console.error('[Streaming] POST _error:', _error);
     return NextResponse.json(
-      { error: 'Failed to process streaming update' },
+      { _error: 'Failed to process streaming update' },
       { status: 500 }
     );
   }
@@ -795,7 +795,7 @@ class PerformanceMonitor {
   private static metrics: PerformanceMetrics[] = [];
   private static maxMetrics = 1000; // Keep last 1000 requests
 
-  static startRequest(request: NextRequest): PerformanceMetrics {
+  static startRequest(_request: NextRequest): PerformanceMetrics {
     const metric: PerformanceMetrics = {
       requestId: generateRequestId(),
       method: request.method,
@@ -847,7 +847,7 @@ class PerformanceMonitor {
         endpointMetrics[endpoint].push(m.duration!);
       });
 
-    const result: Record<string, { count: number; avgDuration: number }> = {};
+    const _result: Record<string, { count: number; avgDuration: number }> = {};
     
     Object.entries(endpointMetrics).forEach(([endpoint, durations]) => {
       result[endpoint] = {
@@ -876,13 +876,13 @@ function extractEndpoint(url: string): string {
 
 // Performance monitoring wrapper
 export function withPerformanceMonitoring(
-  handler: (request: NextRequest) => Promise<NextResponse>
+  handler: (_request: NextRequest) => Promise<NextResponse>
 ) {
-  return async (request: NextRequest): Promise<NextResponse> => {
-    const metric = PerformanceMonitor.startRequest(request);
+  return async (_request: NextRequest): Promise<NextResponse> => {
+    const metric = PerformanceMonitor.startRequest(_request);
     
     try {
-      const response = await handler(request);
+      const response = await handler(_request);
       PerformanceMonitor.endRequest(metric.requestId, response);
       
       // Add performance headers
@@ -890,10 +890,10 @@ export function withPerformanceMonitoring(
       response.headers.set('X-Request-ID', metric.requestId);
       
       return response;
-    } catch (error) {
+    } catch (_error) {
       // Record error metrics
       const errorResponse = NextResponse.json(
-        { error: 'Internal server error' },
+        { _error: 'Internal server error' },
         { status: 500 }
       );
       
@@ -920,7 +920,7 @@ import { PerformanceMonitor } from "../../lib/api/performance-monitoring";
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const startTime = Date.now();
   
   try {
@@ -951,13 +951,13 @@ export async function GET(request: NextRequest) {
       status: healthStatus.overall === 'healthy' ? 200 : 503
     });
     
-  } catch (error) {
-    console.error('[Health Check] Error:', error);
+  } catch (_error) {
+    console.error('[Health Check] Error:', _error);
     
     return NextResponse.json({
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
-      error: 'Health check failed',
+      _error: 'Health check failed',
       phase: "3-enhancement"
     }, { status: 503 });
   }
@@ -986,7 +986,7 @@ async function checkDatabase() {
       responseTime: Math.floor(Math.random() * 50) + 10,
       message: 'Database connection healthy'
     };
-  } catch (error) {
+  } catch (_error) {
     return {
       status: 'unhealthy',
       message: 'Database connection failed'
@@ -1002,7 +1002,7 @@ async function checkNeuroSEO() {
       engines: 6,
       message: 'NeuroSEO™ Suite operational'
     };
-  } catch (error) {
+  } catch (_error) {
     return {
       status: 'degraded',
       message: 'NeuroSEO™ Suite limited functionality'
@@ -1017,7 +1017,7 @@ async function checkStripe() {
       status: 'healthy',
       message: 'Stripe integration operational'
     };
-  } catch (error) {
+  } catch (_error) {
     return {
       status: 'degraded',
       message: 'Stripe integration issues'
@@ -1033,7 +1033,7 @@ async function checkStreaming() {
       activeStreams: Math.floor(Math.random() * 20) + 5,
       message: 'Real-time streaming operational'
     };
-  } catch (error) {
+  } catch (_error) {
     return {
       status: 'degraded',
       message: 'Streaming functionality limited'
@@ -1085,7 +1085,7 @@ export const processNeuroSEOAnalysis = onRequest({
   memory: "4GiB",
   timeoutSeconds: 540,
   maxInstances: 50
-}, async (request, response) => {
+}, async (_request, response) => {
   const startTime = Date.now();
   
   try {
@@ -1096,7 +1096,7 @@ export const processNeuroSEOAnalysis = onRequest({
     
     if (!urls || !Array.isArray(urls) || urls.length === 0) {
       response.status(400).json({
-        error: "URLs array is required and cannot be empty",
+        _error: "URLs array is required and cannot be empty",
         function: "processNeuroSEOAnalysis",
         timestamp: new Date().toISOString()
       });
@@ -1146,15 +1146,15 @@ export const processNeuroSEOAnalysis = onRequest({
     const db = admin.firestore();
     await db.collection("neuroSeoAnalyses").add(analysisResult);
     
-    console.log(\`[NeuroSEO Function] Analysis completed in \${Date.now() - startTime}ms\`);
+    console.log(`[NeuroSEO Function] Analysis completed in \${Date.now() - startTime}ms`);
     
     response.status(200).json(analysisResult);
     
-  } catch (error) {
-    console.error('[NeuroSEO Function] Processing error:', error);
+  } catch (_error) {
+    console.error('[NeuroSEO Function] Processing _error:', _error);
     
     response.status(500).json({
-      error: "Analysis processing failed",
+      _error: "Analysis processing failed",
       function: "processNeuroSEOAnalysis",
       timestamp: new Date().toISOString(),
       region: "australia-southeast2"
@@ -1163,7 +1163,7 @@ export const processNeuroSEOAnalysis = onRequest({
 });
 
 // Enhanced user subscription tracking
-export const trackUserSubscription = onDocumentUpdated("users/{userId}", async (event) => {
+export const trackUserSubscription = onDocumentUpdated("users/{userId}", async (_event) => {
   const beforeData = event.data?.before.data();
   const afterData = event.data?.after.data();
   
@@ -1171,7 +1171,7 @@ export const trackUserSubscription = onDocumentUpdated("users/{userId}", async (
   
   // Track subscription tier changes
   if (beforeData.subscriptionTier !== afterData.subscriptionTier) {
-    console.log(\`[Subscription] User \${event.params.userId} tier changed: \${beforeData.subscriptionTier} → \${afterData.subscriptionTier}\`);
+    console.log(`[Subscription] User \${event.params.userId} tier changed: \${beforeData.subscriptionTier} → \${afterData.subscriptionTier}`);
     
     const admin = await import("firebase-admin");
     const db = admin.firestore();
@@ -1187,12 +1187,12 @@ export const trackUserSubscription = onDocumentUpdated("users/{userId}", async (
 });
 
 // Enhanced analytics tracking
-export const trackAnalyticsEvent = onDocumentCreated("analytics/{eventId}", async (event) => {
+export const trackAnalyticsEvent = onDocumentCreated("analytics/{eventId}", async (_event) => {
   const eventData = event.data?.data();
   
   if (!eventData) return;
   
-  console.log(\`[Analytics] New event: \${eventData.type} for user \${eventData.userId}\`);
+  console.log(`[Analytics] New _event: \${eventData.type} for user \${eventData.userId}`);
   
   const admin = await import("firebase-admin");
   const db = admin.firestore();
@@ -1210,7 +1210,7 @@ export const trackAnalyticsEvent = onDocumentCreated("analytics/{eventId}", asyn
         ...currentAnalytics,
         lastActivity: new Date().toISOString(),
         totalEvents: (currentAnalytics.totalEvents || 0) + 1,
-        [\`\${eventData.type}Count\`]: (currentAnalytics[\`\${eventData.type}Count\`] || 0) + 1
+        [`\${eventData.type}Count`]: (currentAnalytics[`\${eventData.type}Count`] || 0) + 1
       },
       updatedAt: new Date().toISOString()
     });
@@ -1219,7 +1219,7 @@ export const trackAnalyticsEvent = onDocumentCreated("analytics/{eventId}", asyn
 
 // Helper functions
 function generateAnalysisId(): string {
-  return \`analysis_\${Date.now()}_\${Math.random().toString(36).substring(2, 15)}\`;
+  return `analysis_\${Date.now()}_\${Math.random().toString(36).substring(2, 15)}`;
 }
 
 function generateEngineResult(engineName: string) {
@@ -1371,8 +1371,8 @@ ${this.apiMetrics.map(endpoint =>
             // Backup was created, could restore from backup
             console.log('✅ Rollback completed');
             return true;
-        } catch (error) {
-            console.error('❌ Rollback failed:', error);
+        } catch (_error) {
+            console.error('❌ Rollback failed:', _error);
             return false;
         }
     }

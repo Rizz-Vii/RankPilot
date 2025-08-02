@@ -32,13 +32,13 @@ function getProjectMetrics() {
       const pilotScriptFiles = fs.readdirSync('pilotScripts', { recursive: true }).filter(f => 
         f.endsWith('.js') || f.endsWith('.ps1') || f.endsWith('.sh') || f.endsWith('.ts'));
       pilotScriptCount = pilotScriptFiles.length;
-    } catch (error) {
+    } catch (_error) {
       // pilotScripts directory may not exist yet
       pilotScriptCount = 0;
     }
     metrics.pilotScripts = pilotScriptCount;
     
-  } catch (error) {
+  } catch (_error) {
     console.log('Warning: Could not read some directories:', error.message);
     metrics.testFiles = 0;
     metrics.components = 0;
@@ -82,12 +82,12 @@ function getScriptInventory() {
           });
         }
       });
-    } catch (error) {
+    } catch (_error) {
       // pilotScripts directory may not exist yet
       scripts['PilotScripts'] = [];
     }
     
-  } catch (error) {
+  } catch (_error) {
     console.log('Warning: Could not read scripts directory:', error.message);
   }
   
@@ -99,7 +99,7 @@ function getPackageJsonScripts() {
     const packagePath = path.join(process.cwd(), 'package.json');
     const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf-8'));
     return packageJson.scripts || {};
-  } catch (error) {
+  } catch (_error) {
     console.warn('Warning: Could not read package.json scripts');
     return {};
   }
@@ -134,7 +134,7 @@ function generateDynamicContent() {
   for (const [category, scriptList] of Object.entries(scripts)) {
     content += `### ${category} Scripts\n`;
     scriptList.forEach(script => {
-      content += `- \`${script}\`\n`;
+      content += `- `${script}`\n`;
     });
     content += '\n';
   }
@@ -160,13 +160,13 @@ function generateDynamicContent() {
 - **Package.json Integration**: Auto-add pilot commands for new scripts
 
 ### Key File References
-- \`eslint.config.mjs\` - Enhanced with fallback configuration for stability
-- \`testing/utils/enhanced-auth.ts\` - 5-tier authentication with graceful fallbacks
-- \`testing/utils/test-orchestrator.ts\` - Role-based testing with mobile validation
-- \`scripts/build-skip-typecheck.js\` - Emergency build script for deployment
-- \`src/lib/mobile-responsive-utils.ts\` - 8 custom hooks for mobile detection
-- \`pilotScripts/automation/auto-markdown-lint-v1.js\` - Auto markdown quality enforcement
-- \`pilotScripts/automation/auto-script-generator-v1.js\` - Solution script automation
+- `eslint.config.mjs` - Enhanced with fallback configuration for stability
+- `testing/utils/enhanced-auth.ts` - 5-tier authentication with graceful fallbacks
+- `testing/utils/test-orchestrator.ts` - Role-based testing with mobile validation
+- `scripts/build-skip-typecheck.js` - Emergency build script for deployment
+- `src/lib/mobile-responsive-utils.ts` - 8 custom hooks for mobile detection
+- `pilotScripts/automation/auto-markdown-lint-v1.js` - Auto markdown quality enforcement
+- `pilotScripts/automation/auto-script-generator-v1.js` - Solution script automation
 
 ## Available Package.json Scripts (${Object.keys(packageScripts).length} total)
 
@@ -175,11 +175,11 @@ function generateDynamicContent() {
 
   // Add pilot-specific scripts first
   const pilotScripts = Object.entries(packageScripts)
-    .filter(([key, value]) => key.includes('pilot') || key.includes('pilotbuddy'))
+    .filter(([_key, value]) => key.includes('pilot') || key.includes('pilotbuddy'))
     .sort();
   
-  pilotScripts.forEach(([key, value]) => {
-    content += `- \`${key}\` - ${value}\n`;
+  pilotScripts.forEach(([_key, value]) => {
+    content += `- `${key}` - ${value}\n`;
   });
 
   content += `
@@ -187,11 +187,11 @@ function generateDynamicContent() {
 `;
   
   const devScripts = Object.entries(packageScripts)
-    .filter(([key, value]) => key.includes('dev') && !key.includes('pilot'))
+    .filter(([_key, value]) => key.includes('dev') && !key.includes('pilot'))
     .slice(0, 5); // Show top 5
   
-  devScripts.forEach(([key, value]) => {
-    content += `- \`${key}\` - Primary development server\n`;
+  devScripts.forEach(([_key, value]) => {
+    content += `- `${key}` - Primary development server\n`;
   });
 
   content += `
@@ -199,11 +199,11 @@ function generateDynamicContent() {
 `;
   
   const testScripts = Object.entries(packageScripts)
-    .filter(([key, value]) => key.includes('test'))
+    .filter(([_key, value]) => key.includes('test'))
     .slice(0, 5); // Show top 5
   
-  testScripts.forEach(([key, value]) => {
-    content += `- \`${key}\` - Testing automation\n`;
+  testScripts.forEach(([_key, value]) => {
+    content += `- `${key}` - Testing automation\n`;
   });
 
   content += `
@@ -211,11 +211,11 @@ function generateDynamicContent() {
 `;
   
   const buildScripts = Object.entries(packageScripts)
-    .filter(([key, value]) => key.includes('build'))
+    .filter(([_key, value]) => key.includes('build'))
     .slice(0, 3); // Show top 3
   
-  buildScripts.forEach(([key, value]) => {
-    content += `- \`${key}\` - Build pipeline\n`;
+  buildScripts.forEach(([_key, value]) => {
+    content += `- `${key}` - Build pipeline\n`;
   });
 
   content += `
@@ -254,7 +254,7 @@ try {
   console.log(`   Tests: ${metrics.testFiles} | Components: ${metrics.components} | Docs: ${metrics.documentationFiles}`);
   console.log(`   Scripts: ${metrics.scripts}`);
   
-} catch (error) {
+} catch (_error) {
   console.error('Failed to generate dynamic content:', error.message);
   process.exit(1);
 }

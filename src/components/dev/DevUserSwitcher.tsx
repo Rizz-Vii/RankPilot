@@ -78,8 +78,8 @@ export function DevUserSwitcher() {
         userConfig.email,
         userConfig.password
       );
-    } catch (error) {
-      console.error(`Failed to switch to ${userType} user:`, error);
+    } catch (_error) {
+      console.error(`Failed to switch to ${userType} user:`, _error);
     }
   };
 

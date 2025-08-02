@@ -6,14 +6,14 @@
 import { neuroSEOMCPOrchestrator } from '@/lib/neuroseo/mcp-enhanced';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
     try {
         const { url, content, keywords, competitorUrls } = await request.json();
 
         if (!url || !content || !keywords?.length) {
             return NextResponse.json({
                 success: false,
-                error: 'URL, content, and keywords are required',
+                _error: 'URL, content, and keywords are required',
                 message: 'Please provide all required parameters',
             }, { status: 400 });
         }
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            data: result,
+            _data: _result,
             message: 'MCP-enhanced NeuroSEO™ analysis completed successfully',
             metadata: {
                 enhancementFlags: result.enhancementFlags,
@@ -35,10 +35,10 @@ export async function POST(request: NextRequest) {
                 timestamp: new Date().toISOString(),
             },
         });
-    } catch (error) {
+    } catch (_error) {
         return NextResponse.json({
             success: false,
-            error: error instanceof Error ? error.message : 'Unknown error',
+            _error: error instanceof Error ? error.message : 'Unknown error',
             message: 'Enhanced NeuroSEO™ analysis failed',
         }, { status: 500 });
     }

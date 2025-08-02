@@ -55,8 +55,8 @@ async function rotateTestUsers() {
     console.log("Test users rotated successfully");
     console.log("New test user credentials:", newTestUser);
     console.log("New admin user credentials:", newAdminUser);
-  } catch (error) {
-    console.error("Error rotating test users:", error);
+  } catch (_error) {
+    console.error("Error rotating test users:", _error);
   }
 }
 
@@ -65,7 +65,7 @@ function generateSecurePassword() {
   const charset =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
   let password = "";
-  for (let i = 0; i < length; i++) {
+  for (let _i = 0; i < length; i++) {
     const randomIndex = Math.floor(Math.random() * charset.length);
     password += charset[randomIndex];
   }
@@ -76,7 +76,7 @@ function updateEnvFile(filePath: string, updates: Record<string, string>) {
   const envPath = path.resolve(process.cwd(), filePath);
   let content = fs.readFileSync(envPath, "utf8");
 
-  for (const [key, value] of Object.entries(updates)) {
+  for (const [_key, value] of Object.entries(updates)) {
     const regex = new RegExp(`${key}=.*`, "g");
     if (content.match(regex)) {
       content = content.replace(regex, `${key}=${value}`);
@@ -89,4 +89,4 @@ function updateEnvFile(filePath: string, updates: Record<string, string>) {
 }
 
 // Run the rotation
-rotateTestUsers().catch(console.error);
+rotateTestUsers().catch(console._error);

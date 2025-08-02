@@ -43,7 +43,7 @@ type NotificationFormValues = z.infer<typeof notificationSchema>;
 
 interface NotificationSettingsFormProps {
   user: User;
-  profile: any;
+  profile: unknown;
 }
 
 export default function NotificationSettingsForm({
@@ -79,7 +79,7 @@ export default function NotificationSettingsForm({
         title: "Notifications Updated",
         description: "Your notification preferences have been saved.",
       });
-    } catch (error: any) {
+    } catch (_error: unknown) {
       toast({
         variant: "destructive",
         title: "Update Failed",

@@ -6,7 +6,7 @@
 import { multiModelOrchestrator, MultiModelRequest } from '@/lib/ai/multi-model-orchestrator';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
     try {
         // Parse request body
         const body = await request.json();
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
         if (!task || !input || !userTier || !userId) {
             return NextResponse.json({
                 success: false,
-                error: 'Missing required fields: task, input, userTier, userId'
+                _error: 'Missing required fields: task, input, userTier, userId'
             }, { status: 400 });
         }
 
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
         if (!validTasks.includes(task)) {
             return NextResponse.json({
                 success: false,
-                error: `Invalid task type. Must be one of: ${validTasks.join(', ')}`
+                _error: `Invalid task type. Must be one of: ${validTasks.join(', ')}`
             }, { status: 400 });
         }
 
@@ -42,36 +42,36 @@ export async function POST(request: NextRequest) {
         const result = await multiModelOrchestrator.processRequest(multiModelRequest);
 
         // Return response
-        return NextResponse.json(result);
+        return NextResponse.json(_result);
 
-    } catch (error) {
-        console.error('[Multi-Model API] Error:', error);
+    } catch (_error) {
+        console.error('[Multi-Model API] Error:', _error);
         return NextResponse.json({
             success: false,
-            error: 'Internal server error during multi-model processing'
+            _error: 'Internal server error during multi-model processing'
         }, { status: 500 });
     }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     try {
         // Get performance analytics
         const analytics = multiModelOrchestrator.getPerformanceAnalytics();
 
         return NextResponse.json({
             success: true,
-            data: {
+            _data: {
                 analytics,
                 timestamp: new Date().toISOString(),
                 status: 'operational'
             }
         });
 
-    } catch (error) {
-        console.error('[Multi-Model API] Analytics error:', error);
+    } catch (_error) {
+        console.error('[Multi-Model API] Analytics _error:', _error);
         return NextResponse.json({
             success: false,
-            error: 'Failed to retrieve performance analytics'
+            _error: 'Failed to retrieve performance analytics'
         }, { status: 500 });
     }
 }

@@ -37,7 +37,7 @@ export const db = getFirestore(app);
 export const functions = getFunctions(app);
 
 // Initialize Analytics (only in browser and if supported)
-let analytics: any = null;
+let analytics: unknown = null;
 if (typeof window !== "undefined") {
   isSupported().then((supported) => {
     if (supported) {

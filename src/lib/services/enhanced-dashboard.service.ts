@@ -30,7 +30,7 @@ export class EnhancedDashboardService {
      */
     static async getUserInsights(userId: string) {
         try {
-            // Use projects index: userId+status+createdAt
+            // Use projects _index: userId+status+createdAt
             const activeProjectsQuery = query(
                 collection(db, "projects"),
                 where("userId", "==", userId),
@@ -46,7 +46,7 @@ export class EnhancedDashboardService {
                 limit(10)
             );
 
-            // Use neuroSeoAnalyses index: userId+completedAt
+            // Use neuroSeoAnalyses _index: userId+completedAt
             const recentAnalysesQuery = query(
                 collection(db, "neuroSeoAnalyses"),
                 where("userId", "==", userId),
@@ -54,7 +54,7 @@ export class EnhancedDashboardService {
                 limit(20)
             );
 
-            // Use keywordResearch index: userId+createdAt
+            // Use keywordResearch _index: userId+createdAt
             const keywordQuery = query(
                 collection(db, "keywordResearch"),
                 where("userId", "==", userId),
@@ -79,8 +79,8 @@ export class EnhancedDashboardService {
                 projectSuccess: this.calculateProjectSuccessRate(completedProjects.docs.map(doc => doc.data()))
             };
 
-        } catch (error) {
-            console.error("Error fetching user insights:", error);
+        } catch (_error) {
+            console.error("Error fetching user insights:", _error);
             return null;
         }
     }
@@ -91,7 +91,7 @@ export class EnhancedDashboardService {
      */
     static async getTeamMetrics(userId: string) {
         try {
-            // Use teams index: members.userId+updatedAt
+            // Use teams _index: members.userId+updatedAt
             const teamQuery = query(
                 collection(db, "teams"),
                 where("members.userId", "array-contains", userId),
@@ -112,10 +112,10 @@ export class EnhancedDashboardService {
 
             // Get aggregated team data
             let totalTeamProjects = 0;
-            let totalTeamAnalyses = 0;
+            const totalTeamAnalyses = 0;
 
             for (const team of teams) {
-                // Use projects index: teamId+status+createdAt (if we add teamId to projects)
+                // Use projects _index: teamId+status+createdAt (if we add teamId to projects)
                 const teamProjectsQuery = query(
                     collection(db, "projects"),
                     where("teamId", "==", team.id),
@@ -133,11 +133,11 @@ export class EnhancedDashboardService {
                 teams: teams.map(team => ({
                     id: team.id,
                     name: team.name,
-                    role: team.members.find((m: any) => m.userId === userId)?.role || 'member'
+                    role: team.members.find((m: unknown) => m.userId === userId)?.role || 'member'
                 }))
             };
-        } catch (error) {
-            console.error("Error fetching team metrics:", error);
+        } catch (_error) {
+            console.error("Error fetching team metrics:", _error);
             return { memberOf: 0, teamProjects: 0, teamAnalyses: 0, teams: [] };
         }
     }
@@ -183,8 +183,8 @@ export class EnhancedDashboardService {
                 monthlyTrend: this.calculateCompetitorTrend(analyses)
             };
 
-        } catch (error) {
-            console.error("Error fetching competitor insights:", error);
+        } catch (_error) {
+            console.error("Error fetching competitor insights:", _error);
             return { totalCompetitors: 0, averageGap: 0, topOpportunity: null };
         }
     }
@@ -227,26 +227,26 @@ export class EnhancedDashboardService {
                 recentTrend: this.calculateContentTrend(analyses)
             };
 
-        } catch (error) {
-            console.error("Error fetching content metrics:", error);
+        } catch (_error) {
+            console.error("Error fetching content metrics:", _error);
             return { totalContent: 0, averageScore: 0, topPerformer: null };
         }
     }
 
     // Helper methods
-    private static calculateAverageScore(analyses: any[]): number {
+    private static calculateAverageScore(analyses: unknown[]): number {
         if (analyses.length === 0) return 0;
         const scores = analyses.map(a => a.summary?.overallScore || 0).filter(score => score > 0);
         return scores.length > 0 ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length) : 0;
     }
 
-    private static calculateProjectSuccessRate(projects: any[]): number {
+    private static calculateProjectSuccessRate(projects: unknown[]): number {
         if (projects.length === 0) return 0;
         const successful = projects.filter(p => p.status === 'completed' && (p.successScore || 0) > 70).length;
         return Math.round((successful / projects.length) * 100);
     }
 
-    private static calculateCompetitorTrend(analyses: any[]) {
+    private static calculateCompetitorTrend(analyses: unknown[]) {
         // Group by month and calculate trend
         const monthly = analyses.reduce((acc, analysis) => {
             const date = analysis.createdAt?.toDate() || new Date();
@@ -267,7 +267,7 @@ export class EnhancedDashboardService {
             .sort((a, b) => a.month.localeCompare(b.month));
     }
 
-    private static calculateContentTrend(analyses: any[]) {
+    private static calculateContentTrend(analyses: unknown[]) {
         // Similar trending calculation for content
         const monthly = analyses.reduce((acc, analysis) => {
             const date = analysis.createdAt?.toDate() || new Date();

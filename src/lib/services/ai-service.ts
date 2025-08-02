@@ -57,12 +57,12 @@ export interface SEOAuditRequest {
  * Analyze content using backend Cloud Function instead of direct AI
  * 60% cost reduction vs frontend Genkit calls
  */
-export async function analyzeContent(request: ContentAnalysisRequest): Promise<ContentAnalysisResponse> {
+export async function analyzeContent(_request: ContentAnalysisRequest): Promise<ContentAnalysisResponse> {
     try {
-        const result = await analyzeContentFunction(request);
+        const _result = await analyzeContentFunction(_request);
         return result.data as ContentAnalysisResponse;
-    } catch (error) {
-        console.error("Content analysis failed:", error);
+    } catch (_error) {
+        console.error("Content analysis failed:", _error);
         throw new Error("Failed to analyze content. Please try again.");
     }
 }
@@ -71,12 +71,12 @@ export async function analyzeContent(request: ContentAnalysisRequest): Promise<C
  * Get keyword suggestions using backend Cloud Function
  * Optimized with caching and memory management
  */
-export async function getKeywordSuggestions(request: KeywordSuggestionsRequest) {
+export async function getKeywordSuggestions(_request: KeywordSuggestionsRequest) {
     try {
-        const result = await getKeywordSuggestionsFunction(request);
+        const _result = await getKeywordSuggestionsFunction(_request);
         return result.data;
-    } catch (error) {
-        console.error("Keyword suggestions failed:", error);
+    } catch (_error) {
+        console.error("Keyword suggestions failed:", _error);
         throw new Error("Failed to get keyword suggestions. Please try again.");
     }
 }
@@ -85,12 +85,12 @@ export async function getKeywordSuggestions(request: KeywordSuggestionsRequest) 
  * Run SEO audit using backend Cloud Function with web crawling
  * Integrated with NeuroSEO's NeuralCrawler for comprehensive analysis
  */
-export async function runSEOAudit(request: SEOAuditRequest) {
+export async function runSEOAudit(_request: SEOAuditRequest) {
     try {
-        const result = await runSeoAuditFunction(request);
+        const _result = await runSeoAuditFunction(_request);
         return result.data;
-    } catch (error) {
-        console.error("SEO audit failed:", error);
+    } catch (_error) {
+        console.error("SEO audit failed:", _error);
         throw new Error("Failed to run SEO audit. Please try again.");
     }
 }
@@ -99,7 +99,7 @@ export async function runSEOAudit(request: SEOAuditRequest) {
  * NeuroSEO™ Suite comprehensive analysis
  * Enterprise-grade analysis through Next.js API route
  */
-export async function runNeuroSEOAnalysis(request: {
+export async function runNeuroSEOAnalysis(_request: {
     urls: string[];
     targetKeywords?: string[];
     analysisType?: string;
@@ -107,12 +107,12 @@ export async function runNeuroSEOAnalysis(request: {
     userId?: string;
 }) {
     try {
-        const response = await fetch("/api/neuroseo", {
+        const _response = await fetch("/api/neuroseo", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify(request),
+            body: JSON.stringify(_request),
         });
 
         if (!response.ok) {
@@ -120,8 +120,8 @@ export async function runNeuroSEOAnalysis(request: {
         }
 
         return await response.json();
-    } catch (error) {
-        console.error("NeuroSEO analysis failed:", error);
+    } catch (_error) {
+        console.error("NeuroSEO analysis failed:", _error);
         throw new Error("Failed to run NeuroSEO analysis. Please try again.");
     }
 }

@@ -72,25 +72,25 @@ const cookieTypes = [
 const dataProcessing = [
   {
     purpose: "Website Functionality",
-    data: "Login status, preferences, session data",
+    _data: "Login status, preferences, session data",
     legalBasis: "Legitimate Interest",
     retention: "Session to 30 days",
   },
   {
     purpose: "Analytics & Performance",
-    data: "Page views, click tracking, usage patterns",
+    _data: "Page views, click tracking, usage patterns",
     legalBasis: "Consent",
     retention: "24 months",
   },
   {
     purpose: "Marketing & Advertising",
-    data: "Ad interactions, campaign attribution",
+    _data: "Ad interactions, campaign attribution",
     legalBasis: "Consent",
     retention: "12 months",
   },
   {
     purpose: "Security & Fraud Prevention",
-    data: "IP addresses, device fingerprints",
+    _data: "IP addresses, device fingerprints",
     legalBasis: "Legitimate Interest",
     retention: "12 months",
   },
@@ -181,7 +181,7 @@ export default function CookiesPage() {
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-8">
-            {cookieTypes.map((cookie, index) => (
+            {cookieTypes.map((cookie, _index) => (
               <motion.div
                 key={cookie.type}
                 initial="hidden"
@@ -273,7 +273,7 @@ export default function CookiesPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {dataProcessing.map((item, index) => (
+                    {dataProcessing.map((_item, _index) => (
                       <motion.tr
                         key={item.purpose}
                         initial="hidden"

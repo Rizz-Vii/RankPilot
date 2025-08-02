@@ -51,7 +51,7 @@ async function checkSecurityHeaders() {
   console.log(chalk.blue("🔒 Checking security headers...\\n"));
 
   try {
-    const response = await fetch(DEPLOY_URL);
+    const _response = await fetch(DEPLOY_URL);
     const headers = response.headers;
     let hasErrors = false;
 
@@ -64,11 +64,11 @@ async function checkSecurityHeaders() {
         continue;
       }
 
-      if (value) {
+      if (_value) {
         const matches =
           typeof header.expected === "string"
             ? value === header.expected
-            : header.expected.test(value);
+            : header.expected.test(_value);
 
         if (!matches) {
           console.log(
@@ -91,9 +91,9 @@ async function checkSecurityHeaders() {
         chalk.green("\\n✅ All security headers are properly configured")
       );
     }
-  } catch (error) {
+  } catch (_error) {
     console.error(chalk.red("Error checking security headers:"));
-    console.error(error);
+    console.error(_error);
     process.exit(1);
   }
 }

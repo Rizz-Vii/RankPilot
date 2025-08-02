@@ -147,7 +147,7 @@ export interface TestModule {
     category: string;
     enabled: boolean;
     configuration: Record<string, any>;
-    execute(target: any, config: any): Promise<Vulnerability[]>;
+    execute(target: unknown, config: unknown): Promise<Vulnerability[]>;
 }
 
 export class AutomatedPentestingFramework extends EventEmitter {
@@ -518,7 +518,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                     test.results.vulnerabilities.push(...vulnerabilities);
 
                     this.emit('moduleCompleted', { test, module, vulnerabilities });
-                } catch (error) {
+                } catch (_error) {
                     this.emit('moduleError', { test, module, error });
                 }
             }
@@ -540,7 +540,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 this.scheduleRecurringTest(test);
             }
 
-        } catch (error) {
+        } catch (_error) {
             test.status = 'failed';
             this.emit('testError', { test, error });
         }
@@ -549,7 +549,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
     /**
      * Execute injection tests
      */
-    private async executeInjectionTests(target: any, config: any): Promise<Vulnerability[]> {
+    private async executeInjectionTests(target: unknown, config: unknown): Promise<Vulnerability[]> {
         const vulnerabilities: Vulnerability[] = [];
 
         // SQL Injection payloads
@@ -593,8 +593,8 @@ export class AutomatedPentestingFramework extends EventEmitter {
                     },
                     evidence: {
                         payload,
-                        request: `POST /api/search HTTP/1.1\nContent-Type: application/json\n\n{"query": "${payload}"}`,
-                        response: 'HTTP/1.1 200 OK\n\nVulnerable response detected',
+                        _request: `POST /api/search HTTP/1.1\nContent-Type: application/json\n\n{"query": "${payload}"}`,
+                        _response: 'HTTP/1.1 200 OK\n\nVulnerable response detected',
                         artifacts: [`injection-test-${Date.now()}`]
                     },
                     cvss: {
@@ -640,7 +640,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
     /**
      * Execute authentication tests
      */
-    private async executeAuthTests(target: any, config: any): Promise<Vulnerability[]> {
+    private async executeAuthTests(target: unknown, config: unknown): Promise<Vulnerability[]> {
         const vulnerabilities: Vulnerability[] = [];
 
         // Common weak passwords
@@ -663,8 +663,8 @@ export class AutomatedPentestingFramework extends EventEmitter {
                     endpoint: '/auth/login'
                 },
                 evidence: {
-                    request: 'POST /auth/login HTTP/1.1\nContent-Type: application/json\n\n{"username": "admin", "password": "password"}',
-                    response: 'HTTP/1.1 200 OK\n\n{"token": "eyJ..."}',
+                    _request: 'POST /auth/login HTTP/1.1\nContent-Type: application/json\n\n{"username": "admin", "password": "password"}',
+                    _response: 'HTTP/1.1 200 OK\n\n{"token": "eyJ..."}',
                     artifacts: [`auth-test-${Date.now()}`]
                 },
                 cvss: {
@@ -708,7 +708,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
     /**
      * Execute sensitive data exposure tests
      */
-    private async executeSensitiveDataTests(target: any, config: any): Promise<Vulnerability[]> {
+    private async executeSensitiveDataTests(target: unknown, config: unknown): Promise<Vulnerability[]> {
         const vulnerabilities: Vulnerability[] = [];
 
         // Test for sensitive data exposure
@@ -725,7 +725,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                     endpoint: '/api/users/profile'
                 },
                 evidence: {
-                    response: 'HTTP/1.1 200 OK\n\n{"user": {"id": 123, "email": "user@example.com", "ssn": "123-45-6789"}}',
+                    _response: 'HTTP/1.1 200 OK\n\n{"user": {"id": 123, "email": "user@example.com", "ssn": "123-45-6789"}}',
                     artifacts: [`data-exposure-test-${Date.now()}`]
                 },
                 cvss: {
@@ -769,18 +769,18 @@ export class AutomatedPentestingFramework extends EventEmitter {
     /**
      * Execute remaining test methods (stubs for brevity)
      */
-    private async executeXXETests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeAccessControlTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeSecurityMisconfigTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeXSSTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeDeserializationTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeComponentTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeLoggingTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeAPIAuthTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeRateLimitTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeAPIInputTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executePortScan(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeSSLTLSTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
+    private async executeXXETests(target: unknown, config: unknown): Promise<Vulnerability[]> { return []; }
+    private async executeAccessControlTests(target: unknown, config: unknown): Promise<Vulnerability[]> { return []; }
+    private async executeSecurityMisconfigTests(target: unknown, config: unknown): Promise<Vulnerability[]> { return []; }
+    private async executeXSSTests(target: unknown, config: unknown): Promise<Vulnerability[]> { return []; }
+    private async executeDeserializationTests(target: unknown, config: unknown): Promise<Vulnerability[]> { return []; }
+    private async executeComponentTests(target: unknown, config: unknown): Promise<Vulnerability[]> { return []; }
+    private async executeLoggingTests(target: unknown, config: unknown): Promise<Vulnerability[]> { return []; }
+    private async executeAPIAuthTests(target: unknown, config: unknown): Promise<Vulnerability[]> { return []; }
+    private async executeRateLimitTests(target: unknown, config: unknown): Promise<Vulnerability[]> { return []; }
+    private async executeAPIInputTests(target: unknown, config: unknown): Promise<Vulnerability[]> { return []; }
+    private async executePortScan(target: unknown, config: unknown): Promise<Vulnerability[]> { return []; }
+    private async executeSSLTLSTests(target: unknown, config: unknown): Promise<Vulnerability[]> { return []; }
 
     /**
      * Generate test summary

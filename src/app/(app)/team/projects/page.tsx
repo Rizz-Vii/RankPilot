@@ -189,8 +189,8 @@ export default function TeamProjectsPage() {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setProjects(mockProjects);
-    } catch (error) {
-      console.error("Error fetching projects:", error);
+    } catch (_error) {
+      console.error("Error fetching projects:", _error);
       toast.error("Failed to load projects");
     } finally {
       setLoading(false);
@@ -237,8 +237,8 @@ export default function TeamProjectsPage() {
         deadline: "",
       });
       toast.success("Project created successfully");
-    } catch (error) {
-      console.error("Error creating project:", error);
+    } catch (_error) {
+      console.error("Error creating project:", _error);
       toast.error("Failed to create project");
     }
   };
@@ -247,8 +247,8 @@ export default function TeamProjectsPage() {
     try {
       setProjects(projects.filter((p) => p.id !== projectId));
       toast.success("Project deleted successfully");
-    } catch (error) {
-      console.error("Error deleting project:", error);
+    } catch (_error) {
+      console.error("Error deleting project:", _error);
       toast.error("Failed to delete project");
     }
   };
@@ -326,7 +326,7 @@ export default function TeamProjectsPage() {
                     <Label htmlFor="status">Status</Label>
                     <Select
                       value={projectForm.status}
-                      onValueChange={(value: Project["status"]) =>
+                      onValueChange={(_value: Project["status"]) =>
                         setProjectForm({ ...projectForm, status: value })
                       }
                     >
@@ -350,7 +350,7 @@ export default function TeamProjectsPage() {
                     onChange={(e) =>
                       setProjectForm({
                         ...projectForm,
-                        description: e.target.value,
+                        description: e.target._value,
                       })
                     }
                     placeholder="Describe the project goals and scope"
@@ -362,7 +362,7 @@ export default function TeamProjectsPage() {
                     <Label htmlFor="priority">Priority</Label>
                     <Select
                       value={projectForm.priority}
-                      onValueChange={(value: Project["priority"]) =>
+                      onValueChange={(_value: Project["priority"]) =>
                         setProjectForm({ ...projectForm, priority: value })
                       }
                     >
@@ -386,7 +386,7 @@ export default function TeamProjectsPage() {
                       onChange={(e) =>
                         setProjectForm({
                           ...projectForm,
-                          deadline: e.target.value,
+                          deadline: e.target._value,
                         })
                       }
                     />
@@ -436,7 +436,7 @@ export default function TeamProjectsPage() {
               <Input
                 placeholder="Search projects..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => setSearchTerm(e.target._value)}
                 className="pl-10"
               />
             </div>
@@ -564,7 +564,7 @@ export default function TeamProjectsPage() {
                       <span>Team ({project.assignedMembers.length})</span>
                     </div>
                     <div className="flex -space-x-2">
-                      {project.assignedMembers.slice(0, 3).map((member, index) => (
+                      {project.assignedMembers.slice(0, 3).map((member, _index) => (
                         <div
                           key={index}
                           className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-medium border-2 border-background"

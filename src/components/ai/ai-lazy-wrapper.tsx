@@ -155,12 +155,12 @@ export class AIErrorBoundary extends React.Component<
         this.state = { hasError: false };
     }
 
-    static getDerivedStateFromError(error: Error): AIErrorBoundaryState {
+    static getDerivedStateFromError(_error: Error): AIErrorBoundaryState {
         return { hasError: true, error };
     }
 
-    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-        console.error('AI Component Error:', error, errorInfo);
+    componentDidCatch(_error: Error, errorInfo: React.ErrorInfo) {
+        console.error('AI Component Error:', _error, errorInfo);
 
         // Send to monitoring service
         if (typeof window !== 'undefined' && 'gtag' in window) {

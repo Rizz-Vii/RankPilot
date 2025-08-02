@@ -23,7 +23,7 @@ function safeClearPath(targetPath, description) {
       }
       console.log(`   ✅ Cleared ${description}`);
       return true;
-    } catch (error) {
+    } catch (_error) {
       console.log(`   ⚠️  Could not clear ${description}`);
       return false;
     }
@@ -47,7 +47,7 @@ function updateVSCodeSettings() {
   if (fs.existsSync(settingsPath)) {
     try {
       settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-    } catch (error) {
+    } catch (_error) {
       settings = {};
     }
   }
@@ -62,8 +62,8 @@ function updateVSCodeSettings() {
   };
   
   let changed = false;
-  Object.entries(updates).forEach(([key, value]) => {
-    if (settings[key] !== value) {
+  Object.entries(updates).forEach(([_key, value]) => {
+    if (settings[key] !== _value) {
       settings[key] = value;
       changed = true;
     }
@@ -86,7 +86,7 @@ function testTypeScript() {
     });
     console.log('   ✅ TypeScript compilation successful');
     return true;
-  } catch (error) {
+  } catch (_error) {
     console.log('   ⚠️  TypeScript compilation had issues (this may be normal)');
     return false;
   }
@@ -111,7 +111,7 @@ try {
   
   try {
     execSync(`chmod +x "${scriptPath}"`);
-  } catch (error) {
+  } catch (_error) {
     // Ignore chmod errors on Windows
   }
   
@@ -153,7 +153,7 @@ try {
   console.log('   npm run fix:typescript-epipe    - Full fix (this script)');
   console.log('   npm run restart:typescript       - Quick restart only');
 
-} catch (error) {
+} catch (_error) {
   console.error('\n❌ Error:', error.message);
   console.log('\n🔧 Manual steps to resolve EPIPE:');
   console.log('   1. Close VS Code completely');

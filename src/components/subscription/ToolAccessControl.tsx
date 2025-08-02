@@ -3,6 +3,7 @@
  */
 
 import React from "react";
+import type { JSX } from "react";
 import { useToolAccess } from "@/lib/tool-access";
 
 interface ToolAccessWrapperProps {

@@ -42,7 +42,7 @@ export interface RewriteConstraint {
     | "preserve_links"
     | "brand_voice"
     | "legal_compliance";
-  value: boolean | string;
+  _value: boolean | string;
   importance: "critical" | "high" | "medium" | "low";
 }
 
@@ -142,7 +142,7 @@ export interface ComparisonMatrix {
 }
 
 export class RewriteGenEngine {
-  async generateRewrites(request: RewriteRequest): Promise<RewriteAnalysis> {
+  async generateRewrites(_request: RewriteRequest): Promise<RewriteAnalysis> {
     // Analyze original content
     const originalAnalysis = await this.analyzeContent(
       request.originalContent,
@@ -150,10 +150,10 @@ export class RewriteGenEngine {
     );
 
     // Generate multiple rewrite variants
-    const variants = await this.generateVariants(request, originalAnalysis);
+    const variants = await this.generateVariants(_request, originalAnalysis);
 
     // Analyze and score each variant
-    const analyzedVariants = await this.analyzeVariants(variants, request);
+    const analyzedVariants = await this.analyzeVariants(variants, _request);
 
     // Generate recommendations
     const recommendations = this.generateRecommendations(
@@ -257,7 +257,7 @@ export class RewriteGenEngine {
     let syllables = 0;
     let previousWasVowel = false;
 
-    for (let i = 0; i < word.length; i++) {
+    for (let _i = 0; i < word.length; i++) {
       const isVowel = vowels.includes(word[i]);
 
       if (isVowel && !previousWasVowel) {
@@ -497,15 +497,15 @@ export class RewriteGenEngine {
   }
 
   private async generateVariants(
-    request: RewriteRequest,
+    _request: RewriteRequest,
     originalAnalysis: ContentAnalysis
   ): Promise<Partial<RewriteVariant>[]> {
     const variants: Partial<RewriteVariant>[] = [];
 
     // Generate different variants based on goals
-    for (let i = 0; i < 3; i++) {
+    for (let _i = 0; i < 3; i++) {
       const variant = await this.createVariant(
-        request,
+        _request,
         originalAnalysis,
         i + 1
       );
@@ -516,7 +516,7 @@ export class RewriteGenEngine {
   }
 
   private async createVariant(
-    request: RewriteRequest,
+    _request: RewriteRequest,
     originalAnalysis: ContentAnalysis,
     version: number
   ): Promise<Partial<RewriteVariant>> {
@@ -669,7 +669,7 @@ export class RewriteGenEngine {
       },
       general: {
         intro: "Here's what you need to know:",
-        callouts: ["✨ Highlight:", "📌 Remember:", "🚀 Action item:"],
+        callouts: ["✨ Highlight:", "📌 Remember:", "🚀 Action _item:"],
         questions: ["What do you think?", "How does this apply to you?"],
       },
     };
@@ -701,7 +701,7 @@ export class RewriteGenEngine {
 
   private async analyzeVariants(
     variants: Partial<RewriteVariant>[],
-    request: RewriteRequest
+    _request: RewriteRequest
   ): Promise<RewriteVariant[]> {
     const analyzedVariants: RewriteVariant[] = [];
 
@@ -721,16 +721,16 @@ export class RewriteGenEngine {
       const keywordDensity = analysis.keywordDensity;
 
       // Generate improvements
-      const improvements = this.generateVariantImprovements(analysis, request);
+      const improvements = this.generateVariantImprovements(analysis, _request);
 
       // Calculate compliance score
       const complianceScore = this.calculateComplianceScore(
         variant.content,
-        request
+        _request
       );
 
       // Estimate performance
-      const estimatedPerformance = this.estimatePerformance(analysis, request);
+      const estimatedPerformance = this.estimatePerformance(analysis, _request);
 
       analyzedVariants.push({
         id: variant.id,
@@ -751,7 +751,7 @@ export class RewriteGenEngine {
 
   private generateVariantImprovements(
     analysis: ContentAnalysis,
-    request: RewriteRequest
+    _request: RewriteRequest
   ): RewriteImprovement[] {
     const improvements: RewriteImprovement[] = [];
 
@@ -798,7 +798,7 @@ export class RewriteGenEngine {
 
   private calculateComplianceScore(
     content: string,
-    request: RewriteRequest
+    _request: RewriteRequest
   ): number {
     let score = 80; // Base score
 
@@ -825,7 +825,7 @@ export class RewriteGenEngine {
 
   private estimatePerformance(
     analysis: ContentAnalysis,
-    request: RewriteRequest
+    _request: RewriteRequest
   ): PerformanceMetrics {
     // Estimate various performance metrics based on content analysis
 

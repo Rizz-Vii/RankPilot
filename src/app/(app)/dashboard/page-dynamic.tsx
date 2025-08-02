@@ -98,7 +98,7 @@ const itemVariants: Variants = {
 // ----- UTILITY FUNCTIONS -----
 
 const getChartColorClass = (colorValue: string): string => {
-  const colorMap: { [key: string]: string } = {
+  const colorMap: { [_key: string]: string } = {
     "hsl(var(--chart-1))": styles.legendDotChart1,
     "hsl(var(--chart-2))": styles.legendDotChart2,
     "hsl(var(--chart-3))": styles.legendDotChart3,
@@ -112,10 +112,10 @@ const getChartColorClass = (colorValue: string): string => {
 
 const DashboardMetricCard: React.FC<{
   title: string;
-  value: string;
+  _value: string;
   change?: number;
   icon: React.ElementType;
-}> = ({ title, value, change, icon: Icon }) => (
+}> = ({ title, _value, change, icon: Icon }) => (
   <Card className={styles.metricCard}>
     <CardContent className="p-6">
       <div className="flex items-center justify-between space-y-0 pb-2">
@@ -136,7 +136,7 @@ const DashboardMetricCard: React.FC<{
   </Card>
 );
 
-const SeoScoreTrendChart = ({ data }: { data: any[] }) => (
+const SeoScoreTrendChart = ({ data }: { _data: unknown[] }) => (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Overall SEO Score</CardTitle>
@@ -198,7 +198,7 @@ const KeywordVisibilityChart = ({ visibility }: { visibility: any }) => {
   const data = [
     {
       name: "Visibility",
-      value: visibility?.score || 0,
+      _value: visibility?.score || 0,
       fill: "var(--color-score)",
     },
   ];
@@ -250,7 +250,7 @@ const KeywordVisibilityChart = ({ visibility }: { visibility: any }) => {
   );
 };
 
-const DomainAuthorityChart = ({ data }: { data: any }) => (
+const DomainAuthorityChart = ({ data }: { _data: any }) => (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Domain Authority</CardTitle>
@@ -303,7 +303,7 @@ const DomainAuthorityChart = ({ data }: { data: any }) => (
   </Card>
 );
 
-const BacklinksChart = ({ data }: { data: any }) => (
+const BacklinksChart = ({ data }: { _data: any }) => (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Backlink Growth</CardTitle>
@@ -346,7 +346,7 @@ const BacklinksChart = ({ data }: { data: any }) => (
   </Card>
 );
 
-const TrafficSourcesChart = ({ data }: { data: any[] }) => (
+const TrafficSourcesChart = ({ data }: { _data: unknown[] }) => (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Traffic Sources</CardTitle>
@@ -417,9 +417,9 @@ export default function DashboardPage() {
   
   // Use dynamic dashboard data
   const { 
-    data: dashboardData, 
+    _data: dashboardData, 
     loading: dataLoading, 
-    error: dataError, 
+    _error: dataError, 
     refresh 
   } = useRealTimeDashboardData(user?.uid || null);
 

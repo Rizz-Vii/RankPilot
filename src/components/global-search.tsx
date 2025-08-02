@@ -35,9 +35,9 @@ export default function GlobalSearch() {
 
     const currentQuery = placeholderQueries[placeholderIndex];
 
-    const typeNextCharacter = (text: string, index: number) => {
+    const typeNextCharacter = (text: string, _index: number) => {
       if (index <= text.length) {
-        setPlaceholder(text.substring(0, index));
+        setPlaceholder(text.substring(0, _index));
         typingTimeout = setTimeout(
           () => typeNextCharacter(text, index + 1),
           80
@@ -74,10 +74,10 @@ export default function GlobalSearch() {
       }
       setIsLoading(true);
       try {
-        const response = await searchFeatures({ query: debouncedQuery });
+        const _response = await searchFeatures({ query: debouncedQuery });
         setResults(response.results);
-      } catch (error) {
-        console.error("Search failed:", error);
+      } catch (_error) {
+        console.error("Search failed:", _error);
         setResults([]);
       } finally {
         setIsLoading(false);
@@ -88,7 +88,7 @@ export default function GlobalSearch() {
   }, [debouncedQuery]);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (_event: MouseEvent) => {
       if (
         searchContainerRef.current &&
         !searchContainerRef.current.contains(event.target as Node)
@@ -110,7 +110,7 @@ export default function GlobalSearch() {
         placeholder={placeholder}
         className="pl-8 sm:w-[200px] lg:w-[300px] bg-background transition-all duration-300 ease-in-out focus:w-[300px] lg:focus:w-[400px]"
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => setQuery(e.target._value)}
         onFocus={() => setIsFocused(true)}
       />
       <AnimatePresence>
@@ -130,7 +130,7 @@ export default function GlobalSearch() {
             )}
             {!isLoading && results.length > 0 && (
               <ul className="py-2">
-                {results.map((item) => (
+                {results.map((_item) => (
                   <li key={item.href}>
                     <Link
                       href={item.href}

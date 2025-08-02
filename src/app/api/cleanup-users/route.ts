@@ -32,7 +32,7 @@ interface UserData {
   dataCleanupDate?: Date;
   cleanupVersion?: string;
   isTestUser?: boolean;
-  [key: string]: any; // Allow additional properties
+  [_key: string]: unknown; // Allow additional properties
 }
 
 type TierType = "free" | "starter" | "agency" | "enterprise" | "admin";
@@ -250,14 +250,14 @@ export async function POST(): Promise<NextResponse> {
           "Implement tier validation on user registration/updates",
       },
     });
-  } catch (error) {
-    console.error("Error during user cleanup:", error);
+  } catch (_error) {
+    console.error("Error during user cleanup:", _error);
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
     return NextResponse.json(
       {
         success: false,
-        error: errorMessage,
+        _error: errorMessage,
         recommendation: "Review Firebase security rules and retry cleanup",
       },
       { status: 500 }

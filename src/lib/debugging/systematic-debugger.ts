@@ -109,7 +109,7 @@ export class SystematicDebugger {
     /**
      * Complete a debugging step
      */
-    completeStep(stepId: string, result: string, timeSpent?: number): boolean {
+    completeStep(stepId: string, _result: string, timeSpent?: number): boolean {
         if (!this.session) {
             throw new Error('No active debugging session. Call startSession() first.');
         }
@@ -127,7 +127,7 @@ export class SystematicDebugger {
         console.log(`📝 Result: ${result}`);
 
         // Check if this reveals a known pattern
-        this.checkPatterns(stepId, result);
+        this.checkPatterns(stepId, _result);
 
         return this.canProceed();
     }
@@ -202,7 +202,7 @@ export class SystematicDebugger {
     /**
      * Check for matching patterns
      */
-    private checkPatterns(stepId: string, result: string): void {
+    private checkPatterns(stepId: string, _result: string): void {
         // Simple pattern matching - can be enhanced with ML
         if (stepId === 'config-validation' && result.includes('URL mismatch')) {
             console.log('🎯 Pattern Detected: Configuration URL Mismatch');

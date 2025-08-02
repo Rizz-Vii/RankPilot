@@ -382,8 +382,8 @@ class TechnicalOperationsOrchestrator implements RankPilotAgent {
             console.log(`✅ Technical Operations Orchestrator: Execution ${overallSuccess ? 'successful' : 'completed with issues'}`);
             return overallSuccess;
 
-        } catch (error) {
-            console.error('🚨 Technical Operations Orchestrator: Critical error during execution:', error);
+        } catch (_error) {
+            console.error('🚨 Technical Operations Orchestrator: Critical error during execution:', _error);
             await this.rollback();
             return false;
         }
@@ -401,8 +401,8 @@ class TechnicalOperationsOrchestrator implements RankPilotAgent {
             const { TypeScriptGuardianAgent } = await import('./typescript-guardian.js');
             const guardian = new TypeScriptGuardianAgent();
             return await guardian.execute();
-        } catch (error) {
-            console.error('❌ TypeScript Guardian execution failed:', error);
+        } catch (_error) {
+            console.error('❌ TypeScript Guardian execution failed:', _error);
             return false;
         }
     }
@@ -417,8 +417,8 @@ class TechnicalOperationsOrchestrator implements RankPilotAgent {
             const { BuildSystemAgent } = await import('./build-system.js');
             const buildAgent = new BuildSystemAgent();
             return await buildAgent.execute();
-        } catch (error) {
-            console.error('❌ Build System Agent execution failed:', error);
+        } catch (_error) {
+            console.error('❌ Build System Agent execution failed:', _error);
             return false;
         }
     }
@@ -433,8 +433,8 @@ class TechnicalOperationsOrchestrator implements RankPilotAgent {
             const { TestingOrchestratorAgent } = await import('./testing-orchestrator.js');
             const testAgent = new TestingOrchestratorAgent();
             return await testAgent.execute();
-        } catch (error) {
-            console.error('❌ Testing Orchestrator execution failed:', error);
+        } catch (_error) {
+            console.error('❌ Testing Orchestrator execution failed:', _error);
             return false;
         }
     }
@@ -449,8 +449,8 @@ class TechnicalOperationsOrchestrator implements RankPilotAgent {
             const { APIEnhancementAgent } = await import('./api-enhancement.js');
             const apiAgent = new APIEnhancementAgent();
             return await apiAgent.execute();
-        } catch (error) {
-            console.error('❌ API Enhancement Agent execution failed:', error);
+        } catch (_error) {
+            console.error('❌ API Enhancement Agent execution failed:', _error);
             return false;
         }
     }
@@ -465,8 +465,8 @@ class TechnicalOperationsOrchestrator implements RankPilotAgent {
             const { ProductionDeploymentAgent } = await import('./production-deployment.js');
             const deployAgent = new ProductionDeploymentAgent();
             return await deployAgent.execute();
-        } catch (error) {
-            console.error('❌ Production Deployment Agent execution failed:', error);
+        } catch (_error) {
+            console.error('❌ Production Deployment Agent execution failed:', _error);
             return false;
         }
     }
@@ -487,12 +487,12 @@ class TechnicalOperationsOrchestrator implements RankPilotAgent {
                 this.rollbackAgent('typescript-guardian')
             ]);
 
-            const success = rollbackResults.every(result => result);
+            const success = rollbackResults.every(result => _result);
             console.log(`🔄 Technical Operations rollback ${success ? 'successful' : 'partially failed'}`);
             return success;
 
-        } catch (error) {
-            console.error('🚨 Critical error during Technical Operations rollback:', error);
+        } catch (_error) {
+            console.error('🚨 Critical error during Technical Operations rollback:', _error);
             return false;
         }
     }
@@ -507,8 +507,8 @@ class TechnicalOperationsOrchestrator implements RankPilotAgent {
             // Agent-specific rollback logic would go here
             // For now, return success to complete the orchestrator
             return true;
-        } catch (error) {
-            console.error(`❌ Rollback failed for ${agentId}:`, error);
+        } catch (_error) {
+            console.error(`❌ Rollback failed for ${agentId}:`, _error);
             return false;
         }
     }
@@ -516,7 +516,7 @@ class TechnicalOperationsOrchestrator implements RankPilotAgent {
     /**
      * Validate technical operations fix
      */
-    async validateFix(issue: any): Promise<boolean> {
+    async validateFix(issue: unknown): Promise<boolean> {
         console.log('🔍 Technical Operations: Validating fix...');
 
         // Multi-layer validation

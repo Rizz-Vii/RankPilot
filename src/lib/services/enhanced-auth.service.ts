@@ -49,7 +49,7 @@ export class EnhancedAuthService {
      */
     static async getUserAnalytics(): Promise<UserAnalytics> {
         try {
-            // Query users by subscription tier (uses subscriptionTier+createdAt index)
+            // Query users by subscription tier (uses subscriptionTier+createdAt _index)
             const tiers = ['free', 'starter', 'agency', 'enterprise', 'admin'];
             const tierCounts: Record<string, number> = {};
 
@@ -63,7 +63,7 @@ export class EnhancedAuthService {
                 tierCounts[tier] = snapshot.size;
             }
 
-            // Query users by role (uses role+createdAt index)
+            // Query users by role (uses role+createdAt _index)
             const roles = ['user', 'admin', 'moderator'];
             const roleCounts: Record<string, number> = {};
 
@@ -77,7 +77,7 @@ export class EnhancedAuthService {
                 roleCounts[role] = snapshot.size;
             }
 
-            // Get recent logins (uses subscriptionStatus+lastLoginAt index)
+            // Get recent logins (uses subscriptionStatus+lastLoginAt _index)
             const recentLoginQuery = query(
                 collection(db, "users"),
                 where("subscriptionStatus", "in", ["active", "free"]),
@@ -106,8 +106,8 @@ export class EnhancedAuthService {
                 }))
             };
 
-        } catch (error) {
-            console.error("Error fetching user analytics:", error);
+        } catch (_error) {
+            console.error("Error fetching user analytics:", _error);
             return {
                 totalUsers: 0,
                 usersByTier: {},
@@ -155,8 +155,8 @@ export class EnhancedAuthService {
                 activityScore
             };
 
-        } catch (error) {
-            console.error("Error fetching user activity:", error);
+        } catch (_error) {
+            console.error("Error fetching user activity:", _error);
             return { loginFrequency: 0, lastLoginDays: 999, subscriptionAge: 0, activityScore: 0 };
         }
     }
@@ -172,8 +172,8 @@ export class EnhancedAuthService {
                 lastLoginAt: Timestamp.now(),
                 loginCount: (await getDoc(userRef)).data()?.loginCount || 0 + 1
             });
-        } catch (error) {
-            console.error("Error updating login tracking:", error);
+        } catch (_error) {
+            console.error("Error updating login tracking:", _error);
         }
     }
 
@@ -210,8 +210,8 @@ export class EnhancedAuthService {
 
             return insights;
 
-        } catch (error) {
-            console.error("Error fetching subscription insights:", error);
+        } catch (_error) {
+            console.error("Error fetching subscription insights:", _error);
             return { conversions: {}, churn: {}, growth: {} };
         }
     }

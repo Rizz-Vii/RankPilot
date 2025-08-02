@@ -38,7 +38,7 @@ export const stripeWebhook = onRequest(
     secrets: ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"],
     region: "australia-southeast2",
   },
-  async (req, res) => {
+  async (_req, _res) => {
     console.log("🔗 Stripe webhook received");
 
     if (req.method !== "POST") {

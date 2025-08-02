@@ -30,7 +30,7 @@ import {
 
 interface PrivacySettingsCardProps {
   user: User;
-  profile: any;
+  profile: unknown;
 }
 
 export default function PrivacySettingsCard({
@@ -49,12 +49,12 @@ export default function PrivacySettingsCard({
     profile?.privacy?.activityTracking ?? true
   );
 
-  const handlePrivacyUpdate = async (setting: string, value: boolean) => {
+  const handlePrivacyUpdate = async (setting: string, _value: boolean) => {
     setIsLoading(true);
     try {
       const userDocRef = doc(db, "users", user.uid);
       await updateDoc(userDocRef, {
-        [`privacy.${setting}`]: value,
+        [`privacy.${setting}`]: _value,
         updatedAt: new Date(),
       });
 
@@ -62,7 +62,7 @@ export default function PrivacySettingsCard({
         title: "Privacy Settings Updated",
         description: "Your privacy preferences have been saved.",
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Update Failed",

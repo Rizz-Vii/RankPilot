@@ -33,8 +33,8 @@ class AgentConflictResolver {
             console.log('✅ Agent conflict resolution completed successfully!');
             console.log('🔄 VS Code extensions should now work properly');
 
-        } catch (error) {
-            console.error('❌ Agent conflict resolution failed:', error);
+        } catch (_error) {
+            console.error('❌ Agent conflict resolution failed:', _error);
             throw error;
         }
     }
@@ -125,7 +125,7 @@ export class RankPilotAgentSystem {
         return { developmentMode: true, revenueIntelligence: 'disabled' };
     }
 
-    async createSupportTicket(data: any) {
+    async createSupportTicket(_data: unknown) {
         console.log('🛡️ Support ticket creation skipped - Development mode');
         return 'dev-ticket-' + Date.now();
     }
@@ -225,7 +225,7 @@ VSCODE_EXTENSION_DEBUG=false`;
             await execAsync('rm -f tsconfig.tsbuildinfo || true');
             console.log('✅ Cleared TypeScript cache');
 
-        } catch (error) {
+        } catch (_error) {
             console.warn('⚠️ TypeScript server restart had issues:', error.message);
         }
     }
@@ -240,4 +240,4 @@ resolver.disableAgents().then(() => {
     console.log('1. Restart VS Code completely');
     console.log('2. Use "npm run dev:safe" for development');
     console.log('3. Use "npm run agents:enable" to re-enable agents when needed');
-}).catch(console.error);
+}).catch(console._error);

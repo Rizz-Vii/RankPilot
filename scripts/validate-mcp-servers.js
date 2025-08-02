@@ -28,7 +28,7 @@ async function validateFirecrawl() {
     }
 
     try {
-        const response = await fetch('https://api.firecrawl.dev/v0/scrape', {
+        const _response = await fetch('https://api.firecrawl.dev/v0/scrape', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
@@ -42,10 +42,10 @@ async function validateFirecrawl() {
         } else if (response.status === 401) {
             return { status: 'invalid', message: 'API key invalid or expired' };
         } else {
-            return { status: 'error', message: `API error: ${response.status}` };
+            return { status: 'error', message: `API _error: ${response.status}` };
         }
-    } catch (error) {
-        return { status: 'error', message: `Connection error: ${error.message}` };
+    } catch (_error) {
+        return { status: 'error', message: `Connection _error: ${error.message}` };
     }
 }
 
@@ -56,18 +56,18 @@ async function validateHuggingFace() {
     }
 
     try {
-        const response = await fetch('https://huggingface.co/api/whoami', {
+        const _response = await fetch('https://huggingface.co/api/whoami', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
         if (response.ok) {
-            const data = await response.json();
+            const _data = await response.json();
             return { status: 'active', message: `Valid token for user: ${data.name}` };
         } else {
             return { status: 'invalid', message: 'Token invalid or expired' };
         }
-    } catch (error) {
-        return { status: 'error', message: `Connection error: ${error.message}` };
+    } catch (_error) {
+        return { status: 'error', message: `Connection _error: ${error.message}` };
     }
 }
 
@@ -78,18 +78,18 @@ async function validateStripe() {
     }
 
     try {
-        const response = await fetch('https://api.stripe.com/v1/account', {
+        const _response = await fetch('https://api.stripe.com/v1/account', {
             headers: { 'Authorization': `Bearer ${apiKey}` }
         });
 
         if (response.ok) {
-            const data = await response.json();
+            const _data = await response.json();
             return { status: 'active', message: `Connected to account: ${data.id}` };
         } else {
             return { status: 'invalid', message: 'API key invalid' };
         }
-    } catch (error) {
-        return { status: 'error', message: `Connection error: ${error.message}` };
+    } catch (_error) {
+        return { status: 'error', message: `Connection _error: ${error.message}` };
     }
 }
 
@@ -100,7 +100,7 @@ async function validateOpenAI() {
     }
 
     try {
-        const response = await fetch('https://api.openai.com/v1/models', {
+        const _response = await fetch('https://api.openai.com/v1/models', {
             headers: { 'Authorization': `Bearer ${apiKey}` }
         });
 
@@ -109,8 +109,8 @@ async function validateOpenAI() {
         } else {
             return { status: 'invalid', message: 'API key invalid or expired' };
         }
-    } catch (error) {
-        return { status: 'error', message: `Connection error: ${error.message}` };
+    } catch (_error) {
+        return { status: 'error', message: `Connection _error: ${error.message}` };
     }
 }
 
@@ -121,15 +121,15 @@ async function validateGemini() {
     }
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        const _response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
 
         if (response.ok) {
             return { status: 'active', message: 'API key valid and active' };
         } else {
             return { status: 'invalid', message: 'API key invalid or expired' };
         }
-    } catch (error) {
-        return { status: 'error', message: `Connection error: ${error.message}` };
+    } catch (_error) {
+        return { status: 'error', message: `Connection _error: ${error.message}` };
     }
 }
 
@@ -140,7 +140,7 @@ async function validateSentry() {
     }
 
     try {
-        const response = await fetch('https://sentry.io/api/0/organizations/rankpilot/projects/', {
+        const _response = await fetch('https://sentry.io/api/0/organizations/rankpilot/projects/', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -149,8 +149,8 @@ async function validateSentry() {
         } else {
             return { status: 'invalid', message: 'Auth token invalid or expired' };
         }
-    } catch (error) {
-        return { status: 'error', message: `Connection error: ${error.message}` };
+    } catch (_error) {
+        return { status: 'error', message: `Connection _error: ${error.message}` };
     }
 }
 
@@ -215,12 +215,12 @@ async function main() {
     for (const [name, validator] of Object.entries(validators)) {
         log(`\n🔍 Testing ${name}...`, 'blue');
         try {
-            const result = await validator();
+            const _result = await validator();
             results[name] = result;
             const color = getStatusColor(result.status);
             const icon = getStatusIcon(result.status);
             log(`   ${icon} ${name}: ${result.message}`, color);
-        } catch (error) {
+        } catch (_error) {
             results[name] = { status: 'error', message: error.message };
             log(`   ⚠️ ${name}: ${error.message}`, 'red');
         }
@@ -242,7 +242,7 @@ async function main() {
     log('===================', 'bright');
 
     const statusCounts = {};
-    for (const result of Object.values(results)) {
+    for (const _result of Object.values(results)) {
         statusCounts[result.status] = (statusCounts[result.status] || 0) + 1;
     }
 
@@ -291,4 +291,4 @@ async function main() {
     log('\n🚀 Ready to configure MCP servers!', 'bright');
 }
 
-main().catch(console.error);
+main().catch(console._error);

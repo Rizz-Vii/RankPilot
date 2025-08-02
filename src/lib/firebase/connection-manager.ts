@@ -66,7 +66,7 @@ class FirestoreConnectionManager {
                 try {
                     connectFirestoreEmulator(this.db, 'localhost', 8080);
                     console.log('🔧 Connected to Firestore emulator');
-                } catch (error) {
+                } catch (_error) {
                     // Emulator connection already exists - ignore error
                     console.log('🔧 Firestore emulator already connected');
                 }
@@ -74,8 +74,8 @@ class FirestoreConnectionManager {
 
             this.initialized = true;
             console.log('✅ Firestore connection established successfully');
-        } catch (error) {
-            console.error('❌ Firestore initialization failed:', error);
+        } catch (_error) {
+            console.error('❌ Firestore initialization failed:', _error);
             throw error;
         }
     }
@@ -92,8 +92,8 @@ class FirestoreConnectionManager {
             this.initializeDatabase();
 
             console.log('🔄 Firestore connection reset successfully');
-        } catch (error) {
-            console.error('❌ Failed to reset Firestore connection:', error);
+        } catch (_error) {
+            console.error('❌ Failed to reset Firestore connection:', _error);
             throw error;
         }
     }
@@ -116,8 +116,8 @@ export const validateConnection = async (): Promise<boolean> => {
             await connectionManager.resetConnection();
         }
         return true;
-    } catch (error) {
-        console.error('❌ Firestore connection validation failed:', error);
+    } catch (_error) {
+        console.error('❌ Firestore connection validation failed:', _error);
         return false;
     }
 };

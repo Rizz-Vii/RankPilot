@@ -20,10 +20,10 @@ export interface CrawlResult {
   technicalData: {
     loadTime: number;
     pageSize: number;
-    headings: { [key: string]: string[] };
+    headings: { [_key: string]: string[] };
     images: Array<{ src: string; alt: string; title?: string }>;
     links: Array<{ href: string; text: string; isExternal: boolean }>;
-    schema: any[];
+    schema: unknown[];
   };
   authorshipSignals: {
     hasAuthorBio: boolean;
@@ -75,7 +75,7 @@ export class NeuralCrawler {
       });
 
       // Navigate to page
-      const response = await page.goto(url, {
+      const _response = await page.goto(url, {
         waitUntil: "networkidle",
         timeout: options.timeout || 30000,
       });
@@ -157,7 +157,7 @@ export class NeuralCrawler {
       const headingElements = document.querySelectorAll(
         "h1, h2, h3, h4, h5, h6"
       );
-      const headings: { [key: string]: string[] } = {};
+      const headings: { [_key: string]: string[] } = {};
 
       headingElements.forEach((el) => {
         const tag = el.tagName.toLowerCase();
@@ -193,12 +193,12 @@ export class NeuralCrawler {
       const scripts = document.querySelectorAll(
         'script[type="application/ld+json"]'
       );
-      const schemaData: any[] = [];
+      const schemaData: unknown[] = [];
 
       scripts.forEach((script) => {
         try {
           const data = JSON.parse(script.textContent || "");
-          schemaData.push(data);
+          schemaData.push(_data);
         } catch (e) {
           // Ignore invalid JSON
         }

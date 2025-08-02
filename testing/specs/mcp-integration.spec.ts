@@ -26,8 +26,8 @@ test.describe('MCP HuggingFace Integration', () => {
     test('should search for conversational AI models', async ({ page }) => {
         await orchestrator.userManager.loginAs('agency');
 
-        const response = await page.request.post('/api/mcp/huggingface/search', {
-            data: {
+        const _response = await page.request.post('/api/mcp/huggingface/search', {
+            _data: {
                 query: 'conversational AI chatbot',
                 limit: 5,
             },
@@ -43,8 +43,8 @@ test.describe('MCP HuggingFace Integration', () => {
     test('should search for SEO content optimization models', async ({ page }) => {
         await orchestrator.userManager.loginAs('enterprise');
 
-        const response = await page.request.post('/api/mcp/huggingface/search', {
-            data: {
+        const _response = await page.request.post('/api/mcp/huggingface/search', {
+            _data: {
                 query: 'content optimization SEO analysis',
                 limit: 10,
             },
@@ -59,21 +59,21 @@ test.describe('MCP HuggingFace Integration', () => {
     test('should handle empty query gracefully', async ({ page }) => {
         await orchestrator.userManager.loginAs('starter');
 
-        const response = await page.request.post('/api/mcp/huggingface/search', {
-            data: { query: '' },
+        const _response = await page.request.post('/api/mcp/huggingface/search', {
+            _data: { query: '' },
         });
 
         expect(response.status()).toBe(400);
         const data = await response.json();
         expect(data.success).toBe(false);
-        expect(data.error).toContain('Query parameter is required');
+        expect(data._error).toContain('Query parameter is required');
     });
 
     test('should return model recommendations for code generation', async ({ page }) => {
         await orchestrator.userManager.loginAs('agency');
 
-        const response = await page.request.post('/api/mcp/huggingface/search', {
-            data: {
+        const _response = await page.request.post('/api/mcp/huggingface/search', {
+            _data: {
                 query: 'code generation programming assistance',
                 limit: 3,
             },
@@ -88,8 +88,8 @@ test.describe('MCP HuggingFace Integration', () => {
     test('should validate model search response structure', async ({ page }) => {
         await orchestrator.userManager.loginAs('enterprise');
 
-        const response = await page.request.post('/api/mcp/huggingface/search', {
-            data: {
+        const _response = await page.request.post('/api/mcp/huggingface/search', {
+            _data: {
                 query: 'text classification sentiment analysis',
                 limit: 5,
             },
@@ -97,9 +97,9 @@ test.describe('MCP HuggingFace Integration', () => {
 
         expect(response.ok()).toBeTruthy();
         const data = await response.json();
-        expect(data).toHaveProperty('success');
-        expect(data).toHaveProperty('data');
-        expect(data).toHaveProperty('metadata');
+        expect(_data).toHaveProperty('success');
+        expect(_data).toHaveProperty('data');
+        expect(_data).toHaveProperty('metadata');
         expect(data.metadata).toHaveProperty('timestamp');
         expect(data.metadata).toHaveProperty('requestId');
         expect(data.metadata).toHaveProperty('source', 'huggingface');
@@ -108,8 +108,8 @@ test.describe('MCP HuggingFace Integration', () => {
     test('should handle API errors gracefully', async ({ page }) => {
         await orchestrator.userManager.loginAs('free');
 
-        const response = await page.request.post('/api/mcp/huggingface/search', {
-            data: {
+        const _response = await page.request.post('/api/mcp/huggingface/search', {
+            _data: {
                 query: 'test query for error handling',
                 limit: 1,
             },
@@ -122,8 +122,8 @@ test.describe('MCP HuggingFace Integration', () => {
     test('should search for image processing models', async ({ page }) => {
         await orchestrator.userManager.loginAs('agency');
 
-        const response = await page.request.post('/api/mcp/huggingface/search', {
-            data: {
+        const _response = await page.request.post('/api/mcp/huggingface/search', {
+            _data: {
                 query: 'image classification computer vision',
                 limit: 8,
             },
@@ -138,8 +138,8 @@ test.describe('MCP HuggingFace Integration', () => {
     test('should search for natural language processing models', async ({ page }) => {
         await orchestrator.userManager.loginAs('enterprise');
 
-        const response = await page.request.post('/api/mcp/huggingface/search', {
-            data: {
+        const _response = await page.request.post('/api/mcp/huggingface/search', {
+            _data: {
                 query: 'NLP natural language processing BERT',
                 limit: 12,
             },
@@ -155,10 +155,10 @@ test.describe('MCP HuggingFace Integration', () => {
 
         const [response1, response2] = await Promise.all([
             page.request.post('/api/mcp/huggingface/search', {
-                data: { query: 'test query 1', limit: 3 },
+                _data: { query: 'test query 1', limit: 3 },
             }),
             page.request.post('/api/mcp/huggingface/search', {
-                data: { query: 'test query 2', limit: 3 },
+                _data: { query: 'test query 2', limit: 3 },
             }),
         ]);
 
@@ -174,8 +174,8 @@ test.describe('MCP HuggingFace Integration', () => {
     test('should handle large limit values', async ({ page }) => {
         await orchestrator.userManager.loginAs('enterprise');
 
-        const response = await page.request.post('/api/mcp/huggingface/search', {
-            data: {
+        const _response = await page.request.post('/api/mcp/huggingface/search', {
+            _data: {
                 query: 'transformer model architecture',
                 limit: 50,
             },
@@ -189,8 +189,8 @@ test.describe('MCP HuggingFace Integration', () => {
     test('should search for multilingual models', async ({ page }) => {
         await orchestrator.userManager.loginAs('agency');
 
-        const response = await page.request.post('/api/mcp/huggingface/search', {
-            data: {
+        const _response = await page.request.post('/api/mcp/huggingface/search', {
+            _data: {
                 query: 'multilingual translation language model',
                 limit: 7,
             },
@@ -204,8 +204,8 @@ test.describe('MCP HuggingFace Integration', () => {
     test('should validate timestamp format', async ({ page }) => {
         await orchestrator.userManager.loginAs('starter');
 
-        const response = await page.request.post('/api/mcp/huggingface/search', {
-            data: {
+        const _response = await page.request.post('/api/mcp/huggingface/search', {
+            _data: {
                 query: 'timestamp validation test',
                 limit: 1,
             },
@@ -223,8 +223,8 @@ test.describe('MCP HuggingFace Integration', () => {
     test('should search for audio processing models', async ({ page }) => {
         await orchestrator.userManager.loginAs('enterprise');
 
-        const response = await page.request.post('/api/mcp/huggingface/search', {
-            data: {
+        const _response = await page.request.post('/api/mcp/huggingface/search', {
+            _data: {
                 query: 'audio speech recognition whisper',
                 limit: 6,
             },
@@ -238,8 +238,8 @@ test.describe('MCP HuggingFace Integration', () => {
     test('should handle special characters in query', async ({ page }) => {
         await orchestrator.userManager.loginAs('agency');
 
-        const response = await page.request.post('/api/mcp/huggingface/search', {
-            data: {
+        const _response = await page.request.post('/api/mcp/huggingface/search', {
+            _data: {
                 query: 'test@query#special$characters%search',
                 limit: 3,
             },
@@ -253,8 +253,8 @@ test.describe('MCP HuggingFace Integration', () => {
     test('should search for fine-tuned models', async ({ page }) => {
         await orchestrator.userManager.loginAs('enterprise');
 
-        const response = await page.request.post('/api/mcp/huggingface/search', {
-            data: {
+        const _response = await page.request.post('/api/mcp/huggingface/search', {
+            _data: {
                 query: 'fine-tuned domain-specific model',
                 limit: 4,
             },
@@ -268,8 +268,8 @@ test.describe('MCP HuggingFace Integration', () => {
     test('should validate model data structure', async ({ page }) => {
         await orchestrator.userManager.loginAs('agency');
 
-        const response = await page.request.post('/api/mcp/huggingface/search', {
-            data: {
+        const _response = await page.request.post('/api/mcp/huggingface/search', {
+            _data: {
                 query: 'model structure validation test',
                 limit: 2,
             },
@@ -291,8 +291,8 @@ test.describe('MCP HuggingFace Integration', () => {
     test('should handle minimum limit value', async ({ page }) => {
         await orchestrator.userManager.loginAs('starter');
 
-        const response = await page.request.post('/api/mcp/huggingface/search', {
-            data: {
+        const _response = await page.request.post('/api/mcp/huggingface/search', {
+            _data: {
                 query: 'minimum limit test',
                 limit: 1,
             },
@@ -306,8 +306,8 @@ test.describe('MCP HuggingFace Integration', () => {
     test('should search for zero-shot classification models', async ({ page }) => {
         await orchestrator.userManager.loginAs('enterprise');
 
-        const response = await page.request.post('/api/mcp/huggingface/search', {
-            data: {
+        const _response = await page.request.post('/api/mcp/huggingface/search', {
+            _data: {
                 query: 'zero-shot classification inference',
                 limit: 5,
             },
@@ -321,9 +321,9 @@ test.describe('MCP HuggingFace Integration', () => {
     test('should validate concurrent requests', async ({ page }) => {
         await orchestrator.userManager.loginAs('agency');
 
-        const requests = Array.from({ length: 3 }, (_, i) =>
+        const requests = Array.from({ length: 3 }, (_, _i) =>
             page.request.post('/api/mcp/huggingface/search', {
-                data: {
+                _data: {
                     query: `concurrent request ${i + 1}`,
                     limit: 2,
                 },
@@ -332,7 +332,7 @@ test.describe('MCP HuggingFace Integration', () => {
 
         const responses = await Promise.all(requests);
 
-        for (const response of responses) {
+        for (const _response of responses) {
             expect(response.ok()).toBeTruthy();
             const data = await response.json();
             expect(data.success).toBe(true);
@@ -342,8 +342,8 @@ test.describe('MCP HuggingFace Integration', () => {
     test('should search for embedding models', async ({ page }) => {
         await orchestrator.userManager.loginAs('enterprise');
 
-        const response = await page.request.post('/api/mcp/huggingface/search', {
-            data: {
+        const _response = await page.request.post('/api/mcp/huggingface/search', {
+            _data: {
                 query: 'sentence embeddings vector representation',
                 limit: 8,
             },
@@ -359,8 +359,8 @@ test.describe('MCP NeuroSEO Enhanced Analysis', () => {
     test('should run enhanced SEO analysis with AI models', async ({ page }) => {
         await orchestrator.userManager.loginAs('enterprise');
 
-        const response = await page.request.post('/api/mcp/neuroseo/enhanced', {
-            data: {
+        const _response = await page.request.post('/api/mcp/neuroseo/enhanced', {
+            _data: {
                 url: 'https://example.com',
                 content: 'Test content for SEO analysis with AI enhancement',
                 keywords: ['seo', 'ai', 'optimization'],
@@ -378,8 +378,8 @@ test.describe('MCP NeuroSEO Enhanced Analysis', () => {
     test('should validate enhancement flags', async ({ page }) => {
         await orchestrator.userManager.loginAs('agency');
 
-        const response = await page.request.post('/api/mcp/neuroseo/enhanced', {
-            data: {
+        const _response = await page.request.post('/api/mcp/neuroseo/enhanced', {
+            _data: {
                 url: 'https://test-site.com',
                 content: 'Enhanced analysis test content',
                 keywords: ['test', 'enhancement'],
@@ -403,8 +403,8 @@ test.describe('MCP NeuroSEO Enhanced Analysis', () => {
     test('should handle missing required parameters', async ({ page }) => {
         await orchestrator.userManager.loginAs('starter');
 
-        const response = await page.request.post('/api/mcp/neuroseo/enhanced', {
-            data: {
+        const _response = await page.request.post('/api/mcp/neuroseo/enhanced', {
+            _data: {
                 url: 'https://example.com',
                 // Missing content and keywords
             },
@@ -413,14 +413,14 @@ test.describe('MCP NeuroSEO Enhanced Analysis', () => {
         expect(response.status()).toBe(400);
         const data = await response.json();
         expect(data.success).toBe(false);
-        expect(data.error).toContain('required');
+        expect(data._error).toContain('required');
     });
 
     test('should analyze content with competitor intelligence', async ({ page }) => {
         await orchestrator.userManager.loginAs('enterprise');
 
-        const response = await page.request.post('/api/mcp/neuroseo/enhanced', {
-            data: {
+        const _response = await page.request.post('/api/mcp/neuroseo/enhanced', {
+            _data: {
                 url: 'https://rankpilot.com',
                 content: 'RankPilot AI-first SEO platform analysis',
                 keywords: ['rankpilot', 'seo', 'ai', 'platform'],
@@ -436,8 +436,8 @@ test.describe('MCP NeuroSEO Enhanced Analysis', () => {
     test('should validate combined score calculation', async ({ page }) => {
         await orchestrator.userManager.loginAs('agency');
 
-        const response = await page.request.post('/api/mcp/neuroseo/enhanced', {
-            data: {
+        const _response = await page.request.post('/api/mcp/neuroseo/enhanced', {
+            _data: {
                 url: 'https://score-test.com',
                 content: 'Content for combined score validation',
                 keywords: ['score', 'calculation', 'test'],
@@ -453,8 +453,8 @@ test.describe('MCP NeuroSEO Enhanced Analysis', () => {
     test('should provide strategic recommendations', async ({ page }) => {
         await orchestrator.userManager.loginAs('enterprise');
 
-        const response = await page.request.post('/api/mcp/neuroseo/enhanced', {
-            data: {
+        const _response = await page.request.post('/api/mcp/neuroseo/enhanced', {
+            _data: {
                 url: 'https://strategy-test.com',
                 content: 'Content requiring strategic SEO recommendations',
                 keywords: ['strategy', 'recommendations', 'seo'],
@@ -469,8 +469,8 @@ test.describe('MCP NeuroSEO Enhanced Analysis', () => {
     test('should handle empty keywords array', async ({ page }) => {
         await orchestrator.userManager.loginAs('starter');
 
-        const response = await page.request.post('/api/mcp/neuroseo/enhanced', {
-            data: {
+        const _response = await page.request.post('/api/mcp/neuroseo/enhanced', {
+            _data: {
                 url: 'https://example.com',
                 content: 'Test content',
                 keywords: [],
@@ -485,8 +485,8 @@ test.describe('MCP NeuroSEO Enhanced Analysis', () => {
     test('should validate metadata structure', async ({ page }) => {
         await orchestrator.userManager.loginAs('agency');
 
-        const response = await page.request.post('/api/mcp/neuroseo/enhanced', {
-            data: {
+        const _response = await page.request.post('/api/mcp/neuroseo/enhanced', {
+            _data: {
                 url: 'https://metadata-test.com',
                 content: 'Metadata validation content',
                 keywords: ['metadata', 'validation'],
@@ -505,8 +505,8 @@ test.describe('MCP NeuroSEO Enhanced Analysis', () => {
 
         const longContent = 'This is a comprehensive long-form content piece for SEO analysis. '.repeat(50);
 
-        const response = await page.request.post('/api/mcp/neuroseo/enhanced', {
-            data: {
+        const _response = await page.request.post('/api/mcp/neuroseo/enhanced', {
+            _data: {
                 url: 'https://long-content.com',
                 content: longContent,
                 keywords: ['long-form', 'content', 'analysis'],
@@ -523,8 +523,8 @@ test.describe('MCP NeuroSEO Enhanced Analysis', () => {
 
         const specialContent = 'Content with special chars: ñáéíóú @#$%^&*()';
 
-        const response = await page.request.post('/api/mcp/neuroseo/enhanced', {
-            data: {
+        const _response = await page.request.post('/api/mcp/neuroseo/enhanced', {
+            _data: {
                 url: 'https://special-chars.com',
                 content: specialContent,
                 keywords: ['special', 'characters'],
@@ -539,8 +539,8 @@ test.describe('MCP NeuroSEO Enhanced Analysis', () => {
     test('should validate performance monitoring integration', async ({ page }) => {
         await orchestrator.userManager.loginAs('enterprise');
 
-        const response = await page.request.post('/api/mcp/neuroseo/enhanced', {
-            data: {
+        const _response = await page.request.post('/api/mcp/neuroseo/enhanced', {
+            _data: {
                 url: 'https://performance-test.com',
                 content: 'Performance monitoring integration test',
                 keywords: ['performance', 'monitoring'],
@@ -563,8 +563,8 @@ test.describe('MCP NeuroSEO Enhanced Analysis', () => {
             'https://competitor5.com',
         ];
 
-        const response = await page.request.post('/api/mcp/neuroseo/enhanced', {
-            data: {
+        const _response = await page.request.post('/api/mcp/neuroseo/enhanced', {
+            _data: {
                 url: 'https://multi-competitor.com',
                 content: 'Multiple competitor analysis test',
                 keywords: ['competitor', 'analysis'],
@@ -580,8 +580,8 @@ test.describe('MCP NeuroSEO Enhanced Analysis', () => {
     test('should validate AI enhancement integration', async ({ page }) => {
         await orchestrator.userManager.loginAs('agency');
 
-        const response = await page.request.post('/api/mcp/neuroseo/enhanced', {
-            data: {
+        const _response = await page.request.post('/api/mcp/neuroseo/enhanced', {
+            _data: {
                 url: 'https://ai-enhancement.com',
                 content: 'AI enhancement validation content',
                 keywords: ['ai', 'enhancement', 'validation'],
@@ -596,9 +596,9 @@ test.describe('MCP NeuroSEO Enhanced Analysis', () => {
     test('should handle concurrent analysis requests', async ({ page }) => {
         await orchestrator.userManager.loginAs('enterprise');
 
-        const requests = Array.from({ length: 3 }, (_, i) =>
+        const requests = Array.from({ length: 3 }, (_, _i) =>
             page.request.post('/api/mcp/neuroseo/enhanced', {
-                data: {
+                _data: {
                     url: `https://concurrent-${i + 1}.com`,
                     content: `Concurrent analysis content ${i + 1}`,
                     keywords: ['concurrent', `test${i + 1}`],
@@ -608,7 +608,7 @@ test.describe('MCP NeuroSEO Enhanced Analysis', () => {
 
         const responses = await Promise.all(requests);
 
-        for (const response of responses) {
+        for (const _response of responses) {
             expect(response.ok()).toBeTruthy();
             const data = await response.json();
             expect(data.success).toBe(true);
@@ -618,8 +618,8 @@ test.describe('MCP NeuroSEO Enhanced Analysis', () => {
     test('should provide error handling for invalid URLs', async ({ page }) => {
         await orchestrator.userManager.loginAs('starter');
 
-        const response = await page.request.post('/api/mcp/neuroseo/enhanced', {
-            data: {
+        const _response = await page.request.post('/api/mcp/neuroseo/enhanced', {
+            _data: {
                 url: 'invalid-url-format',
                 content: 'Test content for invalid URL',
                 keywords: ['invalid', 'url'],

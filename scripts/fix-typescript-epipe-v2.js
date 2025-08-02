@@ -17,7 +17,7 @@ async function safeKillProcesses() {
   
   try {
     // First, try to gracefully terminate
-    const result = execSync('ps aux | grep -E "(tsserver|typescript)" | grep -v grep', { 
+    const _result = execSync('ps aux | grep -E "(tsserver|typescript)" | grep -v grep', { 
       encoding: 'utf8', 
       stdio: 'pipe' 
     }).toString();
@@ -35,7 +35,7 @@ async function safeKillProcesses() {
     } else {
       console.log('   ℹ️  No TypeScript processes found');
     }
-  } catch (error) {
+  } catch (_error) {
     console.log('   ✅ Process cleanup completed (no processes found)');
   }
 }
@@ -51,13 +51,13 @@ async function clearCaches() {
     { path: 'functions/lib', name: 'Firebase functions build' }
   ];
 
-  for (const item of cacheItems) {
+  for (const _item of cacheItems) {
     const fullPath = path.join(process.cwd(), item.path);
     if (fs.existsSync(fullPath)) {
       try {
         execSync(`rm -rf "${fullPath}"`, { stdio: 'ignore' });
         console.log(`   ✅ Cleared ${item.name}`);
-      } catch (error) {
+      } catch (_error) {
         console.log(`   ⚠️  Could not clear ${item.name}: ${error.message}`);
       }
     }
@@ -70,7 +70,7 @@ async function cleanTypeScriptBuild() {
   try {
     execSync('npx tsc --build --clean', { stdio: 'ignore' });
     console.log('   ✅ TypeScript build cleaned');
-  } catch (error) {
+  } catch (_error) {
     console.log('   ℹ️  No TypeScript build to clean');
   }
 }
@@ -91,7 +91,7 @@ async function optimizeVSCodeSettings() {
     try {
       const content = fs.readFileSync(settingsPath, 'utf8');
       settings = JSON.parse(content);
-    } catch (error) {
+    } catch (_error) {
       console.log('   ⚠️  Could not parse existing settings, creating new ones');
       settings = {};
     }
@@ -116,8 +116,8 @@ async function optimizeVSCodeSettings() {
   };
   
   let updated = false;
-  for (const [key, value] of Object.entries(epipePreventionSettings)) {
-    if (JSON.stringify(settings[key]) !== JSON.stringify(value)) {
+  for (const [_key, value] of Object.entries(epipePreventionSettings)) {
+    if (JSON.stringify(settings[key]) !== JSON.stringify(_value)) {
       settings[key] = value;
       updated = true;
     }
@@ -141,7 +141,7 @@ async function testTypeScriptCompilation() {
     });
     console.log('   ✅ TypeScript compilation successful');
     return true;
-  } catch (error) {
+  } catch (_error) {
     console.log('   ❌ TypeScript compilation failed');
     if (error.stdout) {
       console.log('   📋 Output:', error.stdout.toString().slice(0, 500));
@@ -164,7 +164,7 @@ async function testBuild() {
     });
     console.log('   ✅ Build process started successfully');
     return true;
-  } catch (error) {
+  } catch (_error) {
     console.log('   ⚠️  Build test skipped (may take too long)');
     return false;
   }
@@ -193,7 +193,7 @@ try {
   
   console.log('✅ TypeScript Language Server restarted');
   console.log('💡 Please reload VS Code window for best results');
-} catch (error) {
+} catch (_error) {
   console.error('❌ Error restarting TypeScript:', error.message);
 }
 `;
@@ -237,7 +237,7 @@ async function main() {
     console.log('   - Use "node scripts/restart-typescript.js" for quick restart');
     console.log('   - Monitor memory usage if issues persist');
     
-  } catch (error) {
+  } catch (_error) {
     console.error('\n❌ Error during TypeScript EPIPE fix:', error.message);
     console.error('Stack:', error.stack);
     process.exit(1);
@@ -257,7 +257,7 @@ process.on('SIGTERM', () => {
 
 // Run the main function
 main().catch(error => {
-  console.error('\n❌ Unexpected error:', error.message);
+  console.error('\n❌ Unexpected _error:', error.message);
   console.error('Stack:', error.stack);
   process.exit(1);
 });

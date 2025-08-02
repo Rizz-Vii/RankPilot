@@ -12,17 +12,17 @@ import { edgeMiddleware } from '@/lib/edge/edge-config';
 import { securityMiddleware } from '@/lib/security/advanced-security';
 import { NextRequest } from 'next/server';
 
-export async function middleware(request: NextRequest) {
+export async function middleware(_request: NextRequest) {
     // Apply security middleware first
-    const securityResponse = await securityMiddleware(request);
+    const securityResponse = await securityMiddleware(_request);
 
-    // If security middleware blocks the request, return immediately
+    // If security middleware blocks the _request, return immediately
     if (securityResponse.status !== 200) {
         return securityResponse;
     }
 
     // Apply edge computing optimizations
-    return edgeMiddleware(request);
+    return edgeMiddleware(_request);
 }
 
 export const config = {

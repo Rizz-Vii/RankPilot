@@ -43,7 +43,7 @@ class SimpleAgentExecutor {
 
             console.log(`${success ? '✅' : '❌'} ${agentName} completed in ${duration}ms`);
             return success;
-        } catch (error) {
+        } catch (_error) {
             console.error(`🚨 ${agentName} failed:`, error.message);
             return false;
         }
@@ -91,7 +91,7 @@ async function executeTypeScriptGuardian() {
             execSync('npm run typecheck', { stdio: 'pipe' });
             console.log('✅ No TypeScript errors found!');
             return true;
-        } catch (error) {
+        } catch (_error) {
             tscOutput = error.stdout?.toString() + error.stderr?.toString();
             console.log('🔍 TypeScript errors detected, applying fixes...');
         }
@@ -161,13 +161,13 @@ interface SecurityError extends Error {
             execSync('npm run typecheck', { stdio: 'pipe' });
             console.log('✅ TypeScript Guardian completed successfully - 0 errors!');
             return true;
-        } catch (error) {
+        } catch (_error) {
             console.warn('⚠️  Some TypeScript issues remain, but progress made');
             return true; // Consider partial success
         }
 
-    } catch (error) {
-        console.error('🚨 TypeScript Guardian execution failed:', error);
+    } catch (_error) {
+        console.error('🚨 TypeScript Guardian execution failed:', _error);
         return false;
     }
 }
@@ -201,7 +201,7 @@ async function executeBuildSystemAgent() {
         let modified = false;
         for (const envVar of firebaseEnvVars) {
             const [key] = envVar.split('=');
-            if (!envContent.includes(key)) {
+            if (!envContent.includes(_key)) {
                 envContent += `${envVar}\n`;
                 modified = true;
             }
@@ -270,8 +270,8 @@ exit 1
         console.log('🔍 Build system optimization complete');
         return true;
 
-    } catch (error) {
-        console.error('🚨 Build System Agent execution failed:', error);
+    } catch (_error) {
+        console.error('🚨 Build System Agent execution failed:', _error);
         return false;
     }
 }
@@ -325,8 +325,8 @@ async function mainExecution() {
 
             process.exit(success ? 0 : 1);
         }
-    } catch (error) {
-        console.error('🚨 Agent execution failed:', error);
+    } catch (_error) {
+        console.error('🚨 Agent execution failed:', _error);
         process.exit(1);
     }
 }

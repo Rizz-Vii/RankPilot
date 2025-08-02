@@ -27,7 +27,7 @@ export interface SiteContext {
     totalPages: number;
     contentSummary: string;
     keywords: string[];
-    recentAnalyses: any[];
+    recentAnalyses: unknown[];
 }
 
 export interface AdminContext {
@@ -37,13 +37,13 @@ export interface AdminContext {
         totalAnalyses: number;
         errorRate: number;
     };
-    recentActivity: any[];
+    recentActivity: unknown[];
     performanceInsights: string[];
 }
 
 export interface ChatContext {
     userTier: PlanType | "free";
-    recentConversations: any[];
+    recentConversations: unknown[];
     availableFeatures: string[];
 }
 
@@ -83,8 +83,8 @@ export async function getAuditContext(uid: string, url: string): Promise<AuditCo
             suggestions: auditData.suggestions || [],
             lastAnalyzed: auditData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
         };
-    } catch (error) {
-        console.error('Error fetching audit context:', error);
+    } catch (_error) {
+        console.error('Error fetching audit context:', _error);
         return null;
     }
 }
@@ -131,8 +131,8 @@ export async function getSiteContext(uid: string): Promise<SiteContext> {
             keywords: [...new Set(keywords)].slice(0, 20), // Unique keywords, max 20
             recentAnalyses,
         };
-    } catch (error) {
-        console.error('Error fetching site context:', error);
+    } catch (_error) {
+        console.error('Error fetching site context:', _error);
         return {
             totalPages: 0,
             contentSummary: '',
@@ -144,11 +144,11 @@ export async function getSiteContext(uid: string): Promise<SiteContext> {
 
 /**
  * Fetches admin-level context for system management chatbot
- * Includes system metrics, monitoring data, and insights
+ * Includes system metrics, monitoring _data, and insights
  */
 export async function getAdminContext(adminLevel: 'admin' | 'enterprise'): Promise<AdminContext> {
     try {
-        // Get system metrics (aggregated data)
+        // Get system metrics (aggregated _data)
         const usersRef = collection(db, 'users');
         const usersSnapshot = await getDocs(usersRef);
 
@@ -181,8 +181,8 @@ export async function getAdminContext(adminLevel: 'admin' | 'enterprise'): Promi
                 'Average response time: 1.2s',
             ],
         };
-    } catch (error) {
-        console.error('Error fetching admin context:', error);
+    } catch (_error) {
+        console.error('Error fetching admin context:', _error);
         return {
             systemMetrics: {
                 totalUsers: 0,
@@ -228,8 +228,8 @@ export async function getChatContext(uid: string, isAdmin: boolean = false): Pro
             recentConversations,
             availableFeatures,
         };
-    } catch (error) {
-        console.error('Error fetching chat context:', error);
+    } catch (_error) {
+        console.error('Error fetching chat context:', _error);
         return {
             userTier: 'free',
             recentConversations: [],
@@ -286,7 +286,7 @@ export async function getNeuroSEOContext(uid: string, url?: string): Promise<any
 
             return {
                 type: 'url_analysis',
-                data: report,
+                _data: report,
                 insights: report.keyInsights?.map(insight => insight.description).join(' ') || 'No insights available',
             };
         }
@@ -294,14 +294,14 @@ export async function getNeuroSEOContext(uid: string, url?: string): Promise<any
         // Get general SEO insights for the user
         return {
             type: 'general_insights',
-            data: null,
+            _data: null,
             insights: 'NeuroSEO™ Suite ready to analyze your content',
         };
-    } catch (error) {
-        console.error('Error fetching NeuroSEO context:', error);
+    } catch (_error) {
+        console.error('Error fetching NeuroSEO context:', _error);
         return {
             type: 'error',
-            data: null,
+            _data: null,
             insights: 'NeuroSEO™ analysis temporarily unavailable',
         };
     }
@@ -311,19 +311,19 @@ export async function getNeuroSEOContext(uid: string, url?: string): Promise<any
  * Caching utilities for context data
  * Reduces Firebase reads and improves performance
  */
-const contextCache = new Map<string, { data: any; timestamp: number; }>();
+const contextCache = new Map<string, { _data: unknown; timestamp: number; }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-export function getCachedContext(key: string): any | null {
-    const cached = contextCache.get(key);
+export function getCachedContext(_key: string): any | null {
+    const cached = contextCache.get(_key);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
         return cached.data;
     }
     return null;
 }
 
-export function setCachedContext(key: string, data: any): void {
-    contextCache.set(key, { data, timestamp: Date.now() });
+export function setCachedContext(_key: string, _data: unknown): void {
+    contextCache.set(_key, { _data, timestamp: Date.now() });
 }
 
 // Export all context functions for easy import

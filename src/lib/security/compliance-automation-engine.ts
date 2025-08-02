@@ -83,8 +83,8 @@ export interface ComplianceAuditTrail {
         name?: string;
     };
     details: {
-        before?: any;
-        after?: any;
+        before?: unknown;
+        after?: unknown;
         reason?: string;
         impact?: string;
     };
@@ -309,8 +309,8 @@ export class ComplianceAutomationEngine extends EventEmitter {
                 report
             };
 
-        } catch (error) {
-            console.error('[ComplianceAutomationEngine] Assessment failed:', error);
+        } catch (_error) {
+            console.error('[ComplianceAutomationEngine] Assessment failed:', _error);
             throw new Error('Compliance assessment failed');
         }
     }
@@ -324,7 +324,7 @@ export class ComplianceAutomationEngine extends EventEmitter {
     }): Promise<ComplianceEvidence[]> {
         try {
             const req = this.requirements.get(requirement);
-            if (!req) {
+            if (!_req) {
                 throw new Error('Requirement not found');
             }
 
@@ -334,21 +334,21 @@ export class ComplianceAutomationEngine extends EventEmitter {
             const evidenceTypes = options?.types || ['log', 'test-result', 'document'];
 
             for (const type of evidenceTypes) {
-                const collected = await this.collectEvidenceByType(req, type);
+                const collected = await this.collectEvidenceByType(_req, type);
                 evidence.push(...collected);
             }
 
             // Store evidence
             for (const item of evidence) {
-                this.evidenceStore.set(item.id, item);
+                this.evidenceStore.set(item.id, _item);
             }
 
             console.log(`[ComplianceAutomationEngine] Collected ${evidence.length} evidence items for ${requirement}`);
 
             return evidence;
 
-        } catch (error) {
-            console.error('[ComplianceAutomationEngine] Evidence collection failed:', error);
+        } catch (_error) {
+            console.error('[ComplianceAutomationEngine] Evidence collection failed:', _error);
             throw new Error('Evidence collection failed');
         }
     }
@@ -443,8 +443,8 @@ export class ComplianceAutomationEngine extends EventEmitter {
 
             return report;
 
-        } catch (error) {
-            console.error('[ComplianceAutomationEngine] Report generation failed:', error);
+        } catch (_error) {
+            console.error('[ComplianceAutomationEngine] Report generation failed:', _error);
             throw new Error('Report generation failed');
         }
     }
@@ -613,7 +613,7 @@ export class ComplianceAutomationEngine extends EventEmitter {
             }
         ];
 
-        soc2Requirements.forEach(req => this.requirements.set(req.id, req));
+        soc2Requirements.forEach(req => this.requirements.set(req.id, _req));
     }
 
     private initializeGDPRRequirements(): void {
@@ -659,7 +659,7 @@ export class ComplianceAutomationEngine extends EventEmitter {
             }
         ];
 
-        gdprRequirements.forEach(req => this.requirements.set(req.id, req));
+        gdprRequirements.forEach(req => this.requirements.set(req.id, _req));
     }
 
     private initializeHIPAARequirements(): void {
@@ -692,7 +692,7 @@ export class ComplianceAutomationEngine extends EventEmitter {
             }
         ];
 
-        hipaaRequirements.forEach(req => this.requirements.set(req.id, req));
+        hipaaRequirements.forEach(req => this.requirements.set(req.id, _req));
     }
 
     private initializeISO27001Requirements(): void {
@@ -725,7 +725,7 @@ export class ComplianceAutomationEngine extends EventEmitter {
             }
         ];
 
-        iso27001Requirements.forEach(req => this.requirements.set(req.id, req));
+        iso27001Requirements.forEach(req => this.requirements.set(req.id, _req));
     }
 
     private async assessFramework(framework: ComplianceFramework, fullAssessment?: boolean): Promise<{
@@ -919,7 +919,7 @@ export class ComplianceAutomationEngine extends EventEmitter {
         const history: Array<{ date: number; score: number; }> = [];
         const days = Math.floor((period.end - period.start) / (24 * 60 * 60 * 1000));
 
-        for (let i = 0; i < Math.min(days, 30); i++) {
+        for (let _i = 0; i < Math.min(days, 30); i++) {
             const date = period.start + (i * 24 * 60 * 60 * 1000);
             const score = 75 + Math.random() * 20; // Mock score between 75-95
             history.push({ date, score });
@@ -985,11 +985,11 @@ export class ComplianceAutomationEngine extends EventEmitter {
         return actions;
     }
 
-    private async logAuditEvent(event: Omit<ComplianceAuditTrail, 'id' | 'timestamp' | 'metadata'>): Promise<void> {
+    private async logAuditEvent(_event: Omit<ComplianceAuditTrail, 'id' | 'timestamp' | 'metadata'>): Promise<void> {
         const auditEntry: ComplianceAuditTrail = {
             id: this.generateId(),
             timestamp: Date.now(),
-            ...event,
+            ..._event,
             metadata: {
                 engineVersion: '1.0.0',
                 correlationId: this.generateId()
@@ -1066,8 +1066,8 @@ export class ComplianceAutomationEngine extends EventEmitter {
                 // Emit regular metrics
                 this.emit('compliance-metrics', metrics);
 
-            } catch (error) {
-                console.error('[ComplianceAutomationEngine] Monitoring error:', error);
+            } catch (_error) {
+                console.error('[ComplianceAutomationEngine] Monitoring _error:', _error);
             }
         }, 300000); // Run every 5 minutes
 

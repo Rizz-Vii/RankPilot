@@ -92,7 +92,7 @@ class AutoScriptGenerator {
    */
   generateUtilityScript(utilityData) {
     const {
-      functionName,
+      _functionName,
       utilityCode,
       language = 'javascript',
       description
@@ -103,7 +103,7 @@ class AutoScriptGenerator {
 
     const scriptContent = this.generateScriptTemplate({
       type: 'utility',
-      functionName,
+      _functionName,
       utilityCode,
       language,
       description
@@ -118,9 +118,9 @@ class AutoScriptGenerator {
   /**
    * Generate script template based on type
    */
-  generateScriptTemplate(data) {
-    const header = this.generateHeader(data);
-    const body = this.generateBody(data);
+  generateScriptTemplate(_data) {
+    const header = this.generateHeader(_data);
+    const body = this.generateBody(_data);
     
     return `${header}\n\n${body}`;
   }
@@ -128,7 +128,7 @@ class AutoScriptGenerator {
   /**
    * Generate script header with metadata
    */
-  generateHeader(data) {
+  generateHeader(_data) {
     const timestamp = new Date().toISOString();
     
     if (data.language === 'javascript') {
@@ -136,7 +136,7 @@ class AutoScriptGenerator {
  * @pilotbuddy-script
  * @category: ${data.type}
  * @problem: ${data.problemDescription || data.taskName || data.functionName}
- * @usage: node pilotScripts/${data.type}/${this.getFileName(data)}
+ * @usage: node pilotScripts/${data.type}/${this.getFileName(_data)}
  * @generated: ${timestamp}
  * @pattern-id: ${data.patternId || 'AUTO-GEN-' + Date.now()}
  */`;
@@ -145,7 +145,7 @@ class AutoScriptGenerator {
  * @pilotbuddy-script
  * @category: ${data.type}
  * @problem: ${data.problemDescription || data.taskName || data.functionName}
- * @usage: powershell -ExecutionPolicy Bypass -File pilotScripts/${data.type}/${this.getFileName(data)}
+ * @usage: powershell -ExecutionPolicy Bypass -File pilotScripts/${data.type}/${this.getFileName(_data)}
  * @generated: ${timestamp}
  * @pattern-id: ${data.patternId || 'AUTO-GEN-' + Date.now()}
 #>`;
@@ -161,7 +161,7 @@ class AutoScriptGenerator {
   /**
    * Generate script body
    */
-  generateBody(data) {
+  generateBody(_data) {
     if (data.solutionCode) {
       return data.solutionCode;
     }
@@ -175,13 +175,13 @@ class AutoScriptGenerator {
     }
     
     // Generate basic template if no code provided
-    return this.generateBasicTemplate(data);
+    return this.generateBasicTemplate(_data);
   }
 
   /**
    * Generate basic script template
    */
-  generateBasicTemplate(data) {
+  generateBasicTemplate(_data) {
     if (data.language === 'javascript') {
       return `console.log('🤖 PilotBuddy Auto-Generated Script');
 console.log('Script: ${data.type}');
@@ -223,7 +223,7 @@ echo "Purpose: ${data.problemDescription || data.taskName || data.functionName}"
   /**
    * Get filename from data
    */
-  getFileName(data) {
+  getFileName(_data) {
     if (data.type === 'solution') {
       return `solution-${data.category}-${data.scriptId}-v1.${this.getExtension(data.language)}`;
     } else if (data.type === 'automation') {
@@ -269,7 +269,7 @@ echo "Purpose: ${data.problemDescription || data.taskName || data.functionName}"
       fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
       console.log(`📦 Added npm script: ${scriptKey}`);
       
-    } catch (error) {
+    } catch (_error) {
       console.warn('Warning: Could not update package.json:', error.message);
     }
   }
@@ -284,7 +284,7 @@ const examples = {
 
 try {
   execSync('npx eslint . --fix', { stdio: 'inherit' });
-} catch (error) {
+} catch (_error) {
   console.log('Applying fallback ESLint configuration...');
   execSync('node scripts/build-skip-typecheck.js', { stdio: 'inherit' });
 }`,

@@ -203,7 +203,7 @@ export const conversionFunnel = {
   // Track conversion rates in Firestore
   updateConversionMetrics: async (
     userId: string,
-    event: "view_pricing" | "begin_checkout" | "purchase",
+    _event: "view_pricing" | "begin_checkout" | "purchase",
     plan?: string
   ) => {
     try {
@@ -228,8 +228,8 @@ export const conversionFunnel = {
           lastActivity: serverTimestamp(),
         });
       }
-    } catch (error) {
-      console.error("Error updating conversion metrics:", error);
+    } catch (_error) {
+      console.error("Error updating conversion metrics:", _error);
     }
   },
 };
@@ -243,7 +243,7 @@ export const getAnalyticsDashboard = async () => {
     if (snapshot.exists()) {
       const data = snapshot.data();
       return {
-        conversionRates: calculateConversionRates(data),
+        conversionRates: calculateConversionRates(_data),
         dailyMetrics: data.daily || {},
         planMetrics: data.plans || {},
         lastUpdated: data.lastUpdated?.toDate() || null,
@@ -251,14 +251,14 @@ export const getAnalyticsDashboard = async () => {
     }
 
     return null;
-  } catch (error) {
-    console.error("Error fetching analytics dashboard:", error);
+  } catch (_error) {
+    console.error("Error fetching analytics dashboard:", _error);
     throw error;
   }
 };
 
 // Helper function to calculate conversion rates
-const calculateConversionRates = (data: any) => {
+const calculateConversionRates = (_data: unknown) => {
   const daily = data.daily || {};
   const plans = data.plans || {};
 
@@ -267,7 +267,7 @@ const calculateConversionRates = (data: any) => {
   let totalCheckouts = 0;
   let totalPurchases = 0;
 
-  Object.values(daily).forEach((day: any) => {
+  Object.values(daily).forEach((day: unknown) => {
     totalViews += day.view_pricing || 0;
     totalCheckouts += day.begin_checkout || 0;
     totalPurchases += day.purchase || 0;
@@ -357,8 +357,8 @@ export const cohortAnalysis = {
         totalUsers: increment(1),
         lastUpdated: serverTimestamp(),
       });
-    } catch (error) {
-      console.error("Error tracking cohort:", error);
+    } catch (_error) {
+      console.error("Error tracking cohort:", _error);
     }
   },
 
@@ -379,8 +379,8 @@ export const cohortAnalysis = {
         totalActiveUsers: increment(1),
         lastUpdated: serverTimestamp(),
       });
-    } catch (error) {
-      console.error("Error tracking retention:", error);
+    } catch (_error) {
+      console.error("Error tracking retention:", _error);
     }
   },
 };

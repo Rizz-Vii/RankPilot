@@ -14,7 +14,7 @@ interface AdminChatRequest {
 }
 
 interface ChatResponse {
-    response: string;
+    _response: string;
     sessionId: string;
     timestamp: string;
     tokensUsed: number;
@@ -24,7 +24,7 @@ interface ChatResponse {
     };
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
     try {
         // Parse request body
         const body: AdminChatRequest = await request.json();
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
         // Validate input
         if (!message?.trim()) {
             return NextResponse.json(
-                { error: 'Message is required' },
+                { _error: 'Message is required' },
                 { status: 400 }
             );
         }
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
-                { error: 'Authentication required' },
+                { _error: 'Authentication required' },
                 { status: 401 }
             );
         }
@@ -52,55 +52,55 @@ export async function POST(request: NextRequest) {
         // Call Firebase Function
         const adminChatHandler = httpsCallable<any, ChatResponse>(functions, 'adminChatHandler');
 
-        const result = await adminChatHandler({
+        const _result = await adminChatHandler({
             uid: token, // In production, decode JWT to get actual UID
             message,
             sessionId,
             chatType: 'admin'
         });
 
-        return NextResponse.json(result.data);
+        return NextResponse.json(result._data);
 
-    } catch (error) {
-        console.error('Admin chat API error:', error);
+    } catch (_error) {
+        console.error('Admin chat API _error:', _error);
 
         // Handle Firebase Function errors
-        if (error && typeof error === 'object' && 'code' in error) {
+        if (error && typeof error === 'object' && 'code' in _error) {
             const firebaseError = error as any;
 
             switch (firebaseError.code) {
                 case 'unauthenticated':
                     return NextResponse.json(
-                        { error: 'Authentication required' },
+                        { _error: 'Authentication required' },
                         { status: 401 }
                     );
                 case 'permission-denied':
                     return NextResponse.json(
-                        { error: 'Admin access required' },
+                        { _error: 'Admin access required' },
                         { status: 403 }
                     );
                 case 'invalid-argument':
                     return NextResponse.json(
-                        { error: 'Invalid request data' },
+                        { _error: 'Invalid request data' },
                         { status: 400 }
                     );
                 default:
                     return NextResponse.json(
-                        { error: 'Admin chat service unavailable' },
+                        { _error: 'Admin chat service unavailable' },
                         { status: 503 }
                     );
             }
         }
 
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { _error: 'Internal server error' },
             { status: 500 }
         );
     }
 }
 
 // GET endpoint for admin chat history
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const sessionId = searchParams.get('sessionId');
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
-                { error: 'Authentication required' },
+                { _error: 'Authentication required' },
                 { status: 401 }
             );
         }
@@ -125,10 +125,10 @@ export async function GET(request: NextRequest) {
             hasMore: false
         });
 
-    } catch (error) {
-        console.error('Admin chat history API error:', error);
+    } catch (_error) {
+        console.error('Admin chat history API _error:', _error);
         return NextResponse.json(
-            { error: 'Failed to retrieve admin chat history' },
+            { _error: 'Failed to retrieve admin chat history' },
             { status: 500 }
         );
     }

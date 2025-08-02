@@ -55,7 +55,7 @@ async function listExistingUsers() {
         "   🔗 Go to: https://console.firebase.google.com/project/rankpilot-h3jpc/authentication/users"
       );
     }
-  } catch (error: any) {
+  } catch (_error: unknown) {
     console.error("❌ Error listing users:", error.message);
 
     if (error.code === "auth/insufficient-permission") {
@@ -69,8 +69,8 @@ async function listExistingUsers() {
 async function main() {
   try {
     await listExistingUsers();
-  } catch (error) {
-    console.error("❌ Error:", error);
+  } catch (_error) {
+    console.error("❌ Error:", _error);
     process.exit(1);
   }
 }

@@ -19,8 +19,8 @@ const httpsOptions: HttpsOptions = {
 /**
  * Performance Dashboard - Main Dashboard Data
  */
-export const performanceDashboard = onCall(httpsOptions, async (request: CallableRequest) => {
-  const trace = StructuredLogger.startTrace(request, "performance-dashboard");
+export const performanceDashboard = onCall(httpsOptions, async (_request: CallableRequest) => {
+  const trace = StructuredLogger.startTrace(_request, "performance-dashboard");
 
   try {
     // Check authentication
@@ -39,7 +39,7 @@ export const performanceDashboard = onCall(httpsOptions, async (request: Callabl
       tier: userTier
     });
 
-    const metricsReport = MetricsCollector.generateReport();
+    const _metricsReport = MetricsCollector.generateReport();
     const cacheStats = AIResponseCache.getStats();
 
     // Test cache functionality
@@ -66,7 +66,7 @@ export const performanceDashboard = onCall(httpsOptions, async (request: Callabl
           .slice(0, 10)
       },
       cache: {
-        stats: cacheStats,
+        stats: _cacheStats,
         healthCheck: cacheResult ? "pass" : "fail"
       },
       insights: metricsReport.insights
@@ -80,24 +80,24 @@ export const performanceDashboard = onCall(httpsOptions, async (request: Callabl
 
     return {
       success: true,
-      data: dashboardData,
+      _data: dashboardData,
       traceId: trace.traceId
     };
 
-  } catch (error) {
+  } catch (_error) {
     StructuredLogger.errorTrace(trace.traceId, error as Error, {
       function: "performanceDashboard"
     });
 
-    throw new Error(`Dashboard error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    throw new Error(`Dashboard _error: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 });
 
 /**
  * Real-time Metrics Endpoint
  */
-export const realtimeMetrics = onCall(httpsOptions, async (request: CallableRequest) => {
-  const trace = StructuredLogger.startTrace(request, "realtime-metrics");
+export const realtimeMetrics = onCall(httpsOptions, async (_request: CallableRequest) => {
+  const trace = StructuredLogger.startTrace(_request, "realtime-metrics");
 
   try {
     if (!request.auth) {
@@ -112,7 +112,7 @@ export const realtimeMetrics = onCall(httpsOptions, async (request: CallableRequ
         memoryUsage: process.memoryUsage(),
         uptime: process.uptime()
       },
-      cacheStats: AIResponseCache.getStats()
+      _cacheStats: AIResponseCache.getStats()
     };
 
     StructuredLogger.completeTrace(trace.traceId, {
@@ -122,41 +122,41 @@ export const realtimeMetrics = onCall(httpsOptions, async (request: CallableRequ
 
     return {
       success: true,
-      data: realtimeData,
+      _data: realtimeData,
       traceId: trace.traceId
     };
 
-  } catch (error) {
+  } catch (_error) {
     StructuredLogger.errorTrace(trace.traceId, error as Error, {
       function: "realtimeMetrics"
     });
 
-    throw new Error(`Realtime metrics error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    throw new Error(`Realtime metrics _error: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 });
 
 /**
  * Function Metrics - Detailed metrics for specific functions
  */
-export const functionMetrics = onCall(httpsOptions, async (request: CallableRequest) => {
-  const trace = StructuredLogger.startTrace(request, "function-metrics");
+export const functionMetrics = onCall(httpsOptions, async (_request: CallableRequest) => {
+  const trace = StructuredLogger.startTrace(_request, "function-metrics");
 
   try {
     if (!request.auth) {
       throw new Error("Authentication required");
     }
 
-    const { functionName, timeRange } = request.data || {};
+    const { _functionName, timeRange } = request.data || {};
 
-    if (!functionName) {
+    if (!_functionName) {
       throw new Error("Function name is required");
     }
 
-    const metrics = MetricsCollector.getFunctionMetrics(functionName);
+    const metrics = MetricsCollector.getFunctionMetrics(_functionName);
     const report = MetricsCollector.generateReport();
 
     const functionData = {
-      functionName,
+      _functionName,
       timeRange: timeRange || "24h",
       metrics: metrics || {
         executionCount: 0,
@@ -182,24 +182,24 @@ export const functionMetrics = onCall(httpsOptions, async (request: CallableRequ
 
     return {
       success: true,
-      data: functionData,
+      _data: functionData,
       traceId: trace.traceId
     };
 
-  } catch (error) {
+  } catch (_error) {
     StructuredLogger.errorTrace(trace.traceId, error as Error, {
       function: "functionMetrics"
     });
 
-    throw new Error(`Function metrics error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    throw new Error(`Function metrics _error: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 });
 
 /**
  * A/B Test Management
  */
-export const abTestManagement = onCall(httpsOptions, async (request: CallableRequest) => {
-  const trace = StructuredLogger.startTrace(request, "ab-test-management");
+export const abTestManagement = onCall(httpsOptions, async (_request: CallableRequest) => {
+  const trace = StructuredLogger.startTrace(_request, "ab-test-management");
 
   try {
     if (!request.auth) {
@@ -242,24 +242,24 @@ export const abTestManagement = onCall(httpsOptions, async (request: CallableReq
 
     return {
       success: true,
-      data: responseData,
+      _data: responseData,
       traceId: trace.traceId
     };
 
-  } catch (error) {
+  } catch (_error) {
     StructuredLogger.errorTrace(trace.traceId, error as Error, {
       function: "abTestManagement"
     });
 
-    throw new Error(`A/B test management error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    throw new Error(`A/B test management _error: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 });
 
 /**
  * Health Check
  */
-export const healthCheck = onCall(httpsOptions, async (request: CallableRequest) => {
-  const trace = StructuredLogger.startTrace(request, "health-check");
+export const healthCheck = onCall(httpsOptions, async (_request: CallableRequest) => {
+  const trace = StructuredLogger.startTrace(_request, "health-check");
 
   try {
     const stats = AIResponseCache.getStats();
@@ -288,15 +288,15 @@ export const healthCheck = onCall(httpsOptions, async (request: CallableRequest)
 
     return {
       success: true,
-      data: healthData,
+      _data: healthData,
       traceId: trace.traceId
     };
 
-  } catch (error) {
+  } catch (_error) {
     StructuredLogger.errorTrace(trace.traceId, error as Error, {
       function: "healthCheck"
     });
 
-    throw new Error(`Health check error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    throw new Error(`Health check _error: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 });

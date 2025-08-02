@@ -35,7 +35,7 @@ import React, { useEffect, useRef, useState } from 'react';
 interface AdminChatMessage {
     id: string;
     message: string;
-    response: string;
+    _response: string;
     timestamp: string;
     isUser: boolean;
     tokensUsed?: number;
@@ -46,7 +46,7 @@ interface AdminChatMessage {
 }
 
 interface AdminChatResponse {
-    response: string;
+    _response: string;
     sessionId: string;
     timestamp: string;
     tokensUsed: number;
@@ -68,7 +68,7 @@ export default function AdminChatBot({ className }: AdminChatBotProps) {
     const [inputValue, setInputValue] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [sessionId, setSessionId] = useState<string>('');
-    const [error, setError] = useState<string>('');
+    const [_error, setError] = useState<string>('');
     const [activeTab, setActiveTab] = useState('chat');
 
     // Refs
@@ -104,15 +104,15 @@ export default function AdminChatBot({ className }: AdminChatBotProps) {
             const welcomeMessage: AdminChatMessage = {
                 id: `admin_welcome_${Date.now()}`,
                 message: '',
-                response: `🛡️ **RankPilot Admin AI** - System Management Assistant
+                _response: `🛡️ **RankPilot Admin AI** - System Management Assistant
 
 **Available Commands:**
-• \`/system status\` - Get real-time system health
-• \`/users analytics\` - User engagement metrics  
-• \`/performance report\` - System performance analysis
-• \`/errors analyze\` - Error tracking and resolution
-• \`/billing overview\` - Revenue and subscription insights
-• \`/database metrics\` - Database performance stats
+• `/system status` - Get real-time system health
+• `/users analytics` - User engagement metrics  
+• `/performance report` - System performance analysis
+• `/errors analyze` - Error tracking and resolution
+• `/billing overview` - Revenue and subscription insights
+• `/database metrics` - Database performance stats
 
 **Quick Actions:**
 • Monitor system health and performance
@@ -136,7 +136,7 @@ What would you like to analyze today?`,
         const userMessage: AdminChatMessage = {
             id: `admin_user_${Date.now()}`,
             message: inputValue,
-            response: '',
+            _response: '',
             timestamp: new Date().toISOString(),
             isUser: true,
         };
@@ -179,7 +179,7 @@ What would you like to analyze today?`,
             const aiMessage: AdminChatMessage = {
                 id: `admin_ai_${Date.now()}`,
                 message: '',
-                response: data.response,
+                _response: data._response,
                 timestamp: data.timestamp,
                 isUser: false,
                 tokensUsed: data.tokensUsed,
@@ -193,7 +193,7 @@ What would you like to analyze today?`,
 
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to send admin message');
-            console.error('Admin chat error:', err);
+            console.error('Admin chat _error:', err);
         } finally {
             setIsLoading(false);
         }
@@ -296,7 +296,7 @@ What would you like to analyze today?`,
                                 {/* Messages */}
                                 <ScrollArea className="flex-1 p-4">
                                     <div className="space-y-4">
-                                        {messages.map((msg, index) => (
+                                        {messages.map((msg, _index) => (
                                             <div
                                                 key={msg.id}
                                                 className={cn(
@@ -380,7 +380,7 @@ What would you like to analyze today?`,
                                         <Input
                                             ref={inputRef}
                                             value={inputValue}
-                                            onChange={(e) => setInputValue(e.target.value)}
+                                            onChange={(e) => setInputValue(e.target._value)}
                                             onKeyPress={handleKeyPress}
                                             placeholder="Ask about system performance, users, errors..."
                                             disabled={isLoading || !isAdmin}
@@ -407,7 +407,7 @@ What would you like to analyze today?`,
                             <TabsContent value="commands" className="flex-1 mt-0">
                                 <div className="p-4 space-y-3">
                                     <h4 className="text-sm font-medium text-gray-700 mb-3">Quick Commands</h4>
-                                    {quickCommands.map((cmd, index) => (
+                                    {quickCommands.map((cmd, _index) => (
                                         <Button
                                             key={index}
                                             variant="outline"

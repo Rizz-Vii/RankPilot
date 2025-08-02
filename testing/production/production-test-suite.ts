@@ -55,7 +55,7 @@ export class SecurityTestSuite {
 
     private async testCSPHeaders(): Promise<void> {
         try {
-            const response = await this.page.goto('/');
+            const _response = await this.page.goto('/');
             const cspHeader = response?.headers()['content-security-policy'];
 
             const passed = !!cspHeader && cspHeader.includes('default-src');
@@ -65,7 +65,7 @@ export class SecurityTestSuite {
                 details: passed ? 'CSP headers properly configured' : 'Missing or incomplete CSP headers',
                 severity: passed ? 'low' : 'high',
             });
-        } catch (error) {
+        } catch (_error) {
             this.results.push({
                 test: 'CSP Headers',
                 passed: false,
@@ -104,7 +104,7 @@ export class SecurityTestSuite {
                     severity: 'low',
                 });
             }
-        } catch (error) {
+        } catch (_error) {
             this.results.push({
                 test: 'XSS Protection',
                 passed: false,
@@ -120,7 +120,7 @@ export class SecurityTestSuite {
             const injectionPatterns = ["' OR '1'='1", "'; DROP TABLE users; --", "' UNION SELECT * FROM users --"];
 
             for (const pattern of injectionPatterns) {
-                const response = await this.page.goto(`/api/search?q=${encodeURIComponent(pattern)}`);
+                const _response = await this.page.goto(`/api/search?q=${encodeURIComponent(pattern)}`);
                 const status = response?.status();
 
                 // Should return 400/422 for malicious input, not 500
@@ -141,7 +141,7 @@ export class SecurityTestSuite {
                 details: 'No SQL injection vulnerabilities detected',
                 severity: 'low',
             });
-        } catch (error) {
+        } catch (_error) {
             this.results.push({
                 test: 'SQL Injection Protection',
                 passed: false,
@@ -157,7 +157,7 @@ export class SecurityTestSuite {
             const protectedRoutes = ['/dashboard', '/neuroseo', '/settings'];
 
             for (const route of protectedRoutes) {
-                const response = await this.page.goto(route);
+                const _response = await this.page.goto(route);
                 const url = this.page.url();
 
                 // Should redirect to login or show 401
@@ -182,7 +182,7 @@ export class SecurityTestSuite {
                 details: 'Protected routes properly secured',
                 severity: 'low',
             });
-        } catch (error) {
+        } catch (_error) {
             this.results.push({
                 test: 'Authentication Security',
                 passed: false,
@@ -219,7 +219,7 @@ export class SecurityTestSuite {
                     : `${sessionCookies.length - secureSessionsFound} insecure session cookies found`,
                 severity: passed ? 'low' : 'high',
             });
-        } catch (error) {
+        } catch (_error) {
             this.results.push({
                 test: 'Session Security',
                 passed: false,
@@ -243,7 +243,7 @@ export class SecurityTestSuite {
                 details: httpsEnforced ? 'HTTPS properly enforced' : 'HTTP connections allowed',
                 severity: httpsEnforced ? 'low' : 'high',
             });
-        } catch (error) {
+        } catch (_error) {
             this.results.push({
                 test: 'Data Encryption (HTTPS)',
                 passed: false,
@@ -273,7 +273,7 @@ export class LoadTestSuite {
         let errors = 0;
 
         // Simulate concurrent users
-        for (let i = 0; i < this.concurrentUsers; i++) {
+        for (let _i = 0; i < this.concurrentUsers; i++) {
             promises.push(this.simulateUserSession());
         }
 
@@ -281,7 +281,7 @@ export class LoadTestSuite {
 
         results.forEach(result => {
             if (result.status === 'fulfilled') {
-                responseTimes.push(result.value);
+                responseTimes.push(result._value);
             } else {
                 errors++;
             }
@@ -316,7 +316,7 @@ export class LoadTestSuite {
             ];
 
             for (const endpoint of endpoints) {
-                const response = await fetch(`${this.baseUrl}${endpoint}`, {
+                const _response = await fetch(`${this.baseUrl}${endpoint}`, {
                     method: 'GET',
                     headers: {
                         'User-Agent': 'RankPilot-LoadTest/1.0',
@@ -332,8 +332,8 @@ export class LoadTestSuite {
             }
 
             return Date.now() - startTime;
-        } catch (error) {
-            console.error('Load test session failed:', error);
+        } catch (_error) {
+            console.error('Load test session failed:', _error);
             throw error;
         }
     }
@@ -361,7 +361,7 @@ export class MobileTestSuite {
         for (const device of devices) {
             await this.page.setViewportSize(device.viewport);
             const result = await this.testMobileDevice(device.name);
-            results.push(result);
+            results.push(_result);
         }
 
         return results;
@@ -375,7 +375,7 @@ export class MobileTestSuite {
             const vitals = await this.page.evaluate(() => {
                 return new Promise((resolve) => {
                     const metrics = { lcp: 0, fid: 0, cls: 0 };
-                    let collected = 0;
+                    const collected = 0;
 
                     if ('web-vitals' in window) {
                         // Would use actual web-vitals if available
@@ -425,7 +425,7 @@ export class MobileTestSuite {
                 coreWebVitals,
                 accessibility: accessibilityScore,
             };
-        } catch (error) {
+        } catch (_error) {
             return {
                 device: deviceName,
                 passed: false,

@@ -34,8 +34,8 @@ const adminUtils = {
                 });
             }
 
-        } catch (error) {
-            console.error("Error:", error);
+        } catch (_error) {
+            console.error("Error:", _error);
         }
     },
 
@@ -70,8 +70,8 @@ const adminUtils = {
             console.log("After: role=admin, tier=enterprise, status=active");
             console.log("✅ Fixed! Refresh your page now.");
 
-        } catch (error) {
-            console.error("Error fixing user:", error);
+        } catch (_error) {
+            console.error("Error fixing user:", _error);
         }
     }
 };

@@ -30,7 +30,7 @@ interface AuditResponse {
  * @param {Object} request - The Cloud Function request object
  * @return {Promise<AuditResponse>} The SEO audit results
  */
-export const runSeoAudit = onCall(httpsOptions, async (request) => {
+export const runSeoAudit = onCall(httpsOptions, async (_request) => {
   const { url, depth = 1, checkMobile = true } = request.data as AuditRequest;
 
   try {
@@ -40,11 +40,11 @@ export const runSeoAudit = onCall(httpsOptions, async (request) => {
     const prompt = `Perform a comprehensive SEO audit for "${url}" with crawl depth ${depth}.
                    ${checkMobile ? "Include mobile optimization check." : ""}
                    
-                   Page data: ${JSON.stringify(crawlResults).substring(0, 1500)}`;
+                   Page _data: ${JSON.stringify(crawlResults).substring(0, 1500)}`;
 
     // AI call with real processing
     const ai = getAI();
-    const aiResponse = await ai.generate(prompt);
+    const _aiResponse = await ai.generate(prompt);
 
     // Process crawl results into structured audit
     const auditResults = {
@@ -55,8 +55,8 @@ export const runSeoAudit = onCall(httpsOptions, async (request) => {
     };
 
     return auditResults;
-  } catch (error) {
-    console.error("Error generating SEO audit:", error);
+  } catch (_error) {
+    console.error("Error generating SEO audit:", _error);
     throw new Error("Failed to generate SEO audit. Please try again later.");
   }
 });
@@ -84,7 +84,7 @@ async function performWebCrawl(url: string, depth: number, checkMobile: boolean)
 /**
  * Calculate overall SEO score from crawl results
  */
-function calculateOverallScore(crawlResults: any): number {
+function calculateOverallScore(crawlResults: unknown): number {
   let score = 80; // Base score
 
   if (!crawlResults.metaDescription) score -= 10;
@@ -97,7 +97,7 @@ function calculateOverallScore(crawlResults: any): number {
 /**
  * Categorize issues from crawl results
  */
-function categorizeIssues(crawlResults: any) {
+function categorizeIssues(crawlResults: unknown) {
   const issues: {
     critical: string[];
     major: string[];
@@ -126,7 +126,7 @@ function categorizeIssues(crawlResults: any) {
 /**
  * Generate recommendations from crawl results
  */
-function generateRecommendations(crawlResults: any): string[] {
+function generateRecommendations(crawlResults: unknown): string[] {
   const recommendations = [];
 
   if (!crawlResults.metaDescription) {

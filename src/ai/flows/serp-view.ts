@@ -77,7 +77,7 @@ Use the following API keys for enhanced analysis:
 **Instructions:**
 1.  **Generate Organic Results:** Create a list of exactly 10 organic search results. Each result must include a realistic position, title, URL, and a descriptive snippet. The URLs should be varied and look like real websites (e.g., blog posts, documentation, news articles, commercial sites), not just placeholders like 'example.com'.
 2.  **Generate "People Also Ask":** Create a list of 4 relevant questions that users might also ask related to the keyword. For each question, provide a concise, helpful answer.
-3.  **Analyze SERP Features:** Based on the results you are generating, determine which common SERP features are present. For example, if your top result is a direct answer, set \`hasFeaturedSnippet\` to true. If you include image or video results, set the corresponding flags.
+3.  **Analyze SERP Features:** Based on the results you are generating, determine which common SERP features are present. For example, if your top result is a direct answer, set `hasFeaturedSnippet` to true. If you include image or video results, set the corresponding flags.
 4.  **Realism:** The titles, URLs, and snippets should be plausible and highly relevant to the keyword.
 5.  **Strictly Adhere to Output Format:** Your entire output MUST be a single, valid JSON object that conforms to the provided output schema.
 `,

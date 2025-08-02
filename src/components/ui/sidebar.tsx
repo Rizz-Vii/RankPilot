@@ -98,7 +98,7 @@ const SidebarProvider = forwardRef<HTMLDivElement, SidebarProviderProps>(
           .find((c) => c.trim().startsWith(`${SIDEBAR_COOKIE_NAME}=`));
 
         if (cookie) {
-          const value = cookie.split("=")[1];
+          const _value = cookie.split("=")[1];
           const newPinned = value === "pinned";
           setPinned(newPinned);
           setOpen(newPinned); // A pinned sidebar should always be open initially
@@ -107,7 +107,7 @@ const SidebarProvider = forwardRef<HTMLDivElement, SidebarProviderProps>(
           setPinned(initialPinned);
           setOpen(initialPinned);
         }
-      } catch (error) {
+      } catch (_error) {
         const initialPinned = defaultOpen && !isMobile;
         setPinned(initialPinned);
         setOpen(initialPinned);
@@ -143,7 +143,7 @@ const SidebarProvider = forwardRef<HTMLDivElement, SidebarProviderProps>(
 
     // Adds a keyboard shortcut to toggle the sidebar.
     useEffect(() => {
-      const handleKeyDown = (event: KeyboardEvent) => {
+      const handleKeyDown = (_event: KeyboardEvent) => {
         if (
           event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
           (event.metaKey || event.ctrlKey)
@@ -310,8 +310,8 @@ const SidebarTrigger = forwardRef<
       variant="ghost"
       size="icon"
       className={cn("hidden md:flex", className)}
-      onClick={(event) => {
-        onClick?.(event);
+      onClick={(_event) => {
+        onClick?.(_event);
         toggleSidebar();
       }}
       {...props}
@@ -413,7 +413,7 @@ const SidebarMenuItem = motion.create(
 SidebarMenuItem.displayName = "SidebarMenuItem";
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md py-2 px-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[state=collapsed]:!p-0 group-data-[state=collapsed]:justify-center",
+  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md py-2 px-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-_item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[state=collapsed]:!p-0 group-data-[state=collapsed]:justify-center",
   {
     variants: {
       variant: {

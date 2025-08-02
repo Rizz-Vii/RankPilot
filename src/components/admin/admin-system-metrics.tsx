@@ -62,14 +62,14 @@ export default function AdminSystemMetrics() {
 
       setMetrics(simulatedMetrics);
       setLastRefresh(new Date());
-    } catch (error) {
-      console.error("Error fetching system metrics:", error);
+    } catch (_error) {
+      console.error("Error fetching system metrics:", _error);
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusBadge = (metric: string, value: number) => {
+  const getStatusBadge = (metric: string, _value: number) => {
     switch (metric) {
       case "errorRate":
         if (value < 1)
@@ -96,7 +96,7 @@ export default function AdminSystemMetrics() {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[...Array(3)].map((_, i) => (
+          {[...Array(3)].map((_, _i) => (
             <Card key={i}>
               <CardContent className="p-6">
                 <div className="animate-pulse">

@@ -20,8 +20,8 @@ interface UserActivity {
   id: string;
   type: string;
   tool: string;
-  timestamp: any; // Firestore Timestamp
-  details?: any;
+  timestamp: unknown; // Firestore Timestamp
+  details?: unknown;
   resultsSummary?: string;
 }
 
@@ -29,7 +29,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   role: string | null;
-  profile: any;
+  profile: unknown;
   activities: UserActivity[];
 }
 
@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // In development, also listen for mock auth events
     if (isDevelopment) {
-      const handleMockAuthEvent = (event: CustomEvent) => {
+      const handleMockAuthEvent = (_event: CustomEvent) => {
         const mockUser = event.detail;
         handleAuthStateChange(mockUser);
       };
@@ -86,8 +86,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Ensure user has proper subscription data
       try {
         await ensureUserSubscription(currentUser.uid, currentUser.email || "");
-      } catch (error) {
-        console.error("Error ensuring user subscription:", error);
+      } catch (_error) {
+        console.error("Error ensuring user subscription:", _error);
       }
 
       // Fetch user profile and role
@@ -121,7 +121,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }) as UserActivity
         );
         setActivities(fetchedActivities);
-      } catch (error) {
+      } catch (_error) {
         console.log("Activities not found, setting empty array");
         setActivities([]);
       }

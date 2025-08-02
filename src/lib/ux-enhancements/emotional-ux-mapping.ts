@@ -233,7 +233,7 @@ export class EmotionalUXMapper {
     // Store locally for immediate use
     if (typeof window !== "undefined") {
       const stored = this.getStoredEmotionalData(userId);
-      stored.push(data);
+      stored.push(_data);
       localStorage.setItem(
         `${this.STORAGE_KEY}_${userId}`,
         JSON.stringify(stored.slice(-50)) // Keep last 50 entries
@@ -241,10 +241,10 @@ export class EmotionalUXMapper {
     }
 
     // In production, this would also send to analytics
-    console.log("Emotional state tracked:", data);
+    console.log("Emotional state tracked:", _data);
   }
 
-  static getStoredEmotionalData(userId: string): any[] {
+  static getStoredEmotionalData(userId: string): unknown[] {
     if (typeof window === "undefined") return [];
 
     const stored = localStorage.getItem(`${this.STORAGE_KEY}_${userId}`);

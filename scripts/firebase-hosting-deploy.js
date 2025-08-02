@@ -41,11 +41,11 @@ async function deployToFirebase() {
         let stdout = '';
         let stderr = '';
 
-        child.stdout.on('data', (data) => {
+        child.stdout.on('data', (_data) => {
             stdout += data.toString();
         });
 
-        child.stderr.on('data', (data) => {
+        child.stderr.on('data', (_data) => {
             stderr += data.toString();
         });
 
@@ -66,17 +66,17 @@ async function deployToFirebase() {
 
                     if (jsonLine) {
                         const result = JSON.parse(jsonLine);
-                        originalConsole.log(JSON.stringify(result, null, 2));
-                        resolve(result);
+                        originalConsole.log(JSON.stringify(_result, null, 2));
+                        resolve(_result);
                     } else {
                         // Fallback: output the full stdout
                         originalConsole.log(stdout);
                         resolve({ status: 'success', message: 'Deployment completed' });
                     }
-                } catch (error) {
-                    originalConsole.error('Failed to parse JSON response:', error.message);
+                } catch (_error) {
+                    originalConsole.error('Failed to parse JSON _response:', error.message);
                     originalConsole.error('Raw output:', stdout);
-                    reject(error);
+                    reject(_error);
                 }
             } else {
                 originalConsole.error('Deployment failed with code:', code);
@@ -85,19 +85,19 @@ async function deployToFirebase() {
             }
         });
 
-        child.on('error', (error) => {
+        child.on('error', (_error) => {
             originalConsole.error('Failed to start Firebase CLI:', error.message);
-            reject(error);
+            reject(_error);
         });
     });
 }
 
 // Run deployment
 deployToFirebase()
-    .then((result) => {
+    .then((_result) => {
         process.exit(0);
     })
-    .catch((error) => {
-        originalConsole.error('Deployment error:', error.message);
+    .catch((_error) => {
+        originalConsole.error('Deployment _error:', error.message);
         process.exit(1);
     });

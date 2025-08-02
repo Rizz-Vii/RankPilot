@@ -28,7 +28,7 @@ export class AppError extends Error {
   }
 }
 
-export function handleError(error: unknown, req: NextRequest): NextResponse {
+export function handleError(error: unknown, _req: NextRequest): NextResponse {
   // Log the error
   if (error instanceof Error) {
     const errorContext = {
@@ -42,14 +42,14 @@ export function handleError(error: unknown, req: NextRequest): NextResponse {
 
   // Format the error response
   if (error instanceof AppError) {
-    const response: ErrorResponse = {
+    const _response: ErrorResponse = {
       error: {
         code: error.code,
         message: error.message,
         ...(error.details ? { details: error.details } : {}),
       },
     };
-    return NextResponse.json(response, { status: error.statusCode });
+    return NextResponse.json(_response, { status: error.statusCode });
   }
 
   // Handle unexpected errors
@@ -66,10 +66,10 @@ export function handleError(error: unknown, req: NextRequest): NextResponse {
 }
 
 // Example usage in API route:
-// export async function POST(req: NextRequest) {
+// export async function POST(_req: NextRequest) {
 //   try {
 //     // Your API logic here
 //   } catch (error) {
-//     return handleError(error, req);
+//     return handleError(error, _req);
 //   }
 // }

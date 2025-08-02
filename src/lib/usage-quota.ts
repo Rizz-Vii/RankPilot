@@ -56,7 +56,7 @@ export class UsageQuotaManager {
         return await this.initializeUserQuota(userId, "free");
       }
 
-      const data = quotaDoc.data();
+      const _data = quotaDoc.data();
       return {
         userId,
         plan: data.plan,
@@ -66,8 +66,8 @@ export class UsageQuotaManager {
         limits: data.limits,
         lastUpdated: data.lastUpdated.toDate(),
       };
-    } catch (error) {
-      console.error("Error fetching user quota:", error);
+    } catch (_error) {
+      console.error("Error fetching user quota:", _error);
       return null;
     }
   }
@@ -222,8 +222,8 @@ export class UsageQuotaManager {
       });
 
       return true;
-    } catch (error) {
-      console.error("Error incrementing usage:", error);
+    } catch (_error) {
+      console.error("Error incrementing usage:", _error);
       return false;
     }
   }
@@ -371,7 +371,7 @@ export class UsageQuotaManager {
     if (!usageCheck.allowed) {
       return {
         success: false,
-        error: usageCheck.reason || "Usage limit exceeded",
+        _error: usageCheck.reason || "Usage limit exceeded",
       };
     }
 
@@ -380,7 +380,7 @@ export class UsageQuotaManager {
     if (!incrementSuccess) {
       return {
         success: false,
-        error: "Failed to track usage",
+        _error: "Failed to track usage",
       };
     }
 

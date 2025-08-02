@@ -5,9 +5,9 @@
 
 // Simple logger for production
 const logger = {
-    info: (message: string, data?: any) => console.log(`[NeuroSEO] ${message}`, data),
-    warn: (message: string, data?: any) => console.warn(`[NeuroSEO] ${message}`, data),
-    error: (message: string, data?: any) => console.error(`[NeuroSEO] ${message}`, data),
+    info: (message: string, data?: unknown) => console.log(`[NeuroSEO] ${message}`, _data),
+    warn: (message: string, data?: unknown) => console.warn(`[NeuroSEO] ${message}`, _data),
+    _error: (message: string, data?: unknown) => console.error(`[NeuroSEO] ${message}`, _data),
 };
 
 interface NeuroSEOAnalysisRequest {
@@ -57,7 +57,7 @@ interface NeuroSEOReport {
 }
 
 interface CacheEntry {
-    data: NeuroSEOReport;
+    _data: NeuroSEOReport;
     timestamp: number;
     accessCount: number;
     lastAccessed: number;
@@ -84,9 +84,9 @@ export class EnhancedNeuroSEOOrchestrator {
         return EnhancedNeuroSEOOrchestrator.instance;
     }
 
-    async runAnalysis(request: NeuroSEOAnalysisRequest): Promise<NeuroSEOReport> {
+    async runAnalysis(_request: NeuroSEOAnalysisRequest): Promise<NeuroSEOReport> {
         const startTime = performance.now();
-        const cacheKey = this.generateCacheKey(request);
+        const cacheKey = this.generateCacheKey(_request);
 
         logger.info('NeuroSEO™ Analysis Request', {
             urls: request.urls.length,
@@ -112,7 +112,7 @@ export class EnhancedNeuroSEOOrchestrator {
                 cacheKey: cacheKey.substring(0, 16) + '...'
             });
             const result = await this.processingQueue.get(cacheKey)!;
-            return { ...result, cached: false };
+            return { ..._result, cached: false };
         }
 
         // Rate limiting check
@@ -125,13 +125,13 @@ export class EnhancedNeuroSEOOrchestrator {
         }
 
         // Start new analysis
-        const analysisPromise = this.performAnalysis(request);
+        const analysisPromise = this.performAnalysis(_request);
         this.processingQueue.set(cacheKey, analysisPromise);
         this.activeRequests++;
 
         try {
             const result = await analysisPromise;
-            this.setCache(cacheKey, result);
+            this.setCache(cacheKey, _result);
 
             const duration = performance.now() - startTime;
             logger.info('NeuroSEO™ Analysis Complete', {
@@ -141,10 +141,10 @@ export class EnhancedNeuroSEOOrchestrator {
                 urlsProcessed: result.urls.length
             });
 
-            return { ...result, cached: false };
-        } catch (error) {
+            return { ..._result, cached: false };
+        } catch (_error) {
             logger.error('NeuroSEO™ Analysis Failed', {
-                error: error instanceof Error ? error.message : 'Unknown error',
+                _error: error instanceof Error ? error.message : 'Unknown error',
                 cacheKey: cacheKey.substring(0, 16) + '...',
                 duration: Math.round(performance.now() - startTime)
             });
@@ -155,7 +155,7 @@ export class EnhancedNeuroSEOOrchestrator {
         }
     }
 
-    private async performAnalysis(request: NeuroSEOAnalysisRequest): Promise<NeuroSEOReport> {
+    private async performAnalysis(_request: NeuroSEOAnalysisRequest): Promise<NeuroSEOReport> {
         const analysisId = this.generateAnalysisId();
 
         // Memory-optimized processing with chunking
@@ -169,7 +169,7 @@ export class EnhancedNeuroSEOOrchestrator {
                 analysisId
             });
 
-            const chunkResults = await this.processUrlChunk(chunk, request);
+            const chunkResults = await this.processUrlChunk(chunk, _request);
             analysisResults.push(...chunkResults);
 
             // Allow garbage collection between chunks
@@ -178,10 +178,10 @@ export class EnhancedNeuroSEOOrchestrator {
             }
         }
 
-        return this.generateComprehensiveReport(analysisResults, request, analysisId);
+        return this.generateComprehensiveReport(analysisResults, _request, analysisId);
     }
 
-    private async processUrlChunk(urls: string[], request: NeuroSEOAnalysisRequest) {
+    private async processUrlChunk(urls: string[], _request: NeuroSEOAnalysisRequest) {
         // Simulate AI analysis processing with realistic delays
         const promises = urls.map(async (url) => {
             const mockDelay = 500 + Math.random() * 1000; // 500-1500ms realistic API delay
@@ -202,19 +202,19 @@ export class EnhancedNeuroSEOOrchestrator {
     }
 
     private generateComprehensiveReport(
-        analysisResults: any[],
-        request: NeuroSEOAnalysisRequest,
+        analysisResults: unknown[],
+        _request: NeuroSEOAnalysisRequest,
         analysisId: string
     ): NeuroSEOReport {
         const avgScore = (field: string) =>
-            analysisResults.reduce((sum, result) => sum + result[field], 0) / analysisResults.length;
+            analysisResults.reduce((sum, _result) => sum + result[field], 0) / analysisResults.length;
 
         const overallScore = Math.round(
             (avgScore('seoScore') + avgScore('performance') + avgScore('accessibility') + avgScore('bestPractices')) / 4
         );
 
         const allKeywords = analysisResults.flatMap(result => result.keywords);
-        const totalBacklinks = analysisResults.reduce((sum, result) => sum + result.backlinks.total, 0);
+        const totalBacklinks = analysisResults.reduce((sum, _result) => sum + result.backlinks.total, 0);
 
         return {
             analysisId,
@@ -294,7 +294,7 @@ export class EnhancedNeuroSEOOrchestrator {
         return baseRecommendations;
     }
 
-    private generateCacheKey(request: NeuroSEOAnalysisRequest): string {
+    private generateCacheKey(_request: NeuroSEOAnalysisRequest): string {
         const keyData = {
             urls: request.urls.sort(),
             type: request.analysisType,
@@ -307,8 +307,8 @@ export class EnhancedNeuroSEOOrchestrator {
         return 'neuro_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
     }
 
-    private getFromCache(key: string): NeuroSEOReport | null {
-        const cached = this.cache.get(key);
+    private getFromCache(_key: string): NeuroSEOReport | null {
+        const cached = this.cache.get(_key);
 
         if (cached && (Date.now() - cached.timestamp) < this.CACHE_DURATION) {
             // Update access statistics
@@ -318,20 +318,20 @@ export class EnhancedNeuroSEOOrchestrator {
         }
 
         if (cached) {
-            this.cache.delete(key); // Remove expired cache
+            this.cache.delete(_key); // Remove expired cache
         }
 
         return null;
     }
 
-    private setCache(key: string, data: NeuroSEOReport): void {
+    private setCache(_key: string, _data: NeuroSEOReport): void {
         // Implement LRU eviction if cache is full
         if (this.cache.size >= this.MAX_CACHE_SIZE) {
             this.evictLRU();
         }
 
-        this.cache.set(key, {
-            data,
+        this.cache.set(_key, {
+            _data,
             timestamp: Date.now(),
             accessCount: 1,
             lastAccessed: Date.now()
@@ -348,7 +348,7 @@ export class EnhancedNeuroSEOOrchestrator {
         let oldestKey = '';
         let oldestTime = Date.now();
 
-        for (const [key, entry] of this.cache.entries()) {
+        for (const [_key, entry] of this.cache.entries()) {
             if (entry.lastAccessed < oldestTime) {
                 oldestTime = entry.lastAccessed;
                 oldestKey = key;
@@ -368,9 +368,9 @@ export class EnhancedNeuroSEOOrchestrator {
         const now = Date.now();
         let removed = 0;
 
-        for (const [key, entry] of this.cache.entries()) {
+        for (const [_key, entry] of this.cache.entries()) {
             if ((now - entry.timestamp) > this.CACHE_DURATION) {
-                this.cache.delete(key);
+                this.cache.delete(_key);
                 removed++;
             }
         }
@@ -399,7 +399,7 @@ export class EnhancedNeuroSEOOrchestrator {
     private chunkArray<T>(array: T[], chunkSize: number): T[][] {
         const chunks = [];
         for (let i = 0; i < array.length; i += chunkSize) {
-            chunks.push(array.slice(i, i + chunkSize));
+            chunks.push(array.slice(_i, i + chunkSize));
         }
         return chunks;
     }
@@ -411,8 +411,8 @@ export class EnhancedNeuroSEOOrchestrator {
             maxSize: this.MAX_CACHE_SIZE,
             activeRequests: this.activeRequests,
             maxConcurrent: this.MAX_CONCURRENT_REQUESTS,
-            entries: Array.from(this.cache.entries()).map(([key, entry]) => ({
-                key: key.substring(0, 16) + '...',
+            entries: Array.from(this.cache.entries()).map(([_key, entry]) => ({
+                _key: key.substring(0, 16) + '...',
                 age: Date.now() - entry.timestamp,
                 accessCount: entry.accessCount,
                 lastAccessed: Date.now() - entry.lastAccessed

@@ -14,7 +14,7 @@ const createTransporter = () => {
 };
 
 // Email templates
-const getReceiptEmailTemplate = (data: {
+const getReceiptEmailTemplate = (_data: {
   customerName: string;
   plan: string;
   amount: string;
@@ -132,7 +132,7 @@ const getReceiptEmailTemplate = (data: {
   `;
 };
 
-const getWelcomeEmailTemplate = (data: {
+const getWelcomeEmailTemplate = (_data: {
   customerName: string;
   plan: string;
 }) => {
@@ -149,7 +149,7 @@ const getWelcomeEmailTemplate = (data: {
         .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
         .feature-list { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
         .feature-item { padding: 10px 0; border-bottom: 1px solid #eee; display: flex; align-items: center; }
-        .feature-item:last-child { border-bottom: none; }
+        .feature-_item:last-child { border-bottom: none; }
         .feature-icon { color: #667eea; margin-right: 10px; }
         .btn { display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 5px; }
         .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
@@ -271,11 +271,11 @@ export const sendPaymentReceiptEmail = async (
       html: getReceiptEmailTemplate(paymentData),
     };
 
-    const result = await transporter.sendMail(mailOptions);
+    const _result = await transporter.sendMail(mailOptions);
     console.log("Receipt email sent:", result.messageId);
     return { success: true, messageId: result.messageId };
-  } catch (error) {
-    console.error("Error sending receipt email:", error);
+  } catch (_error) {
+    console.error("Error sending receipt email:", _error);
     throw error;
   }
 };
@@ -297,11 +297,11 @@ export const sendWelcomeEmail = async (
       html: getWelcomeEmailTemplate(userData),
     };
 
-    const result = await transporter.sendMail(mailOptions);
+    const _result = await transporter.sendMail(mailOptions);
     console.log("Welcome email sent:", result.messageId);
     return { success: true, messageId: result.messageId };
-  } catch (error) {
-    console.error("Error sending welcome email:", error);
+  } catch (_error) {
+    console.error("Error sending welcome email:", _error);
     throw error;
   }
 };
@@ -334,11 +334,11 @@ export const sendBillingReminderEmail = async (
       `,
     };
 
-    const result = await transporter.sendMail(mailOptions);
+    const _result = await transporter.sendMail(mailOptions);
     console.log("Billing reminder email sent:", result.messageId);
     return { success: true, messageId: result.messageId };
-  } catch (error) {
-    console.error("Error sending billing reminder email:", error);
+  } catch (_error) {
+    console.error("Error sending billing reminder email:", _error);
     throw error;
   }
 };
@@ -359,8 +359,8 @@ export const getUserDataForEmail = async (userId: string) => {
       };
     }
     return null;
-  } catch (error) {
-    console.error("Error fetching user data:", error);
+  } catch (_error) {
+    console.error("Error fetching user _data:", _error);
     throw error;
   }
 };

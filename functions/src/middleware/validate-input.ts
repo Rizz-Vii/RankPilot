@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { HttpsError } from "firebase-functions/v2/https";
 
-export function validateInput<T>(schema: z.Schema<T>, data: unknown): T {
+export function validateInput<T>(schema: z.Schema<T>, _data: unknown): T {
   try {
-    return schema.parse(data);
-  } catch (error) {
+    return schema.parse(_data);
+  } catch (_error) {
     if (error instanceof z.ZodError) {
       throw new HttpsError(
         "invalid-argument",

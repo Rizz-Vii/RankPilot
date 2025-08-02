@@ -19,7 +19,7 @@ function getDocsFolders() {
             .filter(item => item.isDirectory())
             .map(item => item.name)
             .sort();
-    } catch (error) {
+    } catch (_error) {
         console.error('❌ Error reading docs directory:', error.message);
         return [];
     }
@@ -36,7 +36,7 @@ function getMarkdownFiles(dirPath) {
             .filter(item => item.isFile() && item.name.endsWith('.md'))
             .map(item => path.join(dirPath, item.name))
             .sort();
-    } catch (error) {
+    } catch (_error) {
         console.warn(`⚠️ Error reading directory ${dirPath}:`, error.message);
         return [];
     }
@@ -50,7 +50,7 @@ function readFileContent(filePath) {
             return fs.readFileSync(fullPath, 'utf8');
         }
         return null;
-    } catch (error) {
+    } catch (_error) {
         console.warn(`⚠️ Could not read file: ${filePath}`);
         return null;
     }
@@ -79,19 +79,19 @@ function consolidateFolder(folderName) {
     const consolidatedFileName = `${folderName.toUpperCase()}_CONSOLIDATED.md`;
 
     let consolidatedContent = '';
-    let validSources = [];
+    const validSources = [];
 
     // Header for consolidated file
     consolidatedContent += `# ${folderName.charAt(0).toUpperCase() + folderName.slice(1)} Documentation Consolidated\n\n`;
     consolidatedContent += `**Generated:** ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}\n`;
-    consolidatedContent += `**Folder:** \`docs/${folderName}\`\n`;
+    consolidatedContent += `**Folder:** `docs/${folderName}`\n`;
     consolidatedContent += `**Files Consolidated:** ${markdownFiles.length}\n`;
     consolidatedContent += `**Source Files:** ${markdownFiles.map(f => path.basename(f)).join(', ')}\n\n`;
     consolidatedContent += `---\n\n`;
 
     // Add table of contents
     consolidatedContent += `## Table of Contents\n\n`;
-    markdownFiles.forEach((file, index) => {
+    markdownFiles.forEach((file, _index) => {
         const sectionTitle = path.basename(file, '.md').replace(/_/g, ' ');
         const anchor = sectionTitle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
         consolidatedContent += `${index + 1}. [${sectionTitle}](#${anchor})\n`;
@@ -99,7 +99,7 @@ function consolidateFolder(folderName) {
     consolidatedContent += `\n---\n\n`;
 
     // Process each file in the folder
-    markdownFiles.forEach((file, index) => {
+    markdownFiles.forEach((file, _index) => {
         const content = readFileContent(file);
 
         if (content) {
@@ -108,11 +108,11 @@ function consolidateFolder(folderName) {
             // Add section header
             const sectionTitle = path.basename(file, '.md').replace(/_/g, ' ');
             consolidatedContent += `## ${index + 1}. ${sectionTitle}\n\n`;
-            consolidatedContent += `**Source File:** \`${file}\`\n`;
+            consolidatedContent += `**Source File:** `${file}`\n`;
             consolidatedContent += `**Last Modified:** ${fs.statSync(path.join(DOCS_DIR, file)).mtime.toLocaleDateString()}\n\n`;
 
             // Add content (remove existing top-level title if present)
-            let cleanContent = content
+            const cleanContent = content
                 .replace(/^#\s+.*$/m, '')  // Remove first # title
                 .replace(/^#{1,6}\s+/gm, (match) => '#' + match)  // Increase heading levels
                 .trim();
@@ -184,7 +184,7 @@ function copyDirectoryRecursive(src, dest) {
 
 // Generate comprehensive summary
 function generateComprehensiveSummary(consolidationResults) {
-    const totalFiles = consolidationResults.reduce((sum, result) => sum + result.fileCount, 0);
+    const totalFiles = consolidationResults.reduce((sum, _result) => sum + result.fileCount, 0);
     const successfulConsolidations = consolidationResults.filter(r => r.success).length;
 
     const summaryContent = `# Complete Documentation Consolidation Summary
@@ -199,7 +199,7 @@ function generateComprehensiveSummary(consolidationResults) {
 ${consolidationResults.map(result => {
         if (result.success) {
             return `### ✅ ${result.consolidatedFile}
-- **Source Folder:** \`docs/${result.consolidatedFile.toLowerCase().replace('_consolidated.md', '')}\`
+- **Source Folder:** `docs/${result.consolidatedFile.toLowerCase().replace('_consolidated.md', '')}`
 - **Files Merged:** ${result.fileCount}
 - **Status:** Successfully consolidated`;
         } else {
@@ -213,17 +213,17 @@ ${consolidationResults.map(result => {
 ### Root Documentation Files
 ${consolidationResults
             .filter(r => r.success)
-            .map(r => `- \`${r.consolidatedFile}\` (${r.fileCount} files consolidated)`)
+            .map(r => `- `${r.consolidatedFile}` (${r.fileCount} files consolidated)`)
             .join('\n')}
 
 ### Existing Comprehensive Files
-- \`COMPREHENSIVE_PILOTBUDDY_INTELLIGENCE.md\`
-- \`COMPREHENSIVE_DEVELOPMENT_WORKFLOW.md\`
-- \`COMPREHENSIVE_TESTING_INFRASTRUCTURE.md\`
-- \`COMPREHENSIVE_SYSTEM_ARCHITECTURE.md\`
-- \`COMPREHENSIVE_SECURITY_PROTOCOLS.md\`
-- \`COMPREHENSIVE_MOBILE_PERFORMANCE.md\`
-- \`COMPREHENSIVE_PROJECT_STATUS.md\`
+- `COMPREHENSIVE_PILOTBUDDY_INTELLIGENCE.md`
+- `COMPREHENSIVE_DEVELOPMENT_WORKFLOW.md`
+- `COMPREHENSIVE_TESTING_INFRASTRUCTURE.md`
+- `COMPREHENSIVE_SYSTEM_ARCHITECTURE.md`
+- `COMPREHENSIVE_SECURITY_PROTOCOLS.md`
+- `COMPREHENSIVE_MOBILE_PERFORMANCE.md`
+- `COMPREHENSIVE_PROJECT_STATUS.md`
 
 ## Benefits Achieved
 
@@ -236,7 +236,7 @@ ${consolidationResults
 
 ## Backup Information
 
-**Complete Backup Location:** \`${BACKUP_DIR}\`
+**Complete Backup Location:** `${BACKUP_DIR}`
 - Original folder structure preserved
 - All files backed up before removal
 - Safe restoration possible if needed
@@ -293,7 +293,7 @@ function main() {
         console.log(`💾 Full backup: ${BACKUP_DIR}`);
         console.log('\n🎯 All docs subdirectories have been consolidated into root-level files!');
 
-    } catch (error) {
+    } catch (_error) {
         console.error('❌ Complete consolidation failed:', error.message);
         console.error(error.stack);
         process.exit(1);

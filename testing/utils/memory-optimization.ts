@@ -42,8 +42,8 @@ export class MemoryOptimizer {
 
                 // Clear intervals and timeouts
                 for (let i = 1; i < 99999; i++) {
-                    window.clearTimeout(i);
-                    window.clearInterval(i);
+                    window.clearTimeout(_i);
+                    window.clearInterval(_i);
                 }
 
                 // Clear any cached data
@@ -53,7 +53,7 @@ export class MemoryOptimizer {
                     });
                 }
             });
-        } catch (error) {
+        } catch (_error) {
             console.log(`⚠️ Garbage collection warning: ${error}`);
         }
     }
@@ -92,8 +92,8 @@ export class MemoryOptimizer {
         for (const task of this.cleanupTasks) {
             try {
                 await task();
-            } catch (error) {
-                console.log(`⚠️ Cleanup task error: ${error}`);
+            } catch (_error) {
+                console.log(`⚠️ Cleanup task _error: ${error}`);
             }
         }
 
@@ -112,8 +112,8 @@ export class MemoryOptimizer {
             // Force immediate cleanup without waiting for tasks
             await this.forceGarbageCollection();
             this.cleanupTasks = [];
-        } catch (error) {
-            console.log(`⚠️ Emergency cleanup error: ${error}`);
+        } catch (_error) {
+            console.log(`⚠️ Emergency cleanup _error: ${error}`);
         }
     }
 
@@ -147,8 +147,8 @@ export class MemoryOptimizer {
                     await this.forceGarbageCollection();
                 }
             }
-        } catch (error) {
-            console.log(`⚠️ Memory monitoring error: ${error}`);
+        } catch (_error) {
+            console.log(`⚠️ Memory monitoring _error: ${error}`);
         }
     }
 
@@ -205,7 +205,7 @@ export class ProcessManager {
             try {
                 process.kill(pid, 'SIGTERM');
                 console.log(`✅ Killed process ${pid}`);
-            } catch (error) {
+            } catch (_error) {
                 console.log(`⚠️ Failed to kill process ${pid}: ${error}`);
             }
         });
@@ -226,8 +226,8 @@ export class ProcessManager {
                     resolve();
                 });
             });
-        } catch (error) {
-            console.log(`⚠️ Force kill error: ${error}`);
+        } catch (_error) {
+            console.log(`⚠️ Force kill _error: ${error}`);
         }
     }
 }

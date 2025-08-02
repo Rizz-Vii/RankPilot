@@ -29,7 +29,7 @@ export const TOOL_NAMES = {
 export interface ActivityData {
   type: string;
   tool: string;
-  timestamp: any; // Firestore serverTimestamp()
+  timestamp: unknown; // Firestore serverTimestamp()
   details: Record<string, any>;
   resultsSummary: string;
 }

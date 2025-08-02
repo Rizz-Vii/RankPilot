@@ -34,8 +34,8 @@ export function Confetti({
   ];
 
   useEffect(() => {
-    const newParticles = Array.from({ length: particleCount }, (_, i) => ({
-      id: i,
+    const newParticles = Array.from({ length: particleCount }, (_, _i) => ({
+      id: _i,
       left: Math.random() * 100,
       animationDelay: Math.random() * 3000,
       color: colors[Math.floor(Math.random() * colors.length)],

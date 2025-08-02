@@ -11,9 +11,9 @@ import { colors, getStatusColor } from '@/lib/design-system/colors';
 
 interface MetricCardProps {
     title: string;
-    value: string | number;
+    _value: string | number;
     change?: {
-        value: string;
+        _value: string;
         trend: 'up' | 'down' | 'neutral';
     };
     icon?: React.ReactNode;
@@ -23,7 +23,7 @@ interface MetricCardProps {
 
 export const EnhancedMetricCard: React.FC<MetricCardProps> = ({
     title,
-    value,
+    _value,
     change,
     icon,
     subtitle,
@@ -194,7 +194,7 @@ interface ProjectCardProps {
     progress: number;
     metrics: {
         keywords: { current: number; target: number };
-        traffic: { value: string; trend: 'up' | 'down' };
+        traffic: { _value: string; trend: 'up' | 'down' };
     };
     team: Array<{ name: string; avatar?: string }>;
     dueDate: string;
@@ -284,7 +284,7 @@ export const EnhancedProjectCard: React.FC<ProjectCardProps> = ({
             {/* Footer */}
             <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                 <div className="flex -space-x-2">
-                    {team.slice(0, 3).map((member, index) => (
+                    {team.slice(0, 3).map((member, _index) => (
                         <div
                             key={index}
                             className="w-8 h-8 rounded-full bg-gray-300 border-2 border-white flex items-center justify-center"

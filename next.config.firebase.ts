@@ -58,16 +58,16 @@ const nextConfig = {
                 source: '/(.*)',
                 headers: [
                     {
-                        key: 'X-Content-Type-Options',
-                        value: 'nosniff',
+                        _key: 'X-Content-Type-Options',
+                        _value: 'nosniff',
                     },
                     {
-                        key: 'X-Frame-Options',
-                        value: 'DENY',
+                        _key: 'X-Frame-Options',
+                        _value: 'DENY',
                     },
                     {
-                        key: 'X-XSS-Protection',
-                        value: '1; mode=block',
+                        _key: 'X-XSS-Protection',
+                        _value: '1; mode=block',
                     },
                 ],
             },
@@ -75,7 +75,7 @@ const nextConfig = {
     },
 
     // Webpack configuration for clean builds
-    webpack: (config: any, { buildId, dev, isServer, defaultLoaders, webpack }: any) => {
+    webpack: (config: unknown, { buildId, dev, isServer, defaultLoaders, webpack }: unknown) => {
         // Suppress webpack warnings during deployment
         if (isFirebaseDeployment) {
             config.stats = 'errors-only';

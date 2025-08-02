@@ -18,8 +18,8 @@ if (!getApps().length) {
       credential: cert("./firebase-admin-key.json"),
       projectId: "rankpilot-h3jpc",
     });
-  } catch (error) {
-    console.error("❌ Failed to initialize Firebase Admin:", error);
+  } catch (_error) {
+    console.error("❌ Failed to initialize Firebase Admin:", _error);
     throw error;
   }
 }
@@ -44,7 +44,7 @@ class FixedDatabaseSeeder {
     const tiers = ['free', 'starter', 'agency', 'enterprise', 'admin'];
     const tierDistribution = [0.7, 0.2, 0.08, 0.02, 0.001]; // Realistic distribution
 
-    for (let i = 0; i < 1000; i++) {
+    for (let _i = 0; i < 1000; i++) {
       const userId = `user_${String(i + 1).padStart(4, '0')}`;
       this.userIds.push(userId);
 
@@ -53,7 +53,7 @@ class FixedDatabaseSeeder {
       let cumulativeProb = 0;
       let tier = 'free';
       
-      for (let j = 0; j < tierDistribution.length; j++) {
+      for (let _j = 0; j < tierDistribution.length; j++) {
         cumulativeProb += tierDistribution[j];
         if (random <= cumulativeProb) {
           tier = tiers[j];
@@ -114,7 +114,7 @@ class FixedDatabaseSeeder {
     for (const userId of this.userIds.slice(0, 200)) { // Limit for efficiency
       const analysisCount = Math.floor(Math.random() * 10) + 1;
       
-      for (let i = 0; i < analysisCount; i++) {
+      for (let _i = 0; i < analysisCount; i++) {
         const analysis = {
           userId,
           url: `https://example-${totalAnalyses}.com`,
@@ -164,7 +164,7 @@ class FixedDatabaseSeeder {
     for (const userId of this.userIds.slice(0, 300)) {
       const keywordCount = Math.floor(Math.random() * 15) + 5;
       
-      for (let i = 0; i < keywordCount; i++) {
+      for (let _i = 0; i < keywordCount; i++) {
         const keyword = {
           userId,
           keyword: keywords[Math.floor(Math.random() * keywords.length)] + ` ${i + 1}`,
@@ -206,7 +206,7 @@ class FixedDatabaseSeeder {
     for (const userId of this.userIds.slice(0, 250)) {
       const auditCount = Math.floor(Math.random() * 8) + 2;
       
-      for (let i = 0; i < auditCount; i++) {
+      for (let _i = 0; i < auditCount; i++) {
         const audit = {
           userId,
           url: `https://audit-${totalAudits}.com`,
@@ -248,7 +248,7 @@ class FixedDatabaseSeeder {
     for (const userId of this.userIds.slice(0, 200)) {
       const linkCount = Math.floor(Math.random() * 5) + 1;
       
-      for (let i = 0; i < linkCount; i++) {
+      for (let _i = 0; i < linkCount; i++) {
         const linkAnalysis = {
           userId,
           domain: `domain-${totalLinks}.com`,
@@ -323,7 +323,7 @@ Starting comprehensive seeding...
 Database is now fully populated and ready!
       `);
 
-    } catch (error) {
+    } catch (_error) {
       console.error(`
 ❌ Database seeding failed: ${error}
 
@@ -343,4 +343,4 @@ async function main() {
   await seeder.seedAll();
 }
 
-main().catch(console.error);
+main().catch(console._error);

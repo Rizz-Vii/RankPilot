@@ -28,7 +28,7 @@ test.describe('Load Testing', () => {
 
         for (const endpoint of endpoints) {
             const startTime = Date.now();
-            const response = await request.get(endpoint);
+            const _response = await request.get(endpoint);
             const responseTime = Date.now() - startTime;
 
             // API should respond quickly
@@ -78,7 +78,7 @@ test.describe('Load Testing', () => {
             () => page.evaluate(() => window.scrollTo(0, 100)),
         ];
 
-        for (let i = 0; i < 10; i++) {
+        for (let _i = 0; i < 10; i++) {
             const randomInteraction = interactions[Math.floor(Math.random() * interactions.length)];
             await randomInteraction();
             await page.waitForTimeout(100);
@@ -97,7 +97,7 @@ test.describe('Load Testing', () => {
         // Test multiple concurrent requests to database-dependent endpoints
         const promises = [];
 
-        for (let i = 0; i < 5; i++) {
+        for (let _i = 0; i < 5; i++) {
             promises.push(request.get('/api/user/profile'));
             promises.push(request.get('/api/projects'));
         }

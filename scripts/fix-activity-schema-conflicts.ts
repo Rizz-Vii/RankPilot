@@ -32,7 +32,7 @@ interface ActivityData {
   activityId: string;
   currentType: string;
   newType: string;
-  timestamp: any;
+  timestamp: unknown;
 }
 
 export async function fixActivitySchemaConflicts(): Promise<void> {
@@ -141,8 +141,8 @@ export async function fixActivitySchemaConflicts(): Promise<void> {
 
     // Verify the fix worked
     await verifySchemaFix();
-  } catch (error) {
-    console.error("❌ CRITICAL ERROR during activity schema fix:", error);
+  } catch (_error) {
+    console.error("❌ CRITICAL ERROR during activity schema fix:", _error);
     throw error;
   }
 }
@@ -179,8 +179,8 @@ async function verifySchemaFix(): Promise<void> {
       });
 
     console.log("\n✅ Schema verification completed!");
-  } catch (error) {
-    console.error("❌ Error during schema verification:", error);
+  } catch (_error) {
+    console.error("❌ Error during schema verification:", _error);
   }
 }
 

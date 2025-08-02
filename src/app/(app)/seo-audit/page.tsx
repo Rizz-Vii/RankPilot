@@ -54,7 +54,7 @@ import {
 
 
 const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
-  const chartData = items.map((item) => ({
+  const chartData = items.map((_item) => ({
     name: item.name,
     score: item.score,
     fill:
@@ -65,7 +65,7 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
           : "hsl(var(--chart-5))",
   }));
 
-  const imageAuditItem = items.find((item) => item.id === "image-alts");
+  const imageAuditItem = items.find((_item) => item.id === "image-alts");
   let imageData = null;
   if (imageAuditItem) {
     // A simple regex to extract numbers, assuming a format like "Found X images, Y are missing alt text"
@@ -76,8 +76,8 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
       const total = parseInt(match[1], 10);
       const missing = parseInt(match[2], 10);
       imageData = [
-        { name: "withAlt", value: total - missing },
-        { name: "missingAlt", value: missing },
+        { name: "withAlt", _value: total - missing },
+        { name: "missingAlt", _value: missing },
       ];
     }
   }
@@ -175,7 +175,7 @@ const AuditResults = ({ results }: { results: AuditUrlOutput; }) => (
             initial="hidden"
             animate="visible"
           >
-            {results.items.map((item) => {
+            {results.items.map((_item) => {
               const Icon = statusIcons[item.status] || AlertCircle;
               const color =
                 statusColors[item.status] || "text-muted-foreground";
@@ -212,12 +212,12 @@ export default function SeoAuditPage() {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<AuditUrlOutput | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   const resultsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (results || error) {
+    if (results || _error) {
       resultsRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
@@ -258,7 +258,7 @@ export default function SeoAuditPage() {
         15000, // 15 second timeout
         "SEO audit is taking longer than expected. Using demo data instead."
       );
-      setResults(result);
+      setResults(_result);
 
       if (user) {
         const userActivitiesRef = collection(
@@ -278,9 +278,9 @@ export default function SeoAuditPage() {
           resultsSummary: `Audited ${values.url}. Overall Score: ${result.overallScore}/100.`,
         });
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (e instanceof TimeoutError) {
-        console.warn("SEO audit timed out, using demo data:", e.message);
+        console.warn("SEO audit timed out, using demo _data:", e.message);
         // Use demo data as fallback
         const demoData = getDemoData("seo-audit");
         if (demoData) {

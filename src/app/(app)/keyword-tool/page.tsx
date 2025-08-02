@@ -62,7 +62,7 @@ const getProgressColor = (score: number) => {
   return "bg-success";
 };
 
-const KeywordResults = ({ results }: { results: any; }) => {
+const KeywordResults = ({ results }: { results: unknown; }) => {
   const { toast } = useToast();
 
   const copyToClipboard = (text: string) => {
@@ -102,7 +102,7 @@ const KeywordResults = ({ results }: { results: any; }) => {
               size="sm"
               onClick={() =>
                 copyToClipboard(
-                  (results.suggestions || []).map((k: any) => k.keyword).join(", ")
+                  (results.suggestions || []).map((k: unknown) => k.keyword).join(", ")
                 )
               }
             >
@@ -111,7 +111,7 @@ const KeywordResults = ({ results }: { results: any; }) => {
           }
         >
           <div className="space-y-3">
-            {results.keywords.map((keyword: any, index: number) => (
+            {results.keywords.map((keyword: unknown, _index: number) => (
               <div key={index} className="p-3 bg-gray-50 rounded-lg">
                 <div className="flex justify-between items-start mb-2">
                   <span className="font-medium text-sm">{keyword.keyword}</span>
@@ -152,7 +152,7 @@ const KeywordResults = ({ results }: { results: any; }) => {
                 size="sm"
                 onClick={() =>
                   copyToClipboard(
-                    results.keywords.map((k: any) => k.keyword).join(", ")
+                    results.keywords.map((k: unknown) => k.keyword).join(", ")
                   )
                 }
                 className="font-body"
@@ -175,7 +175,7 @@ const KeywordResults = ({ results }: { results: any; }) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {results.keywords.map((keyword: any, index: number) => (
+                {results.keywords.map((keyword: unknown, _index: number) => (
                   <TableRow key={index}>
                     <TableCell className="font-medium font-body">
                       {keyword.keyword}
@@ -246,7 +246,7 @@ export default function KeywordToolPage() {
         15000, // 15 second timeout
         "Keyword analysis is taking longer than expected. Using demo data instead."
       );
-      setResults(result);
+      setResults(_result);
 
       // End performance monitoring with success
       endOperation(false);
@@ -266,13 +266,13 @@ export default function KeywordToolPage() {
           resultsSummary: `Searched for keywords related to "${values.topic}". Found ${(result as any)?.suggestions?.length || 0} suggestions.`,
         });
       }
-    } catch (error) {
+    } catch (_error) {
       // End performance monitoring with error
       endOperation(true); // Force show feedback on error
 
       if (error instanceof TimeoutError) {
         console.warn(
-          "Keyword analysis timed out, using demo data:",
+          "Keyword analysis timed out, using demo _data:",
           error.message
         );
         // Use demo data as fallback
@@ -281,7 +281,7 @@ export default function KeywordToolPage() {
           setResults(demoData);
         }
       } else {
-        console.error("Error fetching keyword suggestions:", error);
+        console.error("Error fetching keyword suggestions:", _error);
       }
     } finally {
       setIsLoading(false);

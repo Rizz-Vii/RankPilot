@@ -9,8 +9,8 @@ export function useFormInteraction<T>() {
 
   const handleSubmit = useCallback(
     async (
-      submitFn: (data: T) => Promise<void>,
-      data: T,
+      submitFn: (_data: T) => Promise<void>,
+      _data: T,
       options?: {
         successMessage?: string;
         scrollToId?: string;
@@ -20,7 +20,7 @@ export function useFormInteraction<T>() {
       setIsProcessing(true);
 
       try {
-        await submitFn(data);
+        await submitFn(_data);
 
         if (options?.successMessage) {
           addFeedback(options.successMessage, "success");
@@ -28,11 +28,11 @@ export function useFormInteraction<T>() {
 
         if (options?.scrollToId) {
           setTimeout(() => {
-            const element = document.getElementById(options.scrollToId!);
+            const _element = document.getElementById(options.scrollToId!);
             element?.scrollIntoView({ behavior: "smooth", block: "start" });
           }, 100);
         }
-      } catch (error) {
+      } catch (_error) {
         addFeedback(
           error instanceof Error
             ? error.message
@@ -58,16 +58,16 @@ interface UseFieldValidationOptions {
   minLength?: number;
   maxLength?: number;
   pattern?: RegExp;
-  custom?: (value: string) => string | undefined;
+  custom?: (_value: string) => string | undefined;
 }
 
 export function useFieldValidation(options: UseFieldValidationOptions = {}) {
-  const [error, setError] = useState<string>();
+  const [_error, setError] = useState<string>();
   const [touched, setTouched] = useState(false);
 
   const validate = useCallback(
-    (value: string): boolean => {
-      if (options.required && !value) {
+    (_value: string): boolean => {
+      if (options.required && !_value) {
         setError("This field is required");
         return false;
       }
@@ -82,13 +82,13 @@ export function useFieldValidation(options: UseFieldValidationOptions = {}) {
         return false;
       }
 
-      if (options.pattern && !options.pattern.test(value)) {
+      if (options.pattern && !options.pattern.test(_value)) {
         setError("Invalid format");
         return false;
       }
 
       if (options.custom) {
-        const customError = options.custom(value);
+        const customError = options.custom(_value);
         if (customError) {
           setError(customError);
           return false;
@@ -102,7 +102,7 @@ export function useFieldValidation(options: UseFieldValidationOptions = {}) {
   );
 
   return {
-    error,
+    _error,
     setError,
     touched,
     setTouched,

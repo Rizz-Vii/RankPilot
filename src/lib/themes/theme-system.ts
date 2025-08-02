@@ -353,16 +353,16 @@ export class ThemeSystem {
             if (stored) {
                 this.preferences = { ...this.preferences, ...JSON.parse(stored) };
             }
-        } catch (error) {
-            console.warn('Failed to load theme preferences:', error);
+        } catch (_error) {
+            console.warn('Failed to load theme preferences:', _error);
         }
     }
 
     private savePreferences(): void {
         try {
             localStorage.setItem('rankpilot-theme-preferences', JSON.stringify(this.preferences));
-        } catch (error) {
-            console.warn('Failed to save theme preferences:', error);
+        } catch (_error) {
+            console.warn('Failed to save theme preferences:', _error);
         }
     }
 
@@ -415,28 +415,28 @@ export class ThemeSystem {
         const theme = this.getThemeTokens();
 
         // Apply theme colors as CSS custom properties
-        Object.entries(theme.colors).forEach(([key, value]) => {
-            root.style.setProperty(`--color-${key}`, value);
+        Object.entries(theme.colors).forEach(([_key, value]) => {
+            root.style.setProperty(`--color-${key}`, _value);
         });
 
         // Apply typography
-        Object.entries(theme.typography.fontSize).forEach(([key, value]) => {
-            root.style.setProperty(`--font-size-${key}`, value);
+        Object.entries(theme.typography.fontSize).forEach(([_key, value]) => {
+            root.style.setProperty(`--font-size-${key}`, _value);
         });
 
         // Apply spacing
-        Object.entries(theme.spacing).forEach(([key, value]) => {
-            root.style.setProperty(`--spacing-${key}`, value);
+        Object.entries(theme.spacing).forEach(([_key, value]) => {
+            root.style.setProperty(`--spacing-${key}`, _value);
         });
 
         // Apply shadows
-        Object.entries(theme.shadows).forEach(([key, value]) => {
-            root.style.setProperty(`--shadow-${key}`, value);
+        Object.entries(theme.shadows).forEach(([_key, value]) => {
+            root.style.setProperty(`--shadow-${key}`, _value);
         });
 
         // Apply border radius
-        Object.entries(theme.borderRadius).forEach(([key, value]) => {
-            root.style.setProperty(`--radius-${key}`, value);
+        Object.entries(theme.borderRadius).forEach(([_key, value]) => {
+            root.style.setProperty(`--radius-${key}`, _value);
         });
 
         // Apply animation settings
@@ -445,8 +445,8 @@ export class ThemeSystem {
             root.style.setProperty('--animation-duration-medium', '0ms');
             root.style.setProperty('--animation-duration-slow', '0ms');
         } else {
-            Object.entries(theme.animation.duration).forEach(([key, value]) => {
-                root.style.setProperty(`--animation-duration-${key}`, value);
+            Object.entries(theme.animation.duration).forEach(([_key, value]) => {
+                root.style.setProperty(`--animation-duration-${key}`, _value);
             });
         }
 

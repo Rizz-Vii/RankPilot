@@ -75,48 +75,48 @@ interface Integration {
 }
 
 const WEBHOOK_EVENTS = [
-  { value: "report.generated", label: "Report Generated" },
-  { value: "analysis.completed", label: "Analysis Completed" },
-  { value: "keyword.ranking.changed", label: "Keyword Ranking Changed" },
-  { value: "competitor.detected", label: "New Competitor Detected" },
-  { value: "alert.triggered", label: "Alert Triggered" },
-  { value: "user.subscribed", label: "User Subscribed" },
-  { value: "user.unsubscribed", label: "User Unsubscribed" },
+  { _value: "report.generated", label: "Report Generated" },
+  { _value: "analysis.completed", label: "Analysis Completed" },
+  { _value: "keyword.ranking.changed", label: "Keyword Ranking Changed" },
+  { _value: "competitor.detected", label: "New Competitor Detected" },
+  { _value: "alert.triggered", label: "Alert Triggered" },
+  { _value: "user.subscribed", label: "User Subscribed" },
+  { _value: "user.unsubscribed", label: "User Unsubscribed" },
 ];
 
 const INTEGRATION_TYPES = [
   {
-    value: "webhook",
+    _value: "webhook",
     label: "Webhook",
     icon: Webhook,
     description: "HTTP callbacks for real-time events",
   },
   {
-    value: "api",
+    _value: "api",
     label: "REST API",
     icon: Link,
     description: "Custom API endpoints and integrations",
   },
   {
-    value: "database",
+    _value: "database",
     label: "Database",
     icon: Database,
     description: "Direct database connections",
   },
   {
-    value: "email",
+    _value: "email",
     label: "Email",
     icon: Mail,
     description: "Email automation and notifications",
   },
   {
-    value: "chat",
+    _value: "chat",
     label: "Chat/Slack",
     icon: MessageSquare,
     description: "Team chat integrations",
   },
   {
-    value: "analytics",
+    _value: "analytics",
     label: "Analytics",
     icon: BarChart3,
     description: "Third-party analytics platforms",
@@ -214,8 +214,8 @@ export default function IntegrationsPage() {
 
       setWebhooks(mockWebhooks);
       setIntegrations(mockIntegrations);
-    } catch (error) {
-      console.error("Error fetching integrations:", error);
+    } catch (_error) {
+      console.error("Error fetching integrations:", _error);
       toast.error("Failed to load integrations");
     } finally {
       setLoading(false);
@@ -250,8 +250,8 @@ export default function IntegrationsPage() {
       setShowWebhookDialog(false);
       setEditingWebhook(null);
       setWebhookForm({ name: "", url: "", events: [], active: true });
-    } catch (error) {
-      console.error("Error saving webhook:", error);
+    } catch (_error) {
+      console.error("Error saving webhook:", _error);
       toast.error("Failed to save webhook");
     }
   };
@@ -292,8 +292,8 @@ export default function IntegrationsPage() {
         description: "",
         config: {},
       });
-    } catch (error) {
-      console.error("Error saving integration:", error);
+    } catch (_error) {
+      console.error("Error saving integration:", _error);
       toast.error("Failed to save integration");
     }
   };
@@ -308,8 +308,8 @@ export default function IntegrationsPage() {
         )
       );
       toast.success("Webhook status updated");
-    } catch (error) {
-      console.error("Error toggling webhook:", error);
+    } catch (_error) {
+      console.error("Error toggling webhook:", _error);
       toast.error("Failed to update webhook");
     }
   };
@@ -324,8 +324,8 @@ export default function IntegrationsPage() {
         )
       );
       toast.success("Integration status updated");
-    } catch (error) {
-      console.error("Error toggling integration:", error);
+    } catch (_error) {
+      console.error("Error toggling integration:", _error);
       toast.error("Failed to update integration");
     }
   };
@@ -334,8 +334,8 @@ export default function IntegrationsPage() {
     try {
       setWebhooks((prev) => prev.filter((webhook) => webhook.id !== webhookId));
       toast.success("Webhook deleted successfully");
-    } catch (error) {
-      console.error("Error deleting webhook:", error);
+    } catch (_error) {
+      console.error("Error deleting webhook:", _error);
       toast.error("Failed to delete webhook");
     }
   };
@@ -346,8 +346,8 @@ export default function IntegrationsPage() {
         prev.filter((integration) => integration.id !== integrationId)
       );
       toast.success("Integration deleted successfully");
-    } catch (error) {
-      console.error("Error deleting integration:", error);
+    } catch (_error) {
+      console.error("Error deleting integration:", _error);
       toast.error("Failed to delete integration");
     }
   };
@@ -364,8 +364,8 @@ export default function IntegrationsPage() {
       // Mock test - replace with actual API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
       toast.success("Test payload sent successfully");
-    } catch (error) {
-      console.error("Error testing webhook:", error);
+    } catch (_error) {
+      console.error("Error testing webhook:", _error);
       toast.error("Failed to send test payload");
     }
   };
@@ -535,7 +535,7 @@ export default function IntegrationsPage() {
                     <div>
                       <Label className="text-sm font-medium">Events</Label>
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {webhook.events.map((event) => (
+                        {webhook.events.map((_event) => (
                           <Badge
                             key={event}
                             variant="outline"
@@ -737,7 +737,7 @@ export default function IntegrationsPage() {
                   onChange={(e) =>
                     setWebhookForm((prev) => ({
                       ...prev,
-                      name: e.target.value,
+                      name: e.target._value,
                     }))
                   }
                   placeholder="e.g., Report Notifications"
@@ -760,7 +760,7 @@ export default function IntegrationsPage() {
               <div>
                 <Label>Events to Subscribe</Label>
                 <div className="grid gap-2 mt-2 max-h-40 overflow-y-auto">
-                  {WEBHOOK_EVENTS.map((event) => (
+                  {WEBHOOK_EVENTS.map((_event) => (
                     <div
                       key={event.value}
                       className="flex items-center space-x-2"
@@ -768,7 +768,7 @@ export default function IntegrationsPage() {
                       <input
                         type="checkbox"
                         id={event.value}
-                        checked={webhookForm.events.includes(event.value)}
+                        checked={webhookForm.events.includes(event._value)}
                         onChange={(e) => {
                           if (e.target.checked) {
                             setWebhookForm((prev) => ({
@@ -779,7 +779,7 @@ export default function IntegrationsPage() {
                             setWebhookForm((prev) => ({
                               ...prev,
                               events: prev.events.filter(
-                                (ev) => ev !== event.value
+                                (ev) => ev !== event._value
                               ),
                             }));
                           }
@@ -835,7 +835,7 @@ export default function IntegrationsPage() {
                   onChange={(e) =>
                     setIntegrationForm((prev) => ({
                       ...prev,
-                      name: e.target.value,
+                      name: e.target._value,
                     }))
                   }
                   placeholder="e.g., Slack Notifications"
@@ -846,7 +846,7 @@ export default function IntegrationsPage() {
                 <Label htmlFor="integrationType">Integration Type</Label>
                 <Select
                   value={integrationForm.type}
-                  onValueChange={(value: Integration["type"]) =>
+                  onValueChange={(_value: Integration["type"]) =>
                     setIntegrationForm((prev) => ({ ...prev, type: value }))
                   }
                 >
@@ -879,7 +879,7 @@ export default function IntegrationsPage() {
                   onChange={(e) =>
                     setIntegrationForm((prev) => ({
                       ...prev,
-                      description: e.target.value,
+                      description: e.target._value,
                     }))
                   }
                   placeholder="Describe what this integration does..."

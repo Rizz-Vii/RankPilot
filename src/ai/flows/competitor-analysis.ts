@@ -93,10 +93,10 @@ Use the following API keys for enhanced analysis:
 1.  **Simulate Keyword Rankings:**
     *   For each provided keyword, perform a realistic, simulated analysis of where each URL would rank in the top 100 search results.
     *   Your simulation should consider typical factors like domain authority, content relevance, and on-page optimization.
-    *   The ranking information for each URL must be an object with two properties: \`rank\` and \`reason\`.
-    *   \`rank\`: This should be the simulated numerical rank. If a URL is unlikely to rank in the top 100, set this to the string "N/A".
-    *   \`reason\`: Provide a concise explanation for the rank. If the rank is "N/A", **you must explain why**. For example: "URL is a generic search engine, not a content site", "Page lacks specific content about this keyword", or "Low domain authority for a competitive term". This reason is crucial.
-    *   The ranking object for "My Website" should be assigned to the \`yourRank\` property.
+    *   The ranking information for each URL must be an object with two properties: `rank` and `reason`.
+    *   `rank`: This should be the simulated numerical rank. If a URL is unlikely to rank in the top 100, set this to the string "N/A".
+    *   `reason`: Provide a concise explanation for the rank. If the rank is "N/A", **you must explain why**. For example: "URL is a generic search engine, not a content site", "Page lacks specific content about this keyword", or "Low domain authority for a competitive term". This reason is crucial.
+    *   The ranking object for "My Website" should be assigned to the `yourRank` property.
     *   For each competitor, create a property in the ranking object where the key is the **full competitor URL** and the value is its corresponding ranking object.
 
 2.  **Identify Content Gaps:**

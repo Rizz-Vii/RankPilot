@@ -12,7 +12,7 @@ import path from 'path';
 test.describe("Content Analyzer - High Memory Suite", () => {
     let orchestrator: TestOrchestrator;
     let gracefulUtils: GracefulTestUtils;
-    let cacheManifest: any;
+    let cacheManifest: unknown;
 
     test.beforeEach(async ({ page }) => {
         orchestrator = new TestOrchestrator(page);
@@ -25,7 +25,7 @@ test.describe("Content Analyzer - High Memory Suite", () => {
                 cacheManifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
                 console.log(`📊 Using cache manifest from ${cacheManifest.timestamp}`);
             }
-        } catch (error) {
+        } catch (_error) {
             console.log("⚠️ No cache manifest found, proceeding without cache insights");
         }
 
@@ -65,7 +65,7 @@ test.describe("Content Analyzer - High Memory Suite", () => {
             try {
                 await page.waitForSelector('h1, h2, [role="heading"]', { timeout: 30000 });
                 console.log("✅ Page heading detected");
-            } catch (error) {
+            } catch (_error) {
                 console.log("⚠️ No heading found, checking for other content indicators");
             }
 

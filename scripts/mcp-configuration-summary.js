@@ -154,7 +154,7 @@ async function main() {
         console.log('\nRestart VS Code and start developing with enhanced AI capabilities!');
 
         process.exit(0);
-    } catch (error) {
+    } catch (_error) {
         console.error('❌ Error generating configuration summary:', error.message);
         process.exit(1);
     }

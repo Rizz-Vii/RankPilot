@@ -22,8 +22,8 @@ if (!getApps().length) {
       credential: cert("./firebase-admin-key.json"),
       projectId: "rankpilot-h3jpc",
     });
-  } catch (error) {
-    console.error("❌ Failed to initialize Firebase Admin:", error);
+  } catch (_error) {
+    console.error("❌ Failed to initialize Firebase Admin:", _error);
     throw error;
   }
 }
@@ -565,7 +565,7 @@ interface ActivityDocument {
     analysisId?: string;
     url?: string;
     keyword?: string;
-    [key: string]: any;
+    [_key: string]: unknown;
   };
   ipAddress?: string;
   userAgent?: string;
@@ -784,8 +784,8 @@ export class ComprehensiveDatabaseSeeder {
 
       console.log("✅ Comprehensive database seeding completed successfully!");
       console.log("📈 Generated realistic 1-year business data with full feature support");
-    } catch (error) {
-      console.error("❌ Database seeding failed:", error);
+    } catch (_error) {
+      console.error("❌ Database seeding failed:", _error);
       throw error;
     }
   } async loadExistingIds() {
@@ -1208,7 +1208,7 @@ export class ComprehensiveDatabaseSeeder {
           seedKeyword,
           targetLocation: getRandomItem(['US', 'UK', 'CA', 'AU']),
           language: 'en',
-          results: Array.from({ length: Math.floor(Math.random() * 50) + 20 }, (_, index) => ({
+          results: Array.from({ length: Math.floor(Math.random() * 50) + 20 }, (_, _index) => ({
             keyword: `${seedKeyword} ${getRandomItem(['tips', 'guide', 'best', 'how to', 'free', 'online', '2025'])}`,
             searchVolume: Math.floor(Math.random() * 50000) + 100,
             competition: getRandomItem(['low', 'medium', 'high']),
@@ -1403,7 +1403,7 @@ export class ComprehensiveDatabaseSeeder {
               }
             }
           },
-          recommendations: Array.from({ length: Math.floor(Math.random() * 8) + 3 }, (_, index) => ({
+          recommendations: Array.from({ length: Math.floor(Math.random() * 8) + 3 }, (_, _index) => ({
             category: getRandomItem(['technical', 'content', 'links']),
             priority: index + 1,
             title: `Recommendation ${index + 1}`,
@@ -1458,7 +1458,7 @@ export class ComprehensiveDatabaseSeeder {
           brief: {
             title: `Complete ${targetKeyword} ${contentType === 'blog' ? 'Guide' : 'Strategy'} for 2025`,
             metaDescription: `Discover the best ${targetKeyword} strategies and techniques. Expert insights and proven methods for success.`,
-            outline: Array.from({ length: Math.floor(Math.random() * 6) + 4 }, (_, index) => ({
+            outline: Array.from({ length: Math.floor(Math.random() * 6) + 4 }, (_, _index) => ({
               heading: `${index + 1}. ${getRandomItem(['Understanding', 'Implementing', 'Optimizing', 'Measuring', 'Advanced'])} ${targetKeyword}`,
               subheadings: getRandomItems(['Key concepts', 'Best practices', 'Common mistakes', 'Tools and resources', 'Case studies'], 3),
               keyPoints: getRandomItems(['Strategy implementation', 'Performance metrics', 'Cost optimization', 'User experience', 'Technical requirements'], 3),
@@ -1684,7 +1684,7 @@ export class ComprehensiveDatabaseSeeder {
           location,
           language: 'en',
           searchEngine: getRandomItem(['google', 'bing', 'yahoo']),
-          results: Array.from({ length: 10 }, (_, index) => ({
+          results: Array.from({ length: 10 }, (_, _index) => ({
             position: index + 1,
             url: `https://${getRandomItem(SAMPLE_DOMAINS)}`,
             title: `${keyword} - ${getRandomItem(['Complete Guide', 'Best Practices', 'Expert Tips', 'Professional Services', 'Solutions'])}`,
@@ -2164,8 +2164,8 @@ if (require.main === module) {
   const seeder = new ComprehensiveDatabaseSeeder();
   seeder.seedAll()
     .then(() => process.exit(0))
-    .catch((error) => {
-      console.error("Seeding failed:", error);
+    .catch((_error) => {
+      console.error("Seeding failed:", _error);
       process.exit(1);
     });
 }

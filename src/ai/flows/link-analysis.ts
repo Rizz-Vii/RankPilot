@@ -85,7 +85,7 @@ You are a world-class SEO Analyst and Data Simulation Engine. Your mission is to
     *   **Keyword-Related:** Keywords relevant to the target page's topic (e.g., "AI programming assistant").
     *   **Generic:** Non-descriptive text (e.g., "click here," "read more," "this website").
 
-4.  **Construct the Final JSON Output:** After simulating the data, assemble it into a single JSON object. The summary values (\`totalBacklinks\`, \`referringDomains\`) must be calculated accurately from the backlinks array you created.
+4.  **Construct the Final JSON Output:** After simulating the _data, assemble it into a single JSON object. The summary values (`totalBacklinks`, `referringDomains`) must be calculated accurately from the backlinks array you created.
 
 **CRITICAL OUTPUT REQUIREMENTS:**
 
@@ -117,7 +117,7 @@ const linkAnalysisFlow = ai.defineFlow(
         throw new Error("Primary AI provider returned no output.");
       }
       return output;
-    } catch (error: any) {
+    } catch (_error: unknown) {
       console.warn("Primary provider (Google) failed:", error.message);
       // Check if it's a service availability error
       if (
@@ -135,7 +135,7 @@ const linkAnalysisFlow = ai.defineFlow(
             zodToJsonSchema(LinkAnalysisOutputSchema)
           )}`;
 
-          const response = await openai.chat.completions.create({
+          const _response = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
               { role: "system", content: openAISystemPrompt },

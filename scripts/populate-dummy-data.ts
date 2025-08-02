@@ -137,7 +137,7 @@ const userProfiles: UserProfile[] = [
 ];
 
 // Dummy NeuroSEO analysis data
-function generateNeuroSEOAnalysis(profile: UserProfile, index: number) {
+function generateNeuroSEOAnalysis(profile: UserProfile, _index: number) {
   const now = new Date();
   const analysisDate = new Date(now.getTime() - index * 24 * 60 * 60 * 1000); // Spread over last few days
 
@@ -257,7 +257,7 @@ function generateNeuroSEOAnalysis(profile: UserProfile, index: number) {
         })),
         results: profile.targetKeywords.slice(0, 3).map((keyword, qIndex) => ({
           queryId: `query-${qIndex}`,
-          response: `Based on analysis, ${keyword} involves...`,
+          _response: `Based on analysis, ${keyword} involves...`,
           sources: [
             {
               url: profile.websites[0],
@@ -606,8 +606,8 @@ export async function populateDummyData() {
     console.log(
       `   💳 Payment Records: ${userProfiles.filter((p) => p.tier !== "free").length * 4} (avg)`
     );
-  } catch (error) {
-    console.error("❌ Error populating dummy data:", error);
+  } catch (_error) {
+    console.error("❌ Error populating dummy _data:", _error);
     throw error;
   }
 }
@@ -615,13 +615,13 @@ export async function populateDummyData() {
 if (require.main === module) {
   populateDummyData()
     .then(() => {
-      console.log("\n🔍 Run the following to verify data:");
+      console.log("\n🔍 Run the following to verify _data:");
       console.log("   npm run ts-node scripts/get-all-users.ts");
       console.log("   npm run ts-node scripts/verify-dummy-data.ts");
       process.exit(0);
     })
-    .catch((error) => {
-      console.error("💥 Failed to populate dummy data:", error);
+    .catch((_error) => {
+      console.error("💥 Failed to populate dummy _data:", _error);
       process.exit(1);
     });
 }

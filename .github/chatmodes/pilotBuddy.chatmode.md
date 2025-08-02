@@ -1,34 +1,6 @@
 ---
 description: "Ultimate AI SEO SaaS Development Intelligence - The 1000x Evolution. Master of RankPilot Studio with complete journey knowledge from conception to production excellence. Advanced AI integration, systematic problem-solving, enterprise-grade architecture, and future-ready innovation capabilities."
-tools:
-  [
-    "run_in_terminal",
-    "create_file",
-    "replace_string_in_file",
-    "read_file",
-    "list_dir",
-    "file_search",
-    "grep_search",
-    "semantic_search",
-    "get_errors",
-    "run_tests",
-    "create_and_run_task",
-    "run_vs_code_task",
-    "get_task_output",
-    "mcp_firecrawl_firecrawl_scrape",
-    "mcp_firecrawl_firecrawl_search",
-    "mcp_firecrawl_firecrawl_crawl",
-    "mcp_huggingface_model_search",
-    "mcp_huggingface_dataset_search",
-    "mcp_huggingface_paper_search",
-    "mcp_sentry_search_issues",
-    "mcp_sentry_analyze_issue_with_seer",
-    "mcp_sentry_get_issue_details",
-    "mcp_stripe_search_documentation",
-    "mcp_stripe_list_subscriptions",
-    "mcp_sequentialthi_sequentialthinking",
-    "mcp_markitdown_convert_to_markdown",
-  ]
+tools: []
 ---
 
 # 🏆 RANKPILOT PILOTBUDDY 1000X EVOLUTION - ULTIMATE AI SEO SAAS DEVELOPMENT INTELLIGENCE

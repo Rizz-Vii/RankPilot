@@ -11,8 +11,8 @@ let app: admin.app.App;
 try {
   // Check if app is already initialized
   app = admin.apps.length ? admin.app() : initializeFirebaseAdmin();
-} catch (error) {
-  console.warn('[Firebase Admin] Initialization failed, using development fallback:', error);
+} catch (_error) {
+  console.warn('[Firebase Admin] Initialization failed, using development fallback:', _error);
   // In development/build mode, create a mock admin for static generation
   app = createMockAdmin();
 }
@@ -29,8 +29,8 @@ function initializeFirebaseAdmin(): admin.app.App {
         credential: admin.credential.cert(serviceAccount),
         projectId: serviceAccount.project_id
       });
-    } catch (error) {
-      console.warn('[Firebase Admin] Service account JSON parsing failed:', error);
+    } catch (_error) {
+      console.warn('[Firebase Admin] Service account JSON parsing failed:', _error);
     }
   }
 
@@ -71,7 +71,7 @@ function createMockAdmin(): any {
     firestore: () => ({
       collection: () => ({
         doc: () => ({
-          get: async () => ({ exists: false, data: () => null }),
+          get: async () => ({ exists: false, _data: () => null }),
           set: async () => ({}),
           update: async () => ({})
         }),

@@ -41,7 +41,7 @@ export const sendPaymentReceipt = onCall<PaymentReceiptData>(
     timeoutSeconds: 60,
     memory: "256MiB",
   },
-  async (request: CallableRequest<PaymentReceiptData>) => {
+  async (_request: CallableRequest<PaymentReceiptData>) => {
     try {
       // Verify authentication
       if (!request.auth) {
@@ -77,8 +77,8 @@ export const sendPaymentReceipt = onCall<PaymentReceiptData>(
       });
 
       return { success: true, messageId: `receipt_${transactionId}` };
-    } catch (error) {
-      logger.error("Error sending payment receipt email", error);
+    } catch (_error) {
+      logger.error("Error sending payment receipt email", _error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
 
@@ -87,7 +87,7 @@ export const sendPaymentReceipt = onCall<PaymentReceiptData>(
         await db.collection("email_logs").add({
           type: "payment_receipt",
           userId: request.auth.uid,
-          error: errorMessage,
+          _error: errorMessage,
           sentAt: new Date(),
           status: "failed",
         });
@@ -105,7 +105,7 @@ export const sendWelcomeEmailFunction = onCall<WelcomeEmailData>(
     timeoutSeconds: 60,
     memory: "256MiB",
   },
-  async (request: CallableRequest<WelcomeEmailData>) => {
+  async (_request: CallableRequest<WelcomeEmailData>) => {
     try {
       // Verify authentication
       if (!request.auth) {
@@ -131,8 +131,8 @@ export const sendWelcomeEmailFunction = onCall<WelcomeEmailData>(
       });
 
       return { success: true, messageId: `welcome_${request.auth.uid}` };
-    } catch (error) {
-      logger.error("Error sending welcome email", error);
+    } catch (_error) {
+      logger.error("Error sending welcome email", _error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
 
@@ -140,7 +140,7 @@ export const sendWelcomeEmailFunction = onCall<WelcomeEmailData>(
         await db.collection("email_logs").add({
           type: "welcome",
           userId: request.auth.uid,
-          error: errorMessage,
+          _error: errorMessage,
           sentAt: new Date(),
           status: "failed",
         });
@@ -158,7 +158,7 @@ export const sendBillingReminder = onCall<BillingReminderData>(
     timeoutSeconds: 60,
     memory: "256MiB",
   },
-  async (request: CallableRequest<BillingReminderData>) => {
+  async (_request: CallableRequest<BillingReminderData>) => {
     try {
       // Verify authentication
       if (!request.auth) {
@@ -184,8 +184,8 @@ export const sendBillingReminder = onCall<BillingReminderData>(
       });
 
       return { success: true, messageId: `reminder_${request.auth.uid}` };
-    } catch (error) {
-      logger.error("Error sending billing reminder email", error);
+    } catch (_error) {
+      logger.error("Error sending billing reminder email", _error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
 
@@ -193,7 +193,7 @@ export const sendBillingReminder = onCall<BillingReminderData>(
         await db.collection("email_logs").add({
           type: "billing_reminder",
           userId: request.auth.uid,
-          error: errorMessage,
+          _error: errorMessage,
           sentAt: new Date(),
           status: "failed",
         });

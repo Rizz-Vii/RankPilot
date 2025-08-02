@@ -95,7 +95,7 @@ export interface RewriteAnalysis {
     originalAnalysis: {
         wordCount: number;
         readabilityScore: number;
-        keywordDensity: any;
+        keywordDensity: unknown;
         sentimentScore: number;
         structureScore: number;
         seoScore: number;
@@ -300,7 +300,7 @@ export interface SeoAuditFormProps {
 // ============================================================================
 
 export interface ChartConfig {
-    [key: string]: {
+    [_key: string]: {
         label: string;
         color: string;
     };
@@ -314,7 +314,7 @@ export interface ContentFunctions {
     generateContentBrief:
     (input: ContentBriefInput) => Promise<ContentBriefOutput>;
     generateInsights:
-    (input: { keywords: string[]; urls: string[]; activities?: any; }) => Promise<GenerateInsightsOutput>;
+    (input: { keywords: string[]; urls: string[]; activities?: unknown; }) => Promise<GenerateInsightsOutput>;
     getKeywordSuggestions:
     (input: KeywordSuggestion) => Promise<KeywordSuggestion[]>;
     analyzeCompetitors:

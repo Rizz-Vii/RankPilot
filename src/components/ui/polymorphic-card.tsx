@@ -56,11 +56,11 @@ interface PolymorphicCardProps
      * Animation configuration for motion variant
      */
     animation?: {
-        initial?: any;
-        animate?: any;
-        whileHover?: any;
-        whileTap?: any;
-        transition?: any;
+        initial?: unknown;
+        animate?: unknown;
+        whileHover?: unknown;
+        whileTap?: unknown;
+        transition?: unknown;
     };
     /**
      * Slot-based content areas for composition

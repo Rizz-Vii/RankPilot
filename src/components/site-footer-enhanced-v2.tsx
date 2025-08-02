@@ -116,8 +116,8 @@ export default function SiteFooter() {
 
       setEmailSubscription("");
       // You could show a success toast here
-    } catch (error) {
-      console.error("Newsletter subscription failed:", error);
+    } catch (_error) {
+      console.error("Newsletter subscription failed:", _error);
       // You could show an error toast here
     } finally {
       setIsSubscribing(false);
@@ -181,7 +181,7 @@ export default function SiteFooter() {
               type="email"
               placeholder="Enter your email address"
               value={emailSubscription}
-              onChange={(e) => setEmailSubscription(e.target.value)}
+              onChange={(e) => setEmailSubscription(e.target._value)}
               required
               className="flex-1"
               disabled={isSubscribing}
@@ -258,7 +258,7 @@ export default function SiteFooter() {
           </motion.div>
 
           {/* Footer Sections */}
-          {Object.entries(footerSections).map(([key, section], index) => (
+          {Object.entries(footerSections).map(([_key, section], _index) => (
             <motion.nav
               key={key}
               className="lg:col-span-1"

@@ -244,19 +244,19 @@ export default function TrustBlockPage() {
 
     try {
       const result = await simulateTrustAnalysis(analysisUrl);
-      setCurrentResult(result);
+      setCurrentResult(_result);
 
       // Save result to database
       await addDoc(collection(db, 'trustBlockResults'), {
         userId: user.uid,
-        ...result,
+        ..._result,
         createdAt: new Date()
       });
 
       toast.success("Trust analysis completed successfully!");
 
-    } catch (error) {
-      console.error('Analysis error:', error);
+    } catch (_error) {
+      console.error('Analysis _error:', _error);
       toast.error("Analysis failed. Please try again.");
     } finally {
       setIsAnalyzing(false);
@@ -329,7 +329,7 @@ export default function TrustBlockPage() {
                 id="analysis-url"
                 placeholder="https://example.com"
                 value={analysisUrl}
-                onChange={(e) => setAnalysisUrl(e.target.value)}
+                onChange={(e) => setAnalysisUrl(e.target._value)}
                 disabled={isAnalyzing}
               />
             </div>
@@ -478,7 +478,7 @@ export default function TrustBlockPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {Object.entries(currentResult.eatScore.breakdown).map(([key, value]) => (
+                      {Object.entries(currentResult.eatScore.breakdown).map(([_key, value]) => (
                         <div key={key}>
                           <div className="flex justify-between mb-2">
                             <span className="capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
@@ -494,7 +494,7 @@ export default function TrustBlockPage() {
 
               <TabsContent value="signals" className="space-y-4">
                 <div className="space-y-4">
-                  {currentResult.trustSignals.map((signal, index) => (
+                  {currentResult.trustSignals.map((signal, _index) => (
                     <Card key={index}>
                       <CardContent className="p-6">
                         <div className="flex items-start gap-4">
@@ -572,7 +572,7 @@ export default function TrustBlockPage() {
                       <div>
                         <Label className="text-sm font-medium">Credentials & Qualifications</Label>
                         <div className="space-y-2 mt-2">
-                          {currentResult.authorCredibility.credentials.map((credential, index) => (
+                          {currentResult.authorCredibility.credentials.map((credential, _index) => (
                             <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded text-sm">
                               <Award className="h-4 w-4 text-yellow-600" />
                               {credential}
@@ -584,7 +584,7 @@ export default function TrustBlockPage() {
                       <div>
                         <Label className="text-sm font-medium">Expertise Areas</Label>
                         <div className="flex flex-wrap gap-2 mt-2">
-                          {currentResult.authorCredibility.expertiseAreas.map((area, index) => (
+                          {currentResult.authorCredibility.expertiseAreas.map((area, _index) => (
                             <Badge key={index} variant="outline">{area}</Badge>
                           ))}
                         </div>
@@ -628,13 +628,13 @@ export default function TrustBlockPage() {
                       <CardTitle>Content Quality Metrics</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {Object.entries(currentResult.contentQuality).map(([key, value]) => (
+                      {Object.entries(currentResult.contentQuality).map(([_key, value]) => (
                         <div key={key}>
                           <div className="flex justify-between mb-2">
                             <span className="capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
                             <span className="font-semibold">
                               {typeof value === 'number' ? (
-                                key === 'sourcesCited' ? value : `${value}/100`
+                                key === 'sourcesCited' ? _value : `${value}/100`
                               ) : value}
                             </span>
                           </div>
@@ -651,7 +651,7 @@ export default function TrustBlockPage() {
                       <CardTitle>Site Credibility Factors</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      {Object.entries(currentResult.siteCredibility).map(([key, value]) => (
+                      {Object.entries(currentResult.siteCredibility).map(([_key, value]) => (
                         <div key={key} className="flex items-center justify-between p-2 bg-muted rounded">
                           <span className="text-sm capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
                           {typeof value === 'boolean' ? (
@@ -672,7 +672,7 @@ export default function TrustBlockPage() {
 
               <TabsContent value="recommendations" className="space-y-4">
                 <div className="space-y-4">
-                  {currentResult.recommendations.map((rec, index) => (
+                  {currentResult.recommendations.map((rec, _index) => (
                     <Card key={index}>
                       <CardContent className="p-6">
                         <div className="flex items-start gap-4">

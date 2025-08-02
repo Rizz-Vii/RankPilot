@@ -34,18 +34,18 @@ const caseStudies = [
     solution:
       "Implemented NeuroSEO™ Suite with NeuralCrawler™ for technical optimization and RewriteGen™ for product descriptions.",
     results: [
-      { metric: "Organic Traffic", value: "+340%", color: "text-green-600" },
+      { metric: "Organic Traffic", _value: "+340%", color: "text-green-600" },
       {
         metric: "Revenue from Organic",
-        value: "+280%",
+        _value: "+280%",
         color: "text-blue-600",
       },
       {
         metric: "Keyword Rankings (Top 3)",
-        value: "+150%",
+        _value: "+150%",
         color: "text-purple-600",
       },
-      { metric: "Conversion Rate", value: "+45%", color: "text-orange-600" },
+      { metric: "Conversion Rate", _value: "+45%", color: "text-orange-600" },
     ],
     tags: ["E-commerce", "Technical SEO", "AI Content"],
     featured: true,
@@ -60,12 +60,12 @@ const caseStudies = [
     solution:
       "Used AI Visibility Engine and SemanticMap™ to identify content gaps and create authority-building content strategy.",
     results: [
-      { metric: "Brand Visibility", value: "+450%", color: "text-green-600" },
-      { metric: "Lead Generation", value: "+220%", color: "text-blue-600" },
-      { metric: "Featured Snippets", value: "+180%", color: "text-purple-600" },
+      { metric: "Brand Visibility", _value: "+450%", color: "text-green-600" },
+      { metric: "Lead Generation", _value: "+220%", color: "text-blue-600" },
+      { metric: "Featured Snippets", _value: "+180%", color: "text-purple-600" },
       {
         metric: "Domain Authority",
-        value: "+35 points",
+        _value: "+35 points",
         color: "text-orange-600",
       },
     ],
@@ -84,18 +84,18 @@ const caseStudies = [
     results: [
       {
         metric: "Local Search Visibility",
-        value: "+520%",
+        _value: "+520%",
         color: "text-green-600",
       },
-      { metric: "Patient Inquiries", value: "+180%", color: "text-blue-600" },
+      { metric: "Patient Inquiries", _value: "+180%", color: "text-blue-600" },
       {
         metric: "Google My Business Views",
-        value: "+300%",
+        _value: "+300%",
         color: "text-purple-600",
       },
       {
         metric: "Appointment Bookings",
-        value: "+150%",
+        _value: "+150%",
         color: "text-orange-600",
       },
     ],
@@ -112,16 +112,16 @@ const caseStudies = [
     solution:
       "Deployed full NeuroSEO™ Suite for comprehensive content scaling and technical optimization across 500+ pages.",
     results: [
-      { metric: "Organic Sessions", value: "+290%", color: "text-green-600" },
-      { metric: "Content Performance", value: "+400%", color: "text-blue-600" },
+      { metric: "Organic Sessions", _value: "+290%", color: "text-green-600" },
+      { metric: "Content Performance", _value: "+400%", color: "text-blue-600" },
       {
         metric: "Sales Qualified Leads",
-        value: "+160%",
+        _value: "+160%",
         color: "text-purple-600",
       },
       {
         metric: "Content Production Speed",
-        value: "+600%",
+        _value: "+600%",
         color: "text-orange-600",
       },
     ],
@@ -133,25 +133,25 @@ const caseStudies = [
 const successMetrics = [
   {
     icon: TrendingUp,
-    value: "340%",
+    _value: "340%",
     label: "Average Traffic Increase",
     description: "Across all client implementations",
   },
   {
     icon: Users,
-    value: "250+",
+    _value: "250+",
     label: "Successful Implementations",
     description: "Businesses transformed with AI",
   },
   {
     icon: Clock,
-    value: "3.2x",
+    _value: "3.2x",
     label: "Faster Results",
     description: "Compared to traditional SEO",
   },
   {
     icon: Award,
-    value: "98%",
+    _value: "98%",
     label: "Client Retention Rate",
     description: "Long-term partnership success",
   },
@@ -192,7 +192,7 @@ export default function CaseStudiesPage() {
       <section className="pb-16 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-4 gap-6">
-            {successMetrics.map((metric, index) => (
+            {successMetrics.map((metric, _index) => (
               <motion.div
                 key={metric.label}
                 initial="hidden"
@@ -242,7 +242,7 @@ export default function CaseStudiesPage() {
           </motion.div>
 
           <div className="space-y-8">
-            {caseStudies.map((study, index) => (
+            {caseStudies.map((study, _index) => (
               <motion.div
                 key={study.title}
                 initial="hidden"
@@ -321,7 +321,7 @@ export default function CaseStudiesPage() {
                           Results
                         </h4>
                         <div className="space-y-2">
-                          {study.results.map((result, resultIndex) => (
+                          {study.results.map((_result, resultIndex) => (
                             <div
                               key={resultIndex}
                               className="flex justify-between items-center text-sm"

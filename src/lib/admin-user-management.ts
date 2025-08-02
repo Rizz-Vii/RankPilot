@@ -37,7 +37,7 @@ export async function adminUpdateUserSubscription(
 
     // Calculate dates
     const currentDate = new Date();
-    let nextBillingDate = new Date(currentDate);
+    const nextBillingDate = new Date(currentDate);
     if (update.monthsToAdd) {
       nextBillingDate.setMonth(nextBillingDate.getMonth() + update.monthsToAdd);
     }
@@ -47,7 +47,7 @@ export async function adminUpdateUserSubscription(
     if (update.paymentHistoryMonths && update.tier !== "free") {
       for (let i = update.paymentHistoryMonths; i > 0; i--) {
         const paymentDate = new Date(currentDate);
-        paymentDate.setMonth(paymentDate.getMonth() - i);
+        paymentDate.setMonth(paymentDate.getMonth() - _i);
 
         paymentHistory.push({
           amount: getPlanPrice(update.tier),
@@ -62,7 +62,7 @@ export async function adminUpdateUserSubscription(
     }
 
     // Prepare update data
-    const updateData: any = {
+    const updateData: unknown = {
       subscriptionStatus: update.status,
       subscriptionTier: update.tier,
       updatedAt: serverTimestamp(),
@@ -106,8 +106,8 @@ export async function adminUpdateUserSubscription(
     );
 
     return;
-  } catch (error) {
-    console.error("❌ Error updating user subscription:", error);
+  } catch (_error) {
+    console.error("❌ Error updating user subscription:", _error);
     throw error;
   }
 }
@@ -126,8 +126,8 @@ async function findUserByEmail(email: string): Promise<string | null> {
     }
 
     return null;
-  } catch (error) {
-    console.error("Error finding user by email:", error);
+  } catch (_error) {
+    console.error("Error finding user by email:", _error);
     return null;
   }
 }
@@ -191,8 +191,8 @@ export async function fixAllTestUsers(): Promise<void> {
   for (const user of testUsers) {
     try {
       await adminUpdateUserSubscription(user);
-    } catch (error) {
-      console.error(`Failed to fix user ${user.email}:`, error);
+    } catch (_error) {
+      console.error(`Failed to fix user ${user.email}:`, _error);
     }
   }
 

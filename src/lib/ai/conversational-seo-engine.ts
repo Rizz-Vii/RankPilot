@@ -19,7 +19,7 @@ export interface ConversationMessage {
     content: string;
     timestamp: number;
     metadata?: {
-        seoAnalysis?: any;
+        seoAnalysis?: unknown;
         recommendations?: string[];
         confidence?: number;
         sources?: string[];
@@ -40,7 +40,7 @@ export interface ConversationContext {
         competitorUrls?: string[];
     };
     seoHistory?: {
-        previousAnalyses: any[];
+        previousAnalyses: unknown[];
         commonIssues: string[];
         improvementAreas: string[];
     };
@@ -72,13 +72,13 @@ export class ConversationalSEOEngine {
 
     // SEO-specific conversation patterns and responses
     private seoPatterns = {
-        analysis: /analyz|audit|check|review|assess/i,
-        keywords: /keyword|search term|ranking|position/i,
-        technical: /technical|crawl|index|sitemap|robots/i,
-        content: /content|blog|article|copy|text/i,
-        performance: /speed|performance|loading|vitals/i,
-        backlinks: /backlink|link building|authority|domain/i,
-        competitor: /competitor|competition|rival|compare/i,
+        analysis: /analyz|audit|check|review|assess/_i,
+        keywords: /keyword|search term|ranking|position/_i,
+        technical: /technical|crawl|index|sitemap|robots/_i,
+        content: /content|blog|article|copy|text/_i,
+        performance: /speed|performance|loading|vitals/_i,
+        backlinks: /backlink|link building|authority|domain/_i,
+        competitor: /competitor|competition|rival|compare/_i,
         local: /local|location|nearby|geo|maps/i
     };
 
@@ -162,7 +162,7 @@ export class ConversationalSEOEngine {
         const messageType = this.detectMessageIntent(userMessage);
         const conversationHistory = this.buildConversationHistory(context);
 
-        let response: ConversationResponse;
+        let _response: ConversationResponse;
 
         switch (messageType) {
             case 'seo-analysis':
@@ -238,8 +238,8 @@ export class ConversationalSEOEngine {
                 requiresAction: actionItems.length > 0
             };
 
-        } catch (error) {
-            return this.generateErrorResponse('analysis', error);
+        } catch (_error) {
+            return this.generateErrorResponse('analysis', _error);
         }
     }
 
@@ -456,16 +456,16 @@ export class ConversationalSEOEngine {
         };
     }
 
-    private generateAnalysisResponse(analysis: any): string {
+    private generateAnalysisResponse(analysis: unknown): string {
         return `I've analyzed ${analysis.url} and found some interesting insights! 
 
 📊 **Overall SEO Score: ${analysis.overallScore}/100**
 
 🔍 **Key Issues Found:**
-${analysis.issues.map((issue: any) => `• ${issue.type.replace('-', ' ')} (${issue.severity} priority - ${issue.count} instances)`).join('\n')}
+${analysis.issues.map((issue: unknown) => `• ${issue.type.replace('-', ' ')} (${issue.severity} priority - ${issue.count} instances)`).join('\n')}
 
 🚀 **Top Opportunities:**
-${analysis.opportunities.map((opp: string, i: number) => `${i + 1}. ${opp}`).join('\n')}
+${analysis.opportunities.map((opp: string, _i: number) => `${i + 1}. ${opp}`).join('\n')}
 
 ⚡ **Performance Metrics:**
 • LCP: ${analysis.performance.lcp}s (${analysis.performance.lcp < 2.5 ? 'Good' : 'Needs Improvement'})
@@ -475,8 +475,8 @@ ${analysis.opportunities.map((opp: string, i: number) => `${i + 1}. ${opp}`).joi
 Would you like me to provide specific recommendations for any of these areas?`;
     }
 
-    private generateAnalysisActionItems(analysis: any): Array<any> {
-        return analysis.issues.map((issue: any) => ({
+    private generateAnalysisActionItems(analysis: unknown): Array<any> {
+        return analysis.issues.map((issue: unknown) => ({
             type: 'recommendation' as const,
             title: `Fix ${issue.type.replace('-', ' ')} issues`,
             description: `Address ${issue.count} ${issue.type} issues found on your site`,
@@ -594,7 +594,7 @@ Just ask me anything about SEO!`,
         };
     }
 
-    private generateErrorResponse(type: string, error: any): ConversationResponse {
+    private generateErrorResponse(type: string, _error: unknown): ConversationResponse {
         const message: ConversationMessage = {
             id: this.generateMessageId(),
             role: 'assistant',
@@ -628,7 +628,7 @@ Just ask me anything about SEO!`,
         return 'general-content';
     }
 
-    private personalizeKnowledgeResponse(response: any, context: ConversationContext): string {
+    private personalizeKnowledgeResponse(_response: unknown, context: ConversationContext): string {
         return `${response.content}\n\nBased on your ${context.userTier} plan, here are my recommendations:\n${response.tips.join('\n• ')}`;
     }
 
@@ -645,7 +645,7 @@ Just ask me anything about SEO!`,
         return [...(suggestions[messageType] || ['Ask me anything about SEO']), ...tierBonus];
     }
 
-    private generateKeywordResponse(keywords: string[], analysis: any, businessContext: string): string {
+    private generateKeywordResponse(keywords: string[], analysis: unknown, businessContext: string): string {
         return `Great keyword research request for your ${businessContext} business! 
 
 🎯 **Keywords Analyzed:** ${keywords.join(', ')}
@@ -681,7 +681,7 @@ Would you like me to suggest specific long-tail variations or analyze the compet
     }
 
     private async generateTechnicalResponse(message: string, context: ConversationContext): Promise<string> {
-        const aiResponse = await multiModelOrchestrator.processRequest({
+        const _aiResponse = await multiModelOrchestrator.processRequest({
             task: 'question-answering',
             input: `Technical SEO question: ${message}`,
             userTier: context.userTier,
@@ -718,7 +718,7 @@ Would you like specific implementation steps or help with any other technical SE
         }];
     }
 
-    private generateContentOptimizationResponse(contentType: string, analysis: any, keywords: string[]): string {
+    private generateContentOptimizationResponse(contentType: string, analysis: unknown, keywords: string[]): string {
         return `Excellent! Let me help you optimize your ${contentType} content.
 
 📝 **Content Type:** ${contentType.replace('-', ' ')}
@@ -775,7 +775,7 @@ Would you like me to help with any specific optimization technique or review par
 
     private async handleGeneralSEOQuestion(context: ConversationContext, userMessage: string): Promise<ConversationResponse> {
         // Implementation for general SEO questions
-        const aiResponse = await multiModelOrchestrator.processRequest({
+        const _aiResponse = await multiModelOrchestrator.processRequest({
             task: 'question-answering',
             input: userMessage,
             userTier: context.userTier,

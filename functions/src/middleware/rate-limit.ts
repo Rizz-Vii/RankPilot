@@ -11,10 +11,10 @@ interface RateLimit {
 }
 
 export async function enforceRateLimit(
-  request: CallableRequest,
+  _request: CallableRequest,
   limitPerMinute: number = 60
 ): Promise<void> {
-  const authedRequest = validateAuth(request);
+  const authedRequest = validateAuth(_request);
   const userId = authedRequest.auth.uid;
 
   const rateLimitRef = db.collection("rateLimits").doc(userId);
@@ -35,7 +35,7 @@ export async function enforceRateLimit(
         return;
       }
 
-      const data = doc.data() as RateLimit;
+      const _data = doc.data() as RateLimit;
 
       if (data.lastRequest.toMillis() < oneMinuteAgo.toMillis()) {
         // Reset counter if last request was more than a minute ago
@@ -56,7 +56,7 @@ export async function enforceRateLimit(
         });
       }
     });
-  } catch (error) {
+  } catch (_error) {
     if (error instanceof HttpsError) {
       throw error;
     }

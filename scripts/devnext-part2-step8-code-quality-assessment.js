@@ -95,7 +95,7 @@ class DevNextCodeQualityAssessment {
             console.log('✅ DevNext Part II Step 8 Code Quality Assessment Complete!');
             console.log(`${colors.reset}`);
 
-        } catch (error) {
+        } catch (_error) {
             console.error(`${colors.red}❌ DevNext Step 8 Assessment Failed:${colors.reset}`, error.message);
             process.exit(1);
         }
@@ -119,7 +119,7 @@ class DevNextCodeQualityAssessment {
             { pattern: /setState\(/g, type: 'imperative-state', severity: 'medium' },
 
             // TypeScript legacy patterns
-            { pattern: /any\s*[;,\)\]\}]/g, type: 'any-types', severity: 'high' },
+            { pattern: /any\s*[;,\)\]}]/g, type: 'any-types', severity: 'high' },
             { pattern: /@ts-ignore/g, type: 'type-suppressions', severity: 'high' },
             { pattern: /as\s+any/g, type: 'type-assertions', severity: 'high' },
 
@@ -183,7 +183,7 @@ class DevNextCodeQualityAssessment {
                     });
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.warn(`${colors.yellow}Warning: Could not analyze ${file}${colors.reset}`);
             }
         }
@@ -263,7 +263,7 @@ class DevNextCodeQualityAssessment {
                     });
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.warn(`${colors.yellow}Warning: Could not analyze complexity for ${file}${colors.reset}`);
             }
         }
@@ -425,7 +425,7 @@ class DevNextCodeQualityAssessment {
                 totalMaintainabilityScore += Math.max(0, Math.min(100, score));
                 maintainableFiles++;
 
-            } catch (error) {
+            } catch (_error) {
                 console.warn(`${colors.yellow}Warning: Could not assess maintainability for ${file}${colors.reset}`);
             }
         }
@@ -468,7 +468,7 @@ class DevNextCodeQualityAssessment {
                 const documentedInterfaceMatches = content.match(/\/\*\*[\s\S]*?\*\/\s*(?:export\s+)?interface\s+\w+/g) || [];
                 documentedInterfaces += documentedInterfaceMatches.length;
 
-            } catch (error) {
+            } catch (_error) {
                 console.warn(`${colors.yellow}Warning: Could not analyze documentation for ${file}${colors.reset}`);
             }
         }
@@ -621,7 +621,7 @@ ${Object.entries(this.results.legacyCodeAnalysis.legacyPatterns).map(([pattern, 
         ).join('\n')}
 
 ### Critical Files Requiring Refactoring
-${this.results.legacyCodeAnalysis.criticalFiles.slice(0, 10).map((file, index) =>
+${this.results.legacyCodeAnalysis.criticalFiles.slice(0, 10).map((file, _index) =>
             `${index + 1}. **${file.file}** (Score: ${file.score}/100)
    - Issues: ${file.issues.map(issue => `${issue.type} (${issue.count})`).join(', ')}`
         ).join('\n')}
@@ -634,7 +634,7 @@ ${this.results.legacyCodeAnalysis.criticalFiles.slice(0, 10).map((file, index) =
 - **Classes Analyzed:** ${this.results.complexityMetrics.classComplexity.length}
 
 ### High Complexity Functions
-${this.results.complexityMetrics.functionComplexity.slice(0, 5).map((func, index) =>
+${this.results.complexityMetrics.functionComplexity.slice(0, 5).map((func, _index) =>
             `${index + 1}. **${func.file}** (Complexity: ${func.complexity}, Priority: ${func.priority})`
         ).join('\n')}
 
@@ -646,7 +646,7 @@ ${Object.entries(this.results.technicalDebt.categories).map(([category, data]) =
         ).join('\n')}
 
 ### Prioritized Improvement Tasks
-${this.results.technicalDebt.prioritizedTasks.map((task, index) =>
+${this.results.technicalDebt.prioritizedTasks.map((task, _index) =>
             `${task.priority}. **${task.task}**
    - Category: ${task.category}
    - Effort: ${task.effort}
@@ -707,7 +707,7 @@ This assessment integrates with the existing enterprise-grade code quality analy
 
 ---
 
-**Next Step:** Execute implementation plan using \`scripts/devnext-code-quality-implementation-plan.js\`
+**Next Step:** Execute implementation plan using `scripts/devnext-code-quality-implementation-plan.js`
 `;
     }
 
@@ -785,11 +785,11 @@ class CodeQualityImplementation {
         }
         
         totalRemovals += matches.length;
-        this.changes.push(\`Commented out \${matches.length} console statements in \${path.relative(this.srcPath, file)}\`);
+        this.changes.push(`Commented out \${matches.length} console statements in \${path.relative(this.srcPath, file)}`);
       }
     }
 
-    console.log(\`   ✅ Processed \${totalRemovals} console statements\\n\`);
+    console.log(`   ✅ Processed \${totalRemovals} console statements\\n`);
   }
 
   async improveTypeScript() {
@@ -804,8 +804,8 @@ class CodeQualityImplementation {
       let changes = 0;
 
       // Replace simple any types with unknown
-      const beforeAny = newContent.match(/: any[;,\\)\\]\\}]/g) || [];
-      newContent = newContent.replace(/: any([;,\\)\\]\\}])/g, ': unknown$1');
+      const beforeAny = newContent.match(/: any[;,\\)\\]\}]/g) || [];
+      newContent = newContent.replace(/: any([;,\\)\\]\}])/g, ': unknown$1');
       changes += beforeAny.length;
 
       // Add basic function return types
@@ -813,7 +813,7 @@ class CodeQualityImplementation {
       const functionsNeedingTypes = newContent.match(functionPattern) || [];
       if (functionsNeedingTypes.length > 0) {
         // Add comment suggesting return types
-        newContent = \`// TODO: Add return types to functions\\n\` + newContent;
+        newContent = `// TODO: Add return types to functions\\n` + newContent;
         changes += 1;
       }
 
@@ -822,11 +822,11 @@ class CodeQualityImplementation {
           fs.writeFileSync(file, newContent, 'utf8');
         }
         totalImprovements += changes;
-        this.changes.push(\`Made \${changes} TypeScript improvements in \${path.relative(this.srcPath, file)}\`);
+        this.changes.push(`Made \${changes} TypeScript improvements in \${path.relative(this.srcPath, file)}`);
       }
     }
 
-    console.log(\`   ✅ Made \${totalImprovements} TypeScript improvements\\n\`);
+    console.log(`   ✅ Made \${totalImprovements} TypeScript improvements\\n`);
   }
 
   async addDocumentation() {
@@ -843,12 +843,12 @@ class CodeQualityImplementation {
       // Add basic file documentation if missing
       if (!content.includes('/**')) {
         const fileName = path.basename(file, path.extname(file));
-        const fileDoc = \`/**
+        const fileDoc = `/**
  * @fileoverview \${fileName} component/utility
  * TODO: Add detailed file description
  */
 
-\`;
+`;
         newContent = fileDoc + newContent;
         changes += 1;
       }
@@ -858,11 +858,11 @@ class CodeQualityImplementation {
           fs.writeFileSync(file, newContent, 'utf8');
         }
         totalDocumentations += changes;
-        this.changes.push(\`Added documentation to \${path.relative(this.srcPath, file)}\`);
+        this.changes.push(`Added documentation to \${path.relative(this.srcPath, file)}`);
       }
     }
 
-    console.log(\`   ✅ Added documentation to \${totalDocumentations} files\\n\`);
+    console.log(`   ✅ Added documentation to \${totalDocumentations} files\\n`);
   }
 
   async setupQualityGates() {
@@ -923,10 +923,10 @@ class CodeQualityImplementation {
   generateSummary() {
     console.log('📊 Implementation Summary');
     console.log('========================');
-    console.log(\`Total changes: \${this.changes.length}\\n\`);
+    console.log(`Total changes: \${this.changes.length}\\n`);
     
-    this.changes.forEach((change, index) => {
-      console.log(\`\${index + 1}. \${change}\`);
+    this.changes.forEach((change, _index) => {
+      console.log(`\${index + 1}. \${change}`);
     });
 
     console.log('\\n🎯 Next Steps:');
@@ -940,11 +940,11 @@ class CodeQualityImplementation {
 // Execute implementation
 const dryRun = process.argv.includes('--dry-run');
 const implementation = new CodeQualityImplementation(dryRun);
-implementation.execute().catch(console.error);
+implementation.execute().catch(console._error);
 `;
     }
 }
 
 // Execute DevNext Part II Step 8
 const assessment = new DevNextCodeQualityAssessment();
-assessment.execute().catch(console.error);
+assessment.execute().catch(console._error);

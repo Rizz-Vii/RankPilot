@@ -43,7 +43,7 @@ async function globalSetup(config: FullConfig) {
         console.log("🔍 Checking development server...");
         await page.goto(baseURL, { timeout: 10000 });
         console.log("✅ Development server is running");
-    } catch (error) {
+    } catch (_error) {
         console.log("❌ Development server not running. Please start with: npm run dev-no-turbopack");
         throw new Error("Development server not available");
     }
@@ -70,7 +70,7 @@ async function globalSetup(config: FullConfig) {
         await page.waitForURL("**/dashboard", { timeout: 20000 });
         warmingState.authenticationReady = true;
         console.log("✅ Authentication successful with enhanced session");
-    } catch (error) {
+    } catch (_error) {
         console.log("⚠️ Authentication failed, continuing with public pages only");
     }
 
@@ -118,8 +118,8 @@ async function globalSetup(config: FullConfig) {
             warmingState.warmedPages.push(pageConfig.path);
             warmingState.memoryProfile.warmedSuccessfully.push(pageConfig.name);
 
-        } catch (error) {
-            const errorMsg = error instanceof Error ? error.message : String(error);
+        } catch (_error) {
+            const errorMsg = error instanceof Error ? error.message : String(_error);
             console.log(`   ⚠️ ${pageConfig.name} warming failed: ${errorMsg}`);
             warmingState.memoryProfile.failed.push(pageConfig.name);
 
@@ -149,7 +149,7 @@ async function globalSetup(config: FullConfig) {
         await page.goto("/", { waitUntil: "domcontentloaded", timeout: 15000 });
         const perfTime = Date.now() - perfStart;
         console.log(`✅ Post-warming performance: ${perfTime}ms`);
-    } catch (error) {
+    } catch (_error) {
         console.log("⚠️ Performance test failed, but warming data preserved");
     }
 

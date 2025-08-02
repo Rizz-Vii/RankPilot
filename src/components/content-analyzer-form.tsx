@@ -66,8 +66,8 @@ export default function ContentAnalyzerForm({
   async function handleFormSubmit(values: ContentAnalyzerFormValues) {
     try {
       await onSubmit(values as AnalyzeContentInput);
-    } catch (error) {
-      console.error("Content analysis failed:", error);
+    } catch (_error) {
+      console.error("Content analysis failed:", _error);
       // Error handling could be improved with toast notifications
     }
   }

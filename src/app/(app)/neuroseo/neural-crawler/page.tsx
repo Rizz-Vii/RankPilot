@@ -125,7 +125,7 @@ export default function NeuralCrawlerPage() {
       const history: CrawlHistory[] = [];
       
       querySnapshot.forEach((doc) => {
-        const data = doc.data();
+        const _data = doc.data();
         history.push({
           id: doc.id,
           url: data.url,
@@ -137,8 +137,8 @@ export default function NeuralCrawlerPage() {
       });
       
       setCrawlHistory(history);
-    } catch (error) {
-      console.error('Error loading crawl history:', error);
+    } catch (_error) {
+      console.error('Error loading crawl history:', _error);
     }
   };
 
@@ -241,21 +241,21 @@ Key areas of focus include content quality assessment, competitive analysis, per
 
       // Simulate analysis
       const result = await simulateAnalysis(crawlUrl);
-      setCurrentResult(result);
+      setCurrentResult(_result);
 
       // Save complete result
       await addDoc(collection(db, 'neuralCrawlerResults'), {
         userId: user.uid,
         historyId: historyDoc.id,
-        ...result,
+        ..._result,
         createdAt: new Date()
       });
 
       await loadCrawlHistory();
       toast.success("Website analysis completed successfully!");
 
-    } catch (error) {
-      console.error('Analysis error:', error);
+    } catch (_error) {
+      console.error('Analysis _error:', _error);
       toast.error("Analysis failed. Please try again.");
     } finally {
       setIsAnalyzing(false);
@@ -313,7 +313,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
                 id="crawl-url"
                 placeholder="https://example.com"
                 value={crawlUrl}
-                onChange={(e) => setCrawlUrl(e.target.value)}
+                onChange={(e) => setCrawlUrl(e.target._value)}
                 disabled={isAnalyzing}
               />
             </div>
@@ -445,7 +445,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
                       <CardTitle>Issues & Recommendations</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      {currentResult.issues.map((issue, index) => (
+                      {currentResult.issues.map((issue, _index) => (
                         <Alert key={index} variant={issue.type === 'error' ? 'destructive' : 'default'}>
                           <AlertCircle className="h-4 w-4" />
                           <AlertDescription>
@@ -473,7 +473,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
                             {level.toUpperCase()} ({headings.length})
                           </Badge>
                           <ul className="list-disc list-inside space-y-1 ml-4">
-                            {headings.map((heading, index) => (
+                            {headings.map((heading, _index) => (
                               <li key={index} className="text-sm">{heading}</li>
                             ))}
                           </ul>
@@ -492,7 +492,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {currentResult.images.slice(0, 5).map((image, index) => (
+                      {currentResult.images.slice(0, 5).map((image, _index) => (
                         <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded text-sm">
                           <ImageIcon className="h-4 w-4" />
                           <span className="flex-1 truncate">{image.alt || 'No alt text'}</span>
@@ -613,7 +613,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {currentResult.entities.map((entity, index) => (
+                      {currentResult.entities.map((entity, _index) => (
                         <Badge key={index} variant="outline" className="flex items-center gap-1">
                           <span>{entity.text}</span>
                           <span className="text-xs opacity-70">

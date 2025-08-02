@@ -36,7 +36,7 @@ interface EnhancedAppNavProps {
   isAdmin?: boolean;
   className?: string;
   mobile?: boolean;
-  onItemClickAction?: (item: NavItem) => void;
+  onItemClickAction?: (_item: NavItem) => void;
   collapsed?: boolean;
 }
 
@@ -62,7 +62,7 @@ export function EnhancedAppNav({
 
       // Set initial expanded state based on current pathname
       const activeGroup = groups.find((group) =>
-        group.items.some((item) => item.href === pathname)
+        group.items.some((_item) => item.href === pathname)
       );
 
       if (activeGroup) {
@@ -73,7 +73,7 @@ export function EnhancedAppNav({
           activeItem: pathname || undefined,
         }));
       }
-    } catch (error) {
+    } catch (_error) {
       const fallback = handleNavError(
         error as Error,
         "EnhancedAppNav initialization"
@@ -98,20 +98,20 @@ export function EnhancedAppNav({
   }, []);
 
   const handleItemClick = useCallback(
-    (item: NavItem, groupId: string) => {
+    (_item: NavItem, groupId: string) => {
       trackNavigation(item.href, groupId);
       setNavState((prev) => ({
         ...prev,
         activeItem: item.href,
         activeGroup: groupId,
       }));
-      onItemClickAction?.(item);
+      onItemClickAction?.(_item);
     },
     [onItemClickAction]
   );
 
   const renderNavItem = useCallback(
-    (item: NavItem, groupId: string, index: number) => {
+    (_item: NavItem, groupId: string, _index: number) => {
       const isActive = pathname === item.href;
       const Icon = item.icon;
 
@@ -128,7 +128,7 @@ export function EnhancedAppNav({
               <TooltipTrigger asChild>
                 <Link
                   href={item.href}
-                  onClick={() => handleItemClick(item, groupId)}
+                  onClick={() => handleItemClick(_item, groupId)}
                   className={cn(
                     "tool-link group flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-sm font-medium transition-all duration-200",
                     "hover:bg-accent hover:text-accent-foreground w-full min-w-0",
@@ -226,7 +226,7 @@ export function EnhancedAppNav({
   );
 
   const renderNavGroup = useCallback(
-    (group: NavGroup, index: number) => {
+    (group: NavGroup, _index: number) => {
       const isExpanded = navState.expandedGroups.has(group.id);
       const isActive = navState.activeGroup === group.id;
       const GroupIcon = group.icon;
@@ -314,8 +314,8 @@ export function EnhancedAppNav({
                     role="list"
                     aria-label={`${group.title} navigation items`}
                   >
-                    {group.items.map((item, itemIndex) =>
-                      renderNavItem(item, group.id, itemIndex)
+                    {group.items.map((_item, itemIndex) =>
+                      renderNavItem(_item, group.id, itemIndex)
                     )}
                   </motion.ul>
                 </CollapsibleContent>
@@ -335,11 +335,11 @@ export function EnhancedAppNav({
                 <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
                   {group.title}
                 </div>
-                {group.items.map((item) => (
+                {group.items.map((_item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    onClick={() => handleItemClick(item, group.id)}
+                    onClick={() => handleItemClick(_item, group.id)}
                     className={cn(
                       "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm",
                       "hover:bg-accent hover:text-accent-foreground",
@@ -398,7 +398,7 @@ export function EnhancedAppNav({
       aria-label="Main navigation"
     >
       <AnimatePresence initial={false}>
-        {visibleGroups.map((group, index) => renderNavGroup(group, index))}
+        {visibleGroups.map((group, _index) => renderNavGroup(group, _index))}
       </AnimatePresence>
     </nav>
   );
@@ -413,12 +413,12 @@ export function EnhancedMobileNav({
 }: {
   userTier?: string;
   isAdmin?: boolean;
-  onItemClickAction?: (item: NavItem) => void;
+  onItemClickAction?: (_item: NavItem) => void;
   onCloseAction?: () => void;
 }) {
   const handleItemClick = useCallback(
-    (item: NavItem) => {
-      onItemClickAction?.(item);
+    (_item: NavItem) => {
+      onItemClickAction?.(_item);
       onCloseAction?.();
     },
     [onItemClickAction, onCloseAction]

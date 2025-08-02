@@ -87,8 +87,8 @@ class CodeQualityImplementation {
       let changes = 0;
 
       // Replace simple any types with unknown
-      const beforeAny = newContent.match(/: any[;,\)\]\}]/g) || [];
-      newContent = newContent.replace(/: any([;,\)\]\}])/g, ': unknown$1');
+      const beforeAny = newContent.match(/: any[;,\)\]}]/g) || [];
+      newContent = newContent.replace(/: any([;,\)\]}])/g, ': unknown$1');
       changes += beforeAny.length;
 
       // Add basic function return types
@@ -208,7 +208,7 @@ class CodeQualityImplementation {
     console.log('========================');
     console.log(`Total changes: ${this.changes.length}\n`);
     
-    this.changes.forEach((change, index) => {
+    this.changes.forEach((change, _index) => {
       console.log(`${index + 1}. ${change}`);
     });
 
@@ -223,4 +223,4 @@ class CodeQualityImplementation {
 // Execute implementation
 const dryRun = process.argv.includes('--dry-run');
 const implementation = new CodeQualityImplementation(dryRun);
-implementation.execute().catch(console.error);
+implementation.execute().catch(console._error);

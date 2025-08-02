@@ -23,8 +23,8 @@ if (!getApps().length) {
       credential: cert("./firebase-admin-key.json"),
       projectId: "rankpilot-h3jpc",
     });
-  } catch (error) {
-    console.error("❌ Failed to initialize Firebase Admin:", error);
+  } catch (_error) {
+    console.error("❌ Failed to initialize Firebase Admin:", _error);
     throw error;
   }
 }
@@ -532,7 +532,7 @@ export class EnhancedTestUserSeeder {
       try {
         firebaseUser = await auth.getUserByEmail(userData.email);
         console.log(`    ✅ Auth user exists: ${firebaseUser.uid}`);
-      } catch (error) {
+      } catch (_error) {
         // User doesn't exist, create new one
         firebaseUser = await auth.createUser({
           uid: userData.uid,
@@ -569,7 +569,7 @@ export class EnhancedTestUserSeeder {
       });
 
       // Create test projects
-      for (const [index, project] of userData.testData.projects.entries()) {
+      for (const [_index, project] of userData.testData.projects.entries()) {
         const projectId = `${userData.uid}_project_${index + 1}`;
         await db.collection('projects').doc(projectId).set({
           id: projectId,
@@ -600,7 +600,7 @@ export class EnhancedTestUserSeeder {
       }
 
       // Create sample NeuroSEO analyses
-      for (const [index, analysis] of userData.testData.sampleAnalyses.entries()) {
+      for (const [_index, analysis] of userData.testData.sampleAnalyses.entries()) {
         const analysisId = `${userData.uid}_analysis_${index + 1}`;
         await db.collection('neuroSeoAnalyses').doc(analysisId).set({
           id: analysisId,
@@ -754,7 +754,7 @@ export class EnhancedTestUserSeeder {
             joinedAt: userData.createdAt,
             permissions: ['read_projects', 'create_analyses', 'export_reports']
           })) || [],
-          projects: userData.testData.projects.map((_, index) => `${userData.uid}_project_${index + 1}`),
+          projects: userData.testData.projects.map((_, _index) => `${userData.uid}_project_${index + 1}`),
           settings: {
             allowInvites: true,
             requireApproval: false,
@@ -794,8 +794,8 @@ export class EnhancedTestUserSeeder {
 
       console.log(`    ✅ Seeded comprehensive data for ${tier} user`);
       
-    } catch (error) {
-      console.error(`    ❌ Failed to seed ${tier} user:`, error);
+    } catch (_error) {
+      console.error(`    ❌ Failed to seed ${tier} user:`, _error);
       throw error;
     }
   }
@@ -834,7 +834,7 @@ export class EnhancedTestUserSeeder {
         await db.collection('users').doc(userData.uid).delete();
         
         console.log(`    ✅ Cleaned data for ${userData.email}`);
-      } catch (error) {
+      } catch (_error) {
         console.log(`    ⚠️  Warning: Could not clean all data for ${userData.email}`);
       }
     }
@@ -852,15 +852,15 @@ if (require.main === module) {
   if (command === 'clean') {
     seeder.cleanTestData()
       .then(() => process.exit(0))
-      .catch((error) => {
-        console.error("Cleanup failed:", error);
+      .catch((_error) => {
+        console.error("Cleanup failed:", _error);
         process.exit(1);
       });
   } else {
     seeder.seedAllTestUsers()
       .then(() => process.exit(0))
-      .catch((error) => {
-        console.error("Test user seeding failed:", error);
+      .catch((_error) => {
+        console.error("Test user seeding failed:", _error);
         process.exit(1);
       });
   }
@@ -874,8 +874,8 @@ if (require.main === module) {
       console.log("✅ All enhanced test users seeded successfully!");
       process.exit(0);
     })
-    .catch((error) => {
-      console.error("❌ Enhanced test user seeding failed:", error);
+    .catch((_error) => {
+      console.error("❌ Enhanced test user seeding failed:", _error);
       process.exit(1);
     });
 }

@@ -121,8 +121,8 @@ export function EnterpriseDashboard() {
             };
 
             setMetrics(mockMetrics);
-        } catch (error) {
-            console.error('Failed to load dashboard metrics:', error);
+        } catch (_error) {
+            console.error('Failed to load dashboard metrics:', _error);
         } finally {
             setIsLoading(false);
         }
@@ -191,7 +191,7 @@ export function EnterpriseDashboard() {
                     <div className="flex items-center space-x-4">
                         <select
                             value={selectedTimeRange}
-                            onChange={(e) => setSelectedTimeRange(e.target.value)}
+                            onChange={(e) => setSelectedTimeRange(e.target._value)}
                             className="px-3 py-2 border rounded-md bg-white"
                         >
                             <option value="1h">Last Hour</option>
@@ -315,7 +315,7 @@ export function EnterpriseDashboard() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-4">
-                                        {edgeLocationData.map((location, index) => (
+                                        {edgeLocationData.map((location, _index) => (
                                             <div key={index} className="flex items-center justify-between">
                                                 <div className="flex items-center space-x-3">
                                                     <div className="w-3 h-3 bg-green-500 rounded-full" />

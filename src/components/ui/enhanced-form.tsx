@@ -12,14 +12,14 @@ interface EnhancedFormContextType {
   errors: Record<string, string>;
   touched: Record<string, boolean>;
   values: Record<string, any>;
-  setFieldValue: (name: string, value: any) => void;
+  setFieldValue: (name: string, _value: unknown) => void;
   setFieldTouched: (name: string, touched: boolean) => void;
-  setFieldError: (name: string, error: string) => void;
+  setFieldError: (name: string, _error: string) => void;
   clearFieldError: (name: string) => void;
   /**
    * Validation schema for type-safe field validation
    */
-  schema?: any;
+  schema?: unknown;
   /**
    * Field registration for better composition
    */
@@ -32,9 +32,9 @@ interface EnhancedFormContextType {
 }
 
 interface FieldConfig {
-  validate?: (value: any) => string | undefined;
-  transform?: (value: any) => any;
-  defaultValue?: any;
+  validate?: (_value: unknown) => string | undefined;
+  transform?: (_value: unknown) => any;
+  defaultValue?: unknown;
 }
 
 const EnhancedFormContext = createContext<EnhancedFormContextType | null>(null);
@@ -53,7 +53,7 @@ interface EnhancedFormProps {
   children: React.ReactNode;
   onSubmit: (values: Record<string, any>) => Promise<void> | void;
   initialValues?: Record<string, any>;
-  validationSchema?: any; // Could be Zod schema
+  validationSchema?: unknown; // Could be Zod schema
   className?: string;
   autoComplete?: string;
   noValidate?: boolean;
@@ -79,7 +79,7 @@ export function EnhancedForm({
   const formRef = useRef<HTMLFormElement>(null);
   const hydrated = useHydration();
 
-  const setFieldValue = (name: string, value: any) => {
+  const setFieldValue = (name: string, _value: unknown) => {
     setValues((prev) => ({ ...prev, [name]: value }));
     // Clear error when user starts typing
     if (errors[name]) {
@@ -91,7 +91,7 @@ export function EnhancedForm({
     setTouched((prev) => ({ ...prev, [name]: touched }));
   };
 
-  const setFieldError = (name: string, error: string) => {
+  const setFieldError = (name: string, _error: string) => {
     setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
@@ -131,8 +131,8 @@ export function EnhancedForm({
     setIsSubmitting(true);
     try {
       await onSubmit(values);
-    } catch (error) {
-      console.error("Form submission error:", error);
+    } catch (_error) {
+      console.error("Form submission _error:", _error);
       // You could set a global form error here
     } finally {
       setIsSubmitting(false);
@@ -190,10 +190,10 @@ interface EnhancedFieldProps {
   disabled?: boolean;
   className?: string;
   description?: string;
-  validate?: (value: any) => string | undefined;
+  validate?: (_value: unknown) => string | undefined;
   children?: (props: {
-    value: any;
-    onChange: (value: any) => void;
+    _value: unknown;
+    onChange: (_value: unknown) => void;
     onBlur: () => void;
     error?: string;
     touched: boolean;
@@ -230,14 +230,14 @@ export function EnhancedField({
   const isDisabled = disabled || isSubmitting;
   const hydrated = useHydration();
 
-  const handleChange = (value: any) => {
-    setFieldValue(name, value);
+  const handleChange = (_value: unknown) => {
+    setFieldValue(name, _value);
 
     // Run validation if provided
     if (validate) {
-      const error = validate(value);
-      if (error) {
-        setFieldError(name, error);
+      const error = validate(_value);
+      if (_error) {
+        setFieldError(name, _error);
       } else {
         clearFieldError(name);
       }
@@ -269,10 +269,10 @@ export function EnhancedField({
           </label>
         )}
         {children({
-          value: fieldValue,
+          _value: fieldValue,
           onChange: handleChange,
           onBlur: handleBlur,
-          error: fieldError,
+          _error: fieldError,
           touched: fieldTouched,
           disabled: isDisabled,
         })}
@@ -320,7 +320,7 @@ export function EnhancedField({
         name={name}
         type={type}
         value={fieldValue}
-        onChange={(e) => handleChange(e.target.value)}
+        onChange={(e) => handleChange(e.target._value)}
         onBlur={handleBlur}
         placeholder={placeholder}
         disabled={!hydrated || isDisabled}

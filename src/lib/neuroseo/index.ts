@@ -33,7 +33,7 @@ export interface NeuroSEOAnalysisRequest {
 export interface NeuroSEOReport {
   id: string;
   timestamp: string;
-  request: NeuroSEOAnalysisRequest;
+  _request: NeuroSEOAnalysisRequest;
   crawlResults: CrawlResult[];
   semanticAnalysis: SemanticAnalysisResult[];
   visibilityAnalysis: VisibilityReport[];
@@ -114,7 +114,7 @@ export class NeuroSEOSuite {
     this.quotaManager = new UsageQuotaManager();
   }
 
-  async runAnalysis(request: NeuroSEOAnalysisRequest): Promise<NeuroSEOReport> {
+  async runAnalysis(_request: NeuroSEOAnalysisRequest): Promise<NeuroSEOReport> {
     const reportId = `neuro-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     // Check quota before proceeding
@@ -133,7 +133,7 @@ export class NeuroSEOSuite {
       const report: NeuroSEOReport = {
         id: reportId,
         timestamp: new Date().toISOString(),
-        request,
+        _request,
         crawlResults: [],
         semanticAnalysis: [],
         visibilityAnalysis: [],
@@ -206,8 +206,8 @@ export class NeuroSEOSuite {
         `✅ NeuroSEO™ analysis complete! Overall score: ${report.overallScore}/100`
       );
       return report;
-    } catch (error) {
-      console.error("❌ NeuroSEO™ analysis failed:", error);
+    } catch (_error) {
+      console.error("❌ NeuroSEO™ analysis failed:", _error);
       throw error;
     }
   }
@@ -225,8 +225,8 @@ export class NeuroSEOSuite {
           timeout: 30000,
         });
         crawlResults.push(crawlReport);
-      } catch (error) {
-        console.warn(`⚠️ Failed to crawl ${url}:`, error);
+      } catch (_error) {
+        console.warn(`⚠️ Failed to crawl ${url}:`, _error);
         // Continue with other URLs
       }
     }
@@ -237,8 +237,8 @@ export class NeuroSEOSuite {
   private async runSemanticPhase(
     crawlResults: CrawlResult[],
     targetKeywords: string[]
-  ): Promise<any[]> {
-    const semanticResults: any[] = [];
+  ): Promise<unknown[]> {
+    const semanticResults: unknown[] = [];
 
     for (const crawlResult of crawlResults) {
       try {
@@ -248,10 +248,10 @@ export class NeuroSEOSuite {
         //   crawlResult.metadata.title || "Untitled"
         // );
         // semanticResults.push(semanticReport);
-      } catch (error) {
+      } catch (_error) {
         console.warn(
           `⚠️ Failed semantic analysis for ${crawlResult.url}:`,
-          error
+          _error
         );
       }
     }
@@ -274,8 +274,8 @@ export class NeuroSEOSuite {
           competitorUrls
         );
         visibilityResults.push(visibilityReport);
-      } catch (error) {
-        console.warn(`⚠️ Failed visibility analysis for ${url}:`, error);
+      } catch (_error) {
+        console.warn(`⚠️ Failed visibility analysis for ${url}:`, _error);
       }
     }
 
@@ -297,8 +297,8 @@ export class NeuroSEOSuite {
           competitorUrls
         );
         trustResults.push(trustReport);
-      } catch (error) {
-        console.warn(`⚠️ Failed trust analysis for ${crawlResult.url}:`, error);
+      } catch (_error) {
+        console.warn(`⚠️ Failed trust analysis for ${crawlResult.url}:`, _error);
       }
     }
 
@@ -336,7 +336,7 @@ export class NeuroSEOSuite {
           constraints: [
             {
               type: "preserve_facts",
-              value: true,
+              _value: true,
               importance: "critical",
             },
           ],
@@ -355,10 +355,10 @@ export class NeuroSEOSuite {
         const rewriteAnalysis =
           await this.rewriteEngine.generateRewrites(rewriteRequest);
         rewriteResults.push(rewriteAnalysis);
-      } catch (error) {
+      } catch (_error) {
         console.warn(
           `⚠️ Failed rewrite analysis for ${crawlResult.url}:`,
-          error
+          _error
         );
       }
     }
@@ -420,7 +420,7 @@ export class NeuroSEOSuite {
     if (report.crawlResults.length === 0) return 0;
     return Math.round(
       report.crawlResults.reduce(
-        (sum, result) => sum + ((result as any).seoMetrics?.overallScore || 0),
+        (sum, _result) => sum + ((result as any).seoMetrics?.overallScore || 0),
         0
       ) / report.crawlResults.length
     );
@@ -430,7 +430,7 @@ export class NeuroSEOSuite {
     if (report.visibilityAnalysis.length === 0) return 0;
     return Math.round(
       report.visibilityAnalysis.reduce(
-        (sum, result) => sum + result.metrics.overallVisibilityScore,
+        (sum, _result) => sum + result.metrics.overallVisibilityScore,
         0
       ) / report.visibilityAnalysis.length
     );
@@ -440,7 +440,7 @@ export class NeuroSEOSuite {
     if (report.trustAnalysis.length === 0) return 0;
     return Math.round(
       report.trustAnalysis.reduce(
-        (sum, result) => sum + result.metrics.overallEATScore,
+        (sum, _result) => sum + result.metrics.overallEATScore,
         0
       ) / report.trustAnalysis.length
     );
@@ -450,13 +450,13 @@ export class NeuroSEOSuite {
     if ((report as any).semanticAnalysis?.length === 0) return 0;
     return Math.round(
       (report as any).semanticAnalysis?.reduce(
-        (sum: number, result: any) => sum + result.overallRelevanceScore,
+        (sum: number, _result: unknown) => sum + result.overallRelevanceScore,
         0
       ) / (report as any).semanticAnalysis?.length || 0
     );
   }
 
-  private identifyStrengths(ourScores: any, competitorScores: any[]): string[] {
+  private identifyStrengths(ourScores: unknown, competitorScores: unknown[]): string[] {
     const strengths: string[] = [];
     const avgCompetitorSEO =
       competitorScores.reduce((sum, comp) => sum + comp.seo, 0) /
@@ -480,8 +480,8 @@ export class NeuroSEOSuite {
   }
 
   private identifyWeaknesses(
-    ourScores: any,
-    competitorScores: any[]
+    ourScores: unknown,
+    competitorScores: unknown[]
   ): string[] {
     const weaknesses: string[] = [];
     const avgCompetitorSEO =
@@ -536,7 +536,7 @@ export class NeuroSEOSuite {
     return opportunities;
   }
 
-  private identifyThreats(competitorScores: any[]): string[] {
+  private identifyThreats(competitorScores: unknown[]): string[] {
     const threats: string[] = [];
 
     const strongCompetitors = competitorScores.filter(
@@ -558,8 +558,8 @@ export class NeuroSEOSuite {
   }
 
   private generateCompetitiveRecommendations(
-    ourScores: any,
-    competitorScores: any[]
+    ourScores: unknown,
+    competitorScores: unknown[]
   ): string[] {
     const recommendations: string[] = [];
 
@@ -711,7 +711,7 @@ export class NeuroSEOSuite {
   }
 
   private estimateEffort(category: string): "low" | "medium" | "high" {
-    const effortMap: { [key: string]: "low" | "medium" | "high"; } = {
+    const effortMap: { [_key: string]: "low" | "medium" | "high"; } = {
       seo: "medium",
       content: "high",
       technical: "high",
@@ -722,7 +722,7 @@ export class NeuroSEOSuite {
   }
 
   private estimateTimeframe(category: string): string {
-    const timeframeMap: { [key: string]: string; } = {
+    const timeframeMap: { [_key: string]: string; } = {
       seo: "2-4 weeks",
       content: "1-3 weeks",
       technical: "3-6 weeks",
@@ -733,7 +733,7 @@ export class NeuroSEOSuite {
   }
 
   private generateTaskResources(category: string): TaskResource[] {
-    const resourceMap: { [key: string]: TaskResource[]; } = {
+    const resourceMap: { [_key: string]: TaskResource[]; } = {
       seo: [
         {
           type: "guide",

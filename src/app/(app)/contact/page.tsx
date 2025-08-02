@@ -41,12 +41,12 @@ const contactSchema = z.object({
 type ContactFormData = z.infer<typeof contactSchema>;
 
 const supportCategories = [
-  { value: "billing", label: "Billing & Payments" },
-  { value: "technical", label: "Technical Support" },
-  { value: "account", label: "Account Management" },
-  { value: "feature", label: "Feature Request" },
-  { value: "bug", label: "Bug Report" },
-  { value: "general", label: "General Inquiry" },
+  { _value: "billing", label: "Billing & Payments" },
+  { _value: "technical", label: "Technical Support" },
+  { _value: "account", label: "Account Management" },
+  { _value: "feature", label: "Feature Request" },
+  { _value: "bug", label: "Bug Report" },
+  { _value: "general", label: "General Inquiry" },
 ];
 
 const supportChannels = [
@@ -123,7 +123,7 @@ export default function ContactPage() {
     mode: "onChange",
   });
 
-  const onSubmit = async (data: ContactFormData) => {
+  const onSubmit = async (_data: ContactFormData) => {
     setIsSubmitting(true);
 
     try {
@@ -132,8 +132,8 @@ export default function ContactPage() {
 
       toast.success("Message sent successfully! We'll get back to you soon.");
       reset();
-    } catch (error) {
-      console.error("Contact form error:", error);
+    } catch (_error) {
+      console.error("Contact form _error:", _error);
       toast.error("Failed to send message. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -296,7 +296,7 @@ export default function ContactPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {supportChannels.map((channel, index) => (
+                {supportChannels.map((channel, _index) => (
                   <div key={index} className="p-4 border rounded-lg">
                     <div className="flex items-start gap-4">
                       <div className="p-2 bg-primary/10 text-primary rounded-lg">
@@ -392,11 +392,11 @@ export default function ContactPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {faqItems.map((item, index) => (
+                {faqItems.map((_item, _index) => (
                   <div key={index} className="border rounded-lg">
                     <button
                       onClick={() =>
-                        setSelectedFaq(selectedFaq === index ? null : index)
+                        setSelectedFaq(selectedFaq === index ? null : _index)
                       }
                       className="w-full text-left p-4 hover:bg-muted/50 transition-colors"
                     >

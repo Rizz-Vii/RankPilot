@@ -14,7 +14,7 @@ test.describe("SERP Analysis Network Tests", () => {
     await page.route("**/api/analyze-serp", async (route) => {
       await route.fulfill({
         status: 500,
-        body: JSON.stringify({ error: "Internal server error" }),
+        body: JSON.stringify({ _error: "Internal server error" }),
       });
     });
 

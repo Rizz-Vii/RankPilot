@@ -73,8 +73,8 @@ interface User {
   email: string;
   displayName?: string;
   role: string;
-  createdAt: any;
-  lastSignIn?: any;
+  createdAt: unknown;
+  lastSignIn?: unknown;
   subscriptionStatus?: string;
   subscriptionTier?: string;
   activityCount?: number;
@@ -125,7 +125,7 @@ export default function AdminUserManagement() {
       }
 
       setUsers(usersList);
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -168,7 +168,7 @@ export default function AdminUserManagement() {
         title: "Success",
         description: `User ${actionType}d successfully.`,
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -230,7 +230,7 @@ export default function AdminUserManagement() {
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-4">
-            {[...Array(5)].map((_, i) => (
+            {[...Array(5)].map((_, _i) => (
               <div key={i} className="h-16 bg-muted rounded" />
             ))}
           </div>
@@ -332,7 +332,7 @@ export default function AdminUserManagement() {
                 <Input
                   placeholder="Search users by email or name..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => setSearchTerm(e.target._value)}
                   className="pl-8"
                 />
               </div>

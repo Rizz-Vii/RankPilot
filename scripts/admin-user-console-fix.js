@@ -66,8 +66,8 @@ const adminUserUtils = {
 
             return { adminUsers };
 
-        } catch (error) {
-            console.error("❌ Error diagnosing admin users:", error);
+        } catch (_error) {
+            console.error("❌ Error diagnosing admin users:", _error);
             throw error;
         }
     },
@@ -117,8 +117,8 @@ const adminUserUtils = {
 
             return true;
 
-        } catch (error) {
-            console.error("❌ Error fixing admin user:", error);
+        } catch (_error) {
+            console.error("❌ Error fixing admin user:", _error);
             throw error;
         }
     },
@@ -136,7 +136,7 @@ const adminUserUtils = {
             try {
                 await this.fixAdminUser(email);
                 console.log(`✅ Fixed: ${email}\n`);
-            } catch (error) {
+            } catch (_error) {
                 console.log(`❌ Failed to fix ${email}: ${error}\n`);
             }
         }

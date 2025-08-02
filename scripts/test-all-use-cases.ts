@@ -202,13 +202,13 @@ export async function testUserScenarios() {
         console.log(
           `     Features used: ${Object.keys(latestAnalysis)
             .filter(
-              (key) =>
+              (_key) =>
                 [
                   "crawlResults",
                   "visibilityAnalysis",
                   "trustAnalysis",
                   "rewriteRecommendations",
-                ].includes(key) && latestAnalysis[key]?.length > 0
+                ].includes(_key) && latestAnalysis[key]?.length > 0
             )
             .join(", ")}`
         );
@@ -282,7 +282,7 @@ export async function testUserScenarios() {
         if (reportsUsage <= 1 && auditsUsage <= 1) {
           console.log("   ✅ Usage is within limits");
         } else {
-          console.log("   ⚠️ Usage exceeds limits (may be test data)");
+          console.log("   ⚠️ Usage exceeds limits (may be test _data)");
         }
       }
 
@@ -330,7 +330,7 @@ export async function testUserScenarios() {
 
       // 7. Test case verification
       console.log(`🧪 Test Cases:`);
-      scenario.testCases.forEach((testCase, index) => {
+      scenario.testCases.forEach((testCase, _index) => {
         console.log(`   ${index + 1}. ${testCase}`);
       });
 
@@ -377,8 +377,8 @@ export async function testUserScenarios() {
     console.log("   ✅ Admin role differentiation");
 
     console.log("\n🎉 All user scenarios tested successfully!");
-  } catch (error) {
-    console.error("❌ Error during user scenario testing:", error);
+  } catch (_error) {
+    console.error("❌ Error during user scenario testing:", _error);
     throw error;
   }
 }
@@ -477,8 +477,8 @@ export async function generateUseCaseReport() {
     }
 
     console.log("\n🎉 Use case report completed!");
-  } catch (error) {
-    console.error("❌ Error generating use case report:", error);
+  } catch (_error) {
+    console.error("❌ Error generating use case report:", _error);
     throw error;
   }
 }
@@ -502,8 +502,8 @@ if (require.main === module) {
       });
       process.exit(0);
     })
-    .catch((error) => {
-      console.error("💥 Testing failed:", error);
+    .catch((_error) => {
+      console.error("💥 Testing failed:", _error);
       process.exit(1);
     });
 }

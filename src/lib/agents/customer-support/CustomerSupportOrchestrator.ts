@@ -141,8 +141,8 @@ export class CustomerSupportOrchestrator implements RankPilotAgent {
 
             console.log('✅ Customer Support Orchestrator - Execution complete!');
             return true;
-        } catch (error) {
-            console.error('🚨 Customer Support Orchestrator failed:', error);
+        } catch (_error) {
+            console.error('🚨 Customer Support Orchestrator failed:', _error);
             return false;
         }
     }

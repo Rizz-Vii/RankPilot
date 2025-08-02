@@ -16,8 +16,8 @@ if (!getApps().length) {
         initializeApp({
             projectId,
         });
-    } catch (error) {
-        console.error('[CompetitiveIntelligenceAPI] Firebase Admin initialization error:', error);
+    } catch (_error) {
+        console.error('[CompetitiveIntelligenceAPI] Firebase Admin initialization _error:', _error);
     }
 }
 
@@ -28,19 +28,19 @@ interface CompetitorRequestBody {
     name?: string;
     industry?: string;
     targetKeywords?: string[];
-    trackingConfig?: any;
+    trackingConfig?: unknown;
     reportConfig?: {
         competitorIds: string[];
         analysisType: 'overview' | 'keyword-gap' | 'content-gap' | 'technical' | 'comprehensive';
     };
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
     try {
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
-                { error: 'Missing or invalid authorization header' },
+                { _error: 'Missing or invalid authorization header' },
                 { status: 401 }
             );
         }
@@ -51,10 +51,10 @@ export async function POST(request: NextRequest) {
         let decodedToken;
         try {
             decodedToken = await auth.verifyIdToken(token);
-        } catch (error) {
-            console.error('[CompetitiveIntelligenceAPI] Token verification error:', error);
+        } catch (_error) {
+            console.error('[CompetitiveIntelligenceAPI] Token verification _error:', _error);
             return NextResponse.json(
-                { error: 'Invalid authentication token' },
+                { _error: 'Invalid authentication token' },
                 { status: 401 }
             );
         }
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
         // Check tier access for competitive intelligence
         if (!['agency', 'enterprise', 'admin'].includes(userTier)) {
             return NextResponse.json(
-                { error: 'Competitive intelligence requires Agency tier or higher' },
+                { _error: 'Competitive intelligence requires Agency tier or higher' },
                 { status: 403 }
             );
         }
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
             case 'add':
                 if (!body.domain) {
                     return NextResponse.json(
-                        { error: 'Domain is required for adding competitor' },
+                        { _error: 'Domain is required for adding competitor' },
                         { status: 400 }
                     );
                 }
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
             case 'analyze':
                 if (!body.competitorId) {
                     return NextResponse.json(
-                        { error: 'Competitor ID is required for analysis' },
+                        { _error: 'Competitor ID is required for analysis' },
                         { status: 400 }
                     );
                 }
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
             case 'update':
                 if (!body.competitorId) {
                     return NextResponse.json(
-                        { error: 'Competitor ID is required for update' },
+                        { _error: 'Competitor ID is required for update' },
                         { status: 400 }
                     );
                 }
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
 
                 if (!updated) {
                     return NextResponse.json(
-                        { error: 'Competitor not found or update failed' },
+                        { _error: 'Competitor not found or update failed' },
                         { status: 404 }
                     );
                 }
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
             case 'delete':
                 if (!body.competitorId) {
                     return NextResponse.json(
-                        { error: 'Competitor ID is required for deletion' },
+                        { _error: 'Competitor ID is required for deletion' },
                         { status: 400 }
                     );
                 }
@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
 
                 if (!deleted) {
                     return NextResponse.json(
-                        { error: 'Competitor not found or deletion failed' },
+                        { _error: 'Competitor not found or deletion failed' },
                         { status: 404 }
                     );
                 }
@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
             case 'report':
                 if (!body.reportConfig?.competitorIds || body.reportConfig.competitorIds.length === 0) {
                     return NextResponse.json(
-                        { error: 'Competitor IDs are required for report generation' },
+                        { _error: 'Competitor IDs are required for report generation' },
                         { status: 400 }
                     );
                 }
@@ -226,7 +226,7 @@ export async function POST(request: NextRequest) {
             case 'get':
                 if (!body.competitorId) {
                     return NextResponse.json(
-                        { error: 'Competitor ID is required' },
+                        { _error: 'Competitor ID is required' },
                         { status: 400 }
                     );
                 }
@@ -235,7 +235,7 @@ export async function POST(request: NextRequest) {
 
                 if (!competitorData || competitorData.metadata.userId !== userId) {
                     return NextResponse.json(
-                        { error: 'Competitor not found' },
+                        { _error: 'Competitor not found' },
                         { status: 404 }
                     );
                 }
@@ -257,16 +257,16 @@ export async function POST(request: NextRequest) {
 
             default:
                 return NextResponse.json(
-                    { error: 'Invalid action specified' },
+                    { _error: 'Invalid action specified' },
                     { status: 400 }
                 );
         }
 
-    } catch (error) {
-        console.error('[CompetitiveIntelligenceAPI] Error:', error);
+    } catch (_error) {
+        console.error('[CompetitiveIntelligenceAPI] Error:', _error);
         return NextResponse.json(
             {
-                error: 'Internal server error',
+                _error: 'Internal server error',
                 details: error instanceof Error ? error.message : 'Unknown error'
             },
             { status: 500 }
@@ -274,12 +274,12 @@ export async function POST(request: NextRequest) {
     }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     try {
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
-                { error: 'Missing or invalid authorization header' },
+                { _error: 'Missing or invalid authorization header' },
                 { status: 401 }
             );
         }
@@ -290,10 +290,10 @@ export async function GET(request: NextRequest) {
         let decodedToken;
         try {
             decodedToken = await auth.verifyIdToken(token);
-        } catch (error) {
-            console.error('[CompetitiveIntelligenceAPI] Token verification error:', error);
+        } catch (_error) {
+            console.error('[CompetitiveIntelligenceAPI] Token verification _error:', _error);
             return NextResponse.json(
-                { error: 'Invalid authentication token' },
+                { _error: 'Invalid authentication token' },
                 { status: 401 }
             );
         }
@@ -304,7 +304,7 @@ export async function GET(request: NextRequest) {
         // Check tier access
         if (!['agency', 'enterprise', 'admin'].includes(userTier)) {
             return NextResponse.json(
-                { error: 'Competitive intelligence requires Agency tier or higher' },
+                { _error: 'Competitive intelligence requires Agency tier or higher' },
                 { status: 403 }
             );
         }
@@ -348,11 +348,11 @@ export async function GET(request: NextRequest) {
             }))
         });
 
-    } catch (error) {
-        console.error('[CompetitiveIntelligenceAPI] Error:', error);
+    } catch (_error) {
+        console.error('[CompetitiveIntelligenceAPI] Error:', _error);
         return NextResponse.json(
             {
-                error: 'Internal server error',
+                _error: 'Internal server error',
                 details: error instanceof Error ? error.message : 'Unknown error'
             },
             { status: 500 }

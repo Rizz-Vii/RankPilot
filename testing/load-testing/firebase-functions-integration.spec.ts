@@ -26,8 +26,8 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
             };
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/getKeywordSuggestionsEnhanced`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/getKeywordSuggestionsEnhanced`, {
+                    _data: testData,
                     timeout: 25000
                 });
 
@@ -42,8 +42,8 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
                     expect(Array.isArray(responseBody.suggestions)).toBe(true);
                 }
 
-            } catch (error) {
-                console.log('⚠️  Keyword Suggestions test failed (likely auth-protected):', error);
+            } catch (_error) {
+                console.log('⚠️  Keyword Suggestions test failed (likely auth-protected):', _error);
             }
         });
 
@@ -54,8 +54,8 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
             };
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/analyzeContent`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/analyzeContent`, {
+                    _data: testData,
                     timeout: 30000
                 });
 
@@ -69,8 +69,8 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
                     expect(responseBody).toHaveProperty('analysis');
                 }
 
-            } catch (error) {
-                console.log('⚠️  Content Analyzer test failed (likely auth-protected):', error);
+            } catch (_error) {
+                console.log('⚠️  Content Analyzer test failed (likely auth-protected):', _error);
             }
         });
 
@@ -81,8 +81,8 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
             };
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/runSeoAudit`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/runSeoAudit`, {
+                    _data: testData,
                     timeout: 45000
                 });
 
@@ -96,8 +96,8 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
                     expect(responseBody).toHaveProperty('audit');
                 }
 
-            } catch (error) {
-                console.log('⚠️  SEO Audit test failed (likely auth-protected):', error);
+            } catch (_error) {
+                console.log('⚠️  SEO Audit test failed (likely auth-protected):', _error);
             }
         });
     });
@@ -113,8 +113,8 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
             };
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/sendPaymentReceipt`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/sendPaymentReceipt`, {
+                    _data: testData,
                     timeout: 20000
                 });
 
@@ -123,8 +123,8 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
                 // These functions should have proper error responses for invalid data
                 expect([200, 400, 401, 403]).toContain(response.status());
 
-            } catch (error) {
-                console.log('⚠️  Payment Receipt test failed:', error);
+            } catch (_error) {
+                console.log('⚠️  Payment Receipt test failed:', _error);
             }
         });
 
@@ -136,8 +136,8 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
             };
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/sendWelcomeEmailFunction`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/sendWelcomeEmailFunction`, {
+                    _data: testData,
                     timeout: 20000
                 });
 
@@ -146,8 +146,8 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
                 // These functions should have proper error responses for invalid data
                 expect([200, 400, 401, 403]).toContain(response.status());
 
-            } catch (error) {
-                console.log('⚠️  Welcome Email test failed:', error);
+            } catch (_error) {
+                console.log('⚠️  Welcome Email test failed:', _error);
             }
         });
     });
@@ -157,8 +157,8 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
         test('Stripe Webhook - Health Check', async ({ page }) => {
             // Test webhook endpoint availability (without valid signature)
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/stripeWebhook`, {
-                    data: { test: 'ping' },
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/stripeWebhook`, {
+                    _data: { test: 'ping' },
                     timeout: 15000
                 });
 
@@ -167,8 +167,8 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
                 // Webhook should return 400 for invalid signature (expected)
                 expect([400, 401, 403]).toContain(response.status());
 
-            } catch (error) {
-                console.log('⚠️  Stripe Webhook test failed:', error);
+            } catch (_error) {
+                console.log('⚠️  Stripe Webhook test failed:', _error);
             }
         });
     });
@@ -182,8 +182,8 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
             };
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/realtimeMetrics`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/realtimeMetrics`, {
+                    _data: testData,
                     timeout: 15000
                 });
 
@@ -197,20 +197,20 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
                     expect(responseBody).toHaveProperty('metrics');
                 }
 
-            } catch (error) {
-                console.log('⚠️  Real-time Metrics test failed (likely auth-protected):', error);
+            } catch (_error) {
+                console.log('⚠️  Real-time Metrics test failed (likely auth-protected):', _error);
             }
         });
 
         test('Function Metrics - API Contract', async ({ page }) => {
             const testData = {
-                functionName: 'healthCheck',
+                _functionName: 'healthCheck',
                 timeRange: '24h'
             };
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/functionMetrics`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/functionMetrics`, {
+                    _data: testData,
                     timeout: 15000
                 });
 
@@ -224,8 +224,8 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
                     expect(responseBody).toHaveProperty('metrics');
                 }
 
-            } catch (error) {
-                console.log('⚠️  Function Metrics test failed (likely auth-protected):', error);
+            } catch (_error) {
+                console.log('⚠️  Function Metrics test failed (likely auth-protected):', _error);
             }
         });
 
@@ -236,8 +236,8 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
             };
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/abTestManagement`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/abTestManagement`, {
+                    _data: testData,
                     timeout: 15000
                 });
 
@@ -251,8 +251,8 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
                     expect(responseBody).toHaveProperty('tests');
                 }
 
-            } catch (error) {
-                console.log('⚠️  A/B Test Management test failed (likely auth-protected):', error);
+            } catch (_error) {
+                console.log('⚠️  A/B Test Management test failed (likely auth-protected):', _error);
             }
         });
     });
@@ -262,15 +262,15 @@ test.describe('RankPilot Firebase Functions - Error Handling', () => {
 
     test('Invalid Function Name - 404 Handling', async ({ page }) => {
         try {
-            const response = await page.request.post(`${PRODUCTION_BASE_URL}/nonExistentFunction`, {
-                data: {},
+            const _response = await page.request.post(`${PRODUCTION_BASE_URL}/nonExistentFunction`, {
+                _data: {},
                 timeout: 10000
             });
 
             console.log(`❌ Invalid Function Status: ${response.status()}`);
             expect(response.status()).toBe(404);
 
-        } catch (error) {
+        } catch (_error) {
             // Expected for non-existent functions
             console.log('✅ Invalid function properly rejected');
         }
@@ -278,15 +278,15 @@ test.describe('RankPilot Firebase Functions - Error Handling', () => {
 
     test('Malformed Request - Error Handling', async ({ page }) => {
         try {
-            const response = await page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
-                data: 'invalid-json-string',
+            const _response = await page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
+                _data: 'invalid-json-string',
                 timeout: 10000
             });
 
             console.log(`🔍 Malformed Request Status: ${response.status()}`);
             expect([400, 401, 500]).toContain(response.status());
 
-        } catch (error) {
+        } catch (_error) {
             console.log('✅ Malformed request properly handled');
         }
     });
@@ -294,16 +294,16 @@ test.describe('RankPilot Firebase Functions - Error Handling', () => {
     test('Large Payload - Memory Handling', async ({ page }) => {
         // Test with very large payload to ensure proper memory handling
         const largePayload = {
-            data: Array(10000).fill(0).map((_, i) => ({
-                id: i,
+            _data: Array(10000).fill(0).map((_, _i) => ({
+                id: _i,
                 content: 'x'.repeat(1000), // 1KB per item = ~10MB total
                 timestamp: new Date().toISOString()
             }))
         };
 
         try {
-            const response = await page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
-                data: largePayload,
+            const _response = await page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
+                _data: largePayload,
                 timeout: 30000
             });
 
@@ -312,7 +312,7 @@ test.describe('RankPilot Firebase Functions - Error Handling', () => {
             // Should either handle it (200) or reject it gracefully (400/413)
             expect([200, 400, 413, 500]).toContain(response.status());
 
-        } catch (error) {
+        } catch (_error) {
             console.log('⚠️  Large payload test failed (expected for memory limits)');
         }
     });
@@ -321,8 +321,8 @@ test.describe('RankPilot Firebase Functions - Error Handling', () => {
 test.describe('RankPilot Firebase Functions - Security Tests', () => {
 
     test('CORS Headers - Cross-Origin Support', async ({ page }) => {
-        const response = await page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
-            data: {},
+        const _response = await page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
+            _data: {},
             headers: {
                 'Origin': 'https://rankpilot.app'
             }
@@ -345,7 +345,7 @@ test.describe('RankPilot Firebase Functions - Security Tests', () => {
 
         for (let i = 0; i < rapidRequests; i++) {
             const promise = page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
-                data: { iteration: i },
+                _data: { iteration: i },
                 timeout: 5000
             });
             promises.push(promise);
@@ -366,7 +366,7 @@ test.describe('RankPilot Firebase Functions - Security Tests', () => {
             // Either all should succeed (no rate limiting) or some should be rate limited
             expect(successCount + rateLimitedCount).toBeGreaterThan(rapidRequests * 0.5);
 
-        } catch (error) {
+        } catch (_error) {
             console.log('⚠️  Rate limiting test completed with timeouts (expected)');
         }
     });

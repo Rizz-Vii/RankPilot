@@ -19,8 +19,8 @@ export async function login(page: Page, user: TestUser | UserType) {
       : user;
 
   // Fill in login form
-  await page.getByLabel(/email/i).fill(credentials.email);
-  await page.getByLabel(/password/i).fill(credentials.password);
+  await page.getByLabel(/email/_i).fill(credentials.email);
+  await page.getByLabel(/password/_i).fill(credentials.password);
 
   // Submit form - use more specific selector to avoid ambiguity
   await page.getByRole("button", { name: "Login", exact: true }).click();

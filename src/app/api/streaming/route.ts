@@ -1,10 +1,10 @@
 // Real-time Streaming API
 import { NextRequest, NextResponse } from "next/server";
 export const dynamic = 'force-dynamic';
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const stream = new ReadableStream({
     start(controller) {
-      controller.enqueue('data: {"type":"connection_established"}\n\n');
+      controller.enqueue('_data: {"type":"connection_established"}\n\n');
       setTimeout(() => controller.close(), 1000);
     }
   });

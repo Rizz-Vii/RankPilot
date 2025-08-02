@@ -25,9 +25,9 @@ export default function EnhancedNavigationDemo() {
   const [showMobile, setShowMobile] = useState(false);
   const [lastClicked, setLastClicked] = useState<NavItem | null>(null);
 
-  const handleNavItemClick = (item: NavItem) => {
-    setLastClicked(item);
-    console.log("Navigation clicked:", item);
+  const handleNavItemClick = (_item: NavItem) => {
+    setLastClicked(_item);
+    console.log("Navigation clicked:", _item);
   };
 
   return (

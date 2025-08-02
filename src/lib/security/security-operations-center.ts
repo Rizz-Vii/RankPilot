@@ -2,7 +2,7 @@
  * Security Operations Center (SOC)
  * DevNext Part III Step 3: Advanced Security Hardening
  * 
- * Implements enterprise-grade security monitoring and incident response:
+ * Implements enterprise-grade security monitoring and incident _response:
  * - Real-time threat detection and analysis
  * - Automated incident response workflows
  * - Security orchestration and automation (SOAR)
@@ -54,7 +54,7 @@ export interface SecurityIncident {
     };
     indicators: {
         type: 'ip' | 'domain' | 'hash' | 'email' | 'url' | 'file';
-        value: string;
+        _value: string;
         confidence: number; // 0-100
     }[];
     impact: {
@@ -77,7 +77,7 @@ export interface SecurityIncident {
         findings: string[];
         recommendations: string[];
     };
-    response: {
+    _response: {
         containmentActions: string[];
         eradicationActions: string[];
         recoveryActions: string[];
@@ -102,7 +102,7 @@ export interface SecurityAlert {
         component: string;
         location?: string;
     };
-    event: {
+    _event: {
         type: string;
         description: string;
         rawData: Record<string, any>;
@@ -200,7 +200,7 @@ export interface SecurityPlaybook {
 export interface ThreatIntelligenceIndicator {
     id: string;
     type: 'ip' | 'domain' | 'hash' | 'email' | 'url' | 'file';
-    value: string;
+    _value: string;
     malwareFamily?: string;
     threatType: string[];
     confidence: number; // 0-100
@@ -265,7 +265,7 @@ export class SecurityOperationsCenter extends EventEmitter {
         rule: string;
         severity: SecurityAlert['severity'];
         source: SecurityAlert['source'];
-        event: SecurityAlert['event'];
+        _event: SecurityAlert['event'];
         rawData?: Record<string, any>;
     }): Promise<SecurityAlert> {
         try {
@@ -275,8 +275,8 @@ export class SecurityOperationsCenter extends EventEmitter {
                 rule: alertData.rule,
                 severity: alertData.severity,
                 source: alertData.source,
-                event: {
-                    ...alertData.event,
+                _event: {
+                    ...alertData._event,
                     rawData: alertData.rawData || {}
                 },
                 enrichment: {},
@@ -306,8 +306,8 @@ export class SecurityOperationsCenter extends EventEmitter {
 
             return alert;
 
-        } catch (error) {
-            console.error('[SecurityOperationsCenter] Alert processing failed:', error);
+        } catch (_error) {
+            console.error('[SecurityOperationsCenter] Alert processing failed:', _error);
             throw new Error('Failed to process security alert');
         }
     }
@@ -353,7 +353,7 @@ export class SecurityOperationsCenter extends EventEmitter {
                     findings: [],
                     recommendations: []
                 },
-                response: {
+                _response: {
                     containmentActions: [],
                     eradicationActions: [],
                     recoveryActions: [],
@@ -394,8 +394,8 @@ export class SecurityOperationsCenter extends EventEmitter {
 
             return incident;
 
-        } catch (error) {
-            console.error('[SecurityOperationsCenter] Incident creation failed:', error);
+        } catch (_error) {
+            console.error('[SecurityOperationsCenter] Incident creation failed:', _error);
             throw new Error('Failed to create security incident');
         }
     }
@@ -436,8 +436,8 @@ export class SecurityOperationsCenter extends EventEmitter {
             }
 
             // Update response details
-            if (updates.response) {
-                Object.assign(incident.response, updates.response);
+            if (updates._response) {
+                Object.assign(incident._response, updates._response);
             }
 
             // Add notes to timeline
@@ -460,8 +460,8 @@ export class SecurityOperationsCenter extends EventEmitter {
 
             return incident;
 
-        } catch (error) {
-            console.error('[SecurityOperationsCenter] Incident update failed:', error);
+        } catch (_error) {
+            console.error('[SecurityOperationsCenter] Incident update failed:', _error);
             throw new Error('Failed to update incident');
         }
     }
@@ -480,7 +480,7 @@ export class SecurityOperationsCenter extends EventEmitter {
         results: Array<{
             stepId: string;
             status: 'success' | 'failure' | 'skipped';
-            output?: any;
+            output?: unknown;
             error?: string;
         }>;
     }> {
@@ -498,7 +498,7 @@ export class SecurityOperationsCenter extends EventEmitter {
                 status: 'running' as 'running' | 'completed' | 'failed' | 'cancelled',
                 startTime: Date.now(),
                 endTime: undefined as number | undefined,
-                results: [] as any[],
+                results: [] as unknown[],
                 currentStep: 0
             };
 
@@ -527,11 +527,11 @@ export class SecurityOperationsCenter extends EventEmitter {
                         }
                     }
 
-                } catch (error) {
+                } catch (_error) {
                     execution.results.push({
                         stepId: step.id,
                         status: 'failure',
-                        error: error instanceof Error ? (error as Error).message : 'Unknown error'
+                        _error: error instanceof Error ? (error as Error).message : 'Unknown error'
                     });
 
                     // Check for failure handling
@@ -570,8 +570,8 @@ export class SecurityOperationsCenter extends EventEmitter {
                 results: execution.results
             };
 
-        } catch (error) {
-            console.error('[SecurityOperationsCenter] Playbook execution failed:', error);
+        } catch (_error) {
+            console.error('[SecurityOperationsCenter] Playbook execution failed:', _error);
             throw new Error('Failed to execute playbook');
         }
     }
@@ -607,7 +607,7 @@ export class SecurityOperationsCenter extends EventEmitter {
         // Calculate resolution times
         const resolvedIncidents = closedIncidents.filter(i => i.timeline.detected && i.timeline.closed);
         const averageResolutionTime = resolvedIncidents.length > 0
-            ? resolvedIncidents.reduce((sum, i) => sum + (i.timeline.closed! - i.timeline.detected), 0) / resolvedIncidents.length / 60000 // minutes
+            ? resolvedIncidents.reduce((sum, _i) => sum + (i.timeline.closed! - i.timeline.detected), 0) / resolvedIncidents.length / 60000 // minutes
             : 0;
 
         // Calculate alert metrics
@@ -767,7 +767,7 @@ export class SecurityOperationsCenter extends EventEmitter {
             {
                 id: this.generateId(),
                 type: 'ip',
-                value: '192.168.1.100',
+                _value: '192.168.1.100',
                 threatType: ['malware', 'botnet'],
                 confidence: 85,
                 severity: 'high',
@@ -789,7 +789,7 @@ export class SecurityOperationsCenter extends EventEmitter {
             {
                 id: this.generateId(),
                 type: 'hash',
-                value: 'a1b2c3d4e5f6789012345678901234567890abcd',
+                _value: 'a1b2c3d4e5f6789012345678901234567890abcd',
                 malwareFamily: 'TrojanDownloader',
                 threatType: ['malware', 'trojan'],
                 confidence: 95,
@@ -825,7 +825,7 @@ export class SecurityOperationsCenter extends EventEmitter {
         for (const indicator of this.threatIntelligence.values()) {
             // Check if alert contains indicators
             const alertData = JSON.stringify(alert.event.rawData);
-            if (alertData.includes(indicator.value)) {
+            if (alertData.includes(indicator._value)) {
                 threatMatches.push(`${indicator.type}:${indicator.value} (${indicator.severity})`);
             }
         }
@@ -865,7 +865,7 @@ export class SecurityOperationsCenter extends EventEmitter {
                 alert.disposition.status = 'acknowledged';
                 this.alerts.set(alert.id, alert);
 
-            } catch (error) {
+            } catch (_error) {
                 if (error instanceof NetworkError) {
                     // Retry logic for network errors
                     console.warn('[SecurityOperationsCenter] Network error during alert processing, retrying:', (error as Error).message);
@@ -873,11 +873,11 @@ export class SecurityOperationsCenter extends EventEmitter {
                 } else if (error instanceof DataCorruptionError) {
                     // Skip and notify for data corruption
                     console.error('[SecurityOperationsCenter] Data corruption detected in alert, skipping:', (error as Error).message);
-                    this.emit('alert-processing-error', { alertId: alert.id, error: (error as Error).message, type: 'data-corruption' });
+                    this.emit('alert-processing-error', { alertId: alert.id, _error: (error as Error).message, type: 'data-corruption' });
                 } else {
                     // Generic error handling
-                    console.error('[SecurityOperationsCenter] Unexpected alert processing error:', error);
-                    this.emit('alert-processing-error', { alertId: alert.id, error: error instanceof Error ? (error as Error).message : String(error), type: 'unknown' });
+                    console.error('[SecurityOperationsCenter] Unexpected alert processing _error:', _error);
+                    this.emit('alert-processing-error', { alertId: alert.id, _error: error instanceof Error ? (error as Error).message : String(_error), type: 'unknown' });
                 }
             }
         }
@@ -922,8 +922,8 @@ export class SecurityOperationsCenter extends EventEmitter {
                                 incidentId: incident.id,
                                 executor: 'system'
                             });
-                        } catch (error) {
-                            console.error(`[SecurityOperationsCenter] Failed to execute playbook ${playbook.id}:`, error);
+                        } catch (_error) {
+                            console.error(`[SecurityOperationsCenter] Failed to execute playbook ${playbook.id}:`, _error);
                         }
                     }
                 }
@@ -931,13 +931,13 @@ export class SecurityOperationsCenter extends EventEmitter {
         }
     }
 
-    private async executePlaybookStep(step: SecurityPlaybook['steps'][0], context: any): Promise<any> {
+    private async executePlaybookStep(step: SecurityPlaybook['steps'][0], context: unknown): Promise<any> {
         switch (step.action) {
             case 'analyze-ddos-traffic':
-                return { result: 'Traffic analyzed', pattern: 'volumetric-attack' };
+                return { _result: 'Traffic analyzed', pattern: 'volumetric-attack' };
 
             case 'enable-ddos-protection':
-                return { result: 'DDoS protection enabled', level: step.parameters.level };
+                return { _result: 'DDoS protection enabled', level: step.parameters.level };
 
             case 'send-notification':
                 this.emit('notification-sent', {
@@ -945,19 +945,19 @@ export class SecurityOperationsCenter extends EventEmitter {
                     priority: step.parameters.priority,
                     message: `Security incident requires attention: ${context.incidentId}`
                 });
-                return { result: 'Notification sent' };
+                return { _result: 'Notification sent' };
 
             case 'isolate-endpoint':
-                return { result: 'Endpoint isolated', isolated: true };
+                return { _result: 'Endpoint isolated', isolated: true };
 
             case 'collect-malware-samples':
-                return { result: 'Artifacts collected', samples: 3 };
+                return { _result: 'Artifacts collected', samples: 3 };
 
             case 'network-scan':
-                return { result: 'Network scan completed', threatsFound: 0 };
+                return { _result: 'Network scan completed', threatsFound: 0 };
 
             case 'analyst-review':
-                return { result: 'Analyst review pending', assigned: 'soc-analyst-1' };
+                return { _result: 'Analyst review pending', assigned: 'soc-analyst-1' };
 
             default:
                 throw new Error(`Unknown action: ${step.action}`);
@@ -1031,8 +1031,8 @@ export class SecurityOperationsCenter extends EventEmitter {
                     this.processAlertQueue();
                 }
 
-            } catch (error) {
-                console.error('[SecurityOperationsCenter] Monitoring error:', error);
+            } catch (_error) {
+                console.error('[SecurityOperationsCenter] Monitoring _error:', _error);
             }
         }, 60000); // Run every minute
 

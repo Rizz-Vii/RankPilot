@@ -73,8 +73,8 @@ export default function AdminTierMigration() {
       console.error = originalError;
 
       setMigrationComplete(true);
-    } catch (error) {
-      console.error("Migration failed:", error);
+    } catch (_error) {
+      console.error("Migration failed:", _error);
     } finally {
       setIsRunning(false);
     }
@@ -117,7 +117,7 @@ export default function AdminTierMigration() {
               <h4 className="text-sm font-medium">Migration Logs:</h4>
               <div className="bg-muted rounded-md p-3 max-h-96 overflow-y-auto">
                 <div className="space-y-1 text-xs font-mono">
-                  {logs.map((log, index) => (
+                  {logs.map((log, _index) => (
                     <div
                       key={index}
                       className={`${

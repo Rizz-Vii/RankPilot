@@ -22,11 +22,11 @@ const ErrorMessage = ({ message }: { message: string }) => (
 
 // ✅ USE: Error input styling
 const ErrorInput = ({
-  error,
+  _error,
   ...props
 }: {
   error?: string;
-  [key: string]: any;
+  [_key: string]: unknown;
 }) => (
   <input
     className={`border ${error ? "border-destructive" : "border-input"} rounded-md px-3 py-2`}
@@ -85,7 +85,7 @@ const PrimaryAction = ({
   ...props
 }: {
   children: React.ReactNode;
-  [key: string]: any;
+  [_key: string]: unknown;
 }) => (
   <EnhancedButton className="font-body" {...props}>
     {children}
@@ -97,7 +97,7 @@ const SecondaryAction = ({
   ...props
 }: {
   children: React.ReactNode;
-  [key: string]: any;
+  [_key: string]: unknown;
 }) => (
   <EnhancedButton variant="outline" className="font-body" {...props}>
     {children}
@@ -164,7 +164,7 @@ const PageLayout = ({
 // ✅ USE: Consistent form styling
 const FormField = ({
   label,
-  error,
+  _error,
   children,
 }: {
   label: string;
@@ -193,7 +193,7 @@ const StatusIndicator = ({
   const statusClasses = {
     success: "bg-success/10 text-success-foreground border-success",
     warning: "bg-warning/10 text-warning-foreground border-warning",
-    error: "bg-destructive/10 text-destructive-foreground border-destructive",
+    _error: "bg-destructive/10 text-destructive-foreground border-destructive",
     info: "bg-primary/10 text-primary border-primary",
   };
 

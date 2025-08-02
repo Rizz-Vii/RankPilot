@@ -52,7 +52,7 @@ export interface ClickPattern {
     timestamp: number;
     x: number;
     y: number;
-    element: string;
+    _element: string;
     pressure?: number;
     duration: number;
     sequence: number;
@@ -134,17 +134,17 @@ export interface BehavioralAnomaly {
     score: number; // 0-100
     description: string;
     evidence: {
-        expected: any;
-        observed: any;
+        expected: unknown;
+        observed: unknown;
         deviation: number;
         confidence: number;
     };
     context: {
-        baselineData: any;
-        sessionContext: any;
-        environmentalFactors: any;
+        baselineData: unknown;
+        sessionContext: unknown;
+        environmentalFactors: unknown;
     };
-    response: {
+    _response: {
         triggered: boolean;
         actions: string[];
         suppressedUntil?: number;
@@ -530,7 +530,7 @@ export class AdvancedBehavioralAnalytics extends EventEmitter {
                     sessionContext: profile.currentSession,
                     environmentalFactors: { timeOfDay: new Date().getHours() }
                 },
-                response: {
+                _response: {
                     triggered: false,
                     actions: []
                 }
@@ -590,7 +590,7 @@ export class AdvancedBehavioralAnalytics extends EventEmitter {
                         sessionContext: profile.currentSession,
                         environmentalFactors: {}
                     },
-                    response: {
+                    _response: {
                         triggered: false,
                         actions: []
                     }
@@ -633,7 +633,7 @@ export class AdvancedBehavioralAnalytics extends EventEmitter {
                     sessionContext: profile.currentSession,
                     environmentalFactors: {}
                 },
-                response: {
+                _response: {
                     triggered: false,
                     actions: []
                 }
@@ -678,7 +678,7 @@ export class AdvancedBehavioralAnalytics extends EventEmitter {
                         sessionContext: profile.currentSession,
                         environmentalFactors: { timeOfDay: currentHour }
                     },
-                    response: {
+                    _response: {
                         triggered: false,
                         actions: []
                     }
@@ -726,7 +726,7 @@ export class AdvancedBehavioralAnalytics extends EventEmitter {
                     sessionContext: profile.currentSession,
                     environmentalFactors: {}
                 },
-                response: {
+                _response: {
                     triggered: false,
                     actions: []
                 }
@@ -791,7 +791,7 @@ export class AdvancedBehavioralAnalytics extends EventEmitter {
      */
     private async evaluateIndicator(
         profile: UserBehaviorProfile,
-        indicator: any
+        indicator: unknown
     ): Promise<number> {
         // Simplified indicator evaluation
         switch (indicator.type) {

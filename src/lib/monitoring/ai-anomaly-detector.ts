@@ -558,7 +558,7 @@ export class AIAnomalyDetector extends EventEmitter {
         };
     }
 
-    private calculateTrend(data: DataPoint[]): number {
+    private calculateTrend(_data: DataPoint[]): number {
         if (data.length < 2) return 0;
 
         const n = data.length;
@@ -648,11 +648,11 @@ export class AIAnomalyDetector extends EventEmitter {
         return 'low';
     }
 
-    private groupBy<T>(array: T[], keyFn: string | ((item: T) => string)): Record<string, number> {
-        const result: Record<string, number> = {};
+    private groupBy<T>(array: T[], keyFn: string | ((_item: T) => string)): Record<string, number> {
+        const _result: Record<string, number> = {};
 
         for (const item of array) {
-            const key = typeof keyFn === 'string' ? (item as any)[keyFn] : keyFn(item);
+            const _key = typeof keyFn === 'string' ? (item as any)[keyFn] : keyFn(_item);
             result[key] = (result[key] || 0) + 1;
         }
 

@@ -17,8 +17,8 @@ async function runMigration() {
         console.log("\n✅ DATABASE MIGRATION COMPLETED SUCCESSFULLY!");
         process.exit(0);
 
-    } catch (error) {
-        console.error("❌ MIGRATION FAILED:", error);
+    } catch (_error) {
+        console.error("❌ MIGRATION FAILED:", _error);
         process.exit(1);
     }
 }

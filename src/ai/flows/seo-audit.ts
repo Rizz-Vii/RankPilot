@@ -68,31 +68,31 @@ Use the following API keys for enhanced analysis:
 
   For the given URL and its content, perform the following checks. For each check, provide a score (0-100), a status ('good', 'warning', 'error'), and a 'details' string with clear, actionable advice.
 
-  1.  **Title Tag (\`title-tags\`)**:
+  1.  **Title Tag (`title-tags`)**:
       *   **Score:** Based on length (ideal: 50-60 chars), keyword presence, and uniqueness.
       *   **Details:** Comment on length, if the primary keyword is present, and if it's compelling. Suggest a better title if needed.
-  2.  **Meta Description (\`meta-descriptions\`)**:
+  2.  **Meta Description (`meta-descriptions`)**:
       *   **Score:** Based on length (ideal: 120-158 chars), clarity, and inclusion of a call-to-action.
       *   **Details:** Note the length and provide specific suggestions for improvement.
-  3.  **H1 Tag (\`h1-tags\`)**:
+  3.  **H1 Tag (`h1-tags`)**:
       *   **Score:** Based on presence (exactly one H1 tag) and relevance to the title and content.
       *   **Details:** State if one and only one H1 is present. Comment on its relevance.
-  4.  **Content Readability (\`content-readability\`)**:
+  4.  **Content Readability (`content-readability`)**:
       *   **Score:** Assess the complexity of the text (e.g., Flesch-Kincaid score). Aim for a score that matches the target audience (e.g., grade 8-10 for general public).
       *   **Details:** Provide a brief assessment of readability and suggest simplifying complex sentences or jargon.
-  5.  **Image Alt Text (\`image-alts\`)**:
+  5.  **Image Alt Text (`image-alts`)**:
       *   **Score:** Based on the percentage of images with non-empty alt text.
       *   **Details:** Note the number of images found and how many are missing alt text. For example: "Found 10 images, 3 are missing alt text."
-  6.  **Site Speed (Simulated) (\`site-speed\`)**:
+  6.  **Site Speed (Simulated) (`site-speed`)**:
       *   **Score:** Based on content structure (e.g., number of images, scripts). A high number of render-blocking resources should lower the score.
       *   **Details:** Provide a qualitative assessment (e.g., "Appears fast," "May be slow due to numerous large images"). Suggest general performance improvements like image compression.
-  7.  **Mobile-Friendliness (Simulated) (\`mobile-friendliness\`)**:
-      *   **Score:** Assess based on the presence of a viewport meta tag and the absence of deprecated HTML tags like \`<font>\`.
+  7.  **Mobile-Friendliness (Simulated) (`mobile-friendliness`)**:
+      *   **Score:** Assess based on the presence of a viewport meta tag and the absence of deprecated HTML tags like `<font>`.
       *   **Details:** Confirm if a viewport tag is present. Mention any structural elements that could negatively impact mobile usability.
 
   **Overall Score and Summary:**
-  *   Calculate an \`overallScore\` by averaging the individual item scores.
-  *   Write a concise \`summary\` of the most critical findings.
+  *   Calculate an `overallScore` by averaging the individual item scores.
+  *   Write a concise `summary` of the most critical findings.
 
   **URL to audit:** {{{url}}}
   {{#if content}}
@@ -127,7 +127,7 @@ const auditUrlFlow = ai.defineFlow(
 
     try {
       console.log(`Attempting to fetch content for: ${url}`);
-      const response = await fetch(url, {
+      const _response = await fetch(url, {
         headers: {
           "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",

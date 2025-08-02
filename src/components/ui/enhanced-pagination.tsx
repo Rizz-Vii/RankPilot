@@ -57,7 +57,7 @@ export function EnhancedPagination({
 
     const half = Math.floor(maxVisiblePages / 2);
     let start = Math.max(currentPage - half, 1);
-    let end = Math.min(start + maxVisiblePages - 1, totalPages);
+    const end = Math.min(start + maxVisiblePages - 1, totalPages);
 
     if (end - start + 1 < maxVisiblePages) {
       start = Math.max(end - maxVisiblePages + 1, 1);
@@ -136,7 +136,7 @@ export function EnhancedPagination({
             <span>Show</span>
             <Select
               value={pageSize.toString()}
-              onValueChange={(value) => onPageSizeChange(parseInt(value, 10))}
+              onValueChange={(_value) => onPageSizeChange(parseInt(_value, 10))}
               disabled={disabled}
             >
               <SelectTrigger className="w-20">
@@ -191,7 +191,7 @@ export function EnhancedPagination({
 
         {/* Page Numbers */}
         <div className="flex items-center gap-1">
-          {visiblePages.map((page, index) => {
+          {visiblePages.map((page, _index) => {
             if (page === "...") {
               return (
                 <div

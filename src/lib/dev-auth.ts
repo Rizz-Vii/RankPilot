@@ -61,13 +61,13 @@ export const loginAsDevUser = async (
       console.log(`Logged in as ${userType} user:`, userCredential.user.email);
       return userCredential.user;
     }
-  } catch (error) {
-    console.error(`Failed to login as ${userType} user:`, error);
+  } catch (_error) {
+    console.error(`Failed to login as ${userType} user:`, _error);
 
     // Fallback to mock user for development if real login fails
     const mockUser = createMockUser(userType);
     const event = new CustomEvent("mockUserLogin", { detail: mockUser });
-    window.dispatchEvent(event);
+    window.dispatchEvent(_event);
     return mockUser;
   }
 };

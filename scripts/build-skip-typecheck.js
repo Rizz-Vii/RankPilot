@@ -28,7 +28,7 @@ function buildWithoutChecks() {
     console.log('✅ Emergency build completed successfully');
     console.log('⚠️  Remember to fix ESLint and TypeScript issues before next deployment');
     
-  } catch (error) {
+  } catch (_error) {
     console.error('❌ Emergency build failed:', error.message);
     process.exit(1);
   }

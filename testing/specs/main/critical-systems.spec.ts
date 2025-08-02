@@ -59,7 +59,7 @@ test.describe("🚨 Critical System Validation", () => {
 
     test("API health check passes", async ({ page }) => {
         // Test a basic API endpoint
-        const response = await page.request.get("/api/health");
+        const _response = await page.request.get("/api/health");
 
         // Should respond successfully or with expected error format
         expect(response.status()).toBeLessThan(500);
@@ -124,7 +124,7 @@ test.describe("🚨 Critical System Validation", () => {
 
 test.describe("🔍 Lean Channel Specific Tests", () => {
     test("Lean deployment has correct CSP headers", async ({ page }) => {
-        const response = await page.goto("/");
+        const _response = await page.goto("/");
 
         // Check for CSP headers (important for lean deployments)
         const csp = response?.headers()["content-security-policy"];

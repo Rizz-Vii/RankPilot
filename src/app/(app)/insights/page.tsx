@@ -33,7 +33,7 @@ export default function InsightsPage() {
   const [insights, setInsights] = useState<GenerateInsightsOutput["insights"]>(
     []
   );
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchInsights = async () => {
@@ -59,12 +59,12 @@ export default function InsightsPage() {
           resultsSummary: activity.resultsSummary,
         }));
 
-        const result = await generateInsights({
+        const _result = await generateInsights({
           keywords: ['seo', 'content', 'optimization'],
           urls: ['https://example.com'],
         });
         setInsights(result.insights);
-      } catch (e: any) {
+      } catch (e: unknown) {
         setError(e.message || "An unexpected error occurred.");
       } finally {
         setIsLoading(false);
@@ -74,7 +74,7 @@ export default function InsightsPage() {
     fetchInsights();
   }, [user, activities, authLoading]);
 
-  const priorityColors: { [key: string]: string; } = {
+  const priorityColors: { [_key: string]: string; } = {
     High: "bg-destructive",
     Medium: "bg-warning",
     Low: "bg-success",

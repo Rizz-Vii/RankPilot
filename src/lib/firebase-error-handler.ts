@@ -4,7 +4,7 @@ import { analytics } from "./firebase/index";
 import { logEvent } from "firebase/analytics";
 
 export class FirebaseErrorHandler {
-  static isNetworkError(error: any): boolean {
+  static isNetworkError(_error: unknown): boolean {
     return (
       (error instanceof TypeError &&
         error.message.includes("Failed to fetch")) ||
@@ -13,22 +13,22 @@ export class FirebaseErrorHandler {
     );
   }
 
-  static handleFirebaseError(error: any, operation: string): void {
-    if (this.isNetworkError(error)) {
+  static handleFirebaseError(_error: unknown, operation: string): void {
+    if (this.isNetworkError(_error)) {
       console.warn(
         `Firebase ${operation} failed due to network issues. This is non-critical.`,
-        error
+        _error
       );
       return;
     }
 
     if (error instanceof FirebaseError) {
-      console.error(`Firebase ${operation} error:`, {
+      console.error(`Firebase ${operation} _error:`, {
         code: error.code,
         message: error.message,
       });
     } else {
-      console.error(`Unexpected error during ${operation}:`, error);
+      console.error(`Unexpected error during ${operation}:`, _error);
     }
   }
 
@@ -41,20 +41,20 @@ export class FirebaseErrorHandler {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await operation();
-      } catch (error) {
+      } catch (_error) {
         if (attempt === maxRetries) {
-          this.handleFirebaseError(error, operationName);
+          this.handleFirebaseError(_error, operationName);
           return null;
         }
 
-        if (this.isNetworkError(error)) {
+        if (this.isNetworkError(_error)) {
           console.warn(
             `${operationName} attempt ${attempt} failed, retrying...`
           );
           await new Promise((resolve) => setTimeout(resolve, delay * attempt));
         } else {
           // Non-network errors shouldn&apos;t be retried
-          this.handleFirebaseError(error, operationName);
+          this.handleFirebaseError(_error, operationName);
           return null;
         }
       }
@@ -64,14 +64,14 @@ export class FirebaseErrorHandler {
 }
 
 // Wrapper for analytics events that won&apos;t throw errors
-export function safeAnalyticsEvent(eventName: string, eventParams?: any): void {
+export function safeAnalyticsEvent(eventName: string, eventParams?: unknown): void {
   if (typeof window === "undefined") return;
 
   try {
     if (analytics) {
       logEvent(analytics, eventName, eventParams);
     }
-  } catch (error) {
-    FirebaseErrorHandler.handleFirebaseError(error, "analytics event");
+  } catch (_error) {
+    FirebaseErrorHandler.handleFirebaseError(_error, "analytics event");
   }
 }

@@ -22,8 +22,8 @@ async function globalSetup(config: FullConfig) {
 
         console.log("🎯 Performance testing environment ready");
 
-    } catch (error) {
-        console.warn("⚠️ Server warmup encountered issues:", error instanceof Error ? error.message : String(error));
+    } catch (_error) {
+        console.warn("⚠️ Server warmup encountered issues:", error instanceof Error ? error.message : String(_error));
     } finally {
         await browser.close();
     }

@@ -30,7 +30,7 @@ interface NotificationOptions {
     tag?: string;
     icon?: string;
     badge?: string;
-    data?: any;
+    data?: unknown;
     actions?: Array<{
         action: string;
         title: string;
@@ -43,7 +43,7 @@ export class PWAManager {
     private registration: ServiceWorkerRegistration | null = null;
     private installPrompt: PWAInstallPrompt | null = null;
     private isOnline = true;
-    private pendingData: any[] = [];
+    private pendingData: unknown[] = [];
 
     static getInstance(): PWAManager {
         if (!PWAManager.instance) {
@@ -83,8 +83,8 @@ export class PWAManager {
                 // Listen for messages from service worker
                 navigator.serviceWorker.addEventListener('message', this.handleServiceWorkerMessage.bind(this));
 
-            } catch (error) {
-                console.error('[PWA] Service Worker registration failed:', error);
+            } catch (_error) {
+                console.error('[PWA] Service Worker registration failed:', _error);
             }
         }
 
@@ -115,7 +115,7 @@ export class PWAManager {
         this.initializePushNotifications();
     }
 
-    private handleServiceWorkerMessage(event: MessageEvent) {
+    private handleServiceWorkerMessage(_event: MessageEvent) {
         const { type, payload } = event.data;
 
         switch (type) {
@@ -130,7 +130,7 @@ export class PWAManager {
                 this.showNotification('Analysis Complete', {
                     body: payload.message || 'Your SEO analysis is ready',
                     tag: 'analysis-complete',
-                    data: { url: '/neuroseo/results' },
+                    _data: { url: '/neuroseo/results' },
                     actions: [
                         { action: 'view', title: 'View Results' },
                         { action: 'dismiss', title: 'Dismiss' }
@@ -143,7 +143,7 @@ export class PWAManager {
                 break;
 
             default:
-                console.log('[PWA] Unknown message from service worker:', event.data);
+                console.log('[PWA] Unknown message from service worker:', event._data);
         }
     }
 
@@ -163,7 +163,7 @@ export class PWAManager {
         const event = new CustomEvent('pwa-install-prompt', {
             detail: { installPrompt: this.installPrompt }
         });
-        window.dispatchEvent(event);
+        window.dispatchEvent(_event);
     }
 
     async installApp(): Promise<boolean> {
@@ -182,8 +182,8 @@ export class PWAManager {
                 console.log('[PWA] User dismissed the install prompt');
                 return false;
             }
-        } catch (error) {
-            console.error('[PWA] Install prompt failed:', error);
+        } catch (_error) {
+            console.error('[PWA] Install prompt failed:', _error);
             return false;
         }
     }
@@ -227,8 +227,8 @@ export class PWAManager {
 
             console.log('[PWA] Push notification subscription successful');
             return true;
-        } catch (error) {
-            console.error('[PWA] Push notification subscription failed:', error);
+        } catch (_error) {
+            console.error('[PWA] Push notification subscription failed:', _error);
             return false;
         }
     } async unsubscribeFromPushNotifications(): Promise<boolean> {
@@ -252,8 +252,8 @@ export class PWAManager {
 
             console.log('[PWA] Push notification unsubscribed');
             return true;
-        } catch (error) {
-            console.error('[PWA] Push notification unsubscribe failed:', error);
+        } catch (_error) {
+            console.error('[PWA] Push notification unsubscribe failed:', _error);
             return false;
         }
     }
@@ -267,8 +267,8 @@ export class PWAManager {
         const rawData = window.atob(base64);
         const outputArray = new Uint8Array(rawData.length);
 
-        for (let i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
+        for (let i = 0; i < rawData.length; ++_i) {
+            outputArray[i] = rawData.charCodeAt(_i);
         }
         return outputArray;
     }
@@ -284,7 +284,7 @@ export class PWAManager {
             icon: '/android-chrome-192x192.png',
             badge: '/favicon-32x32.png',
             tag: options.tag || 'default',
-            data: options.data,
+            _data: options._data,
             actions: options.actions || []
         };
 
@@ -294,15 +294,15 @@ export class PWAManager {
         });
     }
 
-    async syncInBackground(tag: string, data: any) {
+    async syncInBackground(tag: string, _data: unknown) {
         if (!this.registration) {
-            this.addToPendingData(tag, data);
+            this.addToPendingData(tag, _data);
             return;
         }
 
         try {
             // Store data for background sync
-            await this.storeDataForSync(tag, data);
+            await this.storeDataForSync(tag, _data);
 
             // Register background sync if supported
             if ('sync' in this.registration) {
@@ -310,13 +310,13 @@ export class PWAManager {
                 console.log('[PWA] Background sync registered:', tag);
             } else {
                 console.log('[PWA] Background sync not supported, queuing for manual sync');
-                this.addToPendingData(tag, data);
+                this.addToPendingData(tag, _data);
             }
-        } catch (error) {
-            console.error('[PWA] Background sync registration failed:', error);
-            this.addToPendingData(tag, data);
+        } catch (_error) {
+            console.error('[PWA] Background sync registration failed:', _error);
+            this.addToPendingData(tag, _data);
         }
-    } private async storeDataForSync(tag: string, data: any) {
+    } private async storeDataForSync(tag: string, _data: unknown) {
         // Store in IndexedDB for service worker access
         if ('indexedDB' in window) {
             const db = await this.openIndexedDB();
@@ -326,22 +326,22 @@ export class PWAManager {
             await store.add({
                 id: Date.now(),
                 tag,
-                data,
+                _data,
                 timestamp: new Date().toISOString()
             });
         } else {
-            this.addToPendingData(tag, data);
+            this.addToPendingData(tag, _data);
         }
     }
 
     private async openIndexedDB(): Promise<IDBDatabase> {
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open('rankpilot-pwa', 1);
+            const _request = indexedDB.open('rankpilot-pwa', 1);
 
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request._error);
+            request.onsuccess = () => resolve(request._result);
 
-            request.onupgradeneeded = (event) => {
+            request.onupgradeneeded = (_event) => {
                 const db = (event.target as IDBOpenDBRequest).result;
 
                 if (!db.objectStoreNames.contains('pending-sync')) {
@@ -351,8 +351,8 @@ export class PWAManager {
         });
     }
 
-    private addToPendingData(tag: string, data: any) {
-        this.pendingData.push({ tag, data, timestamp: Date.now() });
+    private addToPendingData(tag: string, _data: unknown) {
+        this.pendingData.push({ tag, _data, timestamp: Date.now() });
     }
 
     private async syncPendingData() {
@@ -362,11 +362,11 @@ export class PWAManager {
 
         console.log('[PWA] Syncing pending data...');
 
-        for (const item of this.pendingData) {
+        for (const _item of this.pendingData) {
             try {
-                await this.syncInBackground(item.tag, item.data);
-            } catch (error) {
-                console.error('[PWA] Failed to sync pending data:', error);
+                await this.syncInBackground(item.tag, item._data);
+            } catch (_error) {
+                console.error('[PWA] Failed to sync pending _data:', _error);
             }
         }
 
@@ -459,8 +459,8 @@ export function usePWA() {
         return success;
     };
 
-    const syncData = async (tag: string, data: any) => {
-        await pwaManager.syncInBackground(tag, data);
+    const syncData = async (tag: string, _data: unknown) => {
+        await pwaManager.syncInBackground(tag, _data);
     };
 
     const showNotification = async (title: string, options?: Partial<NotificationOptions>) => {

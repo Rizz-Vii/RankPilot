@@ -127,7 +127,7 @@ export function PerformanceFeedback({
 
       setIsVisible(false);
       resetForm();
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Submission failed",
@@ -234,8 +234,8 @@ export function PerformanceFeedback({
               <Label className="text-sm font-medium">Category</Label>
               <Select
                 value={category}
-                onValueChange={(value: FeedbackData["category"]) =>
-                  setCategory(value)
+                onValueChange={(_value: FeedbackData["category"]) =>
+                  setCategory(_value)
                 }
               >
                 <SelectTrigger className="mt-1">
@@ -256,8 +256,8 @@ export function PerformanceFeedback({
               <Label className="text-sm font-medium">Severity</Label>
               <Select
                 value={severity}
-                onValueChange={(value: FeedbackData["severity"]) =>
-                  setSeverity(value)
+                onValueChange={(_value: FeedbackData["severity"]) =>
+                  setSeverity(_value)
                 }
               >
                 <SelectTrigger className="mt-1">
@@ -281,7 +281,7 @@ export function PerformanceFeedback({
               <Textarea
                 placeholder="Tell us about your experience..."
                 value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
+                onChange={(e) => setFeedback(e.target._value)}
                 className="mt-1 min-h-[80px]"
               />
             </div>

@@ -95,18 +95,18 @@ class ProjectOptimizer {
       }
 
       operation
-        .then((result) => {
+        .then((_result) => {
           if (!completed) {
             completed = true;
             clearTimeout(timeout);
-            resolve(result);
+            resolve(_result);
           }
         })
-        .catch((error) => {
+        .catch((_error) => {
           if (!completed) {
             completed = true;
             clearTimeout(timeout);
-            reject(error);
+            reject(_error);
           }
         });
     });
@@ -119,7 +119,7 @@ class ProjectOptimizer {
     try {
       await this.withTimeout(operation());
       console.log(`✓ ${description}`);
-    } catch (error: any) {
+    } catch (_error: unknown) {
       if (error.code === "ENOENT") {
         // File doesn't exist, which is fine for cleanup
         return;
@@ -191,12 +191,12 @@ class ProjectOptimizer {
                 await fs.access(publicImagePath);
                 await fs.unlink(filePath);
                 console.log(`✓ Removed duplicate image: src/lib/${imageFile}`);
-              } catch (error) {
+              } catch (_error) {
                 // Public version doesn't exist, keep the src version
                 console.log(`⚠ Keeping unique image: src/lib/${imageFile}`);
               }
             }
-          } catch (error) {
+          } catch (_error) {
             console.log(`⚠ Could not access src/lib directory: ${error}`);
           }
         },
@@ -248,7 +248,7 @@ class ProjectOptimizer {
                   cwd: this.projectRoot,
                   signal: this.abortController.signal,
                 });
-              } catch (error: any) {
+              } catch (_error: unknown) {
                 if (error.code !== "ENOENT") {
                   throw error;
                 }
@@ -270,7 +270,7 @@ class ProjectOptimizer {
                 cwd: this.projectRoot,
                 signal: this.abortController.signal,
               });
-            } catch (error: any) {
+            } catch (_error: unknown) {
               if (error.code !== "ENOENT") {
                 throw error;
               }
@@ -286,7 +286,7 @@ class ProjectOptimizer {
           try {
             await fs.access(docsPath);
             console.log(`✓ Documentation directory exists and organized`);
-          } catch (error) {
+          } catch (_error) {
             console.log(`⚠ Documentation directory missing`);
           }
         },
@@ -313,7 +313,7 @@ class ProjectOptimizer {
         );
 
         // Report any failures
-        results.forEach((result, index) => {
+        results.forEach((_result, _index) => {
           if (result.status === "rejected") {
             console.error(
               `❌ ${this.tasks[index].name} failed:`,
@@ -333,7 +333,7 @@ class ProjectOptimizer {
           try {
             await this.withTimeout(task.execute());
             console.log(`✅ ${task.name} completed successfully\n`);
-          } catch (error: any) {
+          } catch (_error: unknown) {
             console.error(`❌ ${task.name} failed:`, error.message);
 
             // Decide whether to continue or stop
@@ -354,7 +354,7 @@ class ProjectOptimizer {
       console.log('  1. Run "npm run build" to test optimized build');
       console.log('  2. Run "npm run dev" to verify development server');
       console.log("  3. Check documentation for updated instructions");
-    } catch (error: any) {
+    } catch (_error: unknown) {
       console.error("💥 Optimization failed:", error.message);
       process.exit(1);
     }
@@ -395,8 +395,8 @@ Examples:
   }
 
   const optimizer = new ProjectOptimizer(options);
-  optimizer.runOptimization().catch((error) => {
-    console.error("💥 Fatal error:", error);
+  optimizer.runOptimization().catch((_error) => {
+    console.error("💥 Fatal _error:", _error);
     process.exit(1);
   });
 }

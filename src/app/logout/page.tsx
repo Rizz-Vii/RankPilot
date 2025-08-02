@@ -23,8 +23,8 @@ export default function LogoutPage() {
             await signOut(auth);
           }
         }
-      } catch (error) {
-        console.error("Error during logout:", error);
+      } catch (_error) {
+        console.error("Error during logout:", _error);
       } finally {
         // Always redirect to home page
         router.push("/");

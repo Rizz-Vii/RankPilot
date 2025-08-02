@@ -80,7 +80,7 @@ export default function GuidesPage() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
-          {guides.map((guide, index) => {
+          {guides.map((guide, _index) => {
             const IconComponent = guide.icon;
             return (
               <Link

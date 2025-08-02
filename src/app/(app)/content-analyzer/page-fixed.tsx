@@ -100,7 +100,7 @@ export default function ContentAnalyzerPage() {
     const { user } = useAuth();
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [report, setReport] = useState<NeuroSEOReport | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [_error, setError] = useState<string | null>(null);
     const [analysisProgress, setAnalysisProgress] = useState(0);
     const [currentEngine, setCurrentEngine] = useState<string>("");
     const [completedEngines, setCompletedEngines] = useState<string[]>([]);
@@ -178,7 +178,7 @@ export default function ContentAnalyzerPage() {
             };
 
             // Call NeuroSEO™ API
-            const response = await fetch('/api/neuroseo', {
+            const _response = await fetch('/api/neuroseo', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -193,13 +193,13 @@ export default function ContentAnalyzerPage() {
                 throw new Error(`Analysis failed: ${response.statusText}`);
             }
 
-            const data = await response.json();
+            const _data = await response.json();
 
             // Enhanced mock report for content analysis
             const mockReport = {
                 id: generateId(),
                 timestamp: new Date().toISOString(),
-                request: analysisRequest,
+                _request: analysisRequest,
                 crawlResults: [],
                 semanticAnalysis: [],
                 visibilityAnalysis: [],
@@ -209,7 +209,7 @@ export default function ContentAnalyzerPage() {
                         originalAnalysis: {
                             wordCount: content.length,
                             readabilityScore: 85,
-                            keywordDensity: keywords.split(',').reduce((acc: any, k: string) => ({ ...acc, [k.trim()]: 2.5 }), {}),
+                            keywordDensity: keywords.split(',').reduce((acc: unknown, k: string) => ({ ...acc, [k.trim()]: 2.5 }), {}),
                             sentimentScore: 68,
                             structureScore: 78,
                             seoScore: 82,
@@ -275,8 +275,8 @@ export default function ContentAnalyzerPage() {
                 });
             }
 
-        } catch (error) {
-            console.error("Content analysis error:", error);
+        } catch (_error) {
+            console.error("Content analysis _error:", _error);
             setError(error instanceof Error ? error.message : "Analysis failed");
         } finally {
             setIsAnalyzing(false);
@@ -314,7 +314,7 @@ export default function ContentAnalyzerPage() {
                                 id="content"
                                 placeholder="Paste your content here for analysis..."
                                 value={content}
-                                onChange={(e) => setContent(e.target.value)}
+                                onChange={(e) => setContent(e.target._value)}
                                 rows={8}
                                 className="resize-none"
                             />
@@ -334,7 +334,7 @@ export default function ContentAnalyzerPage() {
                                 type="url"
                                 placeholder="https://example.com/article"
                                 value={url}
-                                onChange={(e) => setUrl(e.target.value)}
+                                onChange={(e) => setUrl(e.target._value)}
                             />
                         </div>
 
@@ -344,7 +344,7 @@ export default function ContentAnalyzerPage() {
                                 id="keywords"
                                 placeholder="content marketing, SEO, digital strategy"
                                 value={keywords}
-                                onChange={(e) => setKeywords(e.target.value)}
+                                onChange={(e) => setKeywords(e.target._value)}
                             />
                         </div>
 
@@ -450,7 +450,7 @@ export default function ContentAnalyzerPage() {
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent>
-                                        {report.rewriteRecommendations.map((rewrite, index) => (
+                                        {report.rewriteRecommendations.map((rewrite, _index) => (
                                             <div key={index} className="space-y-4">
                                                 <div>
                                                     <h4 className="font-semibold mb-2">AI-Enhanced Analysis</h4>

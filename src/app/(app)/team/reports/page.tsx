@@ -206,8 +206,8 @@ export default function TeamReportsPage() {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setReports(mockReports);
-    } catch (error) {
-      console.error("Error fetching reports:", error);
+    } catch (_error) {
+      console.error("Error fetching reports:", _error);
       toast.error("Failed to load reports");
     } finally {
       setLoading(false);
@@ -259,8 +259,8 @@ export default function TeamReportsPage() {
         },
       });
       toast.success("Report created successfully");
-    } catch (error) {
-      console.error("Error creating report:", error);
+    } catch (_error) {
+      console.error("Error creating report:", _error);
       toast.error("Failed to create report");
     }
   };
@@ -269,8 +269,8 @@ export default function TeamReportsPage() {
     try {
       setReports(reports.filter((r) => r.id !== reportId));
       toast.success("Report deleted successfully");
-    } catch (error) {
-      console.error("Error deleting report:", error);
+    } catch (_error) {
+      console.error("Error deleting report:", _error);
       toast.error("Failed to delete report");
     }
   };
@@ -279,8 +279,8 @@ export default function TeamReportsPage() {
     try {
       toast.success("Report download started");
       // Simulate download
-    } catch (error) {
-      console.error("Error downloading report:", error);
+    } catch (_error) {
+      console.error("Error downloading report:", _error);
       toast.error("Failed to download report");
     }
   };
@@ -357,7 +357,7 @@ export default function TeamReportsPage() {
                   <Label htmlFor="type">Report Type</Label>
                   <Select
                     value={reportForm.type}
-                    onValueChange={(value: Report["type"]) =>
+                    onValueChange={(_value: Report["type"]) =>
                       setReportForm({ ...reportForm, type: value })
                     }
                   >
@@ -381,7 +381,7 @@ export default function TeamReportsPage() {
                   onChange={(e) =>
                     setReportForm({
                       ...reportForm,
-                      description: e.target.value,
+                      description: e.target._value,
                     })
                   }
                   placeholder="Describe the report content and purpose"
@@ -392,7 +392,7 @@ export default function TeamReportsPage() {
                   <Label htmlFor="status">Status</Label>
                   <Select
                     value={reportForm.status}
-                    onValueChange={(value: Report["status"]) =>
+                    onValueChange={(_value: Report["status"]) =>
                       setReportForm({ ...reportForm, status: value })
                     }
                   >
@@ -416,7 +416,7 @@ export default function TeamReportsPage() {
                       onChange={(e) =>
                         setReportForm({
                           ...reportForm,
-                          scheduledDate: e.target.value,
+                          scheduledDate: e.target._value,
                         })
                       }
                     />
@@ -467,7 +467,7 @@ export default function TeamReportsPage() {
             <Input
               placeholder="Search reports..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => setSearchTerm(e.target._value)}
               className="pl-10"
             />
           </div>

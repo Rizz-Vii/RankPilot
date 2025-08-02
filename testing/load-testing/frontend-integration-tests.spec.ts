@@ -88,7 +88,7 @@ test.describe('RankPilot Frontend-Backend Integration', () => {
                     const featureElement = page.locator(`text*="${feature}"`).first();
                     await expect(featureElement).toBeVisible({ timeout: 5000 });
                     console.log(`   ✅ ${feature} feature showcased`);
-                } catch (error) {
+                } catch (_error) {
                     console.log(`   ⚠️  ${feature} feature not found (may be in different format)`);
                 }
             }
@@ -178,7 +178,7 @@ test.describe('RankPilot Frontend-Backend Integration', () => {
             const apiResponse = await page.request.get(`${RANKPILOT_APP_URL}/api/health`);
             console.log(`   API Health Check Status: ${apiResponse.status()}`);
 
-            // Should respond (even if with auth error)
+            // Should respond (even if with auth _error)
             expect([200, 401, 403, 404]).toContain(apiResponse.status());
 
             // Test CORS headers
@@ -340,7 +340,7 @@ test.describe('RankPilot Frontend-Backend Integration', () => {
         test('Network Resource Loading', async ({ page }) => {
             console.log('🌐 Testing Resource Loading...');
 
-            const responses: any[] = [];
+            const responses: unknown[] = [];
 
             page.on('response', response => {
                 responses.push({
@@ -401,7 +401,7 @@ test.describe('RankPilot Frontend-Backend Integration', () => {
             ];
 
             for (const element of semanticElements) {
-                const elementExists = await page.locator(element).count() > 0;
+                const elementExists = await page.locator(_element).count() > 0;
                 console.log(`   ${element}: ${elementExists ? '✅' : '⚠️'}`);
             }
 

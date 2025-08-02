@@ -64,12 +64,12 @@ export function PerformanceDashboard() {
       const cacheStats = aiOptimizer.getCacheStats();
 
       // Calculate overall cache hit rate
-      const totalCacheOps = Object.values(cacheStats).reduce(
-        (sum: number, stat: any) => sum + stat.entries,
+      const totalCacheOps = Object.values(_cacheStats).reduce(
+        (sum: number, stat: unknown) => sum + stat.entries,
         0
       );
-      const totalCacheHits = Object.values(cacheStats).reduce(
-        (sum: number, stat: any) => sum + (stat.hitRate * stat.entries) / 100,
+      const totalCacheHits = Object.values(_cacheStats).reduce(
+        (sum: number, stat: unknown) => sum + (stat.hitRate * stat.entries) / 100,
         0
       );
       const overallCacheHitRate =
@@ -85,8 +85,8 @@ export function PerformanceDashboard() {
         healthStatus: healthStatus.status,
         recentErrors: healthStatus.issues,
       });
-    } catch (error) {
-      console.error("Failed to refresh performance stats:", error);
+    } catch (_error) {
+      console.error("Failed to refresh performance stats:", _error);
     } finally {
       setIsRefreshing(false);
     }
@@ -157,7 +157,7 @@ export function PerformanceDashboard() {
         <div className="flex items-center gap-2">
           <Tabs
             value={selectedTimeRange}
-            onValueChange={(value) => setSelectedTimeRange(value as any)}
+            onValueChange={(_value) => setSelectedTimeRange(value as any)}
           >
             <TabsList>
               <TabsTrigger value="5m">5m</TabsTrigger>
@@ -199,7 +199,7 @@ export function PerformanceDashboard() {
           </div>
           {stats.recentErrors.length > 0 && (
             <div className="mt-4 space-y-2">
-              {stats.recentErrors.map((error, index) => (
+              {stats.recentErrors.map((_error, _index) => (
                 <div
                   key={index}
                   className="text-sm text-red-600 bg-red-50 p-2 rounded"
@@ -373,7 +373,7 @@ export function PerformanceDashboard() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {stats.recentErrors.map((error, index) => (
+                  {stats.recentErrors.map((_error, _index) => (
                     <div
                       key={index}
                       className="p-3 bg-red-50 border border-red-200 rounded-lg"

@@ -10,22 +10,21 @@ import { MetricsCollector } from "../lib/metrics-collector";
 import { AIResponseCache } from "../lib/ai-response-cache";
 
 describe("Firebase Functions Basic Test Suite", () => {
-
   describe("StructuredLogger", () => {
     it("should create trace with unique ID", () => {
       const mockRequest = {
         auth: { uid: "user123" },
-        data: {},
+        _data: {},
         rawRequest: {
-          headers: { "user-agent": "test-agent" }
-        }
+          headers: { "user-agent": "test-agent" },
+        },
       } as any;
 
       const trace = StructuredLogger.startTrace(mockRequest, "test-function");
 
       expect(trace.traceId).to.be.a("string");
       expect(trace.traceId).to.have.length.greaterThan(10);
-      expect(trace.functionName).to.equal("test-function");
+      expect(trace._functionName).to.equal("test-function");
       expect(trace.userId).to.equal("user123");
       expect(trace.userTier).to.be.a("string");
     });
@@ -42,8 +41,8 @@ describe("Firebase Functions Basic Test Suite", () => {
     it("should complete trace without errors", () => {
       const mockRequest = {
         auth: { uid: "user123" },
-        data: {},
-        rawRequest: { headers: {} }
+        _data: {},
+        rawRequest: { headers: {} },
       } as any;
 
       const trace = StructuredLogger.startTrace(mockRequest, "test-function");
@@ -52,7 +51,7 @@ describe("Firebase Functions Basic Test Suite", () => {
         StructuredLogger.completeTrace(trace.traceId, {
           success: true,
           duration: 1500,
-          memoryUsed: 128
+          memoryUsed: 128,
         });
       }).to.not.throw();
     });
@@ -61,18 +60,10 @@ describe("Firebase Functions Basic Test Suite", () => {
   describe("MetricsCollector", () => {
     it("should record function execution metrics", () => {
       const executionData = {
-        timestamp: Date.now(),
-        functionName: "test-function",
-        userId: "user123",
-        duration: 1000,
-        memoryUsed: 64,
+        _functionName: "test-function",
+        executionTime: 1000,
         success: true,
-        userTier: "starter" as const,
-        businessData: {
-          aiTokensUsed: 50,
-          cacheHit: false,
-          resultCount: 10
-        }
+        memoryUsage: 64,
       };
 
       expect(() => {
@@ -101,20 +92,20 @@ describe("Firebase Functions Basic Test Suite", () => {
 
   describe("AIResponseCache", () => {
     it("should handle cache operations with proper interface", async () => {
-      const testData = { result: "test response", tokens: 100 };
+      const testData = { _result: "test response", tokens: 100 };
       const key = "test-key";
       const options = {
         aiModel: "gpt-4",
         promptHash: "test-hash",
         tokens: 100,
-        userTier: "starter" as const
+        userTier: "starter" as const,
       };
 
       expect(() => {
-        AIResponseCache.set(key, testData, options);
+        AIResponseCache.set(_key, testData, options);
       }).to.not.throw();
 
-      const retrieved = await AIResponseCache.get(key);
+      const retrieved = await AIResponseCache.get(_key);
       // Cache might return null if not found or expired
       if (retrieved) {
         expect(retrieved).to.have.property("result");
@@ -137,35 +128,30 @@ describe("Firebase Functions Basic Test Suite", () => {
     it("should work together without errors", async () => {
       const mockRequest = {
         auth: { uid: "integration-user" },
-        data: {},
-        rawRequest: { headers: {} }
+        _data: {},
+        rawRequest: { headers: {} },
       } as any;
 
       // Start trace
-      const trace = StructuredLogger.startTrace(mockRequest, "integration-test");
+      const trace = StructuredLogger.startTrace(
+        mockRequest,
+        "integration-test"
+      );
       expect(trace.traceId).to.be.a("string");
 
       // Record metrics
       MetricsCollector.recordExecution({
-        timestamp: Date.now(),
-        functionName: "integration-test",
-        userId: "integration-user",
-        duration: 1200,
-        memoryUsed: 96,
+        _functionName: "integration-test",
+        executionTime: 1200,
         success: true,
-        userTier: "agency" as const,
-        businessData: {
-          aiTokensUsed: 150,
-          cacheHit: false,
-          resultCount: 1
-        }
+        memoryUsage: 96,
       });
 
       // Complete trace
       StructuredLogger.completeTrace(trace.traceId, {
         success: true,
         duration: 1200,
-        memoryUsed: 96
+        memoryUsed: 96,
       });
 
       // Get report

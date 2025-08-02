@@ -114,8 +114,8 @@ export class BusinessOperationsOrchestrator implements RankPilotAgent {
 
             console.log('✅ Business Operations Orchestrator - Execution complete!');
             return true;
-        } catch (error) {
-            console.error('🚨 Business Operations Orchestrator failed:', error);
+        } catch (_error) {
+            console.error('🚨 Business Operations Orchestrator failed:', _error);
             return false;
         }
     }
@@ -190,7 +190,7 @@ export class BusinessOperationsOrchestrator implements RankPilotAgent {
 
 export interface BusinessMetric {
     name: string;
-    value: number;
+    _value: number;
     target: number;
     trend: number; // percentage change
     lastUpdated: Date;
@@ -211,7 +211,7 @@ export interface BusinessAutomationWorkflow {
 }
 
 export interface BusinessTrigger {
-    event: string;
+    _event: string;
     condition: string;
     threshold?: number;
 }

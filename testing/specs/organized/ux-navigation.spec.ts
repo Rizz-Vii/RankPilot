@@ -16,7 +16,7 @@ test.describe('User Experience - Navigation & Interface', () => {
         try {
             const testUser = UNIFIED_TEST_USERS.agency;
             await auth.loginAndGoToDashboard(testUser);
-        } catch (error: any) {
+        } catch (_error: unknown) {
             console.warn('Login failed, using fallback:', error.message);
             await page.goto('/dashboard');
             await page.waitForTimeout(2000);

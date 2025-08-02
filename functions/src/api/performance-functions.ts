@@ -30,8 +30,8 @@ interface DashboardRequest {
  */
 export const getPerformanceDashboard = onCall(
   { ...functionsConfig, enforceAppCheck: false },
-  async (request) => {
-    const trace = StructuredLogger.startTrace(request, "getPerformanceDashboard");
+  async (_request) => {
+    const trace = StructuredLogger.startTrace(_request, "getPerformanceDashboard");
 
     try {
       // Verify admin access
@@ -60,21 +60,21 @@ export const getPerformanceDashboard = onCall(
           activeExperiments: 0, // Placeholder
           cacheHitRate: cacheStats.hitRate,
           overallSuccessRate: 100 - metricsReport.summary.overallErrorRate,
-          averageResponseTime: calculateAverageResponseTime(metricsReport),
+          averageResponseTime: calculateAverageResponseTime(_metricsReport),
           totalRequests24h: metricsReport.summary.totalExecutions,
           activeUsers: getActiveUsersCount(),
-          systemHealth: assessSystemHealth(metricsReport)
+          systemHealth: assessSystemHealth(_metricsReport)
         },
         metrics: {
           functions: metricsReport.functions,
-          trends: buildTrendData(metricsReport),
-          topErrors: getTopErrors(metricsReport)
+          trends: buildTrendData(_metricsReport),
+          topErrors: getTopErrors(_metricsReport)
         },
         caching: {
-          stats: cacheStats,
+          stats: _cacheStats,
           hitRateByTier: cacheStats.tierDistribution,
           evictionRate: 0, // Not tracked in current implementation
-          compressionRate: calculateCompressionRate(cacheStats)
+          compressionRate: calculateCompressionRate(_cacheStats)
         },
         rateLimiting: {
           globalStats: {}, // Placeholder
@@ -91,7 +91,7 @@ export const getPerformanceDashboard = onCall(
           predictiveInsights: [],
           nextWarmingSchedule: []
         },
-        insights: generateActionableInsights(metricsReport, cacheStats)
+        insights: generateActionableInsights(_metricsReport, _cacheStats)
       };
 
       StructuredLogger.completeTrace(trace.traceId, {
@@ -102,18 +102,18 @@ export const getPerformanceDashboard = onCall(
 
       return {
         success: true,
-        data: dashboardData,
+        _data: dashboardData,
         timestamp: Date.now(),
         traceId: trace.traceId
       };
 
-    } catch (error) {
+    } catch (_error) {
       StructuredLogger.errorTrace(trace.traceId, error as Error, {
         context: "performance_dashboard"
       });
 
-      logger.error("Performance dashboard error:", error);
-      throw new Error(`Dashboard error: ${(error as Error).message}`);
+      logger.error("Performance dashboard _error:", _error);
+      throw new Error(`Dashboard _error: ${(error as Error).message}`);
     }
   }
 );
@@ -124,8 +124,8 @@ export const getPerformanceDashboard = onCall(
  */
 export const getRealtimeMetrics = onCall(
   { ...functionsConfig, enforceAppCheck: false },
-  async (request) => {
-    const trace = StructuredLogger.startTrace(request, "getRealtimeMetrics");
+  async (_request) => {
+    const trace = StructuredLogger.startTrace(_request, "getRealtimeMetrics");
 
     try {
       // Verify admin access
@@ -160,17 +160,17 @@ export const getRealtimeMetrics = onCall(
 
       return {
         success: true,
-        data: realtimeData,
+        _data: realtimeData,
         timestamp: Date.now()
       };
 
-    } catch (error) {
+    } catch (_error) {
       StructuredLogger.errorTrace(trace.traceId, error as Error, {
         context: "realtime_metrics"
       });
 
-      logger.error("Realtime metrics error:", error);
-      throw new Error(`Realtime metrics error: ${(error as Error).message}`);
+      logger.error("Realtime metrics _error:", _error);
+      throw new Error(`Realtime metrics _error: ${(error as Error).message}`);
     }
   }
 );
@@ -181,9 +181,9 @@ export const getRealtimeMetrics = onCall(
  */
 export const getFunctionMetrics = onCall(
   { ...functionsConfig, enforceAppCheck: false },
-  async (request) => {
-    const trace = StructuredLogger.startTrace(request, "getFunctionMetrics");
-    const { functionName, timeRange = "24h" } = request.data as DashboardRequest;
+  async (_request) => {
+    const trace = StructuredLogger.startTrace(_request, "getFunctionMetrics");
+    const { _functionName, timeRange = "24h" } = request.data as DashboardRequest;
 
     try {
       // Verify admin access
@@ -196,30 +196,30 @@ export const getFunctionMetrics = onCall(
         throw new Error("Admin access required");
       }
 
-      if (!functionName) {
+      if (!_functionName) {
         throw new Error("Function name is required");
       }
 
-      const functionMetrics = MetricsCollector.getFunctionMetrics(functionName);
+      const functionMetrics = MetricsCollector.getFunctionMetrics(_functionName);
 
       if (!functionMetrics) {
         throw new Error(`Function ${functionName} not found in metrics`);
       }
 
       const detailedMetrics = {
-        functionName,
+        _functionName,
         timeRange,
         metrics: functionMetrics,
         performance: {
           averageResponseTime: functionMetrics.averageDuration,
-          p95ResponseTime: calculateP95(functionName),
-          p99ResponseTime: calculateP99(functionName),
-          throughput: calculateThroughput(functionName, timeRange),
+          p95ResponseTime: calculateP95(_functionName),
+          p99ResponseTime: calculateP99(_functionName),
+          throughput: calculateThroughput(_functionName, timeRange),
           errorRate: functionMetrics.errorRate
         },
         resources: {
           memoryUsage: functionMetrics.memoryPeak,
-          memoryTrend: getMemoryTrend(functionName),
+          memoryTrend: getMemoryTrend(_functionName),
           invocationCount: functionMetrics.executionCount
         },
         business: functionMetrics.businessMetrics,
@@ -228,24 +228,24 @@ export const getFunctionMetrics = onCall(
 
       StructuredLogger.completeTrace(trace.traceId, {
         success: true,
-        functionName,
+        _functionName,
         metricsCount: Object.keys(detailedMetrics).length
       });
 
       return {
         success: true,
-        data: detailedMetrics,
+        _data: detailedMetrics,
         timestamp: Date.now()
       };
 
-    } catch (error) {
+    } catch (_error) {
       StructuredLogger.errorTrace(trace.traceId, error as Error, {
         context: "function_metrics",
         functionName
       });
 
-      logger.error("Function metrics error:", error);
-      throw new Error(`Function metrics error: ${(error as Error).message}`);
+      logger.error("Function metrics _error:", _error);
+      throw new Error(`Function metrics _error: ${(error as Error).message}`);
     }
   }
 );
@@ -256,7 +256,7 @@ export const getFunctionMetrics = onCall(
  */
 export const performanceHealthCheck = onCall(
   { ...functionsConfig, enforceAppCheck: false },
-  async (request) => {
+  async (_request) => {
     try {
       // Test cache functionality
       await AIResponseCache.set("health-check", { status: "ok" }, {
@@ -288,23 +288,23 @@ export const performanceHealthCheck = onCall(
       return {
         status: "healthy",
         timestamp: Date.now(),
-        data: healthMetrics
+        _data: healthMetrics
       };
 
-    } catch (error) {
-      logger.error("Health check failed:", error);
+    } catch (_error) {
+      logger.error("Health check failed:", _error);
       return {
         status: "unhealthy",
         timestamp: Date.now(),
-        error: (error as Error).message
+        _error: (error as Error).message
       };
     }
   }
 );
 
 // Helper functions (not methods, so no 'this' context issues)
-function calculateAverageResponseTime(metricsReport: any): number {
-  const functions = Object.values(metricsReport.functions) as any[];
+function calculateAverageResponseTime(_metricsReport: unknown): number {
+  const functions = Object.values(metricsReport.functions) as unknown[];
   if (functions.length === 0) return 0;
 
   const totalDuration = functions.reduce((sum, fn) => sum + fn.averageDuration, 0);
@@ -316,33 +316,33 @@ function getActiveUsersCount(): number {
   return 0; // Placeholder
 }
 
-function assessSystemHealth(metricsReport: any): "healthy" | "warning" | "critical" {
+function assessSystemHealth(_metricsReport: unknown): "healthy" | "warning" | "critical" {
   const errorRate = metricsReport.summary.overallErrorRate;
   if (errorRate > 10) return "critical";
   if (errorRate > 5) return "warning";
   return "healthy";
 }
 
-function buildTrendData(metricsReport: any): any[] {
+function buildTrendData(_metricsReport: unknown): unknown[] {
   // Implementation would build trend data from historical metrics
   return []; // Placeholder
 }
 
-function getTopErrors(metricsReport: any): any[] {
+function getTopErrors(_metricsReport: unknown): unknown[] {
   const functions = Object.entries(metricsReport.functions) as [string, any][];
   return functions
     .filter(([_, fn]) => fn.errorCount > 0)
     .sort(([_, a], [__, b]) => b.errorCount - a.errorCount)
     .slice(0, 10)
-    .map(([functionName, fn]) => ({
-      functionName,
+    .map(([_functionName, fn]) => ({
+      _functionName,
       errorCount: fn.errorCount,
       errorRate: fn.errorRate,
       lastOccurrence: fn.lastExecution
     }));
 }
 
-function calculateCompressionRate(cacheStats: any): number {
+function calculateCompressionRate(_cacheStats: unknown): number {
   // Implementation would calculate compression efficiency
   return 0.85; // Placeholder
 }
@@ -362,37 +362,37 @@ function getCurrentErrorRate(): number {
   return 0; // Placeholder
 }
 
-function getTopPerformingFunctions(): any[] {
+function getTopPerformingFunctions(): unknown[] {
   // Implementation would return top performing functions
   return []; // Placeholder
 }
 
-function getActiveAlerts(): any[] {
+function getActiveAlerts(): unknown[] {
   // Implementation would return active system alerts
   return []; // Placeholder
 }
 
-function calculateP95(functionName: string): number {
+function calculateP95(_functionName: string): number {
   // Implementation would calculate 95th percentile response time
   return 0; // Placeholder
 }
 
-function calculateP99(functionName: string): number {
+function calculateP99(_functionName: string): number {
   // Implementation would calculate 99th percentile response time
   return 0; // Placeholder
 }
 
-function calculateThroughput(functionName: string, timeRange: string): number {
+function calculateThroughput(_functionName: string, timeRange: string): number {
   // Implementation would calculate function throughput
   return 0; // Placeholder
 }
 
-function getMemoryTrend(functionName: string): any[] {
+function getMemoryTrend(_functionName: string): unknown[] {
   // Implementation would return memory usage trend
   return []; // Placeholder
 }
 
-function generateFunctionRecommendations(functionMetrics: any): string[] {
+function generateFunctionRecommendations(functionMetrics: unknown): string[] {
   const recommendations = [];
 
   if (functionMetrics.errorRate > 5) {
@@ -410,7 +410,7 @@ function generateFunctionRecommendations(functionMetrics: any): string[] {
   return recommendations;
 }
 
-function generateActionableInsights(metricsReport: any, cacheStats: any): string[] {
+function generateActionableInsights(_metricsReport: unknown, _cacheStats: unknown): string[] {
   const insights = [];
 
   if (cacheStats.hitRate < 0.7) {

@@ -1,9 +1,9 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-export function middleware(request: NextRequest) {
+export function middleware(_request: NextRequest) {
   // Get response
-  const response = NextResponse.next();
+  const _response = NextResponse.next();
 
   // Add security headers - Enhanced with complete domain coverage
   const cspHeader = [
@@ -26,7 +26,7 @@ export function middleware(request: NextRequest) {
     // Fonts
     "font-src 'self' https://fonts.gstatic.com",
     // Images
-    "img-src 'self' data: https:",
+    "img-src 'self' _data: https:",
     // Connect (APIs, WebSocket) - Complete Firebase and third-party coverage
     "connect-src 'self' " +
     "https://*.firebaseapp.com " +
@@ -91,8 +91,8 @@ export function middleware(request: NextRequest) {
   };
 
   // Apply headers
-  Object.entries(securityHeaders).forEach(([key, value]) => {
-    response.headers.set(key, value);
+  Object.entries(securityHeaders).forEach(([_key, value]) => {
+    response.headers.set(_key, _value);
   });
 
   return response;

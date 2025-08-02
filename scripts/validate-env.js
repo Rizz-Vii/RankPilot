@@ -19,9 +19,9 @@ function loadEnvFile() {
     lines.forEach((line) => {
       line = line.trim();
       if (line && !line.startsWith("#")) {
-        const [key, ...valueParts] = line.split("=");
+        const [_key, ...valueParts] = line.split("=");
         if (key && valueParts.length > 0) {
-          const value = valueParts.join("=").trim();
+          const _value = valueParts.join("=").trim();
           process.env[key.trim()] = value;
         }
       }

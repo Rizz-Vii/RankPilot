@@ -278,8 +278,8 @@ test.describe("Mobile Navigation - Comprehensive Suite", () => {
               console.log("✅ Escape key closes mobile drawer");
             }
           }
-        } catch (error) {
-          console.log("⚠️ Keyboard navigation test failed:", error instanceof Error ? error.message : String(error));
+        } catch (_error) {
+          console.log("⚠️ Keyboard navigation test failed:", error instanceof Error ? error.message : String(_error));
         }
       }
     });

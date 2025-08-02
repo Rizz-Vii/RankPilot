@@ -100,8 +100,8 @@ export function useSubscription() {
         };
 
         setSubscription(subscriptionInfo);
-      } catch (error) {
-        console.error("Error fetching subscription:", error);
+      } catch (_error) {
+        console.error("Error fetching subscription:", _error);
 
         // Default to free plan on error
         const defaultUserAccess: UserAccess = {
@@ -216,8 +216,8 @@ export function useSubscription() {
         };
 
         setSubscription(subscriptionInfo);
-      } catch (error) {
-        console.error("Error refetching subscription:", error);
+      } catch (_error) {
+        console.error("Error refetching subscription:", _error);
       } finally {
         setLoading(false);
       }

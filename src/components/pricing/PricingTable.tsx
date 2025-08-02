@@ -22,7 +22,7 @@ export function PricingTable({ currentTier = 'free', onUpgrade }: PricingTablePr
 
         setLoading(tier);
         try {
-            const response = await fetch('/api/stripe/checkout', {
+            const _response = await fetch('/api/stripe/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -36,8 +36,8 @@ export function PricingTable({ currentTier = 'free', onUpgrade }: PricingTablePr
             if (url) {
                 window.location.href = url;
             }
-        } catch (error) {
-            console.error('Upgrade error:', error);
+        } catch (_error) {
+            console.error('Upgrade _error:', _error);
         } finally {
             setLoading(null);
         }
@@ -45,7 +45,7 @@ export function PricingTable({ currentTier = 'free', onUpgrade }: PricingTablePr
 
     const tiers = [
         {
-            key: 'free',
+            _key: 'free',
             name: 'Free Tier',
             price: 0,
             description: 'Perfect for getting started',
@@ -61,7 +61,7 @@ export function PricingTable({ currentTier = 'free', onUpgrade }: PricingTablePr
             popular: false
         },
         {
-            key: 'starter',
+            _key: 'starter',
             name: 'Starter',
             price: 29,
             description: 'Great for small businesses',
@@ -77,7 +77,7 @@ export function PricingTable({ currentTier = 'free', onUpgrade }: PricingTablePr
             popular: true
         },
         {
-            key: 'agency',
+            _key: 'agency',
             name: 'Agency',
             price: 99,
             description: 'Perfect for agencies',
@@ -93,7 +93,7 @@ export function PricingTable({ currentTier = 'free', onUpgrade }: PricingTablePr
             popular: false
         },
         {
-            key: 'enterprise',
+            _key: 'enterprise',
             name: 'Enterprise',
             price: 299,
             description: 'For large organizations',
@@ -161,7 +161,7 @@ export function PricingTable({ currentTier = 'free', onUpgrade }: PricingTablePr
 
                             <CardContent>
                                 <ul className="space-y-3 text-sm">
-                                    {tier.features.map((feature, index) => (
+                                    {tier.features.map((feature, _index) => (
                                         <li key={index} className="flex items-start">
                                             <Check className="h-4 w-4 text-primary mt-0.5 mr-3 flex-shrink-0" />
                                             <span>{feature}</span>
@@ -173,7 +173,7 @@ export function PricingTable({ currentTier = 'free', onUpgrade }: PricingTablePr
                                     className="w-full mt-8"
                                     variant={tier.popular ? 'default' : 'outline'}
                                     disabled={currentTier === tier.key || loading === tier.key}
-                                    onClick={() => handleUpgrade(tier.key)}
+                                    onClick={() => handleUpgrade(tier._key)}
                                 >
                                     {loading === tier.key ? (
                                         'Processing...'

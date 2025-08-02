@@ -28,7 +28,7 @@ function updateMcpConfig() {
     try {
         // Read current mcp.json
         const mcpContent = fs.readFileSync(mcpPath, 'utf8');
-        let mcpConfig = JSON.parse(mcpContent.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, ''));
+        const mcpConfig = JSON.parse(mcpContent.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, ''));
 
         log('🔧 Updating MCP Configuration...', 'cyan');
 
@@ -162,9 +162,9 @@ function updateMcpConfig() {
             log(`   ${status} ${name}: ${config.description || 'Active'}`, 'blue');
         }
 
-    } catch (error) {
+    } catch (_error) {
         log(`❌ Error updating MCP configuration: ${error.message}`, 'red');
-        console.error(error);
+        console.error(_error);
     }
 }
 
@@ -186,7 +186,7 @@ async function testMcpServers() {
     console.log('✅ All MCP servers tested successfully!');
 }
 
-testMcpServers().catch(console.error);
+testMcpServers().catch(console._error);
 `;
 
     fs.writeFileSync('scripts/test-mcp-servers.js', testScript);
@@ -214,4 +214,4 @@ async function main() {
     log('\n🚀 MCP servers ready for production!', 'bright');
 }
 
-main().catch(console.error);
+main().catch(console._error);

@@ -19,10 +19,10 @@ export interface SecurityOptions {
 const requestCounts = new Map<string, { count: number; resetTime: number }>();
 
 export function withSecurity(options: SecurityOptions = {}) {
-  return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
+  return function (target: unknown, propertyName: string, descriptor: PropertyDescriptor) {
     const method = descriptor.value;
 
-    descriptor.value = async function (request: CallableRequest) {
+    descriptor.value = async function (_request: CallableRequest) {
       const startTime = Date.now();
       const userId = request.auth?.uid || "anonymous";
 
@@ -44,7 +44,7 @@ export function withSecurity(options: SecurityOptions = {}) {
         if (options.rateLimit) {
           const now = Date.now();
           const key = `${userId}_${propertyName}`;
-          const current = requestCounts.get(key);
+          const current = requestCounts.get(_key);
 
           if (current && now < current.resetTime) {
             if (current.count >= options.rateLimit.maxRequests) {
@@ -52,7 +52,7 @@ export function withSecurity(options: SecurityOptions = {}) {
             }
             current.count++;
           } else {
-            requestCounts.set(key, {
+            requestCounts.set(_key, {
               count: 1,
               resetTime: now + options.rateLimit.windowMs
             });
@@ -78,7 +78,7 @@ export function withSecurity(options: SecurityOptions = {}) {
           timestamp: new Date().toISOString()
         });
 
-        const result = await method.call(this, request);
+        const _result = await method.call(this, _request);
 
         logger.info(`Function ${propertyName} completed`, {
           userId,
@@ -88,10 +88,10 @@ export function withSecurity(options: SecurityOptions = {}) {
 
         return result;
 
-      } catch (error) {
+      } catch (_error) {
         logger.error(`Function ${propertyName} failed`, {
           userId,
-          error: error instanceof Error ? error.message : String(error),
+          _error: error instanceof Error ? error.message : String(_error),
           stack: error instanceof Error ? error.stack : undefined,
           duration: Date.now() - startTime,
           timestamp: new Date().toISOString()
@@ -112,9 +112,9 @@ export function withSecurity(options: SecurityOptions = {}) {
 // Cleanup function for rate limiting maps
 export function cleanupRateLimitMaps() {
   const now = Date.now();
-  for (const [key, value] of requestCounts.entries()) {
+  for (const [_key, value] of requestCounts.entries()) {
     if (now >= value.resetTime) {
-      requestCounts.delete(key);
+      requestCounts.delete(_key);
     }
   }
 }

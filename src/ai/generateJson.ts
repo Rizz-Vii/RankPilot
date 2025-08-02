@@ -9,7 +9,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 /**
  * Generates a JSON object from an AI model using a specified prompt.
  * Tries the primary provider (Google Gemini via Genkit) first. If it fails with a
- * service availability error, it automatically falls back to the secondary
+ * service availability _error, it automatically falls back to the secondary
  * provider (OpenAI).
  *
  * @param {string} systemPrompt - The system-level instructions for the AI.
@@ -25,7 +25,7 @@ export async function generateJson(
   // --- Attempt 1: Primary Provider (Google Gemini via Genkit) ---
   try {
     // Using the configured `ai` instance with a schema directly returns the parsed object.
-    const result = await ai.generate({
+    const _result = await ai.generate({
       model: gemini15Flash,
       prompt: `${systemPrompt}\n\n${userPrompt}`,
       output: {
@@ -38,9 +38,9 @@ export async function generateJson(
 
     // CORRECTED: The 'result' is the final, parsed output object. No .output() method is needed.
     return result;
-  } catch (error: any) {
+  } catch (_error: unknown) {
     console.warn("Primary AI provider (Google) failed. Reason:", error.message);
-    // If it's a service error, try the fallback. Otherwise, fail fast.
+    // If it's a service _error, try the fallback. Otherwise, fail fast.
     if (
       (error.cause as any)?.status === 503 ||
       (error.message && error.message.includes("overloaded"))
@@ -58,7 +58,7 @@ export async function generateJson(
       zodToJsonSchema(outputSchema)
     )}`;
 
-    const response = await openai.chat.completions.create({
+    const _response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         { role: "system", content: openAISystemPrompt },
@@ -73,7 +73,7 @@ export async function generateJson(
     const jsonOutput = JSON.parse(text);
     // Validate the output from the fallback provider against the schema
     return outputSchema.parse(jsonOutput);
-  } catch (fallbackError: any) {
+  } catch (fallbackError: unknown) {
     console.error(
       "Fallback AI provider (OpenAI) also failed:",
       fallbackError.message

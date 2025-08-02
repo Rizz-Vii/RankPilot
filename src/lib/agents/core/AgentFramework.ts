@@ -9,7 +9,7 @@ export interface RankPilotAgent {
     safetyConstraints: SafetyConstraint;
     execute(): Promise<boolean>;
     rollback(): Promise<boolean>;
-    validateFix?(error: any): Promise<boolean>;
+    validateFix?(_error: unknown): Promise<boolean>;
 }
 
 export interface AgentCapability {
@@ -88,8 +88,8 @@ export class AgentSystemBootstrap {
                     console.log(`❌ ${name} failed after ${executionTime}ms`);
                 }
 
-            } catch (error) {
-                console.error(`🚨 ${name} threw an error:`, error);
+            } catch (_error) {
+                console.error(`🚨 ${name} threw an _error:`, _error);
                 results.push(false);
             }
         }
@@ -151,8 +151,8 @@ export class AgentSystemBootstrap {
                 const success = await agent.rollback();
                 rollbackResults.push(success);
                 console.log(`${success ? '✅' : '❌'} Rollback ${name}: ${success ? 'SUCCESS' : 'FAILED'}`);
-            } catch (error) {
-                console.error(`🚨 Rollback error for ${name}:`, error);
+            } catch (_error) {
+                console.error(`🚨 Rollback error for ${name}:`, _error);
                 rollbackResults.push(false);
             }
         }

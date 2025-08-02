@@ -68,7 +68,7 @@ export default function SeoAuditPage() {
   const { user } = useAuth();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [report, setReport] = useState<NeuroSEOReport | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [currentEngine, setCurrentEngine] = useState<string>("");
   const [completedEngines, setCompletedEngines] = useState<string[]>([]);
@@ -147,7 +147,7 @@ export default function SeoAuditPage() {
       };
 
       // Call NeuroSEO™ API
-      const response = await fetch('/api/neuroseo', {
+      const _response = await fetch('/api/neuroseo', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -159,13 +159,13 @@ export default function SeoAuditPage() {
         throw new Error(`Analysis failed: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const _data = await response.json();
 
       // For now, create a mock report structure for demonstration
       const mockReport: NeuroSEOReport = {
         id: `audit-${Date.now()}`,
         timestamp: new Date().toISOString(),
-        request: analysisRequest,
+        _request: analysisRequest,
         crawlResults: [],
         semanticAnalysis: [],
         visibilityAnalysis: [],
@@ -245,8 +245,8 @@ export default function SeoAuditPage() {
         });
       }
 
-    } catch (error) {
-      console.error("Analysis error:", error);
+    } catch (_error) {
+      console.error("Analysis _error:", _error);
       setError(error instanceof Error ? error.message : "Analysis failed");
     } finally {
       setIsAnalyzing(false);
@@ -285,7 +285,7 @@ export default function SeoAuditPage() {
                 type="url"
                 placeholder="https://example.com"
                 value={url}
-                onChange={(e) => setUrl(e.target.value)}
+                onChange={(e) => setUrl(e.target._value)}
                 required
               />
             </div>
@@ -296,7 +296,7 @@ export default function SeoAuditPage() {
                 id="keywords"
                 placeholder="SEO, digital marketing, optimization"
                 value={keywords}
-                onChange={(e) => setKeywords(e.target.value)}
+                onChange={(e) => setKeywords(e.target._value)}
               />
             </div>
 
@@ -311,7 +311,7 @@ export default function SeoAuditPage() {
                   id="competitors"
                   placeholder="https://competitor1.com, https://competitor2.com"
                   value={competitorUrls}
-                  onChange={(e) => setCompetitorUrls(e.target.value)}
+                  onChange={(e) => setCompetitorUrls(e.target._value)}
                   rows={3}
                 />
               </div>
@@ -411,7 +411,7 @@ export default function SeoAuditPage() {
 }
 
 const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
-  const chartData = items.map((item) => ({
+  const chartData = items.map((_item) => ({
     name: item.name,
     score: item.score,
     fill:
@@ -422,7 +422,7 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
           : "hsl(var(--chart-5))",
   }));
 
-  const imageAuditItem = items.find((item) => item.id === "image-alts");
+  const imageAuditItem = items.find((_item) => item.id === "image-alts");
   let imageData = null;
   if (imageAuditItem) {
     // A simple regex to extract numbers, assuming a format like "Found X images, Y are missing alt text"
@@ -433,8 +433,8 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
       const total = parseInt(match[1], 10);
       const missing = parseInt(match[2], 10);
       imageData = [
-        { name: "withAlt", value: total - missing },
-        { name: "missingAlt", value: missing },
+        { name: "withAlt", _value: total - missing },
+        { name: "missingAlt", _value: missing },
       ];
     }
   }
@@ -532,7 +532,7 @@ const AuditResults = ({ results }: { results: AuditUrlOutput; }) => (
             initial="hidden"
             animate="visible"
           >
-            {results.items.map((item) => {
+            {results.items.map((_item) => {
               const Icon = statusIcons[item.status] || AlertCircle;
               const color =
                 statusColors[item.status] || "text-muted-foreground";

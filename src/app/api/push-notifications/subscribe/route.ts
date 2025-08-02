@@ -37,7 +37,7 @@ const limiter = rateLimit({
     uniqueTokenPerInterval: 500,
 });
 
-function getClientIP(request: NextRequest): string {
+function getClientIP(_request: NextRequest): string {
     // Try to get IP from various headers
     const forwarded = request.headers.get('x-forwarded-for');
     const realIP = request.headers.get('x-real-ip');
@@ -56,15 +56,15 @@ function getClientIP(request: NextRequest): string {
     return '127.0.0.1';
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
     try {
         // Rate limiting
-        const ip = getClientIP(request);
+        const ip = getClientIP(_request);
         try {
             await limiter.check(5, ip); // 5 requests per minute
         } catch {
             return NextResponse.json(
-                { error: 'Rate limit exceeded' },
+                { _error: 'Rate limit exceeded' },
                 { status: 429 }
             );
         }
@@ -74,14 +74,14 @@ export async function POST(request: NextRequest) {
 
         if (!body.subscription || !body.subscription.endpoint) {
             return NextResponse.json(
-                { error: 'Invalid subscription data' },
+                { _error: 'Invalid subscription data' },
                 { status: 400 }
             );
         }
 
         if (!body.userId) {
             return NextResponse.json(
-                { error: 'User ID is required' },
+                { _error: 'User ID is required' },
                 { status: 400 }
             );
         }
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
         // Validate subscription format
         if (!body.subscription.keys?.p256dh || !body.subscription.keys?.auth) {
             return NextResponse.json(
-                { error: 'Missing subscription keys' },
+                { _error: 'Missing subscription keys' },
                 { status: 400 }
             );
         }
@@ -139,32 +139,32 @@ export async function POST(request: NextRequest) {
             subscriptionId
         });
 
-    } catch (error) {
-        console.error('[PWA] Push subscription error:', error);
+    } catch (_error) {
+        console.error('[PWA] Push subscription _error:', _error);
 
         if (error instanceof Error) {
             return NextResponse.json(
-                { error: 'Subscription failed', details: error.message },
+                { _error: 'Subscription failed', details: error.message },
                 { status: 500 }
             );
         }
 
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { _error: 'Internal server error' },
             { status: 500 }
         );
     }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(_request: NextRequest) {
     try {
         // Rate limiting
-        const ip = getClientIP(request);
+        const ip = getClientIP(_request);
         try {
             await limiter.check(5, ip);
         } catch {
             return NextResponse.json(
-                { error: 'Rate limit exceeded' },
+                { _error: 'Rate limit exceeded' },
                 { status: 429 }
             );
         }
@@ -174,7 +174,7 @@ export async function DELETE(request: NextRequest) {
 
         if (!body.subscription?.endpoint) {
             return NextResponse.json(
-                { error: 'Invalid subscription data' },
+                { _error: 'Invalid subscription data' },
                 { status: 400 }
             );
         }
@@ -198,11 +198,11 @@ export async function DELETE(request: NextRequest) {
             message: 'Push notification subscription deleted successfully'
         });
 
-    } catch (error) {
-        console.error('[PWA] Push unsubscription error:', error);
+    } catch (_error) {
+        console.error('[PWA] Push unsubscription _error:', _error);
 
         return NextResponse.json(
-            { error: 'Unsubscription failed' },
+            { _error: 'Unsubscription failed' },
             { status: 500 }
         );
     }

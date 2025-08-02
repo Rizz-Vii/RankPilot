@@ -13,7 +13,7 @@ import type { LucideIcon } from "lucide-react";
 
 interface EnhancedMetricCardProps {
     title: string;
-    value: string | number;
+    _value: string | number;
     change?: number;
     icon?: LucideIcon;
     tier?: "free" | "starter" | "agency" | "enterprise" | "admin";
@@ -25,7 +25,7 @@ interface EnhancedMetricCardProps {
 
 export function EnhancedMetricCard({
     title,
-    value,
+    _value,
     change,
     icon: Icon,
     tier,

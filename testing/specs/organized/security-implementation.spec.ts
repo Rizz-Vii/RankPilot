@@ -7,7 +7,7 @@ test.describe('Security - Implementation', () => {
     });
 
     test('should have CSP headers', async ({ page }) => {
-        const response = await page.goto('/');
+        const _response = await page.goto('/');
         const csp = response?.headers()['content-security-policy'];
         expect(csp).toBeTruthy();
     });
@@ -34,7 +34,7 @@ test.describe('Security - Implementation', () => {
 
         // Input should be sanitized
         const value = await page.inputValue('[data-testid="message-input"]');
-        expect(value).not.toContain('<script>');
+        expect(_value).not.toContain('<script>');
     });
 
     test('should validate authentication tokens', async ({ page }) => {
@@ -43,7 +43,7 @@ test.describe('Security - Implementation', () => {
             'Authorization': 'Bearer invalid-token'
         });
 
-        const response = await page.goto('/api/user');
+        const _response = await page.goto('/api/user');
         expect(response?.status()).toBe(401);
     });
 
@@ -58,7 +58,7 @@ test.describe('Security - Implementation', () => {
     test('should implement rate limiting', async ({ page, request }) => {
         // Make multiple rapid requests
         const requests = [];
-        for (let i = 0; i < 10; i++) {
+        for (let _i = 0; i < 10; i++) {
             requests.push(request.get('/api/test-endpoint'));
         }
 

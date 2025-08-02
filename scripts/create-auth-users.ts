@@ -83,7 +83,7 @@ async function createTestUsers() {
           `   ✅ User ${user.email} already exists (UID: ${existingUser.uid})`
         );
         continue;
-      } catch (error: any) {
+      } catch (_error: unknown) {
         // User doesn't exist, we can create it
         if (error.code !== "auth/user-not-found") {
           throw error;
@@ -100,7 +100,7 @@ async function createTestUsers() {
       });
 
       console.log(`   ✅ Created user: ${user.email} (UID: ${userRecord.uid})`);
-    } catch (error: any) {
+    } catch (_error: unknown) {
       console.error(
         `   ❌ Failed to create user ${user.email}:`,
         error.message
@@ -114,8 +114,8 @@ async function createTestUsers() {
 async function main() {
   try {
     await createTestUsers();
-  } catch (error) {
-    console.error("❌ Error creating test users:", error);
+  } catch (_error) {
+    console.error("❌ Error creating test users:", _error);
     process.exit(1);
   }
 }

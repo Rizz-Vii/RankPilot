@@ -12,24 +12,24 @@
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
     try {
         // Verify authentication
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json({ _error: 'Unauthorized' }, { status: 401 });
         }
 
         const token = authHeader.split('Bearer ')[1];
         let decodedToken;
         try {
             decodedToken = await adminAuth.verifyIdToken(token);
-        } catch (error) {
-            console.warn('[Visualizations API] Firebase admin initialization error:', error);
+        } catch (_error) {
+            console.warn('[Visualizations API] Firebase admin initialization _error:', _error);
             return NextResponse.json({ 
-                error: 'Authentication service unavailable', 
+                _error: 'Authentication service unavailable', 
                 mock: true,
-                data: [] 
+                _data: [] 
             }, { status: 503 });
         }
         const userId = decodedToken.uid;
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
         // Check subscription tier access
         const userDoc = await adminDb.collection('users').doc(userId).get();
         if (!userDoc.exists) {
-            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+            return NextResponse.json({ _error: 'User not found' }, { status: 404 });
         }
 
         const userData = userDoc.data()!;
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         // Advanced visualizations require Agency tier or higher
         if (!['agency', 'enterprise', 'admin'].includes(subscriptionTier)) {
             return NextResponse.json(
-                { error: 'Advanced visualizations require Agency tier or higher' },
+                { _error: 'Advanced visualizations require Agency tier or higher' },
                 { status: 403 }
             );
         }
@@ -56,36 +56,36 @@ export async function POST(request: NextRequest) {
 
         switch (action) {
             case 'create_chart':
-                return await createChart(userId, data);
+                return await createChart(userId, _data);
             case 'update_chart':
-                return await updateChart(userId, data);
+                return await updateChart(userId, _data);
             case 'export_chart':
-                return await exportChart(userId, data);
+                return await exportChart(userId, _data);
             case 'create_dashboard':
-                return await createDashboard(userId, data);
+                return await createDashboard(userId, _data);
             case 'update_dashboard':
-                return await updateDashboard(userId, data);
+                return await updateDashboard(userId, _data);
             case 'export_dashboard':
-                return await exportDashboard(userId, data);
+                return await exportDashboard(userId, _data);
             default:
-                return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+                return NextResponse.json({ _error: 'Invalid action' }, { status: 400 });
         }
 
-    } catch (error) {
-        console.error('Visualizations API error:', error);
+    } catch (_error) {
+        console.error('Visualizations API _error:', _error);
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { _error: 'Internal server error' },
             { status: 500 }
         );
     }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     try {
         // Verify authentication
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json({ _error: 'Unauthorized' }, { status: 401 });
         }
 
         const token = authHeader.split('Bearer ')[1];
@@ -101,35 +101,35 @@ export async function GET(request: NextRequest) {
                 return await getCharts(userId);
             case 'chart':
                 if (!id) {
-                    return NextResponse.json({ error: 'Chart ID required' }, { status: 400 });
+                    return NextResponse.json({ _error: 'Chart ID required' }, { status: 400 });
                 }
                 return await getChart(userId, id);
             case 'dashboards':
                 return await getDashboards(userId);
             case 'dashboard':
                 if (!id) {
-                    return NextResponse.json({ error: 'Dashboard ID required' }, { status: 400 });
+                    return NextResponse.json({ _error: 'Dashboard ID required' }, { status: 400 });
                 }
                 return await getDashboard(userId, id);
             default:
-                return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
+                return NextResponse.json({ _error: 'Invalid type' }, { status: 400 });
         }
 
-    } catch (error) {
-        console.error('Visualizations API error:', error);
+    } catch (_error) {
+        console.error('Visualizations API _error:', _error);
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { _error: 'Internal server error' },
             { status: 500 }
         );
     }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(_request: NextRequest) {
     try {
         // Verify authentication
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json({ _error: 'Unauthorized' }, { status: 401 });
         }
 
         const token = authHeader.split('Bearer ')[1];
@@ -141,7 +141,7 @@ export async function DELETE(request: NextRequest) {
         const id = url.searchParams.get('id');
 
         if (!type || !id) {
-            return NextResponse.json({ error: 'Type and ID required' }, { status: 400 });
+            return NextResponse.json({ _error: 'Type and ID required' }, { status: 400 });
         }
 
         switch (type) {
@@ -150,25 +150,25 @@ export async function DELETE(request: NextRequest) {
             case 'dashboard':
                 return await deleteDashboard(userId, id);
             default:
-                return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
+                return NextResponse.json({ _error: 'Invalid type' }, { status: 400 });
         }
 
-    } catch (error) {
-        console.error('Visualizations API error:', error);
+    } catch (_error) {
+        console.error('Visualizations API _error:', _error);
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { _error: 'Internal server error' },
             { status: 500 }
         );
     }
 }
 
 // Chart Management Functions
-async function createChart(userId: string, chartData: any) {
+async function createChart(userId: string, chartData: unknown) {
     const chartDoc = {
         id: chartData.id || `chart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         userId,
         config: chartData.config,
-        data: chartData.data || [],
+        _data: chartData.data || [],
         metadata: {
             title: chartData.title || 'Untitled Chart',
             description: chartData.description,
@@ -193,23 +193,23 @@ async function createChart(userId: string, chartData: any) {
     });
 }
 
-async function updateChart(userId: string, updateData: any) {
+async function updateChart(userId: string, updateData: unknown) {
     const { chartId, ...updates } = updateData;
 
     if (!chartId) {
-        return NextResponse.json({ error: 'Chart ID required' }, { status: 400 });
+        return NextResponse.json({ _error: 'Chart ID required' }, { status: 400 });
     }
 
     const chartRef = adminDb.collection('visualizations').doc(chartId);
     const chartDoc = await chartRef.get();
 
     if (!chartDoc.exists) {
-        return NextResponse.json({ error: 'Chart not found' }, { status: 404 });
+        return NextResponse.json({ _error: 'Chart not found' }, { status: 404 });
     }
 
     const chartData = chartDoc.data()!;
     if (chartData.userId !== userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
     const updatedChart = {
@@ -230,23 +230,23 @@ async function updateChart(userId: string, updateData: any) {
     });
 }
 
-async function exportChart(userId: string, exportData: any) {
+async function exportChart(userId: string, exportData: unknown) {
     const { chartId, format, config } = exportData;
 
     if (!chartId || !format) {
-        return NextResponse.json({ error: 'Chart ID and format required' }, { status: 400 });
+        return NextResponse.json({ _error: 'Chart ID and format required' }, { status: 400 });
     }
 
     const chartRef = adminDb.collection('visualizations').doc(chartId);
     const chartDoc = await chartRef.get();
 
     if (!chartDoc.exists) {
-        return NextResponse.json({ error: 'Chart not found' }, { status: 404 });
+        return NextResponse.json({ _error: 'Chart not found' }, { status: 404 });
     }
 
     const chartData = chartDoc.data()!;
     if (chartData.userId !== userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
     // Generate export URL (this would typically integrate with the chart export manager)
@@ -296,12 +296,12 @@ async function getChart(userId: string, chartId: string) {
     const chartDoc = await chartRef.get();
 
     if (!chartDoc.exists) {
-        return NextResponse.json({ error: 'Chart not found' }, { status: 404 });
+        return NextResponse.json({ _error: 'Chart not found' }, { status: 404 });
     }
 
     const chartData = chartDoc.data()!;
     if (chartData.userId !== userId && !chartData.settings?.shared) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
     return NextResponse.json({
@@ -318,12 +318,12 @@ async function deleteChart(userId: string, chartId: string) {
     const chartDoc = await chartRef.get();
 
     if (!chartDoc.exists) {
-        return NextResponse.json({ error: 'Chart not found' }, { status: 404 });
+        return NextResponse.json({ _error: 'Chart not found' }, { status: 404 });
     }
 
     const chartData = chartDoc.data()!;
     if (chartData.userId !== userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
     await chartRef.delete();
@@ -335,7 +335,7 @@ async function deleteChart(userId: string, chartId: string) {
 }
 
 // Dashboard Management Functions
-async function createDashboard(userId: string, dashboardData: any) {
+async function createDashboard(userId: string, dashboardData: unknown) {
     const dashboardDoc = {
         id: dashboardData.id || `dashboard_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         userId,
@@ -366,23 +366,23 @@ async function createDashboard(userId: string, dashboardData: any) {
     });
 }
 
-async function updateDashboard(userId: string, updateData: any) {
+async function updateDashboard(userId: string, updateData: unknown) {
     const { dashboardId, ...updates } = updateData;
 
     if (!dashboardId) {
-        return NextResponse.json({ error: 'Dashboard ID required' }, { status: 400 });
+        return NextResponse.json({ _error: 'Dashboard ID required' }, { status: 400 });
     }
 
     const dashboardRef = adminDb.collection('dashboards').doc(dashboardId);
     const dashboardDoc = await dashboardRef.get();
 
     if (!dashboardDoc.exists) {
-        return NextResponse.json({ error: 'Dashboard not found' }, { status: 404 });
+        return NextResponse.json({ _error: 'Dashboard not found' }, { status: 404 });
     }
 
     const dashboardData = dashboardDoc.data()!;
     if (dashboardData.userId !== userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
     const updatedDashboard = {
@@ -403,23 +403,23 @@ async function updateDashboard(userId: string, updateData: any) {
     });
 }
 
-async function exportDashboard(userId: string, exportData: any) {
+async function exportDashboard(userId: string, exportData: unknown) {
     const { dashboardId, format, config } = exportData;
 
     if (!dashboardId || !format) {
-        return NextResponse.json({ error: 'Dashboard ID and format required' }, { status: 400 });
+        return NextResponse.json({ _error: 'Dashboard ID and format required' }, { status: 400 });
     }
 
     const dashboardRef = adminDb.collection('dashboards').doc(dashboardId);
     const dashboardDoc = await dashboardRef.get();
 
     if (!dashboardDoc.exists) {
-        return NextResponse.json({ error: 'Dashboard not found' }, { status: 404 });
+        return NextResponse.json({ _error: 'Dashboard not found' }, { status: 404 });
     }
 
     const dashboardData = dashboardDoc.data()!;
     if (dashboardData.userId !== userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
     // Generate export URL (this would typically integrate with the chart export manager)
@@ -469,12 +469,12 @@ async function getDashboard(userId: string, dashboardId: string) {
     const dashboardDoc = await dashboardRef.get();
 
     if (!dashboardDoc.exists) {
-        return NextResponse.json({ error: 'Dashboard not found' }, { status: 404 });
+        return NextResponse.json({ _error: 'Dashboard not found' }, { status: 404 });
     }
 
     const dashboardData = dashboardDoc.data()!;
     if (dashboardData.userId !== userId && !dashboardData.settings?.shared) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
     return NextResponse.json({
@@ -491,12 +491,12 @@ async function deleteDashboard(userId: string, dashboardId: string) {
     const dashboardDoc = await dashboardRef.get();
 
     if (!dashboardDoc.exists) {
-        return NextResponse.json({ error: 'Dashboard not found' }, { status: 404 });
+        return NextResponse.json({ _error: 'Dashboard not found' }, { status: 404 });
     }
 
     const dashboardData = dashboardDoc.data()!;
     if (dashboardData.userId !== userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        return NextResponse.json({ _error: 'Unauthorized' }, { status: 403 });
     }
 
     await dashboardRef.delete();
@@ -508,13 +508,13 @@ async function deleteDashboard(userId: string, dashboardId: string) {
 }
 
 // Helper Functions
-async function generateChartExport(chartData: any, format: string, config: any): Promise<string> {
+async function generateChartExport(chartData: unknown, format: string, config: unknown): Promise<string> {
     // This would integrate with the chart export manager
     // For now, return a placeholder URL
     return `https://api.rankpilot.com/exports/charts/${chartData.id}.${format}`;
 }
 
-async function generateDashboardExport(dashboardData: any, format: string, config: any): Promise<string> {
+async function generateDashboardExport(dashboardData: unknown, format: string, config: unknown): Promise<string> {
     // This would integrate with the dashboard export manager
     // For now, return a placeholder URL
     return `https://api.rankpilot.com/exports/dashboards/${dashboardData.id}.${format}`;

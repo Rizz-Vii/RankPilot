@@ -101,7 +101,7 @@ export class RankPilotAgentSystem {
         description: string;
         category: string;
         priority: 'critical' | 'high' | 'medium' | 'low';
-        tier: any;
+        tier: unknown;
     }): Promise<string> {
         console.log('📋 Creating support ticket through Customer Support Orchestrator...');
         return await customerSupportOrchestrator.createSupportTicket(ticketData);
@@ -161,8 +161,8 @@ export async function activateRankPilotAgents(): Promise<boolean> {
         }
 
         return success;
-    } catch (error) {
-        console.error('🚨 Agent System activation failed:', error);
+    } catch (_error) {
+        console.error('🚨 Agent System activation failed:', _error);
         return false;
     }
 }

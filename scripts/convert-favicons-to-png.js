@@ -25,7 +25,7 @@ async function convertFaviconsToPNG() {
                 .toFile(outputPath);
 
             console.log(`✅ Created: ${conversion.output} (${conversion.size}x${conversion.size})`);
-        } catch (error) {
+        } catch (_error) {
             console.error(`❌ Failed to create ${conversion.output}:`, error.message);
         }
     }
@@ -47,7 +47,7 @@ async function convertFaviconsToPNG() {
 try {
     require('sharp');
     convertFaviconsToPNG();
-} catch (error) {
+} catch (_error) {
     console.log('Installing sharp package for image conversion...');
     const { exec } = require('child_process');
     exec('npm install sharp --save-dev', (err, stdout, stderr) => {

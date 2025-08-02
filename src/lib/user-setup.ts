@@ -68,8 +68,8 @@ export async function setupSpecificUsers() {
     });
 
     console.log("Successfully set up specific users with subscription tiers");
-  } catch (error) {
-    console.error("Error setting up users:", error);
+  } catch (_error) {
+    console.error("Error setting up users:", _error);
   }
 }
 

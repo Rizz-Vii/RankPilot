@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react';
 export type SupportedLanguage = 'en' | 'es' | 'fr' | 'de' | 'pt' | 'it' | 'nl' | 'ru' | 'zh' | 'ja' | 'ko' | 'ar' | 'he';
 
 export interface TranslationKey {
-    key: string;
+    _key: string;
     defaultValue: string;
     context?: string;
     description?: string;
@@ -31,7 +31,7 @@ export interface PluralOptions {
 }
 
 export interface InterpolationValues {
-    [key: string]: string | number | Date;
+    [_key: string]: string | number | Date;
 }
 
 export interface LanguageConfig {
@@ -489,10 +489,10 @@ export class InternationalizationSystem {
     }
 
     // Translation methods
-    translate(key: string, values?: InterpolationValues): string {
+    translate(_key: string, values?: InterpolationValues): string {
         const translation = this.translations[key];
         if (!translation) {
-            console.warn(`Translation missing for key: ${key}`);
+            console.warn(`Translation missing for _key: ${key}`);
             return key;
         }
 
@@ -503,7 +503,7 @@ export class InternationalizationSystem {
             if (typeof englishTranslation === 'string') {
                 return this.interpolate(englishTranslation, values);
             }
-            console.warn(`Translation missing for key: ${key} in language: ${this.currentLanguage}`);
+            console.warn(`Translation missing for _key: ${key} in language: ${this.currentLanguage}`);
             return key;
         }
 
@@ -511,20 +511,20 @@ export class InternationalizationSystem {
             return this.interpolate(languageTranslation, values);
         }
 
-        console.warn(`Invalid translation format for key: ${key}`);
+        console.warn(`Invalid translation format for _key: ${key}`);
         return key;
     }
 
-    translatePlural(key: string, count: number, values?: InterpolationValues): string {
+    translatePlural(_key: string, count: number, values?: InterpolationValues): string {
         const translation = this.translations[key];
         if (!translation) {
-            console.warn(`Translation missing for key: ${key}`);
+            console.warn(`Translation missing for _key: ${key}`);
             return key;
         }
 
         const languageTranslation = translation[this.currentLanguage];
         if (!languageTranslation || typeof languageTranslation === 'string') {
-            console.warn(`Plural translation missing for key: ${key} in language: ${this.currentLanguage}`);
+            console.warn(`Plural translation missing for _key: ${key} in language: ${this.currentLanguage}`);
             return key;
         }
 
@@ -533,7 +533,7 @@ export class InternationalizationSystem {
         const pluralTranslation = languageTranslation[pluralRule] || languageTranslation.other;
 
         if (!pluralTranslation) {
-            console.warn(`Plural form missing for key: ${key}, rule: ${pluralRule}`);
+            console.warn(`Plural form missing for _key: ${key}, rule: ${pluralRule}`);
             return key;
         }
 
@@ -543,10 +543,10 @@ export class InternationalizationSystem {
     private interpolate(template: string, values?: InterpolationValues): string {
         if (!values) return template;
 
-        return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+        return template.replace(/{{(\w+)}}/g, (match, _key) => {
             const value = values[key];
             if (value === undefined) return match;
-            return String(value);
+            return String(_value);
         });
     }
 
@@ -639,11 +639,11 @@ export function useI18n() {
 }
 
 // Helper function for translations
-export function t(key: string, values?: InterpolationValues): string {
-    return i18nSystem.translate(key, values);
+export function t(_key: string, values?: InterpolationValues): string {
+    return i18nSystem.translate(_key, values);
 }
 
 // Helper function for plural translations
-export function tp(key: string, count: number, values?: InterpolationValues): string {
-    return i18nSystem.translatePlural(key, count, values);
+export function tp(_key: string, count: number, values?: InterpolationValues): string {
+    return i18nSystem.translatePlural(_key, count, values);
 }

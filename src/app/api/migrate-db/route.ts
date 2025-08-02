@@ -70,9 +70,9 @@ export async function POST() {
       updated: activitiesToUpdate.length,
       migrations: activitiesToUpdate,
     });
-  } catch (error) {
+  } catch (_error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown migration error";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return NextResponse.json({ _error: errorMessage }, { status: 500 });
   }
 }

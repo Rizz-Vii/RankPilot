@@ -85,7 +85,7 @@ export default function MultiPaymentCheckout() {
         method: "stripe",
       });
 
-      const result = await createCheckoutSession({
+      const _result = await createCheckoutSession({
         userId: user?.uid,
         priceId: plan?.priceId[billingInterval as "monthly" | "yearly"],
         plan: planId,
@@ -104,8 +104,8 @@ export default function MultiPaymentCheckout() {
 
       const { error } = await stripe.redirectToCheckout({ sessionId });
 
-      if (error) {
-        console.error("Stripe checkout error:", error);
+      if (_error) {
+        console.error("Stripe checkout _error:", _error);
         trackPaymentEvents.abandonCheckout(
           planId,
           "stripe_redirect",
@@ -113,8 +113,8 @@ export default function MultiPaymentCheckout() {
         );
         toast.error("Payment failed. Please try again.");
       }
-    } catch (error: any) {
-      console.error("Checkout error:", error);
+    } catch (_error: unknown) {
+      console.error("Checkout _error:", _error);
       trackPaymentEvents.abandonCheckout(
         planId,
         "checkout_session_creation",
@@ -126,7 +126,7 @@ export default function MultiPaymentCheckout() {
     }
   };
 
-  const handlePayPalApprove = async (data: any, actions: any) => {
+  const handlePayPalApprove = async (_data: unknown, actions: unknown) => {
     try {
       setIsProcessing(true);
 
@@ -141,8 +141,8 @@ export default function MultiPaymentCheckout() {
         `/payment-success?plan=${planId}&amount=${price}&cycle=${billingInterval}&method=paypal`
       );
       toast.success("Payment successful!");
-    } catch (error) {
-      console.error("PayPal payment error:", error);
+    } catch (_error) {
+      console.error("PayPal payment _error:", _error);
       trackPaymentEvents.abandonCheckout(
         planId,
         "paypal_approval",
@@ -384,25 +384,25 @@ export default function MultiPaymentCheckout() {
                           }}
                           createOrder={async () => {
                             try {
-                              const result = await createPayPalOrder({
+                              const _result = await createPayPalOrder({
                                 userId: user.uid,
                                 plan: planId,
                                 interval: billingInterval,
                                 amount: price,
                               });
                               return (result.data as any).orderID;
-                            } catch (error) {
+                            } catch (_error) {
                               console.error(
-                                "PayPal order creation error:",
-                                error
+                                "PayPal order creation _error:",
+                                _error
                               );
                               toast.error("Failed to create PayPal order");
                               throw error;
                             }
                           }}
                           onApprove={handlePayPalApprove}
-                          onError={(error) => {
-                            console.error("PayPal error:", error);
+                          onError={(_error) => {
+                            console.error("PayPal _error:", _error);
                             toast.error("PayPal payment failed");
                           }}
                           disabled={isProcessing}

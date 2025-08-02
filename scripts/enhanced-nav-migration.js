@@ -17,7 +17,7 @@ const IMPLEMENTATION_GUIDE = `
 ## ✅ Completed Implementation
 
 ### 1. Enhanced Navigation Constants (✅ DONE)
-- **File**: \`src/constants/enhanced-nav.ts\`
+- **File**: `src/constants/enhanced-nav.ts`
 - **Features**: 
   - NeuroSEO™ Suite prominently grouped with AI badge
   - Logical feature grouping (NeuroSEO™, SEO Tools, Competitive Intelligence, Management)
@@ -26,7 +26,7 @@ const IMPLEMENTATION_GUIDE = `
   - Analytics tracking integration
 
 ### 2. Enhanced Navigation Component (✅ DONE)
-- **File**: \`src/components/enhanced-app-nav.tsx\`
+- **File**: `src/components/enhanced-app-nav.tsx`
 - **Features**:
   - Collapsible grouped navigation
   - Smooth animations with Framer Motion
@@ -36,17 +36,17 @@ const IMPLEMENTATION_GUIDE = `
   - Loading states and error handling
 
 ### 3. UI Dependencies (✅ DONE)
-- **File**: \`src/components/ui/collapsible.tsx\`
+- **File**: `src/components/ui/collapsible.tsx`
 - **Features**: Radix UI collapsible components for grouping
 
 ### 4. Integration Examples (✅ DONE)
-- **File**: \`src/components/enhanced-nav-example.tsx\`
+- **File**: `src/components/enhanced-nav-example.tsx`
 - **Features**: Complete integration examples and migration guide
 
 ## 📋 Next Steps for Integration
 
 ### 1. Update Main Sidebar Component
-\`\`\`tsx
+`\``tsx
 // src/components/ui/sidebar.tsx
 import { EnhancedAppNav } from "@/components/enhanced-app-nav";
 
@@ -55,24 +55,24 @@ import { EnhancedAppNav } from "@/components/enhanced-app-nav";
   userTier={user?.tier}
   isAdmin={user?.role === "admin"}
   collapsed={collapsed}
-  onItemClickAction={(item) => {
+  onItemClickAction={(_item) => {
     // Handle navigation
     trackNavigation(item.href);
   }}
 />
-\`\`\`
+`\``
 
 ### 2. Update FeatureGate Component
-\`\`\`tsx
+`\``tsx
 // src/components/subscription/FeatureGate.tsx
 interface FeatureGateProps {
   requiredTier?: "starter" | "agency" | "enterprise"; // Add enterprise
   // ... rest of props
 }
-\`\`\`
+`\``
 
 ### 3. Update Mobile Navigation
-\`\`\`tsx
+`\``tsx
 // src/components/mobile-nav.tsx
 import { EnhancedMobileNav } from "@/components/enhanced-app-nav";
 
@@ -81,9 +81,9 @@ import { EnhancedMobileNav } from "@/components/enhanced-app-nav";
   userTier={user?.tier}
   isAdmin={user?.role === "admin"}
   onCloseAction={() => setMobileMenuOpen(false)}
-  onItemClickAction={(item) => handleNavigation(item)}
+  onItemClickAction={(_item) => handleNavigation(_item)}
 />
-\`\`\`
+`\``
 
 ### 4. Test Navigation Behavior
 - ✅ Verify NeuroSEO™ Suite is prominently displayed
@@ -114,7 +114,7 @@ import { EnhancedMobileNav } from "@/components/enhanced-app-nav";
 
 ## 🔧 Integration Commands
 
-\`\`\`bash
+`\``bash
 # 1. Test the enhanced navigation
 npm run typecheck
 
@@ -126,7 +126,7 @@ npm run test:mobile
 
 # 4. Verify accessibility
 npm run test:accessibility
-\`\`\`
+`\``
 
 ## 📊 Navigation Structure
 

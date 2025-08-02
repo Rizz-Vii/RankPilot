@@ -28,7 +28,7 @@ interface UserSubscriptionData {
   email: string;
   subscriptionTier: string;
   subscriptionStatus: string;
-  updatedAt?: any;
+  updatedAt?: unknown;
 }
 
 export async function identifyAndCorrectUserTiers(): Promise<void> {
@@ -148,8 +148,8 @@ export async function identifyAndCorrectUserTiers(): Promise<void> {
 
     // Final verification
     await verifyTierCorrections();
-  } catch (error) {
-    console.error("❌ Error during tier identification and correction:", error);
+  } catch (_error) {
+    console.error("❌ Error during tier identification and correction:", _error);
     throw error;
   }
 }
@@ -207,8 +207,8 @@ async function verifyTierCorrections(): Promise<void> {
         `⚠️  ${finalStats.outdated} users still have outdated tiers`
       );
     }
-  } catch (error) {
-    console.error("❌ Error during verification:", error);
+  } catch (_error) {
+    console.error("❌ Error during verification:", _error);
   }
 }
 

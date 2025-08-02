@@ -19,8 +19,8 @@ export interface CacheConfig {
 }
 
 export interface CacheEntry<T = any> {
-    key: string;
-    value: any; // Allow any type for flexibility with serialization
+    _key: string;
+    _value: unknown; // Allow any type for flexibility with serialization
     timestamp: number;
     ttl: number;
     hits: number;
@@ -37,7 +37,7 @@ export interface CacheStats {
     hitRate: number;
     missRate: number;
     avgResponseTime: number;
-    topKeys: Array<{ key: string; hits: number; size: number; }>;
+    topKeys: Array<{ _key: string; hits: number; size: number; }>;
     tierUsage: Record<string, { entries: number; size: number; }>;
     evictions: number;
     compressionRatio: number;
@@ -50,7 +50,7 @@ export interface CacheStats {
 export class AdvancedCacheManager {
     private memoryCache: Map<string, CacheEntry> = new Map();
     private distributedCache: Map<string, CacheEntry> = new Map(); // Simulated Redis
-    private cacheStats: Map<string, number> = new Map();
+    private _cacheStats: Map<string, number> = new Map();
     private compressionCache: Map<string, string> = new Map();
 
     // Tier-based cache configurations
@@ -101,33 +101,33 @@ export class AdvancedCacheManager {
     /**
      * Get cached data with intelligent multi-layer lookup
      */
-    async get<T = any>(key: string, userTier: string = 'free'): Promise<T | null> {
+    async get<T = any>(_key: string, userTier: string = 'free'): Promise<T | null> {
         const startTime = Date.now();
 
         try {
             // 1. Check memory cache first (fastest)
-            let entry = this.memoryCache.get(key);
+            let entry = this.memoryCache.get(_key);
             if (entry && this.isValidEntry(entry)) {
-                this.recordCacheHit(key, 'memory', Date.now() - startTime);
+                this.recordCacheHit(_key, 'memory', Date.now() - startTime);
                 entry.hits++;
-                return this.deserializeValue(entry.value);
+                return this.deserializeValue(entry._value);
             }
 
             // 2. Check distributed cache (Redis-like)
-            entry = this.distributedCache.get(key);
+            entry = this.distributedCache.get(_key);
             if (entry && this.isValidEntry(entry)) {
                 // Promote to memory cache for faster future access
-                this.memoryCache.set(key, { ...entry, hits: entry.hits + 1 });
-                this.recordCacheHit(key, 'distributed', Date.now() - startTime);
-                return this.deserializeValue(entry.value);
+                this.memoryCache.set(_key, { ...entry, hits: entry.hits + 1 });
+                this.recordCacheHit(_key, 'distributed', Date.now() - startTime);
+                return this.deserializeValue(entry._value);
             }
 
             // 3. Cache miss
-            this.recordCacheMiss(key, Date.now() - startTime);
+            this.recordCacheMiss(_key, Date.now() - startTime);
             return null;
 
-        } catch (error) {
-            console.error('[AdvancedCache] Get error:', error);
+        } catch (_error) {
+            console.error('[AdvancedCache] Get _error:', _error);
             return null;
         }
     }
@@ -136,8 +136,8 @@ export class AdvancedCacheManager {
      * Set cached data with intelligent distribution across layers
      */
     async set<T = any>(
-        key: string,
-        value: T,
+        _key: string,
+        _value: T,
         userTier: string = 'free',
         options?: {
             ttl?: number;
@@ -148,7 +148,7 @@ export class AdvancedCacheManager {
     ): Promise<boolean> {
         try {
             const config = this.tierConfigs[userTier] || this.tierConfigs.free;
-            const serializedValue = this.serializeValue(value);
+            const serializedValue = this.serializeValue(_value);
             const compressedValue = (!options?.skipCompression && config.compression)
                 ? this.compressValue(serializedValue)
                 : serializedValue;
@@ -157,8 +157,8 @@ export class AdvancedCacheManager {
             const ttl = options?.ttl || config.ttl;
 
             const entry: CacheEntry = {
-                key,
-                value: compressedValue,
+                _key,
+                _value: compressedValue,
                 timestamp: Date.now(),
                 ttl: ttl * 1000, // Convert to milliseconds
                 hits: 0,
@@ -166,7 +166,7 @@ export class AdvancedCacheManager {
                 tags: options?.tags || [],
                 userTier,
                 compressed: config.compression && !options?.skipCompression,
-                encrypted: config.encryptSensitive && this.isSensitiveData(value)
+                encrypted: config.encryptSensitive && this.isSensitiveData(_value)
             };
 
             // Encrypt sensitive data if required
@@ -181,21 +181,21 @@ export class AdvancedCacheManager {
 
             // Store in appropriate cache layer(s)
             if (options?.forceDistributed || size > 1024 * 1024) { // > 1MB goes to distributed
-                this.distributedCache.set(key, entry);
+                this.distributedCache.set(_key, entry);
 
                 // Also store in memory if small enough
                 if (size < 100 * 1024) { // < 100KB
-                    this.memoryCache.set(key, entry);
+                    this.memoryCache.set(_key, entry);
                 }
             } else {
-                this.memoryCache.set(key, entry);
+                this.memoryCache.set(_key, entry);
             }
 
             this.updateCacheStats('set', userTier, size);
             return true;
 
-        } catch (error) {
-            console.error('[AdvancedCache] Set error:', error);
+        } catch (_error) {
+            console.error('[AdvancedCache] Set _error:', _error);
             return false;
         }
     }
@@ -207,8 +207,8 @@ export class AdvancedCacheManager {
         const results: Record<string, T | null> = {};
 
         // Process in parallel for performance
-        const promises = keys.map(async (key) => {
-            const value = await this.get<T>(key, userTier);
+        const promises = keys.map(async (_key) => {
+            const value = await this.get<T>(_key, userTier);
             results[key] = value;
         });
 
@@ -220,11 +220,11 @@ export class AdvancedCacheManager {
      * Batch set operation for enterprise clients
      */
     async setBatch<T = any>(
-        entries: Array<{ key: string; value: T; options?: any; }>,
+        entries: Array<{ _key: string; _value: T; options?: unknown; }>,
         userTier: string = 'free'
     ): Promise<boolean[]> {
-        const promises = entries.map(({ key, value, options }) =>
-            this.set(key, value, userTier, options)
+        const promises = entries.map(({ _key, _value, options }) =>
+            this.set(_key, _value, userTier, options)
         );
 
         return Promise.all(promises);
@@ -243,8 +243,8 @@ export class AdvancedCacheManager {
         } else {
             const keys = Array.isArray(pattern) ? pattern : [pattern];
             for (const key of keys) {
-                if (this.memoryCache.delete(key)) deletedCount++;
-                if (this.distributedCache.delete(key)) deletedCount++;
+                if (this.memoryCache.delete(_key)) deletedCount++;
+                if (this.distributedCache.delete(_key)) deletedCount++;
             }
         }
 
@@ -256,19 +256,19 @@ export class AdvancedCacheManager {
      * Cache warming for frequently accessed data
      */
     async warmCache(warmingPlan: Array<{
-        key: string;
+        _key: string;
         generator: () => Promise<any>;
         userTier: string;
         tags?: string[];
     }>): Promise<void> {
         console.log(`[AdvancedCache] Warming ${warmingPlan.length} cache entries`);
 
-        const promises = warmingPlan.map(async ({ key, generator, userTier, tags }) => {
+        const promises = warmingPlan.map(async ({ _key, generator, userTier, tags }) => {
             try {
                 const value = await generator();
-                await this.set(key, value, userTier, { tags });
-            } catch (error) {
-                console.error(`[AdvancedCache] Cache warming failed for ${key}:`, error);
+                await this.set(_key, _value, userTier, { tags });
+            } catch (_error) {
+                console.error(`[AdvancedCache] Cache warming failed for ${key}:`, _error);
             }
         });
 
@@ -352,19 +352,19 @@ export class AdvancedCacheManager {
         return Date.now() - entry.timestamp < entry.ttl;
     }
 
-    private serializeValue(value: any): string {
-        return JSON.stringify(value);
+    private serializeValue(_value: unknown): string {
+        return JSON.stringify(_value);
     }
 
-    private deserializeValue(value: string): any {
+    private deserializeValue(_value: string): any {
         try {
-            return JSON.parse(value);
+            return JSON.parse(_value);
         } catch {
             return value;
         }
     }
 
-    private compressValue(value: string): string {
+    private compressValue(_value: string): string {
         // Simplified compression simulation
         if (value.length < 1000) return value;
 
@@ -373,22 +373,22 @@ export class AdvancedCacheManager {
         return compressed;
     }
 
-    private encryptValue(value: string): string {
+    private encryptValue(_value: string): string {
         // Simplified encryption simulation (in production, use proper encryption)
-        return Buffer.from(value).toString('base64');
+        return Buffer.from(_value).toString('base64');
     }
 
-    private decryptValue(value: string): string {
+    private decryptValue(_value: string): string {
         // Simplified decryption simulation
-        return Buffer.from(value, 'base64').toString();
+        return Buffer.from(_value, 'base64').toString();
     }
 
-    private calculateSize(value: string): number {
-        return Buffer.byteLength(value, 'utf8');
+    private calculateSize(_value: string): number {
+        return Buffer.byteLength(_value, 'utf8');
     }
 
-    private isSensitiveData(value: any): boolean {
-        const stringValue = JSON.stringify(value).toLowerCase();
+    private isSensitiveData(_value: unknown): boolean {
+        const stringValue = JSON.stringify(_value).toLowerCase();
         const sensitivePatterns = ['password', 'token', 'key', 'secret', 'private'];
         return sensitivePatterns.some(pattern => stringValue.includes(pattern));
     }
@@ -406,22 +406,22 @@ export class AdvancedCacheManager {
             .sort((a, b) => a[1].hits - b[1].hits); // Sort by least used
 
         let freedSpace = 0;
-        for (const [key, entry] of entries) {
+        for (const [_key, entry] of entries) {
             if (freedSpace >= requiredSpace) break;
 
-            this.memoryCache.delete(key);
-            this.distributedCache.delete(key);
+            this.memoryCache.delete(_key);
+            this.distributedCache.delete(_key);
             freedSpace += entry.size;
             this.cacheStats.set('evictions', (this.cacheStats.get('evictions') || 0) + 1);
         }
     }
 
-    private recordCacheHit(key: string, layer: 'memory' | 'distributed', responseTime: number): void {
+    private recordCacheHit(_key: string, layer: 'memory' | 'distributed', responseTime: number): void {
         this.cacheStats.set('hits', (this.cacheStats.get('hits') || 0) + 1);
         this.updateAvgResponseTime(responseTime);
     }
 
-    private recordCacheMiss(key: string, responseTime: number): void {
+    private recordCacheMiss(_key: string, responseTime: number): void {
         this.cacheStats.set('misses', (this.cacheStats.get('misses') || 0) + 1);
         this.updateAvgResponseTime(responseTime);
     }
@@ -435,9 +435,9 @@ export class AdvancedCacheManager {
 
     private invalidateByTags(cache: Map<string, CacheEntry>, tags: string[]): number {
         let count = 0;
-        for (const [key, entry] of cache.entries()) {
+        for (const [_key, entry] of cache.entries()) {
             if (entry.tags.some(tag => tags.includes(tag))) {
-                cache.delete(key);
+                cache.delete(_key);
                 count++;
             }
         }
@@ -452,12 +452,12 @@ export class AdvancedCacheManager {
         return { entries: cache.size, size: totalSize };
     }
 
-    private getTopKeys(): Array<{ key: string; hits: number; size: number; }> {
+    private getTopKeys(): Array<{ _key: string; hits: number; size: number; }> {
         const allEntries = Array.from(this.memoryCache.entries())
             .concat(Array.from(this.distributedCache.entries()));
 
         return allEntries
-            .map(([key, entry]) => ({ key, hits: entry.hits, size: entry.size }))
+            .map(([_key, entry]) => ({ _key, hits: entry.hits, size: entry.size }))
             .sort((a, b) => b.hits - a.hits)
             .slice(0, 10);
     }
@@ -496,16 +496,16 @@ export class AdvancedCacheManager {
         const now = Date.now();
         let cleanedCount = 0;
 
-        for (const [key, entry] of this.memoryCache.entries()) {
+        for (const [_key, entry] of this.memoryCache.entries()) {
             if (now - entry.timestamp >= entry.ttl) {
-                this.memoryCache.delete(key);
+                this.memoryCache.delete(_key);
                 cleanedCount++;
             }
         }
 
-        for (const [key, entry] of this.distributedCache.entries()) {
+        for (const [_key, entry] of this.distributedCache.entries()) {
             if (now - entry.timestamp >= entry.ttl) {
-                this.distributedCache.delete(key);
+                this.distributedCache.delete(_key);
                 cleanedCount++;
             }
         }
@@ -517,9 +517,9 @@ export class AdvancedCacheManager {
 
     private async compressLargeEntries(): Promise<void> {
         // Compress entries larger than 100KB if not already compressed
-        for (const [key, entry] of this.distributedCache.entries()) {
+        for (const [_key, entry] of this.distributedCache.entries()) {
             if (entry.size > 100 * 1024 && !entry.compressed) {
-                const compressed = this.compressValue(entry.value);
+                const compressed = this.compressValue(entry._value);
                 if (compressed.length < entry.value.length) {
                     entry.value = compressed;
                     entry.compressed = true;
@@ -536,15 +536,15 @@ export class AdvancedCacheManager {
             .sort((a, b) => b[1].hits - a[1].hits)
             .slice(0, 100); // Top 100 most accessed small items
 
-        for (const [key, entry] of distributedEntries) {
-            this.memoryCache.set(key, entry);
+        for (const [_key, entry] of distributedEntries) {
+            this.memoryCache.set(_key, entry);
         }
     }
 
     private updateWarmingStrategy(): void {
         // Analyze access patterns and update cache warming strategy
         const topKeys = this.getTopKeys();
-        console.log(`[AdvancedCache] Top accessed keys: ${topKeys.slice(0, 5).map(k => k.key).join(', ')}`);
+        console.log(`[AdvancedCache] Top accessed keys: ${topKeys.slice(0, 5).map(k => k._key).join(', ')}`);
     }
 
     private async performPeriodicWarming(): Promise<void> {
@@ -572,9 +572,9 @@ export class AdvancedCacheManager {
         }
     }
 
-    private updateCacheStats(operation: string, userTier: string, value: number): void {
+    private updateCacheStats(operation: string, userTier: string, _value: number): void {
         const key = `${operation}_${userTier}`;
-        this.cacheStats.set(key, (this.cacheStats.get(key) || 0) + value);
+        this.cacheStats.set(_key, (this.cacheStats.get(_key) || 0) + _value);
     }
 }
 

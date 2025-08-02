@@ -10,10 +10,10 @@ interface FirestoreUser {
   role?: string;
   subscriptionTier?: string;
   subscriptionStatus?: string;
-  subscriptionMetadata?: any;
-  createdAt?: any;
-  lastLoginAt?: any;
-  [key: string]: any;
+  subscriptionMetadata?: unknown;
+  createdAt?: unknown;
+  lastLoginAt?: unknown;
+  [_key: string]: unknown;
 }
 
 export async function getAllUsers(): Promise<{
@@ -96,8 +96,8 @@ export async function getAllUsers(): Promise<{
       summary,
       incompleteUsers,
     };
-  } catch (error) {
-    console.error("❌ Error retrieving users:", error);
+  } catch (_error) {
+    console.error("❌ Error retrieving users:", _error);
     throw error;
   }
 }
@@ -123,8 +123,8 @@ export async function displayAllUsers() {
     );
 
     return { users, summary, incompleteUsers };
-  } catch (error) {
-    console.error("Error displaying users:", error);
+  } catch (_error) {
+    console.error("Error displaying users:", _error);
     return null;
   }
 }
@@ -134,8 +134,8 @@ export async function getUserById(uid: string): Promise<FirestoreUser | null> {
   try {
     const { users } = await getAllUsers();
     return users.find((user) => user.uid === uid) || null;
-  } catch (error) {
-    console.error("Error getting user by ID:", error);
+  } catch (_error) {
+    console.error("Error getting user by ID:", _error);
     return null;
   }
 }

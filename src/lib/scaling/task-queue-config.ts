@@ -65,8 +65,8 @@ export class TaskQueueManager {
       
       console.log(`Task created: ${response.name}`);
       return response;
-    } catch (error) {
-      console.error('Error creating task:', error);
+    } catch (_error) {
+      console.error('Error creating task:', _error);
       throw error;
     }
   }
@@ -82,7 +82,7 @@ export class TaskQueueManager {
     const batches = this.chunkArray(payload.keywords, payload.batchSize);
     const tasks = [];
 
-    for (const [index, batch] of batches.entries()) {
+    for (const [_index, batch] of batches.entries()) {
       const task = {
         httpRequest: {
           httpMethod: 'POST' as const,
@@ -93,7 +93,7 @@ export class TaskQueueManager {
           body: Buffer.from(JSON.stringify({
             keywords: batch,
             userId: payload.userId,
-            batchIndex: index,
+            batchIndex: _index,
           })),
         },
         scheduleTime: {
@@ -111,8 +111,8 @@ export class TaskQueueManager {
       const responses = await Promise.all(tasks);
       console.log(`Created ${responses.length} batch tasks`);
       return responses;
-    } catch (error) {
-      console.error('Error creating batch tasks:', error);
+    } catch (_error) {
+      console.error('Error creating batch tasks:', _error);
       throw error;
     }
   }

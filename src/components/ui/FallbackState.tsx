@@ -21,7 +21,7 @@ interface FallbackStateProps {
 
 const defaultIcons = {
     empty: FileX,
-    error: AlertCircle,
+    _error: AlertCircle,
     loading: RefreshCw,
     "not-found": Search,
 };
@@ -31,7 +31,7 @@ const defaultMessages = {
         title: "No data available",
         description: "There's nothing to display here yet.",
     },
-    error: {
+    _error: {
         title: "Something went wrong",
         description: "We encountered an error while loading this content.",
     },

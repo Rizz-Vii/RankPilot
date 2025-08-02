@@ -2,7 +2,7 @@ import { gemini15Flash, googleAI } from "@genkit-ai/googleai";
 import { genkit } from "genkit";
 
 // Lazy initialization to avoid timeout during cold starts
-let _ai: any = null;
+let _ai: unknown = null;
 
 export function getAI() {
   if (!_ai) {

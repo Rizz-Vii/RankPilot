@@ -56,7 +56,7 @@ const SerpFeatures: React.FC<{ features: SerpViewOutput["serpFeatures"] }> = ({
     { name: "Image Pack", icon: ImageIcon, present: features.hasImagePack },
     { name: "Video Carousel", icon: Video, present: features.hasVideoCarousel },
     { name: "Top Stories", icon: Newspaper, present: features.topStories },
-  ].filter((item) => item.present);
+  ].filter((_item) => item.present);
 
   if (featureItems.length === 0) {
     return null;
@@ -76,7 +76,7 @@ const SerpFeatures: React.FC<{ features: SerpViewOutput["serpFeatures"] }> = ({
           initial="hidden"
           animate="visible"
         >
-          {featureItems.map((item) => {
+          {featureItems.map((_item) => {
             const Icon = item.icon;
             return (
               <motion.div key={item.name} variants={itemVariant}>
@@ -118,7 +118,7 @@ export default function SerpViewResults({ results }: SerpViewResultsProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
-            {results.organicResults.map((result) => (
+            {results.organicResults.map((_result) => (
               <motion.div
                 key={result.position}
                 className="flex gap-4 p-4 rounded-lg transition-all duration-300 ease-in-out hover:bg-muted/50 hover:shadow-lg hover:scale-[1.02] origin-center"
@@ -160,7 +160,7 @@ export default function SerpViewResults({ results }: SerpViewResultsProps) {
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
-                {results.peopleAlsoAsk.map((item, index) => (
+                {results.peopleAlsoAsk.map((_item, _index) => (
                   <motion.div key={index} variants={itemVariant}>
                     <AccordionItem value={`item-${index}`}>
                       <AccordionTrigger className="font-body text-left hover:no-underline">

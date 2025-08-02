@@ -56,7 +56,7 @@ export default function NeuroSEODashboard({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [report, setReport] = useState<NeuroSEOReport | null>(null);
   const [usageStats, setUsageStats] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
   const formRef = useRef<HTMLFormElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
@@ -110,7 +110,7 @@ export default function NeuroSEODashboard({
 
     try {
       const token = await user.getIdToken();
-      const response = await fetch("/api/neuroseo", {
+      const _response = await fetch("/api/neuroseo", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -124,8 +124,8 @@ export default function NeuroSEODashboard({
       } else {
         throw new Error(`Failed to load usage stats: ${response.statusText}`);
       }
-    } catch (error) {
-      console.error("Failed to load usage stats:", error);
+    } catch (_error) {
+      console.error("Failed to load usage stats:", _error);
       setError(
         `Could not load usage statistics: ${error instanceof Error ? error.message : "Unknown error"}`
       );
@@ -208,7 +208,7 @@ export default function NeuroSEODashboard({
         );
       }, 1000);
 
-      const response = await fetch("/api/neuroseo", requestOptions);
+      const _response = await fetch("/api/neuroseo", requestOptions);
 
       clearInterval(progressIndicator);
       clearTimeout(timeoutId);
@@ -239,8 +239,8 @@ export default function NeuroSEODashboard({
       announcement.className = "sr-only";
       document.body.appendChild(announcement);
       setTimeout(() => document.body.removeChild(announcement), 3000);
-    } catch (error) {
-      console.error("Analysis error:", error);
+    } catch (_error) {
+      console.error("Analysis _error:", _error);
 
       // Clear any running timers
       clearTimeout(timeoutId);
@@ -340,7 +340,7 @@ export default function NeuroSEODashboard({
                 id="urls"
                 placeholder="https://example.com/page1&#10;https://example.com/page2"
                 value={urls}
-                onChange={(e) => setUrls(e.target.value)}
+                onChange={(e) => setUrls(e.target._value)}
                 rows={4}
                 className="min-h-[100px] resize-y"
               />
@@ -360,7 +360,7 @@ export default function NeuroSEODashboard({
                 id="competitors"
                 placeholder="https://competitor1.com&#10;https://competitor2.com"
                 value={competitorUrls}
-                onChange={(e) => setCompetitorUrls(e.target.value)}
+                onChange={(e) => setCompetitorUrls(e.target._value)}
                 rows={4}
                 className="min-h-[100px] resize-y"
               />
@@ -382,7 +382,7 @@ export default function NeuroSEODashboard({
                 id="keywords"
                 placeholder="SEO, content optimization, digital marketing"
                 value={targetKeywords}
-                onChange={(e) => setTargetKeywords(e.target.value)}
+                onChange={(e) => setTargetKeywords(e.target._value)}
                 className="h-11"
               />
               <p className="text-xs text-muted-foreground mt-2">
@@ -399,7 +399,7 @@ export default function NeuroSEODashboard({
               </Label>
               <Select
                 value={analysisType}
-                onValueChange={(value: any) => setAnalysisType(value)}
+                onValueChange={(_value: unknown) => setAnalysisType(_value)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -480,7 +480,7 @@ export default function NeuroSEODashboard({
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {report.keyInsights.map((insight, index) => (
+                  {report.keyInsights.map((insight, _index) => (
                     <div
                       key={index}
                       className="border-l-4 border-blue-500 pl-4"
@@ -593,7 +593,7 @@ export default function NeuroSEODashboard({
             </TabsContent>
 
             <TabsContent value="seo" className="space-y-4">
-              {report.crawlResults.map((result, index) => (
+              {report.crawlResults.map((_result, _index) => (
                 <Card key={index}>
                   <CardHeader>
                     <CardTitle className="text-lg">{result.url}</CardTitle>
@@ -639,7 +639,7 @@ export default function NeuroSEODashboard({
             </TabsContent>
 
             <TabsContent value="visibility" className="space-y-4">
-              {report.visibilityAnalysis.map((visibility, index) => (
+              {report.visibilityAnalysis.map((visibility, _index) => (
                 <Card key={index}>
                   <CardHeader>
                     <CardTitle className="text-lg">{visibility.url}</CardTitle>
@@ -680,7 +680,7 @@ export default function NeuroSEODashboard({
             </TabsContent>
 
             <TabsContent value="trust" className="space-y-4">
-              {report.trustAnalysis.map((trust, index) => (
+              {report.trustAnalysis.map((trust, _index) => (
                 <Card key={index}>
                   <CardHeader>
                     <CardTitle className="text-lg">{trust.url}</CardTitle>
@@ -719,7 +719,7 @@ export default function NeuroSEODashboard({
 
             <TabsContent value="tasks" className="space-y-4">
               <div className="space-y-3">
-                {report.actionableTasks.map((task, index) => (
+                {report.actionableTasks.map((task, _index) => (
                   <Card key={task.id}>
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-2">

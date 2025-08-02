@@ -7,9 +7,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface AsyncDataState<T> {
-    data: T;
+    _data: T;
     loading: boolean;
-    error: string | null;
+    _error: string | null;
     refetch: () => Promise<void>;
     isStale: boolean;
 }
@@ -17,8 +17,8 @@ interface AsyncDataState<T> {
 interface AsyncDataOptions {
     retryCount?: number;
     retryDelay?: number;
-    onError?: (error: Error) => void;
-    onSuccess?: (data: any) => void;
+    onError?: (_error: Error) => void;
+    onSuccess?: (_data: unknown) => void;
     enabled?: boolean;
     staleTime?: number; // ms
 }
@@ -33,9 +33,9 @@ export function useSafeAsyncData<T>(
     defaultValue: T,
     options: AsyncDataOptions = {}
 ): AsyncDataState<T> {
-    const [data, setData] = useState<T>(defaultValue);
+    const [_data, setData] = useState<T>(defaultValue);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [_error, setError] = useState<string | null>(null);
     const [isStale, setIsStale] = useState(true);
 
     const isMountedRef = useRef(true);
@@ -62,11 +62,11 @@ export function useSafeAsyncData<T>(
             const result = await fetchFn();
 
             if (isMountedRef.current) {
-                setData(result);
+                setData(_result);
                 setIsStale(false);
                 lastFetchRef.current = Date.now();
                 retryCountRef.current = 0;
-                onSuccess?.(result);
+                onSuccess?.(_result);
             }
         } catch (err) {
             if (!isMountedRef.current) return;
@@ -141,7 +141,7 @@ export function useSafeAsyncData<T>(
         };
     }, []);
 
-    return { data, loading, error, refetch, isStale };
+    return { _data, loading, _error, refetch, isStale };
 }
 
 /**
@@ -149,14 +149,14 @@ export function useSafeAsyncData<T>(
  * Prevents the subscription loops in use-dashboard-data.ts
  */
 export function useSafeFirestoreSubscription<T>(
-    subscriptionFn: (callback: (data: T) => void) => () => void,
+    subscriptionFn: (callback: (_data: T) => void) => () => void,
     dependencies: React.DependencyList,
     defaultValue: T,
     options: Pick<AsyncDataOptions, 'onError' | 'onSuccess' | 'enabled'> = {}
 ): Omit<AsyncDataState<T>, 'refetch'> {
-    const [data, setData] = useState<T>(defaultValue);
+    const [_data, setData] = useState<T>(defaultValue);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [_error, setError] = useState<string | null>(null);
 
     const isMountedRef = useRef(true);
     const unsubscribeRef = useRef<(() => void) | null>(null);
@@ -201,7 +201,7 @@ export function useSafeFirestoreSubscription<T>(
         }
     }, [...dependencies, enabled]);
 
-    return { data, loading, error, isStale: false };
+    return { _data, loading, _error, isStale: false };
 }
 
 /**
@@ -209,15 +209,15 @@ export function useSafeFirestoreSubscription<T>(
  */
 export const safeAccess = {
     array: <T>(arr: T[] | undefined | null): T[] => arr || [],
-    length: (arr: any[] | undefined | null): number => arr?.length || 0,
-    property: <T>(obj: any, path: string, fallback: T): T => {
-        return path.split('.').reduce((curr, key) => curr?.[key], obj) ?? fallback;
+    length: (arr: unknown[] | undefined | null): number => arr?.length || 0,
+    property: <T>(obj: unknown, path: string, fallback: T): T => {
+        return path.split('.').reduce((curr, _key) => curr?.[key], obj) ?? fallback;
     },
-    number: (value: any, fallback = 0): number => {
-        const num = Number(value);
+    number: (_value: unknown, fallback = 0): number => {
+        const num = Number(_value);
         return isNaN(num) ? fallback : num;
     },
-    string: (value: any, fallback = ''): string => {
+    string: (_value: unknown, fallback = ''): string => {
         return value?.toString() || fallback;
     }
 };

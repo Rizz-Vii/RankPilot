@@ -106,8 +106,8 @@ export class BuildSystemAgent implements RankPilotAgent {
                 return true; // Still consider successful if infrastructure is improved
             }
 
-        } catch (error) {
-            console.error('🚨 Build System Agent execution failed:', error);
+        } catch (_error) {
+            console.error('🚨 Build System Agent execution failed:', _error);
             await this.rollback();
             return false;
         }
@@ -186,7 +186,7 @@ export class BuildSystemAgent implements RankPilotAgent {
             let modified = false;
             for (const envVar of firebaseEnvVars) {
                 const [key] = envVar.split('=');
-                if (!envContent.includes(key)) {
+                if (!envContent.includes(_key)) {
                     envContent += `${envVar}\n`;
                     modified = true;
                 }
@@ -213,13 +213,13 @@ try {
         credential: admin.credential.applicationDefault(),
         projectId: process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
     });
-} catch (error) {
-    console.warn('[Visualizations API] Firebase initialization failed, using mock data:', error);
+} catch (_error) {
+    console.warn('[Visualizations API] Firebase initialization failed, using mock _data:', _error);
     // Return mock response for development
     return NextResponse.json({ 
-        error: 'Firebase not configured', 
+        _error: 'Firebase not configured', 
         mock: true,
-        data: [] 
+        _data: [] 
     });
 }`
                     );
@@ -227,13 +227,13 @@ try {
                     await fs.writeFile(visualizationsRoute, routeContent);
                     this.fixedFiles.push(visualizationsRoute);
                 }
-            } catch (error) {
-                console.warn('Could not fix visualizations route:', error);
+            } catch (_error) {
+                console.warn('Could not fix visualizations route:', _error);
             }
 
             return true;
-        } catch (error) {
-            console.error('Failed to fix Firebase configuration:', error);
+        } catch (_error) {
+            console.error('Failed to fix Firebase configuration:', _error);
             return false;
         }
     }
@@ -266,8 +266,8 @@ try {
             this.fixedFiles.push(packageJsonPath);
 
             return true;
-        } catch (error) {
-            console.error('Failed to optimize build memory:', error);
+        } catch (_error) {
+            console.error('Failed to optimize build memory:', _error);
             return false;
         }
     }
@@ -321,8 +321,8 @@ exit 1
             }
 
             return true;
-        } catch (error) {
-            console.error('Failed to setup emergency build fallback:', error);
+        } catch (_error) {
+            console.error('Failed to setup emergency build fallback:', _error);
             return false;
         }
     }
@@ -350,8 +350,8 @@ exit 1
                     // File might not exist, continue
                 }
             }
-        } catch (error) {
-            console.error('Failed to create backup:', error);
+        } catch (_error) {
+            console.error('Failed to create backup:', _error);
             throw error;
         }
     }
@@ -364,7 +364,7 @@ exit 1
             // Try the emergency build script first (safer)
             const { stdout, stderr } = await execAsync('npm run build:memory-safe', { timeout: 300000 });
             return { success: true, output: stdout + stderr };
-        } catch (error: any) {
+        } catch (_error: unknown) {
             // Build might fail due to Firebase, but that's expected
             const output = error.stdout + error.stderr;
             if (output.includes('✓ Compiled successfully')) {
@@ -378,7 +378,7 @@ exit 1
      * Validate fix
      */
     async validateFix(): Promise<boolean> {
-        const result = await this.validateBuild();
+        const _result = await this.validateBuild();
         return result.success;
     }
 
@@ -396,8 +396,8 @@ exit 1
             }
             console.log('✅ Rollback completed');
             return true;
-        } catch (error) {
-            console.error('❌ Rollback failed:', error);
+        } catch (_error) {
+            console.error('❌ Rollback failed:', _error);
             return false;
         }
     }

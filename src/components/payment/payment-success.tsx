@@ -79,8 +79,8 @@ export default function PaymentSuccess() {
         },
         updatedAt: new Date(),
       });
-    } catch (error) {
-      console.error("Error updating subscription:", error);
+    } catch (_error) {
+      console.error("Error updating subscription:", _error);
     }
   };
 
@@ -89,8 +89,8 @@ export default function PaymentSuccess() {
       // This would call your email service
       setEmailSent(true);
       toast.success("Confirmation email sent!");
-    } catch (error) {
-      console.error("Error sending email:", error);
+    } catch (_error) {
+      console.error("Error sending email:", _error);
     }
   };
 
@@ -99,8 +99,8 @@ export default function PaymentSuccess() {
       setInvoiceLoading(true);
       // Generate and download invoice
       toast.success("Invoice downloaded successfully!");
-    } catch (error) {
-      console.error("Error downloading invoice:", error);
+    } catch (_error) {
+      console.error("Error downloading invoice:", _error);
       toast.error("Failed to download invoice");
     } finally {
       setInvoiceLoading(false);

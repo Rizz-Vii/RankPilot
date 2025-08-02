@@ -30,7 +30,7 @@ const testLogin = async (email, password) => {
         console.log(`✅ ${email}: SUCCESS (UID: ${userCredential.user.uid})`);
         await auth.signOut(); // Sign out to test next user
         return true;
-    } catch (error) {
+    } catch (_error) {
         console.log(`❌ ${email}: FAILED - ${error.code}`);
         return false;
     }
@@ -55,4 +55,4 @@ const runTests = async () => {
     process.exit(0);
 };
 
-runTests().catch(console.error);
+runTests().catch(console._error);

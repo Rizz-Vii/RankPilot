@@ -85,7 +85,7 @@ test.describe('Performance - Core Web Vitals', () => {
     });
 
     test('should use efficient caching strategies', async ({ page }) => {
-        const response = await page.goto('/');
+        const _response = await page.goto('/');
         const cacheControl = response?.headers()['cache-control'];
         expect(cacheControl).toBeTruthy();
     });
@@ -112,7 +112,7 @@ test.describe('Performance - Core Web Vitals', () => {
     });
 
     test('should minimize JavaScript bundle size', async ({ page }) => {
-        const response = await page.goto('/');
+        const _response = await page.goto('/');
         const contentLength = response?.headers()['content-length'];
         if (contentLength) {
             expect(parseInt(contentLength)).toBeLessThan(5 * 1024 * 1024); // 5MB limit

@@ -17,7 +17,7 @@ test.describe('AI Integration - NeuroSEO™ Suite', () => {
         try {
             const testUser = UNIFIED_TEST_USERS.agency;
             await auth.loginAndGoToDashboard(testUser);
-        } catch (error: any) {
+        } catch (_error: unknown) {
             console.log(`⚠️ Auth failed: ${error.message}`);
         }
     });
@@ -72,14 +72,14 @@ test.describe('AI Integration - MCP Server Features', () => {
         await page.goto('/api/mcp/huggingface/search?query=conversational%20AI&limit=5');
 
         const response = await page.textContent('body');
-        if (response) {
-            expect(response).toContain('models');
+        if (_response) {
+            expect(_response).toContain('models');
         }
     });
 
     test('NeuroSEO enhanced analysis endpoint', async ({ page }) => {
         const response = await page.request.post('/api/mcp/neuroseo/enhanced', {
-            data: {
+            _data: {
                 content: 'Test SEO content for analysis',
                 keywords: ['SEO', 'optimization'],
                 url: 'https://example.com'
@@ -93,8 +93,8 @@ test.describe('AI Integration - MCP Server Features', () => {
         await page.goto('/api/mcp');
 
         const response = await page.textContent('body');
-        if (response) {
-            expect(response).toContain('mcp');
+        if (_response) {
+            expect(_response).toContain('mcp');
         }
     });
 });
@@ -151,7 +151,7 @@ test.describe('AI Integration - Performance & Error Handling', () => {
         try {
             await page.goto('/neuroseo/neural-crawler', { timeout: 10000 });
             await expect(page.locator('body')).toBeVisible();
-        } catch (error) {
+        } catch (_error) {
             console.log('⚠️ AI service timeout handled gracefully');
         }
     });

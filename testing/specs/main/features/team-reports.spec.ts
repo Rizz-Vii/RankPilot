@@ -428,7 +428,7 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       // Test touch-friendly buttons (48px minimum)
       const buttons = page.locator("button");
       for (let i = 0; i < Math.min(await buttons.count(), 3); i++) {
-        const button = buttons.nth(i);
+        const button = buttons.nth(_i);
         const box = await button.boundingBox();
         if (box) {
           expect(box.height).toBeGreaterThanOrEqual(44); // Close to 48px WCAG requirement

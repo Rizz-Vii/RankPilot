@@ -26,8 +26,8 @@ async function main() {
     );
     console.log("- Subscription data will sync automatically on login");
     console.log("- All subscription features should work correctly");
-  } catch (error) {
-    console.error("❌ User subscription fix failed:", error);
+  } catch (_error) {
+    console.error("❌ User subscription fix failed:", _error);
     process.exit(1);
   }
 }

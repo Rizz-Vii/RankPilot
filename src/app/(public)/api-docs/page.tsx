@@ -29,28 +29,28 @@ const apiEndpoints = [
     endpoint: "/api/neuroseo/analyze",
     description: "Run comprehensive NeuroSEO™ analysis on URLs",
     parameters: ["urls", "keywords", "analysis_type"],
-    response: "Complete SEO analysis with AI insights",
+    _response: "Complete SEO analysis with AI insights",
   },
   {
     method: "GET",
     endpoint: "/api/neuroseo/status/{id}",
     description: "Check analysis status and retrieve results",
     parameters: ["analysis_id"],
-    response: "Analysis status and results when complete",
+    _response: "Analysis status and results when complete",
   },
   {
     method: "POST",
     endpoint: "/api/content/optimize",
     description: "AI-powered content optimization suggestions",
     parameters: ["content", "target_keywords", "intent"],
-    response: "Optimized content recommendations",
+    _response: "Optimized content recommendations",
   },
   {
     method: "GET",
     endpoint: "/api/keywords/research",
     description: "Advanced keyword research with AI insights",
     parameters: ["seed_keywords", "location", "language"],
-    response: "Keyword opportunities with search volumes",
+    _response: "Keyword opportunities with search volumes",
   },
 ];
 
@@ -211,7 +211,7 @@ export default function ApiDocsPage() {
           </motion.div>
 
           <div className="space-y-4">
-            {apiEndpoints.map((endpoint, index) => (
+            {apiEndpoints.map((endpoint, _index) => (
               <motion.div
                 key={endpoint.endpoint}
                 initial="hidden"
@@ -281,7 +281,7 @@ export default function ApiDocsPage() {
           </motion.div>
 
           <div className="grid lg:grid-cols-1 gap-8">
-            {sdkExamples.map((example, index) => (
+            {sdkExamples.map((example, _index) => (
               <motion.div
                 key={example.language}
                 initial="hidden"

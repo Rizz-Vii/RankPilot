@@ -40,7 +40,7 @@ export interface CacheRule {
     conditions: Array<{
         type: 'path' | 'header' | 'query' | 'method' | 'user_agent';
         operator: 'equals' | 'contains' | 'starts_with' | 'regex';
-        value: string;
+        _value: string;
     }>;
     actions: Array<{
         type: 'cache' | 'bypass' | 'purge' | 'transform';
@@ -212,7 +212,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
     /**
      * Evaluate cache rules for a request
      */
-    evaluateCacheRules(request: {
+    evaluateCacheRules(_request: {
         path: string;
         method: string;
         headers: Record<string, string>;
@@ -220,7 +220,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
     }): CacheRule | null {
         const applicableRules = Array.from(this.cacheRules.values())
             .filter(rule => rule.enabled)
-            .filter(rule => this.matchesCacheRule(request, rule))
+            .filter(rule => this.matchesCacheRule(_request, rule))
             .sort((a, b) => b.priority - a.priority);
 
         return applicableRules[0] || null;
@@ -258,7 +258,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
             duration: Date.now() - startTime
         };
 
-        this.emit('cache-purged', result);
+        this.emit('cache-purged', _result);
         return result;
     }
 
@@ -379,7 +379,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
             this.emit('database-optimization-implemented', { optimization, result });
             return result;
 
-        } catch (error) {
+        } catch (_error) {
             optimization.status = 'failed';
             throw error;
         }
@@ -521,14 +521,14 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return (latencyScore * 0.3 + cacheScore * 0.3 + uptimeScore * 0.2 + errorScore * 0.2);
     }
 
-    private matchesCacheRule(request: any, rule: CacheRule): boolean {
+    private matchesCacheRule(_request: unknown, rule: CacheRule): boolean {
         // Check if request path matches rule pattern
         const pathMatches = new RegExp(rule.pattern).test(request.path);
         if (!pathMatches) return false;
 
         // Check additional conditions
         for (const condition of rule.conditions) {
-            if (!this.evaluateCondition(request, condition)) {
+            if (!this.evaluateCondition(_request, condition)) {
                 return false;
             }
         }
@@ -536,8 +536,8 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return true;
     }
 
-    private evaluateCondition(request: any, condition: any): boolean {
-        let value: string;
+    private evaluateCondition(_request: unknown, condition: unknown): boolean {
+        let _value: string;
 
         switch (condition.type) {
             case 'path':
@@ -560,11 +560,11 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
             case 'equals':
                 return value === condition.value;
             case 'contains':
-                return value.includes(condition.value);
+                return value.includes(condition._value);
             case 'starts_with':
-                return value.startsWith(condition.value);
+                return value.startsWith(condition._value);
             case 'regex':
-                return new RegExp(condition.value).test(value);
+                return new RegExp(condition._value).test(_value);
             default:
                 return true;
         }
@@ -575,19 +575,19 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return patterns.length * Math.floor(Math.random() * 100 + 50);
     }
 
-    private getRoundRobinTarget(targets: any[]): string {
+    private getRoundRobinTarget(targets: unknown[]): string {
         // Simple round-robin implementation
         const index = Date.now() % targets.length;
         return targets[index].id;
     }
 
-    private getLeastConnectionsTarget(targets: any[]): string {
+    private getLeastConnectionsTarget(targets: unknown[]): string {
         return targets.reduce((min, target) =>
             target.current_connections < min.current_connections ? target : min
         ).id;
     }
 
-    private getWeightedTarget(targets: any[]): string {
+    private getWeightedTarget(targets: unknown[]): string {
         const totalWeight = targets.reduce((sum, t) => sum + t.weight, 0);
         const random = Math.random() * totalWeight;
 
@@ -602,7 +602,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return targets[0].id;
     }
 
-    private getGeographicTarget(rule: LoadBalancingRule, targets: any[], clientInfo?: any): string {
+    private getGeographicTarget(rule: LoadBalancingRule, targets: unknown[], clientInfo?: unknown): string {
         if (!rule.geographic_routing.enabled || !clientInfo) {
             return this.getRoundRobinTarget(targets);
         }
@@ -618,13 +618,13 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return this.getRoundRobinTarget(targets);
     }
 
-    private getPerformanceTarget(targets: any[]): string {
+    private getPerformanceTarget(targets: unknown[]): string {
         return targets.reduce((best, target) =>
             target.response_time < best.response_time ? target : best
         ).id;
     }
 
-    private async optimizeAsset(asset: any): Promise<any> {
+    private async optimizeAsset(asset: unknown): Promise<any> {
         let optimizedSize = asset.size;
         const appliedOptimizations = [];
 
@@ -784,7 +784,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         }
     }
 
-    private async analyzeEdgePerformance(): Promise<any[]> {
+    private async analyzeEdgePerformance(): Promise<unknown[]> {
         const recommendations = [];
 
         for (const location of this.edgeLocations.values()) {
@@ -810,7 +810,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return recommendations;
     }
 
-    private async analyzeCacheEfficiency(): Promise<any[]> {
+    private async analyzeCacheEfficiency(): Promise<unknown[]> {
         const recommendations = [];
 
         for (const rule of this.cacheRules.values()) {
@@ -836,7 +836,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return recommendations;
     }
 
-    private async analyzeDatabasePerformance(): Promise<any[]> {
+    private async analyzeDatabasePerformance(): Promise<unknown[]> {
         // Analyze database performance and suggest optimizations
         return [
             {

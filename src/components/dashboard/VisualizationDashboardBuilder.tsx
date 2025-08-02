@@ -84,7 +84,7 @@ export interface DashboardLayout {
 interface VisualizationDashboardBuilderProps {
     initialLayout?: DashboardLayout;
     onSave?: (layout: DashboardLayout) => void;
-    onExport?: (format: string, data: any) => void;
+    onExport?: (format: string, _data: unknown) => void;
     readOnly?: boolean;
 }
 
@@ -131,11 +131,11 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
 
         // Sample pie chart data
         data.set('pie', [
-            { label: 'Organic Search', value: 45, x: 0, y: 45 },
-            { label: 'Paid Search', value: 25, x: 1, y: 25 },
-            { label: 'Social Media', value: 15, x: 2, y: 15 },
-            { label: 'Direct', value: 10, x: 3, y: 10 },
-            { label: 'Referral', value: 5, x: 4, y: 5 }
+            { label: 'Organic Search', _value: 45, x: 0, y: 45 },
+            { label: 'Paid Search', _value: 25, x: 1, y: 25 },
+            { label: 'Social Media', _value: 15, x: 2, y: 15 },
+            { label: 'Direct', _value: 10, x: 3, y: 10 },
+            { label: 'Referral', _value: 5, x: 4, y: 5 }
         ]);
 
         // Sample scatter plot data
@@ -148,7 +148,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
             { x: 35, y: 25, size: 9, category: 'C' }
         ]);
 
-        setSampleData(data);
+        setSampleData(_data);
     }, []);
 
     // Render charts when widgets change
@@ -175,7 +175,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
         // Update chart config with current data
         const config: ChartConfig = {
             ...widget.chartConfig,
-            data: data,
+            _data: _data,
             id: widget.id
         };
 
@@ -202,8 +202,8 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                     d3VisualizationEngine.createHeatmap(`chart-${widget.id}`, config);
                     break;
             }
-        } catch (error) {
-            console.error('Failed to render chart:', error);
+        } catch (_error) {
+            console.error('Failed to render chart:', _error);
             chartElement.innerHTML = `<div class="p-4 text-red-500">Error rendering chart: ${error}</div>`;
         }
     }, [sampleData]);
@@ -234,7 +234,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                 width: 400,
                 height: 300,
                 margin: { top: 20, right: 20, bottom: 40, left: 40 },
-                data: [],
+                _data: [],
                 options: {
                     title: 'Sample Chart',
                     animations: true,
@@ -297,7 +297,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                 throw new Error('No charts to export');
             }
 
-            let result: string;
+            let _result: string;
 
             if (format === 'json') {
                 // JSON export - handle separately without createBatch
@@ -339,11 +339,11 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
             document.body.removeChild(link);
 
             if (onExport) {
-                onExport(format, result);
+                onExport(format, _result);
             }
 
-        } catch (error) {
-            console.error('Export failed:', error);
+        } catch (_error) {
+            console.error('Export failed:', _error);
         } finally {
             setIsExporting(false);
         }
@@ -515,7 +515,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                                 <Label className="text-sm font-medium">Theme</Label>
                                 <Select
                                     value={layout.settings.theme}
-                                    onValueChange={(value: 'light' | 'dark' | 'auto') =>
+                                    onValueChange={(_value: 'light' | 'dark' | 'auto') =>
                                         setLayout(prev => ({
                                             ...prev,
                                             settings: { ...prev.settings, theme: value }
@@ -713,7 +713,7 @@ const WidgetPropertiesPanel: React.FC<WidgetPropertiesPanelProps> = ({ widget, o
                         <Label className="text-xs text-gray-500">Chart Type</Label>
                         <Select
                             value={widget.chartConfig.type}
-                            onValueChange={(value: any) =>
+                            onValueChange={(_value: unknown) =>
                                 onUpdate({
                                     chartConfig: { ...widget.chartConfig!, type: value }
                                 })
@@ -736,7 +736,7 @@ const WidgetPropertiesPanel: React.FC<WidgetPropertiesPanelProps> = ({ widget, o
                         <Label className="text-xs text-gray-500">Color Scheme</Label>
                         <Select
                             value={widget.chartConfig.styling.colorScheme || 'default'}
-                            onValueChange={(value: any) =>
+                            onValueChange={(_value: unknown) =>
                                 onUpdate({
                                     chartConfig: {
                                         ...widget.chartConfig!,

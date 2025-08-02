@@ -79,7 +79,7 @@ async function main() {
 and verify that all systems are working correctly with realistic volumes.
     `);
 
-  } catch (error) {
+  } catch (_error) {
     console.error(`
 ❌ Database seeding failed!
 

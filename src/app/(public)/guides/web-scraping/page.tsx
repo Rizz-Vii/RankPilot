@@ -197,7 +197,7 @@ def scrape_title_and_meta(url):
 
 # Usage
 data = scrape_title_and_meta('https://example.com')
-print(data)`}
+print(_data)`}
             </pre>
           </div>
         </section>

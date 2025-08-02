@@ -41,16 +41,16 @@ export function rotateUserAgent(): string {
  * Wait for element with retry logic
  */
 export async function waitForElementWithRetry(
-    page: any,
+    page: unknown,
     selector: string,
     timeout: number = 30000,
     retries: number = 3
 ): Promise<boolean> {
-    for (let i = 0; i < retries; i++) {
+    for (let _i = 0; i < retries; i++) {
         try {
             await page.waitForSelector(selector, { timeout });
             return true;
-        } catch (error) {
+        } catch (_error) {
             if (i === retries - 1) throw error;
             await randomDelay(1000, 2000);
         }

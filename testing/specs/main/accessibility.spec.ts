@@ -28,7 +28,7 @@ test.describe("Accessibility Tests", () => {
     expect(firstElement).toBeTruthy();
 
     // Test that we can navigate through the page with keyboard
-    for (let i = 0; i < 5; i++) {
+    for (let _i = 0; i < 5; i++) {
       await page.keyboard.press("Tab");
     }
 

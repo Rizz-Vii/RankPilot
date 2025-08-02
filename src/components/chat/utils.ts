@@ -10,7 +10,7 @@
 export interface ChatMessage {
     id: string;
     message: string;
-    response: string;
+    _response: string;
     timestamp: string;
     isUser: boolean;
     tokensUsed?: number;
@@ -60,7 +60,7 @@ export const formatTimestamp = (timestamp: string): string => {
         if (diffDays < 7) return `${diffDays}d ago`;
 
         return date.toLocaleDateString();
-    } catch (error) {
+    } catch (_error) {
         return 'Unknown';
     }
 };
@@ -73,31 +73,31 @@ export const formatTokenUsage = (tokens: number): string => {
 
 export const validateMessage = (message: string): { isValid: boolean; error?: string; } => {
     if (!message || !message.trim()) {
-        return { isValid: false, error: 'Message cannot be empty' };
+        return { isValid: false, _error: 'Message cannot be empty' };
     }
 
     if (message.length > 2000) {
-        return { isValid: false, error: 'Message too long (max 2000 characters)' };
+        return { isValid: false, _error: 'Message too long (max 2000 characters)' };
     }
 
     // Basic spam detection
     const repeatingPattern = /(.)\1{10,}/;
     if (repeatingPattern.test(message)) {
-        return { isValid: false, error: 'Message contains too many repeating characters' };
+        return { isValid: false, _error: 'Message contains too many repeating characters' };
     }
 
     return { isValid: true };
 };
 
-export const getErrorMessage = (error: any): string => {
+export const getErrorMessage = (_error: unknown): string => {
     if (typeof error === 'string') return error;
     if (error?.message) return error.message;
-    if (error?.error) return error.error;
+    if (error?._error) return error.error;
     return 'An unexpected error occurred';
 };
 
-export const showChatError = (error: any) => {
-    const message = getErrorMessage(error);
+export const showChatError = (_error: unknown) => {
+    const message = getErrorMessage(_error);
     console.error('Chat Error:', message);
     // toast({
     //   title: 'Chat Error',
@@ -116,7 +116,7 @@ export const showChatSuccess = (message: string) => {
 };
 
 // Message formatting helpers
-export const formatAIResponse = (response: string): string => {
+export const formatAIResponse = (_response: string): string => {
     // Convert markdown-like formatting to HTML
     return response
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -156,10 +156,10 @@ export const saveChatHistory = (sessionId: string, messages: ChatMessage[]): voi
                 messages: messages.slice(-20), // Keep last 20 messages
                 timestamp: new Date().toISOString(),
             };
-            localStorage.setItem(key, JSON.stringify(data));
+            localStorage.setItem(_key, JSON.stringify(_data));
         }
-    } catch (error) {
-        console.warn('Failed to save chat history:', error);
+    } catch (_error) {
+        console.warn('Failed to save chat history:', _error);
     }
 };
 
@@ -167,14 +167,14 @@ export const loadChatHistory = (sessionId: string): ChatMessage[] => {
     try {
         if (typeof window !== 'undefined') {
             const key = `chat_history_${sessionId}`;
-            const stored = localStorage.getItem(key);
+            const stored = localStorage.getItem(_key);
             if (stored) {
                 const data = JSON.parse(stored);
                 return data.messages || [];
             }
         }
-    } catch (error) {
-        console.warn('Failed to load chat history:', error);
+    } catch (_error) {
+        console.warn('Failed to load chat history:', _error);
     }
     return [];
 };
@@ -187,11 +187,11 @@ export const clearChatHistory = (sessionId?: string): void => {
             } else {
                 // Clear all chat history
                 const keys = Object.keys(localStorage).filter(key => key.startsWith('chat_history_'));
-                keys.forEach(key => localStorage.removeItem(key));
+                keys.forEach(key => localStorage.removeItem(_key));
             }
         }
-    } catch (error) {
-        console.warn('Failed to clear chat history:', error);
+    } catch (_error) {
+        console.warn('Failed to clear chat history:', _error);
     }
 };
 
@@ -200,7 +200,7 @@ export const checkRateLimit = (userId: string): { allowed: boolean; resetTime?: 
     try {
         if (typeof window !== 'undefined') {
             const key = `chat_rate_limit_${userId}`;
-            const stored = localStorage.getItem(key);
+            const stored = localStorage.getItem(_key);
 
             if (stored) {
                 const data = JSON.parse(stored);
@@ -208,7 +208,7 @@ export const checkRateLimit = (userId: string): { allowed: boolean; resetTime?: 
 
                 // Reset if hour has passed
                 if (now - data.timestamp > 3600000) {
-                    localStorage.removeItem(key);
+                    localStorage.removeItem(_key);
                     return { allowed: true };
                 }
 
@@ -222,7 +222,7 @@ export const checkRateLimit = (userId: string): { allowed: boolean; resetTime?: 
 
                 // Increment count
                 data.count += 1;
-                localStorage.setItem(key, JSON.stringify(data));
+                localStorage.setItem(_key, JSON.stringify(_data));
                 return { allowed: true };
             } else {
                 // First message in this hour
@@ -230,32 +230,32 @@ export const checkRateLimit = (userId: string): { allowed: boolean; resetTime?: 
                     count: 1,
                     timestamp: Date.now(),
                 };
-                localStorage.setItem(key, JSON.stringify(data));
+                localStorage.setItem(_key, JSON.stringify(_data));
                 return { allowed: true };
             }
         }
-    } catch (error) {
-        console.warn('Rate limit check failed:', error);
+    } catch (_error) {
+        console.warn('Rate limit check failed:', _error);
     }
 
     return { allowed: true }; // Allow by default if check fails
 };
 
 // Analytics helpers
-export const trackChatEvent = (event: string, data?: Record<string, any>): void => {
+export const trackChatEvent = (_event: string, data?: Record<string, any>): void => {
     try {
         // In production, integrate with your analytics service
-        console.log('Chat Event:', event, data);
+        console.log('Chat Event:', _event, _data);
 
         // Example: Google Analytics
         if (typeof window !== 'undefined' && (window as any).gtag) {
-            (window as any).gtag('event', event, {
+            (window as any).gtag('event', _event, {
                 event_category: 'chat',
-                ...data,
+                ..._data,
             });
         }
-    } catch (error) {
-        console.warn('Failed to track chat event:', error);
+    } catch (_error) {
+        console.warn('Failed to track chat _event:', _error);
     }
 };
 

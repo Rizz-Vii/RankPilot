@@ -17,6 +17,9 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    // Performance optimizations
+    "assumeChangesOnlyAffectDirectDependencies": true,
+    "importsNotUsedAsValues": "remove",
     "plugins": [
       {
         "name": "next"

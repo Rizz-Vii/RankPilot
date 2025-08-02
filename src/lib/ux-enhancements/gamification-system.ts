@@ -366,7 +366,7 @@ export class GamificationEngine {
     level: number;
     nextLevelXP: number;
   } {
-    for (let i = levelThresholds.length - 1; i >= 0; i--) {
+    for (let _i = levelThresholds.length - 1; i >= 0; i--) {
       if (xp >= levelThresholds[i].xpRequired) {
         const nextThreshold = levelThresholds[i + 1];
         return {

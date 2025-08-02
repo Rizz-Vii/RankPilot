@@ -38,7 +38,7 @@ const SECURITY_CONFIG = {
         'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*.vercel.app", "https://*.googleapis.com"],
         'style-src': ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         'font-src': ["'self'", "https://fonts.gstatic.com"],
-        'img-src': ["'self'", "data:", "https://*.vercel.app", "https://*.googleapis.com"],
+        'img-src': ["'self'", "_data:", "https://*.vercel.app", "https://*.googleapis.com"],
         'connect-src': ["'self'", "https://*.firebase.googleapis.com", "https://*.firebaseio.com"],
         'frame-src': ["'none'"],
         'object-src': ["'none'"],
@@ -48,21 +48,21 @@ const SECURITY_CONFIG = {
 
     // Threat detection patterns
     THREAT_PATTERNS: [
-        /(\<script[^>]*\>)/i, // XSS detection
-        /(union.*select|select.*from|insert.*into|delete.*from)/i, // SQL injection
-        /(\.\.\/|\.\.\\)/i, // Path traversal
-        /(<iframe|<object|<embed)/i, // Potential malicious embeds
-        /(eval\(|setTimeout\(|setInterval\()/i, // Code injection attempts
+        /(\<script[^>]*\>)/_i, // XSS detection
+        /(union.*select|select.*from|insert.*into|delete.*from)/_i, // SQL injection
+        /(\.\.\/|\.\.\\)/_i, // Path traversal
+        /(<iframe|<object|<embed)/_i, // Potential malicious embeds
+        /(eval\(|setTimeout\(|setInterval\()/_i, // Code injection attempts
     ],
 
     // Blocked user agents (bots, scrapers)
     BLOCKED_USER_AGENTS: [
-        /bot/i,
-        /crawler/i,
-        /spider/i,
-        /scraper/i,
-        /curl/i,
-        /wget/i,
+        /bot/_i,
+        /crawler/_i,
+        /spider/_i,
+        /scraper/_i,
+        /curl/_i,
+        /wget/_i,
     ],
 
     // Allowed origins for CORS
@@ -86,7 +86,7 @@ const rateLimiters = {
 /**
  * Get client IP address from request headers
  */
-function getClientIP(request: NextRequest): string {
+function getClientIP(_request: NextRequest): string {
     const forwarded = request.headers.get('x-forwarded-for');
     const realIP = request.headers.get('x-real-ip');
     const cfConnectingIP = request.headers.get('cf-connecting-ip');
@@ -107,9 +107,9 @@ function getClientIP(request: NextRequest): string {
 /**
  * Apply rate limiting based on endpoint type
  */
-async function applyRateLimit(request: NextRequest): Promise<boolean> {
+async function applyRateLimit(_request: NextRequest): Promise<boolean> {
     const pathname = request.nextUrl.pathname;
-    const ip = getClientIP(request);
+    const ip = getClientIP(_request);
 
     try {
         if (pathname.startsWith('/api/auth/')) {
@@ -131,7 +131,7 @@ async function applyRateLimit(request: NextRequest): Promise<boolean> {
 /**
  * Detect potential threats in request
  */
-function detectThreats(request: NextRequest): { isThreat: boolean; threatType?: string; } {
+function detectThreats(_request: NextRequest): { isThreat: boolean; threatType?: string; } {
     const url = request.url;
     const userAgent = request.headers.get('user-agent') || '';
     const referer = request.headers.get('referer') || '';
@@ -158,7 +158,7 @@ function detectThreats(request: NextRequest): { isThreat: boolean; threatType?: 
     // Check for common attack payloads
     const suspiciousPatterns = [
         'javascript:',
-        'data:text/html',
+        '_data:text/html',
         'vbscript:',
         'onload=',
         'onerror=',
@@ -176,7 +176,7 @@ function detectThreats(request: NextRequest): { isThreat: boolean; threatType?: 
 /**
  * Apply CORS headers for secure cross-origin requests
  */
-function applyCORS(request: NextRequest, response: NextResponse): NextResponse {
+function applyCORS(_request: NextRequest, _response: NextResponse): NextResponse {
     const origin = request.headers.get('origin');
 
     // Check if origin is allowed
@@ -205,10 +205,10 @@ function applyCORS(request: NextRequest, response: NextResponse): NextResponse {
 /**
  * Apply security headers to response
  */
-function applySecurityHeaders(response: NextResponse): NextResponse {
+function applySecurityHeaders(_response: NextResponse): NextResponse {
     // Apply basic security headers
     for (const [header, value] of Object.entries(SECURITY_CONFIG.SECURITY_HEADERS)) {
-        response.headers.set(header, value);
+        response.headers.set(header, _value);
     }
 
     // Build Content Security Policy
@@ -229,11 +229,11 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
 /**
  * Log security events for monitoring
  */
-function logSecurityEvent(request: NextRequest, eventType: string, details?: any) {
+function logSecurityEvent(_request: NextRequest, eventType: string, details?: unknown) {
     const securityEvent = {
         timestamp: new Date().toISOString(),
         type: eventType,
-        ip: getClientIP(request),
+        ip: getClientIP(_request),
         userAgent: request.headers.get('user-agent'),
         url: request.url,
         method: request.method,
@@ -247,26 +247,26 @@ function logSecurityEvent(request: NextRequest, eventType: string, details?: any
 /**
  * Main security middleware function
  */
-export async function securityMiddleware(request: NextRequest): Promise<NextResponse> {
+export async function securityMiddleware(_request: NextRequest): Promise<NextResponse> {
     const startTime = Date.now();
 
     // Handle OPTIONS requests for CORS
     if (request.method === 'OPTIONS') {
         const response = new NextResponse(null, { status: 200 });
-        return applyCORS(request, response);
+        return applyCORS(_request, _response);
     }
 
     // Apply rate limiting
-    const rateLimitPassed = await applyRateLimit(request);
+    const rateLimitPassed = await applyRateLimit(_request);
     if (!rateLimitPassed) {
-        logSecurityEvent(request, 'rate_limit_exceeded');
+        logSecurityEvent(_request, 'rate_limit_exceeded');
         return new NextResponse('Rate limit exceeded', { status: 429 });
     }
 
     // Detect threats
-    const threatCheck = detectThreats(request);
+    const threatCheck = detectThreats(_request);
     if (threatCheck.isThreat) {
-        logSecurityEvent(request, 'threat_detected', { threatType: threatCheck.threatType });
+        logSecurityEvent(_request, 'threat_detected', { threatType: threatCheck.threatType });
         return new NextResponse('Request blocked for security reasons', { status: 403 });
     }
 
@@ -274,10 +274,10 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
     const response = NextResponse.next();
 
     // Apply security headers
-    const secureResponse = applySecurityHeaders(response);
+    const secureResponse = applySecurityHeaders(_response);
 
     // Apply CORS
-    const finalResponse = applyCORS(request, secureResponse);
+    const finalResponse = applyCORS(_request, secureResponse);
 
     // Add performance timing
     finalResponse.headers.set('X-Security-Processing-Time', `${Date.now() - startTime}ms`);
@@ -290,7 +290,7 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
  */
 export class SecurityMonitor {
     private static instance: SecurityMonitor;
-    private events: any[] = [];
+    private events: unknown[] = [];
 
     static getInstance(): SecurityMonitor {
         if (!SecurityMonitor.instance) {
@@ -299,7 +299,7 @@ export class SecurityMonitor {
         return SecurityMonitor.instance;
     }
 
-    logEvent(eventType: string, details: any) {
+    logEvent(eventType: string, details: unknown) {
         const event = {
             id: crypto.randomUUID(),
             timestamp: new Date().toISOString(),
@@ -307,7 +307,7 @@ export class SecurityMonitor {
             details,
         };
 
-        this.events.push(event);
+        this.events.push(_event);
 
         // Keep only last 1000 events in memory
         if (this.events.length > 1000) {
@@ -315,21 +315,21 @@ export class SecurityMonitor {
         }
 
         // In production, send to monitoring service
-        console.log('[SECURITY_MONITOR]', event);
+        console.log('[SECURITY_MONITOR]', _event);
     }
 
-    getRecentEvents(limit = 100): any[] {
+    getRecentEvents(limit = 100): unknown[] {
         return this.events.slice(-limit);
     }
 
-    getEventsByType(eventType: string, limit = 100): any[] {
+    getEventsByType(eventType: string, limit = 100): unknown[] {
         return this.events
             .filter(event => event.type === eventType)
             .slice(-limit);
     }
 
-    getThreatSummary(): { [key: string]: number; } {
-        const summary: { [key: string]: number; } = {};
+    getThreatSummary(): { [_key: string]: number; } {
+        const summary: { [_key: string]: number; } = {};
 
         for (const event of this.events) {
             if (event.type === 'threat_detected') {
@@ -345,7 +345,7 @@ export class SecurityMonitor {
 /**
  * Enterprise compliance validation
  */
-export function validateCompliance(request: NextRequest): {
+export function validateCompliance(_request: NextRequest): {
     isCompliant: boolean;
     issues: string[];
 } {

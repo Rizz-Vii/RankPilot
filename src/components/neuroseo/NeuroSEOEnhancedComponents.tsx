@@ -138,9 +138,9 @@ export function NeuroSEOProgressIndicator({
         <div className="space-y-4">
           <Progress value={progress} className="w-full" />
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {Object.entries(ENGINE_CONFIGS).map(([key, config]) => {
+            {Object.entries(ENGINE_CONFIGS).map(([_key, config]) => {
               const Icon = config.icon;
-              const isCompleted = completedEngines.includes(key);
+              const isCompleted = completedEngines.includes(_key);
               const isCurrent = currentEngine === key;
 
               return (
@@ -186,7 +186,7 @@ export function NeuroSEOProgressIndicator({
 
 // Enhanced multi-engine overview component
 export function NeuroSEOEngineOverview({ report }: { report: NeuroSEOReport; }) {
-  const engineData = Object.entries(ENGINE_CONFIGS).map(([key, config]) => ({
+  const engineData = Object.entries(ENGINE_CONFIGS).map(([_key, config]) => ({
     name: config.name,
     score: Math.round(Math.random() * 40 + 60), // Mock data for now
     icon: config.icon,
@@ -233,7 +233,7 @@ export function NeuroSEOEngineOverview({ report }: { report: NeuroSEOReport; }) 
 
           {/* Engine Details */}
           <div className="space-y-3">
-            {engineData.map((engine, index) => {
+            {engineData.map((engine, _index) => {
               const Icon = engine.icon;
               return (
                 <motion.div
@@ -296,7 +296,7 @@ export function NeuroSEOInsightsPanel({ insights }: { insights: KeyInsight[]; })
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {insights.map((insight, index) => {
+          {insights.map((insight, _index) => {
             const Icon = categoryIcons[insight.category];
             return (
               <motion.div
@@ -398,7 +398,7 @@ export function NeuroSEOActionableTasks({ tasks }: { tasks: ActionableTask[]; })
         </div>
 
         <div className="space-y-4">
-          {filteredTasks.map((task, index) => (
+          {filteredTasks.map((task, _index) => (
             <motion.div
               key={task.id}
               initial={{ opacity: 0, x: -20 }}
@@ -480,10 +480,10 @@ export function NeuroSEOCompetitiveDashboard({
   if (!positioning) return null;
 
   const swotData = [
-    { name: "Strengths", value: positioning.strengths.length, color: COLORS[0] },
-    { name: "Weaknesses", value: positioning.weaknesses.length, color: COLORS[1] },
-    { name: "Opportunities", value: positioning.opportunities.length, color: COLORS[2] },
-    { name: "Threats", value: positioning.threats.length, color: COLORS[3] },
+    { name: "Strengths", _value: positioning.strengths.length, color: COLORS[0] },
+    { name: "Weaknesses", _value: positioning.weaknesses.length, color: COLORS[1] },
+    { name: "Opportunities", _value: positioning.opportunities.length, color: COLORS[2] },
+    { name: "Threats", _value: positioning.threats.length, color: COLORS[3] },
   ];
 
   return (
@@ -522,7 +522,7 @@ export function NeuroSEOCompetitiveDashboard({
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {swotData.map((entry, index) => (
+                  {swotData.map((entry, _index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>

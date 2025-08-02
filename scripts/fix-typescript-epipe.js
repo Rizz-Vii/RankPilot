@@ -19,7 +19,7 @@ async function main() {
     try {
       execSync('ps aux | grep -i typescript | grep -v grep | awk \'{print $2}\' | xargs kill -9 2>/dev/null || true', { stdio: 'ignore' });
       console.log('   ✓ TypeScript processes checked and terminated if found');
-    } catch (error) {
+    } catch (_error) {
       console.log('   ℹ No TypeScript processes to terminate');
     }
 
@@ -45,7 +45,7 @@ async function main() {
   try {
     execSync('npx tsc --build --clean', { stdio: 'ignore' });
     console.log('   ✓ TypeScript build cleaned');
-  } catch (error) {
+  } catch (_error) {
     console.log('   ℹ No TypeScript build to clean');
   }
 
@@ -63,8 +63,8 @@ async function main() {
     };
 
     let needsUpdate = false;
-    for (const [key, value] of Object.entries(requiredSettings)) {
-      if (settings[key] !== value) {
+    for (const [_key, value] of Object.entries(requiredSettings)) {
+      if (settings[key] !== _value) {
         settings[key] = value;
         needsUpdate = true;
       }
@@ -83,7 +83,7 @@ async function main() {
   try {
     execSync('npx tsc --noEmit --incremental false', { stdio: 'ignore' });
     console.log('   ✓ TypeScript compilation successful');
-  } catch (error) {
+  } catch (_error) {
     console.log('   ❌ TypeScript compilation failed');
     console.log('   Error:', error.message);
     process.exit(1);
@@ -95,7 +95,7 @@ async function main() {
   console.log('   - Run "npm run build" to verify everything works');
   console.log('   - Run "npm run dev-no-turbopack" to start development');
 
-} catch (error) {
+} catch (_error) {
   console.error('\n❌ Error during TypeScript EPIPE fix:', error.message);
   process.exit(1);
 }
@@ -103,6 +103,6 @@ async function main() {
 
 // Run the main function
 main().catch(error => {
-  console.error('\n❌ Unexpected error:', error.message);
+  console.error('\n❌ Unexpected _error:', error.message);
   process.exit(1);
 });

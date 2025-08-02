@@ -73,7 +73,7 @@ export default function RegisterPage() {
       // User document will be created by ensureUserSubscription in AuthContext
       // This ensures consistent subscription structure across all auth methods
       router.push("/dashboard");
-    } catch (error: any) {
+    } catch (_error: unknown) {
       setErrors({
         form: error?.message || "Registration failed. Please try again.",
       });
@@ -101,7 +101,7 @@ export default function RegisterPage() {
             aria-label="Email address"
             aria-describedby="email-error"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target._value)}
             className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition"
           />
           <p id="email-error" className="text-xs text-red-600 mt-1">{errors.email}</p>
@@ -118,7 +118,7 @@ export default function RegisterPage() {
             aria-label="Password"
             aria-describedby="password-error"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target._value)}
             className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg pr-10 focus:outline-none focus:border-blue-500 transition"
           />
           <button
@@ -144,7 +144,7 @@ export default function RegisterPage() {
             aria-label="Confirm password"
             aria-describedby="confirmPassword-error"
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(e) => setConfirmPassword(e.target._value)}
             className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg pr-10 focus:outline-none focus:border-blue-500 transition"
           />
           <button

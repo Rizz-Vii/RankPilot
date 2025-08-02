@@ -107,7 +107,7 @@ export default function DocumentationPage() {
       <section className="pb-16 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-2 gap-8">
-            {documentationSections.map((section, index) => (
+            {documentationSections.map((section, _index) => (
               <motion.div
                 key={section.title}
                 initial="hidden"
@@ -127,7 +127,7 @@ export default function DocumentationPage() {
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-3">
-                      {section.items.map((item, itemIndex) => (
+                      {section.items.map((_item, itemIndex) => (
                         <li key={itemIndex}>
                           <Link
                             href={item.href}

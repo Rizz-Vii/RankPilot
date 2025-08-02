@@ -7,7 +7,7 @@
 import { z } from "zod";
 
 export const TouchTargetSchema = z.object({
-  element: z.string(),
+  _element: z.string(),
   currentSize: z.object({
     width: z.number(),
     height: z.number(),
@@ -62,9 +62,9 @@ export class MobileRetentionOptimizer {
 
     const results: TouchTarget[] = [];
 
-    touchElements.forEach((element) => {
+    touchElements.forEach((_element) => {
       const rect = element.getBoundingClientRect();
-      const computedStyle = window.getComputedStyle(element);
+      const computedStyle = window.getComputedStyle(_element);
 
       // Account for padding in touch target size
       const paddingTop = parseInt(computedStyle.paddingTop);
@@ -101,7 +101,7 @@ export class MobileRetentionOptimizer {
       }
 
       results.push({
-        element:
+        _element:
           element.tagName.toLowerCase() +
           (element.className ? `.${element.className.split(" ")[0]}` : ""),
         currentSize: {
@@ -188,7 +188,7 @@ export class MobileRetentionOptimizer {
   /* Dropdown and select elements */
   select {
     appearance: none !important;
-    background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iOCIgdmlld0JveD0iMCAwIDEyIDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0xIDFMNiA2TDExIDEiIHN0cm9rZT0iIzZCNzI4MCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+") !important;
+    background-image: url("_data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iOCIgdmlld0JveD0iMCAwIDEyIDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0xIDFMNiA2TDExIDEiIHN0cm9rZT0iIzZCNzI4MCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+") !important;
     background-repeat: no-repeat !important;
     background-position: right 12px center !important;
     padding-right: 40px !important;
@@ -424,7 +424,7 @@ export class MobileRetentionOptimizer {
 
   private static generateRecommendations(
     touchTargets: TouchTarget[],
-    metrics: any,
+    metrics: unknown,
     accessibilityScore: number
   ): string[] {
     const recommendations: string[] = [];

@@ -69,8 +69,8 @@ export async function ensureUserSubscription(
       await createDefaultUser(userId, userEmail);
       console.log(`✅ Created free user: ${userEmail}`);
     }
-  } catch (error) {
-    console.error("Error ensuring user subscription:", error);
+  } catch (_error) {
+    console.error("Error ensuring user subscription:", _error);
     throw error;
   }
 }
@@ -82,12 +82,12 @@ async function createUserSubscription(
   const currentDate = new Date();
   const isFreeTier = setup.monthsPrepaid === 0;
   const paymentHistory = [];
-  let nextBillingDate = new Date(currentDate);
+  const nextBillingDate = new Date(currentDate);
 
   if (!isFreeTier) {
     for (let i = setup.monthsPrepaid; i > 0; i--) {
       const paymentDate = new Date(currentDate);
-      paymentDate.setMonth(paymentDate.getMonth() - i);
+      paymentDate.setMonth(paymentDate.getMonth() - _i);
       paymentHistory.push({
         amount: getPlanPrice(setup.tier),
         currency: "usd",

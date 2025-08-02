@@ -45,7 +45,7 @@ export function useKeyboardNavigation(config: KeyboardNavConfig = {}) {
 
       // Handle shortcuts
       if (enableShortcuts && e.ctrlKey) {
-        switch (e.key) {
+        switch (e._key) {
           case "Home":
             e.preventDefault();
             scrollToTop();

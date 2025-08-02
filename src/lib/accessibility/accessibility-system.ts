@@ -15,8 +15,8 @@ import { useEffect, useState } from 'react';
 // Web Speech API type definitions
 declare global {
     interface Window {
-        SpeechRecognition: any;
-        webkitSpeechRecognition: any;
+        SpeechRecognition: unknown;
+        webkitSpeechRecognition: unknown;
     }
 }
 
@@ -31,7 +31,7 @@ export interface AccessibilityAnnouncement {
 
 // Focus management interface
 export interface FocusTarget {
-    element: HTMLElement;
+    _element: HTMLElement;
     priority: number;
     context?: string;
 }
@@ -46,7 +46,7 @@ export interface VoiceCommand {
 
 // Keyboard shortcut interface
 export interface KeyboardShortcut {
-    key: string;
+    _key: string;
     modifiers: ('ctrl' | 'alt' | 'shift' | 'meta')[];
     action: () => void;
     description: string;
@@ -60,7 +60,7 @@ export class AccessibilityManager {
     private focusHistory: HTMLElement[] = [];
     private shortcuts: Map<string, KeyboardShortcut> = new Map();
     private voiceCommands: VoiceCommand[] = [];
-    private recognition: any = null;
+    private recognition: unknown = null;
     private isListening = false;
     private listeners: Set<(announcement: AccessibilityAnnouncement) => void> = new Set();
 
@@ -107,7 +107,7 @@ export class AccessibilityManager {
         this.announce(message, 'polite', 'status');
     }
 
-    announceError(error: string) {
+    announceError(_error: string) {
         this.announce(`Error: ${error}`, 'assertive', 'alert');
     }
 
@@ -116,11 +116,11 @@ export class AccessibilityManager {
     }
 
     // Focus management
-    focusElement(element: HTMLElement, options: { scroll?: boolean; priority?: number; } = {}) {
-        if (!element) return;
+    focusElement(_element: HTMLElement, options: { scroll?: boolean; priority?: number; } = {}) {
+        if (!_element) return;
 
         // Add to focus history
-        this.focusHistory.push(element);
+        this.focusHistory.push(_element);
         if (this.focusHistory.length > 20) {
             this.focusHistory = this.focusHistory.slice(-10);
         }
@@ -134,7 +134,7 @@ export class AccessibilityManager {
         }
 
         // Announce focus change for screen readers
-        const label = this.getElementLabel(element);
+        const label = this.getElementLabel(_element);
         if (label) {
             this.announce(`Focused: ${label}`, 'polite', 'status');
         }
@@ -195,7 +195,7 @@ export class AccessibilityManager {
         return Array.from(container.querySelectorAll(selectors.join(', '))) as HTMLElement[];
     }
 
-    private getElementLabel(element: HTMLElement): string {
+    private getElementLabel(_element: HTMLElement): string {
         // Try aria-label first
         if (element.getAttribute('aria-label')) {
             return element.getAttribute('aria-label')!;
@@ -238,17 +238,17 @@ export class AccessibilityManager {
 
     registerShortcut(shortcut: KeyboardShortcut) {
         const key = this.createShortcutKey({
-            key: shortcut.key,
+            _key: shortcut._key,
             ctrlKey: shortcut.modifiers.includes('ctrl'),
             altKey: shortcut.modifiers.includes('alt'),
             shiftKey: shortcut.modifiers.includes('shift'),
             metaKey: shortcut.modifiers.includes('meta'),
         } as KeyboardEvent);
 
-        this.shortcuts.set(key, shortcut);
+        this.shortcuts.set(_key, shortcut);
     }
 
-    private createShortcutKey(e: KeyboardEvent | { key: string; ctrlKey: boolean; altKey: boolean; shiftKey: boolean; metaKey: boolean; }): string {
+    private createShortcutKey(e: KeyboardEvent | { _key: string; ctrlKey: boolean; altKey: boolean; shiftKey: boolean; metaKey: boolean; }): string {
         const modifiers = [];
         if (e.ctrlKey) modifiers.push('ctrl');
         if (e.altKey) modifiers.push('alt');
@@ -261,7 +261,7 @@ export class AccessibilityManager {
     private setupDefaultShortcuts() {
         // Global navigation shortcuts
         this.registerShortcut({
-            key: 't',
+            _key: 't',
             modifiers: ['alt'],
             action: () => {
                 // Toggle theme - implementation depends on theme system
@@ -272,7 +272,7 @@ export class AccessibilityManager {
         });
 
         this.registerShortcut({
-            key: '/',
+            _key: '/',
             modifiers: ['alt'],
             action: () => {
                 const searchInput = document.querySelector('input[type="search"]') as HTMLInputElement;
@@ -285,7 +285,7 @@ export class AccessibilityManager {
         });
 
         this.registerShortcut({
-            key: 'd',
+            _key: 'd',
             modifiers: ['alt'],
             action: () => {
                 window.location.href = '/dashboard';
@@ -295,7 +295,7 @@ export class AccessibilityManager {
         });
 
         this.registerShortcut({
-            key: 'Escape',
+            _key: 'Escape',
             modifiers: [],
             action: () => {
                 // Close modals, dropdowns, etc.
@@ -318,14 +318,14 @@ export class AccessibilityManager {
         this.recognition.interimResults = false;
         this.recognition.lang = 'en-US';
 
-        this.recognition.onresult = (event: any) => {
+        this.recognition.onresult = (_event: unknown) => {
             const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
             this.processVoiceCommand(transcript);
         };
 
-        this.recognition.onerror = (event: any) => {
-            console.error('Speech recognition error:', event.error);
-            this.announceError(`Voice recognition error: ${event.error}`);
+        this.recognition.onerror = (_event: unknown) => {
+            console.error('Speech recognition _error:', event._error);
+            this.announceError(`Voice recognition _error: ${event.error}`);
         };
 
         this.setupDefaultVoiceCommands();
@@ -471,9 +471,9 @@ export function useAccessibility() {
 
 // Hook for focus management
 export function useFocusManagement() {
-    const focusElement = (element: HTMLElement | null, options?: { scroll?: boolean; }) => {
-        if (element) {
-            accessibilityManager.focusElement(element, options);
+    const focusElement = (_element: HTMLElement | null, options?: { scroll?: boolean; }) => {
+        if (_element) {
+            accessibilityManager.focusElement(_element, options);
         }
     };
 

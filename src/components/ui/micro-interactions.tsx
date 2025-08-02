@@ -333,7 +333,7 @@ export function StaggeredList({
     if (shouldReduceMotion()) {
         return (
             <div className={className}>
-                {children.map((child, index) => (
+                {children.map((child, _index) => (
                     <div key={index} className={itemClassName}>
                         {child}
                     </div>
@@ -357,7 +357,7 @@ export function StaggeredList({
             initial="hidden"
             animate="visible"
         >
-            {children.map((child, index) => (
+            {children.map((child, _index) => (
                 <motion.div
                     key={index}
                     className={itemClassName}
@@ -455,7 +455,7 @@ export function LoadingAnimation({
         case 'dots':
             return (
                 <div className={`flex space-x-1 ${className}`}>
-                    {[0, 1, 2].map((index) => (
+                    {[0, 1, 2].map((_index) => (
                         <motion.div
                             key={index}
                             className="w-2 h-2 bg-primary rounded-full"
@@ -492,7 +492,7 @@ export function LoadingAnimation({
         case 'bars':
             return (
                 <div className={`flex space-x-1 items-end ${className}`}>
-                    {[0, 1, 2, 3].map((index) => (
+                    {[0, 1, 2, 3].map((_index) => (
                         <motion.div
                             key={index}
                             className="w-1 bg-primary rounded-sm"
@@ -601,7 +601,7 @@ export function MultiSectionDisclosure({
 
     return (
         <div className={className}>
-            {sections.map((section, index) => (
+            {sections.map((section, _index) => (
                 <div key={section.id} className="border-b border-border last:border-b-0">
                     <div
                         onClick={() => toggleSection(section.id)}

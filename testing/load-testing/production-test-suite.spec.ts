@@ -47,18 +47,18 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
             }
         ];
 
-        const results: any[] = [];
+        const results: unknown[] = [];
 
         for (const check of healthChecks) {
             try {
                 const startTime = Date.now();
-                let response;
+                let _response;
 
                 if (check.type === 'frontend') {
                     response = await page.request.get(check.url, { timeout: 15000 });
                 } else {
                     response = await page.request.post(check.url, {
-                        data: { healthCheck: true },
+                        _data: { healthCheck: true },
                         timeout: 15000
                     });
                 }
@@ -75,7 +75,7 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
 
                 console.log(`   ${check.name}: ${status} (${responseTime}ms) ${status >= 200 && status < 400 ? '✅' : '❌'}`);
 
-            } catch (error) {
+            } catch (_error) {
                 results.push({
                     name: check.name,
                     status: 'ERROR',
@@ -166,12 +166,12 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
         let authProtectedCount = 0;
         let errorCount = 0;
 
-        for (const functionName of deployedFunctions) {
+        for (const _functionName of deployedFunctions) {
             try {
-                const response = await page.request.post(
+                const _response = await page.request.post(
                     `https://australia-southeast2-rankpilot-h3jpc.cloudfunctions.net/${functionName}`,
                     {
-                        data: { test: 'deployment-check' },
+                        _data: { test: 'deployment-check' },
                         timeout: 10000
                     }
                 );
@@ -189,7 +189,7 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
                     console.log(`   ${functionName}: ⚠️ Deployed but Error (${status})`);
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 errorCount++;
                 console.log(`   ${functionName}: ❌ Not Deployed or Unreachable`);
             }
@@ -233,7 +233,7 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
                     const start = Date.now();
                     await page.request.post(
                         'https://australia-southeast2-rankpilot-h3jpc.cloudfunctions.net/healthCheck',
-                        { data: {}, timeout: 15000 }
+                        { _data: {}, timeout: 15000 }
                     );
                     return Date.now() - start;
                 },
@@ -245,7 +245,7 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
                     const start = Date.now();
                     await page.request.post(
                         'https://australia-southeast2-rankpilot-h3jpc.cloudfunctions.net/performanceHealthCheck',
-                        { data: {}, timeout: 15000 }
+                        { _data: {}, timeout: 15000 }
                     );
                     return Date.now() - start;
                 },
@@ -253,7 +253,7 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
             }
         ];
 
-        const baselines: any[] = [];
+        const baselines: unknown[] = [];
 
         for (const test of performanceTests) {
             try {
@@ -269,7 +269,7 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
 
                 console.log(`   ${test.name}: ${responseTime}ms ${withinTarget ? '✅' : '⚠️'} (target: ${test.target}ms)`);
 
-            } catch (error) {
+            } catch (_error) {
                 console.log(`   ${test.name}: ❌ Failed to measure`);
             }
         }

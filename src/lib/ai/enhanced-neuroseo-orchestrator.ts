@@ -18,7 +18,7 @@ interface NeuroSEORequest {
     userPlan: string;
     userId: string;
 }interface CachedResult {
-    data: any;
+    _data: unknown;
     timestamp: number;
     userPlan: string;
 }
@@ -55,8 +55,8 @@ export class EnhancedNeuroSEOOrchestrator {
     /**
      * Run NeuroSEO™ analysis with intelligent caching
      */
-    async runAnalysis(request: NeuroSEORequest): Promise<any> {
-        const cacheKey = this.generateCacheKey(request);
+    async runAnalysis(_request: NeuroSEORequest): Promise<any> {
+        const cacheKey = this.generateCacheKey(_request);
 
         // Check for existing request in progress
         if (this.requestQueue.has(cacheKey)) {
@@ -73,14 +73,14 @@ export class EnhancedNeuroSEOOrchestrator {
         await this.checkMemoryUsage();
 
         // Create new analysis promise
-        const analysisPromise = this.performAnalysis(request);
+        const analysisPromise = this.performAnalysis(_request);
         this.requestQueue.set(cacheKey, analysisPromise);
 
         try {
             const result = await analysisPromise;
 
             // Cache the result
-            this.setCachedResult(cacheKey, result, request.userPlan);
+            this.setCachedResult(cacheKey, _result, request.userPlan);
 
             return result;
         } finally {
@@ -92,7 +92,7 @@ export class EnhancedNeuroSEOOrchestrator {
     /**
      * Generate cache key from request parameters
      */
-    private generateCacheKey(request: NeuroSEORequest): string {
+    private generateCacheKey(_request: NeuroSEORequest): string {
         const keyData = {
             urls: request.urls.sort(),
             keywords: request.targetKeywords.sort(),
@@ -125,9 +125,9 @@ export class EnhancedNeuroSEOOrchestrator {
     /**
      * Set cached result with metadata
      */
-    private setCachedResult(cacheKey: string, data: any, userPlan: string): void {
+    private setCachedResult(cacheKey: string, _data: unknown, userPlan: string): void {
         const cachedResult: CachedResult = {
-            data,
+            _data,
             timestamp: Date.now(),
             userPlan,
         };
@@ -138,13 +138,13 @@ export class EnhancedNeuroSEOOrchestrator {
     /**
      * Perform actual NeuroSEO™ analysis with optimizations
      */
-    private async performAnalysis(request: NeuroSEORequest): Promise<any> {
+    private async performAnalysis(_request: NeuroSEORequest): Promise<any> {
         try {
             // Add performance monitoring
             const startTime = performance.now();
 
             // OPTIMIZATION 1: Parallel engine execution with Promise.all
-            const result = await this.runOptimizedAnalysis(request);
+            const result = await this.runOptimizedAnalysis(_request);
 
             const duration = performance.now() - startTime;
 
@@ -152,17 +152,17 @@ export class EnhancedNeuroSEOOrchestrator {
             this.logPerformanceMetrics({
                 operation: 'neuroseo_analysis',
                 duration,
-                requestSize: JSON.stringify(request).length,
-                responseSize: JSON.stringify(result).length,
+                requestSize: JSON.stringify(_request).length,
+                responseSize: JSON.stringify(_result).length,
             });
 
             return result;
-        } catch (error) {
+        } catch (_error) {
             // Log error and provide fallback
-            console.error('NeuroSEO Analysis Error:', error);
+            console.error('NeuroSEO Analysis Error:', _error);
 
             // Return cached result if available (any plan)
-            const fallbackKey = this.generateCacheKey(request);
+            const fallbackKey = this.generateCacheKey(_request);
             const fallback = this.cache.get(fallbackKey);
 
             if (fallback) {
@@ -177,7 +177,7 @@ export class EnhancedNeuroSEOOrchestrator {
     /**
      * OPTIMIZATION: Run analysis with parallel engine execution and token efficiency
      */
-    private async runOptimizedAnalysis(request: NeuroSEORequest): Promise<any> {
+    private async runOptimizedAnalysis(_request: NeuroSEORequest): Promise<any> {
         // OPTIMIZATION 1: Batch URLs for efficient processing
         const batchSize = this.getBatchSize(request.userPlan);
         const urlBatches = this.chunkArray(request.urls, batchSize);
@@ -187,10 +187,10 @@ export class EnhancedNeuroSEOOrchestrator {
 
         // OPTIMIZATION 3: Parallel execution of batches
         const batchResults = await Promise.all(
-            urlBatches.map(async (urlBatch, index) => {
+            urlBatches.map(async (urlBatch, _index) => {
                 // Add controlled delay to prevent API rate limiting
                 if (index > 0) {
-                    await this.delay(100 * index);
+                    await this.delay(100 * _index);
                 }
 
                 return this.neuroSEO.runAnalysis({
@@ -204,7 +204,7 @@ export class EnhancedNeuroSEOOrchestrator {
         );
 
         // OPTIMIZATION 4: Intelligent result merging
-        return this.mergeOptimizedResults(batchResults, request);
+        return this.mergeOptimizedResults(batchResults, _request);
     }
 
     /**
@@ -241,7 +241,7 @@ export class EnhancedNeuroSEOOrchestrator {
     /**
      * Merge optimized results with intelligent deduplication
      */
-    private mergeOptimizedResults(batchResults: any[], request: NeuroSEORequest): any {
+    private mergeOptimizedResults(batchResults: unknown[], _request: NeuroSEORequest): any {
         // OPTIMIZATION: Intelligent result merging to reduce redundancy
         const mergedResult = {
             summary: this.mergeSummaries(batchResults),
@@ -278,7 +278,7 @@ export class EnhancedNeuroSEOOrchestrator {
     /**
      * Merge summaries from batch results
      */
-    private mergeSummaries(batchResults: any[]): any {
+    private mergeSummaries(batchResults: unknown[]): any {
         // Intelligent summary merging logic
         return batchResults.reduce((merged, batch) => {
             if (batch?.summary) {
@@ -296,9 +296,9 @@ export class EnhancedNeuroSEOOrchestrator {
     /**
      * Merge engine results from batch results
      */
-    private mergeEngineResults(batchResults: any[]): Record<string, any[]> {
+    private mergeEngineResults(batchResults: unknown[]): Record<string, unknown[]> {
         // Merge results from all engines across batches
-        const engineResults: Record<string, any[]> = {};
+        const engineResults: Record<string, unknown[]> = {};
 
         batchResults.forEach(batch => {
             if (batch?.engines) {
@@ -354,17 +354,17 @@ export class EnhancedNeuroSEOOrchestrator {
         const now = Date.now();
         const maxAge = this.cacheConfig.ttl / 2; // Clear entries older than half TTL
 
-        this.cache.forEach((value: CachedResult, key: string) => {
+        this.cache.forEach((_value: CachedResult, _key: string) => {
             if (now - value.timestamp > maxAge) {
-                this.cache.delete(key);
+                this.cache.delete(_key);
             }
         });
     }    /**
      * Handle cache disposal
      */
-    private onCacheDispose(value: CachedResult, key: string): void {
+    private onCacheDispose(_value: CachedResult, _key: string): void {
         // Log cache eviction for monitoring
-        console.debug('Cache entry evicted:', key);
+        console.debug('Cache entry evicted:', _key);
     }
 
     /**
@@ -412,8 +412,8 @@ export class EnhancedNeuroSEOOrchestrator {
      */
     async preloadAnalysis(requests: NeuroSEORequest[]): Promise<void> {
         const preloadPromises = requests.map(request =>
-            this.runAnalysis(request).catch(error => {
-                console.warn('Preload failed for request:', request, error);
+            this.runAnalysis(_request).catch(error => {
+                console.warn('Preload failed for _request:', _request, _error);
             })
         );
 

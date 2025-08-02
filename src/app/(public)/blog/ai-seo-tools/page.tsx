@@ -155,7 +155,7 @@ export default function AISEOToolsBlogPage() {
           <h3>Data-Driven Decisions</h3>
           <p>
             Machine learning algorithms process vast datasets to provide
-            recommendations based on actual performance data, not assumptions.
+            recommendations based on actual performance _data, not assumptions.
           </p>
 
           <h3>Predictive Capabilities</h3>

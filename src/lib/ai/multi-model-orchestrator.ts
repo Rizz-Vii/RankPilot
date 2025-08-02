@@ -31,12 +31,12 @@ export interface MultiModelResponse {
     success: boolean;
     results: Array<{
         model: string;
-        output: any;
+        output: unknown;
         confidence?: number;
         processingTime: number;
         tokensUsed: number;
     }>;
-    aggregatedResult?: any;
+    aggregatedResult?: unknown;
     totalProcessingTime: number;
     totalTokensUsed: number;
     cacheHits: number;
@@ -131,7 +131,7 @@ export class MultiModelOrchestrator {
     /**
      * Main orchestration method for multi-model AI requests
      */
-    async processRequest(request: MultiModelRequest): Promise<MultiModelResponse> {
+    async processRequest(_request: MultiModelRequest): Promise<MultiModelResponse> {
         const startTime = Date.now();
         const requestId = this.generateRequestId();
 
@@ -145,12 +145,12 @@ export class MultiModelOrchestrator {
                     totalTokensUsed: 0,
                     cacheHits: 0,
                     quotaRemaining: this.getQuotaRemaining(request.userId, request.userTier),
-                    error: 'Quota exceeded for user tier'
+                    _error: 'Quota exceeded for user tier'
                 };
             }
 
             // 2. Check distributed cache
-            const cacheKey = this.generateCacheKey(request);
+            const cacheKey = this.generateCacheKey(_request);
             const cachedResult = this.distributedCache.get(cacheKey);
             if (cachedResult) {
                 return {
@@ -161,15 +161,15 @@ export class MultiModelOrchestrator {
             }
 
             // 3. Select optimal models
-            const selectedModels = this.selectModels(request);
+            const selectedModels = this.selectModels(_request);
 
             // 4. Batch processing for enterprise clients
             if (request.userTier === 'enterprise' && Array.isArray(request.input) && request.input.length > 1) {
-                return await this.processBatchRequest(request, selectedModels, startTime);
+                return await this.processBatchRequest(_request, selectedModels, startTime);
             }
 
             // 5. Execute parallel model inference
-            const results = await this.executeParallelInference(request, selectedModels);
+            const results = await this.executeParallelInference(_request, selectedModels);
 
             // 6. Aggregate results
             const aggregatedResult = this.aggregateResults(results, request.task);
@@ -179,7 +179,7 @@ export class MultiModelOrchestrator {
             this.updateQuota(request.userId, totalTokensUsed);
             this.updatePerformanceMetrics(selectedModels, results);
 
-            const response: MultiModelResponse = {
+            const _response: MultiModelResponse = {
                 success: true,
                 results,
                 aggregatedResult,
@@ -190,12 +190,12 @@ export class MultiModelOrchestrator {
             };
 
             // Cache successful results
-            this.distributedCache.set(cacheKey, response);
+            this.distributedCache.set(cacheKey, _response);
 
             return response;
 
-        } catch (error) {
-            console.error('[MultiModelOrchestrator] Processing error:', error);
+        } catch (_error) {
+            console.error('[MultiModelOrchestrator] Processing _error:', _error);
             return {
                 success: false,
                 results: [],
@@ -203,7 +203,7 @@ export class MultiModelOrchestrator {
                 totalTokensUsed: 0,
                 cacheHits: 0,
                 quotaRemaining: this.getQuotaRemaining(request.userId, request.userTier),
-                error: error instanceof Error ? error.message : 'Unknown error occurred'
+                _error: error instanceof Error ? error.message : 'Unknown error occurred'
             };
         }
     }
@@ -211,7 +211,7 @@ export class MultiModelOrchestrator {
     /**
      * Intelligent model selection based on task, performance requirements, and availability
      */
-    private selectModels(request: MultiModelRequest): ModelConfig[] {
+    private selectModels(_request: MultiModelRequest): ModelConfig[] {
         let candidates = this.modelConfigs.filter(model =>
             model.task.includes(request.task)
         );
@@ -245,9 +245,9 @@ export class MultiModelOrchestrator {
      * Execute parallel inference across selected models
      */
     private async executeParallelInference(
-        request: MultiModelRequest,
+        _request: MultiModelRequest,
         models: ModelConfig[]
-    ): Promise<Array<{ model: string; output: any; confidence?: number; processingTime: number; tokensUsed: number; }>> {
+    ): Promise<Array<{ model: string; output: unknown; confidence?: number; processingTime: number; tokensUsed: number; }>> {
         const promises = models.map(async (model) => {
             const modelStartTime = Date.now();
 
@@ -264,13 +264,13 @@ export class MultiModelOrchestrator {
 
                 return {
                     model: model.name,
-                    output: result.data,
-                    confidence: this.calculateConfidence(result.data, model),
+                    output: result._data,
+                    confidence: this.calculateConfidence(result._data, model),
                     processingTime: Date.now() - modelStartTime,
-                    tokensUsed: this.estimateTokenUsage(request.input, result.data)
+                    tokensUsed: this.estimateTokenUsage(request.input, result._data)
                 };
-            } catch (error) {
-                console.error(`[MultiModelOrchestrator] Model ${model.name} failed:`, error);
+            } catch (_error) {
+                console.error(`[MultiModelOrchestrator] Model ${model.name} failed:`, _error);
                 return {
                     model: model.name,
                     output: null,
@@ -288,7 +288,7 @@ export class MultiModelOrchestrator {
      * Process batch requests for enterprise clients
      */
     private async processBatchRequest(
-        request: MultiModelRequest,
+        _request: MultiModelRequest,
         models: ModelConfig[],
         startTime: number
     ): Promise<MultiModelResponse> {
@@ -304,7 +304,7 @@ export class MultiModelOrchestrator {
         let totalTokensUsed = 0;
 
         for (const batch of batches) {
-            const batchRequest = { ...request, input: batch };
+            const batchRequest = { ..._request, input: batch };
             const batchResults = await this.executeParallelInference(batchRequest, models);
             allResults.push(...batchResults);
             totalTokensUsed += batchResults.reduce((sum, r) => sum + r.tokensUsed, 0);
@@ -324,7 +324,7 @@ export class MultiModelOrchestrator {
     /**
      * Aggregate results from multiple models
      */
-    private aggregateResults(results: any[], task: string): any {
+    private aggregateResults(results: unknown[], task: string): any {
         if (results.length === 0) return null;
 
         switch (task) {
@@ -341,7 +341,7 @@ export class MultiModelOrchestrator {
         }
     }
 
-    private aggregateSentimentResults(results: any[]): any {
+    private aggregateSentimentResults(results: unknown[]): any {
         const sentiments = results.map(r => r.output?.[0]);
         const avgScore = sentiments.reduce((sum, s) => sum + (s?.score || 0), 0) / sentiments.length;
         const dominantLabel = sentiments.sort((a, b) => (b?.score || 0) - (a?.score || 0))[0]?.label;
@@ -353,7 +353,7 @@ export class MultiModelOrchestrator {
         };
     }
 
-    private aggregateClassificationResults(results: any[]): any {
+    private aggregateClassificationResults(results: unknown[]): any {
         // Implement voting mechanism for classification
         const votes = new Map<string, number>();
         results.forEach(result => {
@@ -371,13 +371,13 @@ export class MultiModelOrchestrator {
         };
     }
 
-    private aggregateSummarizationResults(results: any[]): any {
+    private aggregateSummarizationResults(results: unknown[]): any {
         // Select best summary based on length and coherence
         const summaries = results.map(r => r.output?.[0]?.summary_text).filter(Boolean);
         return summaries.length > 0 ? summaries[0] : null;
     }
 
-    private aggregateQAResults(results: any[]): any {
+    private aggregateQAResults(results: unknown[]): any {
         // Select answer with highest confidence
         const answers = results.map(r => r.output).filter(Boolean);
         return answers.sort((a, b) => (b.score || 0) - (a.score || 0))[0];
@@ -417,19 +417,19 @@ export class MultiModelOrchestrator {
         return `multi-model-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     }
 
-    private generateCacheKey(request: MultiModelRequest): string {
+    private generateCacheKey(_request: MultiModelRequest): string {
         const inputStr = Array.isArray(request.input) ? request.input.join('|') : request.input;
         return `${request.task}-${inputStr}-${JSON.stringify(request.options)}`;
     }
 
-    private calculateConfidence(output: any, model: ModelConfig): number {
+    private calculateConfidence(output: unknown, model: ModelConfig): number {
         // Implement confidence calculation based on model type and output
         if (output?.[0]?.score) return output[0].score;
         if (output?.score) return output.score;
         return 0.8; // Default confidence
     }
 
-    private estimateTokenUsage(input: any, output: any): number {
+    private estimateTokenUsage(input: unknown, output: unknown): number {
         const inputStr = Array.isArray(input) ? input.join(' ') : input;
         const outputStr = typeof output === 'string' ? output : JSON.stringify(output);
         return Math.ceil((inputStr.length + outputStr.length) / 4); // Rough token estimation
@@ -456,14 +456,14 @@ export class MultiModelOrchestrator {
     private async processBatch(requests: MultiModelRequest[]): Promise<void> {
         // Implementation for processing batched requests
         for (const request of requests) {
-            await this.processRequest(request);
+            await this.processRequest(_request);
         }
     }
 
-    private updatePerformanceMetrics(models: ModelConfig[], results: any[]): void {
-        models.forEach((model, index) => {
+    private updatePerformanceMetrics(models: ModelConfig[], results: unknown[]): void {
+        models.forEach((model, _index) => {
             const result = results[index];
-            if (result) {
+            if (_result) {
                 const metrics = this.performanceMetrics.get(model.name) || [];
                 metrics.push(result.processingTime);
                 if (metrics.length > 100) metrics.shift(); // Keep last 100 measurements

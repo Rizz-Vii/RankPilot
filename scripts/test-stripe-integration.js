@@ -80,7 +80,7 @@ async function testStripeIntegration() {
         console.log('3. Create remaining tier products (Agency, Enterprise)');
         console.log('4. Test the full payment flow');
 
-    } catch (error) {
+    } catch (_error) {
         console.error('❌ Test failed:', error.message);
         if (error.type === 'StripeAuthenticationError') {
             console.log('💡 Check your STRIPE_SECRET_KEY environment variable');

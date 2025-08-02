@@ -64,9 +64,9 @@ const analyzeContentPrompt = ai.definePrompt({
   - GEMINI_API_KEY: ${geminiApiKey}
   - GOOGLE_API_KEY: ${googleApiKey}
   **Content to Analyze:**
-  \`\`\`
+  `\``
   {{{content}}}
-  \`\`\`
+  `\``
 
   **Target Keywords:** {{{targetKeywords}}}
 

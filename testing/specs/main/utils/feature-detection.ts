@@ -10,7 +10,7 @@ import { test, expect } from "@playwright/test";
  */
 
 export async function checkFeatureAvailability(
-  page: any,
+  page: unknown,
   feature: string
 ): Promise<boolean> {
   const baseURL = page.context()._options.baseURL || "http://localhost:3000";
@@ -27,7 +27,7 @@ export async function checkFeatureAvailability(
         const apiResponse = await page.request.post(
           `${baseURL}/api/analyze-link`,
           {
-            data: { url: "https://example.com" },
+            _data: { url: "https://example.com" },
             failOnStatusCode: false,
           }
         );
@@ -43,14 +43,14 @@ export async function checkFeatureAvailability(
       default:
         return true;
     }
-  } catch (error) {
-    console.log(`Feature ${feature} availability check failed:`, error);
+  } catch (_error) {
+    console.log(`Feature ${feature} availability check failed:`, _error);
     return false;
   }
 }
 
 export function skipIfFeatureUnavailable(feature: string) {
-  return async function (testFn: any, testInfo: any) {
+  return async function (testFn: unknown, testInfo: unknown) {
     const available = await checkFeatureAvailability(testInfo.page, feature);
     if (!available) {
       testInfo.skip(`Feature "${feature}" is not implemented yet`);
@@ -62,7 +62,7 @@ export function skipIfFeatureUnavailable(feature: string) {
 
 // Helper for conditional test execution
 export const conditionalTest = {
-  auth: (title: string, testFn: any) =>
+  auth: (title: string, testFn: unknown) =>
     test(title, async ({ page }, testInfo) => {
       const available = await checkFeatureAvailability(page, "auth");
       if (!available) {
@@ -72,7 +72,7 @@ export const conditionalTest = {
       return testFn({ page }, testInfo);
     }),
 
-  api: (title: string, testFn: any) =>
+  api: (title: string, testFn: unknown) =>
     test(title, async ({ page }, testInfo) => {
       const available = await checkFeatureAvailability(
         page,
@@ -85,7 +85,7 @@ export const conditionalTest = {
       return testFn({ page }, testInfo);
     }),
 
-  dashboard: (title: string, testFn: any) =>
+  dashboard: (title: string, testFn: unknown) =>
     test(title, async ({ page }, testInfo) => {
       const available = await checkFeatureAvailability(page, "dashboard");
       if (!available) {

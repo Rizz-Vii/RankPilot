@@ -31,12 +31,12 @@ const db = getFirestore();
 // Create Checkout Session
 export const createCheckoutSession = onRequest(
   { cors: true, secrets: ["STRIPE_SECRET_KEY"] },
-  async (request, response) => {
+  async (_request, _response) => {
     try {
       const { planId, billingInterval, userId } = request.body;
 
       if (!planId || !billingInterval || !userId) {
-        response.status(400).json({ error: "Missing required parameters" });
+        response.status(400).json({ _error: "Missing required parameters" });
         return;
       }
 
@@ -56,7 +56,7 @@ export const createCheckoutSession = onRequest(
       if (!priceId) {
         response
           .status(400)
-          .json({ error: "Invalid plan or billing interval" });
+          .json({ _error: "Invalid plan or billing interval" });
         return;
       }
 
@@ -65,7 +65,7 @@ export const createCheckoutSession = onRequest(
       const userData = userDoc.data();
 
       if (!userData?.email) {
-        response.status(404).json({ error: "User not found" });
+        response.status(404).json({ _error: "User not found" });
         return;
       }
 
@@ -96,9 +96,9 @@ export const createCheckoutSession = onRequest(
       });
 
       response.json({ sessionId: session.id });
-    } catch (error) {
-      console.error("Error creating checkout session:", error);
-      response.status(500).json({ error: "Internal server error" });
+    } catch (_error) {
+      console.error("Error creating checkout session:", _error);
+      response.status(500).json({ _error: "Internal server error" });
     }
   }
 );
@@ -106,9 +106,9 @@ export const createCheckoutSession = onRequest(
 // Handle Stripe Webhooks
 export const stripeWebhook = onRequest(
   { cors: true, secrets: ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"] },
-  async (request, response) => {
+  async (_request, _response) => {
     const sig = request.headers["stripe-signature"];
-    let event: Stripe.Event;
+    let _event: Stripe.Event;
 
     try {
       event = getStripe().webhooks.constructEvent(
@@ -116,7 +116,7 @@ export const stripeWebhook = onRequest(
         sig as string,
         process.env.STRIPE_WEBHOOK_SECRET!
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Webhook signature verification failed:", err.message);
       response.status(400).send(`Webhook Error: ${err.message}`);
       return;
@@ -154,9 +154,9 @@ export const stripeWebhook = onRequest(
       }
 
       response.json({ received: true });
-    } catch (error) {
-      console.error("Error processing webhook:", error);
-      response.status(500).json({ error: "Webhook processing failed" });
+    } catch (_error) {
+      console.error("Error processing webhook:", _error);
+      response.status(500).json({ _error: "Webhook processing failed" });
     }
   }
 );
@@ -266,12 +266,12 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
 // Create Customer Portal Session
 export const createPortalSession = onRequest(
   { cors: true, secrets: ["STRIPE_SECRET_KEY"] },
-  async (request, response) => {
+  async (_request, _response) => {
     try {
       const { userId } = request.body;
 
       if (!userId) {
-        response.status(400).json({ error: "Missing userId" });
+        response.status(400).json({ _error: "Missing userId" });
         return;
       }
 
@@ -279,7 +279,7 @@ export const createPortalSession = onRequest(
       const userData = userDoc.data();
 
       if (!userData?.stripeCustomerId) {
-        response.status(404).json({ error: "No subscription found" });
+        response.status(404).json({ _error: "No subscription found" });
         return;
       }
 
@@ -289,9 +289,9 @@ export const createPortalSession = onRequest(
       });
 
       response.json({ url: session.url });
-    } catch (error) {
-      console.error("Error creating portal session:", error);
-      response.status(500).json({ error: "Internal server error" });
+    } catch (_error) {
+      console.error("Error creating portal session:", _error);
+      response.status(500).json({ _error: "Internal server error" });
     }
   }
 );

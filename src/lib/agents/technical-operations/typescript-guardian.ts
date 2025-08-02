@@ -39,7 +39,7 @@ export interface RankPilotAgent {
     safetyConstraints: SafetyConstraint;
     execute(): Promise<boolean>;
     rollback(): Promise<boolean>;
-    validateFix(error: TypeScriptError): Promise<boolean>;
+    validateFix(_error: TypeScriptError): Promise<boolean>;
 }
 
 /**
@@ -111,14 +111,14 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
             // Step 4: Apply fixes systematically
             let fixCount = 0;
             for (const error of errors) {
-                if (await this.canAutoFix(error)) {
+                if (await this.canAutoFix(_error)) {
                     console.log(`🔧 Fixing: ${error.file}:${error.line} - ${error.code}`);
-                    const success = await this.applyFix(error);
+                    const success = await this.applyFix(_error);
                     if (success) {
                         fixCount++;
 
                         // Validate fix immediately
-                        const isValid = await this.validateFix(error);
+                        const isValid = await this.validateFix(_error);
                         if (!isValid) {
                             console.warn(`⚠️  Fix validation failed for ${error.file}, rolling back...`);
                             await this.rollbackFile(error.file);
@@ -141,8 +141,8 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
                 return false;
             }
 
-        } catch (error) {
-            console.error('🚨 TypeScript Guardian execution failed:', error);
+        } catch (_error) {
+            console.error('🚨 TypeScript Guardian execution failed:', _error);
             await this.rollback();
             return false;
         }
@@ -182,7 +182,7 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
             const { stdout, stderr } = await execAsync('npm run typecheck');
             // If typecheck passes, no errors to fix
             return [];
-        } catch (error: any) {
+        } catch (_error: unknown) {
             const output = error.stdout || error.stderr || '';
             return this.parseTypeScriptErrors(output);
         }
@@ -234,12 +234,12 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
                     const backupFile = path.join(this.backupPath, `${timestamp}-${path.basename(file)}`);
                     await fs.writeFile(backupFile, content);
                     console.log(`📁 Backed up: ${file}`);
-                } catch (error) {
-                    console.warn(`⚠️  Could not backup ${file}:`, error);
+                } catch (_error) {
+                    console.warn(`⚠️  Could not backup ${file}:`, _error);
                 }
             }
-        } catch (error) {
-            console.error('Failed to create backup:', error);
+        } catch (_error) {
+            console.error('Failed to create backup:', _error);
             throw error;
         }
     }
@@ -247,7 +247,7 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
     /**
      * Check if error can be auto-fixed
      */
-    private async canAutoFix(error: TypeScriptError): Promise<boolean> {
+    private async canAutoFix(_error: TypeScriptError): Promise<boolean> {
         // Known fixable patterns
         const fixablePatterns = [
             'TS2322', // Type assignment issues
@@ -263,7 +263,7 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
     /**
      * Apply fix for specific error
      */
-    private async applyFix(error: TypeScriptError): Promise<boolean> {
+    private async applyFix(_error: TypeScriptError): Promise<boolean> {
         try {
             switch (error.file) {
                 case 'src/components/ui/polymorphic-card.tsx':
@@ -279,8 +279,8 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
                     console.log(`🔍 Unknown file for auto-fix: ${error.file}`);
                     return false;
             }
-        } catch (error) {
-            console.error(`❌ Failed to apply fix:`, error);
+        } catch (_error) {
+            console.error(`❌ Failed to apply fix:`, _error);
             return false;
         }
     }
@@ -318,8 +318,8 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
             }
 
             return false;
-        } catch (error) {
-            console.error('Failed to fix polymorphic-card motion props:', error);
+        } catch (_error) {
+            console.error('Failed to fix polymorphic-card motion props:', _error);
             return false;
         }
     }
@@ -338,8 +338,8 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
 interface QueueItem {
     endpoint: string;
     options: RequestInit;
-    resolve: (value: unknown) => void;
-    reject: (reason?: any) => void;
+    resolve: (_value: unknown) => void;
+    reject: (reason?: unknown) => void;
 }
 `;
 
@@ -359,8 +359,8 @@ interface QueueItem {
             await fs.writeFile(filePath, content);
             this.fixedFiles.push(filePath);
             return true;
-        } catch (error) {
-            console.error('Failed to fix connection pool types:', error);
+        } catch (_error) {
+            console.error('Failed to fix connection pool types:', _error);
             return false;
         }
     }
@@ -408,8 +408,8 @@ class DataCorruptionError extends Error {
             await fs.writeFile(filePath, content);
             this.fixedFiles.push(filePath);
             return true;
-        } catch (error) {
-            console.error('Failed to fix security center types:', error);
+        } catch (_error) {
+            console.error('Failed to fix security center types:', _error);
             return false;
         }
     }
@@ -417,9 +417,9 @@ class DataCorruptionError extends Error {
     /**
      * Validate fix by running TypeScript check
      */
-    async validateFix(error: TypeScriptError): Promise<boolean> {
+    async validateFix(_error: TypeScriptError): Promise<boolean> {
         try {
-            const result = await this.runTypeScriptCheck();
+            const _result = await this.runTypeScriptCheck();
             return result.success || result.errorCount < result.previousErrorCount;
         } catch {
             return false;
@@ -433,7 +433,7 @@ class DataCorruptionError extends Error {
         try {
             await execAsync('npm run typecheck');
             return { success: true, errorCount: 0, previousErrorCount: 11 };
-        } catch (error: any) {
+        } catch (_error: unknown) {
             const output = error.stdout || error.stderr || '';
             const errors = this.parseTypeScriptErrors(output);
             return { success: false, errorCount: errors.length, previousErrorCount: 11 };
@@ -451,8 +451,8 @@ class DataCorruptionError extends Error {
             await execAsync('git checkout HEAD -- src/components/ui/polymorphic-card.tsx src/lib/scaling/connection-pool.ts src/lib/security/security-operations-center.ts');
             console.log('✅ Rollback completed via git checkout');
             return true;
-        } catch (error) {
-            console.error('❌ Rollback failed:', error);
+        } catch (_error) {
+            console.error('❌ Rollback failed:', _error);
             return false;
         }
     }
@@ -465,8 +465,8 @@ class DataCorruptionError extends Error {
             await execAsync(`git checkout HEAD -- ${filePath}`);
             console.log(`✅ Rolled back: ${filePath}`);
             return true;
-        } catch (error) {
-            console.error(`❌ Failed to rollback ${filePath}:`, error);
+        } catch (_error) {
+            console.error(`❌ Failed to rollback ${filePath}:`, _error);
             return false;
         }
     }

@@ -49,7 +49,7 @@ export async function GET() {
           id: activityDoc.id,
           type: activityData.type || "unknown",
           timestamp: activityData.timestamp,
-          data: activityData,
+          _data: activityData,
         });
       }
 
@@ -64,7 +64,7 @@ export async function GET() {
         keywords.push({
           id: keywordDoc.id,
           keyword: keywordData.keyword || "",
-          data: keywordData,
+          _data: keywordData,
         });
       }
 
@@ -79,7 +79,7 @@ export async function GET() {
         competitors.push({
           id: compDoc.id,
           domain: compData.domain || "",
-          data: compData,
+          _data: compData,
         });
       }
 
@@ -94,7 +94,7 @@ export async function GET() {
         contentAnalyses.push({
           id: contentDoc.id,
           url: contentData.url || "",
-          data: contentData,
+          _data: contentData,
         });
       }
 
@@ -109,7 +109,7 @@ export async function GET() {
         achievements.push({
           id: achDoc.id,
           type: achData.type || "",
-          data: achData,
+          _data: achData,
         });
       }
 
@@ -280,14 +280,14 @@ export async function GET() {
       },
       users: userAnalysis,
     });
-  } catch (error) {
-    console.error("Error reviewing user data:", error);
+  } catch (_error) {
+    console.error("Error reviewing user _data:", _error);
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
     return NextResponse.json(
       {
         success: false,
-        error: errorMessage,
+        _error: errorMessage,
       },
       { status: 500 }
     );

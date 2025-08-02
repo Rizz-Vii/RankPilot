@@ -1,0 +1,46 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        // Performance focused for IntelliSense
+        "noEmit": true,
+        "skipLibCheck": true,
+        "skipDefaultLibCheck": true,
+        "incremental": true,
+        "composite": false,
+        "declaration": false,
+        "declarationMap": false,
+        "sourceMap": false,
+        // Disable expensive checks for IntelliSense
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "exactOptionalPropertyTypes": false,
+        "noImplicitReturns": false,
+        "noFallthroughCasesInSwitch": false,
+        "noUncheckedIndexedAccess": false,
+        "noImplicitOverride": false
+    },
+    "include": [
+        "next-env.d.ts",
+        "**/*.ts",
+        "**/*.tsx"
+    ],
+    "exclude": [
+        "node_modules",
+        ".next",
+        "dist",
+        "build",
+        "coverage",
+        "test-results",
+        "playwright-report",
+        "backups",
+        ".typescript-guardian-backups",
+        "docs-backup-*",
+        ".firebase",
+        "functions/node_modules",
+        "functions/lib",
+        // Exclude large problematic files during development
+        "src/lib/agents/technical-operations/api-enhancement.ts",
+        "src/lib/agents/technical-operations/production-deployment.ts",
+        "src/lib/automation/ai-dev-automation.ts"
+    ]
+}

@@ -58,7 +58,7 @@ class AIPerformanceOptimization {
 
             console.log('\n✅ AI Performance Optimization Analysis Complete!');
 
-        } catch (error) {
+        } catch (_error) {
             console.error('❌ AI Performance Optimization Error:', error.message);
             process.exit(1);
         }
@@ -275,7 +275,7 @@ class AIPerformanceOptimization {
             const items = fs.readdirSync(dirPath);
 
             for (const item of items) {
-                const itemPath = path.join(dirPath, item);
+                const itemPath = path.join(dirPath, _item);
                 const stat = fs.statSync(itemPath);
 
                 if (stat.isDirectory()) {
@@ -398,7 +398,7 @@ class AIPerformanceOptimization {
             const items = fs.readdirSync(dirPath);
 
             for (const item of items) {
-                const itemPath = path.join(dirPath, item);
+                const itemPath = path.join(dirPath, _item);
                 const stat = fs.statSync(itemPath);
 
                 if (stat.isDirectory() && !item.startsWith('.') && item !== 'node_modules') {
@@ -683,7 +683,7 @@ class AIPerformanceOptimization {
 
 ## 🛠️ Optimization Recommendations
 
-${report.recommendations.map((rec, index) => `
+${report.recommendations.map((rec, _index) => `
 ### ${index + 1}. ${rec.category.toUpperCase()}
 **Priority:** ${rec.priority.toUpperCase()}
 **Description:** ${rec.description}
@@ -772,7 +772,7 @@ Upon completion of all optimizations:
 if (require.main === module) {
     const dryRun = process.argv.includes('--dry-run');
     const optimizer = new AIPerformanceOptimization(dryRun);
-    optimizer.executeOptimization().catch(console.error);
+    optimizer.executeOptimization().catch(console._error);
 }
 
 module.exports = AIPerformanceOptimization;

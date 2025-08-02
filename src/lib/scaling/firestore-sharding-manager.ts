@@ -32,18 +32,18 @@ export interface FirestoreQuery {
     filters: QueryFilter[];
     orderBy?: { field: string; direction: 'asc' | 'desc'; }[];
     limit?: number;
-    startAfter?: any;
-    endBefore?: any;
+    startAfter?: unknown;
+    endBefore?: unknown;
 }
 
 export interface QueryFilter {
     field: string;
     operator: '==' | '!=' | '<' | '<=' | '>' | '>=' | 'array-contains' | 'in' | 'array-contains-any';
-    value: any;
+    _value: unknown;
 }
 
 export interface ShardedQueryResult {
-    documents: any[];
+    documents: unknown[];
     totalDocuments: number;
     queriedShards: string[];
     aggregatedLatency: number;
@@ -77,7 +77,7 @@ export interface IndexRecommendation {
  */
 export class EnterpriseFirestoreSharding {
     private shardingStrategies: Map<string, ShardingStrategy> = new Map();
-    private queryCache: Map<string, { result: any; timestamp: number; ttl: number; }> = new Map();
+    private queryCache: Map<string, { _result: unknown; timestamp: number; ttl: number; }> = new Map();
     private performanceMetrics: Map<string, QueryMetrics> = new Map();
 
     constructor() {
@@ -341,11 +341,11 @@ export class EnterpriseFirestoreSharding {
 
         // Process results and handle failures
         const successfulResults = results
-            .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
-            .map(result => result.value);
+            .filter((_result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
+            .map(result => result._value);
 
         const failedResults = results
-            .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
+            .filter((_result): result is PromiseRejectedResult => result.status === 'rejected')
             .map(result => result.reason);
 
         if (failedResults.length > 0) {
@@ -555,7 +555,7 @@ export class EnterpriseFirestoreSharding {
     }> {
         const collections = collection ? [collection] : Array.from(this.shardingStrategies.keys());
 
-        const allShardMetrics: any[] = [];
+        const allShardMetrics: unknown[] = [];
         let totalLatency = 0;
         let totalThroughput = 0;
         let totalErrors = 0;
@@ -603,7 +603,7 @@ export class EnterpriseFirestoreSharding {
     private async determineTargetShards(
         strategy: ShardingStrategy,
         query: FirestoreQuery,
-        userContext?: any
+        userContext?: unknown
     ): Promise<Shard[]> {
         const candidateShards: Shard[] = [];
 
@@ -617,7 +617,7 @@ export class EnterpriseFirestoreSharding {
         return candidateShards.length > 0 ? candidateShards : strategy.shards;
     }
 
-    private shardMatchesQuery(shard: Shard, query: FirestoreQuery, userContext?: any): boolean {
+    private shardMatchesQuery(shard: Shard, query: FirestoreQuery, userContext?: unknown): boolean {
         if (!shard.filter) return true;
 
         // Parse shard filter and match against query
@@ -629,11 +629,11 @@ export class EnterpriseFirestoreSharding {
 
                 // Check if query has matching filter
                 const hasMatchingFilter = query.filters.some(f =>
-                    f.field === field && f.value === value
+                    f.field === field && f.value === _value
                 );
 
                 // Check user context
-                if (userContext && userContext[field] === value) {
+                if (userContext && userContext[field] === _value) {
                     continue;
                 }
 
@@ -651,7 +651,7 @@ export class EnterpriseFirestoreSharding {
         query: FirestoreQuery,
         consistencyLevel: string
     ): Promise<{
-        documents: any[];
+        documents: unknown[];
         count: number;
         latency: number;
         shardId: string;
@@ -674,9 +674,9 @@ export class EnterpriseFirestoreSharding {
     }
 
     private async mergeShardResults(
-        results: Array<{ documents: any[]; count: number; latency: number; shardId: string; }>,
+        results: Array<{ documents: unknown[]; count: number; latency: number; shardId: string; }>,
         query: FirestoreQuery
-    ): Promise<{ documents: any[]; totalCount: number; }> {
+    ): Promise<{ documents: unknown[]; totalCount: number; }> {
         // Combine all documents
         const allDocuments = results.flatMap(r => r.documents);
 
@@ -705,9 +705,9 @@ export class EnterpriseFirestoreSharding {
         };
     }
 
-    private generateMockDocuments(count: number): any[] {
+    private generateMockDocuments(count: number): unknown[] {
         const documents = [];
-        for (let i = 0; i < count; i++) {
+        for (let _i = 0; i < count; i++) {
             documents.push({
                 id: `doc_${i}`,
                 data: `mock_data_${i}`,
@@ -725,7 +725,7 @@ export class EnterpriseFirestoreSharding {
             optimizedFilters.push({
                 field: 'tier',
                 operator: '==',
-                value: tier
+                _value: tier
             });
         }
 
@@ -760,7 +760,7 @@ export class EnterpriseFirestoreSharding {
     private estimateOptimizationBenefit(
         originalQuery: FirestoreQuery,
         optimizedQuery: FirestoreQuery,
-        userContext?: any
+        userContext?: unknown
     ): {
         latencyReduction: number;
         costReduction: number;

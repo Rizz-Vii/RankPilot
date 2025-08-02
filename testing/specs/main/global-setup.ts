@@ -34,7 +34,7 @@ async function globalSetup(config: FullConfig) {
         const timeout = isDeployedSite ? 15000 : 30000;
 
         // Try to load the homepage
-        const response = await page.goto(baseUrl, {
+        const _response = await page.goto(baseUrl, {
           waitUntil: waitCondition,
           timeout: timeout,
         });
@@ -58,7 +58,7 @@ async function globalSetup(config: FullConfig) {
               });
               // Shorter delay for deployed sites
               await page.waitForTimeout(isDeployedSite ? 1000 : 2000);
-            } catch (error) {
+            } catch (_error) {
               console.log(
                 `   ⚠️  ${path} not available (this is OK if not implemented yet)`
               );
@@ -68,7 +68,7 @@ async function globalSetup(config: FullConfig) {
           console.log("🎯 Server warmup complete!");
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         retries++;
         const delay = isDeployedSite ? 2000 : 3000; // Shorter delay for deployed sites
         console.log(`❌ Connection failed (${error}), retrying in ${delay / 1000} seconds...`);

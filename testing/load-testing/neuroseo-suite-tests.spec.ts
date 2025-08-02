@@ -27,8 +27,8 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
             };
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/neuralCrawler`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/neuralCrawler`, {
+                    _data: testData,
                     timeout: 45000
                 });
 
@@ -43,7 +43,7 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
                     expect(responseBody).toHaveProperty('metadata');
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('⚠️  NeuralCrawler test - function may not be deployed yet');
             }
         });
@@ -62,8 +62,8 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
             try {
                 const startTime = Date.now();
 
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/neuralCrawlerBatch`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/neuralCrawlerBatch`, {
+                    _data: testData,
                     timeout: 90000
                 });
 
@@ -76,7 +76,7 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
                     expect(processingTime).toBeLessThan(60000); // Should complete within 60s
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('⚠️  NeuralCrawler Batch test - function may not be deployed yet');
             }
         });
@@ -92,8 +92,8 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
             };
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/semanticMap`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/semanticMap`, {
+                    _data: testData,
                     timeout: 30000
                 });
 
@@ -108,7 +108,7 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
                     expect(responseBody).toHaveProperty('semanticScore');
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('⚠️  SemanticMap test - function may not be deployed yet');
             }
         });
@@ -123,8 +123,8 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
             try {
                 const startTime = Date.now();
 
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/semanticMapKeywordAnalysis`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/semanticMapKeywordAnalysis`, {
+                    _data: testData,
                     timeout: 25000
                 });
 
@@ -137,7 +137,7 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
                     expect(analysisTime).toBeLessThan(20000); // Should complete within 20s
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('⚠️  SemanticMap Keyword Analysis test - function may not be deployed yet');
             }
         });
@@ -153,8 +153,8 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
             };
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/aiVisibilityEngine`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/aiVisibilityEngine`, {
+                    _data: testData,
                     timeout: 40000
                 });
 
@@ -169,7 +169,7 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
                     expect(responseBody).toHaveProperty('ai_mentions');
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('⚠️  AI Visibility Engine test - function may not be deployed yet');
             }
         });
@@ -187,8 +187,8 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
             try {
                 const startTime = Date.now();
 
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/aiVisibilityCitationQuality`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/aiVisibilityCitationQuality`, {
+                    _data: testData,
                     timeout: 30000
                 });
 
@@ -201,7 +201,7 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
                     expect(analysisTime).toBeLessThan(25000); // Should complete within 25s
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('⚠️  Citation Quality Analysis test - function may not be deployed yet');
             }
         });
@@ -220,8 +220,8 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
             };
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/trustBlock`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/trustBlock`, {
+                    _data: testData,
                     timeout: 35000
                 });
 
@@ -237,7 +237,7 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
                     expect(responseBody).toHaveProperty('overall_eat_score');
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('⚠️  TrustBlock test - function may not be deployed yet');
             }
         });
@@ -252,8 +252,8 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
             try {
                 const startTime = Date.now();
 
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/trustBlockAuthenticity`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/trustBlockAuthenticity`, {
+                    _data: testData,
                     timeout: 40000
                 });
 
@@ -266,7 +266,7 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
                     expect(checkTime).toBeLessThan(30000); // Should complete within 30s
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('⚠️  TrustBlock Authenticity test - function may not be deployed yet');
             }
         });
@@ -283,8 +283,8 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
             };
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/rewriteGen`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/rewriteGen`, {
+                    _data: testData,
                     timeout: 45000
                 });
 
@@ -299,7 +299,7 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
                     expect(responseBody).toHaveProperty('keyword_density');
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('⚠️  RewriteGen test - function may not be deployed yet');
             }
         });
@@ -321,8 +321,8 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
             try {
                 const startTime = Date.now();
 
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/rewriteGenBatch`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/rewriteGenBatch`, {
+                    _data: testData,
                     timeout: 90000
                 });
 
@@ -335,7 +335,7 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
                     expect(rewriteTime).toBeLessThan(60000); // Should complete within 60s
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('⚠️  RewriteGen Batch test - function may not be deployed yet');
             }
         });
@@ -358,8 +358,8 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
             try {
                 const startTime = Date.now();
 
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/neuroSeoOrchestrator`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/neuroSeoOrchestrator`, {
+                    _data: testData,
                     timeout: 180000 // 3 minutes for full analysis
                 });
 
@@ -379,7 +379,7 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
                     expect(totalTime).toBeLessThan(180000);
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('⚠️  NeuroSEO Orchestrator test - functions may not be deployed yet');
             }
         });
@@ -399,8 +399,8 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
             try {
                 const startTime = Date.now();
 
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/neuroSeoCompetitiveAnalysis`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/neuroSeoCompetitiveAnalysis`, {
+                    _data: testData,
                     timeout: 120000 // 2 minutes for competitive analysis
                 });
 
@@ -419,7 +419,7 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
                     expect(analysisTime).toBeLessThan(120000);
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('⚠️  Competitive Analysis test - functions may not be deployed yet');
             }
         });
@@ -432,8 +432,8 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
             };
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/neuroSeoQuotaManager`, {
-                    data: testData,
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/neuroSeoQuotaManager`, {
+                    _data: testData,
                     timeout: 10000
                 });
 
@@ -448,7 +448,7 @@ test.describe('NeuroSEO™ Suite - Production Testing', () => {
                     expect(responseBody).toHaveProperty('remaining_credits');
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('⚠️  Quota Management test - function may not be deployed yet');
             }
         });
@@ -472,8 +472,8 @@ test.describe('NeuroSEO™ Suite - Performance Benchmarks', () => {
             try {
                 const startTime = Date.now();
 
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/${engine.endpoint}`, {
-                    data: { test: 'benchmark', content: 'performance test' },
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/${engine.endpoint}`, {
+                    _data: { test: 'benchmark', content: 'performance test' },
                     timeout: engine.maxTime
                 });
 
@@ -484,7 +484,7 @@ test.describe('NeuroSEO™ Suite - Performance Benchmarks', () => {
                     expect(responseTime).toBeLessThan(engine.maxTime);
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.log(`   ${engine.name}: Function may not be deployed yet`);
             }
         }
@@ -502,8 +502,8 @@ test.describe('NeuroSEO™ Suite - Performance Benchmarks', () => {
         try {
             const startTime = Date.now();
 
-            const response = await page.request.post(`${PRODUCTION_BASE_URL}/semanticMap`, {
-                data: heavyPayload,
+            const _response = await page.request.post(`${PRODUCTION_BASE_URL}/semanticMap`, {
+                _data: heavyPayload,
                 timeout: 60000
             });
 
@@ -514,7 +514,7 @@ test.describe('NeuroSEO™ Suite - Performance Benchmarks', () => {
                 expect(processingTime).toBeLessThan(45000); // Should handle large content efficiently
             }
 
-        } catch (error) {
+        } catch (_error) {
             console.log('   Memory test completed (function may not be deployed)');
         }
     });

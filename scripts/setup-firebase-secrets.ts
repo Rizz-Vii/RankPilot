@@ -73,7 +73,7 @@ async function checkFirebaseAuth(): Promise<boolean> {
   try {
     execSync("firebase projects:list", { stdio: "pipe" });
     return true;
-  } catch (error) {
+  } catch (_error) {
     console.log("❌ Firebase CLI not authenticated.");
     console.log("Please run: firebase login");
     return false;
@@ -86,7 +86,7 @@ async function secretExists(secretName: string): Promise<boolean> {
       stdio: "pipe",
     });
     return true;
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 }
@@ -103,7 +103,7 @@ async function createSecret(
       { stdio: "pipe" }
     );
     console.log(`✅ Secret ${secretName} created successfully`);
-  } catch (error) {
+  } catch (_error) {
     console.log(`❌ Failed to create secret ${secretName}: ${error}`);
   }
 }
@@ -119,7 +119,7 @@ async function updateSecret(
       { stdio: "pipe" }
     );
     console.log(`✅ Secret ${secretName} updated successfully`);
-  } catch (error) {
+  } catch (_error) {
     console.log(`❌ Failed to update secret ${secretName}: ${error}`);
   }
 }
@@ -143,7 +143,7 @@ async function setupSecret(secret: Secret): Promise<void> {
 
   const value = await askQuestion(`Enter ${secret.name}: `);
   if (!value.trim()) {
-    console.log(`⏭️ Skipping ${secret.name} (empty value)`);
+    console.log(`⏭️ Skipping ${secret.name} (empty _value)`);
     return;
   }
 
@@ -162,7 +162,7 @@ async function enableSecretManagerAPI(): Promise<void> {
       { stdio: "pipe" }
     );
     console.log("✅ Secret Manager API enabled");
-  } catch (error) {
+  } catch (_error) {
     console.log(`❌ Failed to enable Secret Manager API: ${error}`);
   }
 }
@@ -174,7 +174,7 @@ async function checkGCloudAuth(): Promise<boolean> {
       { stdio: "pipe" }
     );
     return true;
-  } catch (error) {
+  } catch (_error) {
     console.log("❌ Google Cloud CLI not authenticated.");
     console.log("Please run: gcloud auth login");
     return false;
@@ -186,7 +186,7 @@ async function setGCloudProject(): Promise<void> {
     console.log(`🔧 Setting Google Cloud project to ${PROJECT_ID}...`);
     execSync(`gcloud config set project ${PROJECT_ID}`, { stdio: "pipe" });
     console.log("✅ Project set successfully");
-  } catch (error) {
+  } catch (_error) {
     console.log(`❌ Failed to set project: ${error}`);
   }
 }
@@ -198,7 +198,7 @@ async function listExistingSecrets(): Promise<void> {
       encoding: "utf8",
     });
     console.log(output);
-  } catch (error) {
+  } catch (_error) {
     console.log("❌ Could not list existing secrets");
   }
 }
@@ -246,8 +246,8 @@ async function main(): Promise<void> {
 }
 
 // Handle errors
-process.on("uncaughtException", (error) => {
-  console.error("❌ Uncaught exception:", error);
+process.on("uncaughtException", (_error) => {
+  console.error("❌ Uncaught exception:", _error);
   rl.close();
   process.exit(1);
 });
@@ -258,8 +258,8 @@ process.on("unhandledRejection", (reason, promise) => {
   process.exit(1);
 });
 
-main().catch((error) => {
-  console.error("❌ Script failed:", error);
+main().catch((_error) => {
+  console.error("❌ Script failed:", _error);
   rl.close();
   process.exit(1);
 });

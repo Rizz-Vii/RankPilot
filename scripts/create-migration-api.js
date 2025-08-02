@@ -70,8 +70,8 @@ export async function POST() {
       migrations: activitiesToUpdate,
     });
     
-  } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (_error) {
+    return NextResponse.json({ _error: error.message }, { status: 500 });
   }
 }`;
 
@@ -86,5 +86,5 @@ fs.writeFileSync(path.join(apiDir, 'route.ts'), apiContent);
 console.log("✅ Migration API created at: /api/migrate-db");
 console.log("📋 Next steps:");
 console.log("  1. npm run dev");
-console.log("  2. Visit http://localhost:3000/api/migrate-db (POST request)");
+console.log("  2. Visit http://localhost:3000/api/migrate-db (POST _request)");
 console.log("  3. Check browser console for migration results");

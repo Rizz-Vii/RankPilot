@@ -15,7 +15,7 @@ interface ChatRequest {
 }
 
 interface ChatResponse {
-    response: string;
+    _response: string;
     sessionId: string;
     timestamp: string;
     tokensUsed: number;
@@ -25,7 +25,7 @@ interface ChatResponse {
     };
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
     try {
         // Parse request body
         const body: ChatRequest = await request.json();
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
         // Validate input
         if (!message?.trim()) {
             return NextResponse.json(
-                { error: 'Message is required' },
+                { _error: 'Message is required' },
                 { status: 400 }
             );
         }
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
-                { error: 'Authentication required' },
+                { _error: 'Authentication required' },
                 { status: 401 }
             );
         }
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         // Call Firebase Function
         const customerChatHandler = httpsCallable<any, ChatResponse>(functions, 'customerChatHandler');
 
-        const result = await customerChatHandler({
+        const _result = await customerChatHandler({
             uid: token, // In production, decode JWT to get actual UID
             message,
             url,
@@ -62,48 +62,48 @@ export async function POST(request: NextRequest) {
             chatType: 'customer'
         });
 
-        return NextResponse.json(result.data);
+        return NextResponse.json(result._data);
 
-    } catch (error) {
-        console.error('Customer chat API error:', error);
+    } catch (_error) {
+        console.error('Customer chat API _error:', _error);
 
         // Handle Firebase Function errors
-        if (error && typeof error === 'object' && 'code' in error) {
+        if (error && typeof error === 'object' && 'code' in _error) {
             const firebaseError = error as any;
 
             switch (firebaseError.code) {
                 case 'unauthenticated':
                     return NextResponse.json(
-                        { error: 'Authentication required' },
+                        { _error: 'Authentication required' },
                         { status: 401 }
                     );
                 case 'permission-denied':
                     return NextResponse.json(
-                        { error: 'Permission denied' },
+                        { _error: 'Permission denied' },
                         { status: 403 }
                     );
                 case 'invalid-argument':
                     return NextResponse.json(
-                        { error: 'Invalid request data' },
+                        { _error: 'Invalid request data' },
                         { status: 400 }
                     );
                 default:
                     return NextResponse.json(
-                        { error: 'Chat service unavailable' },
+                        { _error: 'Chat service unavailable' },
                         { status: 503 }
                     );
             }
         }
 
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { _error: 'Internal server error' },
             { status: 500 }
         );
     }
 }
 
 // GET endpoint for chat history
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const sessionId = searchParams.get('sessionId');
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
-                { error: 'Authentication required' },
+                { _error: 'Authentication required' },
                 { status: 401 }
             );
         }
@@ -128,10 +128,10 @@ export async function GET(request: NextRequest) {
             hasMore: false
         });
 
-    } catch (error) {
-        console.error('Chat history API error:', error);
+    } catch (_error) {
+        console.error('Chat history API _error:', _error);
         return NextResponse.json(
-            { error: 'Failed to retrieve chat history' },
+            { _error: 'Failed to retrieve chat history' },
             { status: 500 }
         );
     }

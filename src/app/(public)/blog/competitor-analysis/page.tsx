@@ -268,7 +268,7 @@ export default function CompetitorAnalysisBlogPage() {
           </ul>
 
           <h3>Link Building Opportunities</h3>
-          <p>Leverage their backlink data:</p>
+          <p>Leverage their backlink _data:</p>
           <ul>
             <li>
               <strong>Resource pages:</strong> Find sites that link to

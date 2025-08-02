@@ -136,8 +136,8 @@ export default function TeamManagementPage() {
         },
       ];
       setTeamMembers(mockMembers);
-    } catch (error) {
-      console.error("Error fetching team members:", error);
+    } catch (_error) {
+      console.error("Error fetching team members:", _error);
       toast.error("Failed to load team members");
     } finally {
       setLoading(false);
@@ -173,8 +173,8 @@ export default function TeamManagementPage() {
       setInviteForm({ email: "", role: "member", message: "" });
       setIsInviteDialogOpen(false);
       toast.success("Invitation sent successfully");
-    } catch (error) {
-      console.error("Error sending invite:", error);
+    } catch (_error) {
+      console.error("Error sending invite:", _error);
       toast.error("Failed to send invitation");
     } finally {
       setIsInviting(false);
@@ -192,8 +192,8 @@ export default function TeamManagementPage() {
         )
       );
       toast.success("Member role updated successfully");
-    } catch (error) {
-      console.error("Error updating member role:", error);
+    } catch (_error) {
+      console.error("Error updating member role:", _error);
       toast.error("Failed to update member role");
     }
   };
@@ -202,8 +202,8 @@ export default function TeamManagementPage() {
     try {
       setTeamMembers(teamMembers.filter((member) => member.id !== memberId));
       toast.success("Member removed successfully");
-    } catch (error) {
-      console.error("Error removing member:", error);
+    } catch (_error) {
+      console.error("Error removing member:", _error);
       toast.error("Failed to remove member");
     }
   };
@@ -212,8 +212,8 @@ export default function TeamManagementPage() {
     try {
       // Mock implementation
       toast.success("Invitation resent successfully");
-    } catch (error) {
-      console.error("Error resending invite:", error);
+    } catch (_error) {
+      console.error("Error resending invite:", _error);
       toast.error("Failed to resend invitation");
     }
   };
@@ -303,7 +303,7 @@ export default function TeamManagementPage() {
                     <Label htmlFor="role">Role</Label>
                     <Select
                       value={inviteForm.role}
-                      onValueChange={(value: TeamMember["role"]) =>
+                      onValueChange={(_value: TeamMember["role"]) =>
                         setInviteForm({ ...inviteForm, role: value })
                       }
                     >
@@ -329,7 +329,7 @@ export default function TeamManagementPage() {
                       onChange={(e) =>
                         setInviteForm({
                           ...inviteForm,
-                          message: e.target.value,
+                          message: e.target._value,
                         })
                       }
                     />
@@ -540,8 +540,8 @@ export default function TeamManagementPage() {
                         {member.role !== "owner" && (
                           <Select
                             value={member.role}
-                            onValueChange={(value: TeamMember["role"]) =>
-                              updateMemberRole(member.id, value)
+                            onValueChange={(_value: TeamMember["role"]) =>
+                              updateMemberRole(member.id, _value)
                             }
                           >
                             <SelectTrigger className="w-[100px]">

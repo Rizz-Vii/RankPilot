@@ -33,8 +33,8 @@ try {
   } else {
     logger.warn("OPENAI_API_KEY not found in config or environment");
   }
-} catch (error) {
-  logger.error("Failed to initialize OpenAI client", error);
+} catch (_error) {
+  logger.error("Failed to initialize OpenAI client", _error);
 }// Types for request/response
 interface ChatRequest {
     uid: string;
@@ -45,7 +45,7 @@ interface ChatRequest {
 }
 
 interface ChatResponse {
-    response: string;
+    _response: string;
     sessionId: string;
     timestamp: string;
     tokensUsed: number;
@@ -66,7 +66,7 @@ export const customerChatHandler = onCall(
     timeoutSeconds: 30,
     secrets: ["OPENAI_API_KEY"], // Firebase Functions v2 secrets
   },
-  async (request) => {
+  async (_request) => {
     try {
       const { uid, message, url, sessionId } = request.data as ChatRequest;
 
@@ -111,7 +111,7 @@ export const customerChatHandler = onCall(
           .reverse();
 
         recentHistory.forEach(conv => {
-          if (conv.question && conv.response) {
+          if (conv.question && conv._response) {
             messages.splice(-1, 0,
               { role: "user", content: conv.question },
               { role: "assistant", content: conv.response }
@@ -139,7 +139,7 @@ export const customerChatHandler = onCall(
       const tokensUsed = completion.usage?.total_tokens || 0;
 
       // Save conversation to Firestore
-      await saveConversation(uid, currentSessionId, message, aiResponse, "customer", {
+      await saveConversation(uid, currentSessionId, message, _aiResponse, "customer", {
         auditContext: !!auditContext,
         siteContext: !!siteContext,
         neuroSEOContext: !!neuroSEOContext,
@@ -147,8 +147,8 @@ export const customerChatHandler = onCall(
       });
 
       // Prepare response
-      const response: ChatResponse = {
-        response: aiResponse,
+      const _response: ChatResponse = {
+        _response: _aiResponse,
         sessionId: currentSessionId,
         timestamp: new Date().toISOString(),
         tokensUsed,
@@ -159,7 +159,7 @@ export const customerChatHandler = onCall(
             siteContext ? "site_content" : null,
             neuroSEOContext ? "neuroseo_insights" : null,
             "user_tier_data"
-          ].filter((item): item is string => Boolean(item)),
+          ].filter((_item): item is string => Boolean(_item)),
         },
       }; logger.info("Customer chat response generated", {
         uid,
@@ -169,8 +169,8 @@ export const customerChatHandler = onCall(
 
       return response;
 
-    } catch (error) {
-      logger.error("Customer chat error", error);
+    } catch (_error) {
+      logger.error("Customer chat error", _error);
 
       if (error instanceof HttpsError) {
         throw error;
@@ -192,7 +192,7 @@ export const adminChatHandler = onCall(
     timeoutSeconds: 45,
     secrets: ["OPENAI_API_KEY"], // Firebase Functions v2 secrets
   },
-  async (request) => {
+  async (_request) => {
     try {
       const { uid, message, sessionId } = request.data as ChatRequest;
 
@@ -238,7 +238,7 @@ export const adminChatHandler = onCall(
           .reverse();
 
         recentHistory.forEach(conv => {
-          if (conv.question && conv.response) {
+          if (conv.question && conv._response) {
             messages.splice(-1, 0,
               { role: "user", content: conv.question },
               { role: "assistant", content: conv.response }
@@ -266,13 +266,13 @@ export const adminChatHandler = onCall(
       const tokensUsed = completion.usage?.total_tokens || 0;
 
       // Save admin conversation
-      await saveConversation(uid, currentSessionId, message, aiResponse, "admin", {
+      await saveConversation(uid, currentSessionId, message, _aiResponse, "admin", {
         adminLevel: userData.subscriptionTier,
         systemMetrics: adminContext.systemMetrics,
       });
 
-      const response: ChatResponse = {
-        response: aiResponse,
+      const _response: ChatResponse = {
+        _response: _aiResponse,
         sessionId: currentSessionId,
         timestamp: new Date().toISOString(),
         tokensUsed,
@@ -290,8 +290,8 @@ export const adminChatHandler = onCall(
 
       return response;
 
-    } catch (error) {
-      logger.error("Admin chat error", error);
+    } catch (_error) {
+      logger.error("Admin chat error", _error);
 
       if (error instanceof HttpsError) {
         throw error;
@@ -306,10 +306,10 @@ export const adminChatHandler = onCall(
  * Builds system prompt for customer chatbot
  */
 function buildCustomerSystemPrompt(
-  chatContext: any,
-  auditContext: any,
-  siteContext: any,
-  neuroSEOContext: any
+  chatContext: unknown,
+  auditContext: unknown,
+  siteContext: unknown,
+  neuroSEOContext: unknown
 ): string {
   const userTier = chatContext.userTier || "free";
   const availableFeatures = chatContext.availableFeatures || [];
@@ -393,7 +393,7 @@ IMPORTANT: If the user asks about features beyond their tier, explain the limita
 /**
  * Builds system prompt for admin chatbot
  */
-function buildAdminSystemPrompt(chatContext: any, adminContext: any): string {
+function buildAdminSystemPrompt(chatContext: unknown, adminContext: unknown): string {
   return `You are RankPilot Admin AI, an advanced system management assistant for RankPilot administrators.
 
 ADMIN CONTEXT:
@@ -408,7 +408,7 @@ CURRENT SYSTEM METRICS:
 - Error Rate: ${adminContext.systemMetrics.errorRate}%
 
 RECENT ACTIVITY:
-${adminContext.recentActivity.slice(0, 3).map((activity: any) =>
+${adminContext.recentActivity.slice(0, 3).map((activity: unknown) =>
     `- ${activity.type || "Activity"}: ${activity.description || "No description"}`
   ).join("\n")}
 
@@ -450,15 +450,15 @@ async function saveConversation(
   uid: string,
   sessionId: string,
   question: string,
-  response: string,
+  _response: string,
   chatType: "customer" | "admin",
-  metadata: any = {}
+  metadata: unknown = {}
 ): Promise<void> {
   try {
     const collectionName = chatType === "admin" ? "adminChats" : "chatLogs";
     const conversationData = {
       question,
-      response,
+      _response,
       timestamp: FieldValue.serverTimestamp(),
       tokensUsed: metadata.tokensUsed || 0,
       chatType,
@@ -486,8 +486,8 @@ async function saveConversation(
         chatType,
       }, { merge: true });
 
-  } catch (error) {
-    logger.error("Failed to save conversation", error);
+  } catch (_error) {
+    logger.error("Failed to save conversation", _error);
     // Don't throw error to avoid breaking the chat flow
   }
 }

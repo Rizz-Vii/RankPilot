@@ -46,7 +46,7 @@ type AccountFormValues = z.infer<typeof formSchema>;
 
 interface AccountSettingsFormProps {
   user: User;
-  profile: any;
+  profile: unknown;
 }
 
 export default function AccountSettingsForm({
@@ -91,7 +91,7 @@ export default function AccountSettingsForm({
         title: "Account Updated",
         description: "Your account information has been successfully updated.",
       });
-    } catch (error: any) {
+    } catch (_error: unknown) {
       toast({
         variant: "destructive",
         title: "Update Failed",

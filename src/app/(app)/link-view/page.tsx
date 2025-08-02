@@ -63,7 +63,7 @@ const DomainAuthorityChart = ({
   ];
 
   backlinks.forEach((link) => {
-    const index = Math.floor(link.domainAuthority / 10.01);
+    const _index = Math.floor(link.domainAuthority / 10.01);
     if (daRanges[index]) {
       daRanges[index].count++;
     }
@@ -163,12 +163,12 @@ export default function LinkViewPage() {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<LinkAnalysisOutput | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   const resultsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (results || error) {
+    if (results || _error) {
       resultsRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
@@ -189,7 +189,7 @@ export default function LinkViewPage() {
         limit: 100
       };
       const result = await analyzeLinks(analysisInput);
-      setResults(result);
+      setResults(_result);
 
       if (user) {
         const userActivitiesRef = collection(
@@ -206,7 +206,7 @@ export default function LinkViewPage() {
           resultsSummary: `Analyzed backlinks for ${values.url}. Found ${result.summary.totalBacklinks} links.`,
         });
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       setError(
         e.message || "An unexpected error occurred during link analysis."
       );

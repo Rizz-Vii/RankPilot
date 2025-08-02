@@ -12,9 +12,9 @@ import { DashboardDataService, type DashboardData } from "@/lib/services/dashboa
 
 // Hook for real-time dashboard data
 export const useRealTimeDashboardData = (userId: string | null) => {
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [_data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userId) {
@@ -33,7 +33,7 @@ export const useRealTimeDashboardData = (userId: string | null) => {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error fetching initial dashboard data:", err);
+        console.error("Error fetching initial dashboard _data:", err);
         setError("Failed to load dashboard data");
         setLoading(false);
       });
@@ -63,7 +63,7 @@ export const useRealTimeDashboardData = (userId: string | null) => {
       setData(freshData);
       setError(null);
     } catch (err) {
-      console.error("Error refreshing dashboard data:", err);
+      console.error("Error refreshing dashboard _data:", err);
       setError("Failed to refresh data");
     } finally {
       setLoading(false);
@@ -71,9 +71,9 @@ export const useRealTimeDashboardData = (userId: string | null) => {
   }, [userId]);
 
   return {
-    data,
+    _data,
     loading,
-    error,
+    _error,
     refresh
   };
 };
@@ -112,8 +112,8 @@ export const useChartData = (
           default:
             setChartData(null);
         }
-      } catch (error) {
-        console.error(`Error fetching ${chartType} chart data:`, error);
+      } catch (_error) {
+        console.error(`Error fetching ${chartType} chart _data:`, _error);
         setChartData(null);
       } finally {
         setLoading(false);
@@ -153,8 +153,8 @@ export const useUserMetrics = (userId: string | null) => {
           domainAuthority: data.domainAuthority.score,
           totalBacklinks: data.backlinks.total
         });
-      } catch (error) {
-        console.error("Error fetching user metrics:", error);
+      } catch (_error) {
+        console.error("Error fetching user metrics:", _error);
       } finally {
         setLoading(false);
       }

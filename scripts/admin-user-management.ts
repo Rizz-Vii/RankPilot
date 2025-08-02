@@ -20,7 +20,7 @@ interface UserProfile {
   subscriptionTier: string;
   subscriptionStatus: string;
   displayName?: string;
-  createdAt?: any;
+  createdAt?: unknown;
 }
 
 export async function diagnoseAdminUsers() {
@@ -83,8 +83,8 @@ export async function diagnoseAdminUsers() {
         ...doc.data(),
       })),
     };
-  } catch (error) {
-    console.error("❌ Error diagnosing admin users:", error);
+  } catch (_error) {
+    console.error("❌ Error diagnosing admin users:", _error);
     throw error;
   }
 }
@@ -132,8 +132,8 @@ export async function fixAdminUserConfiguration(userEmail: string) {
     console.log("\n🎉 Admin user configuration fixed!");
 
     return true;
-  } catch (error) {
-    console.error("❌ Error fixing admin user:", error);
+  } catch (_error) {
+    console.error("❌ Error fixing admin user:", _error);
     throw error;
   }
 }
@@ -177,8 +177,8 @@ export async function createAdminUser(
     console.log(`   - Tier: enterprise`);
 
     return true;
-  } catch (error) {
-    console.error("❌ Error creating admin user:", error);
+  } catch (_error) {
+    console.error("❌ Error creating admin user:", _error);
     throw error;
   }
 }
@@ -197,7 +197,7 @@ export async function quickFixKnownAdmins() {
     try {
       await fixAdminUserConfiguration(email);
       console.log(`✅ Fixed: ${email}\n`);
-    } catch (error) {
+    } catch (_error) {
       console.log(`❌ Failed to fix ${email}: ${error}\n`);
     }
   }

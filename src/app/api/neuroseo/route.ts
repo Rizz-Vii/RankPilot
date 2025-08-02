@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const body = await request.json();
     const { urls, targetKeywords, analysisType, userPlan, userId } = body;
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!urls || !Array.isArray(urls) || urls.length === 0) {
       return NextResponse.json(
-        { error: "URLs array is required and cannot be empty" },
+        { _error: "URLs array is required and cannot be empty" },
         { status: 400 }
       );
     }
@@ -28,8 +28,8 @@ export async function POST(request: NextRequest) {
       const neuroSEOModule = await import("../../../lib/neuroseo/index.js");
       const { NeuroSEOSuite } = neuroSEOModule;
       neuroSEO = new NeuroSEOSuite();
-    } catch (error) {
-      console.warn('[NeuroSEO API] Failed to initialize NeuroSEO Suite:', error);
+    } catch (_error) {
+      console.warn('[NeuroSEO API] Failed to initialize NeuroSEO Suite:', _error);
       // Return mock response during build/development
       return NextResponse.json({
         analysis: {
@@ -62,15 +62,15 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(report);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
-      { error: "Failed to process analysis request" },
+      { _error: "Failed to process analysis request" },
       { status: 400 }
     );
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId") || "anonymous";
@@ -81,8 +81,8 @@ export async function GET(request: NextRequest) {
       const neuroSEOModule = await import("../../../lib/neuroseo/index.js");
       const { NeuroSEOSuite } = neuroSEOModule;
       neuroSEO = new NeuroSEOSuite();
-    } catch (error) {
-      console.warn('[NeuroSEO API] GET - Failed to initialize NeuroSEO Suite:', error);
+    } catch (_error) {
+      console.warn('[NeuroSEO API] GET - Failed to initialize NeuroSEO Suite:', _error);
       // Return mock usage stats
       return NextResponse.json({
         usage: {
@@ -124,9 +124,9 @@ export async function GET(request: NextRequest) {
     };
 
     return NextResponse.json(usageStats);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
-      { error: "Failed to load usage statistics" },
+      { _error: "Failed to load usage statistics" },
       { status: 500 }
     );
   }

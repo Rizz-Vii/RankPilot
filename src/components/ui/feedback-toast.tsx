@@ -6,14 +6,14 @@ import { useUI } from "@/context/UIContext";
 
 const iconMap = {
   success: CheckCircle,
-  error: XCircle,
+  _error: XCircle,
   warning: AlertCircle,
   info: Info,
 };
 
 const colorMap = {
   success: "bg-success text-success-foreground",
-  error: "bg-destructive text-destructive-foreground",
+  _error: "bg-destructive text-destructive-foreground",
   warning: "bg-warning text-warning-foreground",
   info: "bg-info text-info-foreground",
 };

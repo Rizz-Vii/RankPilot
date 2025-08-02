@@ -42,8 +42,8 @@ export function initializeFirebaseSafe() {
         db = getFirestore(app);
 
         return { app, auth, db };
-    } catch (error) {
-        console.warn('[Firebase] Initialization failed, using mock objects:', error);
+    } catch (_error) {
+        console.warn('[Firebase] Initialization failed, using mock objects:', _error);
         return {
             app: null,
             auth: null,

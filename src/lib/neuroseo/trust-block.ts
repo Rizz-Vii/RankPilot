@@ -43,7 +43,7 @@ export interface TrustSignal {
     | "citation"
     | "review"
     | "endorsement";
-  value: string;
+  _value: string;
   weight: number;
   confidence: number;
   impact: "high" | "medium" | "low";
@@ -331,11 +331,11 @@ export class TrustBlockEngine {
     // Look for factual indicators
     const factualIndicators = [
       /\b\d{4}\b/, // Years
-      /according to/i,
-      /research shows/i,
-      /study found/i,
-      /data indicates/i,
-      /statistics show/i,
+      /according to/_i,
+      /research shows/_i,
+      /study found/_i,
+      /data indicates/_i,
+      /statistics show/_i,
     ];
 
     const indicatorCount = factualIndicators.reduce((count, pattern) => {
@@ -471,7 +471,7 @@ export class TrustBlockEngine {
       if (authorProfile.credentials.length > 0) {
         signals.push({
           type: "author",
-          value: `Author has ${authorProfile.credentials.length} credentials`,
+          _value: `Author has ${authorProfile.credentials.length} credentials`,
           weight: 0.9,
           confidence: 0.95,
           impact: "high",
@@ -482,7 +482,7 @@ export class TrustBlockEngine {
       if (authorProfile.authorityScore > 80) {
         signals.push({
           type: "author",
-          value: `High authority score: ${authorProfile.authorityScore}`,
+          _value: `High authority score: ${authorProfile.authorityScore}`,
           weight: 0.8,
           confidence: 0.9,
           impact: "high",
@@ -498,7 +498,7 @@ export class TrustBlockEngine {
     if (urls.length >= 3) {
       signals.push({
         type: "source",
-        value: `${urls.length} external sources cited`,
+        _value: `${urls.length} external sources cited`,
         weight: 0.7,
         confidence: 0.8,
         impact: "medium",
@@ -515,7 +515,7 @@ export class TrustBlockEngine {
     ) {
       signals.push({
         type: "publication",
-        value: `Published on authoritative domain: ${domain}`,
+        _value: `Published on authoritative domain: ${domain}`,
         weight: 0.9,
         confidence: 0.95,
         impact: "high",
@@ -537,7 +537,7 @@ export class TrustBlockEngine {
     if (citationCount >= 5) {
       signals.push({
         type: "citation",
-        value: `${citationCount} citations found`,
+        _value: `${citationCount} citations found`,
         weight: 0.6,
         confidence: 0.8,
         impact: "medium",
@@ -560,7 +560,7 @@ export class TrustBlockEngine {
     if (endorsements > 0) {
       signals.push({
         type: "endorsement",
-        value: `${endorsements} endorsement indicators`,
+        _value: `${endorsements} endorsement indicators`,
         weight: 0.8,
         confidence: 0.7,
         impact: "high",
@@ -684,10 +684,10 @@ export class TrustBlockEngine {
 
     const claimIndicators = [
       /\d+%/,
-      /according to/i,
-      /studies show/i,
-      /research indicates/i,
-      /\b\d+\s+(times|percent|people|users)\b/i,
+      /according to/_i,
+      /studies show/_i,
+      /research indicates/_i,
+      /\b\d+\s+(times|percent|people|users)\b/_i,
     ];
 
     return sentences

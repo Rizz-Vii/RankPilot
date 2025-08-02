@@ -37,8 +37,8 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps) {
         setAnalytics(userAnalytics);
         setPlatformMetrics(subscriptionInsights);
         
-      } catch (error) {
-        console.error('Error loading admin dashboard:', error);
+      } catch (_error) {
+        console.error('Error loading admin dashboard:', _error);
       } finally {
         setLoading(false);
       }
@@ -92,7 +92,7 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold">
               {Object.values(analytics?.usersByTier || {})
-                .filter((_, index) => index > 0) // Exclude free tier
+                .filter((_, _index) => index > 0) // Exclude free tier
                 .reduce((sum, count) => sum + count, 0)
                 .toLocaleString()}
             </div>

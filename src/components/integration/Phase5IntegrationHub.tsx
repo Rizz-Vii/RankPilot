@@ -75,8 +75,8 @@ export function Phase5IntegrationHub() {
             startRealTimeSync();
 
             setIsInitializing(false);
-        } catch (error) {
-            console.error('Failed to initialize enterprise systems:', error);
+        } catch (_error) {
+            console.error('Failed to initialize enterprise systems:', _error);
             setIsInitializing(false);
         }
     }, []);
@@ -88,14 +88,14 @@ export function Phase5IntegrationHub() {
             // Record custom metrics for RankPilot
             apm.recordMetric({
                 name: 'seo_analysis_throughput',
-                value: 85,
+                _value: 85,
                 unit: 'requests/minute',
                 tags: { target: '100', description: 'NeuroSEO analysis requests per minute' }
             });
 
             apm.recordMetric({
                 name: 'user_engagement_score',
-                value: 92,
+                _value: 92,
                 unit: 'percentage',
                 tags: { target: '85', description: 'User engagement composite score' }
             }); updateSystemStatus('apm', {
@@ -108,7 +108,7 @@ export function Phase5IntegrationHub() {
                     alerts_configured: 15
                 }
             });
-        } catch (error) {
+        } catch (_error) {
             updateSystemStatus('apm', {
                 name: 'Enterprise APM',
                 status: 'error',
@@ -125,13 +125,13 @@ export function Phase5IntegrationHub() {
             // Add data points for RankPilot-specific patterns
             anomalyDetector.addDataPoint('performance', {
                 timestamp: Date.now(),
-                value: 95.5,
+                _value: 95.5,
                 metadata: { source: 'core_web_vitals', page: 'dashboard' }
             });
 
             anomalyDetector.addDataPoint('user_behavior', {
                 timestamp: Date.now(),
-                value: 88.2,
+                _value: 88.2,
                 metadata: { metric: 'engagement_score', cohort: 'premium_users' }
             });
 
@@ -145,7 +145,7 @@ export function Phase5IntegrationHub() {
                     alerts_last_24h: 3
                 }
             });
-        } catch (error) {
+        } catch (_error) {
             updateSystemStatus('anomaly_detection', {
                 name: 'AI Anomaly Detection',
                 status: 'error',
@@ -176,7 +176,7 @@ export function Phase5IntegrationHub() {
                     global_latency: 145
                 }
             });
-        } catch (error) {
+        } catch (_error) {
             updateSystemStatus('global_optimization', {
                 name: 'Global Infrastructure',
                 status: 'error',
@@ -201,7 +201,7 @@ export function Phase5IntegrationHub() {
                     time_saved_hours: 156
                 }
             });
-        } catch (error) {
+        } catch (_error) {
             updateSystemStatus('dev_automation', {
                 name: 'AI Development Automation',
                 status: 'error',
@@ -268,15 +268,15 @@ export function Phase5IntegrationHub() {
                     }
                 });
 
-            } catch (error) {
-                console.error('Real-time sync failed:', error);
+            } catch (_error) {
+                console.error('Real-time sync failed:', _error);
             }
         }, 30000); // Sync every 30 seconds
 
         return () => clearInterval(syncInterval);
     };
 
-    const calculateIntegrationMetrics = (data: any): IntegrationMetrics => {
+    const calculateIntegrationMetrics = (data: unknown): IntegrationMetrics => {
         // Complex calculation combining all enterprise systems
         const overall_health = Math.round((
             (data.apm?.overall_health || 0) * 0.3 +
@@ -360,8 +360,8 @@ export function Phase5IntegrationHub() {
                     }
                     break;
             }
-        } catch (error) {
-            console.error(`Action ${action} failed for ${systemId}:`, error);
+        } catch (_error) {
+            console.error(`Action ${action} failed for ${systemId}:`, _error);
         }
     };
 
@@ -477,7 +477,7 @@ export function Phase5IntegrationHub() {
                             <CardContent>
                                 {system.metrics && (
                                     <div className="grid grid-cols-2 gap-4 mb-4">
-                                        {Object.entries(system.metrics).map(([key, value]) => (
+                                        {Object.entries(system.metrics).map(([_key, value]) => (
                                             <div key={key} className="text-center">
                                                 <div className="text-lg font-semibold">{value}</div>
                                                 <div className="text-sm text-gray-600 capitalize">

@@ -11,7 +11,7 @@ import {
 export interface CacheOptions {
   ttlMs?: number;
   maxSize?: number;
-  keyGenerator?: (...args: any[]) => string;
+  keyGenerator?: (...args: unknown[]) => string;
 }
 
 export interface BatchOptions {
@@ -30,15 +30,15 @@ export interface OptimizationOptions extends CacheOptions, BatchOptions {
 }
 
 interface CacheEntry<T> {
-  data: T;
+  _data: T;
   timestamp: number;
   hits: number;
 }
 
 interface BatchRequest<T> {
-  args: any[];
-  resolve: (value: T) => void;
-  reject: (reason: any) => void;
+  args: unknown[];
+  resolve: (_value: T) => void;
+  reject: (reason: unknown) => void;
   timestamp: number;
 }
 
@@ -52,13 +52,13 @@ class ResponseCache<T> {
     this.ttlMs = options.ttlMs || 5 * 60 * 1000; // 5 minutes default
   }
 
-  get(key: string): T | null {
-    const entry = this.cache.get(key);
+  get(_key: string): T | null {
+    const entry = this.cache.get(_key);
     if (!entry) return null;
 
     // Check if expired
     if (Date.now() - entry.timestamp > this.ttlMs) {
-      this.cache.delete(key);
+      this.cache.delete(_key);
       return null;
     }
 
@@ -68,14 +68,14 @@ class ResponseCache<T> {
     return entry.data;
   }
 
-  set(key: string, data: T): void {
+  set(_key: string, _data: T): void {
     // Remove oldest entries if at capacity
     if (this.cache.size >= this.maxSize) {
       this.evictOldest();
     }
 
-    this.cache.set(key, {
-      data,
+    this.cache.set(_key, {
+      _data,
       timestamp: Date.now(),
       hits: 1,
     });
@@ -106,7 +106,7 @@ class ResponseCache<T> {
     let oldestTime = Date.now();
     let lowestHits = Infinity;
 
-    for (const [key, entry] of this.cache.entries()) {
+    for (const [_key, entry] of this.cache.entries()) {
       // Prioritize by hits first, then by age
       if (
         entry.hits < lowestHits ||
@@ -137,13 +137,13 @@ class RequestBatcher<T> {
     this.maxWaitMs = options.maxWaitMs || 1000;
   }
 
-  async batch<A extends any[]>(
+  async batch<A extends unknown[]>(
     batchKey: string,
     args: A,
     batchProcessor: (batchedArgs: A[]) => Promise<T[]>
   ): Promise<T> {
     return new Promise<T>((resolve, reject) => {
-      const request: BatchRequest<T> = {
+      const _request: BatchRequest<T> = {
         args,
         resolve,
         reject,
@@ -156,7 +156,7 @@ class RequestBatcher<T> {
       }
 
       const requests = this.pendingRequests.get(batchKey)!;
-      requests.push(request);
+      requests.push(_request);
 
       // Process immediately if batch is full
       if (requests.length >= this.maxBatchSize) {
@@ -184,9 +184,9 @@ class RequestBatcher<T> {
     });
   }
 
-  private async processBatch<A extends any[]>(
+  private async processBatch<A extends unknown[]>(
     batchKey: string,
-    batchProcessor: (batchedArgs: A[]) => Promise<any[]>
+    batchProcessor: (batchedArgs: A[]) => Promise<unknown[]>
   ): Promise<void> {
     const requests = this.pendingRequests.get(batchKey);
     if (!requests || requests.length === 0) return;
@@ -204,7 +204,7 @@ class RequestBatcher<T> {
       const results = await batchProcessor(batchedArgs);
 
       // Resolve individual requests
-      requests.forEach((request, index) => {
+      requests.forEach((_request, _index) => {
         if (index < results.length) {
           request.resolve(results[index]);
         } else {
@@ -213,10 +213,10 @@ class RequestBatcher<T> {
           );
         }
       });
-    } catch (error) {
+    } catch (_error) {
       // Reject all requests in the batch
-      requests.forEach((request) => {
-        request.reject(error);
+      requests.forEach((_request) => {
+        request.reject(_error);
       });
     }
   }
@@ -246,7 +246,7 @@ class AIResponseOptimizer {
     return this.batchers.get(operationType)!;
   }
 
-  async optimizeRequest<T, A extends any[]>(
+  async optimizeRequest<T, A extends unknown[]>(
     operationType: string,
     operation: (...args: A) => Promise<T>,
     args: A,
@@ -305,9 +305,9 @@ class AIResponseOptimizer {
       });
 
       // Cache successful results
-      if (enableCaching && timeoutResult.result) {
+      if (enableCaching && timeoutResult._result) {
         const cache = this.getCache<T>(operationType, options);
-        cache.set(cacheKey, timeoutResult.result);
+        cache.set(cacheKey, timeoutResult._result);
       }
 
       return timeoutResult;
@@ -330,8 +330,8 @@ class AIResponseOptimizer {
   }
 
   async optimizeDataProcessing<T>(
-    operation: (data: any) => Promise<T>,
-    data: any,
+    operation: (_data: unknown) => Promise<T>,
+    _data: unknown,
     options: Partial<OptimizationOptions> = {}
   ): Promise<TimeoutResult<T>> {
     return this.optimizeRequest("data-processing", operation, [data], {
@@ -339,7 +339,7 @@ class AIResponseOptimizer {
       enableBatching: true,
       maxBatchSize: 3,
       operationType: "data-processing",
-      keyGenerator: (data: any) => `data:${JSON.stringify(data).slice(0, 100)}`,
+      keyGenerator: (_data: unknown) => `_data:${JSON.stringify(_data).slice(0, 100)}`,
       ...options,
     });
   }
@@ -368,7 +368,7 @@ class AIResponseOptimizer {
 
   getHealthStatus(): {
     cacheHealth: Record<string, any>;
-    performanceHealth: any;
+    performanceHealth: unknown;
     recommendations: string[];
   } {
     const cacheStats = this.getCacheStats();
@@ -376,7 +376,7 @@ class AIResponseOptimizer {
     const recommendations: string[] = [];
 
     // Analyze cache performance
-    Object.entries(cacheStats).forEach(([type, stats]) => {
+    Object.entries(_cacheStats).forEach(([type, stats]) => {
       if (stats.hitRate < 30) {
         recommendations.push(
           `Consider increasing cache TTL for ${type} operations`
@@ -390,7 +390,7 @@ class AIResponseOptimizer {
     });
 
     return {
-      cacheHealth: cacheStats,
+      cacheHealth: _cacheStats,
       performanceHealth,
       recommendations: [
         ...recommendations,

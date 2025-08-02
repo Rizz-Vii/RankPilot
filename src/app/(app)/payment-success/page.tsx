@@ -254,7 +254,7 @@ export default function PaymentSuccess() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {features.map((feature, index) => (
+                  {features.map((feature, _index) => (
                     <motion.div
                       key={index}
                       initial={{ opacity: 0, x: 20 }}
@@ -290,7 +290,7 @@ export default function PaymentSuccess() {
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-6">
-                {nextSteps.map((step, index) => (
+                {nextSteps.map((step, _index) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, y: 20 }}

@@ -100,8 +100,8 @@ export default function ApiManagementPage() {
         },
       ];
       setApiKeys(mockKeys);
-    } catch (error) {
-      console.error("Error fetching API keys:", error);
+    } catch (_error) {
+      console.error("Error fetching API keys:", _error);
       toast.error("Failed to load API keys");
     } finally {
       setLoading(false);
@@ -120,8 +120,8 @@ export default function ApiManagementPage() {
         avgResponseTime: 245,
       };
       setUsage(mockUsage);
-    } catch (error) {
-      console.error("Error fetching usage stats:", error);
+    } catch (_error) {
+      console.error("Error fetching usage stats:", _error);
     }
   };
 
@@ -148,8 +148,8 @@ export default function ApiManagementPage() {
       setApiKeys([...apiKeys, newKey]);
       setNewKeyName("");
       toast.success("API key created successfully");
-    } catch (error) {
-      console.error("Error creating API key:", error);
+    } catch (_error) {
+      console.error("Error creating API _key:", _error);
       toast.error("Failed to create API key");
     } finally {
       setIsCreating(false);
@@ -158,10 +158,10 @@ export default function ApiManagementPage() {
 
   const deleteApiKey = async (keyId: string) => {
     try {
-      setApiKeys(apiKeys.filter((key) => key.id !== keyId));
+      setApiKeys(apiKeys.filter((_key) => key.id !== keyId));
       toast.success("API key deleted successfully");
-    } catch (error) {
-      console.error("Error deleting API key:", error);
+    } catch (_error) {
+      console.error("Error deleting API _key:", _error);
       toast.error("Failed to delete API key");
     }
   };
@@ -230,7 +230,7 @@ export default function ApiManagementPage() {
                       id="keyName"
                       placeholder="e.g., Production API, Development, Mobile App"
                       value={newKeyName}
-                      onChange={(e) => setNewKeyName(e.target.value)}
+                      onChange={(e) => setNewKeyName(e.target._value)}
                     />
                   </div>
                   <div className="flex items-end">
@@ -257,7 +257,7 @@ export default function ApiManagementPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {apiKeys.map((key) => (
+                  {apiKeys.map((_key) => (
                     <div
                       key={key.id}
                       className="flex items-center justify-between p-4 border rounded-lg"

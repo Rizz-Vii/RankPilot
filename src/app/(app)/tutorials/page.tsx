@@ -88,20 +88,20 @@ type TutorialCategory =
   | "advanced-features";
 
 const TUTORIAL_CATEGORIES = [
-  { value: "getting-started", label: "Getting Started", icon: Lightbulb },
-  { value: "seo-analysis", label: "SEO Analysis", icon: Search },
-  { value: "keyword-research", label: "Keyword Research", icon: Star },
+  { _value: "getting-started", label: "Getting Started", icon: Lightbulb },
+  { _value: "seo-analysis", label: "SEO Analysis", icon: Search },
+  { _value: "keyword-research", label: "Keyword Research", icon: Star },
   {
-    value: "content-optimization",
+    _value: "content-optimization",
     label: "Content Optimization",
     icon: FileText,
   },
-  { value: "competitor-analysis", label: "Competitor Analysis", icon: Users },
-  { value: "reporting", label: "Reporting", icon: BookOpen },
-  { value: "api-integration", label: "API Integration", icon: Zap },
-  { value: "team-management", label: "Team Management", icon: Users },
-  { value: "enterprise-features", label: "Enterprise Features", icon: Crown },
-  { value: "advanced-features", label: "Advanced Features", icon: Star },
+  { _value: "competitor-analysis", label: "Competitor Analysis", icon: Users },
+  { _value: "reporting", label: "Reporting", icon: BookOpen },
+  { _value: "api-integration", label: "API Integration", icon: Zap },
+  { _value: "team-management", label: "Team Management", icon: Users },
+  { _value: "enterprise-features", label: "Enterprise Features", icon: Crown },
+  { _value: "advanced-features", label: "Advanced Features", icon: Star },
 ];
 
 export default function TutorialsPage() {
@@ -395,15 +395,15 @@ export default function TutorialsPage() {
       ];
 
       setTutorials(mockTutorials);
-    } catch (error) {
-      console.error("Error fetching tutorials:", error);
+    } catch (_error) {
+      console.error("Error fetching tutorials:", _error);
     } finally {
       setLoading(false);
     }
   };
 
   const filterTutorials = () => {
-    let filtered = tutorials.filter((tutorial) => {
+    const filtered = tutorials.filter((tutorial) => {
       // Check tier access
       const hasAccess = checkTutorialAccess(tutorial);
       if (!hasAccess) return false;
@@ -516,7 +516,7 @@ export default function TutorialsPage() {
   const groupedTutorials = TUTORIAL_CATEGORIES.reduce(
     (acc, category) => {
       acc[category.value] = filteredTutorials.filter(
-        (t) => t.category === category.value
+        (t) => t.category === category._value
       );
       return acc;
     },
@@ -593,7 +593,7 @@ export default function TutorialsPage() {
                 <Input
                   placeholder="Search tutorials..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => setSearchQuery(e.target._value)}
                   className="pl-9"
                 />
               </div>
@@ -781,7 +781,7 @@ export default function TutorialsPage() {
                   <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
                     <h4 className="font-semibold mb-2">Prerequisites:</h4>
                     <ul className="list-disc list-inside text-sm">
-                      {selectedTutorial.prerequisites.map((prereq, index) => (
+                      {selectedTutorial.prerequisites.map((prereq, _index) => (
                         <li key={index}>{prereq}</li>
                       ))}
                     </ul>
@@ -791,7 +791,7 @@ export default function TutorialsPage() {
                 {selectedTutorial.steps && (
                   <div className="space-y-4">
                     <h4 className="font-semibold">Tutorial Steps:</h4>
-                    {selectedTutorial.steps.map((step, index) => (
+                    {selectedTutorial.steps.map((step, _index) => (
                       <div
                         key={step.id}
                         className="flex gap-4 p-4 border rounded-lg"

@@ -42,7 +42,7 @@ interface UserData {
   updatedAt?: Date;
   lastLoginAt?: Date;
   nextBillingDate?: Date;
-  [key: string]: any;
+  [_key: string]: unknown;
 }
 
 export async function getAllUsers() {
@@ -83,8 +83,8 @@ export async function getAllUsers() {
     });
 
     return { users, usersByTier };
-  } catch (error) {
-    console.error("❌ Error retrieving users:", error);
+  } catch (_error) {
+    console.error("❌ Error retrieving users:", _error);
     throw error;
   }
 }
@@ -93,7 +93,7 @@ if (require.main === module) {
   getAllUsers()
     .then(({ users, usersByTier }) => {
       console.log("\n📋 User Details:");
-      users.forEach((user, index) => {
+      users.forEach((user, _index) => {
         console.log(`\n${index + 1}. ${user.email || "No email"}`);
         console.log(`   ID: ${user.id}`);
         console.log(`   Tier: ${user.subscriptionTier || "free"}`);
@@ -105,8 +105,8 @@ if (require.main === module) {
 
       process.exit(0);
     })
-    .catch((error) => {
-      console.error("💥 Failed to retrieve users:", error);
+    .catch((_error) => {
+      console.error("💥 Failed to retrieve users:", _error);
       process.exit(1);
     });
 }

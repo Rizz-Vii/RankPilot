@@ -342,7 +342,7 @@ export function getUpgradeMessage(
 /**
  * Validate user access object
  */
-export function validateUserAccess(userAccess: any): userAccess is UserAccess {
+export function validateUserAccess(userAccess: unknown): userAccess is UserAccess {
   return (
     userAccess &&
     typeof userAccess.role === "string" &&
@@ -357,7 +357,7 @@ export function validateUserAccess(userAccess: any): userAccess is UserAccess {
 /**
  * Normalize user data from database
  */
-export function normalizeUserAccess(dbUser: any): UserAccess {
+export function normalizeUserAccess(dbUser: unknown): UserAccess {
   // Handle admin tier mapping - admin tier gets enterprise features with admin role
   let mappedTier: SubscriptionTier;
   let mappedRole: UserRole;

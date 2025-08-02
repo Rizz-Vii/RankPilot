@@ -6,6 +6,35 @@
 			"type": "shell",
 			"command": "npm run dev-no-turbopack",
 			"isBackground": true
+		},
+		{
+			"label": "TypeScript: Watch All Errors",
+			"type": "shell",
+			"command": "npx tsc --noEmit --watch",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"isBackground": true,
+			"problemMatcher": "$tsc-watch"
+		},
+		{
+			"label": "TypeScript: Check All Errors (One-time)",
+			"type": "shell",
+			"command": "npx tsc --noEmit",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": "$tsc"
 		}
 	]
 }

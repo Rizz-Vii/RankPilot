@@ -7,7 +7,7 @@ export function initializeGlobalErrorHandler() {
   if (errorHandlerInitialized || typeof window === "undefined") return;
 
   // Catch unhandled promise rejections (like Firebase fetch errors)
-  window.addEventListener("unhandledrejection", (event) => {
+  window.addEventListener("unhandledrejection", (_event) => {
     const error = event.reason;
 
     // Check if it&apos;s a Firebase-related fetch error
@@ -16,7 +16,7 @@ export function initializeGlobalErrorHandler() {
       error.message.includes("Failed to fetch") &&
       (error.stack?.includes("firebase") || error.stack?.includes("firestore"))
     ) {
-      console.warn("Suppressed Firebase fetch error:", error.message);
+      console.warn("Suppressed Firebase fetch _error:", error.message);
       event.preventDefault(); // Prevent the error from propagating
       return;
     }
@@ -26,17 +26,17 @@ export function initializeGlobalErrorHandler() {
       error?.message?.includes("installations") ||
       error?.message?.includes("analytics")
     ) {
-      console.warn("Suppressed Firebase service error:", error.message);
+      console.warn("Suppressed Firebase service _error:", error.message);
       event.preventDefault();
       return;
     }
 
     // Let other errors through
-    console.error("Unhandled promise rejection:", error);
+    console.error("Unhandled promise rejection:", _error);
   });
 
   // Catch regular JavaScript errors
-  window.addEventListener("error", (event) => {
+  window.addEventListener("error", (_event) => {
     const error = event.error;
 
     if (
@@ -45,13 +45,13 @@ export function initializeGlobalErrorHandler() {
       (event.filename?.includes("firebase") ||
         error.stack?.includes("firebase"))
     ) {
-      console.warn("Suppressed Firebase error:", error.message);
+      console.warn("Suppressed Firebase _error:", error.message);
       event.preventDefault();
       return;
     }
 
     // Let other errors through
-    console.error("Global error:", error);
+    console.error("Global _error:", _error);
   });
 
   errorHandlerInitialized = true;

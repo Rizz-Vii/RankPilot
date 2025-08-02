@@ -15,7 +15,7 @@ export function ChartContainer({
     className = ""
 }: {
     children: React.ReactNode;
-    config: any;
+    config: unknown;
     className?: string;
 }) {
     return <div className={`chart-container ${className}`}>{children}</div>;
@@ -25,13 +25,13 @@ export function ChartTooltip({
     content,
     className = ""
 }: {
-    content: (props: any) => React.ReactNode;
+    content: (props: unknown) => React.ReactNode;
     className?: string;
 }) {
     return null; // Placeholder implementation
 }
 
-export function ChartTooltipContent(props: any) {
+export function ChartTooltipContent(props: unknown) {
     return (
         <div className="chart-tooltip">
             {props.label}: {props.value}
@@ -41,10 +41,10 @@ export function ChartTooltipContent(props: any) {
 
 // Progress component
 export function Progress({
-    value,
+    _value,
     className = ""
 }: {
-    value: number;
+    _value: number;
     className?: string;
 }) {
     return (

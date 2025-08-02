@@ -20,8 +20,8 @@ if (!getApps().length) {
       projectId: "rankpilot-h3jpc",
     });
     console.log("✅ Firebase Admin initialized successfully");
-  } catch (error) {
-    console.error("❌ Failed to initialize Firebase Admin:", error);
+  } catch (_error) {
+    console.error("❌ Failed to initialize Firebase Admin:", _error);
     throw error;
   }
 }
@@ -63,7 +63,7 @@ const TEST_USERS = {
   }
 };
 
-async function seedUserProfile(user: any) {
+async function seedUserProfile(user: unknown) {
   console.log(`🌱 Seeding user profile: ${user.email}`);
   
   try {
@@ -107,18 +107,18 @@ async function seedUserProfile(user: any) {
     // Seed sample data for this user
     await seedUserData(user);
     
-  } catch (error) {
-    console.error(`   ❌ Failed to seed user ${user.email}:`, error);
+  } catch (_error) {
+    console.error(`   ❌ Failed to seed user ${user.email}:`, _error);
   }
 }
 
-async function seedUserData(user: any) {
+async function seedUserData(user: unknown) {
   const now = Timestamp.now();
   const pastMonth = Timestamp.fromDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
   
   // Seed NeuroSEO analyses
   const analysesCount = getTierAnalysesCount(user.tier);
-  for (let i = 0; i < analysesCount; i++) {
+  for (let _i = 0; i < analysesCount; i++) {
     await db.collection('neuroSeoAnalyses').add({
       userId: user.uid,
       url: `https://example-${i}.com`,
@@ -134,7 +134,7 @@ async function seedUserData(user: any) {
   
   // Seed keyword research
   const keywordCount = getTierKeywordCount(user.tier);
-  for (let i = 0; i < keywordCount; i++) {
+  for (let _i = 0; i < keywordCount; i++) {
     await db.collection('keywordResearch').add({
       userId: user.uid,
       keyword: `test keyword ${i}`,
@@ -146,7 +146,7 @@ async function seedUserData(user: any) {
   
   // Seed SEO audits
   const auditCount = getTierAuditCount(user.tier);
-  for (let i = 0; i < auditCount; i++) {
+  for (let _i = 0; i < auditCount; i++) {
     await db.collection('seoAudits').add({
       userId: user.uid,
       url: `https://audit-${i}.com`,
@@ -158,7 +158,7 @@ async function seedUserData(user: any) {
   
   // Seed link analyses
   const linkCount = getTierLinkCount(user.tier);
-  for (let i = 0; i < linkCount; i++) {
+  for (let _i = 0; i < linkCount; i++) {
     await db.collection('linkAnalyses').add({
       userId: user.uid,
       domain: `example-${i}.com`,
@@ -286,7 +286,7 @@ Starting seeding process...
 Next: Run authentication tests
     `);
     
-  } catch (error) {
+  } catch (_error) {
     console.error(`
 ❌ Database seeding failed!
 
@@ -301,4 +301,4 @@ Please check:
 }
 
 // Run the seeding
-main().catch(console.error);
+main().catch(console._error);

@@ -62,7 +62,7 @@ async function createUnifiedTestUsers() {
             try {
                 authUser = await auth.getUserByEmail(user.email);
                 console.log(`  ✅ Auth user already exists: ${user.email} (UID: ${authUser.uid})`);
-            } catch (error: any) {
+            } catch (_error: unknown) {
                 if (error.code === 'auth/user-not-found') {
                     // Create new auth user
                     try {
@@ -74,7 +74,7 @@ async function createUnifiedTestUsers() {
                             emailVerified: true, // Mark as verified for testing
                         });
                         console.log(`  ✅ Created Auth user: ${user.email} (UID: ${authUser.uid})`);
-                    } catch (createError: any) {
+                    } catch (createError: unknown) {
                         if (createError.code === 'auth/uid-already-exists') {
                             // UID exists but email doesn't match, get by UID
                             authUser = await auth.getUser(user.uid);
@@ -162,7 +162,7 @@ async function createUnifiedTestUsers() {
                 console.error(`  ⚠️ Failed to create usage document for ${user.email}:`, usageError);
             }
 
-        } catch (error: any) {
+        } catch (_error: unknown) {
             console.error(`❌ Failed to process user ${user.email}:`, error.message);
         }
     }
@@ -184,7 +184,7 @@ async function cleanupExistingTestUsers() {
             try {
                 await auth.deleteUser(user.uid);
                 console.log(`  🗑️ Deleted Auth user: ${user.email}`);
-            } catch (error: any) {
+            } catch (_error: unknown) {
                 if (error.code !== 'auth/user-not-found') {
                     console.error(`  ⚠️ Failed to delete Auth user ${user.email}:`, error.message);
                 }
@@ -196,12 +196,12 @@ async function cleanupExistingTestUsers() {
                 try {
                     await firestore.collection(collection).doc(user.uid).delete();
                     console.log(`  🗑️ Deleted ${collection} document for: ${user.email}`);
-                } catch (error) {
+                } catch (_error) {
                     // Document might not exist, which is fine
                 }
             }
 
-        } catch (error: any) {
+        } catch (_error: unknown) {
             console.error(`❌ Failed to cleanup user ${user.email}:`, error.message);
         }
     }
@@ -235,7 +235,7 @@ async function verifyTestUsers() {
                 console.log(`  ❌ ${user.displayName}: Missing data (UID: ${actualUid})`);
             }
 
-        } catch (error: any) {
+        } catch (_error: unknown) {
             console.log(`  ❌ ${user.displayName}: ${error.message}`);
         }
     }
@@ -274,8 +274,8 @@ async function main() {
                 console.log("Usage: npm run create-test-users [cleanup|create|verify|reset]");
                 break;
         }
-    } catch (error) {
-        console.error("❌ Script failed:", error);
+    } catch (_error) {
+        console.error("❌ Script failed:", _error);
         process.exit(1);
     }
 }

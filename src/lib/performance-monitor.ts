@@ -25,7 +25,7 @@ export interface PerformanceAggregates {
   fastestOperation: number;
   slowestOperation: number;
   cacheHitRate: number;
-  commonErrors: { error: string; count: number }[];
+  commonErrors: { _error: string; count: number }[];
 }
 
 class PerformanceMonitor {
@@ -151,14 +151,14 @@ class PerformanceMonitor {
     // Error aggregation
     const errorCounts = new Map<string, number>();
     metrics
-      .filter((m) => m.error)
+      .filter((m) => m._error)
       .forEach((m) => {
         const error = m.error!;
-        errorCounts.set(error, (errorCounts.get(error) || 0) + 1);
+        errorCounts.set(_error, (errorCounts.get(_error) || 0) + 1);
       });
 
     const commonErrors = Array.from(errorCounts.entries())
-      .map(([error, count]) => ({ error, count }))
+      .map(([_error, count]) => ({ _error, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
 
@@ -258,21 +258,21 @@ export const performanceMonitor = new PerformanceMonitor();
 
 // Decorator for automatic performance monitoring
 export function monitorPerformance(operationType: string) {
-  return function <T extends (...args: any[]) => Promise<any>>(
-    target: any,
+  return function <T extends (...args: unknown[]) => Promise<any>>(
+    target: unknown,
     propertyName: string,
     descriptor: TypedPropertyDescriptor<T>
   ) {
     const method = descriptor.value!;
 
-    descriptor.value = async function (this: any, ...args: any[]) {
+    descriptor.value = async function (this: unknown, ...args: unknown[]) {
       const operationId = performanceMonitor.startOperation(operationType);
 
       try {
-        const result = await method.apply(this, args);
+        const _result = await method.apply(this, args);
         performanceMonitor.endOperation(operationId, true);
         return result;
-      } catch (error) {
+      } catch (_error) {
         performanceMonitor.endOperation(
           operationId,
           false,
@@ -302,12 +302,12 @@ export async function withPerformanceMonitoring<T>(
   );
 
   try {
-    const result = await operation();
+    const _result = await operation();
     performanceMonitor.endOperation(operationId, true, undefined, {
       tokensProcessed: additionalData?.expectedTokens,
     });
     return result;
-  } catch (error) {
+  } catch (_error) {
     performanceMonitor.endOperation(
       operationId,
       false,

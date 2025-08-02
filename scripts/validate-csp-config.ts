@@ -63,7 +63,7 @@ function extractCSPFromFirebase(): CSPConfig {
     const config = JSON.parse(content);
 
     const cspHeader = config.hosting?.headers?.[0]?.headers?.find(
-        (h: any) => h.key === 'Content-Security-Policy'
+        (h: unknown) => h.key === 'Content-Security-Policy'
     )?.value || '';
 
     return {
@@ -77,7 +77,7 @@ function extractCSPFromFirebase(): CSPConfig {
 function extractCSPFromNextConfig(): CSPConfig {
     const content = readFileSync('/workspaces/studio/next.config.ts', 'utf-8');
 
-    const cspMatch = content.match(/Content-Security-Policy[\s\S]*?value:\s*"([^"]+)"/);
+    const cspMatch = content.match(/Content-Security-Policy[\s\S]*?_value:\s*"([^"]+)"/);
     const cspValue = cspMatch?.[1] || '';
 
     return {

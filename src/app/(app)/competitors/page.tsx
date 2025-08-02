@@ -68,7 +68,7 @@ const RankingsChart = ({
           : 101,
       fill: "hsl(var(--chart-1))",
     },
-    ...competitorUrls.map((url, index) => {
+    ...competitorUrls.map((url, _index) => {
       const competitorData = (firstKeywordData as any)[String(url)];
       return {
         name: new URL(String(url)).hostname,
@@ -79,7 +79,7 @@ const RankingsChart = ({
     }),
   ];
 
-  const chartConfig: ChartConfig = chartData.reduce((acc, item) => {
+  const chartConfig: ChartConfig = chartData.reduce((acc, _item) => {
     acc[item.name] = { label: item.name, color: item.fill };
     return acc;
   }, {} as ChartConfig);
@@ -178,7 +178,7 @@ const CompetitorResults = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {results.rankings.map((item) => (
+              {results.rankings.map((_item) => (
                 <TableRow key={item.keyword}>
                   <TableCell className="font-medium">{item.keyword}</TableCell>
                   <TableCell className="text-center">
@@ -230,7 +230,7 @@ export default function CompetitorsPage() {
   const { user } = useAuth();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [report, setReport] = useState<NeuroSEOReport | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [currentEngine, setCurrentEngine] = useState<string>("");
@@ -327,7 +327,7 @@ export default function CompetitorsPage() {
       };
 
       // Call NeuroSEO™ API
-      const response = await fetch('/api/neuroseo', {
+      const _response = await fetch('/api/neuroseo', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -340,7 +340,7 @@ export default function CompetitorsPage() {
       }
 
       const result = await response.json();
-      setReport(result);
+      setReport(_result);
 
       if (user) {
         const userActivitiesRef = collection(
@@ -361,7 +361,7 @@ export default function CompetitorsPage() {
           resultsSummary: `NeuroSEO™ competitive analysis completed for ${yourUrl.trim()} vs ${competitorUrls.split(',').length} competitors.`,
         });
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (e instanceof TimeoutError) {
         console.warn("Competitor analysis timed out:", e.message);
         setError(

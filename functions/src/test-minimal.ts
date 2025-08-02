@@ -9,7 +9,7 @@ export const testMinimal = onCall(
     memory: "256MiB",
     timeoutSeconds: 10,
   },
-  async (request) => {
+  async (_request) => {
     return {
       success: true,
       message: "Test function working",

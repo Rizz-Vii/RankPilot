@@ -111,7 +111,7 @@ function BillingPage() {
               <div className="space-y-2 mb-4">
                 <h4 className="font-semibold">Plan Features:</h4>
                 <ul className="grid md:grid-cols-2 gap-1">
-                  {subscription?.features.map((feature, index) => (
+                  {subscription?.features.map((feature, _index) => (
                     <li key={index} className="flex items-center gap-2 text-sm">
                       <CheckCircle className="w-4 h-4 text-success-foreground" />
                       {feature}
@@ -311,7 +311,7 @@ function BillingPage() {
 
               <CardContent>
                 <ul className="space-y-2 mb-6">
-                  {plan.features.map((feature, index) => (
+                  {plan.features.map((feature, _index) => (
                     <li key={index} className="flex items-center gap-2 text-sm">
                       <CheckCircle className="w-4 h-4 text-success-foreground" />
                       {feature}

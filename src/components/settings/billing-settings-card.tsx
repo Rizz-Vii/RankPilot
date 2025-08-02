@@ -79,7 +79,7 @@ interface BillingData {
 
 interface BillingSettingsCardProps {
   user: User;
-  profile: any;
+  profile: unknown;
 }
 
 const planFeatures = {
@@ -152,8 +152,8 @@ export default function BillingSettingsCard({
           });
         }
       },
-      (error) => {
-        console.error("Error fetching billing data:", error);
+      (_error) => {
+        console.error("Error fetching billing _data:", _error);
         toast.error("Failed to load billing information");
       }
     );
@@ -165,14 +165,14 @@ export default function BillingSettingsCard({
     try {
       setIsLoading(true);
 
-      const result = await createPortalSession({
+      const _result = await createPortalSession({
         userId: user.uid,
       });
 
       const { url } = result.data as { url: string };
       window.open(url, "_blank");
-    } catch (error: any) {
-      console.error("Error opening billing portal:", error);
+    } catch (_error: unknown) {
+      console.error("Error opening billing portal:", _error);
       toast.error("Failed to open billing portal");
     } finally {
       setIsLoading(false);
@@ -186,7 +186,7 @@ export default function BillingSettingsCard({
     try {
       setIsUpgrading(true);
 
-      const result = await createCheckoutSession({
+      const _result = await createCheckoutSession({
         userId: user.uid,
         priceId: `price_${plan}_${interval}`,
         plan,
@@ -195,8 +195,8 @@ export default function BillingSettingsCard({
 
       const { url } = result.data as { url: string };
       window.location.href = url;
-    } catch (error: any) {
-      console.error("Error creating checkout session:", error);
+    } catch (_error: unknown) {
+      console.error("Error creating checkout session:", _error);
       toast.error("Failed to start upgrade process");
     } finally {
       setIsUpgrading(false);
@@ -296,7 +296,7 @@ export default function BillingSettingsCard({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {Object.entries(planFeatures)
                     .filter(([key]) => key !== "free")
-                    .map(([key, plan]) => (
+                    .map(([_key, plan]) => (
                       <Card
                         key={key}
                         className="border-2 hover:border-primary/50 transition-colors"
@@ -309,7 +309,7 @@ export default function BillingSettingsCard({
                           <Button
                             className="w-full mb-2"
                             size="sm"
-                            onClick={() => handleUpgrade(key, "monthly")}
+                            onClick={() => handleUpgrade(_key, "monthly")}
                             disabled={isUpgrading}
                           >
                             {isUpgrading ? (

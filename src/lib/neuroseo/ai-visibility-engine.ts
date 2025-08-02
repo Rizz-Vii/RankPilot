@@ -18,7 +18,7 @@ export interface LLMQuery {
 
 export interface LLMResponse {
   queryId: string;
-  response: string;
+  _response: string;
   sources: Array<{
     url: string;
     title: string;
@@ -151,7 +151,7 @@ export class AIVisibilityEngine {
     const queries: LLMQuery[] = [];
 
     // Generate different types of queries for each keyword
-    targetKeywords.forEach((keyword, index) => {
+    targetKeywords.forEach((keyword, _index) => {
       // Informational queries
       queries.push({
         id: `info-${index}`,
@@ -226,7 +226,7 @@ export class AIVisibilityEngine {
 
       responses.push({
         queryId: query.id,
-        response: response.text,
+        _response: response.text,
         sources: response.sources,
         confidence: response.confidence,
         responseTime,
@@ -267,14 +267,14 @@ export class AIVisibilityEngine {
     sources.sort((a, b) => b.relevanceScore - a.relevanceScore);
 
     // Reassign positions after sorting
-    sources.forEach((source, index) => {
+    sources.forEach((source, _index) => {
       source.citationPosition = index + 1;
     });
 
     const response = this.generateResponseText(query, sources);
 
     return {
-      text: response,
+      text: _response,
       sources,
       confidence: Math.random() * 0.3 + 0.7, // 70-100% confidence
     };
@@ -347,7 +347,7 @@ export class AIVisibilityEngine {
     }
 
     // Add content from top sources
-    sources.slice(0, 3).forEach((source, index) => {
+    sources.slice(0, 3).forEach((source, _index) => {
       response += `According to ${new URL(source.url).hostname}, ${source.snippet} `;
     });
 
@@ -374,11 +374,11 @@ export class AIVisibilityEngine {
           isCited: true,
           citationPosition: targetSource.citationPosition,
           citationContext: this.extractCitationContext(
-            response.response,
+            response._response,
             targetUrl
           ),
           citationType: this.determineCitationType(
-            response.response,
+            response._response,
             targetSource.snippet
           ),
           relevanceScore: targetSource.relevanceScore,
@@ -388,7 +388,7 @@ export class AIVisibilityEngine {
               url: source.url,
               position: source.citationPosition,
               context: this.extractCitationContext(
-                response.response,
+                response._response,
                 source.url
               ),
             })),
@@ -402,7 +402,7 @@ export class AIVisibilityEngine {
           competitorCitations: response.sources.map((source) => ({
             url: source.url,
             position: source.citationPosition,
-            context: this.extractCitationContext(response.response, source.url),
+            context: this.extractCitationContext(response._response, source.url),
           })),
         });
       }
@@ -464,11 +464,11 @@ export class AIVisibilityEngine {
     const topPerformingQueries = citedQueries
       .sort((a, b) => (a.citationPosition || 999) - (b.citationPosition || 999))
       .slice(0, 5)
-      .map((_, index) => queries[citations.indexOf(_)]?.query || "")
+      .map((_, _index) => queries[citations.indexOf(_)]?.query || "")
       .filter(Boolean);
 
     const improvementOpportunities = citations
-      .map((citation, index) => ({
+      .map((citation, _index) => ({
         query: queries[index]?.query || "",
         currentPosition: citation.citationPosition || null,
         potentialGain: citation.isCited ? 0 : 70,
@@ -552,7 +552,7 @@ export class AIVisibilityEngine {
       priority: "low",
       estimatedImpact: 40,
       implementation:
-        "Add structured data, improve heading hierarchy, use clear definitions",
+        "Add structured _data, improve heading hierarchy, use clear definitions",
       timeframe: "1-2 weeks",
     });
 
@@ -581,7 +581,7 @@ export class AIVisibilityEngine {
     });
 
     // Analyze competitor performance
-    responses.forEach((response) => {
+    responses.forEach((_response) => {
       response.sources.forEach((source) => {
         if (competitorStats.has(source.url)) {
           const stats = competitorStats.get(source.url)!;
@@ -624,7 +624,7 @@ export class AIVisibilityEngine {
   ): string[] {
     const strongQueries: string[] = [];
 
-    responses.forEach((response, index) => {
+    responses.forEach((_response, _index) => {
       const source = response.sources.find((s) => s.url === url);
       if (source && source.citationPosition <= 2) {
         strongQueries.push(queries[index]?.query || "");

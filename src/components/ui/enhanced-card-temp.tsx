@@ -63,8 +63,8 @@ export default function KeywordToolForm({
   async function handleFormSubmit(values: KeywordFormValues) {
     try {
       await onSubmit(values as SuggestKeywordsInput);
-    } catch (error) {
-      console.error("Keyword analysis failed:", error);
+    } catch (_error) {
+      console.error("Keyword analysis failed:", _error);
       // Error handling could be improved with toast notifications
     }
   }

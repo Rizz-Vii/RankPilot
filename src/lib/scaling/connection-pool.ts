@@ -9,8 +9,8 @@ import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 interface QueueItem {
   endpoint: string;
   options: RequestInit;
-  resolve: (value: unknown) => void;
-  reject: (reason?: any) => void;
+  resolve: (_value: unknown) => void;
+  reject: (reason?: unknown) => void;
 }
 
 
@@ -76,7 +76,7 @@ export class ConnectionPoolManager {
       if (process.env.NODE_ENV === 'development' && !this.activeConnections.has(connectionKey)) {
         try {
           connectFirestoreEmulator(db, 'localhost', 8080);
-        } catch (error) {
+        } catch (_error) {
           // Emulator already connected or not available
         }
       }
@@ -88,8 +88,8 @@ export class ConnectionPoolManager {
       this.scheduleConnectionCleanup(connectionKey);
 
       return db;
-    } catch (error) {
-      console.error(`Error creating Firestore connection for ${appName}:`, error);
+    } catch (_error) {
+      console.error(`Error creating Firestore connection for ${appName}:`, _error);
       throw error;
     }
   }
@@ -130,7 +130,7 @@ export class ConnectionPoolManager {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), config.connectionTimeout);
 
-          const response = await fetch(`${baseURL}${endpoint}`, {
+          const _response = await fetch(`${baseURL}${endpoint}`, {
             ...options,
             signal: controller.signal,
           });
@@ -148,7 +148,7 @@ export class ConnectionPoolManager {
           }
 
           return response;
-        } catch (error) {
+        } catch (_error) {
           throw error;
         } finally {
           this.activeRequests--;
@@ -181,28 +181,28 @@ export class ConnectionPoolManager {
     const now = Date.now();
     const idleThreshold = now - connectionPoolConfig.idleTimeout;
 
-    for (const [key, lastUsed] of this.connectionCounts.entries()) {
+    for (const [_key, lastUsed] of this.connectionCounts.entries()) {
       if (lastUsed < idleThreshold) {
-        this.activeConnections.delete(key);
-        this.connectionCounts.delete(key);
+        this.activeConnections.delete(_key);
+        this.connectionCounts.delete(_key);
         console.log(`Cleaned up idle connection: ${key}`);
       }
     }
   }
 
-  private incrementConnectionCount(key: string) {
-    this.connectionCounts.set(key, Date.now());
+  private incrementConnectionCount(_key: string) {
+    this.connectionCounts.set(_key, Date.now());
   }
 
-  private scheduleConnectionCleanup(key: string) {
+  private scheduleConnectionCleanup(_key: string) {
     setTimeout(() => {
-      if (this.connectionCounts.has(key)) {
-        const lastUsed = this.connectionCounts.get(key)!;
+      if (this.connectionCounts.has(_key)) {
+        const lastUsed = this.connectionCounts.get(_key)!;
         const now = Date.now();
 
         if (now - lastUsed > connectionPoolConfig.idleTimeout) {
-          this.activeConnections.delete(key);
-          this.connectionCounts.delete(key);
+          this.activeConnections.delete(_key);
+          this.connectionCounts.delete(_key);
           console.log(`Auto-cleaned connection: ${key}`);
         }
       }

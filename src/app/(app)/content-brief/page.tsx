@@ -59,8 +59,8 @@ const ResultCard = ({
 );
 
 const SeoScoreGauge = ({ score }: { score: number; }) => {
-  const data = [
-    { name: "SEO Score", value: score, fill: "hsl(var(--primary))" },
+  const _data = [
+    { name: "SEO Score", _value: score, fill: "hsl(var(--primary))" },
   ];
   return (
     <ResponsiveContainer width="100%" height={150}>
@@ -164,7 +164,7 @@ const BriefResults = ({ briefResult }: { briefResult: ContentBriefOutput; }) => 
           description="What top-ranking pages are doing right."
         >
           <ul className="space-y-2 list-disc pl-5 font-body">
-            {briefResult.competitorInsights.map((insight, i) => (
+            {briefResult.competitorInsights.map((insight, _i) => (
               <li
                 key={i}
                 className="p-1 rounded transition-colors hover:bg-muted/50"
@@ -181,7 +181,7 @@ const BriefResults = ({ briefResult }: { briefResult: ContentBriefOutput; }) => 
         description="A logical structure for the article."
       >
         <ul className="space-y-2 list-disc pl-5">
-          {briefResult.llmGeneratedOutline.map((heading, i) => (
+          {briefResult.llmGeneratedOutline.map((heading, _i) => (
             <li
               key={i}
               className="font-body p-1 -ml-1 rounded transition-colors hover:bg-muted/50"
@@ -204,12 +204,12 @@ export default function ContentBriefPage() {
   const [briefResult, setBriefResult] = useState<ContentBriefOutput | null>(
     null
   );
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   const resultsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (briefResult || error) {
+    if (briefResult || _error) {
       resultsRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
@@ -232,7 +232,7 @@ export default function ContentBriefPage() {
         contentType: 'blog post'
       };
       const result = await generateContentBrief(contentBriefInput);
-      setBriefResult(result);
+      setBriefResult(_result);
 
       if (user) {
         const userActivitiesRef = collection(
@@ -252,7 +252,7 @@ export default function ContentBriefPage() {
           resultsSummary: `Generated content brief for keyword: "${values.keyword}".`,
         });
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       setError(e.message || "An unexpected error occurred.");
     } finally {
       setIsLoading(false);

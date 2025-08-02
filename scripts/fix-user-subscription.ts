@@ -59,8 +59,8 @@ async function fixUserSubscription() {
 
     // For now, let's create a comprehensive solution
     await createProperUserSubscription();
-  } catch (error) {
-    console.error("❌ Error fixing user subscription:", error);
+  } catch (_error) {
+    console.error("❌ Error fixing user subscription:", _error);
   }
 }
 
@@ -158,8 +158,8 @@ async function createProperUserSubscription() {
       console.log(
         `✅ Successfully created/updated user document for UID: ${uid}`
       );
-    } catch (error) {
-      console.error(`❌ Error creating user document for UID ${uid}:`, error);
+    } catch (_error) {
+      console.error(`❌ Error creating user document for UID ${uid}:`, _error);
     }
   }
 
@@ -188,8 +188,8 @@ export async function captureRealUID(email: string): Promise<string | null> {
     // The frontend would then call this with the real UID
     console.log(`🔍 Waiting for real UID for ${email}`);
     return null;
-  } catch (error) {
-    console.error("Error capturing real UID:", error);
+  } catch (_error) {
+    console.error("Error capturing real UID:", _error);
     return null;
   }
 }
@@ -201,8 +201,8 @@ if (require.main === module) {
       console.log("🎉 User subscription fix completed!");
       process.exit(0);
     })
-    .catch((error) => {
-      console.error("💥 User subscription fix failed:", error);
+    .catch((_error) => {
+      console.error("💥 User subscription fix failed:", _error);
       process.exit(1);
     });
 }

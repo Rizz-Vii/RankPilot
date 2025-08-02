@@ -109,7 +109,7 @@ export function SubscriptionManagement() {
 
       const usersSnapshot = await getDocs(usersQuery);
       const usersData: SubscriptionUser[] = [];
-      let tempStats = {
+      const tempStats = {
         total: 0,
         active: 0,
         canceled: 0,
@@ -162,8 +162,8 @@ export function SubscriptionManagement() {
 
       setUsers(usersData);
       setStats(tempStats);
-    } catch (error) {
-      console.error("Error fetching subscription data:", error);
+    } catch (_error) {
+      console.error("Error fetching subscription _data:", _error);
       toast.error("Failed to load subscription data");
     } finally {
       setLoading(false);
@@ -172,12 +172,12 @@ export function SubscriptionManagement() {
 
   const updateUserSubscription = async (
     userId: string,
-    updates: { [key: string]: any }
+    updates: { [_key: string]: any }
   ) => {
     try {
       const userRef = doc(db, "users", userId);
-      const updateData: { [key: string]: any } = {};
-      Object.keys(updates).forEach((key) => {
+      const updateData: { [_key: string]: any } = {};
+      Object.keys(updates).forEach((_key) => {
         updateData[`subscription.${key}`] = updates[key];
       });
 
@@ -185,8 +185,8 @@ export function SubscriptionManagement() {
 
       toast.success("Subscription updated successfully");
       fetchSubscriptionData(); // Refresh data
-    } catch (error) {
-      console.error("Error updating subscription:", error);
+    } catch (_error) {
+      console.error("Error updating subscription:", _error);
       toast.error("Failed to update subscription");
     }
   };
@@ -200,7 +200,7 @@ export function SubscriptionManagement() {
 
   const getStatusBadge = (status: string) => {
     const variants: {
-      [key: string]: "default" | "secondary" | "destructive" | "outline";
+      [_key: string]: "default" | "secondary" | "destructive" | "outline";
     } = {
       active: "default",
       canceled: "destructive",
@@ -323,7 +323,7 @@ export function SubscriptionManagement() {
                 <Input
                   placeholder="Search users..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => setSearchTerm(e.target._value)}
                   className="max-w-sm"
                 />
               </div>

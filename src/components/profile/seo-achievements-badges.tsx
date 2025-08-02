@@ -28,13 +28,13 @@ interface Activity {
   url?: string;
   keywords?: string[];
   score?: number;
-  timestamp: any;
-  metadata?: any;
+  timestamp: unknown;
+  metadata?: unknown;
 }
 
 interface SEOAchievementsBadgesProps {
   user: User;
-  profile: any;
+  profile: unknown;
   activities: Activity[];
 }
 

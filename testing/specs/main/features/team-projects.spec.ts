@@ -339,7 +339,7 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       // Test touch-friendly buttons (48px minimum)
       const buttons = page.locator("button");
       for (let i = 0; i < Math.min(await buttons.count(), 3); i++) {
-        const button = buttons.nth(i);
+        const button = buttons.nth(_i);
         const box = await button.boundingBox();
         if (box) {
           expect(box.height).toBeGreaterThanOrEqual(44); // Close to 48px WCAG requirement
@@ -368,7 +368,7 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       // Check for accessible buttons
       const buttons = page.locator("button");
       for (let i = 0; i < Math.min(await buttons.count(), 5); i++) {
-        const button = buttons.nth(i);
+        const button = buttons.nth(_i);
         const text = await button.textContent();
         expect(text?.trim()).toBeTruthy(); // Should have accessible text
       }

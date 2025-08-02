@@ -23,7 +23,7 @@ test.describe('RankPilot Database Integration Tests', () => {
 
             // Attempt to access user data without authentication
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/getUserData`, {
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/getUserData`, {
                     data: { userId: 'test-user-123' },
                     timeout: 15000
                 });
@@ -34,7 +34,7 @@ test.describe('RankPilot Database Integration Tests', () => {
                 expect([401, 403]).toContain(response.status());
                 console.log('   ✅ User data properly protected');
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('   ✅ User data access properly restricted');
             }
         });
@@ -52,7 +52,7 @@ test.describe('RankPilot Database Integration Tests', () => {
 
             for (const testCase of testCases) {
                 try {
-                    const response = await page.request.post(`${PRODUCTION_BASE_URL}/getProjectData`, {
+                    const _response = await page.request.post(`${PRODUCTION_BASE_URL}/getProjectData`, {
                         data: {
                             userId: `test-${testCase.tier}-user`,
                             tier: testCase.tier,
@@ -66,7 +66,7 @@ test.describe('RankPilot Database Integration Tests', () => {
                     // Should either authenticate or show proper tier restrictions
                     expect([200, 401, 403, 402]).toContain(response.status());
 
-                } catch (error) {
+                } catch (_error) {
                     console.log(`   ${testCase.tier} tier: Access properly controlled`);
                 }
             }
@@ -76,7 +76,7 @@ test.describe('RankPilot Database Integration Tests', () => {
             console.log('📊 Testing Analytics Data Security...');
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/getAnalyticsData`, {
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/getAnalyticsData`, {
                     data: {
                         userId: 'test-user-analytics',
                         dateRange: '7d',
@@ -91,7 +91,7 @@ test.describe('RankPilot Database Integration Tests', () => {
                 expect([200, 401, 403]).toContain(response.status());
                 console.log('   ✅ Analytics data access controlled');
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('   ✅ Analytics data properly secured');
             }
         });
@@ -105,7 +105,7 @@ test.describe('RankPilot Database Integration Tests', () => {
             try {
                 const startTime = Date.now();
 
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/getProjectList`, {
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/getProjectList`, {
                     data: {
                         userId: 'test-user-performance',
                         limit: 100,
@@ -123,7 +123,7 @@ test.describe('RankPilot Database Integration Tests', () => {
                     console.log('   ✅ Query performance acceptable');
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('   ⚠️ Query test completed (auth-protected)');
             }
         });
@@ -132,7 +132,7 @@ test.describe('RankPilot Database Integration Tests', () => {
             console.log('📝 Testing Batch Write Performance...');
 
             try {
-                const batchData = Array(10).fill(0).map((_, i) => ({
+                const batchData = Array(10).fill(0).map((_, _i) => ({
                     id: `test-batch-${i}`,
                     name: `Test Project ${i}`,
                     created_at: new Date().toISOString(),
@@ -141,7 +141,7 @@ test.describe('RankPilot Database Integration Tests', () => {
 
                 const startTime = Date.now();
 
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/batchCreateProjects`, {
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/batchCreateProjects`, {
                     data: {
                         userId: 'test-user-batch',
                         projects: batchData
@@ -157,7 +157,7 @@ test.describe('RankPilot Database Integration Tests', () => {
                     console.log('   ✅ Batch write performance acceptable');
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('   ⚠️ Batch write test completed (auth-protected)');
             }
         });
@@ -166,7 +166,7 @@ test.describe('RankPilot Database Integration Tests', () => {
             console.log('🔄 Testing Real-time Database Connections...');
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/subscribeToUpdates`, {
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/subscribeToUpdates`, {
                     data: {
                         userId: 'test-user-realtime',
                         collection: 'projects',
@@ -180,7 +180,7 @@ test.describe('RankPilot Database Integration Tests', () => {
                 // Should establish connection or show auth requirement
                 expect([200, 401, 403]).toContain(response.status());
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('   ⚠️ Real-time connection test completed');
             }
         });
@@ -216,7 +216,7 @@ test.describe('RankPilot Database Integration Tests', () => {
 
             for (const testCase of invalidDataTests) {
                 try {
-                    const response = await page.request.post(`${PRODUCTION_BASE_URL}/createProject`, {
+                    const _response = await page.request.post(`${PRODUCTION_BASE_URL}/createProject`, {
                         data: testCase.data,
                         timeout: 15000
                     });
@@ -226,7 +226,7 @@ test.describe('RankPilot Database Integration Tests', () => {
                     // Should reject invalid data
                     expect([400, 401, 403, 422]).toContain(response.status());
 
-                } catch (error) {
+                } catch (_error) {
                     console.log(`   ${testCase.name}: Properly rejected`);
                 }
             }
@@ -264,7 +264,7 @@ test.describe('RankPilot Database Integration Tests', () => {
                     console.log('   ✅ Duplicate prevention working');
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('   ⚠️ Duplicate prevention test completed');
             }
         });
@@ -280,7 +280,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
 
             // Test with invalid JWT token
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/protectedEndpoint`, {
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/protectedEndpoint`, {
                     data: { action: 'get_user_data' },
                     headers: {
                         'Authorization': 'Bearer invalid-jwt-token-123'
@@ -294,7 +294,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                 expect([401, 403]).toContain(response.status());
                 console.log('   ✅ Invalid JWT properly rejected');
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('   ✅ JWT validation working');
             }
         });
@@ -304,7 +304,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
 
             // Test with expired session simulation
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/checkSession`, {
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/checkSession`, {
                     data: {
                         sessionId: 'expired-session-123',
                         lastActivity: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() // 24 hours ago
@@ -317,7 +317,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                 // Should handle expired sessions
                 expect([401, 403, 440]).toContain(response.status());
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('   ✅ Session timeout properly handled');
             }
         });
@@ -334,7 +334,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
 
             for (const roleTest of roleTests) {
                 try {
-                    const response = await page.request.post(`${PRODUCTION_BASE_URL}/${roleTest.endpoint}`, {
+                    const _response = await page.request.post(`${PRODUCTION_BASE_URL}/${roleTest.endpoint}`, {
                         data: {
                             userId: `test-${roleTest.role}-user`,
                             role: roleTest.role
@@ -350,7 +350,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                         expect([401, 403]).toContain(response.status()); // Should be denied
                     }
 
-                } catch (error) {
+                } catch (_error) {
                     console.log(`   ${roleTest.role} access: Properly controlled`);
                 }
             }
@@ -371,7 +371,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
 
             for (const injection of sqlInjectionAttempts) {
                 try {
-                    const response = await page.request.post(`${PRODUCTION_BASE_URL}/searchUsers`, {
+                    const _response = await page.request.post(`${PRODUCTION_BASE_URL}/searchUsers`, {
                         data: {
                             query: injection,
                             userId: 'test-user'
@@ -384,7 +384,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                     // Should sanitize and reject malicious input
                     expect([400, 401, 403, 422]).toContain(response.status());
 
-                } catch (error) {
+                } catch (_error) {
                     console.log('   ✅ SQL Injection properly prevented');
                 }
             }
@@ -402,7 +402,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
 
             for (const xss of xssAttempts) {
                 try {
-                    const response = await page.request.post(`${PRODUCTION_BASE_URL}/updateProfile`, {
+                    const _response = await page.request.post(`${PRODUCTION_BASE_URL}/updateProfile`, {
                         data: {
                             userId: 'test-user',
                             name: xss,
@@ -416,7 +416,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                     // Should sanitize malicious scripts
                     expect([200, 400, 401, 403, 422]).toContain(response.status());
 
-                } catch (error) {
+                } catch (_error) {
                     console.log('   ✅ XSS properly prevented');
                 }
             }
@@ -427,7 +427,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
 
             try {
                 // Attempt state-changing operation without proper CSRF token
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/deleteProject`, {
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/deleteProject`, {
                     data: {
                         projectId: 'test-project-123',
                         userId: 'test-user'
@@ -444,7 +444,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                 expect([401, 403, 405]).toContain(response.status());
                 console.log('   ✅ CSRF protection active');
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('   ✅ CSRF properly prevented');
             }
         });
@@ -456,7 +456,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
             console.log('📝 Testing Data Access Logging...');
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/getUserPersonalData`, {
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/getUserPersonalData`, {
                     data: {
                         userId: 'test-user-privacy',
                         requestType: 'data_export',
@@ -470,7 +470,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                 // Should log access attempts
                 expect([200, 401, 403]).toContain(response.status());
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('   ✅ Personal data access properly controlled');
             }
         });
@@ -479,7 +479,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
             console.log('🗄️ Testing Data Retention Policies...');
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/requestDataDeletion`, {
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/requestDataDeletion`, {
                     data: {
                         userId: 'test-user-deletion',
                         deletionType: 'full_account',
@@ -493,7 +493,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                 // Should handle deletion requests properly
                 expect([200, 202, 401, 403]).toContain(response.status());
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('   ✅ Data deletion properly handled');
             }
         });
@@ -502,7 +502,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
             console.log('📋 Testing Audit Trail Generation...');
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/getAuditLog`, {
+                const _response = await page.request.post(`${PRODUCTION_BASE_URL}/getAuditLog`, {
                     data: {
                         userId: 'test-user-audit',
                         dateRange: '30d',
@@ -516,7 +516,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                 // Should provide audit capabilities
                 expect([200, 401, 403]).toContain(response.status());
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('   ✅ Audit trail properly secured');
             }
         });
@@ -530,7 +530,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
             // Check if HTTP redirects to HTTPS
             try {
                 const httpUrl = RANKPILOT_APP_URL.replace('https://', 'http://');
-                const response = await page.request.get(httpUrl, { timeout: 15000 });
+                const _response = await page.request.get(httpUrl, { timeout: 15000 });
 
                 console.log(`   HTTP Redirect Status: ${response.status()}`);
 
@@ -538,7 +538,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                 expect([301, 302, 403, 404]).toContain(response.status());
                 console.log('   ✅ HTTPS enforcement active');
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('   ✅ HTTP properly blocked/redirected');
             }
         });
@@ -546,7 +546,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
         test('Security Headers Validation', async ({ page }) => {
             console.log('🛡️ Testing Security Headers...');
 
-            const response = await page.request.get(RANKPILOT_APP_URL);
+            const _response = await page.request.get(RANKPILOT_APP_URL);
             const headers = response.headers();
 
             const securityHeaders = [
@@ -592,7 +592,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                 // Should have some form of rate limiting
                 expect(rateLimited).toBeGreaterThan(rapidRequests * 0.1); // At least 10% should be limited
 
-            } catch (error) {
+            } catch (_error) {
                 console.log('   ✅ Rate limiting active (requests blocked)');
             }
         });

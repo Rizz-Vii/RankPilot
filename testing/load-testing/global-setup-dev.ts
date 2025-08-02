@@ -30,7 +30,7 @@ async function globalSetup(config: FullConfig) {
 
         console.log("🎯 Development environment ready");
 
-    } catch (error) {
+    } catch (_error) {
         console.error("❌ Development server not running!");
         console.error("Please start with: npm run dev-no-turbopack");
         throw new Error("Development server required for testing");

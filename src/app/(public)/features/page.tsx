@@ -302,7 +302,7 @@ export default function FeaturesPage() {
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {neuroSEOFeatures.map((feature, index) => (
+            {neuroSEOFeatures.map((feature, _index) => (
               <motion.div
                 key={feature.title}
                 initial="hidden"
@@ -325,7 +325,7 @@ export default function FeaturesPage() {
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-2">
-                      {feature.features.map((item, i) => (
+                      {feature.features.map((_item, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm">
                           <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
                           {item}
@@ -357,7 +357,7 @@ export default function FeaturesPage() {
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {seoTools.map((tool, index) => (
+            {seoTools.map((tool, _index) => (
               <motion.div
                 key={tool.title}
                 initial="hidden"
@@ -382,7 +382,7 @@ export default function FeaturesPage() {
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-1">
-                      {tool.features.map((item, i) => (
+                      {tool.features.map((_item, i) => (
                         <li key={i} className="flex items-start gap-2 text-xs">
                           <Star className="h-3 w-3 text-yellow-500 mt-0.5 shrink-0" />
                           {item}
@@ -416,7 +416,7 @@ export default function FeaturesPage() {
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {competitiveIntelligence.map((feature, index) => (
+            {competitiveIntelligence.map((feature, _index) => (
               <motion.div
                 key={feature.title}
                 initial="hidden"
@@ -441,7 +441,7 @@ export default function FeaturesPage() {
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-1">
-                      {feature.features.map((item, i) => (
+                      {feature.features.map((_item, i) => (
                         <li key={i} className="flex items-start gap-2 text-xs">
                           <CheckCircle className="h-3 w-3 text-green-500 mt-0.5 shrink-0" />
                           {item}
@@ -473,7 +473,7 @@ export default function FeaturesPage() {
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-8">
-            {managementFeatures.map((feature, index) => (
+            {managementFeatures.map((feature, _index) => (
               <motion.div
                 key={feature.title}
                 initial="hidden"
@@ -494,7 +494,7 @@ export default function FeaturesPage() {
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-2">
-                      {feature.features.map((item, i) => (
+                      {feature.features.map((_item, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm">
                           <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
                           {item}

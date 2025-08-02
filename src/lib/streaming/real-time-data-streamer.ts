@@ -20,7 +20,7 @@ export interface StreamingDataPoint {
     userId: string;
     dashboardId?: string;
     widgetId?: string;
-    data: any;
+    _data: unknown;
     timestamp: number;
     metadata?: {
         source?: string;
@@ -51,7 +51,7 @@ export interface CollaborationEvent {
     userId: string;
     userName: string;
     dashboardId: string;
-    data: any;
+    _data: unknown;
     timestamp: number;
 }
 
@@ -121,13 +121,13 @@ export class RealTimeDataStreamer extends EventEmitter {
 
             const tierLimit = this.tierLimits[tier as keyof typeof this.tierLimits];
             if (!tierLimit) {
-                return { success: false, error: 'Invalid subscription tier' };
+                return { success: false, _error: 'Invalid subscription tier' };
             }
 
             if (userConnections >= tierLimit.maxConnections) {
                 return {
                     success: false,
-                    error: `Connection limit reached for ${tier} tier (${tierLimit.maxConnections})`
+                    _error: `Connection limit reached for ${tier} tier (${tierLimit.maxConnections})`
                 };
             }
 
@@ -154,11 +154,11 @@ export class RealTimeDataStreamer extends EventEmitter {
 
             return { success: true, client };
 
-        } catch (error) {
-            console.error('[RealTimeStreamer] Client registration error:', error);
+        } catch (_error) {
+            console.error('[RealTimeStreamer] Client registration _error:', _error);
             return {
                 success: false,
-                error: error instanceof Error ? error.message : 'Registration failed'
+                _error: error instanceof Error ? error.message : 'Registration failed'
             };
         }
     }
@@ -172,7 +172,7 @@ export class RealTimeDataStreamer extends EventEmitter {
     ): Promise<{ success: boolean; subscribed: string[]; error?: string; }> {
         const client = this.clients.get(clientId);
         if (!client) {
-            return { success: false, subscribed: [], error: 'Client not found' };
+            return { success: false, subscribed: [], _error: 'Client not found' };
         }
 
         const tierLimit = this.tierLimits[client.tier as keyof typeof this.tierLimits];
@@ -210,8 +210,8 @@ export class RealTimeDataStreamer extends EventEmitter {
         for (const client of relevantClients) {
             try {
                 await this.sendToClient(client, dataPoint);
-            } catch (error) {
-                console.error(`[RealTimeStreamer] Failed to send data to client ${client.id}:`, error);
+            } catch (_error) {
+                console.error(`[RealTimeStreamer] Failed to send data to client ${client.id}:`, _error);
                 this.handleClientError(client.id);
             }
         }
@@ -222,7 +222,7 @@ export class RealTimeDataStreamer extends EventEmitter {
     /**
      * Handle real-time collaboration events
      */
-    async broadcastCollaboration(event: CollaborationEvent): Promise<void> {
+    async broadcastCollaboration(_event: CollaborationEvent): Promise<void> {
         const dashboardClients = Array.from(this.clients.values()).filter(client =>
             client.dashboardId === event.dashboardId && client.userId !== event.userId
         );
@@ -232,7 +232,7 @@ export class RealTimeDataStreamer extends EventEmitter {
             type: 'user-action',
             userId: event.userId,
             dashboardId: event.dashboardId,
-            data: event,
+            _data: _event,
             timestamp: Date.now(),
             metadata: {
                 source: 'collaboration',
@@ -245,8 +245,8 @@ export class RealTimeDataStreamer extends EventEmitter {
         for (const client of dashboardClients) {
             try {
                 await this.sendToClient(client, collaborationData);
-            } catch (error) {
-                console.error(`[RealTimeStreamer] Collaboration broadcast failed for ${client.id}:`, error);
+            } catch (_error) {
+                console.error(`[RealTimeStreamer] Collaboration broadcast failed for ${client.id}:`, _error);
             }
         }
 
@@ -275,8 +275,8 @@ export class RealTimeDataStreamer extends EventEmitter {
                     client.connection.close();
                 }
                 // SSE connections close automatically when response ends
-            } catch (error) {
-                console.error(`[RealTimeStreamer] Error closing connection for ${clientId}:`, error);
+            } catch (_error) {
+                console.error(`[RealTimeStreamer] Error closing connection for ${clientId}:`, _error);
             }
         }
 
@@ -293,7 +293,7 @@ export class RealTimeDataStreamer extends EventEmitter {
         let processedData = dataPoint;
 
         // Apply compression if enabled
-        if (client.preferences.compression && dataPoint.data) {
+        if (client.preferences.compression && dataPoint._data) {
             processedData = await this.compressData(dataPoint);
         }
 
@@ -329,20 +329,20 @@ export class RealTimeDataStreamer extends EventEmitter {
         const cacheKey = `${dataPoint.type}_${dataPoint.userId}`;
         const cachedData = this.compressionCache.get(cacheKey);
 
-        if (cachedData && JSON.stringify(cachedData) === JSON.stringify(dataPoint.data)) {
+        if (cachedData && JSON.stringify(cachedData) === JSON.stringify(dataPoint._data)) {
             // Data hasn't changed, return compressed reference
             return {
                 ...dataPoint,
-                data: { __ref: cacheKey, __compressed: true },
+                _data: { __ref: cacheKey, __compressed: true },
                 metadata: { ...dataPoint.metadata, compressed: true }
             };
         }
 
         // Cache new data
-        this.compressionCache.set(cacheKey, dataPoint.data);
+        this.compressionCache.set(cacheKey, dataPoint._data);
 
         // Calculate compression ratio for metrics
-        const originalSize = JSON.stringify(dataPoint.data).length;
+        const originalSize = JSON.stringify(dataPoint._data).length;
         const compressedSize = JSON.stringify({ __ref: cacheKey }).length;
         this.metrics.compressionRatio = 1 - (compressedSize / originalSize);
 
@@ -355,31 +355,31 @@ export class RealTimeDataStreamer extends EventEmitter {
 
         if (!lastData) {
             // First time, store and return full data
-            this.deltaCache.set(deltaKey, dataPoint.data);
+            this.deltaCache.set(deltaKey, dataPoint._data);
             return dataPoint;
         }
 
         // Generate delta (simplified diff)
-        const delta = this.calculateDelta(lastData, dataPoint.data);
-        this.deltaCache.set(deltaKey, dataPoint.data);
+        const delta = this.calculateDelta(lastData, dataPoint._data);
+        this.deltaCache.set(deltaKey, dataPoint._data);
 
         return {
             ...dataPoint,
-            data: delta,
+            _data: delta,
             metadata: { ...dataPoint.metadata, delta: true }
         };
     }
 
-    private calculateDelta(oldData: any, newData: any): any {
+    private calculateDelta(oldData: unknown, newData: unknown): any {
         // Simplified delta calculation
         if (typeof newData !== 'object' || newData === null) {
             return newData !== oldData ? newData : null;
         }
 
-        const delta: any = {};
+        const delta: unknown = {};
         let hasChanges = false;
 
-        for (const key in newData) {
+        for (const _key in newData) {
             if (newData[key] !== oldData?.[key]) {
                 delta[key] = newData[key];
                 hasChanges = true;
@@ -451,7 +451,7 @@ export class RealTimeDataStreamer extends EventEmitter {
                 id: `${streamType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 type: streamType as any,
                 userId: 'system',
-                data,
+                _data,
                 timestamp: Date.now(),
                 metadata: {
                     source: 'data-generator',

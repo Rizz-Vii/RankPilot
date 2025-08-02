@@ -34,8 +34,8 @@ if (getApps().length === 0) {
   
   try {
     initializeApp(firebaseConfig);
-  } catch (error) {
-    console.warn('[NeuroSEO API] Firebase initialization failed, continuing with mock data:', error);
+  } catch (_error) {
+    console.warn('[NeuroSEO API] Firebase initialization failed, continuing with mock _data:', _error);
   }
 }
 
@@ -67,12 +67,12 @@ ${firebaseImport}`
                     `let decodedToken;
         try {
             decodedToken = await adminAuth.verifyIdToken(token);
-        } catch (error) {
-            console.warn('[Visualizations API] Firebase admin initialization error:', error);
+        } catch (_error) {
+            console.warn('[Visualizations API] Firebase admin initialization _error:', _error);
             return NextResponse.json({ 
-                error: 'Authentication service unavailable', 
+                _error: 'Authentication service unavailable', 
                 mock: true,
-                data: [] 
+                _data: [] 
             }, { status: 503 });
         }`
                 );
@@ -130,8 +130,8 @@ export function initializeFirebaseSafe() {
         db = getFirestore(app);
 
         return { app, auth, db };
-    } catch (error) {
-        console.warn('[Firebase] Initialization failed, using mock objects:', error);
+    } catch (_error) {
+        console.warn('[Firebase] Initialization failed, using mock objects:', _error);
         return {
             app: null,
             auth: null,
@@ -166,7 +166,7 @@ export default { app: firebaseApp, auth: firebaseAuth, db: firebaseDb };
             let modified = false;
             for (const envVar of clientEnvVars) {
                 const [key] = envVar.split('=');
-                if (!envContent.includes(key)) {
+                if (!envContent.includes(_key)) {
                     envContent += `${envVar}\n`;
                     modified = true;
                 }
@@ -181,8 +181,8 @@ export default { app: firebaseApp, auth: firebaseAuth, db: firebaseDb };
         console.log('✅ API Route Guardian Agent completed successfully!');
         return true;
 
-    } catch (error) {
-        console.error('🚨 API Route Guardian Agent execution failed:', error);
+    } catch (_error) {
+        console.error('🚨 API Route Guardian Agent execution failed:', _error);
         return false;
     }
 }
@@ -200,7 +200,7 @@ async function runAPIGuardian() {
 }
 
 if (require.main === module) {
-    runAPIGuardian().catch(console.error);
+    runAPIGuardian().catch(console._error);
 }
 
 module.exports = { executeAPIRouteGuardian };

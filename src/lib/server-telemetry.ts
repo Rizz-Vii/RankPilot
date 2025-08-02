@@ -14,9 +14,9 @@ type OpenTelemetryNodeSDKModule = typeof import("@opentelemetry/sdk-node");
 
 // Global variables to hold the OpenTelemetry API instances (Tracer, Meter, Logger).
 // These are initialized to undefined and populated upon successful SDK startup.
-let tracer: any = undefined;
-let meter: any = undefined;
-let logger: any = undefined;
+let tracer: unknown = undefined;
+let meter: unknown = undefined;
+let logger: unknown = undefined;
 
 /**
  * Creates a server-side telemetry provider that integrates with OpenTelemetry.
@@ -195,8 +195,8 @@ async function createRealProvider(): Promise<TelemetryProvider> {
       sdkInstance
         .shutdown()
         .then(() => console.log("OpenTelemetry SDK shut down gracefully."))
-        .catch((error: Error) =>
-          console.error("Error shutting down OpenTelemetry:", error)
+        .catch((_error: Error) =>
+          console.error("Error shutting down OpenTelemetry:", _error)
         )
         .finally(() => process.exit(0)); // Ensure process exits after shutdown attempt
     });
@@ -217,9 +217,9 @@ async function createRealProvider(): Promise<TelemetryProvider> {
       getMeter: () => meter,
       getLogger: () => logger,
     };
-  } catch (error) {
+  } catch (_error) {
     // Catch any errors during the real provider setup and log them.
-    console.error("Failed to initialize real OpenTelemetry provider:", error);
+    console.error("Failed to initialize real OpenTelemetry provider:", _error);
     // Fallback to a mock provider if the real one fails to initialize.
     return createMockProvider();
   }

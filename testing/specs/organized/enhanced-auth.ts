@@ -162,8 +162,8 @@ export class EnhancedAuth {
 
       console.log(`✅ Successfully logged in as ${targetUser.displayName}`);
 
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+    } catch (_error) {
+      const errorMessage = error instanceof Error ? error.message : String(_error);
       console.error(`❌ Login failed for ${targetUser.displayName}:`, errorMessage);
 
       // Capture debug screenshot
@@ -260,7 +260,7 @@ export class EnhancedAuth {
       );
 
       console.log("✅ Body is now visible");
-    } catch (error) {
+    } catch (_error) {
       console.log("⚠️ Body visibility check failed, continuing anyway");
       await this.page.screenshot({
         path: `test-results/body-visibility-debug-${Date.now()}.png`,
@@ -292,7 +292,7 @@ export class EnhancedAuth {
       ];
 
       for (const selector of logoutSelectors) {
-        const element = this.page.locator(selector);
+        const _element = this.page.locator(selector);
         if (await element.isVisible({ timeout: 2000 })) {
           await element.click();
           break;
@@ -303,7 +303,7 @@ export class EnhancedAuth {
       await this.page.waitForURL(/\/(login|$)/, { timeout: 10000 });
       console.log("✅ Successfully logged out");
 
-    } catch (error) {
+    } catch (_error) {
       console.log("⚠️ Logout may have failed, continuing...");
     }
   }

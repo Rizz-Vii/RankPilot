@@ -172,7 +172,7 @@ async function createTestUser(userKey: string) {
       role: user.tier,
       success: true,
     };
-  } catch (error: any) {
+  } catch (_error: unknown) {
     if (error.code === "auth/email-already-in-use") {
       console.log(`⚠️ User ${user.email} already exists, updating profile...`);
 
@@ -222,16 +222,16 @@ async function createTestUser(userKey: string) {
           email: user.email,
           role: user.tier,
           success: false,
-          error: updateError,
+          _error: updateError,
         };
       }
     } else {
-      console.error(`❌ Failed to create user ${user.email}:`, error);
+      console.error(`❌ Failed to create user ${user.email}:`, _error);
       return {
         email: user.email,
         role: user.tier,
         success: false,
-        error: error,
+        _error: _error,
       };
     }
   }
@@ -248,16 +248,16 @@ async function createAllTestUsers() {
   for (const userKey of Object.keys(TEST_USERS)) {
     try {
       const result = await createTestUser(userKey);
-      results.push(result);
+      results.push(_result);
 
       // Add delay between user creation to avoid rate limits
       await new Promise((resolve) => setTimeout(resolve, 1000));
-    } catch (error) {
-      console.error(`❌ Failed to process user ${userKey}:`, error);
+    } catch (_error) {
+      console.error(`❌ Failed to process user ${userKey}:`, _error);
       results.push({
         role: userKey,
         success: false,
-        error: error,
+        _error: _error,
       });
     }
   }
@@ -299,8 +299,8 @@ if (require.main === module) {
       console.log(`\n✅ Test user creation completed`);
       process.exit(0);
     })
-    .catch((error) => {
-      console.error(`\n❌ Test user creation failed:`, error);
+    .catch((_error) => {
+      console.error(`\n❌ Test user creation failed:`, _error);
       process.exit(1);
     });
 }

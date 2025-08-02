@@ -78,7 +78,7 @@ test.describe('User Experience - Forms & Interactions', () => {
         if (await submitButton.count() > 0) {
             await submitButton.click();
 
-            const errorMessages = page.locator('.error, [role="alert"], .text-red');
+            const errorMessages = page.locator('._error, [role="alert"], .text-red');
             if (await errorMessages.count() > 0) {
                 await expect(errorMessages.first()).toBeVisible();
             }
@@ -234,7 +234,7 @@ test.describe('User Experience - Accessibility', () => {
 
         if (imageCount > 0) {
             for (let i = 0; i < Math.min(imageCount, 5); i++) {
-                const image = images.nth(i);
+                const image = images.nth(_i);
                 const alt = await image.getAttribute('alt');
                 expect(alt).toBeTruthy();
             }
@@ -249,7 +249,7 @@ test.describe('User Experience - Accessibility', () => {
 
         if (inputCount > 0) {
             for (let i = 0; i < Math.min(inputCount, 3); i++) {
-                const input = inputs.nth(i);
+                const input = inputs.nth(_i);
                 const label = await input.getAttribute('aria-label');
                 const labelFor = await page.locator(`label[for="${await input.getAttribute('id')}"]`).count();
 

@@ -11,7 +11,7 @@ import { logger } from "firebase-functions/v2";
 // Initialize Firebase Admin (only if not already initialized)
 try {
   initializeApp();
-} catch (error) {
+} catch (_error) {
   // App already initialized, continue
   logger.info("Firebase app already initialized");
 }
@@ -36,7 +36,7 @@ export interface SiteContext {
     totalPages: number;
     contentSummary: string;
     keywords: string[];
-    recentAnalyses: any[];
+    recentAnalyses: unknown[];
 }
 
 export interface AdminContext {
@@ -46,13 +46,13 @@ export interface AdminContext {
         totalAnalyses: number;
         errorRate: number;
     };
-    recentActivity: any[];
+    recentActivity: unknown[];
     performanceInsights: string[];
 }
 
 export interface ChatContext {
     userTier: string;
-    recentConversations: any[];
+    recentConversations: unknown[];
     availableFeatures: string[];
 }
 
@@ -70,7 +70,7 @@ export const getAuditContext = async (uid: string, url: string): Promise<AuditCo
     }
 
     const auditDoc = snapshot.docs[0];
-    const data = auditDoc.data();
+    const _data = auditDoc.data();
 
     return {
       url: data.url || url,
@@ -84,8 +84,8 @@ export const getAuditContext = async (uid: string, url: string): Promise<AuditCo
       suggestions: Array.isArray(data.suggestions) ? data.suggestions : [],
       lastAnalyzed: data.timestamp?.toDate?.()?.toISOString() || new Date().toISOString(),
     };
-  } catch (error) {
-    console.error("Error fetching audit context:", error);
+  } catch (_error) {
+    console.error("Error fetching audit context:", _error);
     return null;
   }
 };
@@ -126,8 +126,8 @@ export const getSiteContext = async (uid: string): Promise<SiteContext> => {
       keywords: [...new Set(keywords)].slice(0, 20),
       recentAnalyses: analyses.slice(0, 5),
     };
-  } catch (error) {
-    console.error("Error fetching site context:", error);
+  } catch (_error) {
+    console.error("Error fetching site context:", _error);
     return {
       totalPages: 0,
       contentSummary: "",
@@ -148,7 +148,7 @@ export const getAdminContext = async (userTier: string): Promise<AdminContext> =
 
     const totalUsers = usersSnapshot.size;
     const activeSubscriptions = usersSnapshot.docs.filter(doc => {
-      const data = doc.data();
+      const _data = doc.data();
       return data.subscriptionTier && data.subscriptionTier !== "free";
     }).length;
 
@@ -170,8 +170,8 @@ export const getAdminContext = async (userTier: string): Promise<AdminContext> =
         "Database queries are executing efficiently",
       ],
     };
-  } catch (error) {
-    console.error("Error fetching admin context:", error);
+  } catch (_error) {
+    console.error("Error fetching admin context:", _error);
     return {
       systemMetrics: {
         totalUsers: 0,
@@ -200,7 +200,7 @@ export const getChatContext = async (uid: string, isAdmin: boolean = false): Pro
     const chatSnapshot = await chatRef.orderBy("lastActivity", "desc").limit(5).get();
 
     const conversations = chatSnapshot.docs.map(doc => {
-      const data = doc.data();
+      const _data = doc.data();
       return {
         sessionId: doc.id,
         lastMessage: data.lastMessage || "",
@@ -222,8 +222,8 @@ export const getChatContext = async (uid: string, isAdmin: boolean = false): Pro
       recentConversations: conversations,
       availableFeatures: tierFeatures[userTier as keyof typeof tierFeatures] || tierFeatures.free,
     };
-  } catch (error) {
-    console.error("Error fetching chat context:", error);
+  } catch (_error) {
+    console.error("Error fetching chat context:", _error);
     return {
       userTier: "free",
       recentConversations: [],
@@ -257,8 +257,8 @@ export const getNeuroSEOContext = async (uid: string, url?: string): Promise<{ i
       .join(" | ");
 
     return { insights: insights.substring(0, 500) };
-  } catch (error) {
-    console.error("Error fetching NeuroSEO context:", error);
+  } catch (_error) {
+    console.error("Error fetching NeuroSEO context:", _error);
     return { insights: "NeuroSEO™ insights currently unavailable." };
   }
 };

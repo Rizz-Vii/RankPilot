@@ -60,7 +60,7 @@ export default function PrivacyPage() {
           <h2 className="text-2xl font-semibold mb-4">Data Security</h2>
           <p>
             We implement industry-standard security measures to protect your
-            data:
+            _data:
           </p>
           <ul className="list-disc pl-6">
             <li>Encryption in transit and at rest</li>

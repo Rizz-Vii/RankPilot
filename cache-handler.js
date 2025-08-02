@@ -10,20 +10,20 @@ class CustomIncrementalCache extends IncrementalCache {
     this.maxFileSystemCacheSize = 500 * 1024 * 1024; // 500MB
   }
 
-  async get(key, ctx) {
+  async get(_key, ctx) {
     try {
-      return await super.get(key, ctx);
-    } catch (error) {
-      console.warn("Cache get error:", error.message);
+      return await super.get(_key, ctx);
+    } catch (_error) {
+      console.warn("Cache get _error:", error.message);
       return null;
     }
   }
 
-  async set(key, data, ctx) {
+  async set(_key, _data, ctx) {
     try {
-      return await super.set(key, data, ctx);
-    } catch (error) {
-      console.warn("Cache set error:", error.message);
+      return await super.set(_key, _data, ctx);
+    } catch (_error) {
+      console.warn("Cache set _error:", error.message);
       return;
     }
   }

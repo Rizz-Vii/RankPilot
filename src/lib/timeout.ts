@@ -24,7 +24,7 @@ export interface TimeoutOptions {
 }
 
 export interface TimeoutResult<T> {
-  result: T;
+  _result: T;
   elapsedTime: number;
   retryAttempts: number;
 }
@@ -102,14 +102,14 @@ export function withTimeout<T>(
         // Return result with metadata if using enhanced options
         if (typeof timeoutMsOrOptions === "object") {
           resolve({
-            result,
+            _result,
             elapsedTime,
             retryAttempts: attempts - 1,
           } as TimeoutResult<T>);
         } else {
           resolve(result as T);
         }
-      } catch (error) {
+      } catch (_error) {
         clearTimeout(timeoutId);
         if (progressId) clearInterval(progressId);
 
@@ -127,7 +127,7 @@ export function withTimeout<T>(
           return;
         }
 
-        reject(error);
+        reject(_error);
       }
     };
 

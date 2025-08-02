@@ -92,8 +92,8 @@ export class UserManager {
         expect(foundBlockIndicator).toBeTruthy();
         console.log(`🚫 Access properly blocked for ${route}`);
       }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+    } catch (_error) {
+      const errorMessage = error instanceof Error ? error.message : String(_error);
       throw new Error(`Access verification failed for ${route}: ${errorMessage}`);
     }
   }
@@ -131,13 +131,13 @@ export class TestOrchestrator {
 
       try {
         await this.executeStep(step);
-      } catch (error) {
+      } catch (_error) {
         if (step.optional) {
           console.log(`⚠️ Optional step failed, continuing...`);
           continue;
         }
 
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage = error instanceof Error ? error.message : String(_error);
         await this.page.screenshot({
           path: `test-results/flow-failure-${flow.name}-step-${i + 1}-${Date.now()}.png`
         });
@@ -171,10 +171,10 @@ export class TestOrchestrator {
         break;
 
       case 'fill':
-        if (!step.target || !step.value) throw new Error('Fill step requires target and value');
+        if (!step.target || !step._value) throw new Error('Fill step requires target and value');
         const element = await this.gracefulUtils.waitForElementGracefully(step.target, { timeout });
-        if (element) {
-          await element.fill(step.value);
+        if (_element) {
+          await element.fill(step._value);
         } else {
           throw new Error(`Element not found for fill action: ${step.target}`);
         }
@@ -256,7 +256,7 @@ export class TestOrchestrator {
   }>): Promise<void> {
     console.log(`🧭 Testing navigation for ${navigationItems.length} items`);
 
-    for (const item of navigationItems) {
+    for (const _item of navigationItems) {
       console.log(`📍 Testing navigation to ${item.name} (${item.url})`);
 
       if (item.requiredTier) {
@@ -265,7 +265,7 @@ export class TestOrchestrator {
 
       if (item.shouldBeVisible !== false) {
         await this.gracefulUtils.navigateGracefully(item.url);
-        await expect(this.page).toHaveURL(new RegExp(item.url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+        await expect(this.page).toHaveURL(new RegExp(item.url.replace(/[.*+?^${}()|[\]\\]/g, '\$&')));
         console.log(`✅ Successfully navigated to ${item.name}`);
       } else {
         // Should not be accessible
@@ -297,7 +297,7 @@ export class TestOrchestrator {
       const buttonCount = await buttons.count();
 
       for (let i = 0; i < Math.min(buttonCount, 10); i++) {
-        const button = buttons.nth(i);
+        const button = buttons.nth(_i);
         if (await button.isVisible({ timeout: 2000 })) {
           const box = await button.boundingBox();
           if (box) {

@@ -40,8 +40,8 @@ export default function SiteHeader() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-    } catch (error) {
-      console.error("Logout error:", error);
+    } catch (_error) {
+      console.error("Logout _error:", _error);
     }
   };
 
@@ -86,7 +86,7 @@ export default function SiteHeader() {
             role="navigation"
             aria-label="Main navigation"
           >
-            {navigationItems.map((item) => (
+            {navigationItems.map((_item) => (
               <Link
                 key={item.href}
                 href={item.href}

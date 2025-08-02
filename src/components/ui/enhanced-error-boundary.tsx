@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
-  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  onError?: (_error: Error, errorInfo: ErrorInfo) => void;
   showDetails?: boolean;
   resetKeys?: Array<string | number>;
   resetOnPropsChange?: boolean;
@@ -18,7 +18,7 @@ interface Props {
 
 interface State {
   hasError: boolean;
-  error: Error | null;
+  _error: Error | null;
   errorInfo: ErrorInfo | null;
   eventId: string | null;
 }
@@ -30,41 +30,41 @@ class EnhancedErrorBoundary extends Component<Props, State> {
     super(props);
     this.state = {
       hasError: false,
-      error: null,
+      _error: null,
       errorInfo: null,
       eventId: null,
     };
   }
 
-  static getDerivedStateFromError(error: Error): Partial<State> {
+  static getDerivedStateFromError(_error: Error): Partial<State> {
     return {
       hasError: true,
-      error,
+      _error,
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(_error: Error, errorInfo: ErrorInfo) {
     const eventId = `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     this.setState({
-      error,
+      _error,
       errorInfo,
       eventId,
     });
 
     // Log error to console in development
     if (process.env.NODE_ENV === "development") {
-      console.error("Error Boundary caught an error:", error);
+      console.error("Error Boundary caught an _error:", _error);
       console.error("Error Info:", errorInfo);
     }
 
     // Call custom error handler if provided
-    this.props.onError?.(error, errorInfo);
+    this.props.onError?.(_error, errorInfo);
 
     // In production, you might want to send this to an error reporting service
     if (process.env.NODE_ENV === "production") {
       // Example: Send to Sentry, LogRocket, etc.
-      // Sentry.captureException(error, { contexts: { react: errorInfo } });
+      // Sentry.captureException(_error, { contexts: { react: errorInfo } });
     }
   }
 
@@ -73,7 +73,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
     const { hasError } = this.state;
 
     if (hasError && prevProps.resetKeys !== resetKeys) {
-      if (resetKeys?.some((key, idx) => prevProps.resetKeys?.[idx] !== key)) {
+      if (resetKeys?.some((_key, idx) => prevProps.resetKeys?.[idx] !== _key)) {
         this.resetErrorBoundary();
       }
     }
@@ -95,7 +95,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
     this.resetTimeoutId = window.setTimeout(() => {
       this.setState({
         hasError: false,
-        error: null,
+        _error: null,
         errorInfo: null,
         eventId: null,
       });
@@ -103,7 +103,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
   };
 
   reportProblem = () => {
-    const { error, errorInfo, eventId } = this.state;
+    const { _error, errorInfo, eventId } = this.state;
     const userAgent = navigator.userAgent;
     const timestamp = new Date().toISOString();
 
@@ -112,7 +112,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
       timestamp,
       userAgent,
       url: window.location.href,
-      error: {
+      _error: {
         name: error?.name,
         message: error?.message,
         stack: error?.stack,
@@ -140,7 +140,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
-      const { error, errorInfo, eventId } = this.state;
+      const { _error, errorInfo, eventId } = this.state;
       const { showDetails = false } = this.props;
 
       return (

@@ -199,9 +199,9 @@ test.describe('Role-Based Access Control - Admin Access', () => {
 
         let foundAdminElement = false;
         for (const element of adminElements) {
-            if (await page.locator(element).isVisible({ timeout: 5000 })) {
+            if (await page.locator(_element).isVisible({ timeout: 5000 })) {
                 foundAdminElement = true;
-                console.log(`✅ Found admin UI element: ${element}`);
+                console.log(`✅ Found admin UI _element: ${element}`);
                 break;
             }
         }

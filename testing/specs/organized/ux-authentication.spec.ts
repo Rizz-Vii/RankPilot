@@ -46,7 +46,7 @@ test.describe('User Experience - Authentication & Access', () => {
             // Free users should not access premium features
             await page.goto('/neuroseo/advanced');
             await expect(page.locator('[data-testid="upgrade-prompt"]')).toBeVisible();
-        } catch (error: any) {
+        } catch (_error: unknown) {
             console.warn('Free tier access test failed:', error.message);
         }
     });
@@ -59,7 +59,7 @@ test.describe('User Experience - Authentication & Access', () => {
             await page.goto('/profile');
             await expect(page.locator('[data-testid="user-profile"]')).toBeVisible();
             await expect(page.locator('[data-testid="subscription-info"]')).toBeVisible();
-        } catch (error: any) {
+        } catch (_error: unknown) {
             console.warn('Profile test failed:', error.message);
         }
     });
@@ -71,7 +71,7 @@ test.describe('User Experience - Authentication & Access', () => {
 
             await page.click('[data-testid="logout-button"]');
             await expect(page.url()).toContain('login');
-        } catch (error: any) {
+        } catch (_error: unknown) {
             console.warn('Logout test failed:', error.message);
         }
     });
@@ -84,7 +84,7 @@ test.describe('User Experience - Authentication & Access', () => {
             await page.goto('/upgrade');
             await expect(page.locator('[data-testid="pricing-plans"]')).toBeVisible();
             await expect(page.locator('[data-testid="upgrade-buttons"]')).toBeVisible();
-        } catch (error: any) {
+        } catch (_error: unknown) {
             console.warn('Upgrade test failed:', error.message);
         }
     });

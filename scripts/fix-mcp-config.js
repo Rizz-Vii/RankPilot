@@ -81,7 +81,7 @@ function fixMcpConfiguration() {
 
         return true;
 
-    } catch (error) {
+    } catch (_error) {
         console.error('❌ Error fixing MCP configuration:', error.message);
 
         if (error instanceof SyntaxError) {
@@ -102,7 +102,7 @@ function showEnvironmentStatus() {
     console.log('\n📋 Environment Variables Status:');
     console.log('=================================');
 
-    const checkEnv = (key, value) => {
+    const checkEnv = (key, _value) => {
         const status = value && value !== `your_${key.toLowerCase()}_here` ? '✅' : '❌';
         const display = value ? `${value.substring(0, 20)}...` : 'Not set';
         console.log(`${status} ${key}: ${display}`);

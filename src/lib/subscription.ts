@@ -30,8 +30,8 @@ export async function getUserSubscription(
       currentPeriodEnd: userData.nextBillingDate?.toDate(),
       cancelAtPeriodEnd: userData.cancelAtPeriodEnd || false,
     };
-  } catch (error) {
-    console.error("Error fetching user subscription:", error);
+  } catch (_error) {
+    console.error("Error fetching user subscription:", _error);
     return { status: "free", tier: "free" };
   }
 }
@@ -41,7 +41,7 @@ export async function updateUserSubscription(
   subscriptionData: Partial<SubscriptionData>
 ): Promise<void> {
   try {
-    const updateData: any = {};
+    const updateData: unknown = {};
 
     if (subscriptionData.status) {
       updateData.subscriptionStatus = subscriptionData.status;
@@ -70,8 +70,8 @@ export async function updateUserSubscription(
     updateData.updatedAt = new Date();
 
     await updateDoc(doc(db, "users", userId), updateData);
-  } catch (error) {
-    console.error("Error updating user subscription:", error);
+  } catch (_error) {
+    console.error("Error updating user subscription:", _error);
     throw error;
   }
 }
@@ -141,7 +141,7 @@ export function canAccessFeature(
 
 export function getRemainingUsage(
   userTier: PlanType | "free",
-  currentUsage: { [key: string]: number }
+  currentUsage: { [_key: string]: number }
 ) {
   const limits = getSubscriptionLimits(userTier);
 
@@ -181,7 +181,7 @@ export function formatSubscriptionStatus(status: string): string {
 
 export function getUpgradeRecommendation(
   currentTier: PlanType | "free",
-  usage: { [key: string]: number }
+  usage: { [_key: string]: number }
 ): { shouldUpgrade: boolean; recommendedTier?: PlanType; reason?: string } {
   const limits = getSubscriptionLimits(currentTier);
 

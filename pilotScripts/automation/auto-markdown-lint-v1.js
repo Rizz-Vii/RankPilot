@@ -32,7 +32,7 @@ class AutoMarkdownLinter {
       // Update PilotBuddy metrics
       this.updatePilotBuddyMetrics();
       
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Markdown linting failed:', error.message);
       
       // Attempt graceful fallback
@@ -72,16 +72,16 @@ class AutoMarkdownLinter {
       const items = fs.readdirSync(dir);
       
       items.forEach(item => {
-        const fullPath = path.join(dir, item);
+        const fullPath = path.join(dir, _item);
         const stat = fs.statSync(fullPath);
         
-        if (stat.isDirectory() && !this.excludePatterns.includes(item)) {
+        if (stat.isDirectory() && !this.excludePatterns.includes(_item)) {
           files.push(...this.findMarkdownFiles(fullPath));
         } else if (item.endsWith('.md')) {
           files.push(fullPath);
         }
       });
-    } catch (error) {
+    } catch (_error) {
       console.warn(`Warning: Could not read directory ${dir}`);
     }
     
@@ -110,7 +110,7 @@ class AutoMarkdownLinter {
       fs.writeFileSync(filePath, content);
       console.log(`📝 Fixed: ${path.relative(process.cwd(), filePath)}`);
       
-    } catch (error) {
+    } catch (_error) {
       console.warn(`Warning: Could not fix ${filePath}: ${error.message}`);
     }
   }
@@ -122,7 +122,7 @@ class AutoMarkdownLinter {
     try {
       execSync('npm run pilotbuddy:update', { stdio: 'inherit' });
       console.log('📊 PilotBuddy metrics updated');
-    } catch (error) {
+    } catch (_error) {
       console.warn('Warning: Could not update PilotBuddy metrics');
     }
   }
@@ -138,7 +138,7 @@ class AutoMarkdownLinter {
     
     try {
       execSync(watchCommand, { stdio: 'inherit' });
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Watcher setup failed:', error.message);
     }
   }

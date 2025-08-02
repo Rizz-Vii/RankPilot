@@ -23,8 +23,8 @@ async function main() {
       "- Tool restrictions will be enforced based on subscription level"
     );
     console.log("- Usage limits will be tracked in Firestore");
-  } catch (error) {
-    console.error("❌ User setup failed:", error);
+  } catch (_error) {
+    console.error("❌ User setup failed:", _error);
     process.exit(1);
   }
 }

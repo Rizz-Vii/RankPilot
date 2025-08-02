@@ -18,8 +18,8 @@ if (!getApps().length) {
             // For production, you'd use service account credentials
             // credential: cert({...})
         });
-    } catch (error) {
-        console.error('[DashboardAPI] Firebase Admin initialization error:', error);
+    } catch (_error) {
+        console.error('[DashboardAPI] Firebase Admin initialization _error:', _error);
     }
 }
 
@@ -28,23 +28,23 @@ interface DashboardRequestBody {
     dashboardId?: string;
     name?: string;
     templateId?: string;
-    widgetConfig?: any;
+    widgetConfig?: unknown;
     position?: { x: number; y: number; width: number; height: number; };
-    updates?: any;
+    updates?: unknown;
     exportFormat?: 'pdf' | 'excel' | 'json';
-    exportOptions?: any;
+    exportOptions?: unknown;
     collaborators?: Array<{ userId: string; role: 'viewer' | 'editor'; }>;
     isPublic?: boolean;
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
     try {
         const body = await request.json() as DashboardRequestBody;
         const authHeader = request.headers.get('authorization');
 
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
-                { error: 'Unauthorized - Missing token' },
+                { _error: 'Unauthorized - Missing token' },
                 { status: 401 }
             );
         }
@@ -54,10 +54,10 @@ export async function POST(request: NextRequest) {
 
         try {
             user = await getAuth().verifyIdToken(token);
-        } catch (error) {
-            console.error('[DashboardAPI] Token verification failed:', error);
+        } catch (_error) {
+            console.error('[DashboardAPI] Token verification failed:', _error);
             return NextResponse.json(
-                { error: 'Unauthorized - Invalid token' },
+                { _error: 'Unauthorized - Invalid token' },
                 { status: 401 }
             );
         }
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
         // Validate tier access for enterprise features
         if (!['agency', 'enterprise', 'admin'].includes(userTier)) {
             return NextResponse.json(
-                { error: 'Upgrade required - Custom dashboards available for Agency tier and above' },
+                { _error: 'Upgrade required - Custom dashboards available for Agency tier and above' },
                 { status: 403 }
             );
         }
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
             case 'create':
                 if (!body.name) {
                     return NextResponse.json(
-                        { error: 'Dashboard name is required' },
+                        { _error: 'Dashboard name is required' },
                         { status: 400 }
                     );
                 }
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
             case 'update':
                 if (!body.dashboardId) {
                     return NextResponse.json(
-                        { error: 'Dashboard ID is required' },
+                        { _error: 'Dashboard ID is required' },
                         { status: 400 }
                     );
                 }
@@ -126,20 +126,20 @@ export async function POST(request: NextRequest) {
 
                     return NextResponse.json({
                         success: true,
-                        widget: result,
+                        widget: _result,
                         message: 'Widget updated successfully'
                     });
                 }
 
                 return NextResponse.json(
-                    { error: 'Invalid update request' },
+                    { _error: 'Invalid update request' },
                     { status: 400 }
                 );
 
             case 'delete':
                 if (!body.dashboardId) {
                     return NextResponse.json(
-                        { error: 'Dashboard ID is required' },
+                        { _error: 'Dashboard ID is required' },
                         { status: 400 }
                     );
                 }
@@ -158,14 +158,14 @@ export async function POST(request: NextRequest) {
                 }
 
                 return NextResponse.json(
-                    { error: 'Widget ID is required for deletion' },
+                    { _error: 'Widget ID is required for deletion' },
                     { status: 400 }
                 );
 
             case 'export':
                 if (!body.dashboardId || !body.exportFormat) {
                     return NextResponse.json(
-                        { error: 'Dashboard ID and export format are required' },
+                        { _error: 'Dashboard ID and export format are required' },
                         { status: 400 }
                     );
                 }
@@ -179,14 +179,14 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({
                     success: exportResult.success,
                     downloadUrl: exportResult.downloadUrl,
-                    error: exportResult.error,
+                    _error: exportResult._error,
                     message: exportResult.success ? 'Export completed successfully' : 'Export failed'
                 });
 
             case 'share':
                 if (!body.dashboardId || !body.collaborators) {
                     return NextResponse.json(
-                        { error: 'Dashboard ID and collaborators are required' },
+                        { _error: 'Dashboard ID and collaborators are required' },
                         { status: 400 }
                     );
                 }
@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
             case 'duplicate':
                 if (!body.dashboardId || !body.name) {
                     return NextResponse.json(
-                        { error: 'Dashboard ID and new name are required' },
+                        { _error: 'Dashboard ID and new name are required' },
                         { status: 400 }
                     );
                 }
@@ -226,16 +226,16 @@ export async function POST(request: NextRequest) {
 
             default:
                 return NextResponse.json(
-                    { error: 'Invalid action' },
+                    { _error: 'Invalid action' },
                     { status: 400 }
                 );
         }
 
-    } catch (error) {
-        console.error('[DashboardAPI] Error:', error);
+    } catch (_error) {
+        console.error('[DashboardAPI] Error:', _error);
         return NextResponse.json(
             {
-                error: 'Internal server error',
+                _error: 'Internal server error',
                 details: error instanceof Error ? error.message : 'Unknown error'
             },
             { status: 500 }
@@ -243,7 +243,7 @@ export async function POST(request: NextRequest) {
     }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     try {
         const url = new URL(request.url);
         const action = url.searchParams.get('action');
@@ -251,7 +251,7 @@ export async function GET(request: NextRequest) {
 
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
-                { error: 'Unauthorized - Missing token' },
+                { _error: 'Unauthorized - Missing token' },
                 { status: 401 }
             );
         }
@@ -261,10 +261,10 @@ export async function GET(request: NextRequest) {
 
         try {
             user = await getAuth().verifyIdToken(token);
-        } catch (error) {
-            console.error('[DashboardAPI] Token verification failed:', error);
+        } catch (_error) {
+            console.error('[DashboardAPI] Token verification failed:', _error);
             return NextResponse.json(
-                { error: 'Unauthorized - Invalid token' },
+                { _error: 'Unauthorized - Invalid token' },
                 { status: 401 }
             );
         }
@@ -294,7 +294,7 @@ export async function GET(request: NextRequest) {
 
                 if (!dashboardId || !widgetId) {
                     return NextResponse.json(
-                        { error: 'Dashboard ID and Widget ID are required' },
+                        { _error: 'Dashboard ID and Widget ID are required' },
                         { status: 400 }
                     );
                 }
@@ -305,7 +305,7 @@ export async function GET(request: NextRequest) {
 
                 if (!dashboard) {
                     return NextResponse.json(
-                        { error: 'Dashboard not found' },
+                        { _error: 'Dashboard not found' },
                         { status: 404 }
                     );
                 }
@@ -313,7 +313,7 @@ export async function GET(request: NextRequest) {
                 const widget = dashboard.widgets.find(w => w.id === widgetId);
                 if (!widget) {
                     return NextResponse.json(
-                        { error: 'Widget not found' },
+                        { _error: 'Widget not found' },
                         { status: 404 }
                     );
                 }
@@ -321,21 +321,21 @@ export async function GET(request: NextRequest) {
                 const widgetData = await customDashboardBuilder.getWidgetData(widgetId, widget);
                 return NextResponse.json({
                     success: true,
-                    data: widgetData
+                    _data: widgetData
                 });
 
             default:
                 return NextResponse.json(
-                    { error: 'Invalid action' },
+                    { _error: 'Invalid action' },
                     { status: 400 }
                 );
         }
 
-    } catch (error) {
-        console.error('[DashboardAPI] GET Error:', error);
+    } catch (_error) {
+        console.error('[DashboardAPI] GET Error:', _error);
         return NextResponse.json(
             {
-                error: 'Internal server error',
+                _error: 'Internal server error',
                 details: error instanceof Error ? error.message : 'Unknown error'
             },
             { status: 500 }

@@ -33,8 +33,8 @@ interface UserData {
   subscriptionTier?: string;
   subscriptionStatus?: string;
   displayName?: string;
-  createdAt?: any;
-  updatedAt?: any;
+  createdAt?: unknown;
+  updatedAt?: unknown;
 }
 
 async function analyzeUserRolesAndTiers() {
@@ -100,7 +100,7 @@ async function analyzeUserRolesAndTiers() {
     console.log("\n👥 DETAILED USER INFORMATION:");
     console.log("=".repeat(80));
 
-    users.forEach((user, index) => {
+    users.forEach((user, _index) => {
       console.log(`\n${index + 1}. User ID: ${user.id}`);
       console.log(`   Email: ${user.email || "N/A"}`);
       console.log(`   Display Name: ${user.displayName || "N/A"}`);
@@ -178,7 +178,7 @@ async function analyzeUserRolesAndTiers() {
 
     if (recommendations.length > 0) {
       console.log("\n📝 Recommended actions:");
-      recommendations.forEach((rec, index) => {
+      recommendations.forEach((rec, _index) => {
         console.log(`   ${index + 1}. ${rec}`);
       });
     } else {
@@ -186,8 +186,8 @@ async function analyzeUserRolesAndTiers() {
     }
 
     console.log("\n✅ Analysis complete!");
-  } catch (error) {
-    console.error("❌ Error analyzing users:", error);
+  } catch (_error) {
+    console.error("❌ Error analyzing users:", _error);
   }
 }
 

@@ -37,7 +37,7 @@ class RoleBasedTestRunner {
     // Write to log file
     try {
       fs.appendFileSync(this.logFile, logMessage + "\n");
-    } catch (error) {
+    } catch (_error) {
       // Ignore file write errors
     }
   }
@@ -52,7 +52,7 @@ class RoleBasedTestRunner {
         stdio: "ignore",
       });
       this.log("✅ Development server is running");
-    } catch (error) {
+    } catch (_error) {
       this.log("❌ Development server is not running", "ERROR");
       this.log(
         "💡 Please start the development server with: npm run dev",
@@ -98,7 +98,7 @@ class RoleBasedTestRunner {
 
       this.testResults.freeTier.status = "passed";
       this.log("✅ Free Tier Tests completed successfully");
-    } catch (error) {
+    } catch (_error) {
       this.testResults.freeTier.status = "failed";
       this.testResults.freeTier.errors.push(error.message);
       this.log(`❌ Free Tier Tests failed: ${error.message}`, "ERROR");
@@ -132,7 +132,7 @@ class RoleBasedTestRunner {
 
       this.testResults.enterpriseTier.status = "passed";
       this.log("✅ Enterprise Tier Tests completed successfully");
-    } catch (error) {
+    } catch (_error) {
       this.testResults.enterpriseTier.status = "failed";
       this.testResults.enterpriseTier.errors.push(error.message);
       this.log(`❌ Enterprise Tier Tests failed: ${error.message}`, "ERROR");
@@ -163,7 +163,7 @@ class RoleBasedTestRunner {
       }
 
       this.log("✅ Mobile Tests completed successfully");
-    } catch (error) {
+    } catch (_error) {
       this.log(`⚠️ Mobile Tests had issues: ${error.message}`, "WARN");
       // Don't fail the entire test run for mobile issues
     }
@@ -182,7 +182,7 @@ class RoleBasedTestRunner {
       });
 
       this.log("✅ Compatibility Tests completed successfully");
-    } catch (error) {
+    } catch (_error) {
       this.log(`⚠️ Compatibility Tests had issues: ${error.message}`, "WARN");
       // Don't fail the entire test run for compatibility issues
     }
@@ -252,7 +252,7 @@ class RoleBasedTestRunner {
 
       this.testResults.overall.status = "passed";
       this.log("🎉 All role-based tests completed successfully!");
-    } catch (error) {
+    } catch (_error) {
       this.testResults.overall.status = "failed";
       this.log(`💥 Test execution failed: ${error.message}`, "ERROR");
       throw error;
@@ -275,8 +275,8 @@ if (require.main === module) {
       console.log("✅ Test execution completed successfully");
       process.exit(0);
     })
-    .catch((error) => {
-      console.error("❌ Test execution failed:", error);
+    .catch((_error) => {
+      console.error("❌ Test execution failed:", _error);
       process.exit(1);
     });
 }

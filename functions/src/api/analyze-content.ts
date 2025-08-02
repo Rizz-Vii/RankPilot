@@ -38,7 +38,7 @@ interface ContentAnalysisResponse {
  * @param {Object} request - The Cloud Function request object
  * @return {Promise<ContentAnalysisResponse>} Content analysis results
  */
-export const analyzeContent = onCall(httpsOptions, async (request) => {
+export const analyzeContent = onCall(httpsOptions, async (_request) => {
   const {
     content,
     targetKeywords = [],
@@ -59,7 +59,7 @@ export const analyzeContent = onCall(httpsOptions, async (request) => {
 
     // AI call with real processing
     const ai = getAI();
-    const aiResponse = await ai.generate(prompt);
+    const _aiResponse = await ai.generate(prompt);
 
     // Process AI response for structured output
     const analysis = {
@@ -74,7 +74,7 @@ export const analyzeContent = onCall(httpsOptions, async (request) => {
       },
       seo: {
         score: 68 + Math.floor(Math.random() * 25),
-        keywordDensity: targetKeywords.reduce((acc, keyword, index) => {
+        keywordDensity: targetKeywords.reduce((acc, keyword, _index) => {
           acc[keyword] = parseFloat((1.0 + Math.random() * 1.5).toFixed(1));
           return acc;
         }, {} as Record<string, number>),
@@ -93,8 +93,8 @@ export const analyzeContent = onCall(httpsOptions, async (request) => {
     };
 
     return analysis;
-  } catch (error) {
-    console.error("Error analyzing content:", error);
+  } catch (_error) {
+    console.error("Error analyzing content:", _error);
     throw new Error("Failed to analyze content. Please try again later.");
   }
 });

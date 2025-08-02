@@ -83,9 +83,9 @@ export const dummyDashboardData = {
     ],
   },
   trafficSources: [
-    { name: "Organic Search", value: 65, fill: "var(--color-chart-1)" },
-    { name: "Direct", value: 20, fill: "var(--color-chart-2)" },
-    { name: "Referral", value: 10, fill: "var(--color-chart-3)" },
-    { name: "Social", value: 5, fill: "var(--color-chart-4)" },
+    { name: "Organic Search", _value: 65, fill: "var(--color-chart-1)" },
+    { name: "Direct", _value: 20, fill: "var(--color-chart-2)" },
+    { name: "Referral", _value: 10, fill: "var(--color-chart-3)" },
+    { name: "Social", _value: 5, fill: "var(--color-chart-4)" },
   ],
 };

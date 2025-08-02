@@ -26,7 +26,7 @@ export function KeywordToolForm({ onSubmit, isLoading }: KeywordToolFormProps) {
                 <Input
                     id="seed"
                     value={seed}
-                    onChange={(e) => setSeed(e.target.value)}
+                    onChange={(e) => setSeed(e.target._value)}
                     placeholder="Enter your seed keyword..."
                     required
                 />

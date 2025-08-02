@@ -18,6 +18,6 @@ try {
   
   console.log('✅ TypeScript Language Server restarted');
   console.log('💡 Please reload VS Code window for best results');
-} catch (error) {
+} catch (_error) {
   console.error('❌ Error restarting TypeScript:', error.message);
 }

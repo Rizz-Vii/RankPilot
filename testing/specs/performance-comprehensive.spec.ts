@@ -125,8 +125,8 @@ test.describe('Performance - Page Load Optimization', () => {
             const entries = performance.getEntriesByType('resource');
             return {
                 totalResources: entries.length,
-                totalSize: entries.reduce((sum, entry: any) => sum + (entry.transferSize || 0), 0),
-                slowResources: entries.filter((entry: any) => entry.duration > 1000).length
+                totalSize: entries.reduce((sum, entry: unknown) => sum + (entry.transferSize || 0), 0),
+                slowResources: entries.filter((entry: unknown) => entry.duration > 1000).length
             };
         });
 
@@ -139,7 +139,7 @@ test.describe('Performance - Page Load Optimization', () => {
 
         const criticalResources = await page.evaluate(() => {
             const entries = performance.getEntriesByType('resource');
-            return entries.filter((entry: any) =>
+            return entries.filter((entry: unknown) =>
                 entry.name.includes('.css') ||
                 entry.name.includes('font') ||
                 entry.name.includes('critical')
@@ -166,7 +166,7 @@ test.describe('Performance - Page Load Optimization', () => {
 
 test.describe('Performance - Network & Caching', () => {
     test('HTTP/2 implementation', async ({ page }) => {
-        const response = await page.goto('/', { timeout: 30000 });
+        const _response = await page.goto('/', { timeout: 30000 });
         const protocol = await response?.headerValue('x-powered-by');
 
         // Check if modern protocols are used
@@ -176,7 +176,7 @@ test.describe('Performance - Network & Caching', () => {
     });
 
     test('Compression effectiveness', async ({ page }) => {
-        const response = await page.goto('/', { timeout: 30000 });
+        const _response = await page.goto('/', { timeout: 30000 });
         const encoding = await response?.headerValue('content-encoding');
 
         if (encoding === 'gzip' || encoding === 'br') {
@@ -189,7 +189,7 @@ test.describe('Performance - Network & Caching', () => {
 
         const cdnResources = await page.evaluate(() => {
             const entries = performance.getEntriesByType('resource');
-            return entries.filter((entry: any) =>
+            return entries.filter((entry: unknown) =>
                 entry.name.includes('cdn') ||
                 entry.name.includes('cloudfront') ||
                 entry.name.includes('jsdelivr')
@@ -326,7 +326,7 @@ test.describe('Performance - Memory & CPU Optimization', () => {
 
         const longTasks = await page.evaluate(() => {
             return new Promise((resolve) => {
-                const tasks: any[] = [];
+                const tasks: unknown[] = [];
                 new PerformanceObserver((list) => {
                     tasks.push(...list.getEntries());
                     resolve(tasks.length);
@@ -364,9 +364,9 @@ test.describe('Performance - Memory & CPU Optimization', () => {
 
         const jsResources = await page.evaluate(() => {
             const entries = performance.getEntriesByType('resource');
-            return entries.filter((entry: any) =>
+            return entries.filter((entry: unknown) =>
                 entry.name.endsWith('.js')
-            ).reduce((total, entry: any) => total + (entry.transferSize || 0), 0);
+            ).reduce((total, entry: unknown) => total + (entry.transferSize || 0), 0);
         });
 
         expect(jsResources).toBeLessThan(1024 * 1024); // JS bundle under 1MB

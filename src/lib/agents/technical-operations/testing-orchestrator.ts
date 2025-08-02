@@ -95,8 +95,8 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
             console.log('✅ Testing Orchestrator Agent - Phase 2 Complete!');
             return true;
 
-        } catch (error) {
-            console.error('🚨 Testing Orchestrator Agent execution failed:', error);
+        } catch (_error) {
+            console.error('🚨 Testing Orchestrator Agent execution failed:', _error);
             await this.rollback();
             return false;
         }
@@ -171,7 +171,7 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
                     });
                 }
 
-            } catch (error) {
+            } catch (_error) {
                 console.log(`⚠️  ${tier} tier test execution failed, continuing with next tier...`);
                 this.testResults.push({
                     name: `Role-based test: ${tier}`,
@@ -213,7 +213,7 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
 
             console.log(`✅ Performance tests completed (${duration}ms)`);
 
-        } catch (error) {
+        } catch (_error) {
             console.log('⚠️  Performance tests encountered issues, but infrastructure validated');
             this.testResults.push({
                 name: 'Performance Tests (Core Web Vitals)',
@@ -247,7 +247,7 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
 
             console.log(`✅ Mobile tests completed (${duration}ms)`);
 
-        } catch (error) {
+        } catch (_error) {
             console.log('⚠️  Mobile tests encountered issues, validating mobile-responsive utilities...');
 
             // Validate mobile utilities exist
@@ -291,7 +291,7 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
 
             console.log(`✅ Accessibility tests completed (${duration}ms)`);
 
-        } catch (error) {
+        } catch (_error) {
             console.log('⚠️  Accessibility tests need enhancement, validating touch targets...');
 
             // Validate 48px touch targets in CSS
@@ -517,8 +517,8 @@ export default {
             // No destructive changes made, just validation and report generation
             console.log('✅ Rollback completed (no destructive changes to rollback)');
             return true;
-        } catch (error) {
-            console.error('❌ Rollback failed:', error);
+        } catch (_error) {
+            console.error('❌ Rollback failed:', _error);
             return false;
         }
     }

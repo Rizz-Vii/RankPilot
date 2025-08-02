@@ -95,7 +95,7 @@ Use the following API keys for enhanced analysis:
 1.  Analyze the provided activities to identify patterns, recurring issues, or opportunities. For example, if they repeatedly audit the same site with poor scores, that's a key insight. If they research keywords but never generate content briefs, suggest that as a next step.
 2.  Generate a list of 3 to 5 unique, actionable insights based on this analysis.
 3.  For each insight, provide a clear title, description, category, priority, and estimated impact.
-4.  If applicable, suggest a relevant tool within the platform they can use to address the insight by providing an \`actionLink\` and \`actionText\`.
+4.  If applicable, suggest a relevant tool within the platform they can use to address the insight by providing an `actionLink` and `actionText`.
 5.  Prioritize insights that seem most urgent or impactful based on the data. For example, a failed SEO audit is more critical than a single keyword search.
 6.  If there is no activity, return an empty array of insights.
 

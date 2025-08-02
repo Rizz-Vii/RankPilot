@@ -6,7 +6,7 @@
 import { MCPResponse, mcpService } from '@/lib/mcp';
 
 export interface NeuroSEOMCPAnalysis {
-    originalAnalysis: any;
+    originalAnalysis: unknown;
     mcpEnhancements: {
         huggingfaceModels?: MCPResponse;
         competitorAnalysis?: MCPResponse;
@@ -31,7 +31,7 @@ export class NeuroSEOMCPOrchestrator {
             const modelQuery = `content analysis seo ${keywords.join(' ')}`;
             const modelResults = await mcpService.huggingfaceModelSearch(modelQuery, 5);
 
-            if (modelResults.success && modelResults.data) {
+            if (modelResults.success && modelResults._data) {
                 // Simulate AI-enhanced content analysis
                 const enhancedAnalysis = {
                     originalContent: content,
@@ -42,13 +42,13 @@ export class NeuroSEOMCPOrchestrator {
                         aiOptimizedTitle: 'AI-Generated SEO-Optimized Title Based on Content Analysis',
                         suggestedMetaDescription: 'AI-crafted meta description optimized for CTR and relevance',
                     },
-                    modelRecommendations: modelResults.data,
+                    modelRecommendations: modelResults._data,
                     confidenceScore: 0.94,
                 };
 
                 return {
                     success: true,
-                    data: enhancedAnalysis,
+                    _data: enhancedAnalysis,
                     source: 'huggingface',
                     timestamp: new Date().toISOString(),
                     requestId: `neuroseo_hf_${Date.now()}`,
@@ -81,10 +81,10 @@ export class NeuroSEOMCPOrchestrator {
                     onlyMainContent: true,
                 });
 
-                if (scrapeResult.success && scrapeResult.data) {
+                if (scrapeResult.success && scrapeResult._data) {
                     competitorData.push({
                         url,
-                        analysis: scrapeResult.data,
+                        analysis: scrapeResult._data,
                         competitiveInsights: {
                             contentGaps: 'Identified 5 content gaps for competitive advantage',
                             keywordOpportunities: 'Found 12 keyword opportunities not covered by competitor',
@@ -114,7 +114,7 @@ export class NeuroSEOMCPOrchestrator {
 
             return {
                 success: true,
-                data: enhancedCompetitorAnalysis,
+                _data: enhancedCompetitorAnalysis,
                 source: 'firecrawl',
                 timestamp: new Date().toISOString(),
                 requestId: `neuroseo_fc_${Date.now()}`,
@@ -162,7 +162,7 @@ export class NeuroSEOMCPOrchestrator {
 
             return {
                 success: true,
-                data: performanceData,
+                _data: performanceData,
                 source: 'sentry',
                 timestamp: new Date().toISOString(),
                 requestId: `neuroseo_sentry_${Date.now()}`,
@@ -181,7 +181,7 @@ export class NeuroSEOMCPOrchestrator {
     /**
      * Generate strategic insights with Sequential Thinking MCP
      */
-    async generateStrategicInsights(analysisResults: any): Promise<MCPResponse> {
+    async generateStrategicInsights(analysisResults: unknown): Promise<MCPResponse> {
         try {
             const problemStatement = `
         SEO Analysis Results Summary:
@@ -195,10 +195,10 @@ export class NeuroSEOMCPOrchestrator {
 
             const strategicAnalysis = await mcpService.sequentialThinkingAnalyze(problemStatement);
 
-            if (strategicAnalysis.success && strategicAnalysis.data) {
+            if (strategicAnalysis.success && strategicAnalysis._data) {
                 const enhancedInsights = {
                     originalAnalysis: analysisResults,
-                    strategicRecommendations: strategicAnalysis.data,
+                    strategicRecommendations: strategicAnalysis._data,
                     actionPlan: {
                         immediate: [
                             'Optimize Core Web Vitals for better performance scores',
@@ -227,7 +227,7 @@ export class NeuroSEOMCPOrchestrator {
 
                 return {
                     success: true,
-                    data: enhancedInsights,
+                    _data: enhancedInsights,
                     source: 'sequential-thinking',
                     timestamp: new Date().toISOString(),
                     requestId: `neuroseo_st_${Date.now()}`,

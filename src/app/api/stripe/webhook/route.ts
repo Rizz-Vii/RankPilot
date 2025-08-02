@@ -10,18 +10,18 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
     const body = await request.text();
     const headersList = await headers();
     const signature = headersList.get('stripe-signature')!;
 
-    let event: Stripe.Event;
+    let _event: Stripe.Event;
 
     try {
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err) {
         console.error('❌ Webhook signature verification failed:', err);
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+        return NextResponse.json({ _error: 'Invalid signature' }, { status: 400 });
     }
 
     try {
@@ -74,10 +74,10 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ received: true });
 
-    } catch (error) {
-        console.error('❌ Webhook handler error:', error);
+    } catch (_error) {
+        console.error('❌ Webhook handler _error:', _error);
         return NextResponse.json(
-            { error: 'Webhook handler failed' },
+            { _error: 'Webhook handler failed' },
             { status: 500 }
         );
     }
@@ -102,8 +102,8 @@ async function updateUserSubscription(session: Stripe.Checkout.Session) {
         });
 
         console.log(`✅ Updated user ${userId} to ${tier} tier`);
-    } catch (error) {
-        console.error('❌ Failed to update user subscription:', error);
+    } catch (_error) {
+        console.error('❌ Failed to update user subscription:', _error);
     }
 }
 
@@ -123,8 +123,8 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
         });
 
         console.log(`✅ Subscription created for user ${userId}`);
-    } catch (error) {
-        console.error('❌ Failed to handle subscription creation:', error);
+    } catch (_error) {
+        console.error('❌ Failed to handle subscription creation:', _error);
     }
 }
 
@@ -140,8 +140,8 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
         });
 
         console.log(`✅ Subscription updated for user ${userId}`);
-    } catch (error) {
-        console.error('❌ Failed to handle subscription update:', error);
+    } catch (_error) {
+        console.error('❌ Failed to handle subscription update:', _error);
     }
 }
 
@@ -159,8 +159,8 @@ async function downgradeToFreeTier(subscription: Stripe.Subscription) {
         });
 
         console.log(`✅ Downgraded user ${userId} to free tier`);
-    } catch (error) {
-        console.error('❌ Failed to downgrade user:', error);
+    } catch (_error) {
+        console.error('❌ Failed to downgrade user:', _error);
     }
 }
 
@@ -170,8 +170,8 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
     try {
         // Find user by customer ID and update subscription status
         console.log(`✅ Payment succeeded for customer: ${customerId}`);
-    } catch (error) {
-        console.error('❌ Failed to handle payment success:', error);
+    } catch (_error) {
+        console.error('❌ Failed to handle payment success:', _error);
     }
 }
 
@@ -181,7 +181,7 @@ async function handleFailedPayment(invoice: Stripe.Invoice) {
     try {
         console.log(`⚠️ Payment failed for customer: ${customerId}`);
         // TODO: Send email notification about failed payment
-    } catch (error) {
-        console.error('❌ Failed to handle payment failure:', error);
+    } catch (_error) {
+        console.error('❌ Failed to handle payment failure:', _error);
     }
 }

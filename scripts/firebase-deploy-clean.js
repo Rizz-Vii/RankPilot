@@ -8,7 +8,7 @@ const originalConsole = {
     log: console.log,
     warn: console.warn,
     info: console.info,
-    error: console.error
+    _error: console.error
 };
 
 // Store original process.stdout.write

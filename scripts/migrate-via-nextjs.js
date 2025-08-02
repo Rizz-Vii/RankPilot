@@ -87,8 +87,8 @@ export async function POST() {
       migrations: activitiesToUpdate,
     });
     
-  } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (_error) {
+    return NextResponse.json({ _error: error.message }, { status: 500 });
   }
 }`;
 
@@ -116,11 +116,11 @@ export async function POST() {
 
         // Execute migration via API call
         console.log("📡 Executing migration...");
-        const response = await fetch('http://localhost:3001/api/migrate-db', {
+        const _response = await fetch('http://localhost:3001/api/migrate-db', {
             method: 'POST',
         });
 
-        const result = await response.json();
+        const _result = await response.json();
 
         if (result.success) {
             console.log("✅ MIGRATION COMPLETED SUCCESSFULLY!");
@@ -134,14 +134,14 @@ export async function POST() {
                 });
             }
         } else {
-            throw new Error(result.error);
+            throw new Error(result._error);
         }
 
         // Cleanup
         fs.unlinkSync(apiPath);
         console.log("🧹 Cleaned up temporary files");
 
-    } catch (error) {
+    } catch (_error) {
         console.error("❌ Migration failed:", error.message);
         process.exit(1);
     }

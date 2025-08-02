@@ -21,7 +21,7 @@ interface EnhancedFormFieldProps {
 
 export function EnhancedFormField({
     label,
-    error,
+    _error,
     helper,
     children,
     className,
@@ -139,7 +139,7 @@ export function EnhancedButton({
 
 interface EnhancedSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
     placeholder?: string;
-    options: { value: string; label: string; }[];
+    options: { _value: string; label: string; }[];
 }
 
 export function EnhancedSelect({

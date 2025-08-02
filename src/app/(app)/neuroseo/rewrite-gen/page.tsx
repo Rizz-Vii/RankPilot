@@ -127,7 +127,7 @@ export default function RewriteGenPage() {
       url: inputUrl,
       originalContent: content,
       analysisType: type as any,
-      contentSuggestions: sampleSections.map((section, index) => ({
+      contentSuggestions: sampleSections.map((section, _index) => ({
         section,
         originalText: `Original ${section.toLowerCase()} text that could be improved for better SEO performance and user engagement.`,
         suggestedText: `Enhanced ${section.toLowerCase()} text with optimized keywords, improved readability, and stronger call-to-action elements for better conversion rates.`,
@@ -249,19 +249,19 @@ export default function RewriteGenPage() {
       const content = contentText || `Content from ${inputUrl}`;
       
       const result = await simulateRewriteAnalysis(content, keywords, analysisType);
-      setCurrentResult(result);
+      setCurrentResult(_result);
 
       // Save result to database
       await addDoc(collection(db, 'rewriteGenResults'), {
         userId: user.uid,
-        ...result,
+        ..._result,
         createdAt: new Date()
       });
 
       toast.success("Content rewrite analysis completed successfully!");
 
-    } catch (error) {
-      console.error('Analysis error:', error);
+    } catch (_error) {
+      console.error('Analysis _error:', _error);
       toast.error("Analysis failed. Please try again.");
     } finally {
       setIsAnalyzing(false);
@@ -333,7 +333,7 @@ export default function RewriteGenPage() {
                 id="input-url"
                 placeholder="https://example.com"
                 value={inputUrl}
-                onChange={(e) => setInputUrl(e.target.value)}
+                onChange={(e) => setInputUrl(e.target._value)}
                 disabled={isAnalyzing}
               />
             </div>
@@ -343,7 +343,7 @@ export default function RewriteGenPage() {
                 id="target-keywords"
                 placeholder="seo, optimization, content marketing"
                 value={targetKeywords}
-                onChange={(e) => setTargetKeywords(e.target.value)}
+                onChange={(e) => setTargetKeywords(e.target._value)}
                 disabled={isAnalyzing}
               />
             </div>
@@ -356,14 +356,14 @@ export default function RewriteGenPage() {
                 id="content-text"
                 placeholder="Paste your content here for rewriting analysis..."
                 value={contentText}
-                onChange={(e) => setContentText(e.target.value)}
+                onChange={(e) => setContentText(e.target._value)}
                 disabled={isAnalyzing}
                 rows={4}
               />
             </div>
             <div>
               <Label htmlFor="analysis-type">Analysis Type</Label>
-              <Select value={analysisType} onValueChange={(value: any) => setAnalysisType(value)}>
+              <Select value={analysisType} onValueChange={(_value: unknown) => setAnalysisType(_value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select analysis type" />
                 </SelectTrigger>
@@ -490,7 +490,7 @@ export default function RewriteGenPage() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
                         <YAxis />
-                        <Tooltip formatter={(value) => [`+${value}%`, 'Improvement']} />
+                        <Tooltip formatter={(_value) => [`+${value}%`, 'Improvement']} />
                         <Bar dataKey="improvement" fill="#8884d8" />
                       </BarChart>
                     </ResponsiveContainer>
@@ -498,7 +498,7 @@ export default function RewriteGenPage() {
                 </Card>
 
                 <div className="space-y-4">
-                  {currentResult.contentSuggestions.map((suggestion, index) => (
+                  {currentResult.contentSuggestions.map((suggestion, _index) => (
                     <Card key={index}>
                       <CardContent className="p-6">
                         <div className="space-y-4">
@@ -576,7 +576,7 @@ export default function RewriteGenPage() {
 
               <TabsContent value="titles" className="space-y-4">
                 <div className="space-y-4">
-                  {currentResult.titleSuggestions.map((title, index) => (
+                  {currentResult.titleSuggestions.map((title, _index) => (
                     <Card key={index}>
                       <CardContent className="p-6">
                         <div className="space-y-4">
@@ -643,7 +643,7 @@ export default function RewriteGenPage() {
 
               <TabsContent value="meta" className="space-y-4">
                 <div className="space-y-4">
-                  {currentResult.metaDescriptionSuggestions.map((meta, index) => (
+                  {currentResult.metaDescriptionSuggestions.map((meta, _index) => (
                     <Card key={index}>
                       <CardContent className="p-6">
                         <div className="space-y-4">
@@ -753,7 +753,7 @@ export default function RewriteGenPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {currentResult.keywordOptimization.semanticKeywords.map((keyword, index) => (
+                      {currentResult.keywordOptimization.semanticKeywords.map((keyword, _index) => (
                         <Badge key={index} variant="secondary">{keyword}</Badge>
                       ))}
                     </div>
@@ -769,7 +769,7 @@ export default function RewriteGenPage() {
 
               <TabsContent value="recommendations" className="space-y-4">
                 <div className="space-y-4">
-                  {currentResult.recommendations.map((rec, index) => (
+                  {currentResult.recommendations.map((rec, _index) => (
                     <Card key={index}>
                       <CardContent className="p-6">
                         <div className="space-y-4">

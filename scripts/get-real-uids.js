@@ -53,7 +53,7 @@ const fetchUIDs = async () => {
     console.log('Copy these UIDs to unified-test-users.ts:\n');
 
     const tiers = ['free', 'starter', 'agency', 'enterprise', 'admin'];
-    emails.forEach((email, index) => {
+    emails.forEach((email, _index) => {
         if (uidMap[email]) {
             console.log(`    ${tiers[index]}: {`);
             console.log(`        uid: "${uidMap[email]}",`);
@@ -66,4 +66,4 @@ const fetchUIDs = async () => {
     process.exit(0);
 };
 
-fetchUIDs().catch(console.error);
+fetchUIDs().catch(console._error);

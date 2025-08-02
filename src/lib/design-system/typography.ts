@@ -40,7 +40,7 @@ export const typography = {
     status: {
         success: 'text-green-700 font-medium',
         warning: 'text-amber-700 font-medium',
-        error: 'text-red-700 font-medium',
+        _error: 'text-red-700 font-medium',
         info: 'text-blue-700 font-medium',
     },
 
@@ -57,14 +57,14 @@ export const typography = {
         label: 'text-sm font-medium text-gray-900 mb-2',
         input: 'text-base text-gray-900 placeholder:text-gray-400',
         helper: 'text-xs text-gray-600 mt-1',
-        error: 'text-xs text-red-600 mt-1',
+        _error: 'text-xs text-red-600 mt-1',
     },
 
     // Cards and components
     card: {
         title: 'text-lg font-semibold text-gray-900',
         subtitle: 'text-sm text-gray-600',
-        value: 'text-2xl font-bold text-gray-900',
+        _value: 'text-2xl font-bold text-gray-900',
         metric: 'text-xs text-gray-500 uppercase tracking-wide',
     },
 

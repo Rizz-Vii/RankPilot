@@ -88,7 +88,7 @@ export default function CheckoutPage() {
       setLoading(true);
 
       // Call Firebase function to create checkout session
-      const result = await createCheckoutSession({
+      const _result = await createCheckoutSession({
         planId,
         billingInterval,
         userId: user.uid,
@@ -101,8 +101,8 @@ export default function CheckoutPage() {
       if (!stripe) throw new Error("Stripe failed to load");
 
       await stripe.redirectToCheckout({ sessionId });
-    } catch (error: any) {
-      console.error("Checkout error:", error);
+    } catch (_error: unknown) {
+      console.error("Checkout _error:", _error);
       toast({
         variant: "destructive",
         title: "Checkout Failed",
@@ -267,7 +267,7 @@ export default function CheckoutPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {features[planId].map((feature, index) => (
+                {features[planId].map((feature, _index) => (
                   <div key={index} className="flex items-center gap-3">
                     <Check className="h-4 w-4 text-success-foreground flex-shrink-0" />
                     <span className="text-sm">{feature}</span>

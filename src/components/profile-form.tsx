@@ -59,7 +59,7 @@ type ProfileFormValues = z.infer<typeof formSchema>;
 
 interface ProfileFormProps {
   user: User;
-  profile: any;
+  profile: unknown;
 }
 
 export default function ProfileForm({ user, profile }: ProfileFormProps) {
@@ -99,7 +99,7 @@ export default function ProfileForm({ user, profile }: ProfileFormProps) {
         title: "Profile Updated",
         description: "Your SEO profile has been successfully updated.",
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Update Failed",

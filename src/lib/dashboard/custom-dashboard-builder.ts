@@ -341,16 +341,16 @@ export class CustomDashboardBuilder {
 
             return {
                 widgetId,
-                data,
+                _data,
                 timestamp: Date.now(),
                 refreshInterval: dataSource.refreshInterval
             };
-        } catch (error) {
-            console.error(`[DashboardBuilder] Data fetch error for widget ${widgetId}:`, error);
+        } catch (_error) {
+            console.error(`[DashboardBuilder] Data fetch error for widget ${widgetId}:`, _error);
             return {
                 widgetId,
-                data: null,
-                error: 'Failed to fetch data',
+                _data: null,
+                _error: 'Failed to fetch data',
                 timestamp: Date.now()
             };
         }
@@ -378,7 +378,7 @@ export class CustomDashboardBuilder {
     }> {
         const dashboard = this.dashboards.get(dashboardId);
         if (!dashboard) {
-            return { success: false, error: 'Dashboard not found' };
+            return { success: false, _error: 'Dashboard not found' };
         }
 
         try {
@@ -392,13 +392,13 @@ export class CustomDashboardBuilder {
                 case 'json':
                     return await this.exportToJSON(exportData);
                 default:
-                    return { success: false, error: 'Unsupported export format' };
+                    return { success: false, _error: 'Unsupported export format' };
             }
-        } catch (error) {
-            console.error('[DashboardBuilder] Export error:', error);
+        } catch (_error) {
+            console.error('[DashboardBuilder] Export _error:', _error);
             return {
                 success: false,
-                error: error instanceof Error ? error.message : 'Export failed'
+                _error: error instanceof Error ? error.message : 'Export failed'
             };
         }
     }
@@ -504,7 +504,7 @@ export class CustomDashboardBuilder {
             name: 'SEO Executive Dashboard',
             description: 'High-level SEO performance overview for executives',
             category: 'executive',
-            preview: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...', // Mock preview
+            preview: '_data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...', // Mock preview
             requiredTier: 'agency',
             estimatedSetupTime: '5 minutes',
             layout: {
@@ -539,7 +539,7 @@ export class CustomDashboardBuilder {
             name: 'Comprehensive SEO Analysis',
             description: 'Detailed SEO analysis with all key metrics',
             category: 'seo',
-            preview: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...',
+            preview: '_data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...',
             requiredTier: 'enterprise',
             estimatedSetupTime: '10 minutes',
             layout: {
@@ -584,7 +584,7 @@ export class CustomDashboardBuilder {
     private setupDataProviders(): void {
         // NeuroSEO Data Provider
         this.dataProviders.set('neuroseo', {
-            query: async (queryType: string, filters?: any) => {
+            query: async (queryType: string, filters?: unknown) => {
                 // Mock NeuroSEO data - integrate with actual NeuroSEO orchestrator
                 switch (queryType) {
                     case 'overview-metrics':
@@ -608,11 +608,11 @@ export class CustomDashboardBuilder {
 
         // Keywords Data Provider
         this.dataProviders.set('keywords', {
-            query: async (queryType: string, filters?: any) => {
+            query: async (queryType: string, filters?: unknown) => {
                 switch (queryType) {
                     case 'ranking-trends':
-                        return Array.from({ length: 30 }, (_, i) => ({
-                            date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        return Array.from({ length: 30 }, (_, _i) => ({
+                            date: new Date(Date.now() - (29 - _i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                             position: Math.floor(Math.random() * 20) + 1
                         }));
                     default:
@@ -623,11 +623,11 @@ export class CustomDashboardBuilder {
 
         // Performance Data Provider
         this.dataProviders.set('performance', {
-            query: async (queryType: string, filters?: any) => {
+            query: async (queryType: string, filters?: unknown) => {
                 switch (queryType) {
                     case 'vitals-history':
-                        return Array.from({ length: 30 }, (_, i) => ({
-                            date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        return Array.from({ length: 30 }, (_, _i) => ({
+                            date: new Date(Date.now() - (29 - _i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                             lcp: 1.8 + Math.random() * 1.4,
                             cls: 0.05 + Math.random() * 0.1,
                             fid: 50 + Math.random() * 100
@@ -658,7 +658,7 @@ export class CustomDashboardBuilder {
         };
     }
 
-    private setupRealTimeUpdate(widgetId: string, dataSource: any): void {
+    private setupRealTimeUpdate(widgetId: string, dataSource: unknown): void {
         if (dataSource.refreshInterval && dataSource.refreshInterval > 0) {
             const interval = setInterval(async () => {
                 // Emit real-time update event
@@ -677,7 +677,7 @@ export class CustomDashboardBuilder {
         }
     }
 
-    private async generateExportData(dashboard: DashboardLayout, options?: any): Promise<any> {
+    private async generateExportData(dashboard: DashboardLayout, options?: unknown): Promise<any> {
         const exportData = {
             dashboard: {
                 name: dashboard.name,
@@ -685,7 +685,7 @@ export class CustomDashboardBuilder {
                 created: dashboard.metadata.created,
                 updated: dashboard.metadata.updated
             },
-            widgets: [] as Array<{ widget: DashboardWidget; data: any; }>,
+            widgets: [] as Array<{ widget: DashboardWidget; _data: unknown; }>,
             metadata: {
                 exportedAt: Date.now(),
                 format: 'export',
@@ -698,7 +698,7 @@ export class CustomDashboardBuilder {
                 const widgetData = await this.getWidgetData(widget.id, widget);
                 exportData.widgets.push({
                     widget,
-                    data: widgetData
+                    _data: widgetData
                 });
             }
         }
@@ -706,7 +706,7 @@ export class CustomDashboardBuilder {
         return exportData;
     }
 
-    private async exportToPDF(data: any, branding?: any): Promise<any> {
+    private async exportToPDF(_data: unknown, branding?: unknown): Promise<any> {
         // Mock PDF export - integrate with actual PDF generation library
         return {
             success: true,
@@ -714,7 +714,7 @@ export class CustomDashboardBuilder {
         };
     }
 
-    private async exportToExcel(data: any, branding?: any): Promise<any> {
+    private async exportToExcel(_data: unknown, branding?: unknown): Promise<any> {
         // Mock Excel export - integrate with actual Excel generation library
         return {
             success: true,
@@ -722,7 +722,7 @@ export class CustomDashboardBuilder {
         };
     }
 
-    private async exportToJSON(data: any): Promise<any> {
+    private async exportToJSON(_data: unknown): Promise<any> {
         return {
             success: true,
             downloadUrl: '/api/downloads/dashboard-export.json'

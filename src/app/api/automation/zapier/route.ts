@@ -16,8 +16,8 @@ if (!getApps().length) {
         initializeApp({
             projectId,
         });
-    } catch (error) {
-        console.error('[ZapierWorkflowAPI] Firebase Admin initialization error:', error);
+    } catch (_error) {
+        console.error('[ZapierWorkflowAPI] Firebase Admin initialization _error:', _error);
     }
 }
 
@@ -30,12 +30,12 @@ interface WorkflowRequestBody {
     status?: 'active' | 'paused' | 'disabled';
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
     try {
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
-                { error: 'Missing or invalid authorization header' },
+                { _error: 'Missing or invalid authorization header' },
                 { status: 401 }
             );
         }
@@ -46,10 +46,10 @@ export async function POST(request: NextRequest) {
         let decodedToken;
         try {
             decodedToken = await auth.verifyIdToken(token);
-        } catch (error) {
-            console.error('[ZapierWorkflowAPI] Token verification error:', error);
+        } catch (_error) {
+            console.error('[ZapierWorkflowAPI] Token verification _error:', _error);
             return NextResponse.json(
-                { error: 'Invalid authentication token' },
+                { _error: 'Invalid authentication token' },
                 { status: 401 }
             );
         }
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         // Check tier access for Zapier automation
         if (!['agency', 'enterprise', 'admin'].includes(userTier)) {
             return NextResponse.json(
-                { error: 'Zapier automation requires Agency tier or higher' },
+                { _error: 'Zapier automation requires Agency tier or higher' },
                 { status: 403 }
             );
         }
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
             case 'create':
                 if (!body.templateId) {
                     return NextResponse.json(
-                        { error: 'Template ID is required for workflow creation' },
+                        { _error: 'Template ID is required for workflow creation' },
                         { status: 400 }
                     );
                 }
@@ -99,12 +99,12 @@ export async function POST(request: NextRequest) {
             case 'execute':
                 if (!body.workflowId) {
                     return NextResponse.json(
-                        { error: 'Workflow ID is required for execution' },
+                        { _error: 'Workflow ID is required for execution' },
                         { status: 400 }
                     );
                 }
 
-                const result = await zapierWorkflowBuilder.executeWorkflow(body.workflowId);
+                const _result = await zapierWorkflowBuilder.executeWorkflow(body.workflowId);
                 return NextResponse.json({
                     success: true,
                     execution: result
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
             case 'update':
                 if (!body.workflowId || !body.status) {
                     return NextResponse.json(
-                        { error: 'Workflow ID and status are required for update' },
+                        { _error: 'Workflow ID and status are required for update' },
                         { status: 400 }
                     );
                 }
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
                 const updated = zapierWorkflowBuilder.updateWorkflowStatus(body.workflowId, body.status);
                 if (!updated) {
                     return NextResponse.json(
-                        { error: 'Workflow not found or update failed' },
+                        { _error: 'Workflow not found or update failed' },
                         { status: 404 }
                     );
                 }
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
             case 'delete':
                 if (!body.workflowId) {
                     return NextResponse.json(
-                        { error: 'Workflow ID is required for deletion' },
+                        { _error: 'Workflow ID is required for deletion' },
                         { status: 400 }
                     );
                 }
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
                 const deleted = zapierWorkflowBuilder.deleteWorkflow(body.workflowId, userId);
                 if (!deleted) {
                     return NextResponse.json(
-                        { error: 'Workflow not found or deletion failed' },
+                        { _error: 'Workflow not found or deletion failed' },
                         { status: 404 }
                     );
                 }
@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
             case 'analytics':
                 if (!body.workflowId) {
                     return NextResponse.json(
-                        { error: 'Workflow ID is required for analytics' },
+                        { _error: 'Workflow ID is required for analytics' },
                         { status: 400 }
                     );
                 }
@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
                 const analytics = zapierWorkflowBuilder.getWorkflowAnalytics(body.workflowId);
                 if (!analytics) {
                     return NextResponse.json(
-                        { error: 'Workflow not found' },
+                        { _error: 'Workflow not found' },
                         { status: 404 }
                     );
                 }
@@ -209,16 +209,16 @@ export async function POST(request: NextRequest) {
 
             default:
                 return NextResponse.json(
-                    { error: 'Invalid action specified' },
+                    { _error: 'Invalid action specified' },
                     { status: 400 }
                 );
         }
 
-    } catch (error) {
-        console.error('[ZapierWorkflowAPI] Error:', error);
+    } catch (_error) {
+        console.error('[ZapierWorkflowAPI] Error:', _error);
         return NextResponse.json(
             {
-                error: 'Internal server error',
+                _error: 'Internal server error',
                 details: error instanceof Error ? error.message : 'Unknown error'
             },
             { status: 500 }
@@ -226,12 +226,12 @@ export async function POST(request: NextRequest) {
     }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     try {
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
-                { error: 'Missing or invalid authorization header' },
+                { _error: 'Missing or invalid authorization header' },
                 { status: 401 }
             );
         }
@@ -242,10 +242,10 @@ export async function GET(request: NextRequest) {
         let decodedToken;
         try {
             decodedToken = await auth.verifyIdToken(token);
-        } catch (error) {
-            console.error('[ZapierWorkflowAPI] Token verification error:', error);
+        } catch (_error) {
+            console.error('[ZapierWorkflowAPI] Token verification _error:', _error);
             return NextResponse.json(
-                { error: 'Invalid authentication token' },
+                { _error: 'Invalid authentication token' },
                 { status: 401 }
             );
         }
@@ -256,7 +256,7 @@ export async function GET(request: NextRequest) {
         // Check tier access for Zapier automation
         if (!['agency', 'enterprise', 'admin'].includes(userTier)) {
             return NextResponse.json(
-                { error: 'Zapier automation requires Agency tier or higher' },
+                { _error: 'Zapier automation requires Agency tier or higher' },
                 { status: 403 }
             );
         }
@@ -267,7 +267,7 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            data: {
+            _data: {
                 workflows: userWorkflows.map(w => ({
                     id: w.id,
                     name: w.name,
@@ -298,11 +298,11 @@ export async function GET(request: NextRequest) {
             }
         });
 
-    } catch (error) {
-        console.error('[ZapierWorkflowAPI] Error:', error);
+    } catch (_error) {
+        console.error('[ZapierWorkflowAPI] Error:', _error);
         return NextResponse.json(
             {
-                error: 'Internal server error',
+                _error: 'Internal server error',
                 details: error instanceof Error ? error.message : 'Unknown error'
             },
             { status: 500 }

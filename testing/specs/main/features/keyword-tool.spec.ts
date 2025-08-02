@@ -334,7 +334,7 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
       
       await page.locator("button", { hasText: "Generate Keywords" }).click();
 
-      // Look for error handling (either success or graceful error)
+      // Look for error handling (either success or graceful _error)
       const loadingState = page.locator("text=Generating");
       await expect(loadingState).toBeVisible();
 

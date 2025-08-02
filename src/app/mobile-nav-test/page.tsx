@@ -135,7 +135,7 @@ export default function MobileNavTestPage() {
                 {/* Navigation Items */}
                 <nav className="flex-1 px-6 py-4">
                   <div className="space-y-2">
-                    {mockNavItems.map((item, index) => (
+                    {mockNavItems.map((_item, _index) => (
                       <Link
                         key={item.href}
                         href={item.href}

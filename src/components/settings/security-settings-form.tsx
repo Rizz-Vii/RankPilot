@@ -54,7 +54,7 @@ const passwordSchema = z
       .string()
       .min(1, { message: "Please confirm your password." }),
   })
-  .refine((data) => data.newPassword === data.confirmPassword, {
+  .refine((_data) => data.newPassword === data.confirmPassword, {
     message: "Passwords don't match.",
     path: ["confirmPassword"],
   });
@@ -103,7 +103,7 @@ export default function SecuritySettingsForm({
 
       // Reset form
       form.reset();
-    } catch (error: any) {
+    } catch (_error: unknown) {
       let errorMessage = "Failed to update password. Please try again.";
 
       if (error.code === "auth/wrong-password") {

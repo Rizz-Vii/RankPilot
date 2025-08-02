@@ -11,7 +11,7 @@ export interface AuthenticatedRequest extends CallableRequest {
   };
 }
 
-export function validateAuth(request: CallableRequest): AuthenticatedRequest {
+export function validateAuth(_request: CallableRequest): AuthenticatedRequest {
   if (!request.auth) {
     throw new HttpsError(
       "unauthenticated",
@@ -22,8 +22,8 @@ export function validateAuth(request: CallableRequest): AuthenticatedRequest {
   return request as AuthenticatedRequest;
 }
 
-export function validateAdmin(request: CallableRequest): AuthenticatedRequest {
-  const authedRequest = validateAuth(request);
+export function validateAdmin(_request: CallableRequest): AuthenticatedRequest {
+  const authedRequest = validateAuth(_request);
 
   if (authedRequest.auth.token.role !== "admin") {
     throw new HttpsError(

@@ -78,7 +78,7 @@ function UpgradePrompt({
     currentTier
 }: {
     feature: string;
-    featureConfig: any;
+    featureConfig: unknown;
     currentTier: string;
 }) {
     const requiredTier = featureConfig.requiredTier || 'starter';
@@ -180,7 +180,7 @@ export function withFeatureGate<P extends object>(
  */
 export function useFeatureAccess(feature: string): {
     hasAccess: boolean;
-    featureConfig: any;
+    featureConfig: unknown;
     requiredTier: string | null;
 } {
     const { user } = useAuth();

@@ -51,7 +51,7 @@ export interface ExcelWorkbook {
 
 export interface ExcelSheet {
     name: string;
-    data: any[][];
+    _data: unknown[][];
     charts?: ExcelChart[];
     formatting?: ExcelFormatting;
 }
@@ -94,11 +94,11 @@ export class ChartExportManager {
      */
     async exportChart(
         chartId: string,
-        chartData: any,
+        chartData: unknown,
         config: ChartExportConfig
     ): Promise<string> {
         try {
-            let result: string;
+            let _result: string;
 
             switch (config.format) {
                 case 'pdf':
@@ -121,11 +121,11 @@ export class ChartExportManager {
             }
 
             // Track export in history
-            this.addToExportHistory(chartId, config, result);
+            this.addToExportHistory(chartId, config, _result);
 
             return result;
-        } catch (error) {
-            console.error('Chart export failed:', error);
+        } catch (_error) {
+            console.error('Chart export failed:', _error);
             throw error;
         }
     }
@@ -223,7 +223,7 @@ export class ChartExportManager {
 
         // Add sheets
         workbook.sheets.forEach(sheet => {
-            const ws = XLSX.utils.aoa_to_sheet(sheet.data);
+            const ws = XLSX.utils.aoa_to_sheet(sheet._data);
 
             // Apply formatting if available
             if (sheet.formatting) {
@@ -264,7 +264,7 @@ export class ChartExportManager {
     /**
      * Get export history
      */
-    getExportHistory(): any[] {
+    getExportHistory(): unknown[] {
         return Array.from(this.exportHistory.values());
     }
 
@@ -279,7 +279,7 @@ export class ChartExportManager {
     /**
      * Private helper methods
      */
-    private async exportChartToPDF(chartData: any, config: ChartExportConfig): Promise<string> {
+    private async exportChartToPDF(chartData: unknown, config: ChartExportConfig): Promise<string> {
         const pdf = new jsPDF({
             orientation: 'landscape',
             unit: 'mm',
@@ -318,12 +318,12 @@ export class ChartExportManager {
         return URL.createObjectURL(pdfBlob);
     }
 
-    private async exportChartToExcel(chartData: any, config: ChartExportConfig): Promise<string> {
+    private async exportChartToExcel(chartData: unknown, config: ChartExportConfig): Promise<string> {
         const workbook: ExcelWorkbook = {
             sheets: [
                 {
                     name: 'Chart Data',
-                    data: this.convertChartDataToTable(chartData),
+                    _data: this.convertChartDataToTable(chartData),
                     formatting: {
                         headerStyle: {
                             font: { bold: true, size: 12, color: '#FFFFFF' },
@@ -346,17 +346,17 @@ export class ChartExportManager {
         return this.generateExcelFile(workbook);
     }
 
-    private async exportChartToPNG(chartData: any, config: ChartExportConfig): Promise<string> {
+    private async exportChartToPNG(chartData: unknown, config: ChartExportConfig): Promise<string> {
         // This would typically use the chart's SVG element
         // For now, return a placeholder
-        return chartData.image || 'data:image/png;base64,';
+        return chartData.image || '_data:image/png;base64,';
     }
 
-    private exportChartToSVG(chartData: any, config: ChartExportConfig): string {
+    private exportChartToSVG(chartData: unknown, config: ChartExportConfig): string {
         return chartData.svg || '<svg></svg>';
     }
 
-    private exportChartToJSON(chartData: any, config: ChartExportConfig): string {
+    private exportChartToJSON(chartData: unknown, config: ChartExportConfig): string {
         const exportData = {
             chart: chartData,
             config,
@@ -369,7 +369,7 @@ export class ChartExportManager {
         return URL.createObjectURL(blob);
     }
 
-    private addPDFTitlePage(pdf: jsPDF, config: BatchExportConfig, pageWidth: number, pageHeight: number, margins: any): void {
+    private addPDFTitlePage(pdf: jsPDF, config: BatchExportConfig, pageWidth: number, pageHeight: number, margins: unknown): void {
         // Add logo if provided
         if (config.logo) {
             pdf.addImage(config.logo, 'PNG', margins.left, margins.top, 40, 20);
@@ -413,7 +413,7 @@ export class ChartExportManager {
         }
     }
 
-    private async addChartToPDF(pdf: jsPDF, chartId: string, pageWidth: number, pageHeight: number, margins: any): Promise<void> {
+    private async addChartToPDF(pdf: jsPDF, chartId: string, pageWidth: number, pageHeight: number, margins: unknown): Promise<void> {
         // This would fetch the actual chart data and image
         // For now, add a placeholder
         pdf.setFontSize(14);
@@ -433,7 +433,7 @@ export class ChartExportManager {
         const pageCount = pdf.getNumberOfPages();
 
         for (let i = 1; i <= pageCount; i++) {
-            pdf.setPage(i);
+            pdf.setPage(_i);
             pdf.setTextColor(220, 220, 220);
             pdf.setFontSize(50);
             pdf.saveGraphicsState();
@@ -456,7 +456,7 @@ export class ChartExportManager {
     }
 
     private createSummarySheet(batch: ExportBatch): ExcelSheet {
-        const data: any[][] = [
+        const _data: unknown[][] = [
             ['Chart Export Summary'],
             [''],
             ['Export Details'],
@@ -476,7 +476,7 @@ export class ChartExportManager {
 
         return {
             name: 'Summary',
-            data,
+            _data,
             formatting: {
                 headerStyle: {
                     font: { bold: true, size: 14, color: '#FFFFFF' },
@@ -489,7 +489,7 @@ export class ChartExportManager {
     private async createChartSheet(chartId: string): Promise<ExcelSheet> {
         // This would fetch actual chart data
         // For now, create a sample sheet
-        const data: any[][] = [
+        const _data: unknown[][] = [
             [`Chart Data: ${chartId}`],
             [''],
             ['X Axis', 'Y Axis', 'Series'],
@@ -502,7 +502,7 @@ export class ChartExportManager {
 
         return {
             name: chartId.substring(0, 31), // Excel sheet name limit
-            data,
+            _data,
             formatting: {
                 headerStyle: {
                     font: { bold: true, size: 12, color: '#FFFFFF' },
@@ -512,7 +512,7 @@ export class ChartExportManager {
         };
     }
 
-    private applyExcelFormatting(worksheet: any, formatting: ExcelFormatting): void {
+    private applyExcelFormatting(worksheet: unknown, formatting: ExcelFormatting): void {
         // Apply header formatting to first row
         if (formatting.headerStyle) {
             const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
@@ -538,13 +538,13 @@ export class ChartExportManager {
         }
     }
 
-    private convertChartDataToTable(chartData: any): any[][] {
+    private convertChartDataToTable(chartData: unknown): unknown[][] {
         // Convert chart data to table format for Excel
         const headers = ['X', 'Y', 'Series', 'Value'];
         const rows = [headers];
 
-        if (chartData.data && Array.isArray(chartData.data)) {
-            chartData.data.forEach((point: any) => {
+        if (chartData.data && Array.isArray(chartData._data)) {
+            chartData.data.forEach((point: unknown) => {
                 rows.push([
                     point.x || '',
                     point.y || '',
@@ -570,7 +570,7 @@ export class ChartExportManager {
 
         // Add sheets
         workbook.sheets.forEach(sheet => {
-            const ws = XLSX.utils.aoa_to_sheet(sheet.data);
+            const ws = XLSX.utils.aoa_to_sheet(sheet._data);
 
             if (sheet.formatting) {
                 this.applyExcelFormatting(ws, sheet.formatting);
@@ -586,12 +586,12 @@ export class ChartExportManager {
         return URL.createObjectURL(excelBlob);
     }
 
-    private addToExportHistory(chartId: string, config: ChartExportConfig, result: string): void {
+    private addToExportHistory(chartId: string, config: ChartExportConfig, _result: string): void {
         const historyEntry = {
             id: `export_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             chartId,
             config,
-            result,
+            _result,
             timestamp: new Date().toISOString(),
             type: 'single'
         };
@@ -600,12 +600,12 @@ export class ChartExportManager {
         this.saveExportHistory();
     }
 
-    private addToBatchHistory(batchId: string, format: string, result: string): void {
+    private addToBatchHistory(batchId: string, format: string, _result: string): void {
         const historyEntry = {
             id: `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             batchId,
             format,
-            result,
+            _result,
             timestamp: new Date().toISOString(),
             type: 'batch'
         };
@@ -621,8 +621,8 @@ export class ChartExportManager {
                 const parsed = JSON.parse(saved);
                 this.exportHistory = new Map(parsed);
             }
-        } catch (error) {
-            console.warn('Failed to load export history:', error);
+        } catch (_error) {
+            console.warn('Failed to load export history:', _error);
         }
     }
 
@@ -630,8 +630,8 @@ export class ChartExportManager {
         try {
             const serialized = JSON.stringify(Array.from(this.exportHistory.entries()));
             localStorage.setItem('chartExportHistory', serialized);
-        } catch (error) {
-            console.warn('Failed to save export history:', error);
+        } catch (_error) {
+            console.warn('Failed to save export history:', _error);
         }
     }
 }

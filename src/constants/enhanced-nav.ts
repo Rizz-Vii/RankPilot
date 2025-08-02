@@ -331,7 +331,7 @@ export const getVisibleNavGroups = (
   return navGroups
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => {
+      items: group.items.filter((_item) => {
         // Check admin access
         if (item.adminOnly && !isAdmin) return false;
 
@@ -380,7 +380,7 @@ export const getVisibleNavItems = (
   userTier?: string,
   isAdmin?: boolean
 ): NavItem[] => {
-  return flatNavItems.filter((item) => {
+  return flatNavItems.filter((_item) => {
     // Check admin access
     if (item.adminOnly && !isAdmin) return false;
 
@@ -404,12 +404,12 @@ export const getVisibleNavItems = (
 };
 
 export const findNavItemByHref = (href: string): NavItem | undefined => {
-  return flatNavItems.find((item) => item.href === href);
+  return flatNavItems.find((_item) => item.href === href);
 };
 
 export const getNavGroupByItemHref = (href: string): NavGroup | undefined => {
   return navGroups.find((group) =>
-    group.items.some((item) => item.href === href)
+    group.items.some((_item) => item.href === href)
   );
 };
 
@@ -442,8 +442,8 @@ export const defaultNavState: NavState = {
 };
 
 // Error boundaries for navigation
-export const handleNavError = (error: Error, context: string) => {
-  console.error(`Navigation error in ${context}:`, error);
+export const handleNavError = (_error: Error, context: string) => {
+  console.error(`Navigation error in ${context}:`, _error);
 
   // Report to error tracking service in production
   if (process.env.NODE_ENV === "production") {

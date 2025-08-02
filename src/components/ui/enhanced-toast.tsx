@@ -32,7 +32,7 @@ interface ToastContextType {
   removeToast: (id: string) => void;
   clearAllToasts: () => void;
   success: (message: string, options?: Partial<Toast>) => string;
-  error: (message: string, options?: Partial<Toast>) => string;
+  _error: (message: string, options?: Partial<Toast>) => string;
   warning: (message: string, options?: Partial<Toast>) => string;
   info: (message: string, options?: Partial<Toast>) => string;
 }
@@ -176,7 +176,7 @@ export function ToastProvider({
     removeToast,
     clearAllToasts,
     success,
-    error,
+    _error,
     warning,
     info,
   };

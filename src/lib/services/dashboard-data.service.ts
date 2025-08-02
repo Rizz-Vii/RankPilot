@@ -65,7 +65,7 @@ export interface DashboardData {
   };
   trafficSources: Array<{
     name: string;
-    value: number;
+    _value: number;
     fill: string;
   }>;
 }
@@ -107,8 +107,8 @@ class DashboardDataService {
         trafficSources: trafficData
       };
       
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+    } catch (_error) {
+      console.error("Error fetching dashboard _data:", _error);
       return this.getFallbackData();
     }
   }
@@ -144,9 +144,9 @@ class DashboardDataService {
       const change = currentScore - previousScore;
 
       // Generate trend data from recent analyses
-      const trend = analyses.reverse().map((analysis, index) => ({
+      const trend = analyses.reverse().map((analysis, _index) => ({
         date: analysis.completedAt?.toDate?.()?.toISOString().split('T')[0] || 
-              new Date(Date.now() - (analyses.length - index) * 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              new Date(Date.now() - (analyses.length - _index) * 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         score: analysis.summary?.overallScore || 0
       }));
 
@@ -156,8 +156,8 @@ class DashboardDataService {
         trend
       };
       
-    } catch (error) {
-      console.error("Error fetching SEO score trend:", error);
+    } catch (_error) {
+      console.error("Error fetching SEO score trend:", _error);
       return { current: 0, change: 0, trend: [] };
     }
   }
@@ -217,8 +217,8 @@ class DashboardDataService {
         }
       };
       
-    } catch (error) {
-      console.error("Error fetching keyword metrics:", error);
+    } catch (_error) {
+      console.error("Error fetching keyword metrics:", _error);
       return {
         current: 0,
         change: 0,
@@ -250,8 +250,8 @@ class DashboardDataService {
         change: recentProjects
       };
       
-    } catch (error) {
-      console.error("Error fetching projects data:", error);
+    } catch (_error) {
+      console.error("Error fetching projects _data:", _error);
       return { current: 0, change: 0 };
     }
   }
@@ -279,9 +279,9 @@ class DashboardDataService {
       const currentScore = audits[0]?.domainAuthority || 0;
       
       // Generate history from audits
-      const history = audits.reverse().map((audit, index) => ({
+      const history = audits.reverse().map((audit, _index) => ({
         date: audit.createdAt?.toDate?.()?.toISOString().split('T')[0] || 
-              new Date(Date.now() - (audits.length - index) * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              new Date(Date.now() - (audits.length - _index) * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         score: audit.domainAuthority || 0
       }));
 
@@ -290,8 +290,8 @@ class DashboardDataService {
         history
       };
       
-    } catch (error) {
-      console.error("Error fetching domain authority data:", error);
+    } catch (_error) {
+      console.error("Error fetching domain authority _data:", _error);
       return { score: 0, history: [] };
     }
   }
@@ -343,8 +343,8 @@ class DashboardDataService {
         history
       };
       
-    } catch (error) {
-      console.error("Error fetching backlink data:", error);
+    } catch (_error) {
+      console.error("Error fetching backlink _data:", _error);
       return {
         total: 0,
         newLast30Days: 0,
@@ -384,19 +384,19 @@ class DashboardDataService {
       const socialPercent = 100 - organicPercent - directPercent - referralPercent;
 
       return [
-        { name: "Organic Search", value: Math.round(organicPercent), fill: "var(--color-chart-1)" },
-        { name: "Direct", value: Math.round(directPercent), fill: "var(--color-chart-2)" },
-        { name: "Referral", value: Math.round(referralPercent), fill: "var(--color-chart-3)" },
-        { name: "Social", value: Math.round(socialPercent), fill: "var(--color-chart-4)" }
+        { name: "Organic Search", _value: Math.round(organicPercent), fill: "var(--color-chart-1)" },
+        { name: "Direct", _value: Math.round(directPercent), fill: "var(--color-chart-2)" },
+        { name: "Referral", _value: Math.round(referralPercent), fill: "var(--color-chart-3)" },
+        { name: "Social", _value: Math.round(socialPercent), fill: "var(--color-chart-4)" }
       ];
       
-    } catch (error) {
-      console.error("Error fetching traffic sources:", error);
+    } catch (_error) {
+      console.error("Error fetching traffic sources:", _error);
       return [
-        { name: "Organic Search", value: 45, fill: "var(--color-chart-1)" },
-        { name: "Direct", value: 30, fill: "var(--color-chart-2)" },
-        { name: "Referral", value: 15, fill: "var(--color-chart-3)" },
-        { name: "Social", value: 10, fill: "var(--color-chart-4)" }
+        { name: "Organic Search", _value: 45, fill: "var(--color-chart-1)" },
+        { name: "Direct", _value: 30, fill: "var(--color-chart-2)" },
+        { name: "Referral", _value: 15, fill: "var(--color-chart-3)" },
+        { name: "Social", _value: 10, fill: "var(--color-chart-4)" }
       ];
     }
   }
@@ -406,7 +406,7 @@ class DashboardDataService {
    */
   static subscribeToUserDashboardData(
     userId: string, 
-    callback: (data: DashboardData) => void
+    callback: (_data: DashboardData) => void
   ): () => void {
     console.log(`📡 Setting up real-time dashboard subscription for user: ${userId}`);
     
@@ -423,9 +423,9 @@ class DashboardDataService {
       try {
         // Fetch fresh data when analyses update
         const data = await this.getUserDashboardData(userId);
-        callback(data);
-      } catch (error) {
-        console.error("Error in dashboard subscription:", error);
+        callback(_data);
+      } catch (_error) {
+        console.error("Error in dashboard subscription:", _error);
       }
     });
 
@@ -445,7 +445,7 @@ class DashboardDataService {
       domainAuthority: { score: 0, history: [] },
       backlinks: { total: 0, newLast30Days: 0, history: [] },
       trafficSources: [
-        { name: "No Data", value: 100, fill: "var(--color-chart-1)" }
+        { name: "No Data", _value: 100, fill: "var(--color-chart-1)" }
       ]
     };
   }
@@ -461,15 +461,15 @@ class DashboardDataService {
       const userRef = doc(db, "users", userId);
       await updateDoc(userRef, {
         dashboardCache: {
-          data,
+          _data,
           lastUpdated: Timestamp.now(),
           version: "1.0"
         }
       });
       
       console.log(`✅ Dashboard cache updated for user: ${userId}`);
-    } catch (error) {
-      console.error("Error updating dashboard cache:", error);
+    } catch (_error) {
+      console.error("Error updating dashboard cache:", _error);
     }
   }
 }

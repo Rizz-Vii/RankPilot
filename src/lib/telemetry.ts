@@ -98,9 +98,9 @@ export async function initTelemetry(): Promise<TelemetryProvider> {
     // If dynamic import fails or createTelemetryProvider is not found,
     // fall back to the no-op provider to ensure the application continues to function.
     return noopProvider;
-  } catch (error) {
+  } catch (_error) {
     // Catch any other errors during the initialization process and log them.
-    console.error("Failed to initialize telemetry:", error);
+    console.error("Failed to initialize telemetry:", _error);
     return noopProvider; // Always return a provider, even if initialization fails
   }
 }
@@ -129,12 +129,12 @@ export function createSpan<T>(name: string, fn: () => T): T {
     if (tracer) {
       // If a tracer is available, start an active span.
       // The function `fn` will be executed within the context of this span.
-      return tracer.startActiveSpan(name, (span: any) => {
+      return tracer.startActiveSpan(name, (span: unknown) => {
         try {
-          const result = fn(); // Execute the provided function
+          const _result = fn(); // Execute the provided function
           span.end(); // End the span after function execution
           return result;
-        } catch (err: any) {
+        } catch (err: unknown) {
           // Catch errors during function execution
           span.recordException(err); // Record the exception on the span
           span.end(); // End the span even if an error occurred
@@ -145,7 +145,7 @@ export function createSpan<T>(name: string, fn: () => T): T {
       // Fallback behavior if no tracer is available (e.g., in development mode
       // or if telemetry initialization failed).
       const startTime = Date.now();
-      const result = fn();
+      const _result = fn();
       const duration = Date.now() - startTime;
       if (process.env.NODE_ENV === "development") {
         // In development, log the span name and duration to the console.
@@ -155,9 +155,9 @@ export function createSpan<T>(name: string, fn: () => T): T {
       }
       return result;
     }
-  } catch (error) {
+  } catch (_error) {
     // Catch any errors that occur during the span creation or fallback process.
-    console.error(`Error in createSpan for ${name}:`, error);
+    console.error(`Error in createSpan for ${name}:`, _error);
     throw error; // Re-throw the error
   }
 }

@@ -64,7 +64,7 @@ test.describe('Database Integration - Firestore Operations', () => {
             await searchInput.fill('test');
             await page.waitForTimeout(1000);
 
-            const results = page.locator('.search-result, [data-testid*="result"]');
+            const results = page.locator('.search-_result, [data-testid*="result"]');
             if (await results.count() > 0) {
                 console.log(`✅ Search returned ${await results.count()} results`);
             }
@@ -89,18 +89,18 @@ test.describe('Database Integration - Firestore Operations', () => {
 
 test.describe('Database Integration - Cloud Functions', () => {
     test('API endpoint response validation', async ({ page }) => {
-        const response = await page.request.get('/api/health');
+        const _response = await page.request.get('/api/health');
         expect([200, 404]).toContain(response.status());
     });
 
     test('authentication middleware', async ({ page }) => {
-        const response = await page.request.get('/api/protected-route');
+        const _response = await page.request.get('/api/protected-route');
         expect([401, 403, 404]).toContain(response.status());
     });
 
     test('data validation on submission', async ({ page }) => {
-        const response = await page.request.post('/api/validate', {
-            data: { invalid: 'data' }
+        const _response = await page.request.post('/api/validate', {
+            _data: { invalid: 'data' }
         });
         expect([400, 422, 404]).toContain(response.status());
     });
@@ -118,8 +118,8 @@ test.describe('Database Integration - Cloud Functions', () => {
     });
 
     test('error handling and logging', async ({ page }) => {
-        const response = await page.request.post('/api/error-test', {
-            data: { trigger: 'error' }
+        const _response = await page.request.post('/api/error-test', {
+            _data: { trigger: 'error' }
         });
 
         expect([400, 500, 404]).toContain(response.status());
@@ -234,7 +234,7 @@ test.describe('Database Integration - Security & Permissions', () => {
         expect(page.url()).toMatch(/^https:/);
 
         // Check for security headers
-        const response = await page.goto('/', { timeout: 30000 });
+        const _response = await page.goto('/', { timeout: 30000 });
         const headers = response?.headers();
 
         if (headers) {
@@ -328,7 +328,7 @@ test.describe('Database Integration - Performance Optimization', () => {
 
     test('database connection reliability', async ({ page }) => {
         // Test database connectivity
-        const response = await page.request.get('/api/db-health');
+        const _response = await page.request.get('/api/db-health');
         expect([200, 404]).toContain(response.status());
 
         if (response.status() === 200) {

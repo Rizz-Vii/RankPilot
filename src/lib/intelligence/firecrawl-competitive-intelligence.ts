@@ -42,7 +42,7 @@ export interface CompetitorProfile {
 export interface CompetitorMetric {
     name: string;
     type: 'seo' | 'content' | 'technical' | 'performance' | 'social';
-    value: number | string;
+    _value: number | string;
     previousValue?: number | string;
     change?: number;
     changeType?: 'increase' | 'decrease' | 'stable';
@@ -55,8 +55,8 @@ export interface CompetitorChange {
     description: string;
     impact: 'high' | 'medium' | 'low';
     metric: string;
-    oldValue: any;
-    newValue: any;
+    oldValue: unknown;
+    newValue: unknown;
     timestamp: number;
     confidence: number; // 0-1
 }
@@ -76,7 +76,7 @@ export interface CompetitiveAnalysisReport {
         insights: CompetitiveInsight[];
         recommendations: CompetitiveRecommendation[];
     };
-    data: {
+    _data: {
         keywordAnalysis?: KeywordCompetitionData;
         contentAnalysis?: ContentCompetitionData;
         technicalAnalysis?: TechnicalCompetitionData;
@@ -100,7 +100,7 @@ export interface CompetitiveOpportunity {
     competitorData: {
         domain: string;
         metric: string;
-        value: any;
+        _value: unknown;
     };
     actionItems: string[];
 }
@@ -121,7 +121,7 @@ export interface CompetitiveInsight {
     title: string;
     description: string;
     confidence: number; // 0-1
-    supportingData: any[];
+    supportingData: unknown[];
     implications: string[];
 }
 
@@ -316,7 +316,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
                 changesCount: changes.length
             });
 
-        } catch (error) {
+        } catch (_error) {
             competitor.lastAnalysis = {
                 timestamp: Date.now(),
                 status: 'error',
@@ -327,7 +327,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
             this.emit('analysis-error', {
                 competitorId,
                 domain: competitor.domain,
-                error: error instanceof Error ? error.message : error
+                _error: error instanceof Error ? error.message : error
             });
 
             throw error;
@@ -340,7 +340,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
     private async crawlCompetitorSite(competitor: CompetitorProfile): Promise<any> {
         try {
             // Use Firecrawl MCP to scrape competitor website
-            const response = await fetch('/api/mcp/firecrawl/crawl', {
+            const _response = await fetch('/api/mcp/firecrawl/crawl', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -363,7 +363,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
             }
 
             return response.json();
-        } catch (error) {
+        } catch (_error) {
             throw new Error(`Failed to crawl competitor site: ${error instanceof Error ? error.message : error}`);
         }
     }
@@ -371,7 +371,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
     /**
      * Analyze SEO metrics from crawled data
      */
-    private async analyzeSEOMetrics(crawlData: any, competitor: CompetitorProfile): Promise<Record<string, any>> {
+    private async analyzeSEOMetrics(crawlData: unknown, competitor: CompetitorProfile): Promise<Record<string, any>> {
         const pages = crawlData.data || [];
 
         const metrics = {
@@ -390,9 +390,9 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
         };
 
         let totalWordCount = 0;
-        let totalLoadTime = 0;
+        const totalLoadTime = 0;
 
-        pages.forEach((page: any) => {
+        pages.forEach((page: unknown) => {
             const content = page.markdown || page.html || '';
 
             // Count basic SEO elements
@@ -439,7 +439,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
     /**
      * Analyze content metrics
      */
-    private async analyzeContent(crawlData: any, competitor: CompetitorProfile): Promise<Record<string, any>> {
+    private async analyzeContent(crawlData: unknown, competitor: CompetitorProfile): Promise<Record<string, any>> {
         const pages = crawlData.data || [];
 
         const metrics = {
@@ -455,7 +455,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
         const topics: Record<string, number> = {};
         let totalContentLength = 0;
 
-        pages.forEach((page: any) => {
+        pages.forEach((page: unknown) => {
             const content = page.markdown || '';
             totalContentLength += content.length;
 
@@ -480,7 +480,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
     /**
      * Analyze technical metrics
      */
-    private async analyzeTechnical(crawlData: any, competitor: CompetitorProfile): Promise<Record<string, any>> {
+    private async analyzeTechnical(crawlData: unknown, competitor: CompetitorProfile): Promise<Record<string, any>> {
         const pages = crawlData.data || [];
 
         const metrics = {
@@ -499,7 +499,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
 
         const titles: string[] = [];
 
-        pages.forEach((page: any) => {
+        pages.forEach((page: unknown) => {
             const title = page.metadata?.title || '';
             const description = page.metadata?.description || '';
 
@@ -688,7 +688,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
                 end: Date.now()
             },
             findings,
-            data,
+            _data,
             metadata: {
                 generated: Date.now(),
                 format: 'json',
@@ -736,7 +736,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
                     competitorData: {
                         domain: competitor.domain,
                         metric: 'seoScore',
-                        value: metrics.seoScore
+                        _value: metrics.seoScore
                     },
                     actionItems: [
                         'Audit their on-page SEO implementation',
@@ -758,7 +758,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
                     competitorData: {
                         domain: competitor.domain,
                         metric: 'coreWebVitals.overall',
-                        value: metrics.coreWebVitals.overall
+                        _value: metrics.coreWebVitals.overall
                     },
                     actionItems: [
                         'Analyze their page load optimization',
@@ -898,10 +898,10 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
      */
     private getDefaultMetrics(): CompetitorMetric[] {
         return [
-            { name: 'SEO Score', type: 'seo', value: 0, timestamp: Date.now(), source: 'firecrawl' },
-            { name: 'Page Count', type: 'content', value: 0, timestamp: Date.now(), source: 'firecrawl' },
-            { name: 'Core Web Vitals', type: 'performance', value: 0, timestamp: Date.now(), source: 'pagespeed' },
-            { name: 'Mobile Score', type: 'technical', value: 0, timestamp: Date.now(), source: 'pagespeed' }
+            { name: 'SEO Score', type: 'seo', _value: 0, timestamp: Date.now(), source: 'firecrawl' },
+            { name: 'Page Count', type: 'content', _value: 0, timestamp: Date.now(), source: 'firecrawl' },
+            { name: 'Core Web Vitals', type: 'performance', _value: 0, timestamp: Date.now(), source: 'pagespeed' },
+            { name: 'Mobile Score', type: 'technical', _value: 0, timestamp: Date.now(), source: 'pagespeed' }
         ];
     }
 
@@ -932,8 +932,8 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
                 await this.analyzeCompetitor(competitorId);
                 // Wait between analyses to avoid rate limiting
                 await new Promise(resolve => setTimeout(resolve, 2000));
-            } catch (error) {
-                console.error(`Analysis failed for competitor ${competitorId}:`, error);
+            } catch (_error) {
+                console.error(`Analysis failed for competitor ${competitorId}:`, _error);
             }
         }
 

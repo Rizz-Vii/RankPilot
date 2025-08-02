@@ -25,7 +25,7 @@ export interface SecurityTestConfig {
         logout: string;
         profile: string;
         admin: string;
-        data: string;
+        _data: string;
     };
     security: {
         csrfTokenEndpoint: string;
@@ -142,7 +142,7 @@ export class SecurityTestSuite {
             // Test 5: Password Reset Security
             await this.testPasswordResetSecurity(testResult);
 
-        } catch (error) {
+        } catch (_error) {
             testResult.status = 'failed';
             testResult.findings.push({
                 id: `finding_${Date.now()}`,
@@ -166,9 +166,9 @@ export class SecurityTestSuite {
         const failedAttempts = 10;
         let blockedAfterAttempts = false;
 
-        for (let i = 0; i < failedAttempts; i++) {
+        for (let _i = 0; i < failedAttempts; i++) {
             try {
-                const response = await fetch(`${this.config.baseUrl}${this.config.apiEndpoints.login}`, {
+                const _response = await fetch(`${this.config.baseUrl}${this.config.apiEndpoints.login}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -181,7 +181,7 @@ export class SecurityTestSuite {
                     blockedAfterAttempts = true;
                     break;
                 }
-            } catch (error) {
+            } catch (_error) {
                 // Network error might indicate blocking
                 blockedAfterAttempts = true;
                 break;
@@ -215,7 +215,7 @@ export class SecurityTestSuite {
 
         for (const weakPassword of weakPasswords) {
             try {
-                const response = await fetch(`${this.config.baseUrl}/api/auth/register`, {
+                const _response = await fetch(`${this.config.baseUrl}/api/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -236,7 +236,7 @@ export class SecurityTestSuite {
                         cvssScore: 5.3
                     });
                 }
-            } catch (error) {
+            } catch (_error) {
                 // Endpoint might not exist, which is acceptable
             }
         }
@@ -256,7 +256,7 @@ export class SecurityTestSuite {
     private async testMFAImplementation(testResult: SecurityTestResult): Promise<void> {
         // Check if MFA is available and properly implemented
         try {
-            const response = await fetch(`${this.config.baseUrl}/api/auth/mfa/status`, {
+            const _response = await fetch(`${this.config.baseUrl}/api/auth/mfa/status`, {
                 headers: { 'Authorization': 'Bearer test_token' }
             });
 
@@ -271,7 +271,7 @@ export class SecurityTestSuite {
                     cvssScore: 6.8
                 });
             }
-        } catch (error) {
+        } catch (_error) {
             // MFA endpoint might not exist
         }
     }
@@ -313,7 +313,7 @@ export class SecurityTestSuite {
             // Test 4: Role-Based Access Control
             await this.testRoleBasedAccessControl(testResult);
 
-        } catch (error) {
+        } catch (_error) {
             testResult.status = 'failed';
             testResult.findings.push({
                 id: `finding_${Date.now()}`,
@@ -362,7 +362,7 @@ export class SecurityTestSuite {
                     });
                 }
             }
-        } catch (error) {
+        } catch (_error) {
             // Expected behavior - access should be denied
         }
     }
@@ -415,7 +415,7 @@ export class SecurityTestSuite {
             // Test 3: PII Protection
             await this.testPIIProtection(testResult);
 
-        } catch (error) {
+        } catch (_error) {
             testResult.status = 'failed';
         }
 
@@ -471,7 +471,7 @@ export class SecurityTestSuite {
             // Test 3: API Input Validation
             await this.testAPIInputValidation(testResult);
 
-        } catch (error) {
+        } catch (_error) {
             testResult.status = 'failed';
         }
 
@@ -487,14 +487,14 @@ export class SecurityTestSuite {
         const requestCount = 100;
         let rateLimited = false;
 
-        for (let i = 0; i < requestCount; i++) {
+        for (let _i = 0; i < requestCount; i++) {
             try {
-                const response = await fetch(endpoint);
+                const _response = await fetch(endpoint);
                 if (response.status === 429) {
                     rateLimited = true;
                     break;
                 }
-            } catch (error) {
+            } catch (_error) {
                 break;
             }
         }
@@ -553,7 +553,7 @@ export class SecurityTestSuite {
             // Test 3: Secure Cookie Settings
             await this.testSecureCookieSettings(testResult);
 
-        } catch (error) {
+        } catch (_error) {
             testResult.status = 'failed';
         }
 
@@ -606,7 +606,7 @@ export class SecurityTestSuite {
             // Test 2: SameSite Cookie Attribute
             await this.testSameSiteCookieAttribute(testResult);
 
-        } catch (error) {
+        } catch (_error) {
             testResult.status = 'failed';
         }
 
@@ -646,7 +646,7 @@ export class SecurityTestSuite {
         const startTime = Date.now();
 
         try {
-            const response = await fetch(this.config.baseUrl);
+            const _response = await fetch(this.config.baseUrl);
             const headers = response.headers;
 
             // Check for security headers
@@ -673,7 +673,7 @@ export class SecurityTestSuite {
                 }
             }
 
-        } catch (error) {
+        } catch (_error) {
             testResult.status = 'failed';
         }
 
@@ -702,7 +702,7 @@ export class SecurityTestSuite {
             // Test various injection payloads
             await this.testInjectionVulnerabilities(testResult);
 
-        } catch (error) {
+        } catch (_error) {
             testResult.status = 'failed';
         }
 
@@ -741,7 +741,7 @@ export class SecurityTestSuite {
             // Test OWASP Top 10 compliance
             await this.testOWASPCompliance(testResult);
 
-        } catch (error) {
+        } catch (_error) {
             testResult.status = 'failed';
         }
 
@@ -866,7 +866,7 @@ export const securityTestConfig: SecurityTestConfig = {
         logout: '/api/auth/logout',
         profile: '/api/user/profile',
         admin: '/api/admin',
-        data: '/api/data'
+        _data: '/api/data'
     },
     security: {
         csrfTokenEndpoint: '/api/csrf-token',

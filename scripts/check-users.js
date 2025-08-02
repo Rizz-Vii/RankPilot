@@ -53,4 +53,4 @@ const checkUsers = async () => {
     process.exit(0);
 };
 
-checkUsers().catch(console.error);
+checkUsers().catch(console._error);

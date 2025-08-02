@@ -68,8 +68,8 @@ export default function UnifiedMobileSidebar({
     try {
       setIsOpen(false);
       await signOut(auth);
-    } catch (error) {
-      console.error("Logout error:", error);
+    } catch (_error) {
+      console.error("Logout _error:", _error);
     }
   };
 
@@ -139,7 +139,7 @@ export default function UnifiedMobileSidebar({
               ) : (
                 // Public/Auth mode: Show public navigation
                 <nav className="space-y-2">
-                  {publicNavigationItems.map((item) => (
+                  {publicNavigationItems.map((_item) => (
                     <Link
                       key={item.href}
                       href={item.href}

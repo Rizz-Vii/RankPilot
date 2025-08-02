@@ -20,14 +20,14 @@ import React, { useEffect, useRef, useState } from 'react';
 interface ChatMessage {
     id: string;
     message: string;
-    response: string;
+    _response: string;
     timestamp: string;
     isUser: boolean;
     tokensUsed?: number;
 }
 
 interface ChatResponse {
-    response: string;
+    _response: string;
     sessionId: string;
     timestamp: string;
     tokensUsed: number;
@@ -50,7 +50,7 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
     const [inputValue, setInputValue] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [sessionId, setSessionId] = useState<string>('');
-    const [error, setError] = useState<string>('');
+    const [_error, setError] = useState<string>('');
 
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -81,7 +81,7 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
             const welcomeMessage: ChatMessage = {
                 id: `welcome_${Date.now()}`,
                 message: '',
-                response: `👋 Hi! I'm RankPilot AI, your SEO assistant. I can help you with:
+                _response: `👋 Hi! I'm RankPilot AI, your SEO assistant. I can help you with:
 
 • **SEO Audit Analysis** - Explain your site's performance scores
 • **Content Optimization** - Suggest improvements for better rankings  
@@ -104,7 +104,7 @@ What can I help you with today?`,
         const userMessage: ChatMessage = {
             id: `user_${Date.now()}`,
             message: inputValue,
-            response: '',
+            _response: '',
             timestamp: new Date().toISOString(),
             isUser: true,
         };
@@ -137,7 +137,7 @@ What can I help you with today?`,
                 throw new Error(errorData.error || 'Failed to send message');
             }
 
-            const data: ChatResponse = await response.json();
+            const _data: ChatResponse = await response.json();
 
             // Update session ID if new
             if (data.sessionId && data.sessionId !== sessionId) {
@@ -148,7 +148,7 @@ What can I help you with today?`,
             const aiMessage: ChatMessage = {
                 id: `ai_${Date.now()}`,
                 message: '',
-                response: data.response,
+                _response: data._response,
                 timestamp: data.timestamp,
                 isUser: false,
                 tokensUsed: data.tokensUsed,
@@ -158,7 +158,7 @@ What can I help you with today?`,
 
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to send message');
-            console.error('Chat error:', err);
+            console.error('Chat _error:', err);
         } finally {
             setIsLoading(false);
         }
@@ -245,7 +245,7 @@ What can I help you with today?`,
                         {/* Messages */}
                         <ScrollArea className="flex-1 p-4">
                             <div className="space-y-4">
-                                {messages.map((msg, index) => (
+                                {messages.map((msg, _index) => (
                                     <div
                                         key={msg.id}
                                         className={cn(
@@ -317,7 +317,7 @@ What can I help you with today?`,
                                 <Input
                                     ref={inputRef}
                                     value={inputValue}
-                                    onChange={(e) => setInputValue(e.target.value)}
+                                    onChange={(e) => setInputValue(e.target._value)}
                                     onKeyPress={handleKeyPress}
                                     placeholder="Ask about your SEO performance..."
                                     disabled={isLoading || !user}

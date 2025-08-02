@@ -735,8 +735,8 @@ export class EnterpriseGlobalLoadBalancer {
                     console.warn(`Endpoint ${id} is unhealthy - triggering failover`);
                     await this.handleFailover(id);
                 }
-            } catch (error) {
-                console.error(`Health check failed for endpoint ${id}:`, error);
+            } catch (_error) {
+                console.error(`Health check failed for endpoint ${id}:`, _error);
                 endpoint.healthStatus = 'unhealthy';
             }
         }
@@ -790,7 +790,7 @@ export class EnterpriseGlobalLoadBalancer {
         return Math.max(0, 1 - utilization); // Higher score for lower utilization
     }
 
-    private calculateLatencyScore(endpoint: GlobalEndpoint, userLocation: any): number {
+    private calculateLatencyScore(endpoint: GlobalEndpoint, userLocation: unknown): number {
         const baseLatency = endpoint.latency.average;
         const distance = this.calculateDistance(userLocation, this.getEndpointLocation(endpoint));
         const estimatedLatency = baseLatency + (distance * 0.01); // Add 0.01ms per km
@@ -803,7 +803,7 @@ export class EnterpriseGlobalLoadBalancer {
         return Math.min(1, availableCapacity / 1000); // Normalize against 1000 capacity units
     }
 
-    private estimateLatency(endpoint: GlobalEndpoint, userLocation: any): number {
+    private estimateLatency(endpoint: GlobalEndpoint, userLocation: unknown): number {
         const baseLatency = endpoint.latency.average;
         const distance = this.calculateDistance(userLocation, this.getEndpointLocation(endpoint));
         return baseLatency + (distance * 0.01); // Add 0.01ms per km
@@ -817,8 +817,8 @@ export class EnterpriseGlobalLoadBalancer {
     }
 
     private generateSelectionReason(
-        selected: any,
-        alternatives: any[]
+        selected: unknown,
+        alternatives: unknown[]
     ): string {
         const reasons = [];
 

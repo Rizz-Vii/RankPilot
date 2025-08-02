@@ -121,7 +121,7 @@ export async function verifyDummyData(): Promise<DataSummary> {
 
     // 4. Detailed analysis check
     console.log("\n📊 Checking NeuroSEO analysis details...");
-    let analysisDetails: any[] = [];
+    const analysisDetails: unknown[] = [];
 
     const sampleAnalyses = analysesSnapshot.docs.slice(0, 3); // Check first 3 analyses
     for (const analysisDoc of sampleAnalyses) {
@@ -169,7 +169,7 @@ export async function verifyDummyData(): Promise<DataSummary> {
     console.log(
       `   ✅ Users with activities: ${userCount - usersWithoutActivities}`
     );
-    console.log(`   ✅ Users with usage data: ${totalUsage}`);
+    console.log(`   ✅ Users with usage _data: ${totalUsage}`);
     console.log(
       `   ✅ Paid users with payments: ${totalPayments > 0 ? "Yes" : "No"}`
     );
@@ -199,8 +199,8 @@ export async function verifyDummyData(): Promise<DataSummary> {
       usageRecords: totalUsage,
       paymentRecords: totalPayments,
     };
-  } catch (error) {
-    console.error("❌ Error during verification:", error);
+  } catch (_error) {
+    console.error("❌ Error during verification:", _error);
     throw error;
   }
 }
@@ -322,7 +322,7 @@ export async function checkEndToEndFunctionality() {
         `   ✅ Found ${activitiesSnapshot.size} recent activities for ${sampleUser.data().email}`
       );
 
-      activitiesSnapshot.docs.forEach((activityDoc, index) => {
+      activitiesSnapshot.docs.forEach((activityDoc, _index) => {
         const activity = activityDoc.data();
         console.log(
           `     ${index + 1}. ${activity.type}: ${activity.description}`
@@ -355,8 +355,8 @@ export async function checkEndToEndFunctionality() {
     }
 
     console.log("\n🎉 End-to-End functionality verification completed!");
-  } catch (error) {
-    console.error("❌ Error during end-to-end testing:", error);
+  } catch (_error) {
+    console.error("❌ Error during end-to-end testing:", _error);
     throw error;
   }
 }
@@ -378,8 +378,8 @@ if (require.main === module) {
       console.log("   4. Test user admin management features");
       process.exit(0);
     })
-    .catch((error) => {
-      console.error("💥 Verification failed:", error);
+    .catch((_error) => {
+      console.error("💥 Verification failed:", _error);
       process.exit(1);
     });
 }

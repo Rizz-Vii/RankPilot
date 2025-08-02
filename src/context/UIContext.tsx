@@ -16,15 +16,15 @@ interface Feedback {
 
 interface UIContextType {
   isNavigating: boolean;
-  setIsNavigating: (value: boolean) => void;
+  setIsNavigating: (_value: boolean) => void;
   lastFocusedElement: HTMLElement | null;
-  setLastFocusedElement: (element: HTMLElement | null) => void;
+  setLastFocusedElement: (_element: HTMLElement | null) => void;
   isMounted: boolean;
   feedback: Feedback[];
   addFeedback: (message: string, type: Feedback["type"]) => void;
   removeFeedback: (id: string) => void;
   isProcessing: boolean;
-  setIsProcessing: (value: boolean) => void;
+  setIsProcessing: (_value: boolean) => void;
   scrollToTop: () => void;
   scrollToElement: (elementId: string) => void;
 }
@@ -55,7 +55,7 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const removeFeedback = useCallback((id: string) => {
-    setFeedback((prev) => prev.filter((item) => item.id !== id));
+    setFeedback((prev) => prev.filter((_item) => item.id !== id));
   }, []);
 
   const scrollToTop = useCallback(() => {
@@ -67,7 +67,7 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
 
   const scrollToElement = useCallback((elementId: string) => {
     const element = document.getElementById(elementId);
-    if (element) {
+    if (_element) {
       element.scrollIntoView({
         behavior: "smooth",
         block: "start",

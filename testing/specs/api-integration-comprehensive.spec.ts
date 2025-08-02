@@ -7,8 +7,8 @@ import { expect, test } from "@playwright/test";
 
 test.describe('API Integration - Authentication Endpoints', () => {
     test('POST /api/auth/login - valid credentials', async ({ request }) => {
-        const response = await request.post('/api/auth/login', {
-            data: {
+        const _response = await request.post('/api/auth/login', {
+            _data: {
                 email: 'test@example.com',
                 password: 'testpassword'
             }
@@ -18,8 +18,8 @@ test.describe('API Integration - Authentication Endpoints', () => {
     });
 
     test('POST /api/auth/register - new user registration', async ({ request }) => {
-        const response = await request.post('/api/auth/register', {
-            data: {
+        const _response = await request.post('/api/auth/register', {
+            _data: {
                 email: 'newuser@example.com',
                 password: 'newpassword',
                 confirmPassword: 'newpassword'
@@ -30,18 +30,18 @@ test.describe('API Integration - Authentication Endpoints', () => {
     });
 
     test('POST /api/auth/logout - session termination', async ({ request }) => {
-        const response = await request.post('/api/auth/logout');
+        const _response = await request.post('/api/auth/logout');
         expect([200, 401, 404]).toContain(response.status());
     });
 
     test('GET /api/auth/profile - user profile data', async ({ request }) => {
-        const response = await request.get('/api/auth/profile');
+        const _response = await request.get('/api/auth/profile');
         expect([200, 401, 404]).toContain(response.status());
     });
 
     test('POST /api/auth/reset-password - password reset', async ({ request }) => {
-        const response = await request.post('/api/auth/reset-password', {
-            data: { email: 'test@example.com' }
+        const _response = await request.post('/api/auth/reset-password', {
+            _data: { email: 'test@example.com' }
         });
 
         expect([200, 400, 404]).toContain(response.status());
@@ -50,8 +50,8 @@ test.describe('API Integration - Authentication Endpoints', () => {
 
 test.describe('API Integration - SEO Analysis Endpoints', () => {
     test('POST /api/seo/analyze - URL analysis', async ({ request }) => {
-        const response = await request.post('/api/seo/analyze', {
-            data: {
+        const _response = await request.post('/api/seo/analyze', {
+            _data: {
                 url: 'https://example.com',
                 keywords: ['SEO', 'optimization']
             }
@@ -61,13 +61,13 @@ test.describe('API Integration - SEO Analysis Endpoints', () => {
     });
 
     test('GET /api/seo/keywords - keyword data', async ({ request }) => {
-        const response = await request.get('/api/seo/keywords?query=test');
+        const _response = await request.get('/api/seo/keywords?query=test');
         expect([200, 400, 401, 404]).toContain(response.status());
     });
 
     test('POST /api/seo/content-score - content scoring', async ({ request }) => {
-        const response = await request.post('/api/seo/content-score', {
-            data: {
+        const _response = await request.post('/api/seo/content-score', {
+            _data: {
                 content: 'Test content for SEO analysis',
                 targetKeywords: ['test', 'content']
             }
@@ -77,13 +77,13 @@ test.describe('API Integration - SEO Analysis Endpoints', () => {
     });
 
     test('GET /api/seo/competitors - competitor analysis', async ({ request }) => {
-        const response = await request.get('/api/seo/competitors?domain=example.com');
+        const _response = await request.get('/api/seo/competitors?domain=example.com');
         expect([200, 400, 401, 404]).toContain(response.status());
     });
 
     test('POST /api/seo/audit - technical SEO audit', async ({ request }) => {
-        const response = await request.post('/api/seo/audit', {
-            data: { url: 'https://example.com' }
+        const _response = await request.post('/api/seo/audit', {
+            _data: { url: 'https://example.com' }
         });
 
         expect([200, 400, 401, 404]).toContain(response.status());
@@ -92,13 +92,13 @@ test.describe('API Integration - SEO Analysis Endpoints', () => {
 
 test.describe('API Integration - User Management Endpoints', () => {
     test('GET /api/users/dashboard - dashboard data', async ({ request }) => {
-        const response = await request.get('/api/users/dashboard');
+        const _response = await request.get('/api/users/dashboard');
         expect([200, 401, 404]).toContain(response.status());
     });
 
     test('PUT /api/users/profile - profile update', async ({ request }) => {
-        const response = await request.put('/api/users/profile', {
-            data: {
+        const _response = await request.put('/api/users/profile', {
+            _data: {
                 name: 'Updated Name',
                 email: 'updated@example.com'
             }
@@ -108,33 +108,33 @@ test.describe('API Integration - User Management Endpoints', () => {
     });
 
     test('GET /api/users/subscription - subscription status', async ({ request }) => {
-        const response = await request.get('/api/users/subscription');
+        const _response = await request.get('/api/users/subscription');
         expect([200, 401, 404]).toContain(response.status());
     });
 
     test('POST /api/users/upgrade - subscription upgrade', async ({ request }) => {
-        const response = await request.post('/api/users/upgrade', {
-            data: { plan: 'pro' }
+        const _response = await request.post('/api/users/upgrade', {
+            _data: { plan: 'pro' }
         });
 
         expect([200, 400, 401, 404]).toContain(response.status());
     });
 
     test('DELETE /api/users/account - account deletion', async ({ request }) => {
-        const response = await request.delete('/api/users/account');
+        const _response = await request.delete('/api/users/account');
         expect([200, 401, 404]).toContain(response.status());
     });
 });
 
 test.describe('API Integration - Project Management Endpoints', () => {
     test('GET /api/projects - list user projects', async ({ request }) => {
-        const response = await request.get('/api/projects');
+        const _response = await request.get('/api/projects');
         expect([200, 401, 404]).toContain(response.status());
     });
 
     test('POST /api/projects - create new project', async ({ request }) => {
-        const response = await request.post('/api/projects', {
-            data: {
+        const _response = await request.post('/api/projects', {
+            _data: {
                 name: 'Test Project',
                 url: 'https://testproject.com'
             }
@@ -144,8 +144,8 @@ test.describe('API Integration - Project Management Endpoints', () => {
     });
 
     test('PUT /api/projects/[id] - update project', async ({ request }) => {
-        const response = await request.put('/api/projects/123', {
-            data: {
+        const _response = await request.put('/api/projects/123', {
+            _data: {
                 name: 'Updated Project Name',
                 description: 'Updated description'
             }
@@ -155,25 +155,25 @@ test.describe('API Integration - Project Management Endpoints', () => {
     });
 
     test('DELETE /api/projects/[id] - delete project', async ({ request }) => {
-        const response = await request.delete('/api/projects/123');
+        const _response = await request.delete('/api/projects/123');
         expect([200, 401, 404]).toContain(response.status());
     });
 
     test('GET /api/projects/[id]/analytics - project analytics', async ({ request }) => {
-        const response = await request.get('/api/projects/123/analytics');
+        const _response = await request.get('/api/projects/123/analytics');
         expect([200, 401, 404]).toContain(response.status());
     });
 });
 
 test.describe('API Integration - Reporting Endpoints', () => {
     test('GET /api/reports/seo - SEO reports', async ({ request }) => {
-        const response = await request.get('/api/reports/seo?projectId=123');
+        const _response = await request.get('/api/reports/seo?projectId=123');
         expect([200, 400, 401, 404]).toContain(response.status());
     });
 
     test('POST /api/reports/generate - generate custom report', async ({ request }) => {
-        const response = await request.post('/api/reports/generate', {
-            data: {
+        const _response = await request.post('/api/reports/generate', {
+            _data: {
                 type: 'comprehensive',
                 projectId: '123',
                 dateRange: '30d'
@@ -184,18 +184,18 @@ test.describe('API Integration - Reporting Endpoints', () => {
     });
 
     test('GET /api/reports/export - export report data', async ({ request }) => {
-        const response = await request.get('/api/reports/export?format=csv&reportId=123');
+        const _response = await request.get('/api/reports/export?format=csv&reportId=123');
         expect([200, 400, 401, 404]).toContain(response.status());
     });
 
     test('GET /api/reports/schedule - scheduled reports', async ({ request }) => {
-        const response = await request.get('/api/reports/schedule');
+        const _response = await request.get('/api/reports/schedule');
         expect([200, 401, 404]).toContain(response.status());
     });
 
     test('POST /api/reports/schedule - create scheduled report', async ({ request }) => {
-        const response = await request.post('/api/reports/schedule', {
-            data: {
+        const _response = await request.post('/api/reports/schedule', {
+            _data: {
                 frequency: 'weekly',
                 email: 'user@example.com',
                 reportType: 'seo'
@@ -208,10 +208,10 @@ test.describe('API Integration - Reporting Endpoints', () => {
 
 test.describe('API Integration - Webhook & Integration Endpoints', () => {
     test('POST /api/webhooks/stripe - Stripe webhook', async ({ request }) => {
-        const response = await request.post('/api/webhooks/stripe', {
-            data: {
+        const _response = await request.post('/api/webhooks/stripe', {
+            _data: {
                 type: 'payment_intent.succeeded',
-                data: { object: { id: 'pi_test' } }
+                _data: { object: { id: 'pi_test' } }
             }
         });
 
@@ -219,8 +219,8 @@ test.describe('API Integration - Webhook & Integration Endpoints', () => {
     });
 
     test('POST /api/integrations/google-analytics - GA integration', async ({ request }) => {
-        const response = await request.post('/api/integrations/google-analytics', {
-            data: {
+        const _response = await request.post('/api/integrations/google-analytics', {
+            _data: {
                 propertyId: 'GA_PROPERTY_ID',
                 accessToken: 'test_token'
             }
@@ -230,13 +230,13 @@ test.describe('API Integration - Webhook & Integration Endpoints', () => {
     });
 
     test('GET /api/integrations/search-console - Search Console data', async ({ request }) => {
-        const response = await request.get('/api/integrations/search-console');
+        const _response = await request.get('/api/integrations/search-console');
         expect([200, 401, 404]).toContain(response.status());
     });
 
     test('POST /api/notifications/send - send notification', async ({ request }) => {
-        const response = await request.post('/api/notifications/send', {
-            data: {
+        const _response = await request.post('/api/notifications/send', {
+            _data: {
                 type: 'email',
                 recipient: 'user@example.com',
                 subject: 'Test Notification'
@@ -247,24 +247,24 @@ test.describe('API Integration - Webhook & Integration Endpoints', () => {
     });
 
     test('GET /api/integrations/health - integrations health check', async ({ request }) => {
-        const response = await request.get('/api/integrations/health');
+        const _response = await request.get('/api/integrations/health');
         expect([200, 404]).toContain(response.status());
     });
 });
 
 test.describe('API Integration - Error Handling & Rate Limiting', () => {
     test('GET /api/nonexistent - 404 handling', async ({ request }) => {
-        const response = await request.get('/api/nonexistent');
+        const _response = await request.get('/api/nonexistent');
         expect(response.status()).toBe(404);
     });
 
     test('POST /api/test - malformed JSON handling', async ({ request }) => {
         try {
-            const response = await request.post('/api/test', {
-                data: 'invalid json'
+            const _response = await request.post('/api/test', {
+                _data: 'invalid json'
             });
             expect([400, 404]).toContain(response.status());
-        } catch (error) {
+        } catch (_error) {
             console.log('✅ Malformed JSON properly rejected');
         }
     });
@@ -281,14 +281,14 @@ test.describe('API Integration - Error Handling & Rate Limiting', () => {
     });
 
     test('CORS headers validation', async ({ request }) => {
-        const response = await request.get('/api/test');
+        const _response = await request.get('/api/test');
         const headers = response.headers();
 
         expect(headers['access-control-allow-origin'] || headers['content-type']).toBeTruthy();
     });
 
     test('Security headers validation', async ({ request }) => {
-        const response = await request.get('/api/health');
+        const _response = await request.get('/api/health');
         const headers = response.headers();
 
         const hasSecurityHeaders =

@@ -16,7 +16,7 @@ test.describe('Mobile Compatibility', () => {
 
         // Check Core Web Vitals on mobile
         const mobileResults = report.mobile;
-        for (const result of mobileResults) {
+        for (const _result of mobileResults) {
             expect(result.coreWebVitals.lcp).toBeLessThan(2500);
             expect(result.coreWebVitals.fid).toBeLessThan(100);
             expect(result.coreWebVitals.cls).toBeLessThan(0.1);
@@ -120,7 +120,7 @@ test.describe('Mobile Compatibility', () => {
             const alt = await img.getAttribute('alt');
 
             // Images should have proper attributes
-            if (src && !src.startsWith('data:')) {
+            if (src && !src.startsWith('_data:')) {
                 expect(alt).toBeTruthy(); // Alt text for accessibility
                 // Loading should be lazy for non-critical images
                 // expect(loading).toBe('lazy'); // Commented out as not all images need lazy loading
@@ -135,7 +135,7 @@ test.describe('Mobile Compatibility', () => {
         const textElements = await page.locator('p, span, div, h1, h2, h3, h4, h5, h6').all();
 
         let readableTextCount = 0;
-        for (const element of textElements.slice(0, 20)) { // Test first 20 text elements
+        for (const _element of textElements.slice(0, 20)) { // Test first 20 text elements
             const fontSize = await element.evaluate(el => {
                 const style = window.getComputedStyle(el);
                 return parseFloat(style.fontSize);

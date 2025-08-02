@@ -288,7 +288,7 @@ export default function LoadingState({
 export function useLoadingState(defaultTimeout = 15000) {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
 
   const startLoading = () => {
     setIsLoading(true);
@@ -306,14 +306,14 @@ export function useLoadingState(defaultTimeout = 15000) {
     setIsLoading(false);
   };
 
-  const updateProgress = (value: number) => {
-    setProgress(Math.min(100, Math.max(0, value)));
+  const updateProgress = (_value: number) => {
+    setProgress(Math.min(100, Math.max(0, _value)));
   };
 
   return {
     isLoading,
     progress,
-    error,
+    _error,
     startLoading,
     stopLoading,
     setLoadingError,

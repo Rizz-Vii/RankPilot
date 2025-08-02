@@ -32,8 +32,8 @@ export class EnhancedTestOrchestrator {
      */
     async debugTestFailure(
         testName: string,
-        error: Error,
-        context: any = {}
+        _error: Error,
+        context: unknown = {}
     ): Promise<string> {
         console.log(`🔍 Starting systematic debugging for test failure: ${testName}`);
 
@@ -92,10 +92,10 @@ export class EnhancedTestOrchestrator {
     private async autoCompleteStep(
         stepId: string,
         analysis: string,
-        context: any
+        context: unknown
     ): Promise<void> {
         const result = await this.performAutomatedAnalysis(stepId, analysis, context);
-        this.debugger.completeStep(stepId, result);
+        this.debugger.completeStep(stepId, _result);
     }
 
     /**
@@ -104,7 +104,7 @@ export class EnhancedTestOrchestrator {
     private async performAutomatedAnalysis(
         stepId: string,
         analysis: string,
-        context: any
+        context: unknown
     ): Promise<string> {
         switch (stepId) {
             case 'config-validation':
@@ -127,7 +127,7 @@ export class EnhancedTestOrchestrator {
     /**
      * Validate test configuration
      */
-    private validateTestConfiguration(context: any): string {
+    private validateTestConfiguration(context: unknown): string {
         const issues: string[] = [];
 
         // Check environment variables
@@ -158,12 +158,12 @@ export class EnhancedTestOrchestrator {
     /**
      * Analyze test error for patterns
      */
-    private analyzeTestError(analysis: string, context: any): string {
+    private analyzeTestError(analysis: string, context: unknown): string {
         const errorPatterns = [
-            { pattern: /timeout|infinite.*retry/i, type: 'infinite-retry-loop' },
-            { pattern: /url.*mismatch|localhost.*firebase/i, type: 'config-url-mismatch' },
-            { pattern: /eslint.*error|build.*fail/i, type: 'eslint-compatibility' },
-            { pattern: /mobile.*performance|touch.*target/i, type: 'mobile-performance-degradation' },
+            { pattern: /timeout|infinite.*retry/_i, type: 'infinite-retry-loop' },
+            { pattern: /url.*mismatch|localhost.*firebase/_i, type: 'config-url-mismatch' },
+            { pattern: /eslint.*error|build.*fail/_i, type: 'eslint-compatibility' },
+            { pattern: /mobile.*performance|touch.*target/_i, type: 'mobile-performance-degradation' },
         ];
 
         const detectedPatterns = errorPatterns
@@ -188,7 +188,7 @@ export class EnhancedTestOrchestrator {
     /**
      * Validate test environment consistency
      */
-    private validateTestEnvironment(context: any): string {
+    private validateTestEnvironment(context: unknown): string {
         const environment = {
             nodeVersion: process.version,
             platform: process.platform,
@@ -209,8 +209,8 @@ export class EnhancedTestOrchestrator {
 
         try {
             this.debugger.enforceSystematicApproach();
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
+        } catch (_error) {
+            const errorMessage = error instanceof Error ? error.message : String(_error);
             console.error('❌ Systematic approach enforcement failed:', errorMessage);
             throw error;
         }
@@ -225,7 +225,7 @@ export class EnhancedTestOrchestrator {
 }
 
 // Integration with existing test framework
-export function withSystematicDebugging<T extends any[]>(
+export function withSystematicDebugging<T extends unknown[]>(
     testFunction: (...args: T) => Promise<void>
 ): (...args: T) => Promise<void> {
     return async (...args: T) => {
@@ -238,7 +238,7 @@ export function withSystematicDebugging<T extends any[]>(
             // Execute the test
             await testFunction(...args);
 
-        } catch (error) {
+        } catch (_error) {
             console.log('🔍 Test failed - starting systematic debugging');
 
             const context = {

@@ -31,7 +31,7 @@ export interface ZapierWorkflow {
     lastRun?: {
         timestamp: number;
         status: 'success' | 'error' | 'partial';
-        results?: any;
+        results?: unknown;
         errorMessage?: string;
     };
     metadata: {
@@ -46,12 +46,12 @@ export interface ZapierTrigger {
     id: string;
     type: 'webhook' | 'schedule' | 'neuroseo-analysis' | 'keyword-ranking' | 'competitor-change';
     app: string;
-    event: string;
+    _event: string;
     config: {
         endpoint?: string;
         method?: string;
         headers?: Record<string, string>;
-        payload?: any;
+        payload?: unknown;
         filters?: Record<string, any>;
         frequency?: 'hourly' | 'daily' | 'weekly' | 'monthly';
         day?: string;
@@ -89,7 +89,7 @@ export interface ZapierCondition {
     id: string;
     field: string;
     operator: 'equals' | 'not_equals' | 'contains' | 'greater_than' | 'less_than' | 'exists';
-    value: any;
+    _value: unknown;
     logicalOperator?: 'AND' | 'OR';
 }
 
@@ -139,7 +139,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
                 conditions: [{
                     field: 'metric_change_percentage',
                     operator: 'greater_than',
-                    value: 10
+                    _value: 10
                 }],
                 requiredApps: ['gmail', 'slack'],
                 requiredTier: 'starter',
@@ -189,7 +189,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
                 conditions: [{
                     field: 'ranking_change',
                     operator: 'greater_than',
-                    value: 5
+                    _value: 5
                 }],
                 requiredApps: ['asana', 'slack'],
                 requiredTier: 'enterprise',
@@ -216,7 +216,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
                 conditions: [{
                     field: 'position_change',
                     operator: 'greater_than',
-                    value: 3
+                    _value: 3
                 }],
                 requiredApps: ['gmail', 'trello'],
                 requiredTier: 'agency',
@@ -243,7 +243,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
                 conditions: [{
                     field: 'core_web_vitals_score',
                     operator: 'less_than',
-                    value: 90
+                    _value: 90
                 }],
                 requiredApps: ['monday', 'slack'],
                 requiredTier: 'enterprise',
@@ -384,7 +384,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
             this.emit('workflow-completed', { workflowId, runId, results: actionResults });
             return { status: 'success', results: actionResults };
 
-        } catch (error) {
+        } catch (_error) {
             workflow.lastRun = {
                 timestamp: Date.now(),
                 status: 'error',
@@ -396,7 +396,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
             workflow.metadata.runCount++;
             workflow.metadata.successRate = (successCount / workflow.metadata.runCount) * 100;
 
-            this.emit('workflow-error', { workflowId, runId, error: error instanceof Error ? error.message : error });
+            this.emit('workflow-error', { workflowId, runId, _error: error instanceof Error ? error.message : error });
             throw error;
         } finally {
             this.activeRuns.delete(runId);
@@ -427,7 +427,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     private async executeWebhookTrigger(trigger: ZapierTrigger): Promise<any> {
         const { endpoint, method = 'GET', headers = {}, payload } = trigger.config;
 
-        const response = await fetch(endpoint!, {
+        const _response = await fetch(endpoint!, {
             method,
             headers: {
                 'Content-Type': 'application/json',
@@ -449,7 +449,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     private async executeNeuroSEOTrigger(trigger: ZapierTrigger, workflow: ZapierWorkflow): Promise<any> {
         // Integration with NeuroSEO Suite
         try {
-            const response = await fetch('/api/neuroseo/trigger-analysis', {
+            const _response = await fetch('/api/neuroseo/trigger-analysis', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -464,8 +464,8 @@ export class ZapierWorkflowBuilder extends EventEmitter {
             }
 
             return response.json();
-        } catch (error) {
-            throw new Error(`NeuroSEO trigger error: ${error instanceof Error ? error.message : error}`);
+        } catch (_error) {
+            throw new Error(`NeuroSEO trigger _error: ${error instanceof Error ? error.message : error}`);
         }
     }
 
@@ -489,7 +489,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     private async executeCompetitorTrigger(trigger: ZapierTrigger, workflow: ZapierWorkflow): Promise<any> {
         // Integration with Firecrawl MCP for competitor analysis
         try {
-            const response = await fetch('/api/competitors/check-changes', {
+            const _response = await fetch('/api/competitors/check-changes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -503,15 +503,15 @@ export class ZapierWorkflowBuilder extends EventEmitter {
             }
 
             return response.json();
-        } catch (error) {
-            throw new Error(`Competitor trigger error: ${error instanceof Error ? error.message : error}`);
+        } catch (_error) {
+            throw new Error(`Competitor trigger _error: ${error instanceof Error ? error.message : error}`);
         }
     }
 
     /**
      * Execute an action
      */
-    private async executeAction(action: ZapierAction, triggerData: any[], workflow: ZapierWorkflow): Promise<any> {
+    private async executeAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<any> {
         let attempt = 0;
         const maxRetries = action.retryConfig.maxRetries;
 
@@ -533,7 +533,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
                     default:
                         throw new Error(`Unknown action type: ${action.type}`);
                 }
-            } catch (error) {
+            } catch (_error) {
                 attempt++;
                 if (attempt > maxRetries) {
                     throw error;
@@ -549,7 +549,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Execute email action via Zapier MCP
      */
-    private async executeEmailAction(action: ZapierAction, triggerData: any[], workflow: ZapierWorkflow): Promise<any> {
+    private async executeEmailAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<any> {
         const mappedData = this.mapTriggerDataToAction(action.mapping, triggerData);
 
         // Use Zapier MCP for email sending
@@ -564,7 +564,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Execute Slack action via Zapier MCP
      */
-    private async executeSlackAction(action: ZapierAction, triggerData: any[], workflow: ZapierWorkflow): Promise<any> {
+    private async executeSlackAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<any> {
         const mappedData = this.mapTriggerDataToAction(action.mapping, triggerData);
 
         return {
@@ -578,7 +578,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Execute task creation action
      */
-    private async executeTaskAction(action: ZapierAction, triggerData: any[], workflow: ZapierWorkflow): Promise<any> {
+    private async executeTaskAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<any> {
         const mappedData = this.mapTriggerDataToAction(action.mapping, triggerData);
 
         return {
@@ -593,18 +593,18 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Execute dashboard update action
      */
-    private async executeDashboardAction(action: ZapierAction, triggerData: any[], workflow: ZapierWorkflow): Promise<any> {
+    private async executeDashboardAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<any> {
         const mappedData = this.mapTriggerDataToAction(action.mapping, triggerData);
 
         // Integration with Custom Dashboard Builder
         try {
-            const response = await fetch('/api/dashboard/custom/workflow-update', {
+            const _response = await fetch('/api/dashboard/custom/workflow-update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     userId: workflow.userId,
                     workflowId: workflow.id,
-                    data: mappedData
+                    _data: mappedData
                 })
             });
 
@@ -613,15 +613,15 @@ export class ZapierWorkflowBuilder extends EventEmitter {
             }
 
             return response.json();
-        } catch (error) {
-            throw new Error(`Dashboard action error: ${error instanceof Error ? error.message : error}`);
+        } catch (_error) {
+            throw new Error(`Dashboard action _error: ${error instanceof Error ? error.message : error}`);
         }
     }
 
     /**
      * Execute report generation action
      */
-    private async executeReportAction(action: ZapierAction, triggerData: any[], workflow: ZapierWorkflow): Promise<any> {
+    private async executeReportAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<any> {
         const mappedData = this.mapTriggerDataToAction(action.mapping, triggerData);
 
         // Integration with report generation system
@@ -637,7 +637,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Execute sheet update action
      */
-    private async executeSheetAction(action: ZapierAction, triggerData: any[], workflow: ZapierWorkflow): Promise<any> {
+    private async executeSheetAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<any> {
         const mappedData = this.mapTriggerDataToAction(action.mapping, triggerData);
 
         return {
@@ -651,7 +651,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Map trigger data to action fields
      */
-    private mapTriggerDataToAction(mapping: Record<string, string>, triggerData: any[]): Record<string, any> {
+    private mapTriggerDataToAction(mapping: Record<string, string>, triggerData: unknown[]): Record<string, any> {
         const mapped: Record<string, any> = {};
 
         Object.entries(mapping).forEach(([actionField, triggerPath]) => {
@@ -668,14 +668,14 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Get value from nested object path
      */
-    private getValueFromPath(data: any, path: string): any {
-        return path.split('.').reduce((obj, key) => obj && obj[key], data);
+    private getValueFromPath(_data: unknown, path: string): any {
+        return path.split('.').reduce((obj, _key) => obj && obj[key], _data);
     }
 
     /**
      * Evaluate workflow conditions
      */
-    private evaluateConditions(conditions: ZapierCondition[], triggerData: any[]): boolean {
+    private evaluateConditions(conditions: ZapierCondition[], triggerData: unknown[]): boolean {
         if (conditions.length === 0) return true;
 
         return conditions.every(condition => {
@@ -687,11 +687,11 @@ export class ZapierWorkflowBuilder extends EventEmitter {
                 case 'not_equals':
                     return value !== condition.value;
                 case 'contains':
-                    return String(value).includes(String(condition.value));
+                    return String(_value).includes(String(condition._value));
                 case 'greater_than':
-                    return Number(value) > Number(condition.value);
+                    return Number(_value) > Number(condition._value);
                 case 'less_than':
-                    return Number(value) < Number(condition.value);
+                    return Number(_value) < Number(condition._value);
                 case 'exists':
                     return value !== undefined && value !== null;
                 default:

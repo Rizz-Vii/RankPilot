@@ -12,17 +12,17 @@ interface StreamingRequest {
     connectionType?: 'websocket' | 'sse';
     dashboardId?: string;
     streamTypes?: string[];
-    collaborationEvent?: any;
+    collaborationEvent?: unknown;
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
     try {
         const body = await request.json() as StreamingRequest;
         const authHeader = request.headers.get('authorization');
 
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
-                { error: 'Unauthorized - Missing token' },
+                { _error: 'Unauthorized - Missing token' },
                 { status: 401 }
             );
         }
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
             case 'register':
                 if (!body.clientId) {
                     return NextResponse.json(
-                        { error: 'Client ID is required' },
+                        { _error: 'Client ID is required' },
                         { status: 400 }
                     );
                 }
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
                 if (!registrationResult.success) {
                     return NextResponse.json(
-                        { error: registrationResult.error },
+                        { _error: registrationResult.error },
                         { status: 400 }
                     );
                 }
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
             case 'subscribe':
                 if (!body.clientId || !body.streamTypes) {
                     return NextResponse.json(
-                        { error: 'Client ID and stream types are required' },
+                        { _error: 'Client ID and stream types are required' },
                         { status: 400 }
                     );
                 }
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({
                     success: subscriptionResult.success,
                     subscribed: subscriptionResult.subscribed,
-                    error: subscriptionResult.error,
+                    _error: subscriptionResult._error,
                     message: subscriptionResult.success
                         ? `Subscribed to ${subscriptionResult.subscribed.length} streams`
                         : 'Subscription failed'
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
             case 'collaborate':
                 if (!body.collaborationEvent) {
                     return NextResponse.json(
-                        { error: 'Collaboration event data is required' },
+                        { _error: 'Collaboration event data is required' },
                         { status: 400 }
                     );
                 }
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
                     userId: mockUser.uid,
                     userName: body.collaborationEvent.userName || 'Demo User',
                     dashboardId: body.collaborationEvent.dashboardId,
-                    data: body.collaborationEvent.data,
+                    _data: body.collaborationEvent._data,
                     timestamp: Date.now()
                 });
 
@@ -117,16 +117,16 @@ export async function POST(request: NextRequest) {
 
             default:
                 return NextResponse.json(
-                    { error: 'Invalid action' },
+                    { _error: 'Invalid action' },
                     { status: 400 }
                 );
         }
 
-    } catch (error) {
-        console.error('[StreamingAPI] Error:', error);
+    } catch (_error) {
+        console.error('[StreamingAPI] Error:', _error);
         return NextResponse.json(
             {
-                error: 'Internal server error',
+                _error: 'Internal server error',
                 details: error instanceof Error ? error.message : 'Unknown error'
             },
             { status: 500 }
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
     }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     try {
         const url = new URL(request.url);
         const action = url.searchParams.get('action');
@@ -144,7 +144,7 @@ export async function GET(request: NextRequest) {
         if (action === 'sse') {
             if (!clientId) {
                 return NextResponse.json(
-                    { error: 'Client ID is required for SSE' },
+                    { _error: 'Client ID is required for SSE' },
                     { status: 400 }
                 );
             }
@@ -155,7 +155,7 @@ export async function GET(request: NextRequest) {
                 start(controller) {
                     // Send initial connection message
                     controller.enqueue(
-                        encoder.encode(`data: ${JSON.stringify({
+                        encoder.encode(`_data: ${JSON.stringify({
                             type: 'connection',
                             message: 'SSE connection established',
                             timestamp: Date.now()
@@ -163,10 +163,10 @@ export async function GET(request: NextRequest) {
                     );
 
                     // Listen for SSE data events
-                    const handleSSEData = (id: string, data: any) => {
+                    const handleSSEData = (id: string, _data: unknown) => {
                         if (id === clientId) {
                             controller.enqueue(
-                                encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
+                                encoder.encode(`_data: ${JSON.stringify(_data)}\n\n`)
                             );
                         }
                     };
@@ -176,7 +176,7 @@ export async function GET(request: NextRequest) {
                     // Heartbeat to keep connection alive
                     const heartbeat = setInterval(() => {
                         controller.enqueue(
-                            encoder.encode(`data: ${JSON.stringify({
+                            encoder.encode(`_data: ${JSON.stringify({
                                 type: 'heartbeat',
                                 timestamp: Date.now()
                             })}\n\n`)
@@ -223,16 +223,16 @@ export async function GET(request: NextRequest) {
 
             default:
                 return NextResponse.json(
-                    { error: 'Invalid action' },
+                    { _error: 'Invalid action' },
                     { status: 400 }
                 );
         }
 
-    } catch (error) {
-        console.error('[StreamingAPI] GET Error:', error);
+    } catch (_error) {
+        console.error('[StreamingAPI] GET Error:', _error);
         return NextResponse.json(
             {
-                error: 'Internal server error',
+                _error: 'Internal server error',
                 details: error instanceof Error ? error.message : 'Unknown error'
             },
             { status: 500 }
@@ -240,14 +240,14 @@ export async function GET(request: NextRequest) {
     }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(_request: NextRequest) {
     try {
         const url = new URL(request.url);
         const clientId = url.searchParams.get('clientId');
 
         if (!clientId) {
             return NextResponse.json(
-                { error: 'Client ID is required' },
+                { _error: 'Client ID is required' },
                 { status: 400 }
             );
         }
@@ -259,11 +259,11 @@ export async function DELETE(request: NextRequest) {
             message: disconnected ? 'Client disconnected successfully' : 'Client not found'
         });
 
-    } catch (error) {
-        console.error('[StreamingAPI] DELETE Error:', error);
+    } catch (_error) {
+        console.error('[StreamingAPI] DELETE Error:', _error);
         return NextResponse.json(
             {
-                error: 'Internal server error',
+                _error: 'Internal server error',
                 details: error instanceof Error ? error.message : 'Unknown error'
             },
             { status: 500 }

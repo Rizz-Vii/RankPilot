@@ -49,7 +49,7 @@ async function globalSetup(config: FullConfig) {
         console.log("🔍 Checking development server...");
         await page.goto(baseURL, { timeout: 15000 });
         console.log("✅ Development server is running");
-    } catch (error) {
+    } catch (_error) {
         console.log("❌ Development server not running. Please start with: npm run dev-no-turbopack");
         throw new Error("Development server not available");
     }
@@ -66,7 +66,7 @@ async function globalSetup(config: FullConfig) {
 
         // Save authentication state for reuse
         await context.storageState({ path: path.join(cacheDir, 'warmed-storage-state.json') });
-    } catch (error) {
+    } catch (_error) {
         console.log("⚠️ Authentication failed, continuing with warming...");
     }    // Define enhanced warming sequence with state tracking
     const warmingSequence = [
@@ -145,15 +145,15 @@ async function globalSetup(config: FullConfig) {
                 success: true
             };
 
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
+        } catch (_error) {
+            const errorMessage = error instanceof Error ? error.message : String(_error);
             console.log(`   ⚠️ ${pageConfig.name} warming failed: ${errorMessage}`);
 
             warmingResults.push({
                 path: pageConfig.path,
                 name: pageConfig.name,
                 priority: pageConfig.priority,
-                error: errorMessage,
+                _error: errorMessage,
                 success: false,
                 cached: false
             });
@@ -162,7 +162,7 @@ async function globalSetup(config: FullConfig) {
                 path: pageConfig.path,
                 name: pageConfig.name,
                 priority: pageConfig.priority,
-                error: errorMessage,
+                _error: errorMessage,
                 timestamp: new Date().toISOString(),
                 success: false
             };

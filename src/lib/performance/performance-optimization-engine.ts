@@ -141,11 +141,11 @@ export class PerformanceOptimizationEngine extends EventEmitter {
             if (this.evaluateCondition(rule.condition, currentMetrics)) {
                 try {
                     const result = await this.executeOptimization(rule, currentMetrics);
-                    if (result) {
-                        optimizations.push(result);
+                    if (_result) {
+                        optimizations.push(_result);
                     }
-                } catch (error) {
-                    console.error(`[PerformanceEngine] Optimization failed for rule ${rule.id}:`, error);
+                } catch (_error) {
+                    console.error(`[PerformanceEngine] Optimization failed for rule ${rule.id}:`, _error);
                 }
             }
         }
@@ -202,8 +202,8 @@ export class PerformanceOptimizationEngine extends EventEmitter {
 
             return { queriesOptimized, performanceGain, recommendations };
 
-        } catch (error) {
-            console.error('[PerformanceEngine] Database optimization failed:', error);
+        } catch (_error) {
+            console.error('[PerformanceEngine] Database optimization failed:', _error);
             return { queriesOptimized: 0, performanceGain: 0, recommendations: [] };
         }
     }
@@ -245,8 +245,8 @@ export class PerformanceOptimizationEngine extends EventEmitter {
                 recommendations
             };
 
-        } catch (error) {
-            console.error('[PerformanceEngine] Cache optimization failed:', error);
+        } catch (_error) {
+            console.error('[PerformanceEngine] Cache optimization failed:', _error);
             return { cacheHitRatio: 0, memoryOptimization: 0, recommendations: [] };
         }
     }
@@ -295,8 +295,8 @@ export class PerformanceOptimizationEngine extends EventEmitter {
                 recommendations
             };
 
-        } catch (error) {
-            console.error('[PerformanceEngine] Resource optimization failed:', error);
+        } catch (_error) {
+            console.error('[PerformanceEngine] Resource optimization failed:', _error);
             return { assetsOptimized: 0, sizeReduction: 0, loadTimeImprovement: 0, recommendations: [] };
         }
     }
@@ -347,7 +347,7 @@ export class PerformanceOptimizationEngine extends EventEmitter {
         overallRisk: 'low' | 'medium' | 'high';
     }> {
         const recentMetrics = this.metrics.slice(-10); // Last 10 data points
-        const predictions: any[] = [];
+        const predictions: unknown[] = [];
 
         if (recentMetrics.length < 3) {
             return { predictions: [], overallRisk: 'low' };
@@ -543,7 +543,7 @@ export class PerformanceOptimizationEngine extends EventEmitter {
 
         const result = { ...metrics };
 
-        for (const key in varianceFactors) {
+        for (const _key in varianceFactors) {
             if (key in result && key in lastMetrics) {
                 const factor = varianceFactors[key as keyof typeof varianceFactors];
                 result[key as keyof typeof result] =
@@ -575,7 +575,7 @@ export class PerformanceOptimizationEngine extends EventEmitter {
                     severity: 'critical',
                     metric,
                     threshold: thresholds.poor,
-                    current: value,
+                    current: _value,
                     timestamp: Date.now(),
                     recommendation: this.getRecommendationForMetric(metric)
                 });
@@ -586,7 +586,7 @@ export class PerformanceOptimizationEngine extends EventEmitter {
                     severity: 'warning',
                     metric,
                     threshold: thresholds.good,
-                    current: value,
+                    current: _value,
                     timestamp: Date.now(),
                     recommendation: this.getRecommendationForMetric(metric)
                 });
@@ -641,8 +641,8 @@ export class PerformanceOptimizationEngine extends EventEmitter {
                 });
 
             return eval(conditionCode);
-        } catch (error) {
-            console.error('[PerformanceEngine] Condition evaluation error:', error);
+        } catch (_error) {
+            console.error('[PerformanceEngine] Condition evaluation _error:', _error);
             return false;
         }
     }
@@ -688,7 +688,7 @@ export class PerformanceOptimizationEngine extends EventEmitter {
 
             const afterMetrics = this.collectMetrics();
 
-            const result: OptimizationResult = {
+            const _result: OptimizationResult = {
                 optimizationId,
                 type: rule.action,
                 beforeMetrics: currentMetrics,
@@ -698,7 +698,7 @@ export class PerformanceOptimizationEngine extends EventEmitter {
                 description
             };
 
-            this.optimizationHistory.push(result);
+            this.optimizationHistory.push(_result);
 
             // Keep only last 500 optimization results
             if (this.optimizationHistory.length > 500) {
@@ -709,8 +709,8 @@ export class PerformanceOptimizationEngine extends EventEmitter {
 
             return result;
 
-        } catch (error) {
-            console.error(`[PerformanceEngine] Optimization execution failed for ${rule.id}:`, error);
+        } catch (_error) {
+            console.error(`[PerformanceEngine] Optimization execution failed for ${rule.id}:`, _error);
             return null;
         }
     }
@@ -809,7 +809,7 @@ export class PerformanceOptimizationEngine extends EventEmitter {
         const trends: Record<string, number[]> = {};
         const metricKeys = ['lcp', 'cls', 'fid', 'ttfb', 'cpuUsage', 'memoryUsage', 'queryTime'];
 
-        for (const key of metricKeys) {
+        for (const _key of metricKeys) {
             trends[key] = metrics.map(m => m[key as keyof PerformanceMetrics] as number);
         }
 
@@ -822,7 +822,7 @@ export class PerformanceOptimizationEngine extends EventEmitter {
         const averages: Partial<PerformanceMetrics> = {};
         const metricKeys = Object.keys(metrics[0]).filter(key => key !== 'timestamp');
 
-        for (const key of metricKeys) {
+        for (const _key of metricKeys) {
             const values = metrics.map(m => m[key as keyof PerformanceMetrics] as number);
             averages[key as keyof PerformanceMetrics] =
                 values.reduce((sum, val) => sum + val, 0) / values.length as any;

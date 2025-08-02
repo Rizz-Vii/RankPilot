@@ -16,7 +16,7 @@ import React, { useEffect, useState } from 'react';
 
 interface WebVitalsMetric {
     name: string;
-    value: number;
+    _value: number;
     rating: 'good' | 'needs-improvement' | 'poor';
     threshold: { good: number; poor: number; };
     unit: string;
@@ -31,7 +31,7 @@ interface WebVitalsData {
     fcp: number; // First Contentful Paint
 }
 
-const getMetricRating = (value: number, thresholds: { good: number; poor: number; }): 'good' | 'needs-improvement' | 'poor' => {
+const getMetricRating = (_value: number, thresholds: { good: number; poor: number; }): 'good' | 'needs-improvement' | 'poor' => {
     if (value <= thresholds.good) return 'good';
     if (value <= thresholds.poor) return 'needs-improvement';
     return 'poor';
@@ -59,37 +59,37 @@ export function CoreWebVitalsMonitor() {
 
                 const vitalsData: Partial<WebVitalsData> = {};
 
-                onCLS((metric: any) => {
+                onCLS((metric: unknown) => {
                     vitalsData.cls = metric.value;
                     updateVitals(vitalsData);
                 });
 
-                onINP((metric: any) => {
+                onINP((metric: unknown) => {
                     vitalsData.fid = metric.value; // Using INP as FID replacement
                     updateVitals(vitalsData);
                 });
 
-                onFCP((metric: any) => {
+                onFCP((metric: unknown) => {
                     vitalsData.fcp = metric.value;
                     updateVitals(vitalsData);
                 });
 
-                onLCP((metric: any) => {
+                onLCP((metric: unknown) => {
                     vitalsData.lcp = metric.value;
                     updateVitals(vitalsData);
                 });
 
-                onTTFB((metric: any) => {
+                onTTFB((metric: unknown) => {
                     vitalsData.ttfb = metric.value;
                     updateVitals(vitalsData);
                 });
 
-            } catch (error) {
-                console.warn('Web Vitals not available:', error);
+            } catch (_error) {
+                console.warn('Web Vitals not available:', _error);
             }
         };
 
-        const updateVitals = (data: Partial<WebVitalsData>) => {
+        const updateVitals = (_data: Partial<WebVitalsData>) => {
             setVitals(prev => ({ ...prev, ...data } as WebVitalsData));
         };
 
@@ -119,7 +119,7 @@ export function CoreWebVitalsMonitor() {
     const metrics: WebVitalsMetric[] = [
         {
             name: 'LCP',
-            value: vitals.lcp || 0,
+            _value: vitals.lcp || 0,
             rating: getMetricRating(vitals.lcp || 0, { good: 2500, poor: 4000 }),
             threshold: { good: 2500, poor: 4000 },
             unit: 'ms',
@@ -127,7 +127,7 @@ export function CoreWebVitalsMonitor() {
         },
         {
             name: 'FID',
-            value: vitals.fid || 0,
+            _value: vitals.fid || 0,
             rating: getMetricRating(vitals.fid || 0, { good: 100, poor: 300 }),
             threshold: { good: 100, poor: 300 },
             unit: 'ms',
@@ -135,7 +135,7 @@ export function CoreWebVitalsMonitor() {
         },
         {
             name: 'CLS',
-            value: vitals.cls || 0,
+            _value: vitals.cls || 0,
             rating: getMetricRating(vitals.cls || 0, { good: 0.1, poor: 0.25 }),
             threshold: { good: 0.1, poor: 0.25 },
             unit: '',
@@ -143,7 +143,7 @@ export function CoreWebVitalsMonitor() {
         },
         {
             name: 'TTFB',
-            value: vitals.ttfb || 0,
+            _value: vitals.ttfb || 0,
             rating: getMetricRating(vitals.ttfb || 0, { good: 800, poor: 1800 }),
             threshold: { good: 800, poor: 1800 },
             unit: 'ms',
@@ -206,10 +206,10 @@ export function CoreWebVitalsMonitor() {
                                     <p className={cn(typography.ui.caption, "font-medium mb-1")}>
                                         {metric.name}
                                     </p>
-                                    <p className={cn(typography.card.value, "text-lg font-bold")}>
+                                    <p className={cn(typography.card._value, "text-lg font-bold")}>
                                         {metric.name === 'CLS'
                                             ? metric.value.toFixed(3)
-                                            : Math.round(metric.value)
+                                            : Math.round(metric._value)
                                         }{metric.unit}
                                     </p>
                                 </div>
@@ -237,7 +237,7 @@ export function CoreWebVitalsWidget() {
         const calculateScore = async () => {
             try {
                 const { onCLS, onINP, onLCP } = await import('web-vitals');
-                let metrics = { cls: 0, fid: 0, lcp: 0 };
+                const metrics = { cls: 0, fid: 0, lcp: 0 };
                 let count = 0;
 
                 const updateScore = () => {
@@ -253,12 +253,12 @@ export function CoreWebVitalsWidget() {
                     }
                 };
 
-                onCLS((metric: any) => { metrics.cls = metric.value; updateScore(); });
-                onINP((metric: any) => { metrics.fid = metric.value; updateScore(); }); // Using INP as FID replacement
-                onLCP((metric: any) => { metrics.lcp = metric.value; updateScore(); });
+                onCLS((metric: unknown) => { metrics.cls = metric.value; updateScore(); });
+                onINP((metric: unknown) => { metrics.fid = metric.value; updateScore(); }); // Using INP as FID replacement
+                onLCP((metric: unknown) => { metrics.lcp = metric.value; updateScore(); });
 
-            } catch (error) {
-                console.warn('Web Vitals widget not available:', error);
+            } catch (_error) {
+                console.warn('Web Vitals widget not available:', _error);
             }
         };
 

@@ -29,7 +29,7 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
         const startTime = Date.now();
 
         const response = await page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
-            data: {}
+            _data: {}
         });
 
         const endTime = Date.now();
@@ -49,7 +49,7 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
         const startTime = Date.now();
 
         const response = await page.request.post(`${PRODUCTION_BASE_URL}/performanceHealthCheck`, {
-            data: {}
+            _data: {}
         });
 
         const endTime = Date.now();
@@ -69,7 +69,7 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
 
         for (let i = 0; i < concurrentRequests; i++) {
             const promise = page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
-                data: { testId: i }
+                _data: { testId: i }
             });
             promises.push(promise);
         }
@@ -87,7 +87,7 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
         console.log(`   Requests per Second: ${(concurrentRequests / (totalTime / 1000)).toFixed(2)}`);
 
         // Verify all requests succeeded
-        responses.forEach((response, index) => {
+        responses.forEach((_response, _index) => {
             expect(response.status()).toBe(200);
         });
 
@@ -108,7 +108,7 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
 
         try {
             const response = await page.request.post(`${PRODUCTION_BASE_URL}/performanceDashboard`, {
-                data: testData,
+                _data: testData,
                 timeout: 30000
             });
 
@@ -126,8 +126,8 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
                 expect(responseTime).toBeLessThan(15000); // Should respond within 15 seconds
             }
 
-        } catch (error) {
-            console.log('⚠️  Performance Dashboard test failed (likely auth-protected):', error);
+        } catch (_error) {
+            console.log('⚠️  Performance Dashboard test failed (likely auth-protected):', _error);
             // This is expected for production functions with auth
         }
     });
@@ -143,7 +143,7 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
 
             try {
                 const response = await page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
-                    data: { iteration: i },
+                    _data: { iteration: i },
                     timeout: 10000
                 });
 
@@ -157,8 +157,8 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
                     console.log(`   Request ${i + 1}/${requestCount}: ${responseTime}ms`);
                 }
 
-            } catch (error) {
-                console.error(`❌ Request ${i + 1} failed:`, error);
+            } catch (_error) {
+                console.error(`❌ Request ${i + 1} failed:`, _error);
                 throw error;
             }
 
@@ -186,13 +186,13 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
     test('Memory Usage Validation - Heavy Payload Test', async ({ page }) => {
         // Create a larger payload to test memory handling
         const heavyPayload = {
-            data: Array(1000).fill(0).map((_, i) => ({
+            _data: Array(1000).fill(0).map((_, i) => ({
                 id: i,
                 timestamp: new Date().toISOString(),
                 metrics: {
-                    value: Math.random() * 1000,
+                    _value: Math.random() * 1000,
                     category: `category-${i % 10}`,
-                    tags: Array(10).fill(0).map((_, j) => `tag-${j}`)
+                    tags: Array(10).fill(0).map((_, _j) => `tag-${j}`)
                 }
             })),
             metadata: {
@@ -207,7 +207,7 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
         const startTime = Date.now();
 
         const response = await page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
-            data: heavyPayload,
+            _data: heavyPayload,
             timeout: 20000
         });
 
@@ -236,7 +236,7 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
                 const startTime = Date.now();
 
                 const response = await page.request.post(`${PRODUCTION_BASE_URL}/${testCase.endpoint}`, {
-                    data: { iteration: i, region: 'australia-southeast2' }
+                    _data: { iteration: i, region: 'australia-southeast2' }
                 });
 
                 const endTime = Date.now();
@@ -270,7 +270,7 @@ test.describe('RankPilot Production Functions - Performance Benchmarks', () => {
         // Test function response time as proxy for LCP
         const startTime = Date.now();
         const response = await page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
-            data: { testType: 'core-web-vitals' }
+            _data: { testType: 'core-web-vitals' }
         });
         const responseTime = Date.now() - startTime;
 
@@ -292,7 +292,7 @@ test.describe('RankPilot Production Functions - Performance Benchmarks', () => {
 
             const promises = Array(load).fill(0).map((_, i) =>
                 page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
-                    data: { load, iteration: i }
+                    _data: { load, iteration: i }
                 })
             );
 

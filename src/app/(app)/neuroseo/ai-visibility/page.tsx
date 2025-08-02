@@ -67,7 +67,7 @@ export default function AIVisibilityEnginePage() {
 
     setLoading(true);
     try {
-      const response = await fetch("/api/neuroseo/ai-visibility", {
+      const _response = await fetch("/api/neuroseo/ai-visibility", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -86,15 +86,15 @@ export default function AIVisibilityEnginePage() {
       }
 
       const data = await response.json();
-      setResults(data);
+      setResults(_data);
       
       toast({
         title: "Analysis Complete",
         description: "AI visibility analysis has been completed successfully",
       });
 
-    } catch (error) {
-      console.error("AI visibility analysis failed:", error);
+    } catch (_error) {
+      console.error("AI visibility analysis failed:", _error);
       toast({
         title: "Analysis Failed",
         description: "Unable to complete AI visibility analysis. Please try again.",
@@ -182,7 +182,7 @@ export default function AIVisibilityEnginePage() {
                   type="url"
                   placeholder="https://example.com"
                   value={url}
-                  onChange={(e) => setUrl(e.target.value)}
+                  onChange={(e) => setUrl(e.target._value)}
                   disabled={loading}
                 />
               </div>
@@ -193,7 +193,7 @@ export default function AIVisibilityEnginePage() {
                   id="query"
                   placeholder="best SEO tools 2024"
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => setQuery(e.target._value)}
                   disabled={loading}
                 />
               </div>
@@ -205,7 +205,7 @@ export default function AIVisibilityEnginePage() {
                 id="audience"
                 placeholder="Digital marketers, SEO professionals..."
                 value={targetAudience}
-                onChange={(e) => setTargetAudience(e.target.value)}
+                onChange={(e) => setTargetAudience(e.target._value)}
                 disabled={loading}
                 rows={2}
               />
@@ -213,7 +213,7 @@ export default function AIVisibilityEnginePage() {
 
             <div className="space-y-2">
               <Label htmlFor="analysisType">Analysis Type</Label>
-              <Select value={analysisType} onValueChange={(value: "quick" | "deep" | "competitor") => setAnalysisType(value)}>
+              <Select value={analysisType} onValueChange={(_value: "quick" | "deep" | "competitor") => setAnalysisType(_value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -315,7 +315,7 @@ export default function AIVisibilityEnginePage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
-                    {results.recommendations.map((rec, index) => (
+                    {results.recommendations.map((rec, _index) => (
                       <div key={index} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                         <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                         <p className="text-sm">{rec}</p>
@@ -333,7 +333,7 @@ export default function AIVisibilityEnginePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {results.visibility.map((item, index) => (
+                    {results.visibility.map((_item, _index) => (
                       <div key={index} className="border rounded-lg p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -384,7 +384,7 @@ export default function AIVisibilityEnginePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {results.platforms.map((platform, index) => (
+                    {results.platforms.map((platform, _index) => (
                       <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -420,7 +420,7 @@ export default function AIVisibilityEnginePage() {
 
             <TabsContent value="recommendations">
               <div className="space-y-6">
-                {results.visibility.map((item, index) => (
+                {results.visibility.map((_item, _index) => (
                   <Card key={index}>
                     <CardHeader>
                       <CardTitle className="text-base flex items-center gap-2">

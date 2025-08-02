@@ -38,9 +38,9 @@ interface AnalyticsData {
   activeUsers: number;
   totalAudits: number;
   totalKeywordSearches: number;
-  monthlyActivity: any[];
-  toolUsage: any[];
-  userGrowth: any[];
+  monthlyActivity: unknown[];
+  toolUsage: unknown[];
+  userGrowth: unknown[];
 }
 
 export default function AdminAnalytics() {
@@ -141,16 +141,16 @@ export default function AdminAnalytics() {
       }
 
       const toolUsageArray = [
-        { name: "SEO Audits", value: toolUsage.audits, color: "#8884d8" },
+        { name: "SEO Audits", _value: toolUsage.audits, color: "#8884d8" },
         {
           name: "Keyword Research",
-          value: toolUsage.keywords,
+          _value: toolUsage.keywords,
           color: "#82ca9d",
         },
-        { name: "SERP Analysis", value: toolUsage.serp, color: "#ffc658" },
+        { name: "SERP Analysis", _value: toolUsage.serp, color: "#ffc658" },
         {
           name: "Competitor Analysis",
-          value: toolUsage.competitors,
+          _value: toolUsage.competitors,
           color: "#ff7c7c",
         },
       ];
@@ -164,8 +164,8 @@ export default function AdminAnalytics() {
         toolUsage: toolUsageArray,
         userGrowth,
       });
-    } catch (error) {
-      console.error("Error fetching analytics:", error);
+    } catch (_error) {
+      console.error("Error fetching analytics:", _error);
     } finally {
       setLoading(false);
     }
@@ -315,7 +315,7 @@ export default function AdminAnalytics() {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {analytics.toolUsage.map((entry, index) => (
+                  {analytics.toolUsage.map((entry, _index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -394,7 +394,7 @@ export default function AdminAnalytics() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-purple-600">
-              {analytics.toolUsage.sort((a, b) => b.value - a.value)[0]?.name ||
+              {analytics.toolUsage.sort((a, b) => b.value - a._value)[0]?.name ||
                 "N/A"}
             </div>
             <p className="text-sm text-muted-foreground">

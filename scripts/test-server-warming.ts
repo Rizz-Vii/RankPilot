@@ -28,7 +28,7 @@ async function testServerWarming() {
         attempts++;
         console.log(`   📡 Attempt ${attempts}/${maxAttempts}: Checking server availability...`);
         
-        const response = await page.goto("http://localhost:3000", {
+        const _response = await page.goto("http://localhost:3000", {
           waitUntil: "domcontentloaded",
           timeout: 30000,
         });
@@ -37,8 +37,8 @@ async function testServerWarming() {
           connectionSuccess = true;
           console.log(`   ✅ Server responsive on attempt ${attempts}`);
         }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+      } catch (_error) {
+        const errorMessage = error instanceof Error ? error.message : String(_error);
         console.log(`   ❌ Attempt ${attempts} failed: ${errorMessage}`);
         if (attempts < maxAttempts) {
           console.log("   ⏳ Waiting 3 seconds before retry...");
@@ -87,13 +87,13 @@ async function testServerWarming() {
           success: true
         });
         
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+      } catch (_error) {
+        const errorMessage = error instanceof Error ? error.message : String(_error);
         console.log(`   ⚠️  ${route.name} warming failed: ${errorMessage}`);
         warmingResults.push({
           route: route.path,
           name: route.name,
-          error: errorMessage,
+          _error: errorMessage,
           success: false
         });
       }
@@ -111,7 +111,7 @@ async function testServerWarming() {
       });
       performanceTestTime = Date.now() - performanceTestStart;
       console.log(`⚡ Performance test completed in ${performanceTestTime}ms`);
-    } catch (error) {
+    } catch (_error) {
       console.log("⚠️  Performance test timed out, but warming data is still valid");
       performanceTestTime = -1; // Indicate timeout
     }
@@ -175,7 +175,7 @@ if (require.main === module) {
       process.exit(results.success ? 0 : 1);
     })
     .catch(error => {
-      console.error("\n💥 Warming test failed:", error);
+      console.error("\n💥 Warming test failed:", _error);
       process.exit(1);
     });
 }
