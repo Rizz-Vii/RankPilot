@@ -331,7 +331,7 @@ export const getVisibleNavGroups = (
   return navGroups
     .map((group) => ({
       ...group,
-      items: group.items.filter((_item) => {
+      items: group.items.filter((item) => {
         // Check admin access
         if (item.adminOnly && !isAdmin) return false;
 
@@ -380,7 +380,7 @@ export const getVisibleNavItems = (
   userTier?: string,
   isAdmin?: boolean
 ): NavItem[] => {
-  return flatNavItems.filter((_item) => {
+  return flatNavItems.filter((item) => {
     // Check admin access
     if (item.adminOnly && !isAdmin) return false;
 
@@ -404,12 +404,12 @@ export const getVisibleNavItems = (
 };
 
 export const findNavItemByHref = (href: string): NavItem | undefined => {
-  return flatNavItems.find((_item) => item.href === href);
+  return flatNavItems.find((item) => item.href === href);
 };
 
 export const getNavGroupByItemHref = (href: string): NavGroup | undefined => {
   return navGroups.find((group) =>
-    group.items.some((_item) => item.href === href)
+    group.items.some((item) => item.href === href)
   );
 };
 

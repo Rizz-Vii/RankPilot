@@ -177,7 +177,7 @@ export function SubscriptionManagement() {
     try {
       const userRef = doc(db, "users", userId);
       const updateData: { [_key: string]: any } = {};
-      Object.keys(updates).forEach((_key) => {
+      Object.keys(updates).forEach((key) => {
         updateData[`subscription.${key}`] = updates[key];
       });
 
@@ -323,7 +323,7 @@ export function SubscriptionManagement() {
                 <Input
                   placeholder="Search users..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target._value)}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="max-w-sm"
                 />
               </div>

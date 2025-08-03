@@ -92,8 +92,8 @@ export function AdminUserSubscriptionManager() {
         title: "Success",
         description: "Action completed successfully",
       });
-    } catch (_error) {
-      console.error("Action failed:", _error);
+    } catch (error) {
+      console.error("Action failed:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -137,8 +137,8 @@ export function AdminUserSubscriptionManager() {
       setStatus("active");
       setMonthsToAdd("3");
       setPaymentHistoryMonths("3");
-    } catch (_error) {
-      console.error("Update failed:", _error);
+    } catch (error) {
+      console.error("Update failed:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -161,7 +161,7 @@ export function AdminUserSubscriptionManager() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
-            {quickActions.map((action, _index) => (
+            {quickActions.map((action, index) => (
               <div
                 key={index}
                 className="flex items-center justify-between p-4 border rounded-lg"
@@ -201,7 +201,7 @@ export function AdminUserSubscriptionManager() {
                 id="email"
                 placeholder="user@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target._value)}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
@@ -209,7 +209,9 @@ export function AdminUserSubscriptionManager() {
               <Label htmlFor="tier">Subscription Tier</Label>
               <Select
                 value={tier}
-                onValueChange={(_value: unknown) => setTier(_value)}
+                onValueChange={(value) =>
+                  setTier(value as "free" | "starter" | "professional" | "enterprise")
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -231,7 +233,9 @@ export function AdminUserSubscriptionManager() {
               <Label htmlFor="status">Subscription Status</Label>
               <Select
                 value={status}
-                onValueChange={(_value: unknown) => setStatus(_value)}
+                onValueChange={(value) =>
+                  setStatus(value as "free" | "active" | "canceled" | "past_due")
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -252,7 +256,7 @@ export function AdminUserSubscriptionManager() {
                 type="number"
                 placeholder="3"
                 value={monthsToAdd}
-                onChange={(e) => setMonthsToAdd(e.target._value)}
+                onChange={(e) => setMonthsToAdd(e.target.value)}
               />
             </div>
 
@@ -263,7 +267,7 @@ export function AdminUserSubscriptionManager() {
                 type="number"
                 placeholder="3"
                 value={paymentHistoryMonths}
-                onChange={(e) => setPaymentHistoryMonths(e.target._value)}
+                onChange={(e) => setPaymentHistoryMonths(e.target.value)}
               />
             </div>
           </div>

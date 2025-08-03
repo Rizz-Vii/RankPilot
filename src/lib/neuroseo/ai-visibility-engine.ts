@@ -151,7 +151,7 @@ export class AIVisibilityEngine {
     const queries: LLMQuery[] = [];
 
     // Generate different types of queries for each keyword
-    targetKeywords.forEach((keyword, _index) => {
+    targetKeywords.forEach((keyword, index) => {
       // Informational queries
       queries.push({
         id: `info-${index}`,
@@ -267,14 +267,14 @@ export class AIVisibilityEngine {
     sources.sort((a, b) => b.relevanceScore - a.relevanceScore);
 
     // Reassign positions after sorting
-    sources.forEach((source, _index) => {
+    sources.forEach((source, index) => {
       source.citationPosition = index + 1;
     });
 
     const response = this.generateResponseText(query, sources);
 
     return {
-      text: _response,
+      text: response,
       sources,
       confidence: Math.random() * 0.3 + 0.7, // 70-100% confidence
     };
@@ -468,7 +468,7 @@ export class AIVisibilityEngine {
       .filter(Boolean);
 
     const improvementOpportunities = citations
-      .map((citation, _index) => ({
+      .map((citation, index) => ({
         query: queries[index]?.query || "",
         currentPosition: citation.citationPosition || null,
         potentialGain: citation.isCited ? 0 : 70,
@@ -582,7 +582,7 @@ export class AIVisibilityEngine {
 
     // Analyze competitor performance
     responses.forEach((_response) => {
-      response.sources.forEach((source) => {
+      _response.sources.forEach((source) => {
         if (competitorStats.has(source.url)) {
           const stats = competitorStats.get(source.url)!;
           stats.citations++;
@@ -625,9 +625,9 @@ export class AIVisibilityEngine {
     const strongQueries: string[] = [];
 
     responses.forEach((_response, _index) => {
-      const source = response.sources.find((s) => s.url === url);
+      const source = _response.sources.find((s) => s.url === url);
       if (source && source.citationPosition <= 2) {
-        strongQueries.push(queries[index]?.query || "");
+        strongQueries.push(queries[_index]?.query || "");
       }
     });
 

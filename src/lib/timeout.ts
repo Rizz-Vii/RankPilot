@@ -102,14 +102,14 @@ export function withTimeout<T>(
         // Return result with metadata if using enhanced options
         if (typeof timeoutMsOrOptions === "object") {
           resolve({
-            _result,
+            _result: result,
             elapsedTime,
             retryAttempts: attempts - 1,
           } as TimeoutResult<T>);
         } else {
           resolve(result as T);
         }
-      } catch (_error) {
+      } catch (error) {
         clearTimeout(timeoutId);
         if (progressId) clearInterval(progressId);
 
@@ -127,7 +127,7 @@ export function withTimeout<T>(
           return;
         }
 
-        reject(_error);
+        reject(error);
       }
     };
 

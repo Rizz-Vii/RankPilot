@@ -25,7 +25,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase using a singleton pattern
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);

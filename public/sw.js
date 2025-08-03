@@ -35,7 +35,7 @@ const _DYNAMIC_CACHE_PATHS = [
 self.addEventListener("install", (_event) => {
   console.log("[SW] Installing service worker...");
 
-  event.waitUntil(
+  _event.waitUntil(
     (async () => {
       try {
         const cache = await caches.open(STATIC_CACHE);
@@ -74,7 +74,7 @@ self.addEventListener("install", (_event) => {
 self.addEventListener("activate", (_event) => {
   console.log("[SW] Activating service worker...");
 
-  event.waitUntil(
+  _event.waitUntil(
     caches
       .keys()
       .then((cacheNames) => {
@@ -95,7 +95,7 @@ self.addEventListener("activate", (_event) => {
 
 // Fetch event - implement caching strategies
 self.addEventListener("fetch", (_event) => {
-  const { request } = event;
+  const { request } = _event;
   const url = new URL(request.url);
 
   // Skip non-GET requests
@@ -110,19 +110,19 @@ self.addEventListener("fetch", (_event) => {
 
   // Handle API requests with network-first strategy
   if (url.pathname.startsWith("/api/")) {
-    event.respondWith(networkFirstStrategy(_request));
+    _event.respondWith(networkFirstStrategy(request));
     return;
   }
 
   // Handle static assets with cache-first strategy
   if (isStaticAsset(url.pathname)) {
-    event.respondWith(cacheFirstStrategy(_request));
+    _event.respondWith(cacheFirstStrategy(request));
     return;
   }
 
   // Handle app routes with stale-while-revalidate
   if (isAppRoute(url.pathname)) {
-    event.respondWith(staleWhileRevalidateStrategy(_request));
+    _event.respondWith(staleWhileRevalidateStrategy(request));
     return;
   }
 });

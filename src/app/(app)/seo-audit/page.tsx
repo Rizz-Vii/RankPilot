@@ -54,7 +54,7 @@ import {
 
 
 const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
-  const chartData = items.map((_item) => ({
+  const chartData = items.map((item) => ({
     name: item.name,
     score: item.score,
     fill:
@@ -65,7 +65,7 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
           : "hsl(var(--chart-5))",
   }));
 
-  const imageAuditItem = items.find((_item) => item.id === "image-alts");
+  const imageAuditItem = items.find((item) => item.id === "image-alts");
   let imageData = null;
   if (imageAuditItem) {
     // A simple regex to extract numbers, assuming a format like "Found X images, Y are missing alt text"
@@ -76,8 +76,8 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
       const total = parseInt(match[1], 10);
       const missing = parseInt(match[2], 10);
       imageData = [
-        { name: "withAlt", _value: total - missing },
-        { name: "missingAlt", _value: missing },
+        { name: "withAlt", value: total - missing },
+        { name: "missingAlt", value: missing },
       ];
     }
   }
@@ -110,7 +110,7 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
               />
               <XAxis dataKey="score" type="number" hide />
               <ChartTooltip
-                content={(props) => <ChartTooltipContent {...props} />}
+                content={(props: any) => <ChartTooltipContent {...props} />}
               />
               <Bar dataKey="score" radius={5} />
             </BarChart>
@@ -130,7 +130,7 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
             >
               <PieChart>
                 <ChartTooltip
-                  content={(props) => (
+                  content={(props: any) => (
                     <ChartTooltipContent {...props} nameKey="name" hideLabel />
                   )}
                 />
@@ -162,7 +162,7 @@ const AuditResults = ({ results }: { results: AuditUrlOutput; }) => (
           </span>
           <div className="w-full">
             <p className="font-semibold">Overall Score</p>
-            <Progress value={results.overallScore} className="mt-1" />
+            <Progress _value={results.overallScore} className="mt-1" />
           </div>
         </div>
         <CardDescription className="pt-2">{results.summary}</CardDescription>
@@ -176,24 +176,24 @@ const AuditResults = ({ results }: { results: AuditUrlOutput; }) => (
             animate="visible"
           >
             {results.items.map((_item) => {
-              const Icon = statusIcons[item.status] || AlertCircle;
+              const Icon = statusIcons[_item.status] || AlertCircle;
               const color =
-                statusColors[item.status] || "text-muted-foreground";
+                statusColors[_item.status] || "text-muted-foreground";
               return (
                 <motion.div
-                  key={item.id}
+                  key={_item.id}
                   className="flex items-start gap-4"
                   variants={itemVariants}
                 >
                   <Icon className={`mt-1 h-5 w-5 flex-shrink-0 ${color}`} />
                   <div className="flex-1">
-                    <p className="font-semibold">{item.name}</p>
+                    <p className="font-semibold">{_item.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {item.details}
+                      {_item.details}
                     </p>
                   </div>
                   <span className={`font-semibold text-sm ${color}`}>
-                    {item.score}/100
+                    {_item.score}/100
                   </span>
                 </motion.div>
               );
@@ -223,7 +223,7 @@ export default function SeoAuditPage() {
         block: "start",
       });
     }
-  }, [results, error]);
+  }, [results, _error]);
 
   const handleSubmit = async (values: AuditUrlInput) => {
     setIsLoading(true);
@@ -258,7 +258,7 @@ export default function SeoAuditPage() {
         15000, // 15 second timeout
         "SEO audit is taking longer than expected. Using demo data instead."
       );
-      setResults(_result);
+      setResults(result);
 
       if (user) {
         const userActivitiesRef = collection(
@@ -289,7 +289,9 @@ export default function SeoAuditPage() {
           setError("Analysis timed out and no demo data available.");
         }
       } else {
-        setError(e.message || "An unexpected error occurred during the audit.");
+        setError(
+          (e as Error)?.message || "An unexpected error occurred during the audit."
+        );
       }
     } finally {
       setIsLoading(false);
@@ -330,7 +332,7 @@ export default function SeoAuditPage() {
                 <LoadingScreen text="Auditing page..." />
               </motion.div>
             )}
-            {error && (
+            {_error && (
               <motion.div
                 key="error"
                 initial={{ opacity: 0, y: 10 }}
@@ -344,7 +346,7 @@ export default function SeoAuditPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p>{error}</p>
+                    <p>{_error}</p>
                   </CardContent>
                 </Card>
               </motion.div>

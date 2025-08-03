@@ -59,8 +59,8 @@ async function createRealProvider(): Promise<TelemetryProvider> {
     const OpenTelemetry: OpenTelemetryNodeSDKModule = await import(
       "@opentelemetry/sdk-node"
     );
-    // Corrected import for ATTR_SERVICE_NAME and SemanticResourceAttributes
-    const { ATTR_SERVICE_NAME } = await import(
+    // Import SemanticResourceAttributes for service name attribute
+    const { SemanticResourceAttributes } = await import(
       "@opentelemetry/semantic-conventions"
     );
     const { getNodeAutoInstrumentations } = await import(
@@ -97,7 +97,7 @@ async function createRealProvider(): Promise<TelemetryProvider> {
     // Using resourceFromAttributes as per your example
 
     const resource = resourceFromAttributes({
-      [ATTR_SERVICE_NAME]: "api-service",
+      [SemanticResourceAttributes.SERVICE_NAME]: "api-service",
     });
 
     const anotherResource = resourceFromAttributes({

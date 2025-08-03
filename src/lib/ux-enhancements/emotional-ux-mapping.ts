@@ -233,7 +233,7 @@ export class EmotionalUXMapper {
     // Store locally for immediate use
     if (typeof window !== "undefined") {
       const stored = this.getStoredEmotionalData(userId);
-      stored.push(_data);
+      stored.push(data);
       localStorage.setItem(
         `${this.STORAGE_KEY}_${userId}`,
         JSON.stringify(stored.slice(-50)) // Keep last 50 entries
@@ -241,7 +241,7 @@ export class EmotionalUXMapper {
     }
 
     // In production, this would also send to analytics
-    console.log("Emotional state tracked:", _data);
+    console.log("Emotional state tracked:", data);
   }
 
   static getStoredEmotionalData(userId: string): unknown[] {
@@ -257,13 +257,27 @@ export class EmotionalUXMapper {
   ): EmotionalState[] {
     const data = this.getStoredEmotionalData(userId);
     return data
+      .filter(
+        (entry): entry is { stage: string; emotion: EmotionalState } =>
+          typeof entry === "object" &&
+          entry !== null &&
+          "stage" in entry &&
+          "emotion" in entry &&
+          typeof (entry as any).stage === "string"
+      )
       .filter((entry) => entry.stage === stage)
       .map((entry) => entry.emotion);
   }
 
   static getLastEmotionalState(userId: string): EmotionalState | null {
     const data = this.getStoredEmotionalData(userId);
-    return data.length > 0 ? data[data.length - 1].emotion : null;
+    if (data.length > 0) {
+      const lastEntry = data[data.length - 1] as { emotion?: EmotionalState };
+      return lastEntry && typeof lastEntry.emotion === "string"
+        ? (lastEntry.emotion as EmotionalState)
+        : null;
+    }
+    return null;
   }
 
   static getOptimizationSuggestions(

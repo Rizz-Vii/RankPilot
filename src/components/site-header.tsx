@@ -86,7 +86,7 @@ export default function SiteHeader() {
             role="navigation"
             aria-label="Main navigation"
           >
-            {navigationItems.map((_item) => (
+            {navigationItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

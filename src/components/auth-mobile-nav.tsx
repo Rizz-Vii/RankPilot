@@ -120,7 +120,7 @@ export default function AuthMobileNav() {
                 {/* Navigation Items */}
                 <nav className="flex-1 px-6 py-4">
                   <div className="space-y-2">
-                    {navigationItems.map((_item) => (
+                    {navigationItems.map((item) => (
                       <Link
                         key={item.href}
                         href={item.href}

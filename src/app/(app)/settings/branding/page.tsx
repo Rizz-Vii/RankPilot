@@ -147,9 +147,9 @@ export default function WhiteLabelPage() {
   };
 
   const handleLogoUpload = async (
-    _event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = event.target.files?.[0];
+    const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
 
     if (file.size > 2 * 1024 * 1024) {
@@ -227,7 +227,7 @@ export default function WhiteLabelPage() {
                     onChange={(e) =>
                       setBranding((prev) => ({
                         ...prev,
-                        companyName: e.target._value,
+                        companyName: e.target.value,
                       }))
                     }
                     placeholder="Enter your company name"
@@ -295,7 +295,7 @@ export default function WhiteLabelPage() {
                           onChange={(e) =>
                             setBranding((prev) => ({
                               ...prev,
-                              primaryColor: e.target._value,
+                              primaryColor: e.target.value,
                             }))
                           }
                           className="w-16 h-10 p-1 border rounded"
@@ -305,7 +305,7 @@ export default function WhiteLabelPage() {
                           onChange={(e) =>
                             setBranding((prev) => ({
                               ...prev,
-                              primaryColor: e.target._value,
+                              primaryColor: e.target.value,
                             }))
                           }
                           placeholder="#3b82f6"
@@ -324,7 +324,7 @@ export default function WhiteLabelPage() {
                           onChange={(e) =>
                             setBranding((prev) => ({
                               ...prev,
-                              secondaryColor: e.target._value,
+                              secondaryColor: e.target.value,
                             }))
                           }
                           className="w-16 h-10 p-1 border rounded"
@@ -334,7 +334,7 @@ export default function WhiteLabelPage() {
                           onChange={(e) =>
                             setBranding((prev) => ({
                               ...prev,
-                              secondaryColor: e.target._value,
+                              secondaryColor: e.target.value,
                             }))
                           }
                           placeholder="#64748b"
@@ -353,7 +353,7 @@ export default function WhiteLabelPage() {
                           onChange={(e) =>
                             setBranding((prev) => ({
                               ...prev,
-                              accentColor: e.target._value,
+                              accentColor: e.target.value,
                             }))
                           }
                           className="w-16 h-10 p-1 border rounded"
@@ -363,7 +363,7 @@ export default function WhiteLabelPage() {
                           onChange={(e) =>
                             setBranding((prev) => ({
                               ...prev,
-                              accentColor: e.target._value,
+                              accentColor: e.target.value,
                             }))
                           }
                           placeholder="#10b981"
@@ -382,7 +382,7 @@ export default function WhiteLabelPage() {
                     onChange={(e) =>
                       setBranding((prev) => ({
                         ...prev,
-                        customCSS: e.target._value,
+                        customCSS: e.target.value,
                       }))
                     }
                     placeholder="/* Add custom CSS for advanced styling */"
@@ -440,7 +440,7 @@ export default function WhiteLabelPage() {
                     onChange={(e) =>
                       setReportSettings((prev) => ({
                         ...prev,
-                        headerText: e.target._value,
+                        headerText: e.target.value,
                       }))
                     }
                     placeholder="e.g., Professional SEO Analysis Report"
@@ -455,7 +455,7 @@ export default function WhiteLabelPage() {
                     onChange={(e) =>
                       setReportSettings((prev) => ({
                         ...prev,
-                        contactInfo: e.target._value,
+                        contactInfo: e.target.value,
                       }))
                     }
                     placeholder="e.g., contact@yourcompany.com | (555) 123-4567"
@@ -470,7 +470,7 @@ export default function WhiteLabelPage() {
                     onChange={(e) =>
                       setReportSettings((prev) => ({
                         ...prev,
-                        customFooter: e.target._value,
+                        customFooter: e.target.value,
                       }))
                     }
                     placeholder="e.g., © 2024 Your Company Name. All rights reserved."
@@ -486,7 +486,7 @@ export default function WhiteLabelPage() {
                     onChange={(e) =>
                       setReportSettings((prev) => ({
                         ...prev,
-                        disclaimerText: e.target._value,
+                        disclaimerText: e.target.value,
                       }))
                     }
                     placeholder="e.g., This report is confidential and intended for internal use only."

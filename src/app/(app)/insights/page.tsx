@@ -59,13 +59,13 @@ export default function InsightsPage() {
           resultsSummary: activity.resultsSummary,
         }));
 
-        const _result = await generateInsights({
+        const result = await generateInsights({
           keywords: ['seo', 'content', 'optimization'],
           urls: ['https://example.com'],
         });
         setInsights(result.insights);
       } catch (e: unknown) {
-        setError(e.message || "An unexpected error occurred.");
+        setError(e instanceof Error ? e.message : "An unexpected error occurred.");
       } finally {
         setIsLoading(false);
       }
@@ -113,7 +113,7 @@ export default function InsightsPage() {
         </p>
       </header>
 
-      {error && (
+      {_error && (
         <Card className="border-destructive">
           <CardHeader>
             <CardTitle className="text-destructive font-headline flex items-center gap-2">
@@ -121,12 +121,12 @@ export default function InsightsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="font-body text-destructive-foreground">{error}</p>
+            <p className="font-body text-destructive-foreground">{_error}</p>
           </CardContent>
         </Card>
       )}
 
-      {!error && insights.length === 0 && (
+      {!_error && insights.length === 0 && (
         <Card>
           <CardContent className="p-10 text-center">
             <Lightbulb className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -140,7 +140,7 @@ export default function InsightsPage() {
         </Card>
       )}
 
-      {!error && insights.length > 0 && (
+      {!_error && insights.length > 0 && (
         <motion.div
           className="space-y-4"
           variants={containerVariants}

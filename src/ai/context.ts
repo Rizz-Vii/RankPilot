@@ -317,7 +317,7 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 export function getCachedContext(_key: string): any | null {
     const cached = contextCache.get(_key);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-        return cached.data;
+        return cached._data;
     }
     return null;
 }

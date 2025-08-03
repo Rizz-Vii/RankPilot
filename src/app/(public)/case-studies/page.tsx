@@ -192,7 +192,7 @@ export default function CaseStudiesPage() {
       <section className="pb-16 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-4 gap-6">
-            {successMetrics.map((metric, _index) => (
+            {successMetrics.map((metric, index) => (
               <motion.div
                 key={metric.label}
                 initial="hidden"
@@ -206,7 +206,7 @@ export default function CaseStudiesPage() {
                       <metric.icon className="h-6 w-6 text-blue-600" />
                     </div>
                     <div className="text-3xl font-bold text-gray-900 mb-2">
-                      {metric.value}
+                      {metric._value}
                     </div>
                     <div className="font-semibold text-gray-700 mb-1">
                       {metric.label}
@@ -242,7 +242,7 @@ export default function CaseStudiesPage() {
           </motion.div>
 
           <div className="space-y-8">
-            {caseStudies.map((study, _index) => (
+            {caseStudies.map((study, index) => (
               <motion.div
                 key={study.title}
                 initial="hidden"
@@ -321,7 +321,7 @@ export default function CaseStudiesPage() {
                           Results
                         </h4>
                         <div className="space-y-2">
-                          {study.results.map((_result, resultIndex) => (
+                          {study.results.map((result, resultIndex) => (
                             <div
                               key={resultIndex}
                               className="flex justify-between items-center text-sm"
@@ -330,7 +330,7 @@ export default function CaseStudiesPage() {
                                 {result.metric}
                               </span>
                               <span className={`font-bold ${result.color}`}>
-                                {result.value}
+                                {result._value}
                               </span>
                             </div>
                           ))}

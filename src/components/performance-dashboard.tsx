@@ -61,15 +61,21 @@ export function PerformanceDashboard() {
         timeRangeMs
       );
       const healthStatus = performanceMonitor.getHealthStatus();
-      const cacheStats = aiOptimizer.getCacheStats();
+      const _cacheStats = aiOptimizer.getCacheStats();
 
       // Calculate overall cache hit rate
       const totalCacheOps = Object.values(_cacheStats).reduce(
-        (sum: number, stat: unknown) => sum + stat.entries,
+        (sum: number, stat: unknown) => {
+          const s = stat as { entries: number };
+          return sum + s.entries;
+        },
         0
       );
       const totalCacheHits = Object.values(_cacheStats).reduce(
-        (sum: number, stat: unknown) => sum + (stat.hitRate * stat.entries) / 100,
+        (sum: number, stat: unknown) => {
+          const s = stat as { hitRate: number; entries: number };
+          return sum + (s.hitRate * s.entries) / 100;
+        },
         0
       );
       const overallCacheHitRate =
@@ -157,7 +163,7 @@ export function PerformanceDashboard() {
         <div className="flex items-center gap-2">
           <Tabs
             value={selectedTimeRange}
-            onValueChange={(_value) => setSelectedTimeRange(value as any)}
+            onValueChange={(value) => setSelectedTimeRange(value as any)}
           >
             <TabsList>
               <TabsTrigger value="5m">5m</TabsTrigger>
@@ -199,7 +205,7 @@ export function PerformanceDashboard() {
           </div>
           {stats.recentErrors.length > 0 && (
             <div className="mt-4 space-y-2">
-              {stats.recentErrors.map((_error, _index) => (
+              {stats.recentErrors.map((error, index) => (
                 <div
                   key={index}
                   className="text-sm text-red-600 bg-red-50 p-2 rounded"
@@ -373,7 +379,7 @@ export function PerformanceDashboard() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {stats.recentErrors.map((_error, _index) => (
+                  {stats.recentErrors.map((error, index) => (
                     <div
                       key={index}
                       className="p-3 bg-red-50 border border-red-200 rounded-lg"

@@ -326,7 +326,7 @@ export default function TeamProjectsPage() {
                     <Label htmlFor="status">Status</Label>
                     <Select
                       value={projectForm.status}
-                      onValueChange={(_value: Project["status"]) =>
+                      onValueChange={(value: Project["status"]) =>
                         setProjectForm({ ...projectForm, status: value })
                       }
                     >
@@ -350,7 +350,7 @@ export default function TeamProjectsPage() {
                     onChange={(e) =>
                       setProjectForm({
                         ...projectForm,
-                        description: e.target._value,
+                        description: e.target.value,
                       })
                     }
                     placeholder="Describe the project goals and scope"
@@ -363,7 +363,7 @@ export default function TeamProjectsPage() {
                     <Select
                       value={projectForm.priority}
                       onValueChange={(_value: Project["priority"]) =>
-                        setProjectForm({ ...projectForm, priority: value })
+                        setProjectForm({ ...projectForm, priority: _value })
                       }
                     >
                       <SelectTrigger>
@@ -386,7 +386,7 @@ export default function TeamProjectsPage() {
                       onChange={(e) =>
                         setProjectForm({
                           ...projectForm,
-                          deadline: e.target._value,
+                          deadline: e.target.value,
                         })
                       }
                     />
@@ -436,7 +436,7 @@ export default function TeamProjectsPage() {
               <Input
                 placeholder="Search projects..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target._value)}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
@@ -564,7 +564,7 @@ export default function TeamProjectsPage() {
                       <span>Team ({project.assignedMembers.length})</span>
                     </div>
                     <div className="flex -space-x-2">
-                      {project.assignedMembers.slice(0, 3).map((member, _index) => (
+                      {project.assignedMembers.slice(0, 3).map((member, index) => (
                         <div
                           key={index}
                           className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-medium border-2 border-background"

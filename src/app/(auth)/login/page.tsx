@@ -105,15 +105,19 @@ export default function LoginPage() {
       }
       
       // Redirection is handled by the useEffect hook after auth state updates
-    } catch (_error: unknown) {
-      setErrors({ form: error?.message || "Login failed. Please try again." });
+    } catch (error: unknown) {
+      const errorMessage =
+        typeof error === "object" && error !== null && "message" in error
+          ? (error as { message?: string }).message
+          : undefined;
+      setErrors({ form: errorMessage || "Login failed. Please try again." });
     }
   };
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      const _result = await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
       const userDocRef = doc(db, "users", user.uid);
@@ -127,9 +131,12 @@ export default function LoginPage() {
         });
       }
       // Redirection is handled by the useEffect hook after auth state updates
-    } catch (_error: unknown) {
+    } catch (error: unknown) {
       setErrors({
-        form: error?.message || "Google sign-in failed. Please try again.",
+        form:
+          typeof error === "object" && error !== null && "message" in error
+            ? (error as { message?: string }).message || "Google sign-in failed. Please try again."
+            : "Google sign-in failed. Please try again.",
       });
     }
   };
@@ -155,7 +162,7 @@ export default function LoginPage() {
               type="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target._value)}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition"
               disabled={loading}
             />
@@ -175,7 +182,7 @@ export default function LoginPage() {
               type={showPassword ? "text" : "password"}
               required
               value={password}
-              onChange={(e) => setPassword(e.target._value)}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg pr-10 focus:outline-none focus:border-blue-500 transition"
               disabled={loading}
             />

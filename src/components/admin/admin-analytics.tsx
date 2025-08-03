@@ -39,7 +39,7 @@ interface AnalyticsData {
   totalAudits: number;
   totalKeywordSearches: number;
   monthlyActivity: unknown[];
-  toolUsage: unknown[];
+  toolUsage: { name: string; _value: number; color: string }[];
   userGrowth: unknown[];
 }
 
@@ -315,8 +315,8 @@ export default function AdminAnalytics() {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {analytics.toolUsage.map((entry, _index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  {analytics.toolUsage.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={(entry as { color: string }).color} />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -394,7 +394,7 @@ export default function AdminAnalytics() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-purple-600">
-              {analytics.toolUsage.sort((a, b) => b.value - a._value)[0]?.name ||
+              {analytics.toolUsage.sort((a, b) => b._value - a._value)[0]?.name ||
                 "N/A"}
             </div>
             <p className="text-sm text-muted-foreground">

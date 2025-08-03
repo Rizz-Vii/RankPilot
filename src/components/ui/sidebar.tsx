@@ -98,7 +98,7 @@ const SidebarProvider = forwardRef<HTMLDivElement, SidebarProviderProps>(
           .find((c) => c.trim().startsWith(`${SIDEBAR_COOKIE_NAME}=`));
 
         if (cookie) {
-          const _value = cookie.split("=")[1];
+          const value = cookie.split("=")[1];
           const newPinned = value === "pinned";
           setPinned(newPinned);
           setOpen(newPinned); // A pinned sidebar should always be open initially
@@ -143,12 +143,12 @@ const SidebarProvider = forwardRef<HTMLDivElement, SidebarProviderProps>(
 
     // Adds a keyboard shortcut to toggle the sidebar.
     useEffect(() => {
-      const handleKeyDown = (_event: KeyboardEvent) => {
+      const handleKeyDown = (e: KeyboardEvent) => {
         if (
-          event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
-          (event.metaKey || event.ctrlKey)
+          e.key === SIDEBAR_KEYBOARD_SHORTCUT &&
+          (e.metaKey || e.ctrlKey)
         ) {
-          event.preventDefault();
+          e.preventDefault();
           toggleSidebar();
         }
       };

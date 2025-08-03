@@ -230,7 +230,7 @@ export default function AdminUserManagement() {
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-4">
-            {[...Array(5)].map((_, _i) => (
+            {[...Array(5)].map((_, i) => (
               <div key={i} className="h-16 bg-muted rounded" />
             ))}
           </div>
@@ -332,7 +332,7 @@ export default function AdminUserManagement() {
                 <Input
                   placeholder="Search users by email or name..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target._value)}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-8"
                 />
               </div>
@@ -396,18 +396,24 @@ export default function AdminUserManagement() {
                       <div className="text-sm flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         {user.createdAt
-                          ? formatDistanceToNow(user.createdAt.toDate(), {
-                              addSuffix: true,
-                            })
+                          ? formatDistanceToNow(
+                              user.createdAt && typeof (user.createdAt as any).toDate === "function"
+                                ? (user.createdAt as any).toDate()
+                                : new Date(user.createdAt as string),
+                              { addSuffix: true }
+                            )
                           : "Unknown"}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm text-muted-foreground">
                         {user.lastSignIn
-                          ? formatDistanceToNow(user.lastSignIn.toDate(), {
-                              addSuffix: true,
-                            })
+                          ? formatDistanceToNow(
+                              typeof (user.lastSignIn as any)?.toDate === "function"
+                                ? (user.lastSignIn as any).toDate()
+                                : new Date(user.lastSignIn as string),
+                              { addSuffix: true }
+                            )
                           : "Never"}
                       </div>
                     </TableCell>

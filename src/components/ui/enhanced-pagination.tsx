@@ -191,7 +191,7 @@ export function EnhancedPagination({
 
         {/* Page Numbers */}
         <div className="flex items-center gap-1">
-          {visiblePages.map((page, _index) => {
+          {visiblePages.map((page, index) => {
             if (page === "...") {
               return (
                 <div

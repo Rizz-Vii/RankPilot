@@ -158,7 +158,7 @@ export default function ApiManagementPage() {
 
   const deleteApiKey = async (keyId: string) => {
     try {
-      setApiKeys(apiKeys.filter((_key) => key.id !== keyId));
+      setApiKeys(apiKeys.filter((key) => key.id !== keyId));
       toast.success("API key deleted successfully");
     } catch (_error) {
       console.error("Error deleting API _key:", _error);
@@ -230,7 +230,7 @@ export default function ApiManagementPage() {
                       id="keyName"
                       placeholder="e.g., Production API, Development, Mobile App"
                       value={newKeyName}
-                      onChange={(e) => setNewKeyName(e.target._value)}
+                      onChange={(e) => setNewKeyName(e.target.value)}
                     />
                   </div>
                   <div className="flex items-end">
@@ -257,7 +257,7 @@ export default function ApiManagementPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {apiKeys.map((_key) => (
+                  {apiKeys.map((key) => (
                     <div
                       key={key.id}
                       className="flex items-center justify-between p-4 border rounded-lg"

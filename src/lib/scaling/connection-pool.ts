@@ -88,8 +88,8 @@ export class ConnectionPoolManager {
       this.scheduleConnectionCleanup(connectionKey);
 
       return db;
-    } catch (_error) {
-      console.error(`Error creating Firestore connection for ${appName}:`, _error);
+    } catch (error) {
+      console.error(`Error creating Firestore connection for ${appName}:`, error);
       throw error;
     }
   }
@@ -147,8 +147,8 @@ export class ConnectionPoolManager {
             }
           }
 
-          return response;
-        } catch (_error) {
+          return _response;
+        } catch (error) {
           throw error;
         } finally {
           this.activeRequests--;
@@ -185,7 +185,7 @@ export class ConnectionPoolManager {
       if (lastUsed < idleThreshold) {
         this.activeConnections.delete(_key);
         this.connectionCounts.delete(_key);
-        console.log(`Cleaned up idle connection: ${key}`);
+        console.log(`Cleaned up idle connection: ${_key}`);
       }
     }
   }
@@ -203,7 +203,7 @@ export class ConnectionPoolManager {
         if (now - lastUsed > connectionPoolConfig.idleTimeout) {
           this.activeConnections.delete(_key);
           this.connectionCounts.delete(_key);
-          console.log(`Auto-cleaned connection: ${key}`);
+          console.log(`Auto-cleaned connection: ${_key}`);
         }
       }
     }, connectionPoolConfig.idleTimeout);

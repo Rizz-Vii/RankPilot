@@ -41,9 +41,23 @@ const notificationSchema = z.object({
 
 type NotificationFormValues = z.infer<typeof notificationSchema>;
 
+interface Notifications {
+  emailNotifications?: boolean;
+  seoAlerts?: boolean;
+  weeklyReports?: boolean;
+  marketingEmails?: boolean;
+  securityAlerts?: boolean;
+  auditCompletions?: boolean;
+  keywordRankings?: boolean;
+}
+
+interface Profile {
+  notifications?: Notifications;
+}
+
 interface NotificationSettingsFormProps {
   user: User;
-  profile: unknown;
+  profile: Profile;
 }
 
 export default function NotificationSettingsForm({

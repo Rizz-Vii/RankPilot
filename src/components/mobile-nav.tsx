@@ -61,7 +61,7 @@ export default function MobileNav() {
   const toggleMenu = () => setIsOpen(!isOpen);
   const closeMenu = () => setIsOpen(false);
 
-  const handleNavItemClick = (_item: NavItem) => {
+  const handleNavItemClick = (item: NavItem) => {
     console.log("Mobile navigation clicked:", item.title);
     closeMenu();
   };

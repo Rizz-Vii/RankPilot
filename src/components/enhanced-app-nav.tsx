@@ -62,7 +62,7 @@ export function EnhancedAppNav({
 
       // Set initial expanded state based on current pathname
       const activeGroup = groups.find((group) =>
-        group.items.some((_item) => item.href === pathname)
+        group.items.some((_item) => _item.href === pathname)
       );
 
       if (activeGroup) {
@@ -75,7 +75,7 @@ export function EnhancedAppNav({
       }
     } catch (_error) {
       const fallback = handleNavError(
-        error as Error,
+        _error as Error,
         "EnhancedAppNav initialization"
       );
       console.warn(fallback.message);
@@ -99,10 +99,10 @@ export function EnhancedAppNav({
 
   const handleItemClick = useCallback(
     (_item: NavItem, groupId: string) => {
-      trackNavigation(item.href, groupId);
+      trackNavigation(_item.href, groupId);
       setNavState((prev) => ({
         ...prev,
-        activeItem: item.href,
+        activeItem: _item.href,
         activeGroup: groupId,
       }));
       onItemClickAction?.(_item);
@@ -112,22 +112,22 @@ export function EnhancedAppNav({
 
   const renderNavItem = useCallback(
     (_item: NavItem, groupId: string, _index: number) => {
-      const isActive = pathname === item.href;
-      const Icon = item.icon;
+      const isActive = pathname === _item.href;
+      const Icon = _item.icon;
 
       return (
         <motion.li
-          key={item.href}
+          key={_item.href}
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: index * 0.05 }}
+          transition={{ delay: _index * 0.05 }}
           className="relative"
         >
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link
-                  href={item.href}
+                  href={_item.href}
                   onClick={() => handleItemClick(_item, groupId)}
                   className={cn(
                     "tool-link group flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-sm font-medium transition-all duration-200",
@@ -139,14 +139,14 @@ export function EnhancedAppNav({
                       "text-muted-foreground hover:text-foreground": !isActive,
                       "justify-center px-2": collapsed,
                       "opacity-50 cursor-not-allowed pointer-events-none":
-                        item.disabled,
+                        _item.disabled,
                     },
                     className
                   )}
                   aria-current={isActive ? "page" : undefined}
-                  aria-label={`${item.title}${item.description ? `. ${item.description}` : ""}${item.requiredTier ? `. Requires ${item.requiredTier} plan` : ""}`}
-                  title={collapsed ? item.title : item.description}
-                  tabIndex={item.disabled ? -1 : undefined}
+                  aria-label={`${_item.title}${_item.description ? `. ${_item.description}` : ""}${_item.requiredTier ? `. Requires ${_item.requiredTier} plan` : ""}`}
+                  title={collapsed ? _item.title : _item.description}
+                  tabIndex={_item.disabled ? -1 : undefined}
                 >
                   {/* Icon */}
                   <Icon
@@ -161,25 +161,25 @@ export function EnhancedAppNav({
                   {!collapsed && (
                     <>
                       <span className="flex-1 text-left text-sm leading-tight">
-                        {item.title}
+                        {_item.title}
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
-                        {item.badge && (
+                        {_item.badge && (
                           <Badge
                             variant={isActive ? "default" : "secondary"}
                             className="h-4 px-1.5 text-xs"
-                            aria-label={`${item.badge} feature`}
+                            aria-label={`${_item.badge} feature`}
                           >
-                            {item.badge}
+                            {_item.badge}
                           </Badge>
                         )}
-                        {item.requiredTier && (
+                        {_item.requiredTier && (
                           <Badge
                             variant="outline"
                             className="h-4 px-1.5 text-xs"
-                            aria-label={`Requires ${item.requiredTier} plan`}
+                            aria-label={`Requires ${_item.requiredTier} plan`}
                           >
-                            {item.requiredTier}
+                            {_item.requiredTier}
                           </Badge>
                         )}
                       </div>
@@ -205,13 +205,13 @@ export function EnhancedAppNav({
               {!collapsed && (
                 <TooltipContent side="right" className="max-w-xs">
                   <div className="space-y-1">
-                    <p className="font-medium">{item.title}</p>
-                    {item.description && (
-                      <p className="text-xs opacity-75">{item.description}</p>
+                    <p className="font-medium">{_item.title}</p>
+                    {_item.description && (
+                      <p className="text-xs opacity-75">{_item.description}</p>
                     )}
-                    {item.requiredTier && (
+                    {_item.requiredTier && (
                       <p className="text-xs text-muted-foreground">
-                        Requires {item.requiredTier} plan
+                        Requires {_item.requiredTier} plan
                       </p>
                     )}
                   </div>
@@ -238,7 +238,7 @@ export function EnhancedAppNav({
           key={group.id}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.1 }}
+          transition={{ delay: _index * 0.1 }}
           className="space-y-2"
         >
           <Collapsible
@@ -337,26 +337,26 @@ export function EnhancedAppNav({
                 </div>
                 {group.items.map((_item) => (
                   <Link
-                    key={item.href}
-                    href={item.href}
+                    key={_item.href}
+                    href={_item.href}
                     onClick={() => handleItemClick(_item, group.id)}
                     className={cn(
                       "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm",
                       "hover:bg-accent hover:text-accent-foreground",
                       {
                         "bg-accent text-accent-foreground":
-                          pathname === item.href,
+                          pathname === _item.href,
                       }
                     )}
                   >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.title}</span>
-                    {item.badge && (
+                    <_item.icon className="h-4 w-4" />
+                    <span>{_item.title}</span>
+                    {_item.badge && (
                       <Badge
                         variant="secondary"
                         className="ml-auto h-4 px-1 text-xs"
                       >
-                        {item.badge}
+                        {_item.badge}
                       </Badge>
                     )}
                   </Link>

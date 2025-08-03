@@ -258,7 +258,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
             duration: Date.now() - startTime
         };
 
-        this.emit('cache-purged', _result);
+        this.emit('cache-purged', result);
         return result;
     }
 
@@ -381,7 +381,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
 
         } catch (_error) {
             optimization.status = 'failed';
-            throw error;
+            throw _error;
         }
     }
 
@@ -466,10 +466,10 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         // Sort by priority and expected impact
         recommendations.sort((a, b) => {
             const priorityWeight = { critical: 4, high: 3, medium: 2, low: 1 };
-            return priorityWeight[b.priority as keyof typeof priorityWeight] - priorityWeight[a.priority as keyof typeof priorityWeight];
+            return priorityWeight[(b as any).priority as keyof typeof priorityWeight] - priorityWeight[(a as any).priority as keyof typeof priorityWeight];
         });
 
-        return recommendations;
+        return recommendations as any;
     }
 
     // Private methods
@@ -521,9 +521,9 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return (latencyScore * 0.3 + cacheScore * 0.3 + uptimeScore * 0.2 + errorScore * 0.2);
     }
 
-    private matchesCacheRule(_request: unknown, rule: CacheRule): boolean {
+    private matchesCacheRule(_request: any, rule: CacheRule): boolean {
         // Check if request path matches rule pattern
-        const pathMatches = new RegExp(rule.pattern).test(request.path);
+        const pathMatches = new RegExp(rule.pattern).test(_request.path);
         if (!pathMatches) return false;
 
         // Check additional conditions
@@ -536,21 +536,21 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return true;
     }
 
-    private evaluateCondition(_request: unknown, condition: unknown): boolean {
-        let _value: string;
+    private evaluateCondition(_request: any, condition: any): boolean {
+        let value: string;
 
         switch (condition.type) {
             case 'path':
-                value = request.path;
+                value = _request.path;
                 break;
             case 'method':
-                value = request.method;
+                value = _request.method;
                 break;
             case 'header':
-                value = request.headers[condition.name] || '';
+                value = _request.headers[condition.name] || '';
                 break;
             case 'query':
-                value = request.query[condition.name] || '';
+                value = _request.query[condition.name] || '';
                 break;
             default:
                 return true;
@@ -564,7 +564,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
             case 'starts_with':
                 return value.startsWith(condition._value);
             case 'regex':
-                return new RegExp(condition._value).test(_value);
+                return new RegExp(condition._value).test(value);
             default:
                 return true;
         }
@@ -575,19 +575,19 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return patterns.length * Math.floor(Math.random() * 100 + 50);
     }
 
-    private getRoundRobinTarget(targets: unknown[]): string {
+    private getRoundRobinTarget(targets: any[]): string {
         // Simple round-robin implementation
         const index = Date.now() % targets.length;
         return targets[index].id;
     }
 
-    private getLeastConnectionsTarget(targets: unknown[]): string {
+    private getLeastConnectionsTarget(targets: any[]): string {
         return targets.reduce((min, target) =>
             target.current_connections < min.current_connections ? target : min
         ).id;
     }
 
-    private getWeightedTarget(targets: unknown[]): string {
+    private getWeightedTarget(targets: any[]): string {
         const totalWeight = targets.reduce((sum, t) => sum + t.weight, 0);
         const random = Math.random() * totalWeight;
 
@@ -602,7 +602,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return targets[0].id;
     }
 
-    private getGeographicTarget(rule: LoadBalancingRule, targets: unknown[], clientInfo?: unknown): string {
+    private getGeographicTarget(rule: LoadBalancingRule, targets: any[], clientInfo?: any): string {
         if (!rule.geographic_routing.enabled || !clientInfo) {
             return this.getRoundRobinTarget(targets);
         }
@@ -618,13 +618,13 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return this.getRoundRobinTarget(targets);
     }
 
-    private getPerformanceTarget(targets: unknown[]): string {
+    private getPerformanceTarget(targets: any[]): string {
         return targets.reduce((best, target) =>
             target.response_time < best.response_time ? target : best
         ).id;
     }
 
-    private async optimizeAsset(asset: unknown): Promise<any> {
+    private async optimizeAsset(asset: any): Promise<any> {
         let optimizedSize = asset.size;
         const appliedOptimizations = [];
 

@@ -791,7 +791,12 @@ export class AdvancedBehavioralAnalytics extends EventEmitter {
      */
     private async evaluateIndicator(
         profile: UserBehaviorProfile,
-        indicator: unknown
+        indicator: {
+            type: string;
+            weight: number;
+            threshold: number;
+            timeWindow: number;
+        }
     ): Promise<number> {
         // Simplified indicator evaluation
         switch (indicator.type) {

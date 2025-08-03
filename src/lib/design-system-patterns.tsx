@@ -22,7 +22,7 @@ const ErrorMessage = ({ message }: { message: string }) => (
 
 // ✅ USE: Error input styling
 const ErrorInput = ({
-  _error,
+  error,
   ...props
 }: {
   error?: string;
@@ -164,7 +164,7 @@ const PageLayout = ({
 // ✅ USE: Consistent form styling
 const FormField = ({
   label,
-  _error,
+  error,
   children,
 }: {
   label: string;
@@ -193,7 +193,7 @@ const StatusIndicator = ({
   const statusClasses = {
     success: "bg-success/10 text-success-foreground border-success",
     warning: "bg-warning/10 text-warning-foreground border-warning",
-    _error: "bg-destructive/10 text-destructive-foreground border-destructive",
+    error: "bg-destructive/10 text-destructive-foreground border-destructive",
     info: "bg-primary/10 text-primary border-primary",
   };
 

@@ -155,7 +155,7 @@ export class AIErrorBoundary extends React.Component<
         this.state = { hasError: false };
     }
 
-    static getDerivedStateFromError(_error: Error): AIErrorBoundaryState {
+    static getDerivedStateFromError(error: Error): AIErrorBoundaryState {
         return { hasError: true, error };
     }
 
@@ -165,7 +165,7 @@ export class AIErrorBoundary extends React.Component<
         // Send to monitoring service
         if (typeof window !== 'undefined' && 'gtag' in window) {
             (window as any).gtag('event', 'exception', {
-                description: `AI Component Error: ${error.message}`,
+                description: `AI Component Error: ${_error.message}`,
                 fatal: false,
             });
         }

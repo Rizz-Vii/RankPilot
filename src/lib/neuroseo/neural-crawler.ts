@@ -75,7 +75,7 @@ export class NeuralCrawler {
       });
 
       // Navigate to page
-      const _response = await page.goto(url, {
+      const response = await page.goto(url, {
         waitUntil: "networkidle",
         timeout: options.timeout || 30000,
       });
@@ -198,7 +198,7 @@ export class NeuralCrawler {
       scripts.forEach((script) => {
         try {
           const data = JSON.parse(script.textContent || "");
-          schemaData.push(_data);
+          schemaData.push(data);
         } catch (e) {
           // Ignore invalid JSON
         }

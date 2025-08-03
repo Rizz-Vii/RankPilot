@@ -7,22 +7,23 @@ import { HttpsError, CallableRequest } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions";
 
 export interface SecurityOptions {
-    requireAuth?: boolean;
-    requireAdmin?: boolean;
-    rateLimit?: {
-        maxRequests: number;
-        windowMs: number;
-    };
-    validateOrigin?: boolean;
+  requireAuth?: boolean;
+  requireAdmin?: boolean;
+  rateLimit?: {
+    maxRequests: number;
+    windowMs: number;
+  };
+  validateOrigin?: boolean;
 }
 
 const requestCounts = new Map<string, { count: number; resetTime: number }>();
+let rateLimitCleanupInterval: NodeJS.Timeout | null = null;
 
 export function withSecurity(options: SecurityOptions = {}) {
   return function (target: unknown, propertyName: string, descriptor: PropertyDescriptor) {
     const method = descriptor.value;
 
-    descriptor.value = async function (_request: CallableRequest) {
+    descriptor.value = async function (request: CallableRequest) {
       const startTime = Date.now();
       const userId = request.auth?.uid || "anonymous";
 
@@ -44,7 +45,7 @@ export function withSecurity(options: SecurityOptions = {}) {
         if (options.rateLimit) {
           const now = Date.now();
           const key = `${userId}_${propertyName}`;
-          const current = requestCounts.get(_key);
+          const current = requestCounts.get(key);
 
           if (current && now < current.resetTime) {
             if (current.count >= options.rateLimit.maxRequests) {
@@ -52,7 +53,7 @@ export function withSecurity(options: SecurityOptions = {}) {
             }
             current.count++;
           } else {
-            requestCounts.set(_key, {
+            requestCounts.set(key, {
               count: 1,
               resetTime: now + options.rateLimit.windowMs
             });
@@ -78,7 +79,7 @@ export function withSecurity(options: SecurityOptions = {}) {
           timestamp: new Date().toISOString()
         });
 
-        const _result = await method.call(this, _request);
+        const result = await method.call(this, request);
 
         logger.info(`Function ${propertyName} completed`, {
           userId,
@@ -88,10 +89,10 @@ export function withSecurity(options: SecurityOptions = {}) {
 
         return result;
 
-      } catch (_error) {
+      } catch (error) {
         logger.error(`Function ${propertyName} failed`, {
           userId,
-          _error: error instanceof Error ? error.message : String(_error),
+          error: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
           duration: Date.now() - startTime,
           timestamp: new Date().toISOString()
@@ -119,5 +120,21 @@ export function cleanupRateLimitMaps() {
   }
 }
 
-// Schedule cleanup every 10 minutes
-setInterval(cleanupRateLimitMaps, 10 * 60 * 1000);
+// Initialize security middleware with cleanup interval
+export function initializeSecurityMiddleware() {
+  if (!rateLimitCleanupInterval) {
+    rateLimitCleanupInterval = setInterval(cleanupRateLimitMaps, 10 * 60 * 1000);
+  }
+}
+
+// Cleanup security middleware
+export function cleanupSecurityMiddleware() {
+  if (rateLimitCleanupInterval) {
+    clearInterval(rateLimitCleanupInterval);
+    rateLimitCleanupInterval = null;
+  }
+  requestCounts.clear();
+}
+
+// Auto-initialize when module loads
+initializeSecurityMiddleware();

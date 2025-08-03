@@ -155,11 +155,11 @@ export default function SeoAuditPage() {
         body: JSON.stringify(analysisRequest),
       });
 
-      if (!response.ok) {
-        throw new Error(`Analysis failed: ${response.statusText}`);
+      if (!_response.ok) {
+        throw new Error(`Analysis failed: ${_response.statusText}`);
       }
 
-      const _data = await response.json();
+      const _data = await _response.json();
 
       // For now, create a mock report structure for demonstration
       const mockReport: NeuroSEOReport = {
@@ -246,8 +246,8 @@ export default function SeoAuditPage() {
       }
 
     } catch (_error) {
-      console.error("Analysis _error:", _error);
-      setError(error instanceof Error ? error.message : "Analysis failed");
+      console.error("Analysis error:", _error);
+      setError(_error instanceof Error ? _error.message : "Analysis failed");
     } finally {
       setIsAnalyzing(false);
     }
@@ -285,7 +285,7 @@ export default function SeoAuditPage() {
                 type="url"
                 placeholder="https://example.com"
                 value={url}
-                onChange={(e) => setUrl(e.target._value)}
+                onChange={(e) => setUrl(e.target.value)}
                 required
               />
             </div>
@@ -296,7 +296,7 @@ export default function SeoAuditPage() {
                 id="keywords"
                 placeholder="SEO, digital marketing, optimization"
                 value={keywords}
-                onChange={(e) => setKeywords(e.target._value)}
+                onChange={(e) => setKeywords(e.target.value)}
               />
             </div>
 
@@ -311,7 +311,7 @@ export default function SeoAuditPage() {
                   id="competitors"
                   placeholder="https://competitor1.com, https://competitor2.com"
                   value={competitorUrls}
-                  onChange={(e) => setCompetitorUrls(e.target._value)}
+                  onChange={(e) => setCompetitorUrls(e.target.value)}
                   rows={3}
                 />
               </div>
@@ -347,12 +347,12 @@ export default function SeoAuditPage() {
       />
 
       {/* Error Display */}
-      {error && (
+      {_error && (
         <Card className="border-destructive">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />
-              <span>{error}</span>
+              <span>{_error}</span>
             </div>
           </CardContent>
         </Card>
@@ -412,17 +412,17 @@ export default function SeoAuditPage() {
 
 const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
   const chartData = items.map((_item) => ({
-    name: item.name,
-    score: item.score,
+    name: _item.name,
+    score: _item.score,
     fill:
-      item.score > 85
+      _item.score > 85
         ? "hsl(var(--chart-1))"
-        : item.score > 60
+        : _item.score > 60
           ? "hsl(var(--chart-2))"
           : "hsl(var(--chart-5))",
   }));
 
-  const imageAuditItem = items.find((_item) => item.id === "image-alts");
+  const imageAuditItem = items.find((_item) => _item.id === "image-alts");
   let imageData = null;
   if (imageAuditItem) {
     // A simple regex to extract numbers, assuming a format like "Found X images, Y are missing alt text"
@@ -433,8 +433,8 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
       const total = parseInt(match[1], 10);
       const missing = parseInt(match[2], 10);
       imageData = [
-        { name: "withAlt", _value: total - missing },
-        { name: "missingAlt", _value: missing },
+        { name: "withAlt", value: total - missing },
+        { name: "missingAlt", value: missing },
       ];
     }
   }
@@ -467,7 +467,7 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
               />
               <XAxis dataKey="score" type="number" hide />
               <ChartTooltip
-                content={(props) => <ChartTooltipContent {...props} />}
+                content={(props: any) => <ChartTooltipContent {...props} />}
               />
               <Bar dataKey="score" radius={5} />
             </BarChart>
@@ -487,7 +487,7 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
             >
               <PieChart>
                 <ChartTooltip
-                  content={(props) => (
+                  content={(props: any) => (
                     <ChartTooltipContent {...props} nameKey="name" hideLabel />
                   )}
                 />
@@ -519,7 +519,7 @@ const AuditResults = ({ results }: { results: AuditUrlOutput; }) => (
           </span>
           <div className="w-full">
             <p className="font-semibold">Overall Score</p>
-            <Progress value={results.overallScore} className="mt-1" />
+            <Progress _value={results.overallScore} className="mt-1" />
           </div>
         </div>
         <CardDescription className="pt-2">{results.summary}</CardDescription>
@@ -533,24 +533,24 @@ const AuditResults = ({ results }: { results: AuditUrlOutput; }) => (
             animate="visible"
           >
             {results.items.map((_item) => {
-              const Icon = statusIcons[item.status] || AlertCircle;
+              const Icon = statusIcons[_item.status] || AlertCircle;
               const color =
-                statusColors[item.status] || "text-muted-foreground";
+                statusColors[_item.status] || "text-muted-foreground";
               return (
                 <motion.div
-                  key={item.id}
+                  key={_item.id}
                   className="flex items-start gap-4"
                   variants={itemVariants}
                 >
                   <Icon className={`mt-1 h-5 w-5 flex-shrink-0 ${color}`} />
                   <div className="flex-1">
-                    <p className="font-semibold">{item.name}</p>
+                    <p className="font-semibold">{_item.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {item.details}
+                      {_item.details}
                     </p>
                   </div>
                   <span className={`font-semibold text-sm ${color}`}>
-                    {item.score}/100
+                    {_item.score}/100
                   </span>
                 </motion.div>
               );

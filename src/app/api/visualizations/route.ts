@@ -15,7 +15,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(_request: NextRequest) {
     try {
         // Verify authentication
-        const authHeader = request.headers.get('authorization');
+        const authHeader = _request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json({ _error: 'Unauthorized' }, { status: 401 });
         }
@@ -26,10 +26,10 @@ export async function POST(_request: NextRequest) {
             decodedToken = await adminAuth.verifyIdToken(token);
         } catch (_error) {
             console.warn('[Visualizations API] Firebase admin initialization _error:', _error);
-            return NextResponse.json({ 
-                _error: 'Authentication service unavailable', 
+            return NextResponse.json({
+                _error: 'Authentication service unavailable',
                 mock: true,
-                _data: [] 
+                _data: []
             }, { status: 503 });
         }
         const userId = decodedToken.uid;
@@ -51,22 +51,22 @@ export async function POST(_request: NextRequest) {
             );
         }
 
-        const body = await request.json();
+        const body = await _request.json();
         const { action, data } = body;
 
         switch (action) {
             case 'create_chart':
-                return await createChart(userId, _data);
+                return await createChart(userId, data);
             case 'update_chart':
-                return await updateChart(userId, _data);
+                return await updateChart(userId, data);
             case 'export_chart':
-                return await exportChart(userId, _data);
+                return await exportChart(userId, data);
             case 'create_dashboard':
-                return await createDashboard(userId, _data);
+                return await createDashboard(userId, data);
             case 'update_dashboard':
-                return await updateDashboard(userId, _data);
+                return await updateDashboard(userId, data);
             case 'export_dashboard':
-                return await exportDashboard(userId, _data);
+                return await exportDashboard(userId, data);
             default:
                 return NextResponse.json({ _error: 'Invalid action' }, { status: 400 });
         }
@@ -83,7 +83,7 @@ export async function POST(_request: NextRequest) {
 export async function GET(_request: NextRequest) {
     try {
         // Verify authentication
-        const authHeader = request.headers.get('authorization');
+        const authHeader = _request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json({ _error: 'Unauthorized' }, { status: 401 });
         }
@@ -92,7 +92,7 @@ export async function GET(_request: NextRequest) {
         const decodedToken = await adminAuth.verifyIdToken(token);
         const userId = decodedToken.uid;
 
-        const url = new URL(request.url);
+        const url = new URL(_request.url);
         const type = url.searchParams.get('type');
         const id = url.searchParams.get('id');
 
@@ -127,7 +127,7 @@ export async function GET(_request: NextRequest) {
 export async function DELETE(_request: NextRequest) {
     try {
         // Verify authentication
-        const authHeader = request.headers.get('authorization');
+        const authHeader = _request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json({ _error: 'Unauthorized' }, { status: 401 });
         }
@@ -136,7 +136,7 @@ export async function DELETE(_request: NextRequest) {
         const decodedToken = await adminAuth.verifyIdToken(token);
         const userId = decodedToken.uid;
 
-        const url = new URL(request.url);
+        const url = new URL(_request.url);
         const type = url.searchParams.get('type');
         const id = url.searchParams.get('id');
 
@@ -163,7 +163,7 @@ export async function DELETE(_request: NextRequest) {
 }
 
 // Chart Management Functions
-async function createChart(userId: string, chartData: unknown) {
+async function createChart(userId: string, chartData: any) {
     const chartDoc = {
         id: chartData.id || `chart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         userId,
@@ -193,7 +193,7 @@ async function createChart(userId: string, chartData: unknown) {
     });
 }
 
-async function updateChart(userId: string, updateData: unknown) {
+async function updateChart(userId: string, updateData: any) {
     const { chartId, ...updates } = updateData;
 
     if (!chartId) {
@@ -230,7 +230,7 @@ async function updateChart(userId: string, updateData: unknown) {
     });
 }
 
-async function exportChart(userId: string, exportData: unknown) {
+async function exportChart(userId: string, exportData: any) {
     const { chartId, format, config } = exportData;
 
     if (!chartId || !format) {
@@ -335,7 +335,7 @@ async function deleteChart(userId: string, chartId: string) {
 }
 
 // Dashboard Management Functions
-async function createDashboard(userId: string, dashboardData: unknown) {
+async function createDashboard(userId: string, dashboardData: any) {
     const dashboardDoc = {
         id: dashboardData.id || `dashboard_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         userId,
@@ -366,7 +366,7 @@ async function createDashboard(userId: string, dashboardData: unknown) {
     });
 }
 
-async function updateDashboard(userId: string, updateData: unknown) {
+async function updateDashboard(userId: string, updateData: any) {
     const { dashboardId, ...updates } = updateData;
 
     if (!dashboardId) {
@@ -403,7 +403,7 @@ async function updateDashboard(userId: string, updateData: unknown) {
     });
 }
 
-async function exportDashboard(userId: string, exportData: unknown) {
+async function exportDashboard(userId: string, exportData: any) {
     const { dashboardId, format, config } = exportData;
 
     if (!dashboardId || !format) {
@@ -508,13 +508,13 @@ async function deleteDashboard(userId: string, dashboardId: string) {
 }
 
 // Helper Functions
-async function generateChartExport(chartData: unknown, format: string, config: unknown): Promise<string> {
+async function generateChartExport(chartData: any, format: string, config: any): Promise<string> {
     // This would integrate with the chart export manager
     // For now, return a placeholder URL
     return `https://api.rankpilot.com/exports/charts/${chartData.id}.${format}`;
 }
 
-async function generateDashboardExport(dashboardData: unknown, format: string, config: unknown): Promise<string> {
+async function generateDashboardExport(dashboardData: any, format: string, config: any): Promise<string> {
     // This would integrate with the dashboard export manager
     // For now, return a placeholder URL
     return `https://api.rankpilot.com/exports/dashboards/${dashboardData.id}.${format}`;

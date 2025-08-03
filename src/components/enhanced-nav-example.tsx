@@ -22,7 +22,7 @@ export function SidebarWithEnhancedNav({
   isAdmin?: boolean;
   collapsed?: boolean;
 }) {
-  const handleNavItemClick = (_item: NavItem) => {
+  const handleNavItemClick = (item: NavItem) => {
     // Analytics tracking
     console.log("Navigation clicked:", item.title, item.href);
 
@@ -90,7 +90,7 @@ export function MobileNavigationExample({
         userTier={userTier}
         isAdmin={isAdmin}
         onCloseAction={onClose}
-        onItemClickAction={(_item) => {
+        onItemClickAction={(item) => {
           console.log("Mobile nav clicked:", item.title);
         }}
       />

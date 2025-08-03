@@ -61,7 +61,7 @@ export default function ToolGrid({
   const { user, role } = useAuth();
 
   // Filter nav items based on user role and exclude dashboard if not showAll
-  const visibleNavItems = navItems.filter((_item) => {
+  const visibleNavItems = navItems.filter((item) => {
     if (!showAll && item.href === "/dashboard") return false;
     return !item.adminOnly || (user && role === "admin");
   });
@@ -73,7 +73,7 @@ export default function ToolGrid({
       animate="visible"
       className={cn("tool-grid", className)}
     >
-      {visibleNavItems.map((_item, _index) => (
+      {visibleNavItems.map((item, _index) => (
         <motion.div key={item.href} variants={cardVariants}>
           <Link href={item.href} className="block">
             <Card className="tool-card hover:border-primary/50 transition-all duration-200 cursor-pointer group">

@@ -333,7 +333,7 @@ export function StaggeredList({
     if (shouldReduceMotion()) {
         return (
             <div className={className}>
-                {children.map((child, _index) => (
+                {children.map((child, index) => (
                     <div key={index} className={itemClassName}>
                         {child}
                     </div>
@@ -357,7 +357,7 @@ export function StaggeredList({
             initial="hidden"
             animate="visible"
         >
-            {children.map((child, _index) => (
+            {children.map((child, index) => (
                 <motion.div
                     key={index}
                     className={itemClassName}
@@ -455,7 +455,7 @@ export function LoadingAnimation({
         case 'dots':
             return (
                 <div className={`flex space-x-1 ${className}`}>
-                    {[0, 1, 2].map((_index) => (
+                    {[0, 1, 2].map((index) => (
                         <motion.div
                             key={index}
                             className="w-2 h-2 bg-primary rounded-full"
@@ -492,7 +492,7 @@ export function LoadingAnimation({
         case 'bars':
             return (
                 <div className={`flex space-x-1 items-end ${className}`}>
-                    {[0, 1, 2, 3].map((_index) => (
+                    {[0, 1, 2, 3].map((index) => (
                         <motion.div
                             key={index}
                             className="w-1 bg-primary rounded-sm"

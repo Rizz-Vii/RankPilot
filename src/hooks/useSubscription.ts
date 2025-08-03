@@ -84,7 +84,7 @@ export function useSubscription() {
 
         // Create user access object from profile and subscription data
         const userAccess = normalizeUserAccess({
-          role: profile?.role || "user",
+          role: (profile && typeof profile === "object" && profile !== null && "role" in profile ? (profile as any).role : "user"),
           subscriptionTier: subData.tier,
           subscriptionStatus: subData.status,
         });
@@ -126,7 +126,7 @@ export function useSubscription() {
     }
 
     fetchSubscription();
-  }, [user?.uid, profile?.role]);
+  }, [user?.uid, (profile && typeof profile === "object" && "role" in profile ? (profile as any).role : undefined)]);
 
   const canUseFeature = (featureName: string): boolean => {
     if (!subscription?.userAccess) return false;
@@ -200,7 +200,7 @@ export function useSubscription() {
 
         // Create user access object from profile and subscription data
         const userAccess = normalizeUserAccess({
-          role: profile?.role || "user",
+          role: (profile && typeof profile === "object" && profile !== null && "role" in profile ? (profile as any).role : "user"),
           subscriptionTier: subData.tier,
           subscriptionStatus: subData.status,
         });

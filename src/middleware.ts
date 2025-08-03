@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export function middleware(_request: NextRequest) {
   // Get response
-  const _response = NextResponse.next();
+  const response = NextResponse.next();
 
   // Add security headers - Enhanced with complete domain coverage
   const cspHeader = [
@@ -26,7 +26,7 @@ export function middleware(_request: NextRequest) {
     // Fonts
     "font-src 'self' https://fonts.gstatic.com",
     // Images
-    "img-src 'self' _data: https:",
+    "img-src 'self' data: https:",
     // Connect (APIs, WebSocket) - Complete Firebase and third-party coverage
     "connect-src 'self' " +
     "https://*.firebaseapp.com " +
@@ -84,15 +84,15 @@ export function middleware(_request: NextRequest) {
 
     // Permissions Policy
     "Permissions-Policy":
-      "camera=(), microphone=(), geolocation=(), payment=()",
+      "camera=(), microphone=(), geolocation=()",
 
     // HSTS
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
   };
 
   // Apply headers
-  Object.entries(securityHeaders).forEach(([_key, value]) => {
-    response.headers.set(_key, _value);
+  Object.entries(securityHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value);
   });
 
   return response;

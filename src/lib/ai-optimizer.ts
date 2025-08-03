@@ -30,7 +30,7 @@ export interface OptimizationOptions extends CacheOptions, BatchOptions {
 }
 
 interface CacheEntry<T> {
-  _data: T;
+  data: T;
   timestamp: number;
   hits: number;
 }
@@ -68,14 +68,14 @@ class ResponseCache<T> {
     return entry.data;
   }
 
-  set(_key: string, _data: T): void {
+  set(_key: string, data: T): void {
     // Remove oldest entries if at capacity
     if (this.cache.size >= this.maxSize) {
       this.evictOldest();
     }
 
     this.cache.set(_key, {
-      _data,
+      data,
       timestamp: Date.now(),
       hits: 1,
     });
@@ -106,7 +106,7 @@ class ResponseCache<T> {
     let oldestTime = Date.now();
     let lowestHits = Infinity;
 
-    for (const [_key, entry] of this.cache.entries()) {
+    for (const [key, entry] of this.cache.entries()) {
       // Prioritize by hits first, then by age
       if (
         entry.hits < lowestHits ||
@@ -204,9 +204,9 @@ class RequestBatcher<T> {
       const results = await batchProcessor(batchedArgs);
 
       // Resolve individual requests
-      requests.forEach((_request, _index) => {
+      requests.forEach((request, index) => {
         if (index < results.length) {
-          request.resolve(results[index]);
+          request.resolve(results[index] as T);
         } else {
           request.reject(
             new Error("Batch processing failed: insufficient results")
@@ -215,7 +215,7 @@ class RequestBatcher<T> {
       });
     } catch (_error) {
       // Reject all requests in the batch
-      requests.forEach((_request) => {
+      requests.forEach((request) => {
         request.reject(_error);
       });
     }
@@ -324,7 +324,7 @@ class AIResponseOptimizer {
       enableCaching: true,
       ttlMs: 10 * 60 * 1000, // 10 minutes for AI responses
       operationType: "llm-generation",
-      keyGenerator: (prompt: string) => `openai:${btoa(prompt.slice(0, 200))}`,
+      keyGenerator: (...args: unknown[]) => `openai:${btoa((args[0] as string).slice(0, 200))}`,
       ...options,
     });
   }
@@ -334,7 +334,7 @@ class AIResponseOptimizer {
     _data: unknown,
     options: Partial<OptimizationOptions> = {}
   ): Promise<TimeoutResult<T>> {
-    return this.optimizeRequest("data-processing", operation, [data], {
+    return this.optimizeRequest("data-processing", operation, [_data], {
       enableCaching: true,
       enableBatching: true,
       maxBatchSize: 3,
@@ -376,7 +376,7 @@ class AIResponseOptimizer {
     const recommendations: string[] = [];
 
     // Analyze cache performance
-    Object.entries(_cacheStats).forEach(([type, stats]) => {
+    Object.entries(cacheStats).forEach(([type, stats]) => {
       if (stats.hitRate < 30) {
         recommendations.push(
           `Consider increasing cache TTL for ${type} operations`
@@ -390,7 +390,7 @@ class AIResponseOptimizer {
     });
 
     return {
-      cacheHealth: _cacheStats,
+      cacheHealth: cacheStats,
       performanceHealth,
       recommendations: [
         ...recommendations,
@@ -415,7 +415,7 @@ export async function optimizeAICall<T>(
     [],
     options
   );
-  return result.result;
+  return result._result;
 }
 
 export async function optimizeOpenAI<T>(
@@ -428,5 +428,5 @@ export async function optimizeOpenAI<T>(
     prompt,
     options
   );
-  return result.result;
+  return result._result;
 }

@@ -176,7 +176,7 @@ export function ToastProvider({
     removeToast,
     clearAllToasts,
     success,
-    _error,
+    _error: error,
     warning,
     info,
   };

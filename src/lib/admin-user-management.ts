@@ -47,7 +47,7 @@ export async function adminUpdateUserSubscription(
     if (update.paymentHistoryMonths && update.tier !== "free") {
       for (let i = update.paymentHistoryMonths; i > 0; i--) {
         const paymentDate = new Date(currentDate);
-        paymentDate.setMonth(paymentDate.getMonth() - _i);
+        paymentDate.setMonth(paymentDate.getMonth() - i);
 
         paymentHistory.push({
           amount: getPlanPrice(update.tier),
@@ -62,7 +62,7 @@ export async function adminUpdateUserSubscription(
     }
 
     // Prepare update data
-    const updateData: unknown = {
+    const updateData: { [key: string]: any } = {
       subscriptionStatus: update.status,
       subscriptionTier: update.tier,
       updatedAt: serverTimestamp(),
@@ -108,7 +108,7 @@ export async function adminUpdateUserSubscription(
     return;
   } catch (_error) {
     console.error("❌ Error updating user subscription:", _error);
-    throw error;
+    throw _error;
   }
 }
 

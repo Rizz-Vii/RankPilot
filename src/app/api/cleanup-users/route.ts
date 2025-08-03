@@ -250,8 +250,8 @@ export async function POST(): Promise<NextResponse> {
           "Implement tier validation on user registration/updates",
       },
     });
-  } catch (_error) {
-    console.error("Error during user cleanup:", _error);
+  } catch (error) {
+    console.error("Error during user cleanup:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
     return NextResponse.json(

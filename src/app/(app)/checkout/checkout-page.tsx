@@ -94,7 +94,7 @@ export default function CheckoutPage() {
         userId: user.uid,
       });
 
-      const { sessionId } = result.data as { sessionId: string };
+      const { sessionId } = _result.data as { sessionId: string };
 
       // Redirect to Stripe Checkout
       const stripe = await getStripe();
@@ -102,11 +102,11 @@ export default function CheckoutPage() {
 
       await stripe.redirectToCheckout({ sessionId });
     } catch (_error: unknown) {
-      console.error("Checkout _error:", _error);
+      console.error("Checkout error:", _error);
       toast({
         variant: "destructive",
         title: "Checkout Failed",
-        description: error.message || "Something went wrong. Please try again.",
+        description: (_error as Error).message || "Something went wrong. Please try again.",
       });
     } finally {
       setLoading(false);
@@ -268,7 +268,7 @@ export default function CheckoutPage() {
             <CardContent>
               <div className="space-y-3">
                 {features[planId].map((feature, _index) => (
-                  <div key={index} className="flex items-center gap-3">
+                  <div key={_index} className="flex items-center gap-3">
                     <Check className="h-4 w-4 text-success-foreground flex-shrink-0" />
                     <span className="text-sm">{feature}</span>
                   </div>

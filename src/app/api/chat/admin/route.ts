@@ -24,7 +24,7 @@ interface ChatResponse {
     };
 }
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
     try {
         // Parse request body
         const body: AdminChatRequest = await request.json();
@@ -59,13 +59,13 @@ export async function POST(_request: NextRequest) {
             chatType: 'admin'
         });
 
-        return NextResponse.json(result._data);
+        return NextResponse.json(_result.data);
 
-    } catch (_error) {
-        console.error('Admin chat API _error:', _error);
+    } catch (error) {
+        console.error('Admin chat API _error:', error);
 
         // Handle Firebase Function errors
-        if (error && typeof error === 'object' && 'code' in _error) {
+        if (error && typeof error === 'object' && 'code' in error) {
             const firebaseError = error as any;
 
             switch (firebaseError.code) {
@@ -100,7 +100,7 @@ export async function POST(_request: NextRequest) {
 }
 
 // GET endpoint for admin chat history
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const sessionId = searchParams.get('sessionId');

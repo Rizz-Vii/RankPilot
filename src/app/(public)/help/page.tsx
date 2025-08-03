@@ -174,7 +174,7 @@ export default function HelpPage() {
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {supportChannels.map((channel, _index) => (
+            {supportChannels.map((channel, index) => (
               <motion.div
                 key={channel.title}
                 initial="hidden"

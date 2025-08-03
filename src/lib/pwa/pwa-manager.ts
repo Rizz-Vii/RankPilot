@@ -116,7 +116,7 @@ export class PWAManager {
     }
 
     private handleServiceWorkerMessage(_event: MessageEvent) {
-        const { type, payload } = event.data;
+        const { type, payload } = _event.data;
 
         switch (type) {
             case 'SYNC_SUCCESS':
@@ -130,7 +130,7 @@ export class PWAManager {
                 this.showNotification('Analysis Complete', {
                     body: payload.message || 'Your SEO analysis is ready',
                     tag: 'analysis-complete',
-                    _data: { url: '/neuroseo/results' },
+                    data: { url: '/neuroseo/results' },
                     actions: [
                         { action: 'view', title: 'View Results' },
                         { action: 'dismiss', title: 'Dismiss' }
@@ -143,7 +143,7 @@ export class PWAManager {
                 break;
 
             default:
-                console.log('[PWA] Unknown message from service worker:', event._data);
+                console.log('[PWA] Unknown message from service worker:', _event.data);
         }
     }
 
@@ -163,7 +163,7 @@ export class PWAManager {
         const event = new CustomEvent('pwa-install-prompt', {
             detail: { installPrompt: this.installPrompt }
         });
-        window.dispatchEvent(_event);
+        window.dispatchEvent(event);
     }
 
     async installApp(): Promise<boolean> {
@@ -267,8 +267,8 @@ export class PWAManager {
         const rawData = window.atob(base64);
         const outputArray = new Uint8Array(rawData.length);
 
-        for (let i = 0; i < rawData.length; ++_i) {
-            outputArray[i] = rawData.charCodeAt(_i);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
         }
         return outputArray;
     }
@@ -284,7 +284,7 @@ export class PWAManager {
             icon: '/android-chrome-192x192.png',
             badge: '/favicon-32x32.png',
             tag: options.tag || 'default',
-            _data: options._data,
+            data: options.data,
             actions: options.actions || []
         };
 
@@ -336,12 +336,12 @@ export class PWAManager {
 
     private async openIndexedDB(): Promise<IDBDatabase> {
         return new Promise((resolve, reject) => {
-            const _request = indexedDB.open('rankpilot-pwa', 1);
+            const request = indexedDB.open('rankpilot-pwa', 1);
 
-            request.onerror = () => reject(request._error);
-            request.onsuccess = () => resolve(request._result);
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
 
-            request.onupgradeneeded = (_event) => {
+            request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
                 const db = (event.target as IDBOpenDBRequest).result;
 
                 if (!db.objectStoreNames.contains('pending-sync')) {
@@ -364,6 +364,7 @@ export class PWAManager {
 
         for (const _item of this.pendingData) {
             try {
+                const item = _item as { tag: string; _data: unknown; timestamp: number };
                 await this.syncInBackground(item.tag, item._data);
             } catch (_error) {
                 console.error('[PWA] Failed to sync pending _data:', _error);

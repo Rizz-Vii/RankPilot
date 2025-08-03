@@ -27,7 +27,15 @@ interface ChatBotProps {
 
 export default function ChatBot({ className }: ChatBotProps) {
     const { user, profile } = useAuth();
-    const userTier = profile?.subscriptionTier || 'free';
+
+    // Define the expected profile type
+    type Profile = {
+        subscriptionTier?: string;
+        // add other properties if needed
+    };
+
+    const typedProfile = profile as Profile;
+    const userTier = typedProfile?.subscriptionTier || 'free';
     const pathname = usePathname();
 
     // Don't show chatbots on auth pages

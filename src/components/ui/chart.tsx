@@ -103,12 +103,12 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
             ([theme, prefix]) => `
 ${prefix} [data-chart=${id}] {
 ${colorConfig
-  .map(([_key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
-  })
+  .map(([key, itemConfig]) => {
+            const color =
+              itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
+              itemConfig.color;
+            return color ? `  --color-${key}: ${color};` : null;
+          })
   .join("\n")}
 }
 `
@@ -195,9 +195,9 @@ const ChartTooltipContent = React.forwardRef<
       >
         {!nestLabel ? tooltipLabel : null}
         <div className="grid gap-1.5">
-          {payload.map((_item, _index) => {
+          {payload.map((item, index) => {
             const key = `${nameKey || item.name || item.dataKey || "value"}`;
-            const itemConfig = getPayloadConfigFromPayload(config, _item, _key);
+            const itemConfig = getPayloadConfigFromPayload(config, item, key);
             const indicatorColor = color || item.payload.fill || item.color;
 
             return (
@@ -209,7 +209,7 @@ const ChartTooltipContent = React.forwardRef<
                 )}
               >
                 {formatter && item?.value !== undefined && item.name ? (
-                  formatter(item._value, item.name, _item, _index, item.payload)
+                  formatter(item.value, item.name, item, index, item.payload)
                 ) : (
                   <>
                     {itemConfig?.icon ? (
@@ -301,9 +301,9 @@ const ChartLegendContent = React.forwardRef<
           className
         )}
       >
-        {payload.map((_item) => {
+        {payload.map((item) => {
           const key = `${nameKey || item.dataKey || "value"}`;
-          const itemConfig = getPayloadConfigFromPayload(config, _item, _key);
+          const itemConfig = getPayloadConfigFromPayload(config, item, key);
 
           return (
             <div
@@ -336,7 +336,7 @@ ChartLegendContent.displayName = "ChartLegend";
 function getPayloadConfigFromPayload(
   config: ChartConfig,
   payload: unknown,
-  _key: string
+  key: string
 ) {
   if (typeof payload !== "object" || payload === null) {
     return undefined;

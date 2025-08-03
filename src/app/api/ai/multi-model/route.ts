@@ -6,7 +6,7 @@
 import { multiModelOrchestrator, MultiModelRequest } from '@/lib/ai/multi-model-orchestrator';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
     try {
         // Parse request body
         const body = await request.json();
@@ -42,7 +42,7 @@ export async function POST(_request: NextRequest) {
         const result = await multiModelOrchestrator.processRequest(multiModelRequest);
 
         // Return response
-        return NextResponse.json(_result);
+        return NextResponse.json(result);
 
     } catch (_error) {
         console.error('[Multi-Model API] Error:', _error);

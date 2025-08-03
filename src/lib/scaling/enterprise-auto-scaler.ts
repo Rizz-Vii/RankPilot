@@ -227,7 +227,7 @@ export class EnterpriseAutoScaler {
             const result = await this.performScaling(action);
 
             // Post-scaling validation
-            await this.validateScalingSuccess(action, _result);
+            await this.validateScalingSuccess(action, result);
 
             const duration = Date.now() - startTime;
 
@@ -350,13 +350,13 @@ export class EnterpriseAutoScaler {
     }
 
     private analyzeTrends(_data: number[]): { direction: 'up' | 'down' | 'stable'; strength: number; } {
-        if (data.length < 3) return { direction: 'stable', strength: 0 };
+        if (_data.length < 3) return { direction: 'stable', strength: 0 };
 
-        const recent = data.slice(-5);
-        const older = data.slice(-10, -5);
+        const recent = _data.slice(-5);
+        const older = _data.slice(-10, -5);
 
-        const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
-        const olderAvg = older.reduce((a, b) => a + b, 0) / older.length;
+        const recentAvg = recent.reduce((a: number, b: number) => a + b, 0) / recent.length;
+        const olderAvg = older.reduce((a: number, b: number) => a + b, 0) / older.length;
 
         const change = recentAvg - olderAvg;
         const changePercent = Math.abs(change) / olderAvg;
@@ -370,10 +370,10 @@ export class EnterpriseAutoScaler {
     private analyzeSeasonality(_data: number[]): { pattern: 'strong' | 'weak' | 'none'; } {
         // Simplified seasonality analysis
         // In production, would use more sophisticated time series analysis
-        if (data.length < 24) return { pattern: 'none' };
+        if (_data.length < 24) return { pattern: 'none' };
 
         const variance = this.calculateVariance(_data);
-        const mean = data.reduce((a, b) => a + b, 0) / data.length;
+        const mean = _data.reduce((a: number, b: number) => a + b, 0) / _data.length;
         const coefficientOfVariation = Math.sqrt(variance) / mean;
 
         if (coefficientOfVariation > 0.3) return { pattern: 'strong' };
@@ -382,10 +382,10 @@ export class EnterpriseAutoScaler {
     }
 
     private analyzeVolatility(_data: number[]): { level: 'high' | 'medium' | 'low'; } {
-        if (data.length < 5) return { level: 'medium' };
+        if (_data.length < 5) return { level: 'medium' };
 
         const variance = this.calculateVariance(_data);
-        const mean = data.reduce((a, b) => a + b, 0) / data.length;
+        const mean = _data.reduce((a: number, b: number) => a + b, 0) / _data.length;
         const volatility = Math.sqrt(variance) / mean;
 
         if (volatility > 0.4) return { level: 'high' };
@@ -394,23 +394,25 @@ export class EnterpriseAutoScaler {
     }
 
     private calculateVariance(_data: number[]): number {
-        const mean = data.reduce((a, b) => a + b, 0) / data.length;
-        const squaredDifferences = data.map(value => Math.pow(value - mean, 2));
-        return squaredDifferences.reduce((a, b) => a + b, 0) / data.length;
+        const mean = _data.reduce((a: number, b: number) => a + b, 0) / _data.length;
+        const squaredDifferences = _data.map((value: number) => Math.pow(value - mean, 2));
+        return squaredDifferences.reduce((a: number, b: number) => a + b, 0) / _data.length;
     }
 
     private calculateTrendPrediction(trends: unknown, timeHorizon: number): number {
         // Simplified trend extrapolation
+        const trendsData = trends as any;
         const lastValue = this.getLastKnownValue('concurrent_users');
-        const trendMultiplier = trends.direction === 'up' ? 1 + (trends.strength * 0.1) :
-            trends.direction === 'down' ? 1 - (trends.strength * 0.1) : 1;
+        const trendMultiplier = trendsData.direction === 'up' ? 1 + (trendsData.strength * 0.1) :
+            trendsData.direction === 'down' ? 1 - (trendsData.strength * 0.1) : 1;
 
         return lastValue * trendMultiplier;
     }
 
     private calculateSeasonalAdjustment(seasonality: unknown): number {
         // Simplified seasonal adjustment
-        switch (seasonality.pattern) {
+        const seasonalityData = seasonality as any;
+        switch (seasonalityData.pattern) {
             case 'strong': return 1.15; // 15% increase for strong patterns
             case 'weak': return 1.05;   // 5% increase for weak patterns
             default: return 1.0;        // No adjustment
@@ -419,7 +421,8 @@ export class EnterpriseAutoScaler {
 
     private calculateVolatilityBuffer(volatility: unknown): number {
         // Add buffer based on volatility
-        switch (volatility.level) {
+        const volatilityData = volatility as any;
+        switch (volatilityData.level) {
             case 'high': return 50;   // Add 50 units buffer
             case 'medium': return 25; // Add 25 units buffer
             default: return 10;       // Add 10 units buffer
@@ -427,16 +430,20 @@ export class EnterpriseAutoScaler {
     }
 
     private calculatePredictionConfidence(trends: unknown, seasonality: unknown, volatility: unknown): number {
+        const trendsData = trends as any;
+        const seasonalityData = seasonality as any;
+        const volatilityData = volatility as any;
+
         let confidence = 0.7; // Base confidence
 
         // Adjust based on trend strength
-        confidence += trends.strength * 0.2;
+        confidence += trendsData.strength * 0.2;
 
         // Adjust based on seasonality
-        if (seasonality.pattern === 'strong') confidence += 0.1;
+        if (seasonalityData.pattern === 'strong') confidence += 0.1;
 
         // Adjust based on volatility (higher volatility = lower confidence)
-        switch (volatility.level) {
+        switch (volatilityData.level) {
             case 'high': confidence -= 0.3; break;
             case 'medium': confidence -= 0.1; break;
         }
@@ -458,7 +465,7 @@ export class EnterpriseAutoScaler {
         implementationTime: number;
     } {
 
-        const predictedValue = prediction.value;
+        const predictedValue = prediction._value;
         const confidence = prediction.confidence;
 
         // Scale up decision
@@ -567,6 +574,7 @@ export class EnterpriseAutoScaler {
 
     private async validateScalingSuccess(action: ScalingAction, _result: unknown): Promise<void> {
         // Validate that scaling was successful
+        const result = _result as any;
         if (result.newCapacity !== action.targetCapacity) {
             throw new Error(`Scaling target not achieved: expected ${action.targetCapacity}, got ${result.newCapacity}`);
         }

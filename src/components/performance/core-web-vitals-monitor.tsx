@@ -31,7 +31,7 @@ interface WebVitalsData {
     fcp: number; // First Contentful Paint
 }
 
-const getMetricRating = (_value: number, thresholds: { good: number; poor: number; }): 'good' | 'needs-improvement' | 'poor' => {
+const getMetricRating = (value: number, thresholds: { good: number; poor: number; }): 'good' | 'needs-improvement' | 'poor' => {
     if (value <= thresholds.good) return 'good';
     if (value <= thresholds.poor) return 'needs-improvement';
     return 'poor';
@@ -60,27 +60,32 @@ export function CoreWebVitalsMonitor() {
                 const vitalsData: Partial<WebVitalsData> = {};
 
                 onCLS((metric: unknown) => {
-                    vitalsData.cls = metric.value;
+                    const m = metric as { value: number };
+                    vitalsData.cls = m.value;
                     updateVitals(vitalsData);
                 });
 
                 onINP((metric: unknown) => {
-                    vitalsData.fid = metric.value; // Using INP as FID replacement
+                    const m = metric as { value: number };
+                    vitalsData.fid = m.value; // Using INP as FID replacement
                     updateVitals(vitalsData);
                 });
 
                 onFCP((metric: unknown) => {
-                    vitalsData.fcp = metric.value;
+                    const m = metric as { value: number };
+                    vitalsData.fcp = m.value;
                     updateVitals(vitalsData);
                 });
 
                 onLCP((metric: unknown) => {
-                    vitalsData.lcp = metric.value;
+                    const m = metric as { value: number };
+                    vitalsData.lcp = m.value;
                     updateVitals(vitalsData);
                 });
 
                 onTTFB((metric: unknown) => {
-                    vitalsData.ttfb = metric.value;
+                    const m = metric as { value: number };
+                    vitalsData.ttfb = m.value;
                     updateVitals(vitalsData);
                 });
 
@@ -89,7 +94,7 @@ export function CoreWebVitalsMonitor() {
             }
         };
 
-        const updateVitals = (_data: Partial<WebVitalsData>) => {
+        const updateVitals = (data: Partial<WebVitalsData>) => {
             setVitals(prev => ({ ...prev, ...data } as WebVitalsData));
         };
 
@@ -208,7 +213,7 @@ export function CoreWebVitalsMonitor() {
                                     </p>
                                     <p className={cn(typography.card._value, "text-lg font-bold")}>
                                         {metric.name === 'CLS'
-                                            ? metric.value.toFixed(3)
+                                            ? metric._value.toFixed(3)
                                             : Math.round(metric._value)
                                         }{metric.unit}
                                     </p>
@@ -253,9 +258,9 @@ export function CoreWebVitalsWidget() {
                     }
                 };
 
-                onCLS((metric: unknown) => { metrics.cls = metric.value; updateScore(); });
-                onINP((metric: unknown) => { metrics.fid = metric.value; updateScore(); }); // Using INP as FID replacement
-                onLCP((metric: unknown) => { metrics.lcp = metric.value; updateScore(); });
+                onCLS((metric: unknown) => { metrics.cls = (metric as { value: number }).value; updateScore(); });
+                onINP((metric: unknown) => { metrics.fid = (metric as { value: number }).value; updateScore(); }); // Using INP as FID replacement
+                onLCP((metric: unknown) => { metrics.lcp = (metric as { value: number }).value; updateScore(); });
 
             } catch (_error) {
                 console.warn('Web Vitals widget not available:', _error);

@@ -20,5 +20,6 @@ export async function getSerpData(input: unknown) {
 }
 
 export async function auditUrl(input: unknown) {
-    return { url: input.url, overallScore: 85, items: [], remainingQuota: 100 };
+    const url = typeof input === 'object' && input !== null && 'url' in input ? (input as { url: string }).url : '';
+    return { url, overallScore: 85, items: [], remainingQuota: 100 };
 }

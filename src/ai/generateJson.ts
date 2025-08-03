@@ -36,9 +36,10 @@ export async function generateJson(
       },
     });
 
-    // CORRECTED: The 'result' is the final, parsed output object. No .output() method is needed.
-    return result;
+    // CORRECTED: The '_result' is the final, parsed output object. No .output() method is needed.
+    return _result;
   } catch (_error: unknown) {
+    const error = _error as Error;
     console.warn("Primary AI provider (Google) failed. Reason:", error.message);
     // If it's a service _error, try the fallback. Otherwise, fail fast.
     if (
@@ -54,7 +55,7 @@ export async function generateJson(
   // --- Attempt 2: Fallback Provider (OpenAI) ---
   try {
     // For the fallback, we manually provide the JSON schema in the prompt
-    const openAISystemPrompt = `${systemPrompt}\n\nCRITICAL: Your entire response MUST be a single, valid JSON object that strictly adheres to the following JSON Schema: ${JSON.stringify(
+    const openAISystemPrompt = `${systemPrompt}\n\nCRITICAL: Your entire _response MUST be a single, valid JSON object that strictly adheres to the following JSON Schema: ${JSON.stringify(
       zodToJsonSchema(outputSchema)
     )}`;
 
@@ -67,7 +68,7 @@ export async function generateJson(
       response_format: { type: "json_object" },
     });
 
-    const text = response.choices[0].message.content;
+    const text = _response.choices[0].message.content;
     if (!text) throw new Error("OpenAI returned no content.");
 
     const jsonOutput = JSON.parse(text);
@@ -76,7 +77,7 @@ export async function generateJson(
   } catch (fallbackError: unknown) {
     console.error(
       "Fallback AI provider (OpenAI) also failed:",
-      fallbackError.message
+      (fallbackError as Error).message
     );
     throw new Error(
       "All available AI providers failed. Please try again later."

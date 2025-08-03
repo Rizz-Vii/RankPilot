@@ -181,7 +181,7 @@ export default function SiteFooter() {
               type="email"
               placeholder="Enter your email address"
               value={emailSubscription}
-              onChange={(e) => setEmailSubscription(e.target._value)}
+              onChange={(e) => setEmailSubscription(e.target.value)}
               required
               className="flex-1"
               disabled={isSubscribing}
@@ -258,7 +258,7 @@ export default function SiteFooter() {
           </motion.div>
 
           {/* Footer Sections */}
-          {Object.entries(footerSections).map(([_key, section], _index) => (
+          {Object.entries(footerSections).map(([key, section], index) => (
             <motion.nav
               key={key}
               className="lg:col-span-1"

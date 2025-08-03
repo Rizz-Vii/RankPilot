@@ -344,13 +344,17 @@ export function getUpgradeMessage(
  */
 export function validateUserAccess(userAccess: unknown): userAccess is UserAccess {
   return (
-    userAccess &&
-    typeof userAccess.role === "string" &&
-    ["admin", "user"].includes(userAccess.role) &&
-    typeof userAccess.tier === "string" &&
-    TIER_HIERARCHY.includes(userAccess.tier) &&
-    typeof userAccess.status === "string" &&
-    ["active", "canceled", "past_due", "free"].includes(userAccess.status)
+    typeof userAccess === "object" &&
+    userAccess !== null &&
+    "role" in userAccess &&
+    "tier" in userAccess &&
+    "status" in userAccess &&
+    typeof (userAccess as any).role === "string" &&
+    ["admin", "user"].includes((userAccess as any).role) &&
+    typeof (userAccess as any).tier === "string" &&
+    TIER_HIERARCHY.includes((userAccess as any).tier) &&
+    typeof (userAccess as any).status === "string" &&
+    ["active", "canceled", "past_due", "free"].includes((userAccess as any).status)
   );
 }
 
@@ -358,23 +362,34 @@ export function validateUserAccess(userAccess: unknown): userAccess is UserAcces
  * Normalize user data from database
  */
 export function normalizeUserAccess(dbUser: unknown): UserAccess {
+  // Ensure dbUser is an object
+  if (typeof dbUser !== "object" || dbUser === null) {
+    return {
+      role: "user",
+      tier: "free",
+      status: "free",
+    };
+  }
+
+  const userObj = dbUser as Record<string, any>;
+
   // Handle admin tier mapping - admin tier gets enterprise features with admin role
   let mappedTier: SubscriptionTier;
   let mappedRole: UserRole;
 
-  if (dbUser.subscriptionTier === "admin" || dbUser.tier === "admin") {
+  if (userObj.subscriptionTier === "admin" || userObj.tier === "admin") {
     mappedTier = "enterprise"; // Admin gets enterprise-level features
     mappedRole = "admin"; // But with admin role for special permissions
   } else {
-    mappedRole = (dbUser.role === "admin" ? "admin" : "user") as UserRole;
-    mappedTier = (TIER_HIERARCHY.includes(dbUser.subscriptionTier)
-      ? dbUser.subscriptionTier
+    mappedRole = (userObj.role === "admin" ? "admin" : "user") as UserRole;
+    mappedTier = (TIER_HIERARCHY.includes(userObj.subscriptionTier)
+      ? userObj.subscriptionTier
       : "free") as SubscriptionTier;
   }
 
   return {
     role: mappedRole,
     tier: mappedTier,
-    status: dbUser.subscriptionStatus || "free",
+    status: userObj.subscriptionStatus || "free",
   };
 }

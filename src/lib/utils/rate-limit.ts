@@ -37,7 +37,7 @@ class RateLimiter {
         const key = token;
 
         // Get or create entry
-        let entry = this.requests.get(_key);
+        let entry = this.requests.get(key);
 
         if (!entry || now > entry.resetTime) {
             // Create new entry or reset expired one
@@ -45,7 +45,7 @@ class RateLimiter {
                 count: 1,
                 resetTime: now + this.config.interval
             };
-            this.requests.set(_key, entry);
+            this.requests.set(key, entry);
             return;
         }
 
@@ -56,7 +56,7 @@ class RateLimiter {
 
         // Increment count
         entry.count++;
-        this.requests.set(_key, entry);
+        this.requests.set(key, entry);
     }
 
     private cleanup(): void {
@@ -70,7 +70,7 @@ class RateLimiter {
         }
 
         for (const key of toDelete) {
-            this.requests.delete(_key);
+            this.requests.delete(key);
         }
 
         // Prevent memory leak by limiting total entries
@@ -80,7 +80,7 @@ class RateLimiter {
 
             const toRemove = entries.slice(0, entries.length - this.config.uniqueTokenPerInterval);
             for (const [key] of toRemove) {
-                this.requests.delete(_key);
+                this.requests.delete(key);
             }
         }
     }

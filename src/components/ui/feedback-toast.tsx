@@ -25,7 +25,9 @@ export function FeedbackToast() {
     <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
       <AnimatePresence>
         {feedback.map(({ message, type, id }) => {
-          const Icon = iconMap[type];
+          // Map 'error' to '_error' for compatibility with iconMap and colorMap
+          const mappedType = type === "error" ? "_error" : type;
+          const Icon = iconMap[mappedType];
           return (
             <motion.div
               key={id}
@@ -33,7 +35,7 @@ export function FeedbackToast() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
               className={`
-                ${colorMap[type]}
+                ${colorMap[mappedType]}
                 rounded-lg shadow-lg p-4 pr-12
                 flex items-center gap-3 relative
                 cursor-pointer

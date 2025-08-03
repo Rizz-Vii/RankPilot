@@ -171,7 +171,7 @@ export default function SecurityPage() {
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {securityFeatures.map((feature, _index) => (
+            {securityFeatures.map((feature, index) => (
               <motion.div
                 key={feature.title}
                 initial="hidden"
@@ -215,7 +215,7 @@ export default function SecurityPage() {
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {complianceItems.map((_item, _index) => (
+            {complianceItems.map((item, index) => (
               <motion.div
                 key={item.title}
                 initial="hidden"
@@ -293,7 +293,7 @@ export default function SecurityPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {dataHandling.map((_item, _index) => (
+                    {dataHandling.map((item, index) => (
                       <motion.tr
                         key={item.category}
                         initial="hidden"

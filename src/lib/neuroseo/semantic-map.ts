@@ -245,7 +245,7 @@ export class SemanticMap {
   private findRelatedTerms(words: string[], indicators: string[]): string[] {
     const related: string[] = [];
 
-    words.forEach((word, _index) => {
+    words.forEach((word, index) => {
       if (indicators.some((indicator) => word.includes(indicator))) {
         // Add surrounding words as context
         const start = Math.max(0, index - 2);
@@ -673,7 +673,7 @@ export class SemanticMap {
       });
 
       // Add keyword nodes for each topic
-      cluster.keywords.slice(0, 5).forEach((keyword, _index) => {
+      cluster.keywords.slice(0, 5).forEach((keyword, index) => {
         const keywordId = `${cluster.id}-keyword-${index}`;
         nodes.push({
           id: keywordId,

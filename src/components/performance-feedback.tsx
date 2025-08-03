@@ -281,7 +281,7 @@ export function PerformanceFeedback({
               <Textarea
                 placeholder="Tell us about your experience..."
                 value={feedback}
-                onChange={(e) => setFeedback(e.target._value)}
+                onChange={(e) => setFeedback(e.target.value)}
                 className="mt-1 min-h-[80px]"
               />
             </div>

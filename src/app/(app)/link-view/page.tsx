@@ -64,8 +64,8 @@ const DomainAuthorityChart = ({
 
   backlinks.forEach((link) => {
     const _index = Math.floor(link.domainAuthority / 10.01);
-    if (daRanges[index]) {
-      daRanges[index].count++;
+    if (daRanges[_index]) {
+      daRanges[_index].count++;
     }
   });
 
@@ -174,7 +174,7 @@ export default function LinkViewPage() {
         block: "start",
       });
     }
-  }, [results, error]);
+  }, [results, _error]);
 
   const handleSubmit = async (values: { url: string; }) => {
     setIsLoading(true);
@@ -189,7 +189,7 @@ export default function LinkViewPage() {
         limit: 100
       };
       const result = await analyzeLinks(analysisInput);
-      setResults(_result);
+      setResults(result);
 
       if (user) {
         const userActivitiesRef = collection(
@@ -208,7 +208,7 @@ export default function LinkViewPage() {
       }
     } catch (e: unknown) {
       setError(
-        e.message || "An unexpected error occurred during link analysis."
+        e instanceof Error ? e.message : "An unexpected error occurred during link analysis."
       );
     } finally {
       setIsLoading(false);
@@ -242,7 +242,7 @@ export default function LinkViewPage() {
                 <LoadingScreen text="Discovering backlinks..." />
               </motion.div>
             )}
-            {error && (
+            {_error && (
               <motion.div
                 key="error"
                 initial={{ opacity: 0, y: 10 }}
@@ -256,7 +256,7 @@ export default function LinkViewPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p>{error}</p>
+                    <p>{_error}</p>
                   </CardContent>
                 </Card>
               </motion.div>

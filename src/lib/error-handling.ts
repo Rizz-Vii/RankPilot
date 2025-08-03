@@ -28,7 +28,7 @@ export class AppError extends Error {
   }
 }
 
-export function handleError(error: unknown, _req: NextRequest): NextResponse {
+export function handleError(error: unknown, req: NextRequest): NextResponse {
   // Log the error
   if (error instanceof Error) {
     const errorContext = {

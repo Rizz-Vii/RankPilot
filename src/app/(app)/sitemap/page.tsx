@@ -372,7 +372,7 @@ export default function Sitemap() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {quickActions.map((action, _index) => (
+                {quickActions.map((action, index) => (
                   <Link key={index} href={action.href}>
                     <Button
                       variant={action.variant}
@@ -404,7 +404,7 @@ export default function Sitemap() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {popularPages.map((page, _index) => (
+                {popularPages.map((page, index) => (
                   <Link key={index} href={page.href}>
                     <div className="p-4 rounded-lg border hover:bg-muted/50 transition-colors group">
                       <div className="flex items-center justify-between">

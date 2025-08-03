@@ -65,7 +65,7 @@ const SeoScoreGauge = ({ score }: { score: number; }) => {
   return (
     <ResponsiveContainer width="100%" height={150}>
       <RadialBarChart
-        data={data}
+        data={_data}
         startAngle={180}
         endAngle={0}
         innerRadius="70%"
@@ -73,7 +73,7 @@ const SeoScoreGauge = ({ score }: { score: number; }) => {
         barSize={20}
       >
         <PolarGrid gridType="circle" radialLines={false} stroke="none" />
-        <RadialBar background dataKey="value" cornerRadius={10} />
+        <RadialBar background dataKey="_value" cornerRadius={10} />
         <text
           x="50%"
           y="75%"
@@ -164,7 +164,7 @@ const BriefResults = ({ briefResult }: { briefResult: ContentBriefOutput; }) => 
           description="What top-ranking pages are doing right."
         >
           <ul className="space-y-2 list-disc pl-5 font-body">
-            {briefResult.competitorInsights.map((insight, _i) => (
+            {briefResult.competitorInsights.map((insight, i) => (
               <li
                 key={i}
                 className="p-1 rounded transition-colors hover:bg-muted/50"
@@ -181,7 +181,7 @@ const BriefResults = ({ briefResult }: { briefResult: ContentBriefOutput; }) => 
         description="A logical structure for the article."
       >
         <ul className="space-y-2 list-disc pl-5">
-          {briefResult.llmGeneratedOutline.map((heading, _i) => (
+          {briefResult.llmGeneratedOutline.map((heading, i) => (
             <li
               key={i}
               className="font-body p-1 -ml-1 rounded transition-colors hover:bg-muted/50"
@@ -215,7 +215,7 @@ export default function ContentBriefPage() {
         block: "start",
       });
     }
-  }, [briefResult, error]);
+  }, [briefResult, _error]);
 
   const handleSubmit = async (values: { keyword: string; }) => {
     setIsLoading(true);
@@ -232,7 +232,7 @@ export default function ContentBriefPage() {
         contentType: 'blog post'
       };
       const result = await generateContentBrief(contentBriefInput);
-      setBriefResult(_result);
+      setBriefResult(result);
 
       if (user) {
         const userActivitiesRef = collection(
@@ -253,7 +253,8 @@ export default function ContentBriefPage() {
         });
       }
     } catch (e: unknown) {
-      setError(e.message || "An unexpected error occurred.");
+      const errorMessage = e instanceof Error ? e.message : "An unexpected error occurred.";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -282,7 +283,7 @@ export default function ContentBriefPage() {
               <LoadingScreen text="Generating your content brief..." />
             )}
 
-            {error && (
+            {_error && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -296,7 +297,7 @@ export default function ContentBriefPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="font-body text-destructive-foreground">
-                      {error}
+                      {_error}
                     </p>
                   </CardContent>
                 </Card>

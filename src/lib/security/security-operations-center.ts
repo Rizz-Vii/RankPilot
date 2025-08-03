@@ -265,7 +265,7 @@ export class SecurityOperationsCenter extends EventEmitter {
         rule: string;
         severity: SecurityAlert['severity'];
         source: SecurityAlert['source'];
-        _event: SecurityAlert['event'];
+        _event: SecurityAlert['_event'];
         rawData?: Record<string, any>;
     }): Promise<SecurityAlert> {
         try {
@@ -406,7 +406,7 @@ export class SecurityOperationsCenter extends EventEmitter {
     async updateIncident(incidentId: string, updates: {
         status?: SecurityIncident['status'];
         investigation?: Partial<SecurityIncident['investigation']>;
-        response?: Partial<SecurityIncident['response']>;
+        _response?: Partial<SecurityIncident['_response']>;
         notes?: string;
         analyst?: string;
     }): Promise<SecurityIncident> {
@@ -498,7 +498,7 @@ export class SecurityOperationsCenter extends EventEmitter {
                 status: 'running' as 'running' | 'completed' | 'failed' | 'cancelled',
                 startTime: Date.now(),
                 endTime: undefined as number | undefined,
-                results: [] as unknown[],
+                results: [] as { stepId: string; status: 'success' | 'failure' | 'skipped'; output?: unknown; error?: string }[],
                 currentStep: 0
             };
 
@@ -531,7 +531,7 @@ export class SecurityOperationsCenter extends EventEmitter {
                     execution.results.push({
                         stepId: step.id,
                         status: 'failure',
-                        _error: error instanceof Error ? (error as Error).message : 'Unknown error'
+                        error: _error instanceof Error ? (_error as Error).message : 'Unknown error'
                     });
 
                     // Check for failure handling
@@ -607,7 +607,7 @@ export class SecurityOperationsCenter extends EventEmitter {
         // Calculate resolution times
         const resolvedIncidents = closedIncidents.filter(i => i.timeline.detected && i.timeline.closed);
         const averageResolutionTime = resolvedIncidents.length > 0
-            ? resolvedIncidents.reduce((sum, _i) => sum + (i.timeline.closed! - i.timeline.detected), 0) / resolvedIncidents.length / 60000 // minutes
+            ? resolvedIncidents.reduce((sum, _i) => sum + (_i.timeline.closed! - _i.timeline.detected), 0) / resolvedIncidents.length / 60000 // minutes
             : 0;
 
         // Calculate alert metrics
@@ -824,9 +824,9 @@ export class SecurityOperationsCenter extends EventEmitter {
 
         for (const indicator of this.threatIntelligence.values()) {
             // Check if alert contains indicators
-            const alertData = JSON.stringify(alert.event.rawData);
+            const alertData = JSON.stringify(alert._event.rawData);
             if (alertData.includes(indicator._value)) {
-                threatMatches.push(`${indicator.type}:${indicator.value} (${indicator.severity})`);
+                threatMatches.push(`${indicator.type}:${indicator._value} (${indicator.severity})`);
             }
         }
 
@@ -839,7 +839,7 @@ export class SecurityOperationsCenter extends EventEmitter {
         }
 
         // Mock geolocation enrichment
-        if (alert.event.rawData?.sourceIp) {
+        if (alert._event.rawData?.sourceIp) {
             alert.enrichment.geoLocation = 'US-CA-San Francisco';
         }
 
@@ -866,18 +866,18 @@ export class SecurityOperationsCenter extends EventEmitter {
                 this.alerts.set(alert.id, alert);
 
             } catch (_error) {
-                if (error instanceof NetworkError) {
+                if (_error instanceof NetworkError) {
                     // Retry logic for network errors
-                    console.warn('[SecurityOperationsCenter] Network error during alert processing, retrying:', (error as Error).message);
+                    console.warn('[SecurityOperationsCenter] Network error during alert processing, retrying:', (_error as Error).message);
                     this.alertProcessingQueue.push(alert); // Re-queue the alert for retry
-                } else if (error instanceof DataCorruptionError) {
+                } else if (_error instanceof DataCorruptionError) {
                     // Skip and notify for data corruption
-                    console.error('[SecurityOperationsCenter] Data corruption detected in alert, skipping:', (error as Error).message);
-                    this.emit('alert-processing-error', { alertId: alert.id, _error: (error as Error).message, type: 'data-corruption' });
+                    console.error('[SecurityOperationsCenter] Data corruption detected in alert, skipping:', (_error as Error).message);
+                    this.emit('alert-processing-error', { alertId: alert.id, _error: (_error as Error).message, type: 'data-corruption' });
                 } else {
                     // Generic error handling
                     console.error('[SecurityOperationsCenter] Unexpected alert processing _error:', _error);
-                    this.emit('alert-processing-error', { alertId: alert.id, _error: error instanceof Error ? (error as Error).message : String(_error), type: 'unknown' });
+                    this.emit('alert-processing-error', { alertId: alert.id, _error: _error instanceof Error ? (_error as Error).message : String(_error), type: 'unknown' });
                 }
             }
         }
@@ -898,7 +898,7 @@ export class SecurityOperationsCenter extends EventEmitter {
         if (alert.severity === 'critical' || similarAlerts.length >= 3) {
             await this.createIncident({
                 title: `${alert.rule} - ${alert.severity.toUpperCase()}`,
-                description: alert.event.description,
+                description: alert._event.description,
                 severity: alert.severity,
                 category: this.mapAlertCategoryToIncidentCategory(alert.rule),
                 source: {
@@ -943,7 +943,7 @@ export class SecurityOperationsCenter extends EventEmitter {
                 this.emit('notification-sent', {
                     channel: step.parameters.channel,
                     priority: step.parameters.priority,
-                    message: `Security incident requires attention: ${context.incidentId}`
+                    message: `Security incident requires attention: ${(context as { incidentId?: string }).incidentId}`
                 });
                 return { _result: 'Notification sent' };
 

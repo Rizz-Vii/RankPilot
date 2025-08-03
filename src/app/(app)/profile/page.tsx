@@ -110,11 +110,11 @@ export default function ProfilePage() {
                   {activities?.filter((a) => a.type === "audit").length || 0}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  This month:{" "}
+                  This month: {" "}
                   {activities?.filter(
                     (a) =>
                       a.type === "audit" &&
-                      new Date(a.timestamp.toDate()).getMonth() ===
+                      new Date((a as { timestamp: any }).timestamp.toDate()).getMonth() ===
                       new Date().getMonth()
                   ).length || 0}
                 </p>
@@ -132,11 +132,11 @@ export default function ProfilePage() {
                     .length || 0}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  This month:{" "}
+                  This month: {" "}
                   {activities?.filter(
                     (a) =>
                       a.type === "keyword-research" &&
-                      new Date(a.timestamp.toDate()).getMonth() ===
+                      new Date((a as { timestamp: any }).timestamp.toDate()).getMonth() ===
                       new Date().getMonth()
                   ).length || 0}
                 </p>
@@ -154,11 +154,11 @@ export default function ProfilePage() {
                     .length || 0}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  This month:{" "}
+                  This month: {" "}
                   {activities?.filter(
                     (a) =>
                       a.type === "serp-analysis" &&
-                      new Date(a.timestamp.toDate()).getMonth() ===
+                      new Date((a as { timestamp: any }).timestamp.toDate()).getMonth() ===
                       new Date().getMonth()
                   ).length || 0}
                 </p>

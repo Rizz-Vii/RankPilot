@@ -137,48 +137,48 @@ export class ZeroTrustOrchestrator extends EventEmitter {
             const sessionId = this.generateSessionId();
 
             // Generate device fingerprint if not provided
-            const deviceFingerprint = request.deviceFingerprint ||
+            const deviceFingerprint = _request.deviceFingerprint ||
                 createHash('sha256')
-                    .update(request.userAgent + request.ipAddress)
+                    .update(_request.userAgent + _request.ipAddress)
                     .digest('hex');
 
             // Calculate initial risk score
             const riskScore = await this.calculateRiskScore({
-                userId: request.userId,
-                ipAddress: request.ipAddress,
+                userId: _request.userId,
+                ipAddress: _request.ipAddress,
                 deviceFingerprint,
-                userAgent: request.userAgent,
-                authFactors: request.authenticationFactors
+                userAgent: _request.userAgent,
+                authFactors: _request.authenticationFactors
             });
 
             // Determine trust level based on risk score
-            const trustLevel = this.determineTrustLevel(riskScore, request.authenticationFactors);
+            const trustLevel = this.determineTrustLevel(riskScore, _request.authenticationFactors);
 
             // Get user permissions based on trust level
-            const permissions = await this.getUserPermissions(request.userId, trustLevel);
+            const permissions = await this.getUserPermissions(_request.userId, trustLevel);
 
             // Create session
             const session: ZeroTrustSession = {
                 id: sessionId,
-                userId: request.userId,
+                userId: _request.userId,
                 deviceFingerprint,
-                ipAddress: request.ipAddress,
+                ipAddress: _request.ipAddress,
                 riskScore,
                 trustLevel,
                 permissions,
                 context: {
-                    userAgent: request.userAgent,
+                    userAgent: _request.userAgent,
                     timestamp: Date.now(),
                     lastActivity: Date.now(),
                     activityPattern: []
                 },
                 verification: {
-                    factors: request.authenticationFactors as unknown[],
-                    strength: this.calculateAuthStrength(request.authenticationFactors),
+                    factors: _request.authenticationFactors as ('password' | 'mfa' | 'biometric' | 'device' | 'location')[],
+                    strength: this.calculateAuthStrength(_request.authenticationFactors),
                     lastVerification: Date.now()
                 },
                 restrictions: {
-                    allowedResources: await this.getAllowedResources(request.userId, trustLevel),
+                    allowedResources: await this.getAllowedResources(_request.userId, trustLevel),
                     deniedActions: [],
                     timeLimit: trustLevel === 'untrusted' ? 900000 : undefined // 15 minutes for untrusted
                 }
@@ -194,7 +194,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
             // Log session creation
             this.emit('session-created', {
                 sessionId,
-                userId: request.userId,
+                userId: _request.userId,
                 riskScore,
                 trustLevel,
                 timestamp: Date.now()
@@ -234,7 +234,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
             }
 
             // Update activity pattern
-            session.context.activityPattern.push(request.action);
+            session.context.activityPattern.push(_request.action);
             session.context.lastActivity = Date.now();
 
             // Behavioral analysis
@@ -272,7 +272,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
             }
 
             // Check resource permissions
-            if (!this.hasResourceAccess(session, request.resource)) {
+            if (!this.hasResourceAccess(session, _request.resource)) {
                 return {
                     allowed: false,
                     reason: 'Insufficient permissions',
@@ -281,7 +281,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
             }
 
             // Check action restrictions
-            if (session.restrictions.deniedActions.includes(request.action)) {
+            if (session.restrictions.deniedActions.includes(_request.action)) {
                 return {
                     allowed: false,
                     reason: 'Action restricted due to risk level',
@@ -291,7 +291,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
 
             // Continuous verification for high-risk actions
             const highRiskActions = ['admin-actions', 'data-export', 'sensitive-data', 'user-management'];
-            if (highRiskActions.includes(request.action) && session.riskScore > 50) {
+            if (highRiskActions.includes(_request.action) && session.riskScore > 50) {
                 const timeSinceLastVerification = Date.now() - session.verification.lastVerification;
                 if (timeSinceLastVerification > 600000) { // 10 minutes
                     return {
@@ -591,7 +591,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
 
         // Check request frequency
         const recentActivity = session.context.activityPattern.slice(-10);
-        const duplicateActions = recentActivity.filter(action => action === request.action).length;
+        const duplicateActions = recentActivity.filter(action => action === _request.action).length;
         if (duplicateActions > 5) {
             anomalyScore += 0.3;
             reasons.push('Repeated action pattern detected');
@@ -631,7 +631,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
             }
 
             // Check resource access
-            if (policy.conditions.resourceTypes.includes(request.resource)) {
+            if (policy.conditions.resourceTypes.includes(_request.resource)) {
                 if (policy.actions.requireMFA && !session.verification.factors.includes('mfa')) {
                     violations.push('MFA required for this resource');
                     requiredActions.push('enable-mfa');

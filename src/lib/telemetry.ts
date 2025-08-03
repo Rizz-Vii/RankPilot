@@ -129,14 +129,14 @@ export function createSpan<T>(name: string, fn: () => T): T {
     if (tracer) {
       // If a tracer is available, start an active span.
       // The function `fn` will be executed within the context of this span.
-      return tracer.startActiveSpan(name, (span: unknown) => {
+      return tracer.startActiveSpan(name, (span: any) => {
         try {
-          const _result = fn(); // Execute the provided function
+          const result = fn(); // Execute the provided function
           span.end(); // End the span after function execution
           return result;
         } catch (err: unknown) {
           // Catch errors during function execution
-          span.recordException(err); // Record the exception on the span
+          span.recordException?.(err); // Record the exception on the span if available
           span.end(); // End the span even if an error occurred
           throw err; // Re-throw the error to propagate it
         }
@@ -145,7 +145,7 @@ export function createSpan<T>(name: string, fn: () => T): T {
       // Fallback behavior if no tracer is available (e.g., in development mode
       // or if telemetry initialization failed).
       const startTime = Date.now();
-      const _result = fn();
+      const result = fn();
       const duration = Date.now() - startTime;
       if (process.env.NODE_ENV === "development") {
         // In development, log the span name and duration to the console.
@@ -158,6 +158,6 @@ export function createSpan<T>(name: string, fn: () => T): T {
   } catch (_error) {
     // Catch any errors that occur during the span creation or fallback process.
     console.error(`Error in createSpan for ${name}:`, _error);
-    throw error; // Re-throw the error
+    throw _error; // Re-throw the error
   }
 }

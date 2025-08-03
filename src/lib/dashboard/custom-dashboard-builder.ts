@@ -341,7 +341,7 @@ export class CustomDashboardBuilder {
 
             return {
                 widgetId,
-                _data,
+                data,
                 timestamp: Date.now(),
                 refreshInterval: dataSource.refreshInterval
             };
@@ -378,7 +378,7 @@ export class CustomDashboardBuilder {
     }> {
         const dashboard = this.dashboards.get(dashboardId);
         if (!dashboard) {
-            return { success: false, _error: 'Dashboard not found' };
+            return { success: false, error: 'Dashboard not found' };
         }
 
         try {
@@ -392,13 +392,13 @@ export class CustomDashboardBuilder {
                 case 'json':
                     return await this.exportToJSON(exportData);
                 default:
-                    return { success: false, _error: 'Unsupported export format' };
+                    return { success: false, error: 'Unsupported export format' };
             }
         } catch (_error) {
             console.error('[DashboardBuilder] Export _error:', _error);
             return {
                 success: false,
-                _error: error instanceof Error ? error.message : 'Export failed'
+                error: _error instanceof Error ? _error.message : 'Export failed'
             };
         }
     }
@@ -659,11 +659,18 @@ export class CustomDashboardBuilder {
     }
 
     private setupRealTimeUpdate(widgetId: string, dataSource: unknown): void {
-        if (dataSource.refreshInterval && dataSource.refreshInterval > 0) {
+        if (
+            typeof dataSource === 'object' &&
+            dataSource !== null &&
+            'refreshInterval' in dataSource &&
+            typeof (dataSource as { refreshInterval?: number }).refreshInterval === 'number' &&
+            (dataSource as { refreshInterval?: number }).refreshInterval! > 0
+        ) {
+            const refreshInterval = (dataSource as { refreshInterval: number }).refreshInterval;
             const interval = setInterval(async () => {
                 // Emit real-time update event
                 console.log(`[DashboardBuilder] Real-time update for widget ${widgetId}`);
-            }, dataSource.refreshInterval * 1000);
+            }, refreshInterval * 1000);
 
             this.realTimeSubscriptions.set(widgetId, interval);
         }
@@ -677,7 +684,18 @@ export class CustomDashboardBuilder {
         }
     }
 
-    private async generateExportData(dashboard: DashboardLayout, options?: unknown): Promise<any> {
+    private async generateExportData(
+        dashboard: DashboardLayout,
+        options?: {
+            includeData?: boolean;
+            dateRange?: { start: string; end: string; };
+            branding?: {
+                logo?: string;
+                companyName?: string;
+                colors?: Record<string, string>;
+            };
+        }
+    ): Promise<any> {
         const exportData = {
             dashboard: {
                 name: dashboard.name,

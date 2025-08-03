@@ -262,7 +262,7 @@ export default function PricingPage() {
 
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-3 gap-8 mb-16">
-          {plans.map((plan, _index) => (
+          {plans.map((plan, index) => (
             <motion.div
               key={plan.id}
               initial={{ opacity: 0, y: 20 }}
@@ -389,7 +389,7 @@ export default function PricingPage() {
                             {category.category}
                           </td>
                         </tr>
-                        {category.items.map((_item, idx) => (
+                        {category.items.map((item, idx) => (
                           <tr key={idx} className="border-b border-muted">
                             <td className="p-4">{item.name}</td>
                             <td className="p-4 text-center text-sm">

@@ -438,7 +438,7 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
 
         const _response: IncidentResponse = {
             id: responseId,
-            incidentId: incident.id,
+            incidentId: (incident as any).id,
             triggeredAt: startTime,
             responseTime: 0,
             status: 'initiated',
@@ -476,7 +476,7 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
         }
 
         this.emit('responseInitiated', _response);
-        return response;
+        return _response;
     }
 
     /**
@@ -487,14 +487,14 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
             const matches = playbook.triggers.every(trigger => {
                 switch (trigger.type) {
                     case 'severity':
-                        return incident.severity === trigger.value;
+                        return (incident as any).severity === trigger._value;
                     case 'category':
-                        return incident.category === trigger.value;
+                        return (incident as any).category === trigger._value;
                     case 'source':
-                        return incident.source === trigger.value;
+                        return (incident as any).source === trigger._value;
                     case 'indicator':
-                        return incident.indicators?.some((ind: string) =>
-                            trigger.condition === 'contains' ? ind.includes(trigger._value) : ind === trigger._value
+                        return (incident as any).indicators?.some((ind: string) =>
+                            trigger.condition === 'contains' ? ind.includes(String(trigger._value)) : ind === trigger._value
                         );
                     default:
                         return false;
@@ -519,21 +519,21 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
             if (!rule.enabled) continue;
 
             const matches = rule.conditions.every(condition => {
-                const fieldValue = incident[condition.field];
+                const fieldValue = (incident as any)[condition.field];
 
                 switch (condition.operator) {
                     case 'equals':
-                        return fieldValue === condition.value;
+                        return fieldValue === condition._value;
                     case 'contains':
                         return Array.isArray(fieldValue)
                             ? fieldValue.includes(condition._value)
-                            : String(fieldValue).includes(condition._value);
+                            : String(fieldValue).includes(String(condition._value));
                     case 'greater_than':
                         return Number(fieldValue) > Number(condition._value);
                     case 'less_than':
                         return Number(fieldValue) < Number(condition._value);
                     case 'regex':
-                        return new RegExp(condition._value).test(String(fieldValue));
+                        return new RegExp(String(condition._value)).test(String(fieldValue));
                     default:
                         return false;
                 }
@@ -567,8 +567,8 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
             'none': 1
         };
 
-        const severityScore = severityMap[incident.severity] || 1;
-        const impactScore = impactMap[incident.impact] || 1;
+        const severityScore = severityMap[(incident as any).severity] || 1;
+        const impactScore = impactMap[(incident as any).impact] || 1;
         const totalScore = (severityScore + impactScore) / 2;
 
         if (totalScore >= 4.5) return 'p0';
@@ -587,7 +587,7 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
             rule.lastTriggered = Date.now();
 
             for (const ruleAction of rule.actions) {
-                if (ruleAction.requiresApproval && response.priority !== 'p0') {
+                if (ruleAction.requiresApproval && _response.priority !== 'p0') {
                     // Skip actions requiring approval for non-critical incidents
                     continue;
                 }
@@ -600,10 +600,10 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
                     automated: true,
                     description: `Automated ${ruleAction.type} action from rule: ${rule.name}`,
                     dependencies: [],
-                    _result: undefined
+                    result: undefined
                 };
 
-                response.actions.push(action);
+                _response.actions.push(action);
 
                 try {
                     const result = await this.executeAutomationAction(ruleAction);
@@ -621,7 +621,7 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
                         artifacts: []
                     };
 
-                    this.emit('automationActionFailed', { _response, action, rule, error });
+                    this.emit('automationActionFailed', { _response, action, rule, _error });
                 }
             }
         }
@@ -649,32 +649,32 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
         // Simulate automation action execution
         await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
 
-        switch (action.type) {
+        switch ((action as any).type) {
             case 'block':
                 return {
                     success: true,
-                    output: `Blocked ${action.parameters.scope} for ${action.parameters.duration}ms`,
+                    output: `Blocked ${(action as any).parameters.scope} for ${(action as any).parameters.duration}ms`,
                     artifacts: [`block-rule-${Date.now()}`]
                 };
 
             case 'contain':
                 return {
                     success: true,
-                    output: `Containment applied: ${action.parameters.method}`,
+                    output: `Containment applied: ${(action as any).parameters.method}`,
                     artifacts: [`containment-${Date.now()}`]
                 };
 
             case 'isolate':
                 return {
                     success: true,
-                    output: `Isolated ${action.parameters.scope} for ${action.parameters.duration}ms`,
+                    output: `Isolated ${(action as any).parameters.scope} for ${(action as any).parameters.duration}ms`,
                     artifacts: [`isolation-${Date.now()}`]
                 };
 
             case 'notify':
                 return {
                     success: true,
-                    output: `Notifications sent to: ${action.parameters.channels.join(', ')}`,
+                    output: `Notifications sent to: ${(action as any).parameters.channels.join(', ')}`,
                     artifacts: [`notification-${Date.now()}`]
                 };
 
@@ -691,14 +691,14 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
      * Execute playbook-based response
      */
     private async executeResponse(responseId: string): Promise<void> {
-        const response = this.responses.get(responseId);
+        const _response = this.responses.get(responseId);
         if (!_response) return;
 
-        const incident = { id: response.incidentId }; // Get incident details
+        const incident = { id: _response.incidentId }; // Get incident details
         const playbook = this.selectPlaybook(incident);
         if (!playbook) return;
 
-        response.status = 'analyzing';
+        _response.status = 'analyzing';
         const startTime = Date.now();
 
         try {
@@ -714,7 +714,7 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
                     dependencies: playbookAction.conditions || []
                 };
 
-                response.actions.push(action);
+                _response.actions.push(action);
 
                 try {
                     // Check dependencies
@@ -739,11 +739,11 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
                     action.duration = action.completedAt - (action.startedAt || 0);
                     action.result = result as any;
 
-                    // Update response status based on action type
+                    // Update _response status based on action type
                     if (action.type === 'analyze') {
-                        response.status = 'containing';
+                        _response.status = 'containing';
                     } else if (action.type === 'contain') {
-                        response.status = 'remediating';
+                        _response.status = 'remediating';
                     }
 
                     this.emit('actionCompleted', { _response, action });
@@ -756,7 +756,7 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
                         artifacts: []
                     };
 
-                    this.emit('actionFailed', { _response, action, error });
+                    this.emit('actionFailed', { _response, action, _error });
 
                     // Check if failure should trigger escalation
                     if (playbookAction.type === 'contain' || action.type === 'remediate') {
@@ -765,9 +765,9 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
                 }
             }
 
-            response.status = 'resolved';
-            response.resolvedAt = Date.now();
-            response.responseTime = response.resolvedAt - response.triggeredAt;
+            _response.status = 'resolved';
+            _response.resolvedAt = Date.now();
+            _response.responseTime = _response.resolvedAt - _response.triggeredAt;
 
             // Update metrics
             this.updateResponseMetrics(_response);
@@ -775,8 +775,8 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
             this.emit('responseCompleted', _response);
 
         } catch (_error) {
-            response.status = 'escalated';
-            this.emit('responseError', { _response, error });
+            _response.status = 'escalated';
+            this.emit('responseError', { _response, _error });
         }
     }
 
@@ -788,11 +788,11 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
             // Check if dependency condition is met
             switch (dep) {
                 case 'containment_successful':
-                    return response.actions.some(a =>
+                    return _response.actions.some(a =>
                         a.type === 'contain' && a.status === 'completed' && a.result?.success
                     );
                 case 'analysis_complete':
-                    return response.actions.some(a =>
+                    return _response.actions.some(a =>
                         a.type === 'analyze' && a.status === 'completed'
                     );
                 default:
@@ -811,8 +811,8 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
 
         return {
             success: true,
-            output: `${action.description} completed successfully`,
-            artifacts: [`${action.type}-result-${Date.now()}`]
+            output: `${(action as any).description} completed successfully`,
+            artifacts: [`${(action as any).type}-result-${Date.now()}`]
         };
     }
 
@@ -825,18 +825,18 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
 
             // Check escalation conditions
             if (escalationRule.condition === 'containment_failed') {
-                shouldEscalate = response.actions.some(a =>
+                shouldEscalate = _response.actions.some(a =>
                     a.type === 'contain' && a.status === 'failed'
                 );
             } else if (escalationRule.condition.startsWith('total_time >')) {
                 const threshold = parseInt(escalationRule.condition.split(' ')[2]);
-                shouldEscalate = (Date.now() - response.triggeredAt) > threshold;
+                shouldEscalate = (Date.now() - _response.triggeredAt) > threshold;
             }
 
             if (shouldEscalate) {
-                response.status = 'escalated';
-                response.stakeholders.escalatedTo = response.stakeholders.escalatedTo || [];
-                response.stakeholders.escalatedTo.push(escalationRule.target);
+                _response.status = 'escalated';
+                _response.stakeholders.escalatedTo = _response.stakeholders.escalatedTo || [];
+                _response.stakeholders.escalatedTo.push(escalationRule.target);
 
                 this.emit('incidentEscalated', {
                     _response,
@@ -852,16 +852,16 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
      * Update response metrics
      */
     private updateResponseMetrics(_response: IncidentResponse): void {
-        const analyzeActions = response.actions.filter(a => a.type === 'analyze');
-        const containActions = response.actions.filter(a => a.type === 'contain');
-        const remediateActions = response.actions.filter(a => a.type === 'remediate');
+        const analyzeActions = _response.actions.filter(a => a.type === 'analyze');
+        const containActions = _response.actions.filter(a => a.type === 'contain');
+        const remediateActions = _response.actions.filter(a => a.type === 'remediate');
 
-        response.metrics = {
-            detectionTime: response.triggeredAt - response.triggeredAt, // Immediate for this system
+        _response.metrics = {
+            detectionTime: _response.triggeredAt - _response.triggeredAt, // Immediate for this system
             analysisTime: analyzeActions.reduce((sum, a) => sum + (a.duration || 0), 0),
             containmentTime: containActions.reduce((sum, a) => sum + (a.duration || 0), 0),
             remediationTime: remediateActions.reduce((sum, a) => sum + (a.duration || 0), 0),
-            totalResponseTime: response.responseTime
+            totalResponseTime: _response.responseTime
         };
     }
 

@@ -64,7 +64,7 @@ export class EnhancedNeuroSEOOrchestrator {
         }
 
         // Check cache first
-        const cached = this.getCachedResult(cacheKey, request.userPlan);
+        const cached = this.getCachedResult(cacheKey, _request.userPlan);
         if (cached) {
             return cached;
         }
@@ -80,7 +80,7 @@ export class EnhancedNeuroSEOOrchestrator {
             const result = await analysisPromise;
 
             // Cache the result
-            this.setCachedResult(cacheKey, _result, request.userPlan);
+            this.setCachedResult(cacheKey, result, _request.userPlan);
 
             return result;
         } finally {
@@ -94,9 +94,9 @@ export class EnhancedNeuroSEOOrchestrator {
      */
     private generateCacheKey(_request: NeuroSEORequest): string {
         const keyData = {
-            urls: request.urls.sort(),
-            keywords: request.targetKeywords.sort(),
-            type: request.analysisType,
+            urls: _request.urls.sort(),
+            keywords: _request.targetKeywords.sort(),
+            type: _request.analysisType,
         };
 
         return Buffer.from(JSON.stringify(keyData)).toString('base64');
@@ -116,7 +116,7 @@ export class EnhancedNeuroSEOOrchestrator {
         const requestPlanIndex = planHierarchy.indexOf(userPlan);
 
         if (requestPlanIndex >= cachedPlanIndex) {
-            return cached.data;
+            return cached._data;
         }
 
         return null;
@@ -153,7 +153,7 @@ export class EnhancedNeuroSEOOrchestrator {
                 operation: 'neuroseo_analysis',
                 duration,
                 requestSize: JSON.stringify(_request).length,
-                responseSize: JSON.stringify(_result).length,
+                responseSize: JSON.stringify(result).length,
             });
 
             return result;
@@ -167,10 +167,10 @@ export class EnhancedNeuroSEOOrchestrator {
 
             if (fallback) {
                 console.warn('Using cached fallback for failed analysis');
-                return fallback.data;
+                return fallback._data;
             }
 
-            throw error;
+            throw _error;
         }
     }
 
@@ -179,26 +179,26 @@ export class EnhancedNeuroSEOOrchestrator {
      */
     private async runOptimizedAnalysis(_request: NeuroSEORequest): Promise<any> {
         // OPTIMIZATION 1: Batch URLs for efficient processing
-        const batchSize = this.getBatchSize(request.userPlan);
-        const urlBatches = this.chunkArray(request.urls, batchSize);
+        const batchSize = this.getBatchSize(_request.userPlan);
+        const urlBatches = this.chunkArray(_request.urls, batchSize);
 
         // OPTIMIZATION 2: Optimize keywords for token efficiency
-        const optimizedKeywords = this.optimizeKeywords(request.targetKeywords);
+        const optimizedKeywords = this.optimizeKeywords(_request.targetKeywords);
 
         // OPTIMIZATION 3: Parallel execution of batches
         const batchResults = await Promise.all(
             urlBatches.map(async (urlBatch, _index) => {
                 // Add controlled delay to prevent API rate limiting
-                if (index > 0) {
+                if (_index > 0) {
                     await this.delay(100 * _index);
                 }
 
                 return this.neuroSEO.runAnalysis({
-                    urls: urlBatch,
+                    urls: urlBatch as string[],
                     targetKeywords: optimizedKeywords,
-                    analysisType: request.analysisType,
-                    userPlan: request.userPlan,
-                    userId: request.userId,
+                    analysisType: _request.analysisType,
+                    userPlan: _request.userPlan,
+                    userId: _request.userId,
                 });
             })
         );
@@ -247,7 +247,7 @@ export class EnhancedNeuroSEOOrchestrator {
             summary: this.mergeSummaries(batchResults),
             engines: this.mergeEngineResults(batchResults),
             metadata: {
-                totalUrls: request.urls.length,
+                totalUrls: _request.urls.length,
                 processedBatches: batchResults.length,
                 optimizationApplied: true,
                 timestamp: Date.now()
@@ -280,7 +280,7 @@ export class EnhancedNeuroSEOOrchestrator {
      */
     private mergeSummaries(batchResults: unknown[]): any {
         // Intelligent summary merging logic
-        return batchResults.reduce((merged, batch) => {
+        return batchResults.reduce((merged: any, batch: any) => {
             if (batch?.summary) {
                 return {
                     ...merged,
@@ -300,7 +300,7 @@ export class EnhancedNeuroSEOOrchestrator {
         // Merge results from all engines across batches
         const engineResults: Record<string, unknown[]> = {};
 
-        batchResults.forEach(batch => {
+        batchResults.forEach((batch: any) => {
             if (batch?.engines) {
                 Object.keys(batch.engines).forEach(engineName => {
                     if (!engineResults[engineName]) {
@@ -355,7 +355,7 @@ export class EnhancedNeuroSEOOrchestrator {
         const maxAge = this.cacheConfig.ttl / 2; // Clear entries older than half TTL
 
         this.cache.forEach((_value: CachedResult, _key: string) => {
-            if (now - value.timestamp > maxAge) {
+            if (now - _value.timestamp > maxAge) {
                 this.cache.delete(_key);
             }
         });
@@ -412,8 +412,8 @@ export class EnhancedNeuroSEOOrchestrator {
      */
     async preloadAnalysis(requests: NeuroSEORequest[]): Promise<void> {
         const preloadPromises = requests.map(request =>
-            this.runAnalysis(_request).catch(error => {
-                console.warn('Preload failed for _request:', _request, _error);
+            this.runAnalysis(request).catch(error => {
+                console.warn('Preload failed for request:', request, error);
             })
         );
 

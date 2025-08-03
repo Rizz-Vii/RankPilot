@@ -71,7 +71,7 @@ export async function ensureUserSubscription(
     }
   } catch (_error) {
     console.error("Error ensuring user subscription:", _error);
-    throw error;
+    throw _error;
   }
 }
 
@@ -87,7 +87,7 @@ async function createUserSubscription(
   if (!isFreeTier) {
     for (let i = setup.monthsPrepaid; i > 0; i--) {
       const paymentDate = new Date(currentDate);
-      paymentDate.setMonth(paymentDate.getMonth() - _i);
+      paymentDate.setMonth(paymentDate.getMonth() - i);
       paymentHistory.push({
         amount: getPlanPrice(setup.tier),
         currency: "usd",

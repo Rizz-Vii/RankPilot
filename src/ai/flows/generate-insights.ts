@@ -72,45 +72,91 @@ export type GenerateInsightsOutput = z.infer<
 export async function generateInsights(
   input: GenerateInsightsInput
 ): Promise<GenerateInsightsOutput> {
-  return generateInsightsFlow(input);
+  const { activities } = input;
+
+  // If no activities, return empty insights
+  if (!activities || activities.length === 0) {
+    return { insights: [] };
+  }
+
+  // Analyze activities to generate insights
+  const insights = generateInsightsFromActivities(activities);
+
+  return { insights };
 }
 
-const insightsPrompt = ai.definePrompt({
-  name: "generateInsightsPrompt",
-  input: { schema: GenerateInsightsInputSchema },
-  output: { schema: GenerateInsightsOutputSchema },
-  prompt: `You are an expert SEO consultant reviewing a user's recent activity on an SEO platform. Your task is to analyze their actions and provide 3-5 highly relevant, actionable insights.
-Use the following API keys for enhanced analysis:
-  - GEMINI_API_KEY: ${geminiApiKey}
-  - GOOGLE_API_KEY: ${googleApiKey}
-**User's Recent Activities:**
-{{#each activities}}
-- **Tool:** {{{tool}}}
-  - **Action:** {{{type}}}
-  - **Details:** {{json details}}
-  - **Summary:** {{{resultsSummary}}}
-{{/each}}
+function generateInsightsFromActivities(activities: any[]): Array<{
+  id: string;
+  title: string;
+  description: string;
+  category: 'Technical SEO' | 'Content' | 'Link Building' | 'Keywords';
+  priority: 'High' | 'Medium' | 'Low';
+  estimatedImpact: 'High' | 'Medium' | 'Low';
+  actionLink?: string;
+  actionText?: string;
+}> {
+  const insights = [];
 
-**Instructions:**
-1.  Analyze the provided activities to identify patterns, recurring issues, or opportunities. For example, if they repeatedly audit the same site with poor scores, that's a key insight. If they research keywords but never generate content briefs, suggest that as a next step.
-2.  Generate a list of 3 to 5 unique, actionable insights based on this analysis.
-3.  For each insight, provide a clear title, description, category, priority, and estimated impact.
-4.  If applicable, suggest a relevant tool within the platform they can use to address the insight by providing an `actionLink` and `actionText`.
-5.  Prioritize insights that seem most urgent or impactful based on the data. For example, a failed SEO audit is more critical than a single keyword search.
-6.  If there is no activity, return an empty array of insights.
+  // Analyze tool usage patterns
+  const toolCounts = activities.reduce((acc, activity) => {
+    acc[activity.tool] = (acc[activity.tool] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
-Your entire output MUST be a single, valid JSON object that conforms to the provided output schema. Do not add any extra commentary.
-`,
-});
+  const mostUsedTool = Object.keys(toolCounts).reduce((a, b) =>
+    toolCounts[a] > toolCounts[b] ? a : b
+  );
 
-const generateInsightsFlow = ai.defineFlow(
-  {
-    name: "generateInsightsFlow",
-    inputSchema: GenerateInsightsInputSchema,
-    outputSchema: GenerateInsightsOutputSchema,
-  },
-  async (input) => {
-    const { output } = await insightsPrompt(input);
-    return output!;
+  // Generate insights based on activity patterns
+  if (toolCounts['seo-audit'] > 2) {
+    insights.push({
+      id: 'multiple-seo-audits',
+      title: 'Multiple SEO Audits Detected',
+      description: `You've run ${toolCounts['seo-audit']} SEO audits recently. Consider implementing the recommendations from your latest audit to improve your site's performance.`,
+      category: 'Technical SEO' as const,
+      priority: 'High' as const,
+      estimatedImpact: 'High' as const,
+      actionLink: '/audit',
+      actionText: 'View Latest Audit'
+    });
   }
-);
+
+  if (toolCounts['keyword-research'] && !toolCounts['content-brief']) {
+    insights.push({
+      id: 'keyword-to-content',
+      title: 'Turn Keyword Research into Content',
+      description: 'You\'ve been researching keywords but haven\'t created content briefs yet. Transform your research into actionable content plans.',
+      category: 'Content' as const,
+      priority: 'Medium' as const,
+      estimatedImpact: 'High' as const,
+      actionLink: '/content-brief',
+      actionText: 'Create Content Brief'
+    });
+  }
+
+  if (activities.some(a => a.resultsSummary?.includes('error') || a.resultsSummary?.includes('failed'))) {
+    insights.push({
+      id: 'technical-issues',
+      title: 'Technical Issues Need Attention',
+      description: 'Some of your recent activities encountered errors. Review and resolve these technical issues to improve your SEO workflow.',
+      category: 'Technical SEO' as const,
+      priority: 'High' as const,
+      estimatedImpact: 'Medium' as const
+    });
+  }
+
+  // Default insights if patterns don't match
+  if (insights.length === 0) {
+    insights.push({
+      id: 'great-activity',
+      title: 'Great SEO Activity!',
+      description: `You've been actively using ${mostUsedTool} and other SEO tools. Keep up the momentum and consider expanding to other optimization areas.`,
+      category: 'Keywords' as const,
+      priority: 'Low' as const,
+      estimatedImpact: 'Medium' as const
+    });
+  }
+
+  // Limit to 5 insights
+  return insights.slice(0, 5);
+}

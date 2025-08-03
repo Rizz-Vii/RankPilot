@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
     try {
         const { tier, billingInterval, successUrl, cancelUrl } = await request.json();
 
@@ -25,7 +25,7 @@ export async function POST(_request: NextRequest) {
         }
 
         // Create checkout session via Firebase Function
-        const _result = await createCheckoutSession({
+        const result = await createCheckoutSession({
             planId: tier,
             billingInterval: billingInterval || 'monthly',
             successUrl: successUrl || `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
@@ -39,23 +39,28 @@ export async function POST(_request: NextRequest) {
             url: `https://checkout.stripe.com/pay/${sessionId}`,
         });
 
-    } catch (_error: unknown) {
-        console.error('❌ Stripe checkout _error:', _error);
+    } catch (error: unknown) {
+        console.error('❌ Stripe checkout _error:', error);
 
         // Handle Firebase Function errors
-        if (error.code === 'unauthenticated') {
+        if (
+            typeof error === 'object' &&
+            error !== null &&
+            'code' in error &&
+            (error as { code?: string }).code === 'unauthenticated'
+        ) {
             return NextResponse.json({ _error: 'Authentication required' }, { status: 401 });
         }
 
         return NextResponse.json(
-            { _error: error.message || 'Failed to create checkout session' },
+            { _error: typeof error === 'object' && error !== null && 'message' in error ? (error as { message?: string }).message : 'Failed to create checkout session' },
             { status: 500 }
         );
     }
 }
 
 // Handle checkout session retrieval
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const sessionId = searchParams.get('session_id');

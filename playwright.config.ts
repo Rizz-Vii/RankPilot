@@ -1,5 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
-import { getProxyConfig } from "./testing/specs/main/utils/proxy";
+// import { getProxyConfig } from "./testing/specs/main/utils/proxy";
 
 export default defineConfig({
   testDir: "./testing",
@@ -35,7 +35,7 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1280, height: 720 },
-        proxy: getProxyConfig(),
+        // proxy: getProxyConfig(),
       },
     },
     {

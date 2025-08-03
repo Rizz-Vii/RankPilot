@@ -327,10 +327,10 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
             this.emit('analysis-error', {
                 competitorId,
                 domain: competitor.domain,
-                _error: error instanceof Error ? error.message : error
+                _error: _error instanceof Error ? _error.message : _error
             });
 
-            throw error;
+            throw _error;
         }
     }
 
@@ -358,13 +358,13 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
                 })
             });
 
-            if (!response.ok) {
-                throw new Error(`Firecrawl crawl failed: ${response.statusText}`);
+            if (!_response.ok) {
+                throw new Error(`Firecrawl crawl failed: ${_response.statusText}`);
             }
 
-            return response.json();
+            return _response.json();
         } catch (_error) {
-            throw new Error(`Failed to crawl competitor site: ${error instanceof Error ? error.message : error}`);
+            throw new Error(`Failed to crawl competitor site: ${_error instanceof Error ? _error.message : _error}`);
         }
     }
 
@@ -372,7 +372,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
      * Analyze SEO metrics from crawled data
      */
     private async analyzeSEOMetrics(crawlData: unknown, competitor: CompetitorProfile): Promise<Record<string, any>> {
-        const pages = crawlData.data || [];
+        const pages = (crawlData as { data?: any[] }).data || [];
 
         const metrics = {
             totalPages: pages.length,
@@ -393,11 +393,12 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
         const totalLoadTime = 0;
 
         pages.forEach((page: unknown) => {
-            const content = page.markdown || page.html || '';
+            const _page = page as any;
+            const content = _page.markdown || _page.html || '';
 
             // Count basic SEO elements
-            if (page.metadata?.title) metrics.titleTags++;
-            if (page.metadata?.description) metrics.metaDescriptions++;
+            if (_page.metadata?.title) metrics.titleTags++;
+            if (_page.metadata?.description) metrics.metaDescriptions++;
             if (content.includes('# ') || content.includes('<h1')) metrics.h1Tags++;
 
             // Word count analysis
@@ -440,7 +441,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
      * Analyze content metrics
      */
     private async analyzeContent(crawlData: unknown, competitor: CompetitorProfile): Promise<Record<string, any>> {
-        const pages = crawlData.data || [];
+        const pages = (crawlData as { data?: any[] }).data || [];
 
         const metrics = {
             contentTypes: {} as Record<string, number>,
@@ -456,7 +457,8 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
         let totalContentLength = 0;
 
         pages.forEach((page: unknown) => {
-            const content = page.markdown || '';
+            const _page = page as any;
+            const content = _page.markdown || '';
             totalContentLength += content.length;
 
             // Simple topic extraction (in production, use NLP)
@@ -481,7 +483,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
      * Analyze technical metrics
      */
     private async analyzeTechnical(crawlData: unknown, competitor: CompetitorProfile): Promise<Record<string, any>> {
-        const pages = crawlData.data || [];
+        const pages = (crawlData as { data?: any[] }).data || [];
 
         const metrics = {
             seoScore: 0,
@@ -500,8 +502,9 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
         const titles: string[] = [];
 
         pages.forEach((page: unknown) => {
-            const title = page.metadata?.title || '';
-            const description = page.metadata?.description || '';
+            const _page = page as any;
+            const title = _page.metadata?.title || '';
+            const description = _page.metadata?.description || '';
 
             // Track titles for duplicate detection
             if (title) {
@@ -688,7 +691,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
                 end: Date.now()
             },
             findings,
-            _data,
+            _data: data,
             metadata: {
                 generated: Date.now(),
                 format: 'json',
@@ -825,7 +828,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
     private async generateCompetitiveData(
         competitors: CompetitorProfile[],
         analysisType: string
-    ): Promise<CompetitiveAnalysisReport['data']> {
+    ): Promise<CompetitiveAnalysisReport['_data']> {
         // Mock data generation - in production, compile actual competitor data
         const keywordAnalysis: KeywordCompetitionData = {
             gapAnalysis: {

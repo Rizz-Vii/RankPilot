@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/card";
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
-  visible: (_i: number) => ({
+  visible: (i: number) => ({
     opacity: 1,
     y: 0,
     transition: { delay: i * 0.15, duration: 0.6 },
@@ -134,7 +134,7 @@ export default function HomePage() {
           id="features"
           className="mt-24 grid md:grid-cols-3 gap-8 max-w-6xl w-full text-left"
         >
-          {features.map((_item, _i) => (
+          {features.map((item, i) => (
             <Dialog key={item.title}>
               <DialogTrigger asChild>
                 <motion.div
@@ -143,7 +143,7 @@ export default function HomePage() {
                   animate="visible"
                   custom={i}
                   className="cursor-pointer h-full"
-                  onMouseEnter={() => setHoveredIdx(_i)}
+                  onMouseEnter={() => setHoveredIdx(i)}
                   onMouseLeave={() => setHoveredIdx(null)}
                 >
                   <Card className="h-full">
@@ -276,7 +276,7 @@ export default function HomePage() {
                 company: "SEO Freelance Pro",
                 text: "Everything I need — in one dashboard. No more switching tools constantly.",
               },
-            ].map((t, _i) => (
+            ].map((t, i) => (
               <motion.div
                 key={i}
                 variants={fadeIn}
@@ -388,7 +388,7 @@ function PricingCard({
       </CardHeader>
       <CardContent className="flex-grow">
         <ul className="text-left space-y-2 text-muted-foreground">
-          {features.map((f, _i) => (
+          {features.map((f, i) => (
             <li key={i}>• {f}</li>
           ))}
         </ul>

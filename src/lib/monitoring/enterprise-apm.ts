@@ -167,11 +167,11 @@ export class EnterpriseAPM extends EventEmitter {
         };
 
         const key = `${metric.name}-${JSON.stringify(metric.tags)}`;
-        if (!this.metrics.has(_key)) {
-            this.metrics.set(_key, []);
+        if (!this.metrics.has(key)) {
+            this.metrics.set(key, []);
         }
 
-        const metricSeries = this.metrics.get(_key)!;
+        const metricSeries = this.metrics.get(key)!;
         metricSeries.push(fullMetric);
 
         // Keep only last 1000 metrics per series
@@ -235,8 +235,8 @@ export class EnterpriseAPM extends EventEmitter {
 
                 // Tags filter
                 if (query.tags) {
-                    for (const [_key, value] of Object.entries(query.tags)) {
-                        if (metric.tags[key] !== _value) return false;
+                    for (const [tagKey, tagValue] of Object.entries(query.tags)) {
+                        if (metric.tags[tagKey] !== tagValue) return false;
                     }
                 }
 
@@ -389,12 +389,12 @@ export class EnterpriseAPM extends EventEmitter {
                     unit: 'ms',
                     tags: {
                         url: args[0] as string,
-                        status: response.status.toString(),
+                        status: _response.status.toString(),
                         method: args[1]?.method || 'GET'
                     }
                 });
 
-                return response;
+                return _response;
             };
         }
     }
@@ -472,7 +472,7 @@ export class EnterpriseAPM extends EventEmitter {
             if (!rule.enabled) continue;
 
             // Simple threshold check (real implementation would support complex conditions)
-            if (rule.name === metric.name && metric.value > rule.threshold) {
+            if (rule.name === metric.name && metric._value > rule.threshold) {
                 const now = Date.now();
                 if (!rule.lastTriggered || (now - rule.lastTriggered) > rule.cooldown) {
                     this.triggerAlert(rule, metric);
@@ -487,7 +487,7 @@ export class EnterpriseAPM extends EventEmitter {
             rule,
             metric,
             timestamp: Date.now(),
-            message: `Alert: ${rule.name} threshold exceeded. Value: ${metric.value}${metric.unit}`
+            message: `Alert: ${rule.name} threshold exceeded. Value: ${metric._value}${metric.unit}`
         };
 
         this.emit('alert-triggered', alert);
@@ -497,25 +497,25 @@ export class EnterpriseAPM extends EventEmitter {
         // Extract Core Web Vitals metrics
         this.recordMetric({
             name: 'performance.lcp',
-            _value: event.performance.lcp,
+            _value: (_event as any).performance?.lcp || 0,
             unit: 'ms',
             tags: {
-                page: event.name,
-                userTier: event.userTier,
-                device: event.device.type,
-                country: event.location.country
+                page: (_event as any).name || 'unknown',
+                userTier: (_event as any).userTier || 'free',
+                device: (_event as any).device?.type || 'unknown',
+                country: (_event as any).location?.country || 'unknown'
             }
         });
 
         // Extract user engagement metrics
-        if (event.type === 'user-interaction') {
+        if ((_event as any).type === 'user-interaction') {
             this.recordMetric({
                 name: 'user.engagement',
-                _value: event.duration,
+                _value: (_event as any).duration || 0,
                 unit: 'ms',
                 tags: {
-                    interaction: event.name,
-                    userTier: event.userTier
+                    interaction: (_event as any).name || 'unknown',
+                    userTier: (_event as any).userTier || 'free'
                 }
             });
         }
@@ -527,8 +527,8 @@ export class EnterpriseAPM extends EventEmitter {
 
         for (const metric of metrics) {
             const key = groupBy.map(field => metric.tags[field] || 'unknown').join('-');
-            if (!groups.has(_key)) groups.set(_key, []);
-            groups.get(_key)!.push(metric);
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key)!.push(metric);
         }
 
         const results: APMMetric[] = [];
@@ -537,22 +537,22 @@ export class EnterpriseAPM extends EventEmitter {
 
             switch (aggregation) {
                 case 'avg':
-                    value = groupMetrics.reduce((sum, m) => sum + m._value, 0) / groupMetrics.length;
+                    _value = groupMetrics.reduce((sum, m) => sum + m._value, 0) / groupMetrics.length;
                     break;
                 case 'sum':
-                    value = groupMetrics.reduce((sum, m) => sum + m._value, 0);
+                    _value = groupMetrics.reduce((sum, m) => sum + m._value, 0);
                     break;
                 case 'min':
-                    value = Math.min(...groupMetrics.map(m => m._value));
+                    _value = Math.min(...groupMetrics.map(m => m._value));
                     break;
                 case 'max':
-                    value = Math.max(...groupMetrics.map(m => m._value));
+                    _value = Math.max(...groupMetrics.map(m => m._value));
                     break;
                 case 'count':
-                    value = groupMetrics.length;
+                    _value = groupMetrics.length;
                     break;
                 default:
-                    value = groupMetrics[0].value;
+                    _value = groupMetrics[0]._value;
             }
 
             results.push({
@@ -561,7 +561,7 @@ export class EnterpriseAPM extends EventEmitter {
                 _value,
                 unit: groupMetrics[0].unit,
                 timestamp: Date.now(),
-                tags: { aggregation, groupKey: key }
+                tags: { aggregation, groupBy: _key }
             });
         }
 
@@ -590,7 +590,7 @@ export class EnterpriseAPM extends EventEmitter {
         // Simplified CSV export
         const headers = 'timestamp,type,name,_value,unit,tags\n';
         const rows = metrics.map(m =>
-            `${m.timestamp},metric,${m.name},${m.value},${m.unit},"${JSON.stringify(m.tags)}"`
+            `${m.timestamp},metric,${m.name},${m._value},${m.unit},"${JSON.stringify(m.tags)}"`
         ).join('\n');
 
         return headers + rows;
@@ -599,7 +599,7 @@ export class EnterpriseAPM extends EventEmitter {
     private exportToPrometheus(metrics: APMMetric[]): string {
         // Simplified Prometheus format export
         return metrics.map(m =>
-            `${m.name.replace(/\./g, '_')}{${Object.entries(m.tags).map(([k, v]) => `${k}="${v}"`).join(',')}} ${m.value} ${m.timestamp}`
+            `${m.name.replace(/\./g, '_')}{${Object.entries(m.tags).map(([k, v]) => `${k}="${v}"`).join(',')}} ${m._value} ${m.timestamp}`
         ).join('\n');
     }
 

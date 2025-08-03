@@ -91,7 +91,7 @@ export default function BlogPage() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
-          {posts.map((post, _index) => {
+          {posts.map((post, index) => {
             const IconComponent = post.icon;
             return (
               <article

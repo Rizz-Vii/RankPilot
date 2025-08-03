@@ -300,7 +300,7 @@ export default function TeamManagementPage() {
                     <Label htmlFor="role">Role</Label>
                     <Select
                       value={inviteForm.role}
-                      onValueChange={(_value: TeamMember["role"]) =>
+                      onValueChange={(value: TeamMember["role"]) =>
                         setInviteForm({ ...inviteForm, role: value })
                       }
                     >
@@ -326,7 +326,7 @@ export default function TeamManagementPage() {
                       onChange={(e) =>
                         setInviteForm({
                           ...inviteForm,
-                          message: e.target._value,
+                          message: e.target.value,
                         })
                       }
                     />

@@ -7,7 +7,7 @@ import { LucideIcon } from "lucide-react";
 
 interface EnhancedMetricCardProps {
     title: string;
-    _value: string | number;
+    value: string | number;
     change?: number;
     icon?: LucideIcon;
     loading?: boolean;
@@ -20,7 +20,7 @@ interface EnhancedMetricCardProps {
 
 export function EnhancedMetricCard({
     title,
-    _value,
+    value,
     change,
     icon: Icon,
     loading = false,

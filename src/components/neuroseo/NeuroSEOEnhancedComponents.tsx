@@ -138,9 +138,9 @@ export function NeuroSEOProgressIndicator({
         <div className="space-y-4">
           <Progress value={progress} className="w-full" />
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {Object.entries(ENGINE_CONFIGS).map(([_key, config]) => {
+            {Object.entries(ENGINE_CONFIGS).map(([key, config]) => {
               const Icon = config.icon;
-              const isCompleted = completedEngines.includes(_key);
+              const isCompleted = completedEngines.includes(key);
               const isCurrent = currentEngine === key;
 
               return (
@@ -233,7 +233,7 @@ export function NeuroSEOEngineOverview({ report }: { report: NeuroSEOReport; }) 
 
           {/* Engine Details */}
           <div className="space-y-3">
-            {engineData.map((engine, _index) => {
+            {engineData.map((engine, index) => {
               const Icon = engine.icon;
               return (
                 <motion.div
@@ -296,7 +296,7 @@ export function NeuroSEOInsightsPanel({ insights }: { insights: KeyInsight[]; })
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {insights.map((insight, _index) => {
+          {insights.map((insight, index) => {
             const Icon = categoryIcons[insight.category];
             return (
               <motion.div
@@ -398,7 +398,7 @@ export function NeuroSEOActionableTasks({ tasks }: { tasks: ActionableTask[]; })
         </div>
 
         <div className="space-y-4">
-          {filteredTasks.map((task, _index) => (
+          {filteredTasks.map((task, index) => (
             <motion.div
               key={task.id}
               initial={{ opacity: 0, x: -20 }}
@@ -522,7 +522,7 @@ export function NeuroSEOCompetitiveDashboard({
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {swotData.map((entry, _index) => (
+                  {swotData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>

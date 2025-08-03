@@ -164,7 +164,7 @@ export default function CareersPage() {
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {benefits.map((benefit, _index) => (
+            {benefits.map((benefit, index) => (
               <motion.div
                 key={benefit.title}
                 initial="hidden"
@@ -211,7 +211,7 @@ export default function CareersPage() {
           </motion.div>
 
           <div className="space-y-6">
-            {jobOpenings.map((job, _index) => (
+            {jobOpenings.map((job, index) => (
               <motion.div
                 key={job.title}
                 initial="hidden"
@@ -254,7 +254,7 @@ export default function CareersPage() {
                         Key Requirements:
                       </h4>
                       <ul className="list-disc list-inside space-y-1 text-gray-600 text-sm">
-                        {job.requirements.map((_req, reqIndex) => (
+                        {job.requirements.map((req, reqIndex) => (
                           <li key={reqIndex}>{req}</li>
                         ))}
                       </ul>

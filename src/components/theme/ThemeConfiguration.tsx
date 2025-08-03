@@ -57,7 +57,7 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
         setTheme(newTheme);
     };
 
-    const handlePreferenceChange = (_key: keyof ThemePreferences, _value: unknown) => {
+    const handlePreferenceChange = (key: keyof ThemePreferences, value: unknown) => {
         setPreferences({ [key]: value });
     };
 
@@ -173,12 +173,12 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
                                                 id="primary-color"
                                                 type="color"
                                                 value={customColors.primary}
-                                                onChange={(e) => handleCustomColorChange('primary', e.target._value)}
+                                                onChange={(e) => handleCustomColorChange('primary', e.target.value)}
                                                 className="w-12 h-12 rounded-md border cursor-pointer"
                                             />
                                             <Input
                                                 value={customColors.primary}
-                                                onChange={(e) => handleCustomColorChange('primary', e.target._value)}
+                                                onChange={(e) => handleCustomColorChange('primary', e.target.value)}
                                                 placeholder="#3B82F6"
                                                 className="flex-1"
                                             />
@@ -192,12 +192,12 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
                                                 id="secondary-color"
                                                 type="color"
                                                 value={customColors.secondary}
-                                                onChange={(e) => handleCustomColorChange('secondary', e.target._value)}
+                                                onChange={(e) => handleCustomColorChange('secondary', e.target.value)}
                                                 className="w-12 h-12 rounded-md border cursor-pointer"
                                             />
                                             <Input
                                                 value={customColors.secondary}
-                                                onChange={(e) => handleCustomColorChange('secondary', e.target._value)}
+                                                onChange={(e) => handleCustomColorChange('secondary', e.target.value)}
                                                 placeholder="#6B7280"
                                                 className="flex-1"
                                             />
@@ -211,12 +211,12 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
                                                 id="accent-color"
                                                 type="color"
                                                 value={customColors.accent}
-                                                onChange={(e) => handleCustomColorChange('accent', e.target._value)}
+                                                onChange={(e) => handleCustomColorChange('accent', e.target.value)}
                                                 className="w-12 h-12 rounded-md border cursor-pointer"
                                             />
                                             <Input
                                                 value={customColors.accent}
-                                                onChange={(e) => handleCustomColorChange('accent', e.target._value)}
+                                                onChange={(e) => handleCustomColorChange('accent', e.target.value)}
                                                 placeholder="#10B981"
                                                 className="flex-1"
                                             />

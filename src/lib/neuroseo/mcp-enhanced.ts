@@ -31,7 +31,7 @@ export class NeuroSEOMCPOrchestrator {
             const modelQuery = `content analysis seo ${keywords.join(' ')}`;
             const modelResults = await mcpService.huggingfaceModelSearch(modelQuery, 5);
 
-            if (modelResults.success && modelResults._data) {
+            if (modelResults.success && modelResults.data) {
                 // Simulate AI-enhanced content analysis
                 const enhancedAnalysis = {
                     originalContent: content,
@@ -42,13 +42,13 @@ export class NeuroSEOMCPOrchestrator {
                         aiOptimizedTitle: 'AI-Generated SEO-Optimized Title Based on Content Analysis',
                         suggestedMetaDescription: 'AI-crafted meta description optimized for CTR and relevance',
                     },
-                    modelRecommendations: modelResults._data,
+                    modelRecommendations: modelResults.data,
                     confidenceScore: 0.94,
                 };
 
                 return {
                     success: true,
-                    _data: enhancedAnalysis,
+                    data: enhancedAnalysis,
                     source: 'huggingface',
                     timestamp: new Date().toISOString(),
                     requestId: `neuroseo_hf_${Date.now()}`,
@@ -81,10 +81,10 @@ export class NeuroSEOMCPOrchestrator {
                     onlyMainContent: true,
                 });
 
-                if (scrapeResult.success && scrapeResult._data) {
+                if (scrapeResult.success && scrapeResult.data) {
                     competitorData.push({
                         url,
-                        analysis: scrapeResult._data,
+                        analysis: scrapeResult.data,
                         competitiveInsights: {
                             contentGaps: 'Identified 5 content gaps for competitive advantage',
                             keywordOpportunities: 'Found 12 keyword opportunities not covered by competitor',
@@ -114,7 +114,7 @@ export class NeuroSEOMCPOrchestrator {
 
             return {
                 success: true,
-                _data: enhancedCompetitorAnalysis,
+                data: enhancedCompetitorAnalysis,
                 source: 'firecrawl',
                 timestamp: new Date().toISOString(),
                 requestId: `neuroseo_fc_${Date.now()}`,
@@ -162,7 +162,7 @@ export class NeuroSEOMCPOrchestrator {
 
             return {
                 success: true,
-                _data: performanceData,
+                data: performanceData,
                 source: 'sentry',
                 timestamp: new Date().toISOString(),
                 requestId: `neuroseo_sentry_${Date.now()}`,
@@ -183,22 +183,26 @@ export class NeuroSEOMCPOrchestrator {
      */
     async generateStrategicInsights(analysisResults: unknown): Promise<MCPResponse> {
         try {
+            const safeAnalysis = typeof analysisResults === 'object' && analysisResults !== null
+                ? analysisResults as { [key: string]: any }
+                : {};
+
             const problemStatement = `
         SEO Analysis Results Summary:
-        - Performance Score: ${analysisResults.performance || 85}
-        - Content Quality: ${analysisResults.contentQuality || 'Good'}
-        - Technical SEO: ${analysisResults.technicalSEO || 'Needs Improvement'}
-        - Competitive Position: ${analysisResults.competitivePosition || 'Moderate'}
+        - Performance Score: ${safeAnalysis.performance ?? 85}
+        - Content Quality: ${safeAnalysis.contentQuality ?? 'Good'}
+        - Technical SEO: ${safeAnalysis.technicalSEO ?? 'Needs Improvement'}
+        - Competitive Position: ${safeAnalysis.competitivePosition ?? 'Moderate'}
         
         Generate strategic recommendations for improvement.
       `;
 
             const strategicAnalysis = await mcpService.sequentialThinkingAnalyze(problemStatement);
 
-            if (strategicAnalysis.success && strategicAnalysis._data) {
+            if (strategicAnalysis.success && strategicAnalysis.data) {
                 const enhancedInsights = {
                     originalAnalysis: analysisResults,
-                    strategicRecommendations: strategicAnalysis._data,
+                    strategicRecommendations: strategicAnalysis.data,
                     actionPlan: {
                         immediate: [
                             'Optimize Core Web Vitals for better performance scores',
@@ -227,7 +231,7 @@ export class NeuroSEOMCPOrchestrator {
 
                 return {
                     success: true,
-                    _data: enhancedInsights,
+                    data: enhancedInsights,
                     source: 'sequential-thinking',
                     timestamp: new Date().toISOString(),
                     requestId: `neuroseo_st_${Date.now()}`,

@@ -57,9 +57,9 @@ export interface SEOAuditRequest {
  * Analyze content using backend Cloud Function instead of direct AI
  * 60% cost reduction vs frontend Genkit calls
  */
-export async function analyzeContent(_request: ContentAnalysisRequest): Promise<ContentAnalysisResponse> {
+export async function analyzeContent(request: ContentAnalysisRequest): Promise<ContentAnalysisResponse> {
     try {
-        const _result = await analyzeContentFunction(_request);
+        const result = await analyzeContentFunction(request);
         return result.data as ContentAnalysisResponse;
     } catch (_error) {
         console.error("Content analysis failed:", _error);
@@ -73,7 +73,7 @@ export async function analyzeContent(_request: ContentAnalysisRequest): Promise<
  */
 export async function getKeywordSuggestions(_request: KeywordSuggestionsRequest) {
     try {
-        const _result = await getKeywordSuggestionsFunction(_request);
+        const result = await getKeywordSuggestionsFunction(_request);
         return result.data;
     } catch (_error) {
         console.error("Keyword suggestions failed:", _error);
@@ -87,7 +87,7 @@ export async function getKeywordSuggestions(_request: KeywordSuggestionsRequest)
  */
 export async function runSEOAudit(_request: SEOAuditRequest) {
     try {
-        const _result = await runSeoAuditFunction(_request);
+        const result = await runSeoAuditFunction(_request);
         return result.data;
     } catch (_error) {
         console.error("SEO audit failed:", _error);
@@ -107,7 +107,7 @@ export async function runNeuroSEOAnalysis(_request: {
     userId?: string;
 }) {
     try {
-        const _response = await fetch("/api/neuroseo", {
+        const response = await fetch("/api/neuroseo", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

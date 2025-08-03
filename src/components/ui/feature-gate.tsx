@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
-import { canAccessFeature, FEATURE_ACCESS, TIER_HIERARCHY } from '@/lib/access-control';
+import { canAccessFeature, FEATURE_ACCESS, TIER_HIERARCHY, SubscriptionTier } from '@/lib/access-control';
 import { Crown, Lock, Star, Zap } from 'lucide-react';
 import React from 'react';
 
@@ -72,18 +72,23 @@ export function FeatureGate({
 /**
  * Upgrade prompt component
  */
+interface FeatureConfig {
+    requiredTier?: string;
+    description?: string;
+}
+
 function UpgradePrompt({
     feature,
     featureConfig,
     currentTier
 }: {
     feature: string;
-    featureConfig: unknown;
+    featureConfig: FeatureConfig;
     currentTier: string;
 }) {
     const requiredTier = featureConfig.requiredTier || 'starter';
     const currentTierIndex = TIER_HIERARCHY.indexOf(currentTier as any);
-    const requiredTierIndex = TIER_HIERARCHY.indexOf(requiredTier);
+    const requiredTierIndex = TIER_HIERARCHY.indexOf(requiredTier as SubscriptionTier);
 
     const tierIcons = {
         free: null,

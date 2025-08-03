@@ -140,9 +140,17 @@ export default function SEOActivitiesTimeline({
                     {getActivityTitle(activity)}
                   </h4>
                   <time className="text-xs text-muted-foreground flex-shrink-0 ml-2">
-                    {formatDistanceToNow(activity.timestamp.toDate(), {
-                      addSuffix: true,
-                    })}
+                    {formatDistanceToNow(
+                      typeof activity.timestamp === "object" &&
+                        activity.timestamp !== null &&
+                        "toDate" in activity.timestamp &&
+                        typeof (activity.timestamp as { toDate: Function }).toDate === "function"
+                        ? (activity.timestamp as { toDate: () => Date }).toDate()
+                        : new Date(),
+                      {
+                        addSuffix: true,
+                      }
+                    )}
                   </time>
                 </div>
 

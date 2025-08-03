@@ -241,17 +241,22 @@ export function useToolAccess() {
 /**
  * Filter navigation items based on subscription tier
  */
+export interface Subscription {
+  tier: TierType;
+  [key: string]: any;
+}
+
 export function filterNavBySubscription(
   navItems: NavItem[],
-  subscription: unknown
+  subscription: Subscription | null | undefined
 ): NavItem[] {
-  if (!subscription) return navItems.filter((_item) => !item.requiredTier);
+  if (!subscription) return navItems.filter((item) => !item.requiredTier);
 
   const tierAccess = TIER_TOOL_ACCESS[subscription.tier as TierType];
   if (!tierAccess) return navItems;
 
   return navItems
-    .filter((_item) => {
+    .filter((item) => {
       // If no tier requirement, show to all users
       if (!item.requiredTier) return true;
 
@@ -270,7 +275,7 @@ export function filterNavBySubscription(
 
       return userTierLevel >= requiredTierLevel;
     })
-    .map((_item) => {
+    .map((item) => {
       // Filter subitems based on tool access if they exist
       const filteredItem = { ...item };
 

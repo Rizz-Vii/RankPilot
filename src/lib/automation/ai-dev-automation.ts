@@ -322,9 +322,27 @@ export class AIDevAutomation extends EventEmitter {
             throw new Error(`Test plan ${testPlanId} not found`);
         }
 
-        const testResults = await this.executePerformanceTests(testPlan);
-        const regressionAnalysis = await this.analyzePerformanceRegression(testResults);
-        const recommendations = await this.generatePerformanceRecommendations(testResults, regressionAnalysis);
+        const testResults = await this.executePerformanceTests(testPlan) as {
+            suite: string;
+            test: string;
+            metric: string;
+            value: number;
+            threshold: number;
+            passed: boolean;
+        }[];
+        const regressionAnalysis = await this.analyzePerformanceRegression(testResults) as {
+            metric: string;
+            current_value: number;
+            baseline_value: number;
+            change_percentage: number;
+            is_regression: boolean;
+        }[];
+        const recommendations = await this.generatePerformanceRecommendations(testResults, regressionAnalysis) as {
+            type: string;
+            description: string;
+            impact: string;
+            effort: string;
+        }[];
 
         const result = {
             test_results: testResults,
@@ -380,9 +398,9 @@ export class AIDevAutomation extends EventEmitter {
             return result;
 
         } catch (_error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            const errorMessage = _error instanceof Error ? _error.message : 'Unknown error';
             this.emit('deployment-failed', { deploymentId, _error: errorMessage });
-            throw error;
+            throw _error;
         }
     }
 
@@ -520,14 +538,14 @@ export class AIDevAutomation extends EventEmitter {
         const content = await this.readFile(filePath);
         const linesOfCode = content.split('\n').length;
 
-        const issues = [];
-        const suggestions = [];
+        const issues: CodeAnalysisResult['issues'] = [];
+        const suggestions: CodeAnalysisResult['suggestions'] = [];
 
         // Apply code quality rules
         for (const rule of this.codeRules.values()) {
             if (!rule.enabled) continue;
 
-            const ruleIssues = this.applyRule(content, rule, filePath);
+            const ruleIssues = this.applyRule(content, rule, filePath) as CodeAnalysisResult['issues'];
             issues.push(...ruleIssues);
         }
 
@@ -594,19 +612,20 @@ export class AIDevAutomation extends EventEmitter {
     }
 
     private async analyzePerformanceRegression(testResults: unknown[]): Promise<unknown[]> {
-        return testResults.map(result => ({
-            metric: result.metric,
-            current_value: result.value,
-            baseline_value: result.threshold * 0.8,
-            change_percentage: ((result.value - result.threshold * 0.8) / (result.threshold * 0.8)) * 100,
-            is_regression: result.value > result.threshold * 0.8
-        }));
+        return (testResults as Array<{ metric: string; value: number; threshold: number; }>).
+            map(result => ({
+                metric: result.metric,
+                current_value: result.value,
+                baseline_value: result.threshold * 0.8,
+                change_percentage: ((result.value - result.threshold * 0.8) / (result.threshold * 0.8)) * 100,
+                is_regression: result.value > result.threshold * 0.8
+            }));
     }
 
     private async generatePerformanceRecommendations(testResults: unknown[], regressionAnalysis: unknown[]): Promise<unknown[]> {
-        const recommendations = [];
+        const recommendations: Array<{ type: string; description: string; impact: string; effort: string; }> = [];
 
-        const failedTests = testResults.filter(r => !r.passed);
+        const failedTests = (testResults as Array<{ passed: boolean }>).filter(r => !r.passed);
         if (failedTests.length > 0) {
             recommendations.push({
                 type: 'performance_optimization',
@@ -616,7 +635,7 @@ export class AIDevAutomation extends EventEmitter {
             });
         }
 
-        const regressions = regressionAnalysis.filter(r => r.is_regression);
+        const regressions = (regressionAnalysis as Array<{ is_regression: boolean }>).filter(r => r.is_regression);
         if (regressions.length > 0) {
             recommendations.push({
                 type: 'regression_fix',
@@ -630,9 +649,10 @@ export class AIDevAutomation extends EventEmitter {
     }
 
     private calculatePerformanceSummary(testResults: unknown[]): any {
-        const passed = testResults.filter(r => r.passed).length;
+        const passed = (testResults as Array<{ passed: boolean }>).filter(r => r.passed).length;
         const failed = testResults.length - passed;
-        const budgetViolations = testResults.filter(r => r.value > r.threshold).length;
+        const budgetViolations = (testResults as Array<{ value: number; threshold: number }>).
+            filter(r => r.value > r.threshold).length;
 
         return {
             overall_score: (passed / testResults.length) * 100,
@@ -689,7 +709,7 @@ export class AIDevAutomation extends EventEmitter {
         const success = Math.random() > 0.1; // 90% success rate
 
         return {
-            step_id: step.id,
+            step_id: (step as { id: string }).id,
             status: success ? 'success' : 'failed',
             duration: Date.now() - startTime,
             output: success ? 'Step completed successfully' : 'Step failed with error'
@@ -917,7 +937,7 @@ export class AIDevAutomation extends EventEmitter {
         const success = Math.random() > 0.1; // 90% success rate
 
         return {
-            action_id: action.id,
+            action_id: (action as { id: string }).id,
             status: success ? 'success' : 'failed',
             duration: Date.now() - startTime,
             output: success ? 'Action completed' : 'Action failed'
@@ -996,7 +1016,8 @@ export class AIDevAutomation extends EventEmitter {
 
     private calculateMaintainabilityIndex(metrics: unknown): number {
         // Simplified maintainability calculation
-        return Math.max(0, 100 - metrics.cyclomatic_complexity * 2 - metrics.duplication_percentage);
+        const m = metrics as { cyclomatic_complexity: number; duplication_percentage: number };
+        return Math.max(0, 100 - m.cyclomatic_complexity * 2 - m.duplication_percentage);
     }
 
     private generateOverallRecommendations(results: CodeAnalysisResult[]): unknown[] {

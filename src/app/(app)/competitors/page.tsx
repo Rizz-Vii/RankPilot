@@ -74,13 +74,13 @@ const RankingsChart = ({
         name: new URL(String(url)).hostname,
         rank:
           typeof competitorData?.rank === "number" ? competitorData.rank : 101,
-        fill: `hsl(var(--chart-${(index % 5) + 2}))`,
+        fill: `hsl(var(--chart-${(_index % 5) + 2}))`,
       };
     }),
   ];
 
   const chartConfig: ChartConfig = chartData.reduce((acc, _item) => {
-    acc[item.name] = { label: item.name, color: item.fill };
+    acc[_item.name] = { label: _item.name, color: _item.fill };
     return acc;
   }, {} as ChartConfig);
 
@@ -179,14 +179,14 @@ const CompetitorResults = ({
             </TableHeader>
             <TableBody>
               {results.rankings.map((_item) => (
-                <TableRow key={item.keyword}>
-                  <TableCell className="font-medium">{item.keyword}</TableCell>
+                <TableRow key={_item.keyword}>
+                  <TableCell className="font-medium">{_item.keyword}</TableCell>
                   <TableCell className="text-center">
-                    {item.yourRank?.rank ?? "N/A"}
+                    {_item.yourRank?.rank ?? "N/A"}
                   </TableCell>
                   {competitorHeaders.map((url) => (
                     <TableCell key={String(url)} className="text-center">
-                      {(item as any)[String(url)]?.rank ?? "N/A"}
+                      {(_item as any)[String(url)]?.rank ?? "N/A"}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -335,11 +335,11 @@ export default function CompetitorsPage() {
         body: JSON.stringify(analysisRequest),
       });
 
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
+      if (!_response.ok) {
+        throw new Error(`API request failed: ${_response.status}`);
       }
 
-      const result = await response.json();
+      const _result = await _response.json();
       setReport(_result);
 
       if (user) {
@@ -362,13 +362,14 @@ export default function CompetitorsPage() {
         });
       }
     } catch (e: unknown) {
+      const error = e as Error;
       if (e instanceof TimeoutError) {
-        console.warn("Competitor analysis timed out:", e.message);
+        console.warn("Competitor analysis timed out:", error.message);
         setError(
           "Competitor analysis is taking longer than expected. Please try again later or with fewer competitors."
         );
       } else {
-        setError(e.message || "An unexpected error occurred during analysis.");
+        setError(error.message || "An unexpected error occurred during analysis.");
       }
     } finally {
       setIsLoading(false);
@@ -402,9 +403,9 @@ export default function CompetitorsPage() {
                 <LoadingScreen text="Analyzing rankings..." />
               </motion.div>
             )}
-            {error && (
+            {_error && (
               <motion.div
-                key="error"
+                key="_error"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
@@ -416,7 +417,7 @@ export default function CompetitorsPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p>{error}</p>
+                    <p>{_error}</p>
                   </CardContent>
                 </Card>
               </motion.div>

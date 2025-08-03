@@ -75,48 +75,48 @@ interface Integration {
 }
 
 const WEBHOOK_EVENTS = [
-  { _value: "report.generated", label: "Report Generated" },
-  { _value: "analysis.completed", label: "Analysis Completed" },
-  { _value: "keyword.ranking.changed", label: "Keyword Ranking Changed" },
-  { _value: "competitor.detected", label: "New Competitor Detected" },
-  { _value: "alert.triggered", label: "Alert Triggered" },
-  { _value: "user.subscribed", label: "User Subscribed" },
-  { _value: "user.unsubscribed", label: "User Unsubscribed" },
+  { value: "report.generated", label: "Report Generated" },
+  { value: "analysis.completed", label: "Analysis Completed" },
+  { value: "keyword.ranking.changed", label: "Keyword Ranking Changed" },
+  { value: "competitor.detected", label: "New Competitor Detected" },
+  { value: "alert.triggered", label: "Alert Triggered" },
+  { value: "user.subscribed", label: "User Subscribed" },
+  { value: "user.unsubscribed", label: "User Unsubscribed" },
 ];
 
 const INTEGRATION_TYPES = [
   {
-    _value: "webhook",
+    value: "webhook",
     label: "Webhook",
     icon: Webhook,
     description: "HTTP callbacks for real-time events",
   },
   {
-    _value: "api",
+    value: "api",
     label: "REST API",
     icon: Link,
     description: "Custom API endpoints and integrations",
   },
   {
-    _value: "database",
+    value: "database",
     label: "Database",
     icon: Database,
     description: "Direct database connections",
   },
   {
-    _value: "email",
+    value: "email",
     label: "Email",
     icon: Mail,
     description: "Email automation and notifications",
   },
   {
-    _value: "chat",
+    value: "chat",
     label: "Chat/Slack",
     icon: MessageSquare,
     description: "Team chat integrations",
   },
   {
-    _value: "analytics",
+    value: "analytics",
     label: "Analytics",
     icon: BarChart3,
     description: "Third-party analytics platforms",
@@ -532,22 +532,20 @@ export default function IntegrationsPage() {
                       </div>
                     </div>
 
-                    <div>
-                      <Label className="text-sm font-medium">Events</Label>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {webhook.events.map((_event) => (
-                          <Badge
-                            key={event}
-                            variant="outline"
-                            className="text-xs"
-                          >
-                            {event}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-3 pt-2 border-t">
+                      <div>
+                        <Label className="text-sm font-medium">Events</Label>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {webhook.events.map((event) => (
+                            <Badge
+                              key={event}
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              {event}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>                    <div className="grid gap-4 md:grid-cols-3 pt-2 border-t">
                       <div className="text-center">
                         <p className="text-2xl font-bold text-green-600">
                           {webhook.deliveryCount}
@@ -737,7 +735,7 @@ export default function IntegrationsPage() {
                   onChange={(e) =>
                     setWebhookForm((prev) => ({
                       ...prev,
-                      name: e.target._value,
+                      name: e.target.value,
                     }))
                   }
                   placeholder="e.g., Report Notifications"
@@ -760,7 +758,7 @@ export default function IntegrationsPage() {
               <div>
                 <Label>Events to Subscribe</Label>
                 <div className="grid gap-2 mt-2 max-h-40 overflow-y-auto">
-                  {WEBHOOK_EVENTS.map((_event) => (
+                  {WEBHOOK_EVENTS.map((event) => (
                     <div
                       key={event.value}
                       className="flex items-center space-x-2"
@@ -768,7 +766,7 @@ export default function IntegrationsPage() {
                       <input
                         type="checkbox"
                         id={event.value}
-                        checked={webhookForm.events.includes(event._value)}
+                        checked={webhookForm.events.includes(event.value)}
                         onChange={(e) => {
                           if (e.target.checked) {
                             setWebhookForm((prev) => ({
@@ -779,7 +777,7 @@ export default function IntegrationsPage() {
                             setWebhookForm((prev) => ({
                               ...prev,
                               events: prev.events.filter(
-                                (ev) => ev !== event._value
+                                (ev) => ev !== event.value
                               ),
                             }));
                           }
@@ -835,7 +833,7 @@ export default function IntegrationsPage() {
                   onChange={(e) =>
                     setIntegrationForm((prev) => ({
                       ...prev,
-                      name: e.target._value,
+                      name: e.target.value,
                     }))
                   }
                   placeholder="e.g., Slack Notifications"
@@ -846,7 +844,7 @@ export default function IntegrationsPage() {
                 <Label htmlFor="integrationType">Integration Type</Label>
                 <Select
                   value={integrationForm.type}
-                  onValueChange={(_value: Integration["type"]) =>
+                  onValueChange={(value: Integration["type"]) =>
                     setIntegrationForm((prev) => ({ ...prev, type: value }))
                   }
                 >
@@ -879,7 +877,7 @@ export default function IntegrationsPage() {
                   onChange={(e) =>
                     setIntegrationForm((prev) => ({
                       ...prev,
-                      description: e.target._value,
+                      description: e.target.value,
                     }))
                   }
                   placeholder="Describe what this integration does..."

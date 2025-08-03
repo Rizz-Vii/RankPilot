@@ -6,7 +6,7 @@
 import { conversationalSEOEngine } from '@/lib/ai/conversational-seo-engine';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
         const { action, sessionId, message, userId, userTier } = body;
@@ -38,7 +38,7 @@ export async function POST(_request: NextRequest) {
                     }, { status: 400 });
                 }
 
-                const _response = await conversationalSEOEngine.processMessage(sessionId, message);
+                const response = await conversationalSEOEngine.processMessage(sessionId, message);
 
                 return NextResponse.json({
                     success: true,
@@ -52,8 +52,8 @@ export async function POST(_request: NextRequest) {
                 }, { status: 400 });
         }
 
-    } catch (_error) {
-        console.error('[Conversational SEO API] Error:', _error);
+    } catch (error) {
+        console.error('[Conversational SEO API] Error:', error);
         return NextResponse.json({
             success: false,
             _error: error instanceof Error ? error.message : 'Internal server error'

@@ -92,7 +92,7 @@ const DashboardMetricCard: React.FC<{
       <Icon className="h-4 w-4 text-muted-foreground" />
     </CardHeader>
     <CardContent>
-      <div className="text-2xl font-bold font-headline">{value}</div>
+      <div className="text-2xl font-bold font-headline">{_value}</div>
       {change !== undefined && (
         <p
           className={`text-xs ${change >= 0 ? "text-success" : "text-destructive"}`}
@@ -104,7 +104,7 @@ const DashboardMetricCard: React.FC<{
   </Card>
 );
 
-const SeoScoreTrendChart = ({ data }: { _data: unknown[]; }) => (
+const SeoScoreTrendChart = ({ _data }: { _data: unknown[]; }) => (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Overall SEO Score</CardTitle>
@@ -113,11 +113,11 @@ const SeoScoreTrendChart = ({ data }: { _data: unknown[]; }) => (
       </CardDescription>
     </CardHeader>
     <CardContent>
-      {data && data.length > 0 ? (
+      {_data && _data.length > 0 ? (
         <ChartContainer config={lineChartConfig} className="h-[200px] w-full">
           <ResponsiveContainer>
             <LineChart
-              data={data}
+              data={_data}
               margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
             >
               <CartesianGrid vertical={false} />
@@ -163,10 +163,12 @@ const SeoScoreTrendChart = ({ data }: { _data: unknown[]; }) => (
 );
 
 const KeywordVisibilityChart = ({ visibility }: { visibility: unknown; }) => {
+  const score = (visibility as any)?.score || 0;
+  const top10 = (visibility as any)?.top10 || 0;
   const data = [
     {
       name: "Visibility",
-      _value: visibility?.score || 0,
+      _value: score,
       fill: "hsl(var(--chart-1))",
     },
   ];
@@ -179,7 +181,7 @@ const KeywordVisibilityChart = ({ visibility }: { visibility: unknown; }) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex items-center justify-center">
-        {visibility && (visibility.top10 > 0 || visibility.score > 0) ? (
+        {score > 0 || top10 > 0 ? (
           <ChartContainer config={lineChartConfig} className="h-[200px] w-full">
             <RadialBarChart
               data={data}
@@ -190,7 +192,7 @@ const KeywordVisibilityChart = ({ visibility }: { visibility: unknown; }) => {
               barSize={30}
             >
               <PolarGrid gridType="circle" radialLines={false} stroke="none" />
-              <RadialBar background dataKey="value" cornerRadius={10} />
+              <RadialBar background dataKey="_value" cornerRadius={10} />
               <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
               <text
                 x="50%"
@@ -199,7 +201,7 @@ const KeywordVisibilityChart = ({ visibility }: { visibility: unknown; }) => {
                 dominantBaseline="middle"
                 className="text-4xl font-headline fill-foreground"
               >
-                {`${visibility.score}%`}
+                {`${score}%`}
               </text>
             </RadialBarChart>
           </ChartContainer>
@@ -217,7 +219,7 @@ const KeywordVisibilityChart = ({ visibility }: { visibility: unknown; }) => {
   );
 };
 
-const DomainAuthorityChart = ({ data }: { _data: unknown; }) => (
+const DomainAuthorityChart = ({ _data }: { _data: any; }) => (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Domain Authority</CardTitle>
@@ -226,10 +228,10 @@ const DomainAuthorityChart = ({ data }: { _data: unknown; }) => (
       </CardDescription>
     </CardHeader>
     <CardContent>
-      {data && data.history && data.history.length > 0 ? (
+      {_data && _data.history && _data.history.length > 0 ? (
         <ChartContainer config={lineChartConfig} className="h-[200px] w-full">
           <LineChart
-            data={data.history}
+            data={_data.history}
             margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
           >
             <CartesianGrid vertical={false} />
@@ -270,7 +272,7 @@ const DomainAuthorityChart = ({ data }: { _data: unknown; }) => (
   </Card>
 );
 
-const BacklinksChart = ({ data }: { _data: unknown; }) => (
+const BacklinksChart = ({ _data }: { _data: any; }) => (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Backlink Growth</CardTitle>
@@ -279,11 +281,11 @@ const BacklinksChart = ({ data }: { _data: unknown; }) => (
       </CardDescription>
     </CardHeader>
     <CardContent>
-      {data && data.history && data.history.length > 0 ? (
+      {_data && _data.history && _data.history.length > 0 ? (
         <ChartContainer config={barChartConfig} className="h-[200px] w-full">
           <ResponsiveContainer>
             <BarChart
-              data={data.history}
+              data={_data.history}
               margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
             >
               <CartesianGrid vertical={false} />
@@ -313,7 +315,7 @@ const BacklinksChart = ({ data }: { _data: unknown; }) => (
   </Card>
 );
 
-const TrafficSourcesChart = ({ data }: { _data: unknown[]; }) => (
+const TrafficSourcesChart = ({ _data }: { _data: any[]; }) => (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Traffic Sources</CardTitle>
@@ -322,7 +324,7 @@ const TrafficSourcesChart = ({ data }: { _data: unknown[]; }) => (
       </CardDescription>
     </CardHeader>
     <CardContent className="flex items-center justify-center">
-      {data && data.length > 0 ? (
+      {_data && _data.length > 0 ? (
         <ChartContainer config={pieChartConfig} className="h-[200px] w-full">
           <ResponsiveContainer>
             <PieChart>
@@ -333,20 +335,20 @@ const TrafficSourcesChart = ({ data }: { _data: unknown[]; }) => (
                 )}
               />
               <Pie
-                data={data}
+                data={_data}
                 dataKey="value"
                 nameKey="name"
                 innerRadius={50}
                 strokeWidth={5}
               >
-                {data.map((entry) => (
+                {_data.map((entry: any) => (
                   <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                 ))}
               </Pie>
               <Legend
                 content={({ payload }) => (
                   <div className={styles.legendContainer}>
-                    {payload?.map((entry) => (
+                    {payload?.map((entry: any) => (
                       <div
                         key={`legend-${entry.value}`}
                         className={styles.legendItem}
@@ -464,7 +466,7 @@ export default function DashboardPage() {
         layoutId="dashboard-header"
       >
         <h1 className="text-3xl font-headline font-semibold text-foreground">
-          Welcome, {profile?.displayName || user?.email}!
+          Welcome, {(profile as any)?.displayName || user?.email}!
         </h1>
         <p className="text-muted-foreground font-body">
           Here&apos;s your SEO command center at a glance.
@@ -480,7 +482,7 @@ export default function DashboardPage() {
         <motion.div variants={itemVariants}>
           <DashboardMetricCard
             title="Overall SEO Score"
-            value={String(dashboardData?.seoScore.current || 0)}
+            _value={String(dashboardData?.seoScore.current || 0)}
             change={dashboardData?.seoScore.change || 0}
             icon={Activity}
           />
@@ -488,7 +490,7 @@ export default function DashboardPage() {
         <motion.div variants={itemVariants}>
           <DashboardMetricCard
             title="Tracked Keywords"
-            value={(dashboardData?.trackedKeywords.current || 0).toLocaleString()}
+            _value={(dashboardData?.trackedKeywords.current || 0).toLocaleString()}
             change={dashboardData?.trackedKeywords.change || 0}
             icon={KeyRound}
           />
@@ -496,7 +498,7 @@ export default function DashboardPage() {
         <motion.div variants={itemVariants}>
           <DashboardMetricCard
             title="Domain Authority"
-            value={String(dashboardData?.domainAuthority.score || 0)}
+            _value={String(dashboardData?.domainAuthority.score || 0)}
             change={(dashboardData?.domainAuthority.score || 0) - 52}
             icon={ShieldCheck}
           />
@@ -504,7 +506,7 @@ export default function DashboardPage() {
         <motion.div variants={itemVariants}>
           <DashboardMetricCard
             title="Total Backlinks"
-            value={(dashboardData?.backlinks.total || 0).toLocaleString()}
+            _value={(dashboardData?.backlinks.total || 0).toLocaleString()}
             change={dashboardData?.backlinks.newLast30Days || 0}
             icon={LinkIcon}
           />
@@ -518,10 +520,10 @@ export default function DashboardPage() {
         animate="visible"
       >
         <motion.div className={styles.chartLargeSpan} variants={itemVariants}>
-          <SeoScoreTrendChart data={dashboardData?.seoScoreTrend || []} />
+          <SeoScoreTrendChart _data={dashboardData?.seoScoreTrend || []} />
         </motion.div>
         <motion.div className={styles.chartMediumSpan} variants={itemVariants}>
-          <TrafficSourcesChart data={dashboardData?.trafficSources || []} />
+          <TrafficSourcesChart _data={dashboardData?.trafficSources || []} />
         </motion.div>
       </motion.div>
 
@@ -535,7 +537,7 @@ export default function DashboardPage() {
           <KeywordVisibilityChart visibility={dashboardData?.keywordVisibility || { score: 0, top10: 0 }} />
         </motion.div>
         <motion.div variants={itemVariants}>
-          <BacklinksChart data={dashboardData?.backlinks || { total: 0, newLast30Days: 0, quality: { high: 0, medium: 0, low: 0 } }} />
+          <BacklinksChart _data={dashboardData?.backlinks || { total: 0, newLast30Days: 0, quality: { high: 0, medium: 0, low: 0 } }} />
         </motion.div>
       </motion.div>
 
@@ -546,10 +548,10 @@ export default function DashboardPage() {
         animate="visible"
       >
         <motion.div variants={itemVariants}>
-          <DomainAuthorityChart data={dashboardData?.domainAuthority || { score: 0, trend: [] }} />
+          <DomainAuthorityChart _data={dashboardData?.domainAuthority || { score: 0, trend: [] }} />
         </motion.div>
         <motion.div variants={itemVariants}>
-          <BacklinksChart data={dashboardData?.backlinks || { total: 0, newLast30Days: 0, quality: { high: 0, medium: 0, low: 0 } }} />
+          <BacklinksChart _data={dashboardData?.backlinks || { total: 0, newLast30Days: 0, quality: { high: 0, medium: 0, low: 0 } }} />
         </motion.div>
       </motion.div>
 

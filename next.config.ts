@@ -7,14 +7,14 @@ const nextConfig: NextConfig = {
   // Enable React strict mode for better development practices
   reactStrictMode: true,
 
-  // Disable ESLint during build for deployment
+  // Enable ESLint during build for code quality
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
 
-  // Disable TypeScript checking during build for deployment
+  // Enable TypeScript checking during build for type safety
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 
   // Configure image domains
@@ -87,32 +87,32 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: [
           {
-            _key: "X-DNS-Prefetch-Control",
-            _value: "on",
+            key: "X-DNS-Prefetch-Control",
+            value: "on",
           },
           {
-            _key: "Permissions-Policy",
-            _value: "payment=(), microphone=(), camera=(), geolocation=(), interest-cohort=()"
+            key: "Permissions-Policy",
+            value: "payment=(), microphone=(), camera=(), geolocation=(), interest-cohort=()"
           },
           {
-            _key: "Strict-Transport-Security",
-            _value: "max-age=31536000; includeSubDomains",
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains",
           },
           {
-            _key: "X-Frame-Options",
-            _value: "SAMEORIGIN",
+            key: "X-Frame-Options",
+            value: "SAMEORIGIN",
           },
           {
-            _key: "X-Content-Type-Options",
-            _value: "nosniff",
+            key: "X-Content-Type-Options",
+            value: "nosniff",
           },
           {
-            _key: "Referrer-Policy",
-            _value: "origin-when-cross-origin",
+            key: "Referrer-Policy",
+            value: "origin-when-cross-origin",
           },
           {
-            _key: "Content-Security-Policy",
-            _value:
+            key: "Content-Security-Policy",
+            value:
               "default-src 'self'; " +
               "script-src 'self' 'unsafe-eval' 'unsafe-inline' " +
               "https://apis.google.com " +
@@ -127,7 +127,7 @@ const nextConfig: NextConfig = {
               "https://www.google-analytics.com; " +
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
               "font-src 'self' https://fonts.gstatic.com; " +
-              "img-src 'self' _data: https:; " +
+              "img-src 'self' data: https:; " +
               "connect-src 'self' " +
               "https://*.firebaseapp.com " +
               "https://*.firebase.com " +

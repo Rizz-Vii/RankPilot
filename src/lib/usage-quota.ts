@@ -56,7 +56,7 @@ export class UsageQuotaManager {
         return await this.initializeUserQuota(userId, "free");
       }
 
-      const _data = quotaDoc.data();
+      const data = quotaDoc.data();
       return {
         userId,
         plan: data.plan,
@@ -371,7 +371,7 @@ export class UsageQuotaManager {
     if (!usageCheck.allowed) {
       return {
         success: false,
-        _error: usageCheck.reason || "Usage limit exceeded",
+        error: usageCheck.reason || "Usage limit exceeded",
       };
     }
 
@@ -380,7 +380,7 @@ export class UsageQuotaManager {
     if (!incrementSuccess) {
       return {
         success: false,
-        _error: "Failed to track usage",
+        error: "Failed to track usage",
       };
     }
 

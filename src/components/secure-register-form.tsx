@@ -65,7 +65,7 @@ export function SecureRegisterForm({
           id="email"
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target._value)}
+          onChange={(e) => setEmail(e.target.value)}
           required
         />
         {errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
@@ -76,7 +76,7 @@ export function SecureRegisterForm({
           id="password"
           type={passwordToggle.show ? "text" : "password"}
           value={password}
-          onChange={(e) => setPassword(e.target._value)}
+          onChange={(e) => setPassword(e.target.value)}
           required
         />
         <button
@@ -96,7 +96,7 @@ export function SecureRegisterForm({
           id="confirmPassword"
           type={confirmPasswordToggle.show ? "text" : "password"}
           value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target._value)}
+          onChange={(e) => setConfirmPassword(e.target.value)}
           required
         />
         <button

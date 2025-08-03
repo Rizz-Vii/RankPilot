@@ -211,7 +211,7 @@ export default function ApiDocsPage() {
           </motion.div>
 
           <div className="space-y-4">
-            {apiEndpoints.map((endpoint, _index) => (
+            {apiEndpoints.map((endpoint, index) => (
               <motion.div
                 key={endpoint.endpoint}
                 initial="hidden"
@@ -281,7 +281,7 @@ export default function ApiDocsPage() {
           </motion.div>
 
           <div className="grid lg:grid-cols-1 gap-8">
-            {sdkExamples.map((example, _index) => (
+            {sdkExamples.map((example, index) => (
               <motion.div
                 key={example.language}
                 initial="hidden"

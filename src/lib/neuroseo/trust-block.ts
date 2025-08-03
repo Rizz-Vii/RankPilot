@@ -331,11 +331,11 @@ export class TrustBlockEngine {
     // Look for factual indicators
     const factualIndicators = [
       /\b\d{4}\b/, // Years
-      /according to/_i,
-      /research shows/_i,
-      /study found/_i,
-      /data indicates/_i,
-      /statistics show/_i,
+      /according to/i,
+      /research shows/i,
+      /study found/i,
+      /data indicates/i,
+      /statistics show/i,
     ];
 
     const indicatorCount = factualIndicators.reduce((count, pattern) => {
@@ -684,10 +684,10 @@ export class TrustBlockEngine {
 
     const claimIndicators = [
       /\d+%/,
-      /according to/_i,
-      /studies show/_i,
-      /research indicates/_i,
-      /\b\d+\s+(times|percent|people|users)\b/_i,
+      /according to/i,
+      /studies show/i,
+      /research indicates/i,
+      /\b\d+\s+(times|percent|people|users)\b/i,
     ];
 
     return sentences

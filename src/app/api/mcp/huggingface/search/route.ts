@@ -6,7 +6,7 @@
 import { mcpService } from '@/lib/mcp';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
     try {
         const { query, limit = 10 } = await request.json();
 
@@ -18,12 +18,12 @@ export async function POST(_request: NextRequest) {
             }, { status: 400 });
         }
 
-        const _result = await mcpService.huggingfaceModelSearch(query, limit);
+        const result = await mcpService.huggingfaceModelSearch(query, limit);
 
         return NextResponse.json({
             success: result.success,
-            _data: result._data,
-            _error: result._error,
+            _data: result.data,
+            _error: result.error,
             metadata: {
                 source: result.source,
                 timestamp: result.timestamp,
@@ -33,7 +33,7 @@ export async function POST(_request: NextRequest) {
     } catch (_error) {
         return NextResponse.json({
             success: false,
-            _error: error instanceof Error ? error.message : 'Unknown error',
+            _error: _error instanceof Error ? _error.message : 'Unknown error',
             message: 'HuggingFace model search failed',
         }, { status: 500 });
     }

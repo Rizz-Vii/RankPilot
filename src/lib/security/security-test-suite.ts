@@ -25,7 +25,7 @@ export interface SecurityTestConfig {
         logout: string;
         profile: string;
         admin: string;
-        _data: string;
+        data: string;
     };
     security: {
         csrfTokenEndpoint: string;
@@ -147,7 +147,7 @@ export class SecurityTestSuite {
             testResult.findings.push({
                 id: `finding_${Date.now()}`,
                 type: 'authentication_failure',
-                description: `Authentication test failed: ${error}`,
+                description: `Authentication test failed: ${_error instanceof Error ? _error.message : String(_error)}`,
                 impact: 'High - Authentication vulnerabilities can lead to unauthorized access',
                 remediation: 'Review and fix authentication implementation',
                 references: ['https://owasp.org/www-project-top-ten/2017/A2_2017-Broken_Authentication']
@@ -166,9 +166,9 @@ export class SecurityTestSuite {
         const failedAttempts = 10;
         let blockedAfterAttempts = false;
 
-        for (let _i = 0; i < failedAttempts; i++) {
+        for (let i = 0; i < failedAttempts; i++) {
             try {
-                const _response = await fetch(`${this.config.baseUrl}${this.config.apiEndpoints.login}`, {
+                const response = await fetch(`${this.config.baseUrl}${this.config.apiEndpoints.login}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -225,7 +225,7 @@ export class SecurityTestSuite {
                     })
                 });
 
-                if (response.ok) {
+                if (_response.ok) {
                     testResult.findings.push({
                         id: `finding_${Date.now()}`,
                         type: 'weak_password_accepted',
@@ -256,7 +256,7 @@ export class SecurityTestSuite {
     private async testMFAImplementation(testResult: SecurityTestResult): Promise<void> {
         // Check if MFA is available and properly implemented
         try {
-            const _response = await fetch(`${this.config.baseUrl}/api/auth/mfa/status`, {
+            const response = await fetch(`${this.config.baseUrl}/api/auth/mfa/status`, {
                 headers: { 'Authorization': 'Bearer test_token' }
             });
 
@@ -318,7 +318,7 @@ export class SecurityTestSuite {
             testResult.findings.push({
                 id: `finding_${Date.now()}`,
                 type: 'authorization_test_failure',
-                description: `Authorization test failed: ${error}`,
+                description: `Authorization test failed: ${_error instanceof Error ? _error.message : String(_error)}`,
                 impact: 'Critical - Authorization vulnerabilities can lead to privilege escalation',
                 remediation: 'Review and fix authorization implementation',
                 references: ['https://owasp.org/www-project-top-ten/2017/A5_2017-Broken_Access_Control']
@@ -487,10 +487,10 @@ export class SecurityTestSuite {
         const requestCount = 100;
         let rateLimited = false;
 
-        for (let _i = 0; i < requestCount; i++) {
+        for (let i = 0; i < requestCount; i++) {
             try {
                 const _response = await fetch(endpoint);
-                if (response.status === 429) {
+                if (_response.status === 429) {
                     rateLimited = true;
                     break;
                 }
@@ -647,7 +647,7 @@ export class SecurityTestSuite {
 
         try {
             const _response = await fetch(this.config.baseUrl);
-            const headers = response.headers;
+            const headers = _response.headers;
 
             // Check for security headers
             const securityHeaders = [
@@ -866,7 +866,7 @@ export const securityTestConfig: SecurityTestConfig = {
         logout: '/api/auth/logout',
         profile: '/api/user/profile',
         admin: '/api/admin',
-        _data: '/api/data'
+        data: '/api/data'
     },
     security: {
         csrfTokenEndpoint: '/api/csrf-token',

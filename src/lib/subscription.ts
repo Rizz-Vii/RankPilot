@@ -41,7 +41,7 @@ export async function updateUserSubscription(
   subscriptionData: Partial<SubscriptionData>
 ): Promise<void> {
   try {
-    const updateData: unknown = {};
+    const updateData: Record<string, any> = {};
 
     if (subscriptionData.status) {
       updateData.subscriptionStatus = subscriptionData.status;
@@ -72,7 +72,7 @@ export async function updateUserSubscription(
     await updateDoc(doc(db, "users", userId), updateData);
   } catch (_error) {
     console.error("Error updating user subscription:", _error);
-    throw error;
+    throw _error;
   }
 }
 
@@ -158,9 +158,9 @@ export function getRemainingUsage(
       limits.competitorAnalysis === -1
         ? "unlimited"
         : Math.max(
-            0,
-            limits.competitorAnalysis - (currentUsage.competitors || 0)
-          ),
+          0,
+          limits.competitorAnalysis - (currentUsage.competitors || 0)
+        ),
   };
 }
 

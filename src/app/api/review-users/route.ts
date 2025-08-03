@@ -280,8 +280,8 @@ export async function GET() {
       },
       users: userAnalysis,
     });
-  } catch (_error) {
-    console.error("Error reviewing user _data:", _error);
+  } catch (error) {
+    console.error("Error reviewing user _data:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
     return NextResponse.json(

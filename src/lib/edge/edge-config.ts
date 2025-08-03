@@ -11,6 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+
 // Edge locations configuration
 const EDGE_LOCATIONS = {
     US_EAST: 'us-east-1',
@@ -55,8 +56,8 @@ const PERFORMANCE_RULES: Record<string, CacheConfig> = {
  * Determine the best edge location based on request origin
  */
 function getOptimalEdgeLocation(_request: NextRequest): string {
-    const countryCode = request.headers.get('cf-ipcountry') ||
-        request.headers.get('x-country-code') || 'US';
+    const countryCode = _request.headers.get('cf-ipcountry') ||
+        _request.headers.get('x-country-code') || 'US';
 
     // Map countries to edge locations for optimal performance
     const locationMap: Record<string, string> = {
@@ -85,7 +86,7 @@ function getOptimalEdgeLocation(_request: NextRequest): string {
  * Apply intelligent caching headers based on request type
  */
 function applyCachingStrategy(_request: NextRequest, _response: NextResponse): NextResponse {
-    const pathname = request.nextUrl.pathname;
+    const pathname = _request.nextUrl.pathname;
 
     // Determine caching strategy
     let cacheConfig: CacheConfig = PERFORMANCE_RULES.HTML_PAGES; // default
@@ -109,22 +110,22 @@ function applyCachingStrategy(_request: NextRequest, _response: NextResponse): N
     }
 
     // Apply cache headers
-    response.headers.set('Cache-Control', cacheControl);
+    _response.headers.set('Cache-Control', cacheControl);
 
     // Add performance headers
-    response.headers.set('X-Edge-Location', getOptimalEdgeLocation(_request));
-    response.headers.set('X-Cache-Strategy', Object.keys(PERFORMANCE_RULES).find(
+    _response.headers.set('X-Edge-Location', getOptimalEdgeLocation(_request));
+    _response.headers.set('X-Cache-Strategy', Object.keys(PERFORMANCE_RULES).find(
         key => PERFORMANCE_RULES[key] === cacheConfig
     ) || 'DEFAULT');
 
-    return response;
+    return _response;
 }
 
 /**
  * Global performance optimization for static assets
  */
 export function optimizeStaticAssets(_request: NextRequest): NextResponse | null {
-    const pathname = request.nextUrl.pathname;
+    const pathname = _request.nextUrl.pathname;
 
     // Check if this is a static asset
     const isStaticAsset = PERFORMANCE_RULES.STATIC_ASSETS.paths.some(
@@ -157,7 +158,7 @@ export function optimizeStaticAssets(_request: NextRequest): NextResponse | null
  * API response optimization with intelligent caching
  */
 export function optimizeAPIResponses(_request: NextRequest): NextResponse | null {
-    const pathname = request.nextUrl.pathname;
+    const pathname = _request.nextUrl.pathname;
 
     if (!pathname.startsWith('/api/')) {
         return null;
@@ -238,14 +239,37 @@ export function addPerformanceMonitoring(_request: NextRequest, _response: NextR
     const startTime = Date.now();
 
     // Add performance timing headers
-    response.headers.set('X-Response-Time', `${Date.now() - startTime}ms`);
-    response.headers.set('X-Edge-Processing', 'true');
+    _response.headers.set('X-Response-Time', `${Date.now() - startTime}ms`);
+    _response.headers.set('X-Edge-Processing', 'true');
+
 
     // Add monitoring headers for analysis
-    response.headers.set('X-Request-ID', crypto.randomUUID());
-    response.headers.set('X-Timestamp', new Date().toISOString());
+    _response.headers.set('X-Request-ID', generateUUID());
+    _response.headers.set('X-Timestamp', new Date().toISOString());
+    return _response;
+}
 
-    return response;
+// Edge-compatible UUID generator
+function generateUUID(): string {
+    // Use crypto.getRandomValues if available (Edge Runtime supports Web Crypto API)
+    if (typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.getRandomValues === 'function') {
+        const arr = new Uint8Array(16);
+        globalThis.crypto.getRandomValues(arr);
+        // Adapted from StackOverflow: https://stackoverflow.com/a/2117523
+        let hex = Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+        return (
+            hex.substring(0, 8) + '-' +
+            hex.substring(8, 12) + '-' +
+            hex.substring(12, 16) + '-' +
+            hex.substring(16, 20) + '-' +
+            hex.substring(20, 32)
+        );
+    }
+    // Fallback: Math.random-based UUID (not cryptographically secure)
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
 }
 
 /**
@@ -261,12 +285,12 @@ export function edgeMiddleware(_request: NextRequest): NextResponse {
         NextResponse.next(); // Fallback to default response
 
     // Apply performance monitoring
-    response = addPerformanceMonitoring(_request, _response);
+    response = addPerformanceMonitoring(_request, response);
 
     // Apply intelligent caching
-    response = applyCachingStrategy(_request, _response);
+    response = applyCachingStrategy(_request, response);
 
-    // Add global performance headers
+    // Add global performance headers16  src/lib/edge/edge-config.ts:58
     response.headers.set('X-Edge-Optimized', 'true');
     response.headers.set('X-Processing-Time', `${Date.now() - startTime}ms`);
 
@@ -282,7 +306,8 @@ export const config = {
          * - _next/image (image optimization files)
          * - favicon.ico (favicon file)
          * - sw.js (service worker)
+         * - css/ (public CSS files)
          */
-        '/((?!_next/static|_next/image|favicon.ico|sw.js).*)',
+        '/((?!_next/static|_next/image|favicon.ico|sw.js|css/).*)',
     ],
 };

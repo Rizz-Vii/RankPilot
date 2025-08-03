@@ -184,7 +184,7 @@ export default function TeamChatPage() {
         const data = doc.data();
         newMessages.push({
           id: doc.id,
-          ..._data,
+          ...data,
           timestamp: data.timestamp?.toDate() || new Date(),
           editedAt: data.editedAt?.toDate()
         } as ChatMessage);
@@ -201,7 +201,7 @@ export default function TeamChatPage() {
         const data = doc.data();
         users.push({
           userId: doc.id,
-          ..._data,
+          ...data,
           lastSeen: data.lastSeen?.toDate() || new Date()
         } as UserPresence);
       });
@@ -459,7 +459,7 @@ export default function TeamChatPage() {
                   <Input
                     placeholder="Search messages..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target._value)}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 w-64"
                   />
                 </div>
@@ -494,7 +494,7 @@ export default function TeamChatPage() {
                     </p>
                   </div>
                 ) : (
-                  filteredMessages.map((message, _index) => {
+                  filteredMessages.map((message, index) => {
                     const isConsecutive = index > 0 && 
                       filteredMessages[index - 1].authorId === message.authorId &&
                       (message.timestamp.getTime() - filteredMessages[index - 1].timestamp.getTime()) < 300000; // 5 minutes
@@ -644,7 +644,7 @@ export default function TeamChatPage() {
                   ref={messageInputRef}
                   placeholder={`Message #${channels.find(c => c.id === activeChannel)?.name || 'general'}`}
                   value={newMessage}
-                  onChange={(e) => setNewMessage(e.target._value)}
+                  onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
                   className="min-h-[44px] max-h-32 resize-none"
                   rows={1}

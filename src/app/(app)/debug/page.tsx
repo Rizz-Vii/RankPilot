@@ -25,7 +25,7 @@ export default function DebugPage() {
         title: "Success",
         description: "User subscription fixed successfully",
       });
-    } catch (_error) {
+    } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",

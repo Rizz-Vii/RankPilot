@@ -131,7 +131,7 @@ export default function RewriteGenPage() {
         section,
         originalText: `Original ${section.toLowerCase()} text that could be improved for better SEO performance and user engagement.`,
         suggestedText: `Enhanced ${section.toLowerCase()} text with optimized keywords, improved readability, and stronger call-to-action elements for better conversion rates.`,
-        improvementType: improvementTypes[index % improvementTypes.length],
+        improvementType: improvementTypes[_index % improvementTypes.length],
         confidence: Math.random() * 0.3 + 0.7, // 70-100%
         reasoning: `Improved keyword density, enhanced readability score, and stronger user engagement signals`,
         impact: `Expected ${Math.floor(Math.random() * 20) + 10}% improvement in search rankings`,
@@ -249,12 +249,12 @@ export default function RewriteGenPage() {
       const content = contentText || `Content from ${inputUrl}`;
       
       const result = await simulateRewriteAnalysis(content, keywords, analysisType);
-      setCurrentResult(_result);
+      setCurrentResult(result);
 
       // Save result to database
       await addDoc(collection(db, 'rewriteGenResults'), {
         userId: user.uid,
-        ..._result,
+        ...result,
         createdAt: new Date()
       });
 
@@ -333,7 +333,7 @@ export default function RewriteGenPage() {
                 id="input-url"
                 placeholder="https://example.com"
                 value={inputUrl}
-                onChange={(e) => setInputUrl(e.target._value)}
+                onChange={(e) => setInputUrl(e.target.value)}
                 disabled={isAnalyzing}
               />
             </div>
@@ -343,7 +343,7 @@ export default function RewriteGenPage() {
                 id="target-keywords"
                 placeholder="seo, optimization, content marketing"
                 value={targetKeywords}
-                onChange={(e) => setTargetKeywords(e.target._value)}
+                onChange={(e) => setTargetKeywords(e.target.value)}
                 disabled={isAnalyzing}
               />
             </div>
@@ -356,14 +356,14 @@ export default function RewriteGenPage() {
                 id="content-text"
                 placeholder="Paste your content here for rewriting analysis..."
                 value={contentText}
-                onChange={(e) => setContentText(e.target._value)}
+                onChange={(e) => setContentText(e.target.value)}
                 disabled={isAnalyzing}
                 rows={4}
               />
             </div>
             <div>
               <Label htmlFor="analysis-type">Analysis Type</Label>
-              <Select value={analysisType} onValueChange={(_value: unknown) => setAnalysisType(_value)}>
+              <Select value={analysisType} onValueChange={(value: 'comprehensive' | 'seo-focused' | 'readability' | 'conversion') => setAnalysisType(value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select analysis type" />
                 </SelectTrigger>
@@ -490,7 +490,7 @@ export default function RewriteGenPage() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
                         <YAxis />
-                        <Tooltip formatter={(_value) => [`+${value}%`, 'Improvement']} />
+                        <Tooltip formatter={(_value) => [`+${_value}%`, 'Improvement']} />
                         <Bar dataKey="improvement" fill="#8884d8" />
                       </BarChart>
                     </ResponsiveContainer>
@@ -499,7 +499,7 @@ export default function RewriteGenPage() {
 
                 <div className="space-y-4">
                   {currentResult.contentSuggestions.map((suggestion, _index) => (
-                    <Card key={index}>
+                    <Card key={_index}>
                       <CardContent className="p-6">
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
@@ -530,10 +530,10 @@ export default function RewriteGenPage() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleCopySuggestion(suggestion.suggestedText, `suggestion-${index}`)}
+                                  onClick={() => handleCopySuggestion(suggestion.suggestedText, `suggestion-${_index}`)}
                                   className="h-7"
                                 >
-                                  {copiedSuggestion === `suggestion-${index}` ? (
+                                  {copiedSuggestion === `suggestion-${_index}` ? (
                                     <CheckCircle2 className="h-3 w-3" />
                                   ) : (
                                     <Copy className="h-3 w-3" />
@@ -577,7 +577,7 @@ export default function RewriteGenPage() {
               <TabsContent value="titles" className="space-y-4">
                 <div className="space-y-4">
                   {currentResult.titleSuggestions.map((title, _index) => (
-                    <Card key={index}>
+                    <Card key={_index}>
                       <CardContent className="p-6">
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
@@ -585,9 +585,9 @@ export default function RewriteGenPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleCopySuggestion(title.title, `title-${index}`)}
+                              onClick={() => handleCopySuggestion(title.title, `title-${_index}`)}
                             >
-                              {copiedSuggestion === `title-${index}` ? (
+                              {copiedSuggestion === `title-${_index}` ? (
                                 <CheckCircle2 className="h-4 w-4" />
                               ) : (
                                 <Copy className="h-4 w-4" />
@@ -644,17 +644,17 @@ export default function RewriteGenPage() {
               <TabsContent value="meta" className="space-y-4">
                 <div className="space-y-4">
                   {currentResult.metaDescriptionSuggestions.map((meta, _index) => (
-                    <Card key={index}>
+                    <Card key={_index}>
                       <CardContent className="p-6">
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <Label className="text-sm font-medium">Meta Description {index + 1}</Label>
+                            <Label className="text-sm font-medium">Meta Description {_index + 1}</Label>
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleCopySuggestion(meta.metaDescription, `meta-${index}`)}
+                              onClick={() => handleCopySuggestion(meta.metaDescription, `meta-${_index}`)}
                             >
-                              {copiedSuggestion === `meta-${index}` ? (
+                              {copiedSuggestion === `meta-${_index}` ? (
                                 <CheckCircle2 className="h-4 w-4" />
                               ) : (
                                 <Copy className="h-4 w-4" />
@@ -754,7 +754,7 @@ export default function RewriteGenPage() {
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
                       {currentResult.keywordOptimization.semanticKeywords.map((keyword, _index) => (
-                        <Badge key={index} variant="secondary">{keyword}</Badge>
+                        <Badge key={_index} variant="secondary">{keyword}</Badge>
                       ))}
                     </div>
                     <Alert className="mt-4">
@@ -770,7 +770,7 @@ export default function RewriteGenPage() {
               <TabsContent value="recommendations" className="space-y-4">
                 <div className="space-y-4">
                   {currentResult.recommendations.map((rec, _index) => (
-                    <Card key={index}>
+                    <Card key={_index}>
                       <CardContent className="p-6">
                         <div className="space-y-4">
                           <div className="flex items-center gap-2">

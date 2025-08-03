@@ -117,7 +117,7 @@ export default function AdminTierMigration() {
               <h4 className="text-sm font-medium">Migration Logs:</h4>
               <div className="bg-muted rounded-md p-3 max-h-96 overflow-y-auto">
                 <div className="space-y-1 text-xs font-mono">
-                  {logs.map((log, _index) => (
+                  {logs.map((log, index) => (
                     <div
                       key={index}
                       className={`${

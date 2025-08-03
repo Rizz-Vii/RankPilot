@@ -30,7 +30,14 @@ import {
 
 interface PrivacySettingsCardProps {
   user: User;
-  profile: unknown;
+  profile: {
+    privacy?: {
+      profileVisibility?: boolean;
+      dataCollection?: boolean;
+      activityTracking?: boolean;
+    };
+    // Add other profile properties if needed
+  };
 }
 
 export default function PrivacySettingsCard({

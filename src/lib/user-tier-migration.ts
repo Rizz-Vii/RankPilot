@@ -148,8 +148,8 @@ export async function identifyAndCorrectUserTiers(): Promise<void> {
 
     // Final verification
     await verifyTierCorrections();
-  } catch (_error) {
-    console.error("❌ Error during tier identification and correction:", _error);
+  } catch (error) {
+    console.error("❌ Error during tier identification and correction:", error);
     throw error;
   }
 }

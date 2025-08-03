@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     // Get the raw body for Stripe signature verification
     const body = await request.text();
@@ -14,7 +14,7 @@ export async function POST(_request: NextRequest) {
     const functionUrl =
       "https://australia-southeast2-rankpilot-h3jpc.cloudfunctions.net/stripeWebhook";
 
-    const _response = await fetch(functionUrl, {
+    const response = await fetch(functionUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -32,7 +32,7 @@ export async function POST(_request: NextRequest) {
     }
 
     const result = await response.json();
-    return NextResponse.json(_result);
+    return NextResponse.json(result);
   } catch (_error) {
     console.error("Webhook API route _error:", _error);
     return NextResponse.json(

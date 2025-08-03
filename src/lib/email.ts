@@ -14,7 +14,7 @@ const createTransporter = () => {
 };
 
 // Email templates
-const getReceiptEmailTemplate = (_data: {
+const getReceiptEmailTemplate = (data: {
   customerName: string;
   plan: string;
   amount: string;
@@ -72,9 +72,8 @@ const getReceiptEmailTemplate = (_data: {
           </div>
           
             <h3>Your ${data.plan} Features Include:</h3>
-            ${
-              data.plan === "Starter"
-                ? `
+            ${data.plan === "Starter"
+      ? `
               <div class="feature-item">
                 <span class="feature-icon">📊</span>
                 <span>50 Link Analyses per month</span>
@@ -88,8 +87,8 @@ const getReceiptEmailTemplate = (_data: {
                 <span>Email Support</span>
               </div>
             `
-                : data.plan === "Agency"
-                  ? `
+      : data.plan === "Agency"
+        ? `
               <div class="feature-item">
                 <span class="feature-icon">♾️</span>
                 <span>Unlimited Link Analyses</span>
@@ -107,8 +106,8 @@ const getReceiptEmailTemplate = (_data: {
                 <span>Custom Integrations</span>
               </div>
             `
-                  : ""
-            }
+        : ""
+    }
           ${data.invoiceUrl ? `<a href="${data.invoiceUrl}" class="btn">Download Invoice</a>` : ""}
           
           <h3>What's Next?</h3>
@@ -132,7 +131,7 @@ const getReceiptEmailTemplate = (_data: {
   `;
 };
 
-const getWelcomeEmailTemplate = (_data: {
+const getWelcomeEmailTemplate = (data: {
   customerName: string;
   plan: string;
 }) => {
@@ -149,7 +148,7 @@ const getWelcomeEmailTemplate = (_data: {
         .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
         .feature-list { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
         .feature-item { padding: 10px 0; border-bottom: 1px solid #eee; display: flex; align-items: center; }
-        .feature-_item:last-child { border-bottom: none; }
+        .feature-item:last-child { border-bottom: none; }
         .feature-icon { color: #667eea; margin-right: 10px; }
         .btn { display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 5px; }
         .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
@@ -168,9 +167,8 @@ const getWelcomeEmailTemplate = (_data: {
           
           <div class="feature-list">
             <h3>Your ${data.plan} Features Include:</h3>
-            ${
-              data.plan === "Professional"
-                ? `
+            ${data.plan === "Professional"
+      ? `
               <div class="feature-item">
                 <span class="feature-icon">📊</span>
                 <span>100 Link Analyses per month</span>
@@ -188,8 +186,8 @@ const getWelcomeEmailTemplate = (_data: {
                 <span>API Access</span>
               </div>
             `
-                : data.plan === "Enterprise"
-                  ? `
+      : data.plan === "Enterprise"
+        ? `
               <div class="feature-item">
                 <span class="feature-icon">♾️</span>
                 <span>Unlimited Link Analyses</span>
@@ -207,7 +205,7 @@ const getWelcomeEmailTemplate = (_data: {
                 <span>Custom Integrations</span>
               </div>
             `
-                  : `
+        : `
               <div class="feature-item">
                 <span class="feature-icon">📈</span>
                 <span>10 Link Analyses per month</span>
@@ -221,7 +219,7 @@ const getWelcomeEmailTemplate = (_data: {
                 <span>Email Support</span>
               </div>
             `
-            }
+    }
           </div>
           
           <h3>Getting Started Guide:</h3>
@@ -271,11 +269,11 @@ export const sendPaymentReceiptEmail = async (
       html: getReceiptEmailTemplate(paymentData),
     };
 
-    const _result = await transporter.sendMail(mailOptions);
+    const result = await transporter.sendMail(mailOptions);
     console.log("Receipt email sent:", result.messageId);
     return { success: true, messageId: result.messageId };
-  } catch (_error) {
-    console.error("Error sending receipt email:", _error);
+  } catch (error) {
+    console.error("Error sending receipt email:", error);
     throw error;
   }
 };
@@ -297,11 +295,11 @@ export const sendWelcomeEmail = async (
       html: getWelcomeEmailTemplate(userData),
     };
 
-    const _result = await transporter.sendMail(mailOptions);
+    const result = await transporter.sendMail(mailOptions);
     console.log("Welcome email sent:", result.messageId);
     return { success: true, messageId: result.messageId };
-  } catch (_error) {
-    console.error("Error sending welcome email:", _error);
+  } catch (error) {
+    console.error("Error sending welcome email:", error);
     throw error;
   }
 };
@@ -334,11 +332,11 @@ export const sendBillingReminderEmail = async (
       `,
     };
 
-    const _result = await transporter.sendMail(mailOptions);
+    const result = await transporter.sendMail(mailOptions);
     console.log("Billing reminder email sent:", result.messageId);
     return { success: true, messageId: result.messageId };
-  } catch (_error) {
-    console.error("Error sending billing reminder email:", _error);
+  } catch (error) {
+    console.error("Error sending billing reminder email:", error);
     throw error;
   }
 };
@@ -359,8 +357,8 @@ export const getUserDataForEmail = async (userId: string) => {
       };
     }
     return null;
-  } catch (_error) {
-    console.error("Error fetching user _data:", _error);
+  } catch (error) {
+    console.error("Error fetching user data:", error);
     throw error;
   }
 };

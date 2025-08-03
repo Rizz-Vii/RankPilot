@@ -32,7 +32,7 @@ export default function AppNav() {
 
   const collapsed = !open && !isMobile;
 
-  const handleNavItemClick = (_item: NavItem) => {
+  const handleNavItemClick = (item: NavItem) => {
     // Close mobile sidebar when nav item is clicked
     if (isMobile) {
       setOpenMobile(false);

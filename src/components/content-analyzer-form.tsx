@@ -65,7 +65,19 @@ export default function ContentAnalyzerForm({
 
   async function handleFormSubmit(values: ContentAnalyzerFormValues) {
     try {
-      await onSubmit(values as AnalyzeContentInput);
+      // Split keywords by comma, trim whitespace, and filter out empty strings
+      const keywordsArray = values.targetKeywords
+        .split(",")
+        .map((kw) => kw.trim())
+        .filter((kw) => kw.length > 0);
+
+      const input: AnalyzeContentInput = {
+        content: values.content,
+        targetKeyword: keywordsArray[0] || "",
+        additionalKeywords: keywordsArray.slice(1),
+      };
+
+      await onSubmit(input);
     } catch (_error) {
       console.error("Content analysis failed:", _error);
       // Error handling could be improved with toast notifications

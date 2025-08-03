@@ -165,7 +165,7 @@ export default function BillingSettingsCard({
     try {
       setIsLoading(true);
 
-      const _result = await createPortalSession({
+      const result = await createPortalSession({
         userId: user.uid,
       });
 
@@ -186,7 +186,7 @@ export default function BillingSettingsCard({
     try {
       setIsUpgrading(true);
 
-      const _result = await createCheckoutSession({
+      const result = await createCheckoutSession({
         userId: user.uid,
         priceId: `price_${plan}_${interval}`,
         plan,
@@ -298,7 +298,7 @@ export default function BillingSettingsCard({
                     .filter(([key]) => key !== "free")
                     .map(([_key, plan]) => (
                       <Card
-                        key={key}
+                        key={_key}
                         className="border-2 hover:border-primary/50 transition-colors"
                       >
                         <CardContent className="p-4">

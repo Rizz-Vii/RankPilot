@@ -101,7 +101,7 @@ export class RankPilotAgentSystem {
         description: string;
         category: string;
         priority: 'critical' | 'high' | 'medium' | 'low';
-        tier: unknown;
+        tier?: 'free' | 'starter' | 'agency' | 'enterprise';
     }): Promise<string> {
         console.log('📋 Creating support ticket through Customer Support Orchestrator...');
         return await customerSupportOrchestrator.createSupportTicket(ticketData);

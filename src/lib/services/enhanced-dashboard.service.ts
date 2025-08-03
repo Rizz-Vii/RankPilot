@@ -133,7 +133,7 @@ export class EnhancedDashboardService {
                 teams: teams.map(team => ({
                     id: team.id,
                     name: team.name,
-                    role: team.members.find((m: unknown) => m.userId === userId)?.role || 'member'
+                    role: (team.members as Array<{ userId: string; role?: string }>).find((m) => m.userId === userId)?.role || 'member'
                 }))
             };
         } catch (_error) {
@@ -236,19 +236,22 @@ export class EnhancedDashboardService {
     // Helper methods
     private static calculateAverageScore(analyses: unknown[]): number {
         if (analyses.length === 0) return 0;
-        const scores = analyses.map(a => a.summary?.overallScore || 0).filter(score => score > 0);
+        const scores = (analyses as Array<{ summary?: { overallScore?: number } }>)
+            .map(a => a.summary?.overallScore || 0)
+            .filter(score => score > 0);
         return scores.length > 0 ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length) : 0;
     }
 
     private static calculateProjectSuccessRate(projects: unknown[]): number {
         if (projects.length === 0) return 0;
-        const successful = projects.filter(p => p.status === 'completed' && (p.successScore || 0) > 70).length;
+        const successful = (projects as Array<{ status?: string; successScore?: number }>)
+            .filter(p => p.status === 'completed' && (p.successScore || 0) > 70).length;
         return Math.round((successful / projects.length) * 100);
     }
 
     private static calculateCompetitorTrend(analyses: unknown[]) {
         // Group by month and calculate trend
-        const monthly = analyses.reduce((acc, analysis) => {
+        const monthly = (analyses as Array<{ createdAt?: Timestamp; gapScore?: number }>).reduce((acc, analysis) => {
             const date = analysis.createdAt?.toDate() || new Date();
             const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
@@ -269,7 +272,7 @@ export class EnhancedDashboardService {
 
     private static calculateContentTrend(analyses: unknown[]) {
         // Similar trending calculation for content
-        const monthly = analyses.reduce((acc, analysis) => {
+        const monthly = (analyses as Array<{ createdAt?: Timestamp; overallScore?: number }>).reduce((acc, analysis) => {
             const date = analysis.createdAt?.toDate() || new Date();
             const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 

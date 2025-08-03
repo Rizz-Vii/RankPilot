@@ -3,7 +3,34 @@
  * Implements Priority 3 Advanced Architecture Enhancements from DevReady Phase 3
  * 
  * Features:
- * - Multi-layer security validation with defense in depth
+ * - Multi-layer security         try {
+            // Check IP blacklist
+            if (this.blockedIPs.has(_request.ip)) {
+                return {
+                    al    async decryptData(encryptedData: string, keyId: string = 'default'): Promise<string> {
+        try {
+            const key = this.encryptionKeys.get(keyId);
+            if (!key) {
+                throw new Error('Decryption key not found');
+            }
+
+            const parts = encryptedData.split(':');
+            if (parts.length !== 3) {
+                throw new Error('Invalid encrypted data format');
+            }
+
+            const iv = Buffer.from(parts[0], 'hex');
+            const authTag = Buffer.from(parts[1], 'hex');
+            const encrypted = parts[2];
+
+            const decipher = require('crypto').createDecipher('aes-256-gcm', key);                 threats,
+                    warnings,
+                    blockReason: 'IP address is blocked due to previous security violations'
+                };
+            }
+
+            // Rate limiting
+            const rateLimitResult = this.checkRateLimit(_request.ip, _request.url);th defense in depth
  * - Advanced threat detection with ML-based analysis
  * - Real-time security monitoring and alerting
  * - Automated incident response and remediation
@@ -105,8 +132,8 @@ export class AdvancedSecurityFramework extends EventEmitter {
     // ML-based threat detection patterns
     private threatPatterns = {
         sqlInjection: [
-            /(union|select|insert|update|delete|drop|create|alter|exec|execute)/_i,
-            /(\bunion\b.*\bselect\b)|(\bselect\b.*\bunion\b)/_i,
+            /(union|select|insert|update|delete|drop|create|alter|exec|execute)/i,
+            /(\bunion\b.*\bselect\b)|(\bselect\b.*\bunion\b)/i,
             /'[^']*'[^']*'/,
             /\b(or|and)\b\s*['"]\s*['"]\s*[=<>]/i
         ],
@@ -118,15 +145,15 @@ export class AdvancedSecurityFramework extends EventEmitter {
             /eval\s*\(/gi
         ],
         csrfAttack: [
-            /referer.*localhost|127\.0\.0\.1|0\.0\.0\.0/_i,
+            /referer.*localhost|127\.0\.0\.1|0\.0\.0\.0/i,
             /origin.*null/i
         ],
         bruteForce: {
             maxAttempts: 5,
             timeWindow: 300000, // 5 minutes
             patterns: [
-                /password/_i,
-                /login/_i,
+                /password/i,
+                /login/i,
                 /auth/i
             ]
         }
@@ -160,7 +187,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
 
         try {
             // Check IP blacklist
-            if (this.blockedIPs.has(request.ip)) {
+            if (this.blockedIPs.has(_request.ip)) {
                 return {
                     allowed: false,
                     threats,
@@ -170,7 +197,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
             }
 
             // Rate limiting check
-            const rateLimitResult = this.checkRateLimit(request.ip, request.url);
+            const rateLimitResult = this.checkRateLimit(_request.ip, _request.url);
             if (!rateLimitResult.allowed) {
                 return {
                     allowed: false,
@@ -213,7 +240,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
             const highThreats = threats.filter(t => t.severity === 'high');
 
             if (criticalThreats.length > 0) {
-                await this.handleCriticalThreats(criticalThreats, request.ip);
+                await this.handleCriticalThreats(criticalThreats, _request.ip);
                 return {
                     allowed: false,
                     threats,
@@ -232,13 +259,13 @@ export class AdvancedSecurityFramework extends EventEmitter {
                 this.auditLogs.push({
                     id: this.generateId(),
                     timestamp: Date.now(),
-                    userId: request.userId,
+                    userId: _request.userId,
                     action: 'security-validation',
-                    resource: request.url,
+                    resource: _request.url,
                     outcome: 'success',
                     details: {
-                        ip: request.ip,
-                        userAgent: request.headers['user-agent'],
+                        ip: _request.ip,
+                        userAgent: _request.headers['user-agent'],
                         threatLevel: threats.length > 0 ? threats[0].severity : 'none',
                         policyViolations: threats.map(t => t.type)
                     },
@@ -271,12 +298,12 @@ export class AdvancedSecurityFramework extends EventEmitter {
     async encryptData(_data: string, keyId: string = 'default'): Promise<string> {
         try {
             const key = this.encryptionKeys.get(keyId);
-            if (!_key) {
+            if (!key) {
                 throw new Error('Encryption key not found');
             }
 
             const iv = randomBytes(16);
-            const cipher = require('crypto').createCipher('aes-256-gcm', _key);
+            const cipher = require('crypto').createCipher('aes-256-gcm', key);
 
             let encrypted = cipher.update(_data, 'utf8', 'hex');
             encrypted += cipher.final('hex');
@@ -296,7 +323,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
     async decryptData(encryptedData: string, keyId: string = 'default'): Promise<string> {
         try {
             const key = this.encryptionKeys.get(keyId);
-            if (!_key) {
+            if (!key) {
                 throw new Error('Decryption key not found');
             }
 
@@ -309,7 +336,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
             const tag = Buffer.from(parts[1], 'hex');
             const encrypted = parts[2];
 
-            const decipher = require('crypto').createDecipher('aes-256-gcm', _key);
+            const decipher = require('crypto').createDecipher('aes-256-gcm', key);
             decipher.setAuthTag(tag);
 
             let decrypted = decipher.update(encrypted, 'hex', 'utf8');
@@ -458,10 +485,10 @@ export class AdvancedSecurityFramework extends EventEmitter {
         const windowSize = 60000; // 1 minute window
         const maxRequests = 100; // Max requests per window
 
-        const existing = this.rateLimits.get(_key);
+        const existing = this.rateLimits.get(key);
 
         if (!existing || now > existing.resetTime) {
-            this.rateLimits.set(_key, { count: 1, resetTime: now + windowSize });
+            this.rateLimits.set(key, { count: 1, resetTime: now + windowSize });
             return { allowed: true, remaining: maxRequests - 1 };
         }
 
@@ -474,7 +501,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
     }
 
     private detectSQLInjection(_request: unknown): SecurityThreat | null {
-        const testString = JSON.stringify(request.body || '') + request.url;
+        const testString = JSON.stringify((_request as any).body || '') + (_request as any).url;
 
         for (const pattern of this.threatPatterns.sqlInjection) {
             if (pattern.test(testString)) {
@@ -483,12 +510,12 @@ export class AdvancedSecurityFramework extends EventEmitter {
                     type: 'injection',
                     severity: 'high',
                     source: {
-                        ip: request.ip,
-                        userAgent: request.headers['user-agent'],
-                        userId: request.userId
+                        ip: (_request as any).ip,
+                        userAgent: (_request as any).headers['user-agent'],
+                        userId: (_request as any).userId
                     },
                     details: {
-                        endpoint: request.url,
+                        endpoint: (_request as any).url,
                         payload: testString.substring(0, 500),
                         detectionMethod: 'pattern-matching',
                         confidence: 0.8
@@ -503,7 +530,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
     }
 
     private detectXSS(_request: unknown): SecurityThreat | null {
-        const testString = JSON.stringify(request.body || '') + request.url;
+        const testString = JSON.stringify((_request as any).body || '') + (_request as any).url;
 
         for (const pattern of this.threatPatterns.xssAttack) {
             if (pattern.test(testString)) {
@@ -512,12 +539,12 @@ export class AdvancedSecurityFramework extends EventEmitter {
                     type: 'xss',
                     severity: 'medium',
                     source: {
-                        ip: request.ip,
-                        userAgent: request.headers['user-agent'],
-                        userId: request.userId
+                        ip: (_request as any).ip,
+                        userAgent: (_request as any).headers['user-agent'],
+                        userId: (_request as any).userId
                     },
                     details: {
-                        endpoint: request.url,
+                        endpoint: (_request as any).url,
                         payload: testString.substring(0, 500),
                         detectionMethod: 'pattern-matching',
                         confidence: 0.7
@@ -532,8 +559,8 @@ export class AdvancedSecurityFramework extends EventEmitter {
     }
 
     private detectCSRF(_request: unknown): SecurityThreat | null {
-        const referer = request.headers['referer'] || '';
-        const origin = request.headers['origin'] || '';
+        const referer = (_request as any).headers['referer'] || '';
+        const origin = (_request as any).headers['origin'] || '';
 
         for (const pattern of this.threatPatterns.csrfAttack) {
             if (pattern.test(referer) || pattern.test(origin)) {
@@ -542,12 +569,12 @@ export class AdvancedSecurityFramework extends EventEmitter {
                     type: 'csrf',
                     severity: 'medium',
                     source: {
-                        ip: request.ip,
-                        userAgent: request.headers['user-agent'],
-                        userId: request.userId
+                        ip: (_request as any).ip,
+                        userAgent: (_request as any).headers['user-agent'],
+                        userId: (_request as any).userId
                     },
                     details: {
-                        endpoint: request.url,
+                        endpoint: (_request as any).url,
                         headers: { referer, origin },
                         detectionMethod: 'header-analysis',
                         confidence: 0.6
@@ -562,16 +589,16 @@ export class AdvancedSecurityFramework extends EventEmitter {
     }
 
     private detectBruteForce(_request: unknown): SecurityThreat | null {
-        const key = `brute_force:${request.ip}`;
-        const attempts = this.suspiciousPatterns.get(_key) || 0;
+        const key = `brute_force:${(_request as any).ip}`;
+        const attempts = this.suspiciousPatterns.get(key) || 0;
 
         // Check if this looks like an authentication endpoint
         const isAuthEndpoint = this.threatPatterns.bruteForce.patterns.some(pattern =>
-            pattern.test(request.url)
+            pattern.test((_request as any).url)
         );
 
         if (isAuthEndpoint) {
-            this.suspiciousPatterns.set(_key, attempts + 1);
+            this.suspiciousPatterns.set(key, attempts + 1);
 
             if (attempts + 1 > this.threatPatterns.bruteForce.maxAttempts) {
                 return {
@@ -579,12 +606,12 @@ export class AdvancedSecurityFramework extends EventEmitter {
                     type: 'brute-force',
                     severity: 'high',
                     source: {
-                        ip: request.ip,
-                        userAgent: request.headers['user-agent'],
-                        userId: request.userId
+                        ip: (_request as any).ip,
+                        userAgent: (_request as any).headers['user-agent'],
+                        userId: (_request as any).userId
                     },
                     details: {
-                        endpoint: request.url,
+                        endpoint: (_request as any).url,
                         detectionMethod: 'attempt-counting',
                         confidence: 0.9
                     },
@@ -608,12 +635,12 @@ export class AdvancedSecurityFramework extends EventEmitter {
                 type: 'data-breach',
                 severity: 'medium',
                 source: {
-                    ip: request.ip,
-                    userAgent: request.headers['user-agent'],
-                    userId: request.userId
+                    ip: (_request as any).ip,
+                    userAgent: (_request as any).headers['user-agent'],
+                    userId: (_request as any).userId
                 },
                 details: {
-                    endpoint: request.url,
+                    endpoint: (_request as any).url,
                     detectionMethod: 'anomaly-detection',
                     confidence: anomalyScore
                 },
@@ -630,15 +657,15 @@ export class AdvancedSecurityFramework extends EventEmitter {
         let score = 0;
 
         // Unusual request size
-        const bodySize = JSON.stringify(request.body || '').length;
+        const bodySize = JSON.stringify((_request as any).body || '').length;
         if (bodySize > 10000) score += 0.3;
 
         // Unusual headers
-        const headerCount = Object.keys(request.headers).length;
+        const headerCount = Object.keys((_request as any).headers).length;
         if (headerCount > 20) score += 0.2;
 
         // Suspicious user agent
-        const userAgent = request.headers['user-agent'] || '';
+        const userAgent = (_request as any).headers['user-agent'] || '';
         if (userAgent.includes('bot') || userAgent.includes('crawler')) score += 0.4;
 
         return Math.min(score, 1);
@@ -669,19 +696,19 @@ export class AdvancedSecurityFramework extends EventEmitter {
         const logEntry: SecurityAuditLog = {
             id: this.generateId(),
             timestamp: Date.now(),
-            userId: request.userId,
+            userId: (_request as any).userId,
             action: eventType,
-            resource: request.url,
+            resource: (_request as any).url,
             outcome: 'success',
             details: {
-                ip: request.ip,
-                userAgent: request.headers['user-agent'],
+                ip: (_request as any).ip,
+                userAgent: (_request as any).headers['user-agent'],
                 threatLevel: threats.length > 0 ? threats[0].severity : 'none',
                 policyViolations: threats.map(t => t.type)
             },
             metadata: {
                 requestId: this.generateId(),
-                correlationId: request.headers['x-correlation-id']
+                correlationId: (_request as any).headers['x-correlation-id']
             }
         };
 

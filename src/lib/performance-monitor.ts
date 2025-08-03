@@ -151,10 +151,10 @@ class PerformanceMonitor {
     // Error aggregation
     const errorCounts = new Map<string, number>();
     metrics
-      .filter((m) => m._error)
+      .filter((m) => m.error)
       .forEach((m) => {
         const error = m.error!;
-        errorCounts.set(_error, (errorCounts.get(_error) || 0) + 1);
+        errorCounts.set(error, (errorCounts.get(error) || 0) + 1);
       });
 
     const commonErrors = Array.from(errorCounts.entries())
@@ -269,10 +269,10 @@ export function monitorPerformance(operationType: string) {
       const operationId = performanceMonitor.startOperation(operationType);
 
       try {
-        const _result = await method.apply(this, args);
+        const result = await method.apply(this, args);
         performanceMonitor.endOperation(operationId, true);
         return result;
-      } catch (_error) {
+      } catch (error) {
         performanceMonitor.endOperation(
           operationId,
           false,
@@ -302,12 +302,12 @@ export async function withPerformanceMonitoring<T>(
   );
 
   try {
-    const _result = await operation();
+    const result = await operation();
     performanceMonitor.endOperation(operationId, true, undefined, {
       tokensProcessed: additionalData?.expectedTokens,
     });
     return result;
-  } catch (_error) {
+  } catch (error) {
     performanceMonitor.endOperation(
       operationId,
       false,

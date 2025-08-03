@@ -357,7 +357,7 @@ export default function TeamReportsPage() {
                   <Label htmlFor="type">Report Type</Label>
                   <Select
                     value={reportForm.type}
-                    onValueChange={(_value: Report["type"]) =>
+                    onValueChange={(value: Report["type"]) =>
                       setReportForm({ ...reportForm, type: value })
                     }
                   >
@@ -381,7 +381,7 @@ export default function TeamReportsPage() {
                   onChange={(e) =>
                     setReportForm({
                       ...reportForm,
-                      description: e.target._value,
+                      description: e.target.value,
                     })
                   }
                   placeholder="Describe the report content and purpose"
@@ -392,7 +392,7 @@ export default function TeamReportsPage() {
                   <Label htmlFor="status">Status</Label>
                   <Select
                     value={reportForm.status}
-                    onValueChange={(_value: Report["status"]) =>
+                    onValueChange={(value: Report["status"]) =>
                       setReportForm({ ...reportForm, status: value })
                     }
                   >
@@ -416,7 +416,7 @@ export default function TeamReportsPage() {
                       onChange={(e) =>
                         setReportForm({
                           ...reportForm,
-                          scheduledDate: e.target._value,
+                          scheduledDate: e.target.value,
                         })
                       }
                     />
@@ -467,7 +467,7 @@ export default function TeamReportsPage() {
             <Input
               placeholder="Search reports..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target._value)}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>

@@ -790,7 +790,7 @@ export class EnterpriseGlobalLoadBalancer {
         return Math.max(0, 1 - utilization); // Higher score for lower utilization
     }
 
-    private calculateLatencyScore(endpoint: GlobalEndpoint, userLocation: unknown): number {
+    private calculateLatencyScore(endpoint: GlobalEndpoint, userLocation: { latitude: number; longitude: number; }): number {
         const baseLatency = endpoint.latency.average;
         const distance = this.calculateDistance(userLocation, this.getEndpointLocation(endpoint));
         const estimatedLatency = baseLatency + (distance * 0.01); // Add 0.01ms per km
@@ -803,7 +803,7 @@ export class EnterpriseGlobalLoadBalancer {
         return Math.min(1, availableCapacity / 1000); // Normalize against 1000 capacity units
     }
 
-    private estimateLatency(endpoint: GlobalEndpoint, userLocation: unknown): number {
+    private estimateLatency(endpoint: GlobalEndpoint, userLocation: { latitude: number; longitude: number; }): number {
         const baseLatency = endpoint.latency.average;
         const distance = this.calculateDistance(userLocation, this.getEndpointLocation(endpoint));
         return baseLatency + (distance * 0.01); // Add 0.01ms per km
@@ -817,8 +817,18 @@ export class EnterpriseGlobalLoadBalancer {
     }
 
     private generateSelectionReason(
-        selected: unknown,
-        alternatives: unknown[]
+        selected: {
+            latencyScore: number;
+            loadScore: number;
+            capacityScore: number;
+            distance: number;
+        },
+        alternatives: {
+            latencyScore: number;
+            loadScore: number;
+            capacityScore: number;
+            distance: number;
+        }[]
     ): string {
         const reasons = [];
 

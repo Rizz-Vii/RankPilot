@@ -7,6 +7,8 @@ import { firecrawlCompetitiveIntelligence } from '@/lib/intelligence/firecrawl-c
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { NextRequest, NextResponse } from 'next/server';
+// Import CompetitorMetric type
+import type { CompetitorMetric } from '@/lib/intelligence/firecrawl-competitive-intelligence';
 
 // Initialize Firebase Admin if not already initialized
 if (!getApps().length) {
@@ -35,7 +37,7 @@ interface CompetitorRequestBody {
     };
 }
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
     try {
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
@@ -88,7 +90,12 @@ export async function POST(_request: NextRequest) {
                         name: body.name,
                         industry: body.industry,
                         targetKeywords: body.targetKeywords,
-                        trackingConfig: body.trackingConfig
+                        trackingConfig: body.trackingConfig as {
+                            crawlFrequency: 'daily' | 'weekly' | 'monthly';
+                            pages: string[];
+                            metrics: CompetitorMetric[];
+                            alertThresholds: Record<string, number>;
+                        } | undefined
                     }
                 );
 
@@ -153,7 +160,12 @@ export async function POST(_request: NextRequest) {
                         name: body.name,
                         industry: body.industry,
                         targetKeywords: body.targetKeywords,
-                        trackingConfig: body.trackingConfig
+                        trackingConfig: body.trackingConfig as {
+                            crawlFrequency: 'daily' | 'weekly' | 'monthly';
+                            pages: string[];
+                            metrics: CompetitorMetric[];
+                            alertThresholds: Record<string, number>;
+                        } | undefined
                     }
                 );
 
@@ -262,8 +274,8 @@ export async function POST(_request: NextRequest) {
                 );
         }
 
-    } catch (_error) {
-        console.error('[CompetitiveIntelligenceAPI] Error:', _error);
+    } catch (error) {
+        console.error('[CompetitiveIntelligenceAPI] Error:', error);
         return NextResponse.json(
             {
                 _error: 'Internal server error',
@@ -274,7 +286,7 @@ export async function POST(_request: NextRequest) {
     }
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
     try {
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
@@ -353,7 +365,7 @@ export async function GET(_request: NextRequest) {
         return NextResponse.json(
             {
                 _error: 'Internal server error',
-                details: error instanceof Error ? error.message : 'Unknown error'
+                details: _error instanceof Error ? _error.message : 'Unknown error'
             },
             { status: 500 }
         );

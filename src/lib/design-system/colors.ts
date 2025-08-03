@@ -18,7 +18,7 @@ export const colors = {
             border: 'border-amber-200',
             badge: 'bg-amber-100 text-amber-800',
         },
-        _error: {
+        error: {
             bg: 'bg-red-50',
             text: 'text-red-700',
             border: 'border-red-200',

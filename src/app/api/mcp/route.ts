@@ -17,13 +17,13 @@ export async function GET() {
 
         return NextResponse.json({
             success: true,
-            _data: status,
+            data: status,
             message: 'MCP service status retrieved successfully',
         });
-    } catch (_error) {
+    } catch (error) {
         return NextResponse.json({
             success: false,
-            _error: error instanceof Error ? error.message : 'Unknown error',
+            error: error instanceof Error ? error.message : 'Unknown error',
             message: 'Failed to retrieve MCP service status',
         }, { status: 500 });
     }
@@ -33,7 +33,7 @@ export async function GET() {
  * POST /api/mcp
  * Main MCP integration endpoint with route-based handling
  */
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
     try {
         const url = new URL(request.url);
         const pathname = url.pathname;
@@ -49,7 +49,7 @@ export async function POST(_request: NextRequest) {
             if (!query) {
                 return NextResponse.json({
                     success: false,
-                    _error: 'Query parameter is required',
+                    error: 'Query parameter is required',
                     message: 'Please provide a search query',
                 }, { status: 400 });
             }
@@ -58,8 +58,8 @@ export async function POST(_request: NextRequest) {
 
             return NextResponse.json({
                 success: result.success,
-                _data: result._data,
-                _error: result._error,
+                data: result.data,
+                error: result.error,
                 metadata: {
                     source: result.source,
                     timestamp: result.timestamp,
@@ -71,7 +71,7 @@ export async function POST(_request: NextRequest) {
         // Default response for unsupported routes
         return NextResponse.json({
             success: false,
-            _error: 'Unsupported MCP service action',
+            error: 'Unsupported MCP service action',
             message: `Service action '${serviceAction}' is not supported`,
             availableActions: [
                 'huggingface/search',
@@ -82,10 +82,10 @@ export async function POST(_request: NextRequest) {
             ],
         }, { status: 400 });
 
-    } catch (_error) {
+    } catch (error) {
         return NextResponse.json({
             success: false,
-            _error: error instanceof Error ? error.message : 'Unknown error',
+            error: error instanceof Error ? error.message : 'Unknown error',
             message: 'MCP service request failed',
         }, { status: 500 });
     }
@@ -94,14 +94,14 @@ export async function POST(_request: NextRequest) {
      * POST /api/mcp/firecrawl/scrape
      * Scrape URL via Firecrawl MCP
      */
-    async function handleFirecrawlScrape(_request: NextRequest) {
+    async function handleFirecrawlScrape(request: NextRequest) {
         try {
             const { url, options = {} } = await request.json();
 
             if (!url) {
                 return NextResponse.json({
                     success: false,
-                    _error: 'URL parameter is required',
+                    error: 'URL parameter is required',
                     message: 'Please provide a URL to scrape',
                 }, { status: 400 });
             }
@@ -110,18 +110,18 @@ export async function POST(_request: NextRequest) {
 
             return NextResponse.json({
                 success: result.success,
-                _data: result._data,
-                _error: result._error,
+                data: result.data,
+                error: result.error,
                 metadata: {
                     source: result.source,
                     timestamp: result.timestamp,
                     requestId: result.requestId,
                 },
             });
-        } catch (_error) {
+        } catch (error) {
             return NextResponse.json({
                 success: false,
-                _error: error instanceof Error ? error.message : 'Unknown error',
+                error: error instanceof Error ? error.message : 'Unknown error',
                 message: 'Firecrawl scraping failed',
             }, { status: 500 });
         }
@@ -131,14 +131,14 @@ export async function POST(_request: NextRequest) {
      * POST /api/mcp/sentry/analyze
      * Analyze Sentry issue via MCP
      */
-    async function handleSentryAnalyze(_request: NextRequest) {
+    async function handleSentryAnalyze(request: NextRequest) {
         try {
             const { issueId } = await request.json();
 
             if (!issueId) {
                 return NextResponse.json({
                     success: false,
-                    _error: 'Issue ID parameter is required',
+                    error: 'Issue ID parameter is required',
                     message: 'Please provide a Sentry issue ID',
                 }, { status: 400 });
             }
@@ -147,18 +147,18 @@ export async function POST(_request: NextRequest) {
 
             return NextResponse.json({
                 success: result.success,
-                _data: result._data,
-                _error: result._error,
+                data: result.data,
+                error: result.error,
                 metadata: {
                     source: result.source,
                     timestamp: result.timestamp,
                     requestId: result.requestId,
                 },
             });
-        } catch (_error) {
+        } catch (error) {
             return NextResponse.json({
                 success: false,
-                _error: error instanceof Error ? error.message : 'Unknown error',
+                error: error instanceof Error ? error.message : 'Unknown error',
                 message: 'Sentry issue analysis failed',
             }, { status: 500 });
         }
@@ -168,14 +168,14 @@ export async function POST(_request: NextRequest) {
      * POST /api/mcp/sequential-thinking/analyze
      * Analyze problem via Sequential Thinking MCP
      */
-    async function handleSequentialThinking(_request: NextRequest) {
+    async function handleSequentialThinking(request: NextRequest) {
         try {
             const { problem } = await request.json();
 
             if (!problem) {
                 return NextResponse.json({
                     success: false,
-                    _error: 'Problem parameter is required',
+                    error: 'Problem parameter is required',
                     message: 'Please provide a problem to analyze',
                 }, { status: 400 });
             }
@@ -184,18 +184,18 @@ export async function POST(_request: NextRequest) {
 
             return NextResponse.json({
                 success: result.success,
-                _data: result._data,
-                _error: result._error,
+                data: result.data,
+                error: result.error,
                 metadata: {
                     source: result.source,
                     timestamp: result.timestamp,
                     requestId: result.requestId,
                 },
             });
-        } catch (_error) {
+        } catch (error) {
             return NextResponse.json({
                 success: false,
-                _error: error instanceof Error ? error.message : 'Unknown error',
+                error: error instanceof Error ? error.message : 'Unknown error',
                 message: 'Sequential thinking analysis failed',
             }, { status: 500 });
         }
@@ -205,14 +205,14 @@ export async function POST(_request: NextRequest) {
      * POST /api/mcp/neuroseo/enhanced-analysis
      * Run MCP-enhanced NeuroSEO™ analysis
      */
-    async function handleEnhancedNeuroSEO(_request: NextRequest) {
+    async function handleEnhancedNeuroSEO(request: NextRequest) {
         try {
             const { url, content, keywords, competitorUrls } = await request.json();
 
             if (!url || !content || !keywords?.length) {
                 return NextResponse.json({
                     success: false,
-                    _error: 'URL, content, and keywords are required',
+                    error: 'URL, content, and keywords are required',
                     message: 'Please provide all required parameters',
                 }, { status: 400 });
             }
@@ -226,7 +226,7 @@ export async function POST(_request: NextRequest) {
 
             return NextResponse.json({
                 success: true,
-                _data: _result,
+                data: result,
                 message: 'MCP-enhanced NeuroSEO™ analysis completed successfully',
                 metadata: {
                     enhancementFlags: result.enhancementFlags,
@@ -234,10 +234,10 @@ export async function POST(_request: NextRequest) {
                     timestamp: new Date().toISOString(),
                 },
             });
-        } catch (_error) {
+        } catch (error) {
             return NextResponse.json({
                 success: false,
-                _error: error instanceof Error ? error.message : 'Unknown error',
+                error: error instanceof Error ? error.message : 'Unknown error',
                 message: 'Enhanced NeuroSEO™ analysis failed',
             }, { status: 500 });
         }

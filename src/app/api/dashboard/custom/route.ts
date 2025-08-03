@@ -3,7 +3,7 @@
  * Handles enterprise dashboard creation, management, and sharing
  */
 
-import { customDashboardBuilder } from '@/lib/dashboard/custom-dashboard-builder';
+import { customDashboardBuilder, DashboardWidget } from '@/lib/dashboard/custom-dashboard-builder';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { NextRequest, NextResponse } from 'next/server';
@@ -39,8 +39,8 @@ interface DashboardRequestBody {
 
 export async function POST(_request: NextRequest) {
     try {
-        const body = await request.json() as DashboardRequestBody;
-        const authHeader = request.headers.get('authorization');
+        const body = await _request.json() as DashboardRequestBody;
+        const authHeader = _request.headers.get('authorization');
 
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
@@ -118,17 +118,24 @@ export async function POST(_request: NextRequest) {
                     });
                 } else if (body.updates) {
                     // Updating existing widget or dashboard
-                    const result = await customDashboardBuilder.updateWidget(
-                        body.dashboardId,
-                        body.updates.widgetId,
-                        body.updates
-                    );
-
-                    return NextResponse.json({
-                        success: true,
-                        widget: _result,
-                        message: 'Widget updated successfully'
-                    });
+                    const updates = body.updates as { widgetId?: string } & Partial<DashboardWidget>;
+                    if (typeof updates.widgetId === 'string') {
+                        const result = await customDashboardBuilder.updateWidget(
+                            body.dashboardId,
+                            updates.widgetId,
+                            updates as Partial<DashboardWidget>
+                        );
+                        return NextResponse.json({
+                            success: true,
+                            widget: result,
+                            message: 'Widget updated successfully'
+                        });
+                    } else {
+                        return NextResponse.json(
+                            { _error: 'Widget ID is required for update' },
+                            { status: 400 }
+                        );
+                    }
                 }
 
                 return NextResponse.json(
@@ -145,16 +152,23 @@ export async function POST(_request: NextRequest) {
                 }
 
                 // For widget deletion, we'd need a widgetId in the body
-                if (body.updates?.widgetId) {
-                    const removed = await customDashboardBuilder.removeWidget(
-                        body.dashboardId,
-                        body.updates.widgetId
-                    );
-
-                    return NextResponse.json({
-                        success: removed,
-                        message: removed ? 'Widget removed successfully' : 'Widget not found'
-                    });
+                const updates = body.updates as { widgetId?: string;[key: string]: any };
+                if (updates?.widgetId) {
+                    if (typeof updates.widgetId === 'string') {
+                        const removed = await customDashboardBuilder.removeWidget(
+                            body.dashboardId,
+                            updates.widgetId
+                        );
+                        return NextResponse.json({
+                            success: removed,
+                            message: removed ? 'Widget removed successfully' : 'Widget not found'
+                        });
+                    } else {
+                        return NextResponse.json(
+                            { _error: 'Widget ID is required for deletion' },
+                            { status: 400 }
+                        );
+                    }
                 }
 
                 return NextResponse.json(
@@ -173,13 +187,21 @@ export async function POST(_request: NextRequest) {
                 const exportResult = await customDashboardBuilder.exportDashboard(
                     body.dashboardId,
                     body.exportFormat,
-                    body.exportOptions
+                    body.exportOptions as {
+                        includeData?: boolean;
+                        dateRange?: { start: string; end: string; };
+                        branding?: {
+                            logo?: string;
+                            companyName?: string;
+                            colors?: Record<string, string>;
+                        };
+                    }
                 );
 
                 return NextResponse.json({
                     success: exportResult.success,
                     downloadUrl: exportResult.downloadUrl,
-                    _error: exportResult._error,
+                    error: exportResult.error,
                     message: exportResult.success ? 'Export completed successfully' : 'Export failed'
                 });
 
@@ -236,7 +258,7 @@ export async function POST(_request: NextRequest) {
         return NextResponse.json(
             {
                 _error: 'Internal server error',
-                details: error instanceof Error ? error.message : 'Unknown error'
+                details: _error instanceof Error ? _error.message : 'Unknown error'
             },
             { status: 500 }
         );
@@ -245,9 +267,9 @@ export async function POST(_request: NextRequest) {
 
 export async function GET(_request: NextRequest) {
     try {
-        const url = new URL(request.url);
+        const url = new URL(_request.url);
         const action = url.searchParams.get('action');
-        const authHeader = request.headers.get('authorization');
+        const authHeader = _request.headers.get('authorization');
 
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
@@ -336,7 +358,7 @@ export async function GET(_request: NextRequest) {
         return NextResponse.json(
             {
                 _error: 'Internal server error',
-                details: error instanceof Error ? error.message : 'Unknown error'
+                details: _error instanceof Error ? _error.message : 'Unknown error'
             },
             { status: 500 }
         );

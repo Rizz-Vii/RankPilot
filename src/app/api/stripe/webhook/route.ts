@@ -5,17 +5,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2025-06-30.basil',
+    apiVersion: '2025-07-30.basil',
 });
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(_request: NextRequest) {
-    const body = await request.text();
+    const body = await _request.text();
     const headersList = await headers();
     const signature = headersList.get('stripe-signature')!;
 
-    let _event: Stripe.Event;
+    let event: Stripe.Event;
 
     try {
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
@@ -75,7 +75,7 @@ export async function POST(_request: NextRequest) {
         return NextResponse.json({ received: true });
 
     } catch (_error) {
-        console.error('❌ Webhook handler _error:', _error);
+        console.error('❌ Webhook handler error:', _error);
         return NextResponse.json(
             { _error: 'Webhook handler failed' },
             { status: 500 }

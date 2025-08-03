@@ -518,7 +518,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                     test.results.vulnerabilities.push(...vulnerabilities);
 
                     this.emit('moduleCompleted', { test, module, vulnerabilities });
-                } catch (_error) {
+                } catch (error) {
                     this.emit('moduleError', { test, module, error });
                 }
             }
@@ -540,7 +540,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 this.scheduleRecurringTest(test);
             }
 
-        } catch (_error) {
+        } catch (error) {
             test.status = 'failed';
             this.emit('testError', { test, error });
         }
@@ -588,13 +588,13 @@ export class AutomatedPentestingFramework extends EventEmitter {
                     title: `${payload.includes('$') ? 'NoSQL' : payload.includes(';') ? 'Command' : 'SQL'} Injection Vulnerability`,
                     description: `Injection vulnerability detected with payload: ${payload}`,
                     location: {
-                        url: target.url || 'https://example.com',
+                        url: typeof target === 'object' && target !== null && 'url' in target ? (target as any).url : 'https://example.com',
                         parameter: 'user_input'
                     },
                     evidence: {
                         payload,
-                        _request: `POST /api/search HTTP/1.1\nContent-Type: application/json\n\n{"query": "${payload}"}`,
-                        _response: 'HTTP/1.1 200 OK\n\nVulnerable response detected',
+                        request: `POST /api/search HTTP/1.1\nContent-Type: application/json\n\n{"query": "${payload}"}`,
+                        response: 'HTTP/1.1 200 OK\n\nVulnerable response detected',
                         artifacts: [`injection-test-${Date.now()}`]
                     },
                     cvss: {
@@ -659,12 +659,12 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 title: 'Weak Password Policy',
                 description: 'Application accepts weak passwords that can be easily brute-forced',
                 location: {
-                    url: target.url || 'https://example.com',
+                    url: typeof target === 'object' && target !== null && 'url' in target ? (target as any).url : 'https://example.com',
                     endpoint: '/auth/login'
                 },
                 evidence: {
-                    _request: 'POST /auth/login HTTP/1.1\nContent-Type: application/json\n\n{"username": "admin", "password": "password"}',
-                    _response: 'HTTP/1.1 200 OK\n\n{"token": "eyJ..."}',
+                    request: 'POST /auth/login HTTP/1.1\nContent-Type: application/json\n\n{"username": "admin", "password": "password"}',
+                    response: 'HTTP/1.1 200 OK\n\n{"token": "eyJ..."}',
                     artifacts: [`auth-test-${Date.now()}`]
                 },
                 cvss: {
@@ -721,11 +721,11 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 title: 'Sensitive Data in Response',
                 description: 'Sensitive information is exposed in API responses',
                 location: {
-                    url: target.url || 'https://example.com',
+                    url: typeof target === 'object' && target !== null && 'url' in target ? (target as any).url : 'https://example.com',
                     endpoint: '/api/users/profile'
                 },
                 evidence: {
-                    _response: 'HTTP/1.1 200 OK\n\n{"user": {"id": 123, "email": "user@example.com", "ssn": "123-45-6789"}}',
+                    response: 'HTTP/1.1 200 OK\n\n{"user": {"id": 123, "email": "user@example.com", "ssn": "123-45-6789"}}',
                     artifacts: [`data-exposure-test-${Date.now()}`]
                 },
                 cvss: {

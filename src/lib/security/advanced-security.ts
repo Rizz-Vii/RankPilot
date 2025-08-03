@@ -48,21 +48,21 @@ const SECURITY_CONFIG = {
 
     // Threat detection patterns
     THREAT_PATTERNS: [
-        /(\<script[^>]*\>)/_i, // XSS detection
-        /(union.*select|select.*from|insert.*into|delete.*from)/_i, // SQL injection
-        /(\.\.\/|\.\.\\)/_i, // Path traversal
-        /(<iframe|<object|<embed)/_i, // Potential malicious embeds
-        /(eval\(|setTimeout\(|setInterval\()/_i, // Code injection attempts
+        /(\<script[^>]*\>)/i, // XSS detection
+        /(union.*select|select.*from|insert.*into|delete.*from)/i, // SQL injection
+        /(\.\.\/|\.\.\\)/i, // Path traversal
+        /(<iframe|<object|<embed)/i, // Potential malicious embeds
+        /(eval\(|setTimeout\(|setInterval\()/i, // Code injection attempts
     ],
 
     // Blocked user agents (bots, scrapers)
     BLOCKED_USER_AGENTS: [
-        /bot/_i,
-        /crawler/_i,
-        /spider/_i,
-        /scraper/_i,
-        /curl/_i,
-        /wget/_i,
+        /bot/i,
+        /crawler/i,
+        /spider/i,
+        /scraper/i,
+        /curl/i,
+        /wget/i,
     ],
 
     // Allowed origins for CORS
@@ -87,9 +87,9 @@ const rateLimiters = {
  * Get client IP address from request headers
  */
 function getClientIP(_request: NextRequest): string {
-    const forwarded = request.headers.get('x-forwarded-for');
-    const realIP = request.headers.get('x-real-ip');
-    const cfConnectingIP = request.headers.get('cf-connecting-ip');
+    const forwarded = _request.headers.get('x-forwarded-for');
+    const realIP = _request.headers.get('x-real-ip');
+    const cfConnectingIP = _request.headers.get('cf-connecting-ip');
 
     if (forwarded) {
         return forwarded.split(',')[0].trim();
@@ -108,7 +108,7 @@ function getClientIP(_request: NextRequest): string {
  * Apply rate limiting based on endpoint type
  */
 async function applyRateLimit(_request: NextRequest): Promise<boolean> {
-    const pathname = request.nextUrl.pathname;
+    const pathname = _request.nextUrl.pathname;
     const ip = getClientIP(_request);
 
     try {
@@ -132,9 +132,9 @@ async function applyRateLimit(_request: NextRequest): Promise<boolean> {
  * Detect potential threats in request
  */
 function detectThreats(_request: NextRequest): { isThreat: boolean; threatType?: string; } {
-    const url = request.url;
-    const userAgent = request.headers.get('user-agent') || '';
-    const referer = request.headers.get('referer') || '';
+    const url = _request.url;
+    const userAgent = _request.headers.get('user-agent') || '';
+    const referer = _request.headers.get('referer') || '';
 
     // Check for malicious user agents
     for (const pattern of SECURITY_CONFIG.BLOCKED_USER_AGENTS) {
@@ -177,7 +177,7 @@ function detectThreats(_request: NextRequest): { isThreat: boolean; threatType?:
  * Apply CORS headers for secure cross-origin requests
  */
 function applyCORS(_request: NextRequest, _response: NextResponse): NextResponse {
-    const origin = request.headers.get('origin');
+    const origin = _request.headers.get('origin');
 
     // Check if origin is allowed
     const isAllowedOrigin = origin && SECURITY_CONFIG.ALLOWED_ORIGINS.some(
@@ -191,15 +191,15 @@ function applyCORS(_request: NextRequest, _response: NextResponse): NextResponse
     );
 
     if (isAllowedOrigin) {
-        response.headers.set('Access-Control-Allow-Origin', origin);
+        _response.headers.set('Access-Control-Allow-Origin', origin);
     }
 
-    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-    response.headers.set('Access-Control-Allow-Credentials', 'true');
-    response.headers.set('Access-Control-Max-Age', '86400');
+    _response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    _response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    _response.headers.set('Access-Control-Allow-Credentials', 'true');
+    _response.headers.set('Access-Control-Max-Age', '86400');
 
-    return response;
+    return _response;
 }
 
 /**
@@ -208,7 +208,7 @@ function applyCORS(_request: NextRequest, _response: NextResponse): NextResponse
 function applySecurityHeaders(_response: NextResponse): NextResponse {
     // Apply basic security headers
     for (const [header, value] of Object.entries(SECURITY_CONFIG.SECURITY_HEADERS)) {
-        response.headers.set(header, _value);
+        _response.headers.set(header, value);
     }
 
     // Build Content Security Policy
@@ -216,14 +216,14 @@ function applySecurityHeaders(_response: NextResponse): NextResponse {
         .map(([directive, sources]) => `${directive} ${sources.join(' ')}`)
         .join('; ');
 
-    response.headers.set('Content-Security-Policy', cspDirectives);
+    _response.headers.set('Content-Security-Policy', cspDirectives);
 
     // Add security monitoring headers
-    response.headers.set('X-Security-Scan', 'enabled');
-    response.headers.set('X-Threat-Detection', 'active');
-    response.headers.set('X-Security-Version', '1.0');
+    _response.headers.set('X-Security-Scan', 'enabled');
+    _response.headers.set('X-Threat-Detection', 'active');
+    _response.headers.set('X-Security-Version', '1.0');
 
-    return response;
+    return _response;
 }
 
 /**
@@ -234,9 +234,9 @@ function logSecurityEvent(_request: NextRequest, eventType: string, details?: un
         timestamp: new Date().toISOString(),
         type: eventType,
         ip: getClientIP(_request),
-        userAgent: request.headers.get('user-agent'),
-        url: request.url,
-        method: request.method,
+        userAgent: _request.headers.get('user-agent'),
+        url: _request.url,
+        method: _request.method,
         details,
     };
 
@@ -251,9 +251,9 @@ export async function securityMiddleware(_request: NextRequest): Promise<NextRes
     const startTime = Date.now();
 
     // Handle OPTIONS requests for CORS
-    if (request.method === 'OPTIONS') {
+    if (_request.method === 'OPTIONS') {
         const response = new NextResponse(null, { status: 200 });
-        return applyCORS(_request, _response);
+        return applyCORS(_request, response);
     }
 
     // Apply rate limiting
@@ -274,7 +274,7 @@ export async function securityMiddleware(_request: NextRequest): Promise<NextRes
     const response = NextResponse.next();
 
     // Apply security headers
-    const secureResponse = applySecurityHeaders(_response);
+    const secureResponse = applySecurityHeaders(response);
 
     // Apply CORS
     const finalResponse = applyCORS(_request, secureResponse);
@@ -307,7 +307,7 @@ export class SecurityMonitor {
             details,
         };
 
-        this.events.push(_event);
+        this.events.push(event);
 
         // Keep only last 1000 events in memory
         if (this.events.length > 1000) {
@@ -315,7 +315,7 @@ export class SecurityMonitor {
         }
 
         // In production, send to monitoring service
-        console.log('[SECURITY_MONITOR]', _event);
+        console.log('[SECURITY_MONITOR]', event);
     }
 
     getRecentEvents(limit = 100): unknown[] {
@@ -324,7 +324,7 @@ export class SecurityMonitor {
 
     getEventsByType(eventType: string, limit = 100): unknown[] {
         return this.events
-            .filter(event => event.type === eventType)
+            .filter(event => (event as any).type === eventType)
             .slice(-limit);
     }
 
@@ -332,8 +332,8 @@ export class SecurityMonitor {
         const summary: { [_key: string]: number; } = {};
 
         for (const event of this.events) {
-            if (event.type === 'threat_detected') {
-                const threatType = event.details?.threatType || 'unknown';
+            if ((event as any).type === 'threat_detected') {
+                const threatType = (event as any).details?.threatType || 'unknown';
                 summary[threatType] = (summary[threatType] || 0) + 1;
             }
         }
@@ -360,15 +360,15 @@ export function validateCompliance(_request: NextRequest): {
     ];
 
     // HTTPS enforcement
-    if (!request.url.startsWith('https://') && process.env.NODE_ENV === 'production') {
+    if (!_request.url.startsWith('https://') && process.env.NODE_ENV === 'production') {
         issues.push('HTTPS required in production');
     }
 
     // Check authentication for sensitive endpoints
     const sensitiveEndpoints = ['/api/admin/', '/api/user/', '/api/upload/'];
-    const authHeader = request.headers.get('authorization');
+    const authHeader = _request.headers.get('authorization');
 
-    if (sensitiveEndpoints.some(endpoint => request.nextUrl.pathname.startsWith(endpoint))) {
+    if (sensitiveEndpoints.some(endpoint => _request.nextUrl.pathname.startsWith(endpoint))) {
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             issues.push('Authentication required for sensitive endpoints');
         }

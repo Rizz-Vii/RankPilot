@@ -117,6 +117,31 @@ export class AIAnomalyDetector extends EventEmitter {
     }
 
     /**
+     * Cleanup old anomalies to prevent memory growth
+     */
+    private cleanupOldAnomalies(): void {
+        const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
+
+        for (const [id, anomaly] of this.anomalies.entries()) {
+            if (anomaly.timestamp < twentyFourHoursAgo) {
+                this.anomalies.delete(id);
+            }
+        }
+    }
+
+    /**
+     * Complete cleanup - dispose of all data and stop analysis
+     */
+    dispose(): void {
+        this.stopAnalysis();
+        this.dataHistory.clear();
+        this.anomalies.clear();
+        this.patterns.clear();
+        this.models.clear();
+        this.removeAllListeners();
+    }
+
+    /**
      * Add data point for analysis
      */
     addDataPoint(metric: string, dataPoint: DataPoint): void {
@@ -127,10 +152,14 @@ export class AIAnomalyDetector extends EventEmitter {
         const history = this.dataHistory.get(metric)!;
         history.push(dataPoint);
 
-        // Keep only last 10000 data points per metric
-        if (history.length > 10000) {
-            history.shift();
+        // Keep only last 1000 data points per metric (reduced from 10000)
+        if (history.length > 1000) {
+            // Remove older data points more aggressively
+            history.splice(0, history.length - 1000);
         }
+
+        // Cleanup old anomalies (older than 24 hours)
+        this.cleanupOldAnomalies();
 
         // Sort by timestamp
         history.sort((a, b) => a.timestamp - b.timestamp);
@@ -559,13 +588,13 @@ export class AIAnomalyDetector extends EventEmitter {
     }
 
     private calculateTrend(_data: DataPoint[]): number {
-        if (data.length < 2) return 0;
+        if (_data.length < 2) return 0;
 
-        const n = data.length;
-        const sumX = data.reduce((sum, _, i) => sum + i, 0);
-        const sumY = data.reduce((sum, p) => sum + p.value, 0);
-        const sumXY = data.reduce((sum, p, i) => sum + (i * p.value), 0);
-        const sumXX = data.reduce((sum, _, i) => sum + (i * i), 0);
+        const n = _data.length;
+        const sumX = _data.reduce((sum: number, _: DataPoint, i: number) => sum + i, 0);
+        const sumY = _data.reduce((sum: number, p: DataPoint) => sum + p.value, 0);
+        const sumXY = _data.reduce((sum: number, p: DataPoint, i: number) => sum + (i * p.value), 0);
+        const sumXX = _data.reduce((sum: number, _: DataPoint, i: number) => sum + (i * i), 0);
 
         return (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
     }
@@ -652,11 +681,11 @@ export class AIAnomalyDetector extends EventEmitter {
         const _result: Record<string, number> = {};
 
         for (const item of array) {
-            const _key = typeof keyFn === 'string' ? (item as any)[keyFn] : keyFn(_item);
-            result[key] = (result[key] || 0) + 1;
+            const _key = typeof keyFn === 'string' ? (item as any)[keyFn] : keyFn(item);
+            _result[_key] = (_result[_key] || 0) + 1;
         }
 
-        return result;
+        return _result;
     }
 
     private calculateAverageResolutionTime(anomalies: Anomaly[]): number {
@@ -759,4 +788,9 @@ export const aiAnomalyDetector = new AIAnomalyDetector();
 // Auto-start analysis
 if (typeof window !== 'undefined') {
     aiAnomalyDetector.startAnalysis();
+
+    // Add cleanup on page unload to prevent memory leaks
+    window.addEventListener('beforeunload', () => {
+        aiAnomalyDetector.dispose();
+    });
 }

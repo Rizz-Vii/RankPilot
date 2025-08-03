@@ -149,7 +149,7 @@ export default function AboutPage() {
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-8">
-            {values.map((_value, _index) => (
+            {values.map((value, index) => (
               <motion.div
                 key={value.title}
                 initial="hidden"
@@ -194,7 +194,7 @@ export default function AboutPage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {teamMembers.map((member, _index) => (
+            {teamMembers.map((member, index) => (
               <motion.div
                 key={member.name}
                 initial="hidden"

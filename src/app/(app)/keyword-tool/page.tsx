@@ -92,9 +92,9 @@ const KeywordResults = ({ results }: { results: unknown; }) => {
     >
       {/* Mobile Results */}
       <div className="block md:hidden">
-        <MobileResultsCard
+            <MobileResultsCard
           title="Keyword Suggestions"
-          subtitle={`${results.suggestions?.length || 0} keywords found`}
+              subtitle={`${(results as any).suggestions?.length || 0} keywords found`}
           icon={<Search className="h-5 w-5" />}
           actions={
             <Button
@@ -102,7 +102,7 @@ const KeywordResults = ({ results }: { results: unknown; }) => {
               size="sm"
               onClick={() =>
                 copyToClipboard(
-                  (results.suggestions || []).map((k: unknown) => k.keyword).join(", ")
+                      ((results as any).suggestions || []).map((k: any) => k.keyword).join(", ")
                 )
               }
             >
@@ -111,12 +111,12 @@ const KeywordResults = ({ results }: { results: unknown; }) => {
           }
         >
           <div className="space-y-3">
-            {results.keywords.map((keyword: unknown, _index: number) => (
-              <div key={index} className="p-3 bg-gray-50 rounded-lg">
+                {(results as any).keywords.map((keyword: any, _index: number) => (
+                  <div key={_index} className="p-3 bg-gray-50 rounded-lg">
                 <div className="flex justify-between items-start mb-2">
                   <span className="font-medium text-sm">{keyword.keyword}</span>
                   <div className="text-xs text-muted-foreground">
-                    {keyword.searchVolume.toLocaleString()}/mo
+                        {keyword.searchVolume.toLocaleString()}/mo
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -130,7 +130,7 @@ const KeywordResults = ({ results }: { results: unknown; }) => {
                     />
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    {keyword.difficulty}% difficulty
+                        {keyword.difficulty}% difficulty
                   </span>
                 </div>
               </div>
@@ -152,7 +152,7 @@ const KeywordResults = ({ results }: { results: unknown; }) => {
                 size="sm"
                 onClick={() =>
                   copyToClipboard(
-                    results.keywords.map((k: unknown) => k.keyword).join(", ")
+                        (results as any).keywords.map((k: any) => k.keyword).join(", ")
                   )
                 }
                 className="font-body"
@@ -175,13 +175,13 @@ const KeywordResults = ({ results }: { results: unknown; }) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {results.keywords.map((keyword: unknown, _index: number) => (
-                  <TableRow key={index}>
+                    {(results as any).keywords.map((keyword: any, _index: number) => (
+                      <TableRow key={_index}>
                     <TableCell className="font-medium font-body">
-                      {keyword.keyword}
+                          {keyword.keyword}
                     </TableCell>
                     <TableCell className="text-right font-body">
-                      {keyword.searchVolume.toLocaleString()}
+                          {keyword.searchVolume.toLocaleString()}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
@@ -193,7 +193,7 @@ const KeywordResults = ({ results }: { results: unknown; }) => {
                           )}
                         />
                         <span className="text-sm text-muted-foreground font-body w-8">
-                          {keyword.difficulty}
+                              {keyword.difficulty}
                         </span>
                       </div>
                     </TableCell>
@@ -246,7 +246,7 @@ export default function KeywordToolPage() {
         15000, // 15 second timeout
         "Keyword analysis is taking longer than expected. Using demo data instead."
       );
-      setResults(_result);
+      setResults(result);
 
       // End performance monitoring with success
       endOperation(false);
@@ -270,10 +270,10 @@ export default function KeywordToolPage() {
       // End performance monitoring with error
       endOperation(true); // Force show feedback on error
 
-      if (error instanceof TimeoutError) {
+      if (_error instanceof TimeoutError) {
         console.warn(
           "Keyword analysis timed out, using demo _data:",
-          error.message
+          _error.message
         );
         // Use demo data as fallback
         const demoData = getDemoData("keyword-tool");

@@ -85,7 +85,7 @@ export default function MultiPaymentCheckout() {
         method: "stripe",
       });
 
-      const _result = await createCheckoutSession({
+      const result = await createCheckoutSession({
         userId: user?.uid,
         priceId: plan?.priceId[billingInterval as "monthly" | "yearly"],
         plan: planId,
@@ -104,8 +104,8 @@ export default function MultiPaymentCheckout() {
 
       const { error } = await stripe.redirectToCheckout({ sessionId });
 
-      if (_error) {
-        console.error("Stripe checkout _error:", _error);
+      if (error) {
+        console.error("Stripe checkout _error:", error);
         trackPaymentEvents.abandonCheckout(
           planId,
           "stripe_redirect",
@@ -118,7 +118,9 @@ export default function MultiPaymentCheckout() {
       trackPaymentEvents.abandonCheckout(
         planId,
         "checkout_session_creation",
-        error.message
+        typeof _error === "object" && _error !== null && "message" in _error
+          ? String((_error as { message?: unknown }).message)
+          : String(_error)
       );
       toast.error("Failed to process payment. Please try again.");
     } finally {
@@ -131,7 +133,12 @@ export default function MultiPaymentCheckout() {
       setIsProcessing(true);
 
       // Track successful PayPal payment
-      trackPaymentEvents.purchase(planId, price || 0, data.orderID, "USD");
+      trackPaymentEvents.purchase(
+        planId,
+        price || 0,
+        (_data as { orderID: string }).orderID,
+        "USD"
+      );
       conversionFunnel.step(5, "payment_completed", planId, {
         method: "paypal",
       });
@@ -390,14 +397,14 @@ export default function MultiPaymentCheckout() {
                                 interval: billingInterval,
                                 amount: price,
                               });
-                              return (result.data as any).orderID;
+                              return (_result.data as any).orderID;
                             } catch (_error) {
                               console.error(
                                 "PayPal order creation _error:",
                                 _error
                               );
                               toast.error("Failed to create PayPal order");
-                              throw error;
+                              throw _error;
                             }
                           }}
                           onApprove={handlePayPalApprove}

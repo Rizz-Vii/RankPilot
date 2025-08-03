@@ -113,9 +113,9 @@ class EnhancedErrorBoundary extends Component<Props, State> {
       userAgent,
       url: window.location.href,
       _error: {
-        name: error?.name,
-        message: error?.message,
-        stack: error?.stack,
+        name: _error?.name,
+        message: _error?.message,
+        stack: _error?.stack,
       },
       errorInfo: {
         componentStack: errorInfo?.componentStack,
@@ -176,12 +176,12 @@ class EnhancedErrorBoundary extends Component<Props, State> {
               </div>
 
               {/* Error Details */}
-              {showDetails && error && (
+              {showDetails && _error && (
                 <Alert variant="destructive" className="text-left">
                   <Bug className="h-4 w-4" />
                   <AlertDescription className="space-y-2">
                     <div className="font-medium">
-                      {error.name}: {error.message}
+                      {_error.name}: {_error.message}
                     </div>
                     {eventId && (
                       <div className="flex items-center gap-2">
@@ -197,7 +197,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
                           Stack Trace (Development)
                         </summary>
                         <pre className="mt-2 text-xs overflow-auto max-h-40 p-2 bg-muted rounded">
-                          {error.stack}
+                          {_error.stack}
                         </pre>
                       </details>
                     )}

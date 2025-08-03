@@ -1,0 +1,85 @@
+import OpenAI from "openai";
+import { gemini15Flash } from "@genkit-ai/googleai"; // Import the model reference
+import { ai } from "./genkit";
+import { z, ZodType } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
+// Initialize the OpenAI client for fallback
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+/**
+ * Generates a JSON object from an AI model using a specified prompt.
+ * Tries the primary provider (Google Gemini via Genkit) first. If it fails with a
+ * service availability _error, it automatically falls back to the secondary
+ * provider (OpenAI).
+ *
+ * @param {string} systemPrompt - The system-level instructions for the AI.
+ * @param {string} userPrompt - The user's specific request.
+ * @param {ZodType} outputSchema - The Zod schema that defines the desired output structure.
+ * @returns {Promise<any>} A promise that resolves to the parsed JSON output.
+ */
+export async function generateJson(
+  systemPrompt: string,
+  userPrompt: string,
+  outputSchema: ZodType
+): Promise<any> {
+  // --- Attempt 1: Primary Provider (Google Gemini via Genkit) ---
+  try {
+    // Using the configured `ai` instance with a schema directly returns the parsed object.
+    const _result = await ai.generate({
+      model: gemini15Flash,
+      prompt: `${systemPrompt}\n\n${userPrompt}`,
+      output: {
+        schema: outputSchema,
+      },
+      config: {
+        temperature: 0.1,
+      },
+    });
+
+    // CORRECTED: The '_result' is the final, parsed output object. No .output() method is needed.
+    return _result;
+  } catch (_error: unknown) {
+    console.warn("Primary AI provider (Google) failed. Reason:", _error.message);
+    // If it's a service _error, try the fallback. Otherwise, fail fast.
+    if (
+      (_error.cause as any)?.status === 503 ||
+      (_error.message && _error.message.includes("overloaded"))
+    ) {
+      console.log("Falling back to secondary provider (OpenAI)...");
+    } else {
+      // Re-throw other errors
+      throw new Error(`Primary AI provider failed: ${_error.message}`);
+    }
+  }
+  // --- Attempt 2: Fallback Provider (OpenAI) ---
+  try {
+    // For the fallback, we manually provide the JSON schema in the prompt
+    const openAISystemPrompt = `${systemPrompt}\n\nCRITICAL: Your entire _response MUST be a single, valid JSON object that strictly adheres to the following JSON Schema: ${JSON.stringify(
+      zodToJsonSchema(outputSchema)
+    )}`;
+
+    const _response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: openAISystemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const text = _response.choices[0].message.content;
+    if (!text) throw new Error("OpenAI returned no content.");
+
+    const jsonOutput = JSON.parse(text);
+    // Validate the output from the fallback provider against the schema
+    return outputSchema.parse(jsonOutput);
+  } catch (fallbackError: unknown) {
+    console._error(
+      "Fallback AI provider (OpenAI) also failed:",
+      (fallbackError as Error).message
+    );
+    throw new Error(
+      "All available AI providers failed. Please try again later."
+    );
+  }
+}

@@ -67,7 +67,7 @@ export const loginAsDevUser = async (
     // Fallback to mock user for development if real login fails
     const mockUser = createMockUser(userType);
     const event = new CustomEvent("mockUserLogin", { detail: mockUser });
-    window.dispatchEvent(_event);
+    window.dispatchEvent(event);
     return mockUser;
   }
 };

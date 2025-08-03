@@ -121,13 +121,13 @@ export class RealTimeDataStreamer extends EventEmitter {
 
             const tierLimit = this.tierLimits[tier as keyof typeof this.tierLimits];
             if (!tierLimit) {
-                return { success: false, _error: 'Invalid subscription tier' };
+                return { success: false, error: 'Invalid subscription tier' };
             }
 
             if (userConnections >= tierLimit.maxConnections) {
                 return {
                     success: false,
-                    _error: `Connection limit reached for ${tier} tier (${tierLimit.maxConnections})`
+                    error: `Connection limit reached for ${tier} tier (${tierLimit.maxConnections})`
                 };
             }
 
@@ -155,10 +155,10 @@ export class RealTimeDataStreamer extends EventEmitter {
             return { success: true, client };
 
         } catch (_error) {
-            console.error('[RealTimeStreamer] Client registration _error:', _error);
+            console.error('[RealTimeStreamer] Client registration error:', _error);
             return {
                 success: false,
-                _error: error instanceof Error ? error.message : 'Registration failed'
+                error: _error instanceof Error ? _error.message : 'Registration failed'
             };
         }
     }
@@ -172,7 +172,7 @@ export class RealTimeDataStreamer extends EventEmitter {
     ): Promise<{ success: boolean; subscribed: string[]; error?: string; }> {
         const client = this.clients.get(clientId);
         if (!client) {
-            return { success: false, subscribed: [], _error: 'Client not found' };
+            return { success: false, subscribed: [], error: 'Client not found' };
         }
 
         const tierLimit = this.tierLimits[client.tier as keyof typeof this.tierLimits];
@@ -224,14 +224,14 @@ export class RealTimeDataStreamer extends EventEmitter {
      */
     async broadcastCollaboration(_event: CollaborationEvent): Promise<void> {
         const dashboardClients = Array.from(this.clients.values()).filter(client =>
-            client.dashboardId === event.dashboardId && client.userId !== event.userId
+            client.dashboardId === _event.dashboardId && client.userId !== _event.userId
         );
 
         const collaborationData: StreamingDataPoint = {
             id: `collab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             type: 'user-action',
-            userId: event.userId,
-            dashboardId: event.dashboardId,
+            userId: _event.userId,
+            dashboardId: _event.dashboardId,
             _data: _event,
             timestamp: Date.now(),
             metadata: {
@@ -376,13 +376,15 @@ export class RealTimeDataStreamer extends EventEmitter {
             return newData !== oldData ? newData : null;
         }
 
-        const delta: unknown = {};
+        const delta: Record<string, any> = {};
         let hasChanges = false;
 
-        for (const _key in newData) {
-            if (newData[key] !== oldData?.[key]) {
-                delta[key] = newData[key];
-                hasChanges = true;
+        if (typeof newData === 'object' && newData !== null) {
+            for (const key in newData as Record<string, any>) {
+                if ((newData as Record<string, any>)[key] !== (oldData as Record<string, any>)?.[key]) {
+                    delta[key] = (newData as Record<string, any>)[key];
+                    hasChanges = true;
+                }
             }
         }
 
@@ -451,7 +453,7 @@ export class RealTimeDataStreamer extends EventEmitter {
                 id: `${streamType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 type: streamType as any,
                 userId: 'system',
-                _data,
+                _data: data,
                 timestamp: Date.now(),
                 metadata: {
                     source: 'data-generator',

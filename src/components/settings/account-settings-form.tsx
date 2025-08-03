@@ -44,9 +44,17 @@ const formSchema = z.object({
 
 type AccountFormValues = z.infer<typeof formSchema>;
 
+interface Profile {
+  firstName?: string;
+  lastName?: string;
+  company?: string;
+  timezone?: string;
+  email?: string;
+}
+
 interface AccountSettingsFormProps {
   user: User;
-  profile: unknown;
+  profile: Profile;
 }
 
 export default function AccountSettingsForm({
@@ -91,12 +99,14 @@ export default function AccountSettingsForm({
         title: "Account Updated",
         description: "Your account information has been successfully updated.",
       });
-    } catch (_error: unknown) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Update Failed",
         description:
-          error.message || "Could not update your account. Please try again.",
+          typeof error === "object" && error !== null && "message" in error
+            ? String((error as { message?: unknown }).message)
+            : "Could not update your account. Please try again.",
       });
     } finally {
       setIsLoading(false);

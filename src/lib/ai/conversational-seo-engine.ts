@@ -72,13 +72,13 @@ export class ConversationalSEOEngine {
 
     // SEO-specific conversation patterns and responses
     private seoPatterns = {
-        analysis: /analyz|audit|check|review|assess/_i,
-        keywords: /keyword|search term|ranking|position/_i,
-        technical: /technical|crawl|index|sitemap|robots/_i,
-        content: /content|blog|article|copy|text/_i,
-        performance: /speed|performance|loading|vitals/_i,
-        backlinks: /backlink|link building|authority|domain/_i,
-        competitor: /competitor|competition|rival|compare/_i,
+        analysis: /analyz|audit|check|review|assess/i,
+        keywords: /keyword|search term|ranking|position/i,
+        technical: /technical|crawl|index|sitemap|robots/i,
+        content: /content|blog|article|copy|text/i,
+        performance: /speed|performance|loading|vitals/i,
+        backlinks: /backlink|link building|authority|domain/i,
+        competitor: /competitor|competition|rival|compare/i,
         local: /local|location|nearby|geo|maps/i
     };
 
@@ -166,31 +166,31 @@ export class ConversationalSEOEngine {
 
         switch (messageType) {
             case 'seo-analysis':
-                response = await this.handleSEOAnalysisRequest(context, userMessage);
+                _response = await this.handleSEOAnalysisRequest(context, userMessage);
                 break;
             case 'keyword-research':
-                response = await this.handleKeywordResearch(context, userMessage);
+                _response = await this.handleKeywordResearch(context, userMessage);
                 break;
             case 'technical-seo':
-                response = await this.handleTechnicalSEOQuestion(context, userMessage);
+                _response = await this.handleTechnicalSEOQuestion(context, userMessage);
                 break;
             case 'content-optimization':
-                response = await this.handleContentOptimization(context, userMessage);
+                _response = await this.handleContentOptimization(context, userMessage);
                 break;
             case 'competitor-analysis':
-                response = await this.handleCompetitorAnalysis(context, userMessage);
+                _response = await this.handleCompetitorAnalysis(context, userMessage);
                 break;
             case 'general-question':
-                response = await this.handleGeneralSEOQuestion(context, userMessage);
+                _response = await this.handleGeneralSEOQuestion(context, userMessage);
                 break;
             default:
-                response = await this.handleFallbackResponse(context, userMessage);
+                _response = await this.handleFallbackResponse(context, userMessage);
         }
 
         // Add personalized recommendations
-        response.suggestions = await this.generatePersonalizedSuggestions(context, messageType);
+        _response.suggestions = await this.generatePersonalizedSuggestions(context, messageType);
 
-        return response;
+        return _response;
     }
 
     /**
@@ -457,26 +457,28 @@ export class ConversationalSEOEngine {
     }
 
     private generateAnalysisResponse(analysis: unknown): string {
-        return `I've analyzed ${analysis.url} and found some interesting insights! 
+        const analysisData = analysis as any;
+        return `I've analyzed ${analysisData.url} and found some interesting insights! 
 
-📊 **Overall SEO Score: ${analysis.overallScore}/100**
+📊 **Overall SEO Score: ${analysisData.overallScore}/100**
 
 🔍 **Key Issues Found:**
-${analysis.issues.map((issue: unknown) => `• ${issue.type.replace('-', ' ')} (${issue.severity} priority - ${issue.count} instances)`).join('\n')}
+${analysisData.issues.map((issue: any) => `• ${issue.type.replace('-', ' ')} (${issue.severity} priority - ${issue.count} instances)`).join('\n')}
 
 🚀 **Top Opportunities:**
-${analysis.opportunities.map((opp: string, _i: number) => `${i + 1}. ${opp}`).join('\n')}
+${analysisData.opportunities.map((opp: string, _i: number) => `${_i + 1}. ${opp}`).join('\n')}
 
 ⚡ **Performance Metrics:**
-• LCP: ${analysis.performance.lcp}s (${analysis.performance.lcp < 2.5 ? 'Good' : 'Needs Improvement'})
-• CLS: ${analysis.performance.cls} (${analysis.performance.cls < 0.1 ? 'Good' : 'Needs Improvement'})
-• FID: ${analysis.performance.fid}ms (${analysis.performance.fid < 100 ? 'Good' : 'Needs Improvement'})
+• LCP: ${analysisData.performance.lcp}s (${analysisData.performance.lcp < 2.5 ? 'Good' : 'Needs Improvement'})
+• CLS: ${analysisData.performance.cls} (${analysisData.performance.cls < 0.1 ? 'Good' : 'Needs Improvement'})
+• FID: ${analysisData.performance.fid}ms (${analysisData.performance.fid < 100 ? 'Good' : 'Needs Improvement'})
 
 Would you like me to provide specific recommendations for any of these areas?`;
     }
 
     private generateAnalysisActionItems(analysis: unknown): Array<any> {
-        return analysis.issues.map((issue: unknown) => ({
+        const analysisData = analysis as any;
+        return analysisData.issues.map((issue: any) => ({
             type: 'recommendation' as const,
             title: `Fix ${issue.type.replace('-', ' ')} issues`,
             description: `Address ${issue.count} ${issue.type} issues found on your site`,
@@ -629,7 +631,8 @@ Just ask me anything about SEO!`,
     }
 
     private personalizeKnowledgeResponse(_response: unknown, context: ConversationContext): string {
-        return `${response.content}\n\nBased on your ${context.userTier} plan, here are my recommendations:\n${response.tips.join('\n• ')}`;
+        const responseData = _response as any;
+        return `${responseData.content}\n\nBased on your ${context.userTier} plan, here are my recommendations:\n${responseData.tips.join('\n• ')}`;
     }
 
     private getBaseSuggestions(messageType: string, userTier: string): string[] {
@@ -646,12 +649,13 @@ Just ask me anything about SEO!`,
     }
 
     private generateKeywordResponse(keywords: string[], analysis: unknown, businessContext: string): string {
+        const analysisData = analysis as any;
         return `Great keyword research request for your ${businessContext} business! 
 
 🎯 **Keywords Analyzed:** ${keywords.join(', ')}
 
 📈 **AI Analysis Results:**
-${analysis.success ? 'Keywords show good potential for your niche with moderate competition levels.' : 'Let me provide some general guidance for these keywords.'}
+${analysisData.success ? 'Keywords show good potential for your niche with moderate competition levels.' : 'Let me provide some general guidance for these keywords.'}
 
 💡 **Recommendations:**
 • Focus on long-tail variations of your main keywords
@@ -690,7 +694,7 @@ Would you like me to suggest specific long-tail variations or analyze the compet
 
         return `Here's what I know about that technical SEO topic:
 
-${aiResponse.success ? aiResponse.results?.[0]?.output?.answer || 'Let me provide some guidance on this technical aspect.' : 'Let me help you with this technical SEO question.'}
+${_aiResponse.success ? (_aiResponse.results?.[0]?.output as any)?.answer || 'Let me provide some guidance on this technical aspect.' : 'Let me help you with this technical SEO question.'}
 
 For your ${context.userTier} plan, I recommend prioritizing the most impactful technical improvements first.
 
@@ -719,13 +723,14 @@ Would you like specific implementation steps or help with any other technical SE
     }
 
     private generateContentOptimizationResponse(contentType: string, analysis: unknown, keywords: string[]): string {
+        const analysisData = analysis as any;
         return `Excellent! Let me help you optimize your ${contentType} content.
 
 📝 **Content Type:** ${contentType.replace('-', ' ')}
 🎯 **Target Keywords:** ${keywords.length ? keywords.join(', ') : 'Not specified - let\'s work on that!'}
 
 ✨ **AI Content Analysis:**
-${analysis.success ? analysis.results?.[0]?.output?.summary_text || 'Your content has optimization potential.' : 'Let me provide some optimization guidance.'}
+${analysisData.success ? analysisData.results?.[0]?.output?.summary_text || 'Your content has optimization potential.' : 'Let me provide some optimization guidance.'}
 
 🚀 **Optimization Recommendations:**
 • Structure content with clear headings (H1, H2, H3)
@@ -785,8 +790,8 @@ Would you like me to help with any specific optimization technique or review par
         const message: ConversationMessage = {
             id: this.generateMessageId(),
             role: 'assistant',
-            content: aiResponse.success
-                ? `${aiResponse.results?.[0]?.output?.answer || 'Let me help you with that SEO question.'}\n\nIs there anything specific you'd like to dive deeper into?`
+            content: _aiResponse.success
+                ? `${(_aiResponse.results?.[0]?.output as any)?.answer || 'Let me help you with that SEO question.'}\n\nIs there anything specific you'd like to dive deeper into?`
                 : 'I\'m here to help with any SEO questions! Could you provide more details about what you\'re trying to achieve?',
             timestamp: Date.now()
         };
@@ -795,7 +800,7 @@ Would you like me to help with any specific optimization technique or review par
             message,
             suggestions: ['Ask more specific questions', 'Request an SEO audit', 'Explore keyword research'],
             followUpQuestions: ['What SEO challenge are you currently facing?'],
-            confidenceScore: aiResponse.success ? 0.80 : 0.60
+            confidenceScore: _aiResponse.success ? 0.80 : 0.60
         };
     }
 

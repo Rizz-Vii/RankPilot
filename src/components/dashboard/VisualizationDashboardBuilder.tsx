@@ -148,7 +148,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
             { x: 35, y: 25, size: 9, category: 'C' }
         ]);
 
-        setSampleData(_data);
+        setSampleData(data);
     }, []);
 
     // Render charts when widgets change
@@ -170,12 +170,12 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
         if (!chartElement) return;
 
         // Get sample data for chart type
-        const data = sampleData.get(widget.chartConfig.type) || [];
+        const chartData = sampleData.get(widget.chartConfig.type) || [];
 
         // Update chart config with current data
         const config: ChartConfig = {
             ...widget.chartConfig,
-            _data: _data,
+            _data: chartData,
             id: widget.id
         };
 
@@ -204,7 +204,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
             }
         } catch (_error) {
             console.error('Failed to render chart:', _error);
-            chartElement.innerHTML = `<div class="p-4 text-red-500">Error rendering chart: ${error}</div>`;
+            chartElement.innerHTML = `<div class="p-4 text-red-500">Error rendering chart: ${_error}</div>`;
         }
     }, [sampleData]);
 
@@ -297,7 +297,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                 throw new Error('No charts to export');
             }
 
-            let _result: string;
+            let result: string = '';
 
             if (format === 'json') {
                 // JSON export - handle separately without createBatch
@@ -339,7 +339,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
             document.body.removeChild(link);
 
             if (onExport) {
-                onExport(format, _result);
+                onExport(format, result);
             }
 
         } catch (_error) {
@@ -515,10 +515,10 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                                 <Label className="text-sm font-medium">Theme</Label>
                                 <Select
                                     value={layout.settings.theme}
-                                    onValueChange={(_value: 'light' | 'dark' | 'auto') =>
+                                    onValueChange={themeValue =>
                                         setLayout(prev => ({
                                             ...prev,
-                                            settings: { ...prev.settings, theme: value }
+                                            settings: { ...prev.settings, theme: themeValue as 'light' | 'dark' | 'auto' }
                                         }))
                                     }
                                 >
@@ -713,9 +713,9 @@ const WidgetPropertiesPanel: React.FC<WidgetPropertiesPanelProps> = ({ widget, o
                         <Label className="text-xs text-gray-500">Chart Type</Label>
                         <Select
                             value={widget.chartConfig.type}
-                            onValueChange={(_value: unknown) =>
+                            onValueChange={typeValue =>
                                 onUpdate({
-                                    chartConfig: { ...widget.chartConfig!, type: value }
+                                    chartConfig: { ...widget.chartConfig!, type: typeValue as ChartConfig['type'] }
                                 })
                             }
                         >
@@ -736,11 +736,11 @@ const WidgetPropertiesPanel: React.FC<WidgetPropertiesPanelProps> = ({ widget, o
                         <Label className="text-xs text-gray-500">Color Scheme</Label>
                         <Select
                             value={widget.chartConfig.styling.colorScheme || 'default'}
-                            onValueChange={(_value: unknown) =>
+                            onValueChange={colorSchemeValue =>
                                 onUpdate({
                                     chartConfig: {
                                         ...widget.chartConfig!,
-                                        styling: { ...widget.chartConfig!.styling, colorScheme: value }
+                                        styling: { ...widget.chartConfig!.styling, colorScheme: colorSchemeValue as ChartConfig['styling']['colorScheme'] }
                                     }
                                 })
                             }

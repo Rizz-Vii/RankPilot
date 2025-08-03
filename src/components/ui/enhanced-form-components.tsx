@@ -21,7 +21,7 @@ interface EnhancedFormFieldProps {
 
 export function EnhancedFormField({
     label,
-    _error,
+    error,
     helper,
     children,
     className,
@@ -166,7 +166,7 @@ export function EnhancedSelect({
                 </option>
             )}
             {options.map((option) => (
-                <option key={option.value} value={option.value}>
+                <option key={option._value} value={option._value}>
                     {option.label}
                 </option>
             ))}

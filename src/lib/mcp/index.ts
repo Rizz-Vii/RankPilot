@@ -67,7 +67,7 @@ export class MCPServiceManager {
         if (!this.config.huggingface?.enabled) {
             return {
                 success: false,
-                _error: 'HuggingFace MCP not enabled',
+                error: 'HuggingFace MCP not enabled',
                 source: 'huggingface',
                 timestamp: new Date().toISOString(),
                 requestId: this.generateRequestId(),
@@ -100,15 +100,15 @@ export class MCPServiceManager {
 
             return {
                 success: true,
-                _data: mockResults,
+                data: mockResults,
                 source: 'huggingface',
                 timestamp: new Date().toISOString(),
                 requestId: this.generateRequestId(),
             };
-        } catch (_error) {
+        } catch (error) {
             return {
                 success: false,
-                _error: error instanceof Error ? error.message : 'Unknown HuggingFace MCP error',
+                error: error instanceof Error ? error.message : 'Unknown HuggingFace MCP error',
                 source: 'huggingface',
                 timestamp: new Date().toISOString(),
                 requestId: this.generateRequestId(),
@@ -127,7 +127,7 @@ export class MCPServiceManager {
         if (!this.config.firecrawl?.enabled) {
             return {
                 success: false,
-                _error: 'Firecrawl MCP not enabled',
+                error: 'Firecrawl MCP not enabled',
                 source: 'firecrawl',
                 timestamp: new Date().toISOString(),
                 requestId: this.generateRequestId(),
@@ -159,15 +159,15 @@ export class MCPServiceManager {
 
             return {
                 success: true,
-                _data: mockResults,
+                data: mockResults,
                 source: 'firecrawl',
                 timestamp: new Date().toISOString(),
                 requestId: this.generateRequestId(),
             };
-        } catch (_error) {
+        } catch (error) {
             return {
                 success: false,
-                _error: error instanceof Error ? error.message : 'Unknown Firecrawl MCP error',
+                error: error instanceof Error ? error.message : 'Unknown Firecrawl MCP error',
                 source: 'firecrawl',
                 timestamp: new Date().toISOString(),
                 requestId: this.generateRequestId(),
@@ -183,7 +183,7 @@ export class MCPServiceManager {
         if (!this.config.sentry?.enabled) {
             return {
                 success: false,
-                _error: 'Sentry MCP not enabled',
+                error: 'Sentry MCP not enabled',
                 source: 'sentry',
                 timestamp: new Date().toISOString(),
                 requestId: this.generateRequestId(),
@@ -214,15 +214,15 @@ export class MCPServiceManager {
 
             return {
                 success: true,
-                _data: mockResults,
+                data: mockResults,
                 source: 'sentry',
                 timestamp: new Date().toISOString(),
                 requestId: this.generateRequestId(),
             };
-        } catch (_error) {
+        } catch (error) {
             return {
                 success: false,
-                _error: error instanceof Error ? error.message : 'Unknown Sentry MCP error',
+                error: error instanceof Error ? error.message : 'Unknown Sentry MCP error',
                 source: 'sentry',
                 timestamp: new Date().toISOString(),
                 requestId: this.generateRequestId(),
@@ -238,7 +238,7 @@ export class MCPServiceManager {
         if (!this.config.sequentialThinking?.enabled) {
             return {
                 success: false,
-                _error: 'Sequential Thinking MCP not enabled',
+                error: 'Sequential Thinking MCP not enabled',
                 source: 'sequential-thinking',
                 timestamp: new Date().toISOString(),
                 requestId: this.generateRequestId(),
@@ -276,15 +276,15 @@ export class MCPServiceManager {
 
             return {
                 success: true,
-                _data: mockResults,
+                data: mockResults,
                 source: 'sequential-thinking',
                 timestamp: new Date().toISOString(),
                 requestId: this.generateRequestId(),
             };
-        } catch (_error) {
+        } catch (error) {
             return {
                 success: false,
-                _error: error instanceof Error ? error.message : 'Unknown Sequential Thinking MCP error',
+                error: error instanceof Error ? error.message : 'Unknown Sequential Thinking MCP error',
                 source: 'sequential-thinking',
                 timestamp: new Date().toISOString(),
                 requestId: this.generateRequestId(),
@@ -337,7 +337,7 @@ export class MCPServiceManager {
         if (!this.config.huggingface?.enabled) {
             return {
                 success: false,
-                _error: 'HuggingFace MCP not enabled',
+                error: 'HuggingFace MCP not enabled',
                 source: 'huggingface',
                 timestamp: new Date().toISOString(),
                 requestId: this.generateRequestId(),
@@ -358,15 +358,15 @@ export class MCPServiceManager {
 
             return {
                 success: true,
-                _data: mockResults,
+                data: mockResults,
                 source: 'huggingface',
                 timestamp: new Date().toISOString(),
                 requestId: this.generateRequestId(),
             };
-        } catch (_error) {
+        } catch (error) {
             return {
                 success: false,
-                _error: error instanceof Error ? error.message : 'Unknown HuggingFace inference error',
+                error: error instanceof Error ? error.message : 'Unknown HuggingFace inference error',
                 source: 'huggingface',
                 timestamp: new Date().toISOString(),
                 requestId: this.generateRequestId(),

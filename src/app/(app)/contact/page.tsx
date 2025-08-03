@@ -217,7 +217,7 @@ export default function ContactPage() {
                     >
                       <option value="">Select a category</option>
                       {supportCategories.map((category) => (
-                        <option key={category.value} value={category.value}>
+                        <option key={category._value} value={category._value}>
                           {category.label}
                         </option>
                       ))}
@@ -297,7 +297,7 @@ export default function ContactPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {supportChannels.map((channel, _index) => (
-                  <div key={index} className="p-4 border rounded-lg">
+                  <div key={_index} className="p-4 border rounded-lg">
                     <div className="flex items-start gap-4">
                       <div className="p-2 bg-primary/10 text-primary rounded-lg">
                         {channel.icon}
@@ -393,25 +393,25 @@ export default function ContactPage() {
             <CardContent>
               <div className="space-y-4">
                 {faqItems.map((_item, _index) => (
-                  <div key={index} className="border rounded-lg">
+                  <div key={_index} className="border rounded-lg">
                     <button
                       onClick={() =>
-                        setSelectedFaq(selectedFaq === index ? null : _index)
+                        setSelectedFaq(selectedFaq === _index ? null : _index)
                       }
                       className="w-full text-left p-4 hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex items-center justify-between">
-                        <h3 className="font-medium">{item.question}</h3>
+                        <h3 className="font-medium">{_item.question}</h3>
                         <div
-                          className={`transition-transform ${selectedFaq === index ? "rotate-180" : ""}`}
+                          className={`transition-transform ${selectedFaq === _index ? "rotate-180" : ""}`}
                         >
                           <HelpCircle className="h-4 w-4" />
                         </div>
                       </div>
                     </button>
-                    {selectedFaq === index && (
+                    {selectedFaq === _index && (
                       <div className="px-4 pb-4">
-                        <p className="text-muted-foreground">{item.answer}</p>
+                        <p className="text-muted-foreground">{_item.answer}</p>
                       </div>
                     )}
                   </div>

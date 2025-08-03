@@ -69,7 +69,7 @@ export default function AdminSystemMetrics() {
     }
   };
 
-  const getStatusBadge = (metric: string, _value: number) => {
+  const getStatusBadge = (metric: string, value: number) => {
     switch (metric) {
       case "errorRate":
         if (value < 1)
@@ -96,7 +96,7 @@ export default function AdminSystemMetrics() {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[...Array(3)].map((_, _i) => (
+          {[...Array(3)].map((_, i) => (
             <Card key={i}>
               <CardContent className="p-6">
                 <div className="animate-pulse">

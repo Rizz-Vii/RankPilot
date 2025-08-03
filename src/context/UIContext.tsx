@@ -55,7 +55,7 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const removeFeedback = useCallback((id: string) => {
-    setFeedback((prev) => prev.filter((_item) => item.id !== id));
+    setFeedback((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
   const scrollToTop = useCallback(() => {
@@ -67,7 +67,7 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
 
   const scrollToElement = useCallback((elementId: string) => {
     const element = document.getElementById(elementId);
-    if (_element) {
+    if (element) {
       element.scrollIntoView({
         behavior: "smooth",
         block: "start",

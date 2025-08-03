@@ -388,7 +388,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
             workflow.lastRun = {
                 timestamp: Date.now(),
                 status: 'error',
-                errorMessage: error instanceof Error ? error.message : 'Unknown error'
+                errorMessage: _error instanceof Error ? _error.message : 'Unknown error'
             };
 
             // Update success rate
@@ -396,8 +396,8 @@ export class ZapierWorkflowBuilder extends EventEmitter {
             workflow.metadata.runCount++;
             workflow.metadata.successRate = (successCount / workflow.metadata.runCount) * 100;
 
-            this.emit('workflow-error', { workflowId, runId, _error: error instanceof Error ? error.message : error });
-            throw error;
+            this.emit('workflow-error', { workflowId, runId, _error: _error instanceof Error ? _error.message : _error });
+            throw _error;
         } finally {
             this.activeRuns.delete(runId);
         }
@@ -436,11 +436,11 @@ export class ZapierWorkflowBuilder extends EventEmitter {
             body: payload ? JSON.stringify(payload) : undefined
         });
 
-        if (!response.ok) {
-            throw new Error(`Webhook trigger failed: ${response.statusText}`);
+        if (!_response.ok) {
+            throw new Error(`Webhook trigger failed: ${_response.statusText}`);
         }
 
-        return response.json();
+        return _response.json();
     }
 
     /**
@@ -459,13 +459,13 @@ export class ZapierWorkflowBuilder extends EventEmitter {
                 })
             });
 
-            if (!response.ok) {
-                throw new Error(`NeuroSEO trigger failed: ${response.statusText}`);
+            if (!_response.ok) {
+                throw new Error(`NeuroSEO trigger failed: ${_response.statusText}`);
             }
 
-            return response.json();
+            return _response.json();
         } catch (_error) {
-            throw new Error(`NeuroSEO trigger _error: ${error instanceof Error ? error.message : error}`);
+            throw new Error(`NeuroSEO trigger _error: ${_error instanceof Error ? _error.message : _error}`);
         }
     }
 
@@ -498,13 +498,13 @@ export class ZapierWorkflowBuilder extends EventEmitter {
                 })
             });
 
-            if (!response.ok) {
-                throw new Error(`Competitor trigger failed: ${response.statusText}`);
+            if (!_response.ok) {
+                throw new Error(`Competitor trigger failed: ${_response.statusText}`);
             }
 
-            return response.json();
+            return _response.json();
         } catch (_error) {
-            throw new Error(`Competitor trigger _error: ${error instanceof Error ? error.message : error}`);
+            throw new Error(`Competitor trigger _error: ${_error instanceof Error ? _error.message : _error}`);
         }
     }
 
@@ -536,7 +536,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
             } catch (_error) {
                 attempt++;
                 if (attempt > maxRetries) {
-                    throw error;
+                    throw _error;
                 }
 
                 // Exponential backoff
@@ -608,13 +608,13 @@ export class ZapierWorkflowBuilder extends EventEmitter {
                 })
             });
 
-            if (!response.ok) {
-                throw new Error(`Dashboard update failed: ${response.statusText}`);
+            if (!_response.ok) {
+                throw new Error(`Dashboard update failed: ${_response.statusText}`);
             }
 
-            return response.json();
+            return _response.json();
         } catch (_error) {
-            throw new Error(`Dashboard action _error: ${error instanceof Error ? error.message : error}`);
+            throw new Error(`Dashboard action _error: ${_error instanceof Error ? _error.message : _error}`);
         }
     }
 
@@ -669,7 +669,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
      * Get value from nested object path
      */
     private getValueFromPath(_data: unknown, path: string): any {
-        return path.split('.').reduce((obj, _key) => obj && obj[key], _data);
+        return path.split('.').reduce((obj: any, _key) => obj && obj[_key], _data);
     }
 
     /**
@@ -683,15 +683,15 @@ export class ZapierWorkflowBuilder extends EventEmitter {
 
             switch (condition.operator) {
                 case 'equals':
-                    return value === condition.value;
+                    return value === condition._value;
                 case 'not_equals':
-                    return value !== condition.value;
+                    return value !== condition._value;
                 case 'contains':
-                    return String(_value).includes(String(condition._value));
+                    return String(value).includes(String(condition._value));
                 case 'greater_than':
-                    return Number(_value) > Number(condition._value);
+                    return Number(value) > Number(condition._value);
                 case 'less_than':
-                    return Number(_value) < Number(condition._value);
+                    return Number(value) < Number(condition._value);
                 case 'exists':
                     return value !== undefined && value !== null;
                 default:

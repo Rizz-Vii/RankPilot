@@ -96,8 +96,8 @@ export async function getAllUsers(): Promise<{
       summary,
       incompleteUsers,
     };
-  } catch (_error) {
-    console.error("❌ Error retrieving users:", _error);
+  } catch (error) {
+    console.error("❌ Error retrieving users:", error);
     throw error;
   }
 }

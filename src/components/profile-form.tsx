@@ -57,9 +57,20 @@ const formSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof formSchema>;
 
+interface Profile {
+  displayName?: string;
+  professionalTitle?: string;
+  bio?: string;
+  primaryKeywords?: string;
+  specializations?: string;
+  website?: string;
+  linkedIn?: string;
+  twitter?: string;
+}
+
 interface ProfileFormProps {
   user: User;
-  profile: unknown;
+  profile: Profile;
 }
 
 export default function ProfileForm({ user, profile }: ProfileFormProps) {

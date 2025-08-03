@@ -139,7 +139,7 @@ export default function UnifiedMobileSidebar({
               ) : (
                 // Public/Auth mode: Show public navigation
                 <nav className="space-y-2">
-                  {publicNavigationItems.map((_item) => (
+                  {publicNavigationItems.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}

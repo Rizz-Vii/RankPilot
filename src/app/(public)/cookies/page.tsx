@@ -181,7 +181,7 @@ export default function CookiesPage() {
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-8">
-            {cookieTypes.map((cookie, _index) => (
+            {cookieTypes.map((cookie, index) => (
               <motion.div
                 key={cookie.type}
                 initial="hidden"
@@ -273,7 +273,7 @@ export default function CookiesPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {dataProcessing.map((_item, _index) => (
+                    {dataProcessing.map((item, index) => (
                       <motion.tr
                         key={item.purpose}
                         initial="hidden"
@@ -283,7 +283,7 @@ export default function CookiesPage() {
                         className="border-b border-gray-100 hover:bg-gray-50"
                       >
                         <td className="p-4 font-medium">{item.purpose}</td>
-                        <td className="p-4 text-gray-600">{item.data}</td>
+                        <td className="p-4 text-gray-600">{item._data}</td>
                         <td className="p-4">
                           <span
                             className={`px-2 py-1 rounded text-xs font-medium ${item.legalBasis === "Consent" ? "bg-blue-100 text-blue-800" : "bg-orange-100 text-orange-800"}`}

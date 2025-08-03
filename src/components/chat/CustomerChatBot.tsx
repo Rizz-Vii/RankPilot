@@ -137,7 +137,7 @@ What can I help you with today?`,
                 throw new Error(errorData.error || 'Failed to send message');
             }
 
-            const _data: ChatResponse = await response.json();
+            const data: ChatResponse = await response.json();
 
             // Update session ID if new
             if (data.sessionId && data.sessionId !== sessionId) {
@@ -268,7 +268,7 @@ What can I help you with today?`,
                                             )}
                                         >
                                             <div className="whitespace-pre-wrap">
-                                                {msg.isUser ? msg.message : msg.response}
+                                                {msg.isUser ? msg.message : msg._response}
                                             </div>
 
                                             {!msg.isUser && msg.tokensUsed && (
@@ -302,9 +302,9 @@ What can I help you with today?`,
                                     </div>
                                 )}
 
-                                {error && (
+                                {_error && (
                                     <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600">
-                                        {error}
+                                        {_error}
                                     </div>
                                 )}
                             </div>
@@ -317,7 +317,7 @@ What can I help you with today?`,
                                 <Input
                                     ref={inputRef}
                                     value={inputValue}
-                                    onChange={(e) => setInputValue(e.target._value)}
+                                    onChange={(e) => setInputValue(e.target.value)}
                                     onKeyPress={handleKeyPress}
                                     placeholder="Ask about your SEO performance..."
                                     disabled={isLoading || !user}

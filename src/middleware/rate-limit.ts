@@ -9,7 +9,7 @@ const WINDOW_SIZE_MS = 60 * 1000; // 1 minute
 const MAX_REQUESTS = 100; // Maximum requests per minute
 const API_MAX_REQUESTS = 50; // Lower limit for API endpoints
 
-export async function rateLimit(_req: NextRequest) {
+export async function rateLimit(req: NextRequest) {
   try {
     // Get token to identify user
     const token = await getToken({ req });
@@ -69,7 +69,7 @@ export async function rateLimit(_req: NextRequest) {
     }
 
     // Add rate limit headers
-    const _response = NextResponse.next();
+    const response = NextResponse.next();
     response.headers.set("X-RateLimit-Limit", limit.toString());
     response.headers.set(
       "X-RateLimit-Remaining",

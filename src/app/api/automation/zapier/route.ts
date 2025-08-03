@@ -30,7 +30,7 @@ interface WorkflowRequestBody {
     status?: 'active' | 'paused' | 'disabled';
 }
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
     try {
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
@@ -107,7 +107,7 @@ export async function POST(_request: NextRequest) {
                 const _result = await zapierWorkflowBuilder.executeWorkflow(body.workflowId);
                 return NextResponse.json({
                     success: true,
-                    execution: result
+                    execution: _result
                 });
 
             case 'list':
@@ -214,8 +214,8 @@ export async function POST(_request: NextRequest) {
                 );
         }
 
-    } catch (_error) {
-        console.error('[ZapierWorkflowAPI] Error:', _error);
+    } catch (error) {
+        console.error('[ZapierWorkflowAPI] Error:', error);
         return NextResponse.json(
             {
                 _error: 'Internal server error',
@@ -226,7 +226,7 @@ export async function POST(_request: NextRequest) {
     }
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
     try {
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
@@ -298,8 +298,8 @@ export async function GET(_request: NextRequest) {
             }
         });
 
-    } catch (_error) {
-        console.error('[ZapierWorkflowAPI] Error:', _error);
+    } catch (error) {
+        console.error('[ZapierWorkflowAPI] Error:', error);
         return NextResponse.json(
             {
                 _error: 'Internal server error',

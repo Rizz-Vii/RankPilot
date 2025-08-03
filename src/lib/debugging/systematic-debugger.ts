@@ -120,11 +120,11 @@ export class SystematicDebugger {
         }
 
         step.completed = true;
-        step.result = result;
+        step.result = _result;
         step.timeSpent = timeSpent;
 
         console.log(`✅ Completed: ${step.name}`);
-        console.log(`📝 Result: ${result}`);
+        console.log(`📝 Result: ${_result}`);
 
         // Check if this reveals a known pattern
         this.checkPatterns(stepId, _result);
@@ -204,12 +204,12 @@ export class SystematicDebugger {
      */
     private checkPatterns(stepId: string, _result: string): void {
         // Simple pattern matching - can be enhanced with ML
-        if (stepId === 'config-validation' && result.includes('URL mismatch')) {
+        if (stepId === 'config-validation' && _result.includes('URL mismatch')) {
             console.log('🎯 Pattern Detected: Configuration URL Mismatch');
             this.session?.patterns.push('config-url-mismatch');
         }
 
-        if (stepId === 'error-analysis' && result.includes('infinite retry')) {
+        if (stepId === 'error-analysis' && _result.includes('infinite retry')) {
             console.log('🎯 Pattern Detected: Infinite Retry Loop');
             this.session?.patterns.push('infinite-retry-loop');
         }

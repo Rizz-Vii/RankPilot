@@ -62,9 +62,9 @@ export class MobileRetentionOptimizer {
 
     const results: TouchTarget[] = [];
 
-    touchElements.forEach((_element) => {
+    touchElements.forEach((element) => {
       const rect = element.getBoundingClientRect();
-      const computedStyle = window.getComputedStyle(_element);
+      const computedStyle = window.getComputedStyle(element);
 
       // Account for padding in touch target size
       const paddingTop = parseInt(computedStyle.paddingTop);
@@ -424,7 +424,13 @@ export class MobileRetentionOptimizer {
 
   private static generateRecommendations(
     touchTargets: TouchTarget[],
-    metrics: unknown,
+    metrics: {
+      firstContentfulPaint: number;
+      largestContentfulPaint: number;
+      cumulativeLayoutShift: number;
+      firstInputDelay: number;
+      mobileFriendlyScore: number;
+    },
     accessibilityScore: number
   ): string[] {
     const recommendations: string[] = [];

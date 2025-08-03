@@ -423,7 +423,7 @@ class DashboardDataService {
       try {
         // Fetch fresh data when analyses update
         const data = await this.getUserDashboardData(userId);
-        callback(_data);
+        callback(data);
       } catch (_error) {
         console.error("Error in dashboard subscription:", _error);
       }
@@ -461,7 +461,7 @@ class DashboardDataService {
       const userRef = doc(db, "users", userId);
       await updateDoc(userRef, {
         dashboardCache: {
-          _data,
+          data,
           lastUpdated: Timestamp.now(),
           version: "1.0"
         }

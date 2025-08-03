@@ -186,7 +186,7 @@ export class BuildSystemAgent implements RankPilotAgent {
             let modified = false;
             for (const envVar of firebaseEnvVars) {
                 const [key] = envVar.split('=');
-                if (!envContent.includes(_key)) {
+                if (!envContent.includes(key)) {
                     envContent += `${envVar}\n`;
                     modified = true;
                 }
@@ -352,7 +352,7 @@ exit 1
             }
         } catch (_error) {
             console.error('Failed to create backup:', _error);
-            throw error;
+            throw _error;
         }
     }
 
@@ -364,9 +364,20 @@ exit 1
             // Try the emergency build script first (safer)
             const { stdout, stderr } = await execAsync('npm run build:memory-safe', { timeout: 300000 });
             return { success: true, output: stdout + stderr };
-        } catch (_error: unknown) {
+        } catch (error: unknown) {
             // Build might fail due to Firebase, but that's expected
-            const output = error.stdout + error.stderr;
+            let output = '';
+            if (
+                typeof error === 'object' &&
+                error !== null &&
+                'stdout' in error &&
+                'stderr' in error
+            ) {
+                const errObj = error as { stdout: string; stderr: string };
+                output = errObj.stdout + errObj.stderr;
+            } else {
+                output = String(error);
+            }
             if (output.includes('✓ Compiled successfully')) {
                 return { success: true, output };
             }
@@ -378,7 +389,7 @@ exit 1
      * Validate fix
      */
     async validateFix(): Promise<boolean> {
-        const _result = await this.validateBuild();
+        const result = await this.validateBuild();
         return result.success;
     }
 

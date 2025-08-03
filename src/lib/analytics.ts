@@ -147,8 +147,9 @@ export const trackUserEvents = {
       signup_date?: string;
     }
   ) => {
-    if (typeof window !== "undefined" && analytics) {
-      setUserProperties(analytics, {
+    const instance = getAnalyticsInstance();
+    if (typeof window !== "undefined" && instance) {
+      setUserProperties(instance, {
         user_id: userId,
         ...properties,
       });
@@ -157,8 +158,9 @@ export const trackUserEvents = {
 
   // Track user engagement
   engagement: (action: string, category: string, label?: string) => {
-    if (typeof window !== "undefined" && analytics) {
-      logEvent(analytics, "engagement", {
+    const instance = getAnalyticsInstance();
+    if (typeof window !== "undefined" && instance) {
+      logEvent(instance, "engagement", {
         action,
         category,
         label: label || null,
@@ -169,8 +171,9 @@ export const trackUserEvents = {
 
   // Track feature usage
   featureUsage: (feature: string, plan: string, usage_count?: number) => {
-    if (typeof window !== "undefined" && analytics) {
-      logEvent(analytics, "feature_usage", {
+    const instance = getAnalyticsInstance();
+    if (typeof window !== "undefined" && instance) {
+      logEvent(instance, "feature_usage", {
         feature,
         plan,
         usage_count: usage_count || 1,
@@ -189,8 +192,9 @@ export const conversionFunnel = {
     plan?: string,
     additionalData?: Record<string, any>
   ) => {
-    if (typeof window !== "undefined" && analytics) {
-      logEvent(analytics, "funnel_step", {
+    const instance = getAnalyticsInstance();
+    if (typeof window !== "undefined" && instance) {
+      logEvent(instance, "funnel_step", {
         step_number: step,
         step_name: stepName,
         plan: plan || null,
@@ -243,7 +247,7 @@ export const getAnalyticsDashboard = async () => {
     if (snapshot.exists()) {
       const data = snapshot.data();
       return {
-        conversionRates: calculateConversionRates(_data),
+        conversionRates: calculateConversionRates(data),
         dailyMetrics: data.daily || {},
         planMetrics: data.plans || {},
         lastUpdated: data.lastUpdated?.toDate() || null,
@@ -253,14 +257,14 @@ export const getAnalyticsDashboard = async () => {
     return null;
   } catch (_error) {
     console.error("Error fetching analytics dashboard:", _error);
-    throw error;
+    throw _error;
   }
 };
 
 // Helper function to calculate conversion rates
 const calculateConversionRates = (_data: unknown) => {
-  const daily = data.daily || {};
-  const plans = data.plans || {};
+  const daily = (_data as any).daily || {};
+  const plans = (_data as any).plans || {};
 
   // Calculate overall conversion rates
   let totalViews = 0;
@@ -268,9 +272,10 @@ const calculateConversionRates = (_data: unknown) => {
   let totalPurchases = 0;
 
   Object.values(daily).forEach((day: unknown) => {
-    totalViews += day.view_pricing || 0;
-    totalCheckouts += day.begin_checkout || 0;
-    totalPurchases += day.purchase || 0;
+    const d = day as Record<string, any>;
+    totalViews += d.view_pricing || 0;
+    totalCheckouts += d.begin_checkout || 0;
+    totalPurchases += d.purchase || 0;
   });
 
   const viewToCheckout =
@@ -313,8 +318,9 @@ const calculateConversionRates = (_data: unknown) => {
 export const abTesting = {
   // Track A/B test variant
   trackVariant: (testName: string, variant: string, plan?: string) => {
-    if (typeof window !== "undefined" && analytics) {
-      logEvent(analytics, "ab_test_variant", {
+    const instance = getAnalyticsInstance();
+    if (typeof window !== "undefined" && instance) {
+      logEvent(instance, "ab_test_variant", {
         test_name: testName,
         variant,
         plan: plan || null,
@@ -330,8 +336,9 @@ export const abTesting = {
     conversionType: string,
     value?: number
   ) => {
-    if (typeof window !== "undefined" && analytics) {
-      logEvent(analytics, "ab_test_conversion", {
+    const instance = getAnalyticsInstance();
+    if (typeof window !== "undefined" && instance) {
+      logEvent(instance, "ab_test_conversion", {
         test_name: testName,
         variant,
         conversion_type: conversionType,

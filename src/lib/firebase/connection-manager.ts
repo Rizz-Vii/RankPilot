@@ -76,7 +76,7 @@ class FirestoreConnectionManager {
             console.log('✅ Firestore connection established successfully');
         } catch (_error) {
             console.error('❌ Firestore initialization failed:', _error);
-            throw error;
+            throw _error;
         }
     }
 
@@ -92,8 +92,8 @@ class FirestoreConnectionManager {
             this.initializeDatabase();
 
             console.log('🔄 Firestore connection reset successfully');
-        } catch (_error) {
-            console.error('❌ Failed to reset Firestore connection:', _error);
+        } catch (error) {
+            console.error('❌ Failed to reset Firestore connection:', error);
             throw error;
         }
     }

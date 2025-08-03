@@ -92,7 +92,7 @@ export function UsageAnalytics() {
         users: userData?.usage?.users || 1,
       });
     } catch (_error) {
-      console.error("Error fetching usage _data:", _error);
+      console.error("Error fetching usage data:", _error);
     } finally {
       setLoading(false);
     }
@@ -174,7 +174,7 @@ export function UsageAnalytics() {
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, _i) => (
-            <Card key={i}>
+            <Card key={_i}>
               <CardHeader className="animate-pulse">
                 <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                 <div className="h-8 bg-gray-200 rounded w-1/2"></div>
@@ -217,25 +217,25 @@ export function UsageAnalytics() {
       {/* Usage Overview */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {usageLimits.map((_item) => {
-          const percentage = getUsagePercentage(item.current, item.limit);
-          const status = getUsageStatus(item.current, item.limit);
+          const percentage = getUsagePercentage(_item.current, _item.limit);
+          const status = getUsageStatus(_item.current, _item.limit);
 
           return (
-            <Card key={item.name}>
+            <Card key={_item.name}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  {item.name}
+                  {_item.name}
                 </CardTitle>
-                <div className={item.color}>{item.icon}</div>
+                <div className={_item.color}>{_item.icon}</div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {item.current}
-                  {item.limit === -1 ? "" : `/${item.limit}`}
-                  {item.unit && ` ${item.unit}`}
+                  {_item.current}
+                  {_item.limit === -1 ? "" : `/${_item.limit}`}
+                  {_item.unit && ` ${_item.unit}`}
                 </div>
 
-                {item.limit !== -1 && (
+                {_item.limit !== -1 && (
                   <div className="mt-2 space-y-1">
                     <Progress value={percentage} className="h-2" />
                     <p className={`text-xs ${getStatusColor(status)}`}>
@@ -250,7 +250,7 @@ export function UsageAnalytics() {
                   </div>
                 )}
 
-                {item.limit === -1 && (
+                {_item.limit === -1 && (
                   <p className="text-xs text-green-500 mt-2">Unlimited</p>
                 )}
               </CardContent>
@@ -262,8 +262,8 @@ export function UsageAnalytics() {
       {/* Warnings and Recommendations */}
       {usageLimits.some(
         (_item) =>
-          getUsageStatus(item.current, item.limit) === "warning" ||
-          getUsageStatus(item.current, item.limit) === "exceeded"
+          getUsageStatus(_item.current, _item.limit) === "warning" ||
+          getUsageStatus(_item.current, _item.limit) === "exceeded"
       ) && (
         <Card className="border-yellow-200 bg-yellow-50 dark:border-yellow-900 dark:bg-yellow-950">
           <CardHeader>
@@ -276,25 +276,25 @@ export function UsageAnalytics() {
             {usageLimits
               .filter(
                 (_item) =>
-                  getUsageStatus(item.current, item.limit) !== "normal" &&
-                  getUsageStatus(item.current, item.limit) !== "unlimited"
+                  getUsageStatus(_item.current, _item.limit) !== "normal" &&
+                  getUsageStatus(_item.current, _item.limit) !== "unlimited"
               )
               .map((_item) => (
                 <div
-                  key={item.name}
+                  key={_item.name}
                   className="flex items-center justify-between text-sm"
                 >
                   <span>
-                    {item.name}: {item.current}/{item.limit}
+                    {_item.name}: {_item.current}/{_item.limit}
                   </span>
                   <Badge
                     variant={
-                      getUsageStatus(item.current, item.limit) === "exceeded"
+                      getUsageStatus(_item.current, _item.limit) === "exceeded"
                         ? "destructive"
                         : "secondary"
                     }
                   >
-                    {getUsageStatus(item.current, item.limit) === "exceeded"
+                    {getUsageStatus(_item.current, _item.limit) === "exceeded"
                       ? "Exceeded"
                       : "Near Limit"}
                   </Badge>

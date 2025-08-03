@@ -28,11 +28,11 @@ export function useFormInteraction<T>() {
 
         if (options?.scrollToId) {
           setTimeout(() => {
-            const _element = document.getElementById(options.scrollToId!);
+            const element = document.getElementById(options.scrollToId!);
             element?.scrollIntoView({ behavior: "smooth", block: "start" });
           }, 100);
         }
-      } catch (_error) {
+      } catch (error) {
         addFeedback(
           error instanceof Error
             ? error.message
@@ -72,12 +72,12 @@ export function useFieldValidation(options: UseFieldValidationOptions = {}) {
         return false;
       }
 
-      if (options.minLength && value.length < options.minLength) {
+      if (options.minLength && _value.length < options.minLength) {
         setError(`Must be at least ${options.minLength} characters`);
         return false;
       }
 
-      if (options.maxLength && value.length > options.maxLength) {
+      if (options.maxLength && _value.length > options.maxLength) {
         setError(`Must be no more than ${options.maxLength} characters`);
         return false;
       }

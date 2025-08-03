@@ -324,7 +324,7 @@ export class ComplianceAutomationEngine extends EventEmitter {
     }): Promise<ComplianceEvidence[]> {
         try {
             const req = this.requirements.get(requirement);
-            if (!_req) {
+            if (!req) {
                 throw new Error('Requirement not found');
             }
 
@@ -334,13 +334,13 @@ export class ComplianceAutomationEngine extends EventEmitter {
             const evidenceTypes = options?.types || ['log', 'test-result', 'document'];
 
             for (const type of evidenceTypes) {
-                const collected = await this.collectEvidenceByType(_req, type);
+                const collected = await this.collectEvidenceByType(req, type);
                 evidence.push(...collected);
             }
 
             // Store evidence
             for (const item of evidence) {
-                this.evidenceStore.set(item.id, _item);
+                this.evidenceStore.set(item.id, item);
             }
 
             console.log(`[ComplianceAutomationEngine] Collected ${evidence.length} evidence items for ${requirement}`);
@@ -613,7 +613,7 @@ export class ComplianceAutomationEngine extends EventEmitter {
             }
         ];
 
-        soc2Requirements.forEach(req => this.requirements.set(req.id, _req));
+        soc2Requirements.forEach(req => this.requirements.set(req.id, req));
     }
 
     private initializeGDPRRequirements(): void {
@@ -659,7 +659,7 @@ export class ComplianceAutomationEngine extends EventEmitter {
             }
         ];
 
-        gdprRequirements.forEach(req => this.requirements.set(req.id, _req));
+        gdprRequirements.forEach(req => this.requirements.set(req.id, req));
     }
 
     private initializeHIPAARequirements(): void {
@@ -692,7 +692,7 @@ export class ComplianceAutomationEngine extends EventEmitter {
             }
         ];
 
-        hipaaRequirements.forEach(req => this.requirements.set(req.id, _req));
+        hipaaRequirements.forEach(req => this.requirements.set(req.id, req));
     }
 
     private initializeISO27001Requirements(): void {
@@ -725,7 +725,7 @@ export class ComplianceAutomationEngine extends EventEmitter {
             }
         ];
 
-        iso27001Requirements.forEach(req => this.requirements.set(req.id, _req));
+        iso27001Requirements.forEach(req => this.requirements.set(req.id, req));
     }
 
     private async assessFramework(framework: ComplianceFramework, fullAssessment?: boolean): Promise<{
@@ -919,7 +919,7 @@ export class ComplianceAutomationEngine extends EventEmitter {
         const history: Array<{ date: number; score: number; }> = [];
         const days = Math.floor((period.end - period.start) / (24 * 60 * 60 * 1000));
 
-        for (let _i = 0; i < Math.min(days, 30); i++) {
+        for (let i = 0; i < Math.min(days, 30); i++) {
             const date = period.start + (i * 24 * 60 * 60 * 1000);
             const score = 75 + Math.random() * 20; // Mock score between 75-95
             history.push({ date, score });

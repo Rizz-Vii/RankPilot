@@ -128,11 +128,11 @@ export default function NeuralCrawlerPage() {
         const _data = doc.data();
         history.push({
           id: doc.id,
-          url: data.url,
-          status: data.status,
-          pagesFound: data.pagesFound || 1,
-          totalTime: data.totalTime || 0,
-          createdAt: data.createdAt?.toDate() || new Date()
+          url: _data.url,
+          status: _data.status,
+          pagesFound: _data.pagesFound || 1,
+          totalTime: _data.totalTime || 0,
+          createdAt: _data.createdAt?.toDate() || new Date()
         });
       });
       
@@ -241,13 +241,13 @@ Key areas of focus include content quality assessment, competitive analysis, per
 
       // Simulate analysis
       const result = await simulateAnalysis(crawlUrl);
-      setCurrentResult(_result);
+      setCurrentResult(result);
 
       // Save complete result
       await addDoc(collection(db, 'neuralCrawlerResults'), {
         userId: user.uid,
         historyId: historyDoc.id,
-        ..._result,
+        ...result,
         createdAt: new Date()
       });
 
@@ -313,7 +313,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
                 id="crawl-url"
                 placeholder="https://example.com"
                 value={crawlUrl}
-                onChange={(e) => setCrawlUrl(e.target._value)}
+                onChange={(e) => setCrawlUrl(e.target.value)}
                 disabled={isAnalyzing}
               />
             </div>
@@ -445,7 +445,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
                       <CardTitle>Issues & Recommendations</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      {currentResult.issues.map((issue, _index) => (
+                      {currentResult.issues.map((issue, index) => (
                         <Alert key={index} variant={issue.type === 'error' ? 'destructive' : 'default'}>
                           <AlertCircle className="h-4 w-4" />
                           <AlertDescription>
@@ -473,7 +473,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
                             {level.toUpperCase()} ({headings.length})
                           </Badge>
                           <ul className="list-disc list-inside space-y-1 ml-4">
-                            {headings.map((heading, _index) => (
+                            {headings.map((heading, index) => (
                               <li key={index} className="text-sm">{heading}</li>
                             ))}
                           </ul>
@@ -492,7 +492,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {currentResult.images.slice(0, 5).map((image, _index) => (
+                      {currentResult.images.slice(0, 5).map((image, index) => (
                         <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded text-sm">
                           <ImageIcon className="h-4 w-4" />
                           <span className="flex-1 truncate">{image.alt || 'No alt text'}</span>
@@ -613,7 +613,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {currentResult.entities.map((entity, _index) => (
+                      {currentResult.entities.map((entity, index) => (
                         <Badge key={index} variant="outline" className="flex items-center gap-1">
                           <span>{entity.text}</span>
                           <span className="text-xs opacity-70">

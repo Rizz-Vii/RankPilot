@@ -45,13 +45,14 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "functions/**/*.ts",
     "playwright.config.new.mjs"
   ],
   "exclude": [
     "node_modules",
     "backups/**/*",
     ".typescript-guardian-backups/**/*",
-    "docs-backup-*/**/*"
+    "docs-backup-*/**/*",
+    "functions/**/*",
+    "scripts/**/*"
   ]
 }

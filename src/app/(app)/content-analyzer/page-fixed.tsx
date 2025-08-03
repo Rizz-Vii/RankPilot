@@ -189,11 +189,11 @@ export default function ContentAnalyzerPage() {
                 }),
             });
 
-            if (!response.ok) {
-                throw new Error(`Analysis failed: ${response.statusText}`);
+            if (!_response.ok) {
+                throw new Error(`Analysis failed: ${_response.statusText}`);
             }
 
-            const _data = await response.json();
+            const _data = await _response.json();
 
             // Enhanced mock report for content analysis
             const mockReport = {
@@ -209,7 +209,7 @@ export default function ContentAnalyzerPage() {
                         originalAnalysis: {
                             wordCount: content.length,
                             readabilityScore: 85,
-                            keywordDensity: keywords.split(',').reduce((acc: unknown, k: string) => ({ ...acc, [k.trim()]: 2.5 }), {}),
+                            keywordDensity: keywords.split(',').reduce((acc: { [keyword: string]: number }, k: string) => ({ ...acc, [k.trim()]: 2.5 }), {}),
                             sentimentScore: 68,
                             structureScore: 78,
                             seoScore: 82,
@@ -277,7 +277,7 @@ export default function ContentAnalyzerPage() {
 
         } catch (_error) {
             console.error("Content analysis _error:", _error);
-            setError(error instanceof Error ? error.message : "Analysis failed");
+            setError(_error instanceof Error ? _error.message : "Analysis failed");
         } finally {
             setIsAnalyzing(false);
         }
@@ -314,7 +314,7 @@ export default function ContentAnalyzerPage() {
                                 id="content"
                                 placeholder="Paste your content here for analysis..."
                                 value={content}
-                                onChange={(e) => setContent(e.target._value)}
+                                onChange={(e) => setContent(e.target.value)}
                                 rows={8}
                                 className="resize-none"
                             />
@@ -334,7 +334,7 @@ export default function ContentAnalyzerPage() {
                                 type="url"
                                 placeholder="https://example.com/article"
                                 value={url}
-                                onChange={(e) => setUrl(e.target._value)}
+                                onChange={(e) => setUrl(e.target.value)}
                             />
                         </div>
 
@@ -344,7 +344,7 @@ export default function ContentAnalyzerPage() {
                                 id="keywords"
                                 placeholder="content marketing, SEO, digital strategy"
                                 value={keywords}
-                                onChange={(e) => setKeywords(e.target._value)}
+                                onChange={(e) => setKeywords(e.target.value)}
                             />
                         </div>
 
@@ -378,12 +378,12 @@ export default function ContentAnalyzerPage() {
             />
 
             {/* Error Display */}
-            {error && (
+            {_error && (
                 <Card className="border-destructive">
                     <CardContent className="pt-6">
                         <div className="flex items-center gap-2 text-destructive">
                             <AlertTriangle className="h-5 w-5" />
-                            <span>{error}</span>
+                            <span>{_error}</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -451,7 +451,7 @@ export default function ContentAnalyzerPage() {
                                     </CardHeader>
                                     <CardContent>
                                         {report.rewriteRecommendations.map((rewrite, _index) => (
-                                            <div key={index} className="space-y-4">
+                                            <div key={_index} className="space-y-4">
                                                 <div>
                                                     <h4 className="font-semibold mb-2">AI-Enhanced Analysis</h4>
                                                     <div className="p-3 bg-green-50 rounded border text-sm">

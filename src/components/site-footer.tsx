@@ -141,7 +141,7 @@ export default function SiteFooter() {
                 type="email"
                 placeholder="Enter your email"
                 value={emailSubscription}
-                onChange={(e) => setEmailSubscription(e.target._value)}
+                onChange={(e) => setEmailSubscription(e.target.value)}
                 required
                 className="flex-1"
                 disabled={isSubscribing}
@@ -180,7 +180,7 @@ export default function SiteFooter() {
 
             {/* Social Links */}
             <div className="flex gap-3">
-              {socialLinks.map((social, _index) => {
+              {socialLinks.map((social, index) => {
                 const Icon = social.icon;
                 return (
                   <motion.a
@@ -206,7 +206,7 @@ export default function SiteFooter() {
 
           {/* Footer Sections */}
           {Object.entries(footerSections).map(
-            ([_key, section], sectionIndex) => (
+            ([key, section], sectionIndex) => (
               <motion.div
                 key={key}
                 initial={{ opacity: 0, y: 20 }}

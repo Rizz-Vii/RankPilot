@@ -137,15 +137,15 @@ export class MultiModelOrchestrator {
 
         try {
             // 1. Validate quota
-            if (!this.validateQuota(request.userId, request.userTier)) {
+            if (!this.validateQuota(_request.userId, _request.userTier)) {
                 return {
                     success: false,
                     results: [],
                     totalProcessingTime: Date.now() - startTime,
                     totalTokensUsed: 0,
                     cacheHits: 0,
-                    quotaRemaining: this.getQuotaRemaining(request.userId, request.userTier),
-                    _error: 'Quota exceeded for user tier'
+                    quotaRemaining: this.getQuotaRemaining(_request.userId, _request.userTier),
+                    error: 'Quota exceeded for user tier'
                 };
             }
 
@@ -156,7 +156,7 @@ export class MultiModelOrchestrator {
                 return {
                     ...cachedResult,
                     cacheHits: 1,
-                    quotaRemaining: this.getQuotaRemaining(request.userId, request.userTier)
+                    quotaRemaining: this.getQuotaRemaining(_request.userId, _request.userTier)
                 };
             }
 
@@ -164,7 +164,7 @@ export class MultiModelOrchestrator {
             const selectedModels = this.selectModels(_request);
 
             // 4. Batch processing for enterprise clients
-            if (request.userTier === 'enterprise' && Array.isArray(request.input) && request.input.length > 1) {
+            if (_request.userTier === 'enterprise' && Array.isArray(_request.input) && _request.input.length > 1) {
                 return await this.processBatchRequest(_request, selectedModels, startTime);
             }
 
@@ -172,11 +172,11 @@ export class MultiModelOrchestrator {
             const results = await this.executeParallelInference(_request, selectedModels);
 
             // 6. Aggregate results
-            const aggregatedResult = this.aggregateResults(results, request.task);
+            const aggregatedResult = this.aggregateResults(results, _request.task);
 
             // 7. Update metrics and cache
             const totalTokensUsed = results.reduce((sum, r) => sum + r.tokensUsed, 0);
-            this.updateQuota(request.userId, totalTokensUsed);
+            this.updateQuota(_request.userId, totalTokensUsed);
             this.updatePerformanceMetrics(selectedModels, results);
 
             const _response: MultiModelResponse = {
@@ -186,13 +186,13 @@ export class MultiModelOrchestrator {
                 totalProcessingTime: Date.now() - startTime,
                 totalTokensUsed,
                 cacheHits: 0,
-                quotaRemaining: this.getQuotaRemaining(request.userId, request.userTier)
+                quotaRemaining: this.getQuotaRemaining(_request.userId, _request.userTier)
             };
 
             // Cache successful results
             this.distributedCache.set(cacheKey, _response);
 
-            return response;
+            return _response;
 
         } catch (_error) {
             console.error('[MultiModelOrchestrator] Processing _error:', _error);
@@ -202,8 +202,8 @@ export class MultiModelOrchestrator {
                 totalProcessingTime: Date.now() - startTime,
                 totalTokensUsed: 0,
                 cacheHits: 0,
-                quotaRemaining: this.getQuotaRemaining(request.userId, request.userTier),
-                _error: error instanceof Error ? error.message : 'Unknown error occurred'
+                quotaRemaining: this.getQuotaRemaining(_request.userId, _request.userTier),
+                error: _error instanceof Error ? _error.message : 'Unknown error occurred'
             };
         }
     }
@@ -213,13 +213,13 @@ export class MultiModelOrchestrator {
      */
     private selectModels(_request: MultiModelRequest): ModelConfig[] {
         let candidates = this.modelConfigs.filter(model =>
-            model.task.includes(request.task)
+            model.task.includes(_request.task)
         );
 
         // If specific models requested, filter to those
-        if (request.options?.models) {
+        if (_request.options?.models) {
             candidates = candidates.filter(model =>
-                request.options!.models!.includes(model.name)
+                _request.options!.models!.includes(model.name)
             );
         }
 
@@ -234,7 +234,7 @@ export class MultiModelOrchestrator {
 
         // Select primary model and fallback
         const selectedModels = [candidates[0]];
-        if (candidates.length > 1 && request.userTier !== 'free') {
+        if (candidates.length > 1 && _request.userTier !== 'free') {
             selectedModels.push(candidates[1]);
         }
 
@@ -255,19 +255,19 @@ export class MultiModelOrchestrator {
                 // Use HuggingFace MCP for model inference
                 const result = await this.mcpManager.huggingfaceInference({
                     model: model.name,
-                    inputs: request.input,
+                    inputs: _request.input,
                     parameters: {
-                        max_tokens: request.options?.maxTokens || model.tokenLimit,
-                        temperature: request.options?.temperature || 0.7
+                        max_tokens: _request.options?.maxTokens || model.tokenLimit,
+                        temperature: _request.options?.temperature || 0.7
                     }
                 });
 
                 return {
                     model: model.name,
-                    output: result._data,
-                    confidence: this.calculateConfidence(result._data, model),
+                    output: result.data,
+                    confidence: this.calculateConfidence(result.data, model),
                     processingTime: Date.now() - modelStartTime,
-                    tokensUsed: this.estimateTokenUsage(request.input, result._data)
+                    tokensUsed: this.estimateTokenUsage(_request.input, result.data)
                 };
             } catch (_error) {
                 console.error(`[MultiModelOrchestrator] Model ${model.name} failed:`, _error);
@@ -292,8 +292,8 @@ export class MultiModelOrchestrator {
         models: ModelConfig[],
         startTime: number
     ): Promise<MultiModelResponse> {
-        const batchSize = request.options?.batchSize || 10;
-        const inputs = Array.isArray(request.input) ? request.input : [request.input];
+        const batchSize = _request.options?.batchSize || 10;
+        const inputs = Array.isArray(_request.input) ? _request.input : [_request.input];
         const batches = [];
 
         for (let i = 0; i < inputs.length; i += batchSize) {
@@ -313,11 +313,11 @@ export class MultiModelOrchestrator {
         return {
             success: true,
             results: allResults,
-            aggregatedResult: this.aggregateResults(allResults, request.task),
+            aggregatedResult: this.aggregateResults(allResults, _request.task),
             totalProcessingTime: Date.now() - startTime,
             totalTokensUsed,
             cacheHits: 0,
-            quotaRemaining: this.getQuotaRemaining(request.userId, request.userTier)
+            quotaRemaining: this.getQuotaRemaining(_request.userId, _request.userTier)
         };
     }
 
@@ -337,12 +337,12 @@ export class MultiModelOrchestrator {
             case 'question-answering':
                 return this.aggregateQAResults(results);
             default:
-                return results[0]?.output;
+                return (results[0] as any)?.output;
         }
     }
 
     private aggregateSentimentResults(results: unknown[]): any {
-        const sentiments = results.map(r => r.output?.[0]);
+        const sentiments = results.map(r => (r as any).output?.[0]);
         const avgScore = sentiments.reduce((sum, s) => sum + (s?.score || 0), 0) / sentiments.length;
         const dominantLabel = sentiments.sort((a, b) => (b?.score || 0) - (a?.score || 0))[0]?.label;
 
@@ -357,7 +357,7 @@ export class MultiModelOrchestrator {
         // Implement voting mechanism for classification
         const votes = new Map<string, number>();
         results.forEach(result => {
-            const label = result.output?.[0]?.label;
+            const label = (result as any).output?.[0]?.label;
             if (label) {
                 votes.set(label, (votes.get(label) || 0) + 1);
             }
@@ -373,13 +373,13 @@ export class MultiModelOrchestrator {
 
     private aggregateSummarizationResults(results: unknown[]): any {
         // Select best summary based on length and coherence
-        const summaries = results.map(r => r.output?.[0]?.summary_text).filter(Boolean);
+        const summaries = results.map(r => (r as any).output?.[0]?.summary_text).filter(Boolean);
         return summaries.length > 0 ? summaries[0] : null;
     }
 
     private aggregateQAResults(results: unknown[]): any {
         // Select answer with highest confidence
-        const answers = results.map(r => r.output).filter(Boolean);
+        const answers = results.map(r => (r as any).output).filter(Boolean);
         return answers.sort((a, b) => (b.score || 0) - (a.score || 0))[0];
     }
 
@@ -418,19 +418,19 @@ export class MultiModelOrchestrator {
     }
 
     private generateCacheKey(_request: MultiModelRequest): string {
-        const inputStr = Array.isArray(request.input) ? request.input.join('|') : request.input;
-        return `${request.task}-${inputStr}-${JSON.stringify(request.options)}`;
+        const inputStr = Array.isArray(_request.input) ? _request.input.join('|') : _request.input;
+        return `${_request.task}-${inputStr}-${JSON.stringify(_request.options)}`;
     }
 
     private calculateConfidence(output: unknown, model: ModelConfig): number {
         // Implement confidence calculation based on model type and output
-        if (output?.[0]?.score) return output[0].score;
-        if (output?.score) return output.score;
+        if ((output as any)?.[0]?.score) return (output as any)[0].score;
+        if ((output as any)?.score) return (output as any).score;
         return 0.8; // Default confidence
     }
 
     private estimateTokenUsage(input: unknown, output: unknown): number {
-        const inputStr = Array.isArray(input) ? input.join(' ') : input;
+        const inputStr = Array.isArray(input) ? input.join(' ') : String(input);
         const outputStr = typeof output === 'string' ? output : JSON.stringify(output);
         return Math.ceil((inputStr.length + outputStr.length) / 4); // Rough token estimation
     }
@@ -456,16 +456,16 @@ export class MultiModelOrchestrator {
     private async processBatch(requests: MultiModelRequest[]): Promise<void> {
         // Implementation for processing batched requests
         for (const request of requests) {
-            await this.processRequest(_request);
+            await this.processRequest(request);
         }
     }
 
     private updatePerformanceMetrics(models: ModelConfig[], results: unknown[]): void {
         models.forEach((model, _index) => {
-            const result = results[index];
-            if (_result) {
+            const result = results[_index];
+            if (result) {
                 const metrics = this.performanceMetrics.get(model.name) || [];
-                metrics.push(result.processingTime);
+                metrics.push((result as any).processingTime);
                 if (metrics.length > 100) metrics.shift(); // Keep last 100 measurements
                 this.performanceMetrics.set(model.name, metrics);
             }

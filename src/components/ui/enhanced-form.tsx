@@ -79,7 +79,7 @@ export function EnhancedForm({
   const formRef = useRef<HTMLFormElement>(null);
   const hydrated = useHydration();
 
-  const setFieldValue = (name: string, _value: unknown) => {
+  const setFieldValue = (name: string, value: unknown) => {
     setValues((prev) => ({ ...prev, [name]: value }));
     // Clear error when user starts typing
     if (errors[name]) {
@@ -91,7 +91,7 @@ export function EnhancedForm({
     setTouched((prev) => ({ ...prev, [name]: touched }));
   };
 
-  const setFieldError = (name: string, _error: string) => {
+  const setFieldError = (name: string, error: string) => {
     setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
@@ -236,8 +236,8 @@ export function EnhancedField({
     // Run validation if provided
     if (validate) {
       const error = validate(_value);
-      if (_error) {
-        setFieldError(name, _error);
+      if (error) {
+        setFieldError(name, error);
       } else {
         clearFieldError(name);
       }
@@ -272,7 +272,7 @@ export function EnhancedField({
           _value: fieldValue,
           onChange: handleChange,
           onBlur: handleBlur,
-          _error: fieldError,
+          error: fieldError,
           touched: fieldTouched,
           disabled: isDisabled,
         })}
@@ -320,7 +320,7 @@ export function EnhancedField({
         name={name}
         type={type}
         value={fieldValue}
-        onChange={(e) => handleChange(e.target._value)}
+        onChange={(e) => handleChange(e.target.value)}
         onBlur={handleBlur}
         placeholder={placeholder}
         disabled={!hydrated || isDisabled}

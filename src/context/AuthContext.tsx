@@ -58,8 +58,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // In development, also listen for mock auth events
     if (isDevelopment) {
-      const handleMockAuthEvent = (_event: CustomEvent) => {
-        const mockUser = event.detail;
+      const handleMockAuthEvent = (event: Event) => {
+        const mockUser = (event as CustomEvent).detail;
         handleAuthStateChange(mockUser);
       };
 

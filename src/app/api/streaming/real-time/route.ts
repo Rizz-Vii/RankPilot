@@ -17,8 +17,8 @@ interface StreamingRequest {
 
 export async function POST(_request: NextRequest) {
     try {
-        const body = await request.json() as StreamingRequest;
-        const authHeader = request.headers.get('authorization');
+        const body = await _request.json() as StreamingRequest;
+        const authHeader = _request.headers.get('authorization');
 
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
@@ -80,26 +80,26 @@ export async function POST(_request: NextRequest) {
                 return NextResponse.json({
                     success: subscriptionResult.success,
                     subscribed: subscriptionResult.subscribed,
-                    _error: subscriptionResult._error,
+                    error: subscriptionResult.error,
                     message: subscriptionResult.success
                         ? `Subscribed to ${subscriptionResult.subscribed.length} streams`
                         : 'Subscription failed'
                 });
 
             case 'collaborate':
-                if (!body.collaborationEvent) {
+                if (!body.collaborationEvent || typeof body.collaborationEvent !== 'object') {
                     return NextResponse.json(
                         { _error: 'Collaboration event data is required' },
                         { status: 400 }
                     );
                 }
-
+                const event = body.collaborationEvent as Partial<{ type: string; userName?: string; dashboardId?: string; _data?: unknown }>;
                 await realTimeDataStreamer.broadcastCollaboration({
-                    type: body.collaborationEvent.type,
+                    type: typeof event.type === 'string' ? event.type as any : 'user-joined',
                     userId: mockUser.uid,
-                    userName: body.collaborationEvent.userName || 'Demo User',
-                    dashboardId: body.collaborationEvent.dashboardId,
-                    _data: body.collaborationEvent._data,
+                    userName: typeof event.userName === 'string' ? event.userName : 'Demo User',
+                    dashboardId: typeof event.dashboardId === 'string' ? event.dashboardId : '',
+                    _data: event._data,
                     timestamp: Date.now()
                 });
 
@@ -127,7 +127,7 @@ export async function POST(_request: NextRequest) {
         return NextResponse.json(
             {
                 _error: 'Internal server error',
-                details: error instanceof Error ? error.message : 'Unknown error'
+                details: _error instanceof Error ? _error.message : 'Unknown error'
             },
             { status: 500 }
         );
@@ -136,7 +136,7 @@ export async function POST(_request: NextRequest) {
 
 export async function GET(_request: NextRequest) {
     try {
-        const url = new URL(request.url);
+        const url = new URL(_request.url);
         const action = url.searchParams.get('action');
         const clientId = url.searchParams.get('clientId');
 
@@ -184,7 +184,7 @@ export async function GET(_request: NextRequest) {
                     }, 30000);
 
                     // Cleanup on close
-                    request.signal.addEventListener('abort', () => {
+                    _request.signal.addEventListener('abort', () => {
                         clearInterval(heartbeat);
                         realTimeDataStreamer.off('sse-data', handleSSEData);
                         realTimeDataStreamer.disconnectClient(clientId);
@@ -233,7 +233,7 @@ export async function GET(_request: NextRequest) {
         return NextResponse.json(
             {
                 _error: 'Internal server error',
-                details: error instanceof Error ? error.message : 'Unknown error'
+                details: _error instanceof Error ? _error.message : 'Unknown error'
             },
             { status: 500 }
         );
@@ -242,7 +242,7 @@ export async function GET(_request: NextRequest) {
 
 export async function DELETE(_request: NextRequest) {
     try {
-        const url = new URL(request.url);
+        const url = new URL(_request.url);
         const clientId = url.searchParams.get('clientId');
 
         if (!clientId) {
@@ -264,7 +264,7 @@ export async function DELETE(_request: NextRequest) {
         return NextResponse.json(
             {
                 _error: 'Internal server error',
-                details: error instanceof Error ? error.message : 'Unknown error'
+                details: _error instanceof Error ? _error.message : 'Unknown error'
             },
             { status: 500 }
         );

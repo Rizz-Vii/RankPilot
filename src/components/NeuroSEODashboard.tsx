@@ -118,16 +118,16 @@ export default function NeuroSEODashboard({
         cache: networkStatus.downlink < 5 ? "force-cache" : "default",
       });
 
-      if (response.ok) {
-        const stats = await response.json();
+      if (_response.ok) {
+        const stats = await _response.json();
         setUsageStats(stats);
       } else {
-        throw new Error(`Failed to load usage stats: ${response.statusText}`);
+        throw new Error(`Failed to load usage stats: ${_response.statusText}`);
       }
     } catch (_error) {
       console.error("Failed to load usage stats:", _error);
       setError(
-        `Could not load usage statistics: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Could not load usage statistics: ${_error instanceof Error ? _error.message : "Unknown error"}`
       );
     }
   };
@@ -213,19 +213,19 @@ export default function NeuroSEODashboard({
       clearInterval(progressIndicator);
       clearTimeout(timeoutId);
 
-      if (!response.ok) {
+      if (!_response.ok) {
         let errorMessage = "Analysis failed";
         try {
-          const errorData = await response.json();
+          const errorData = await _response.json();
           errorMessage = errorData.error || errorMessage;
         } catch (e) {
-          errorMessage = `HTTP Error ${response.status}: ${response.statusText}`;
+          errorMessage = `HTTP Error ${_response.status}: ${_response.statusText}`;
         }
         throw new Error(errorMessage);
       }
 
       setLoadingProgress(98); // Almost done
-      const analysisReport = await response.json();
+      const analysisReport = await _response.json();
       setLoadingProgress(100); // Complete
 
       setReport(analysisReport);
@@ -246,7 +246,7 @@ export default function NeuroSEODashboard({
       clearTimeout(timeoutId);
 
       // Handle specific error types
-      if (error instanceof DOMException && error.name === "AbortError") {
+      if (_error instanceof DOMException && _error.name === "AbortError") {
         setError(
           "Analysis request timed out. Please try again or check your network connection."
         );
@@ -255,19 +255,19 @@ export default function NeuroSEODashboard({
           "Your network connection was lost. Please reconnect and try again."
         );
       } else if (
-        error instanceof TypeError &&
-        error.message.includes("NetworkError")
+        _error instanceof TypeError &&
+        _error.message.includes("NetworkError")
       ) {
         setError(
           "Network error occurred. Please check your connection and try again."
         );
-      } else if (error instanceof Error) {
-        if (error.message.includes("quota")) {
+      } else if (_error instanceof Error) {
+        if (_error.message.includes("quota")) {
           setError(
             "You've reached your usage quota limit. Please upgrade your plan or try again later."
           );
         } else {
-          setError(error.message);
+          setError(_error.message);
         }
       } else {
         setError(
@@ -340,7 +340,7 @@ export default function NeuroSEODashboard({
                 id="urls"
                 placeholder="https://example.com/page1&#10;https://example.com/page2"
                 value={urls}
-                onChange={(e) => setUrls(e.target._value)}
+                onChange={(e) => setUrls(e.target.value)}
                 rows={4}
                 className="min-h-[100px] resize-y"
               />
@@ -360,7 +360,7 @@ export default function NeuroSEODashboard({
                 id="competitors"
                 placeholder="https://competitor1.com&#10;https://competitor2.com"
                 value={competitorUrls}
-                onChange={(e) => setCompetitorUrls(e.target._value)}
+                onChange={(e) => setCompetitorUrls(e.target.value)}
                 rows={4}
                 className="min-h-[100px] resize-y"
               />
@@ -382,7 +382,7 @@ export default function NeuroSEODashboard({
                 id="keywords"
                 placeholder="SEO, content optimization, digital marketing"
                 value={targetKeywords}
-                onChange={(e) => setTargetKeywords(e.target._value)}
+                onChange={(e) => setTargetKeywords(e.target.value)}
                 className="h-11"
               />
               <p className="text-xs text-muted-foreground mt-2">
@@ -399,7 +399,7 @@ export default function NeuroSEODashboard({
               </Label>
               <Select
                 value={analysisType}
-                onValueChange={(_value: unknown) => setAnalysisType(_value)}
+                onValueChange={(value) => setAnalysisType(value as "comprehensive" | "seo-focused" | "content-focused" | "competitive")}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -420,10 +420,10 @@ export default function NeuroSEODashboard({
             </div>
           </div>
 
-          {error && (
+          {_error && (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{_error}</AlertDescription>
             </Alert>
           )}
 
@@ -482,7 +482,7 @@ export default function NeuroSEODashboard({
                 <div className="space-y-4">
                   {report.keyInsights.map((insight, _index) => (
                     <div
-                      key={index}
+                      key={_index}
                       className="border-l-4 border-blue-500 pl-4"
                     >
                       <div className="flex items-center gap-2 mb-2">
@@ -594,42 +594,42 @@ export default function NeuroSEODashboard({
 
             <TabsContent value="seo" className="space-y-4">
               {report.crawlResults.map((_result, _index) => (
-                <Card key={index}>
+                <Card key={_index}>
                   <CardHeader>
-                    <CardTitle className="text-lg">{result.url}</CardTitle>
+                    <CardTitle className="text-lg">{_result.url}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
                         <div className="text-sm text-gray-600">Overall SEO</div>
                         <div
-                          className={`text-xl font-bold ${getScoreColor((result as any).seoMetrics?.overallScore || 0)}`}
+                          className={`text-xl font-bold ${getScoreColor((_result as any).seoMetrics?.overallScore || 0)}`}
                         >
-                          {(result as any).seoMetrics?.overallScore || 0}/100
+                          {(_result as any).seoMetrics?.overallScore || 0}/100
                         </div>
                       </div>
                       <div>
                         <div className="text-sm text-gray-600">Technical</div>
                         <div
-                          className={`text-xl font-bold ${getScoreColor((result as any).seoMetrics?.technicalScore || 0)}`}
+                          className={`text-xl font-bold ${getScoreColor((_result as any).seoMetrics?.technicalScore || 0)}`}
                         >
-                          {(result as any).seoMetrics?.technicalScore || 0}/100
+                          {(_result as any).seoMetrics?.technicalScore || 0}/100
                         </div>
                       </div>
                       <div>
                         <div className="text-sm text-gray-600">Content</div>
                         <div
-                          className={`text-xl font-bold ${getScoreColor((result as any).seoMetrics?.contentScore || 0)}`}
+                          className={`text-xl font-bold ${getScoreColor((_result as any).seoMetrics?.contentScore || 0)}`}
                         >
-                          {(result as any).seoMetrics?.contentScore || 0}/100
+                          {(_result as any).seoMetrics?.contentScore || 0}/100
                         </div>
                       </div>
                       <div>
                         <div className="text-sm text-gray-600">Performance</div>
                         <div
-                          className={`text-xl font-bold ${getScoreColor((result as any).performance?.overallScore || 0)}`}
+                          className={`text-xl font-bold ${getScoreColor((_result as any).performance?.overallScore || 0)}`}
                         >
-                          {(result as any).performance?.overallScore || 0}/100
+                          {(_result as any).performance?.overallScore || 0}/100
                         </div>
                       </div>
                     </div>
@@ -640,7 +640,7 @@ export default function NeuroSEODashboard({
 
             <TabsContent value="visibility" className="space-y-4">
               {report.visibilityAnalysis.map((visibility, _index) => (
-                <Card key={index}>
+                <Card key={_index}>
                   <CardHeader>
                     <CardTitle className="text-lg">{visibility.url}</CardTitle>
                   </CardHeader>
@@ -681,7 +681,7 @@ export default function NeuroSEODashboard({
 
             <TabsContent value="trust" className="space-y-4">
               {report.trustAnalysis.map((trust, _index) => (
-                <Card key={index}>
+                <Card key={_index}>
                   <CardHeader>
                     <CardTitle className="text-lg">{trust.url}</CardTitle>
                   </CardHeader>

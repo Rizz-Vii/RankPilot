@@ -39,7 +39,7 @@ export interface FirestoreQuery {
 export interface QueryFilter {
     field: string;
     operator: '==' | '!=' | '<' | '<=' | '>' | '>=' | 'array-contains' | 'in' | 'array-contains-any';
-    _value: unknown;
+    value: unknown;
 }
 
 export interface ShardedQueryResult {
@@ -341,12 +341,12 @@ export class EnterpriseFirestoreSharding {
 
         // Process results and handle failures
         const successfulResults = results
-            .filter((_result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
-            .map(result => result._value);
+            .filter((_result): _result is PromiseFulfilledResult<any> => _result.status === 'fulfilled')
+            .map(_result => (_result as PromiseFulfilledResult<any>).value);
 
         const failedResults = results
-            .filter((_result): result is PromiseRejectedResult => result.status === 'rejected')
-            .map(result => result.reason);
+            .filter((_result): _result is PromiseRejectedResult => _result.status === 'rejected')
+            .map(_result => (_result as PromiseRejectedResult).reason);
 
         if (failedResults.length > 0) {
             console.warn(`Some shard queries failed:`, failedResults);
@@ -537,25 +537,16 @@ export class EnterpriseFirestoreSharding {
     /**
      * Get comprehensive sharding performance metrics
      */
-    async getShardingMetrics(collection?: string): Promise<{
-        overallPerformance: {
-            averageLatency: number;
-            totalThroughput: number;
-            errorRate: number;
-            utilizationDistribution: number[];
-        };
-        shardMetrics: Array<{
+    async getShardingMetrics(collection?: string) {
+        const collections = collection ? [collection] : Array.from(this.shardingStrategies.keys());
+
+        const allShardMetrics: Array<{
             shardId: string;
             collection: string;
             performance: ShardPerformanceMetrics;
             health: 'excellent' | 'good' | 'fair' | 'poor';
             recommendations: string[];
-        }>;
-        rebalancingOpportunities: RebalancingOpportunity[];
-    }> {
-        const collections = collection ? [collection] : Array.from(this.shardingStrategies.keys());
-
-        const allShardMetrics: unknown[] = [];
+        }> = [];
         let totalLatency = 0;
         let totalThroughput = 0;
         let totalErrors = 0;
@@ -629,12 +620,15 @@ export class EnterpriseFirestoreSharding {
 
                 // Check if query has matching filter
                 const hasMatchingFilter = query.filters.some(f =>
-                    f.field === field && f.value === _value
+                    f.field === field && f.value === value
                 );
 
                 // Check user context
-                if (userContext && userContext[field] === _value) {
-                    continue;
+                if (userContext && typeof userContext === 'object' && userContext !== null && field in userContext) {
+                    // @ts-ignore
+                    if ((userContext as any)[field] === value) {
+                        continue;
+                    }
                 }
 
                 if (!hasMatchingFilter) {
@@ -678,14 +672,14 @@ export class EnterpriseFirestoreSharding {
         query: FirestoreQuery
     ): Promise<{ documents: unknown[]; totalCount: number; }> {
         // Combine all documents
-        const allDocuments = results.flatMap(r => r.documents);
+        const allDocuments = results.flatMap(r => r.documents) as any[];
 
         // Apply sorting if specified
         if (query.orderBy && query.orderBy.length > 0) {
-            allDocuments.sort((a, b) => {
+            allDocuments.sort((a: any, b: any) => {
                 for (const order of query.orderBy!) {
-                    const aVal = a[order.field];
-                    const bVal = b[order.field];
+                    const aVal = (a as any)[order.field];
+                    const bVal = (b as any)[order.field];
 
                     if (aVal < bVal) return order.direction === 'asc' ? -1 : 1;
                     if (aVal > bVal) return order.direction === 'asc' ? 1 : -1;
@@ -707,10 +701,10 @@ export class EnterpriseFirestoreSharding {
 
     private generateMockDocuments(count: number): unknown[] {
         const documents = [];
-        for (let _i = 0; i < count; i++) {
+        for (let _i = 0; _i < count; _i++) {
             documents.push({
-                id: `doc_${i}`,
-                data: `mock_data_${i}`,
+                id: `doc_${_i}`,
+                data: `mock_data_${_i}`,
                 timestamp: Date.now() - (Math.random() * 86400000) // Random time in last 24h
             });
         }
@@ -725,7 +719,7 @@ export class EnterpriseFirestoreSharding {
             optimizedFilters.push({
                 field: 'tier',
                 operator: '==',
-                _value: tier
+                value: tier
             });
         }
 

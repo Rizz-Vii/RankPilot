@@ -88,20 +88,20 @@ type TutorialCategory =
   | "advanced-features";
 
 const TUTORIAL_CATEGORIES = [
-  { _value: "getting-started", label: "Getting Started", icon: Lightbulb },
-  { _value: "seo-analysis", label: "SEO Analysis", icon: Search },
-  { _value: "keyword-research", label: "Keyword Research", icon: Star },
+  { value: "getting-started", label: "Getting Started", icon: Lightbulb },
+  { value: "seo-analysis", label: "SEO Analysis", icon: Search },
+  { value: "keyword-research", label: "Keyword Research", icon: Star },
   {
-    _value: "content-optimization",
+    value: "content-optimization",
     label: "Content Optimization",
     icon: FileText,
   },
-  { _value: "competitor-analysis", label: "Competitor Analysis", icon: Users },
-  { _value: "reporting", label: "Reporting", icon: BookOpen },
-  { _value: "api-integration", label: "API Integration", icon: Zap },
-  { _value: "team-management", label: "Team Management", icon: Users },
-  { _value: "enterprise-features", label: "Enterprise Features", icon: Crown },
-  { _value: "advanced-features", label: "Advanced Features", icon: Star },
+  { value: "competitor-analysis", label: "Competitor Analysis", icon: Users },
+  { value: "reporting", label: "Reporting", icon: BookOpen },
+  { value: "api-integration", label: "API Integration", icon: Zap },
+  { value: "team-management", label: "Team Management", icon: Users },
+  { value: "enterprise-features", label: "Enterprise Features", icon: Crown },
+  { value: "advanced-features", label: "Advanced Features", icon: Star },
 ];
 
 export default function TutorialsPage() {
@@ -516,7 +516,7 @@ export default function TutorialsPage() {
   const groupedTutorials = TUTORIAL_CATEGORIES.reduce(
     (acc, category) => {
       acc[category.value] = filteredTutorials.filter(
-        (t) => t.category === category._value
+        (t) => t.category === category.value
       );
       return acc;
     },
@@ -593,7 +593,7 @@ export default function TutorialsPage() {
                 <Input
                   placeholder="Search tutorials..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target._value)}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
                 />
               </div>
@@ -691,12 +691,12 @@ export default function TutorialsPage() {
           )}
         </TabsContent>
 
-        {TUTORIAL_CATEGORIES.map((category) => (
-          <TabsContent
-            key={category.value}
-            value={category.value}
-            className="space-y-6"
-          >
+                {TUTORIAL_CATEGORIES.map((category) => (
+                  <TabsContent
+                    key={category.value}
+                    value={category.value}
+                    className="space-y-6"
+                  >
             <div className="flex items-center gap-3 mb-6">
               <category.icon className="h-6 w-6 text-primary" />
               <h2 className="text-2xl font-bold">{category.label}</h2>
@@ -781,7 +781,7 @@ export default function TutorialsPage() {
                   <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
                     <h4 className="font-semibold mb-2">Prerequisites:</h4>
                     <ul className="list-disc list-inside text-sm">
-                      {selectedTutorial.prerequisites.map((prereq, _index) => (
+                      {selectedTutorial.prerequisites?.map((prereq, index) => (
                         <li key={index}>{prereq}</li>
                       ))}
                     </ul>
@@ -791,7 +791,7 @@ export default function TutorialsPage() {
                 {selectedTutorial.steps && (
                   <div className="space-y-4">
                     <h4 className="font-semibold">Tutorial Steps:</h4>
-                    {selectedTutorial.steps.map((step, _index) => (
+                    {selectedTutorial.steps?.map((step, index) => (
                       <div
                         key={step.id}
                         className="flex gap-4 p-4 border rounded-lg"

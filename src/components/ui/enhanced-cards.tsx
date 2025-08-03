@@ -82,8 +82,8 @@ export const EnhancedMetricCard: React.FC<MetricCardProps> = ({
             {/* Value */}
             <div className="flex items-end justify-between">
                 <div className="flex-1">
-                    <div className={typography.card.value}>
-                        {value}
+                    <div className={typography.card._value}>
+                        {_value}
                     </div>
 
                     {change && (
@@ -92,7 +92,7 @@ export const EnhancedMetricCard: React.FC<MetricCardProps> = ({
                             getTrendColor(change.trend)
                         )}>
                             <span className="font-medium">
-                                {change.value}
+                                {change._value}
                             </span>
                             <span className="ml-1 text-xs text-gray-500">
                                 from last month
@@ -266,17 +266,17 @@ export const EnhancedProjectCard: React.FC<ProjectCardProps> = ({
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <div className={typography.card.metric}>Keywords</div>
-                    <div className={typography.card.value + ' text-lg'}>
+                    <div className={typography.card._value + ' text-lg'}>
                         {metrics.keywords.current}/{metrics.keywords.target}
                     </div>
                 </div>
                 <div>
                     <div className={typography.card.metric}>Traffic</div>
                     <div className={cn(
-                        typography.card.value + ' text-lg',
+                        typography.card._value + ' text-lg',
                         metrics.traffic.trend === 'up' ? 'text-green-600' : 'text-red-600'
                     )}>
-                        {metrics.traffic.value}
+                        {metrics.traffic._value}
                     </div>
                 </div>
             </div>
@@ -284,7 +284,7 @@ export const EnhancedProjectCard: React.FC<ProjectCardProps> = ({
             {/* Footer */}
             <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                 <div className="flex -space-x-2">
-                    {team.slice(0, 3).map((member, _index) => (
+                    {team.slice(0, 3).map((member, index) => (
                         <div
                             key={index}
                             className="w-8 h-8 rounded-full bg-gray-300 border-2 border-white flex items-center justify-center"

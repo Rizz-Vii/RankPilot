@@ -14,7 +14,7 @@ interface FallbackStateProps {
         onClick: () => void;
         variant?: "default" | "outline" | "secondary" | "ghost" | "link" | "destructive";
     };
-    type?: "empty" | "error" | "loading" | "not-found";
+    type?: "empty" | "_error" | "loading" | "not-found";
     className?: string;
     showCard?: boolean;
 }
@@ -64,13 +64,13 @@ export function FallbackState({
         )}>
             <div className={cn(
                 "rounded-full p-4 bg-muted/50",
-                type === "error" && "bg-destructive/10",
+                type === "_error" && "bg-destructive/10",
                 type === "loading" && "bg-primary/10"
             )}>
                 <FallbackIcon
                     className={cn(
                         "h-8 w-8 text-muted-foreground",
-                        type === "error" && "text-destructive",
+                        type === "_error" && "text-destructive",
                         type === "loading" && "text-primary animate-spin"
                     )}
                 />
@@ -116,7 +116,7 @@ export function EmptyState(props: Omit<FallbackStateProps, "type">) {
 }
 
 export function ErrorState(props: Omit<FallbackStateProps, "type">) {
-    return <FallbackState {...props} type="error" />;
+    return <FallbackState {...props} type="_error" />;
 }
 
 export function LoadingState(props: Omit<FallbackStateProps, "type">) {

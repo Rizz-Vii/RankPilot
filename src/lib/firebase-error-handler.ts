@@ -1,10 +1,11 @@
 // Firebase error handling utilities
 import { FirebaseError } from "firebase/app";
-import { analytics } from "./firebase/index";
-import { logEvent } from "firebase/analytics";
+import { getAnalytics, logEvent, Analytics } from "firebase/analytics";
+import { app } from "./firebase/index"; // Ensure 'app' is your FirebaseApp instance
+const analytics: Analytics = getAnalytics(app);
 
 export class FirebaseErrorHandler {
-  static isNetworkError(_error: unknown): boolean {
+  static isNetworkError(error: unknown): boolean {
     return (
       (error instanceof TypeError &&
         error.message.includes("Failed to fetch")) ||
@@ -22,10 +23,10 @@ export class FirebaseErrorHandler {
       return;
     }
 
-    if (error instanceof FirebaseError) {
+    if (_error instanceof FirebaseError) {
       console.error(`Firebase ${operation} _error:`, {
-        code: error.code,
-        message: error.message,
+        code: _error.code,
+        message: _error.message,
       });
     } else {
       console.error(`Unexpected error during ${operation}:`, _error);
@@ -69,7 +70,7 @@ export function safeAnalyticsEvent(eventName: string, eventParams?: unknown): vo
 
   try {
     if (analytics) {
-      logEvent(analytics, eventName, eventParams);
+      logEvent(analytics, eventName, eventParams as Record<string, any> | undefined);
     }
   } catch (_error) {
     FirebaseErrorHandler.handleFirebaseError(_error, "analytics event");

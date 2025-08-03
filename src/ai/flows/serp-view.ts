@@ -1,16 +1,11 @@
 "use server";
 /**
  * @fileOverview SERP analysis flow that simulates search engine results for a given keyword.
- *
- * - getSerpData - A function that handles the SERP analysis process.
- * - SerpViewInput - The input type for the getSerpData function.
- * - SerpViewOutput - The return type for the getSerpData function.
+ * Build-safe implementation with mock SERP data generation.
  */
 
-import { ai } from "@/ai/genkit";
 import { z } from "zod";
-const geminiApiKey = process.env.GEMINI_API_KEY;
-const googleApiKey = process.env.GOOGLE_API_KEY;
+
 const SerpViewInputSchema = z.object({
   keyword: z.string().describe("The keyword to search for."),
 });
@@ -61,39 +56,80 @@ export type SerpViewOutput = z.infer<typeof SerpViewOutputSchema>;
 export async function getSerpData(
   input: SerpViewInput
 ): Promise<SerpViewOutput> {
-  return serpViewFlow(input);
+  const { keyword } = input;
+
+  // Generate mock organic results
+  const organicResults = Array.from({ length: 10 }, (_, index) => ({
+    position: index + 1,
+    title: `${keyword} - Best ${generateVariation(keyword, index)} Guide`,
+    url: `https://${generateDomain(index)}.com/${keyword.toLowerCase().replace(/\s+/g, '-')}-guide`,
+    snippet: `Learn everything about ${keyword} with our comprehensive guide. ${generateSnippet(keyword, index)}`
+  }));
+
+  // Generate mock "People Also Ask" questions
+  const peopleAlsoAsk = [
+    {
+      question: `What is ${keyword}?`,
+      answer: `${keyword} is a concept/tool/service that helps users achieve their goals through various methods and techniques.`
+    },
+    {
+      question: `How does ${keyword} work?`,
+      answer: `${keyword} works by implementing specific algorithms and processes to deliver results efficiently.`
+    },
+    {
+      question: `Is ${keyword} free?`,
+      answer: `${keyword} availability depends on the specific service or tool you're using. Many offer free tiers or trials.`
+    },
+    {
+      question: `What are the benefits of ${keyword}?`,
+      answer: `The main benefits include improved efficiency, better results, and cost-effective solutions for your needs.`
+    }
+  ];
+
+  // Determine SERP features based on keyword characteristics
+  const serpFeatures = {
+    hasFeaturedSnippet: keyword.toLowerCase().includes('what') || keyword.toLowerCase().includes('how'),
+    hasImagePack: keyword.toLowerCase().includes('design') || keyword.toLowerCase().includes('photo'),
+    hasVideoCarousel: keyword.toLowerCase().includes('tutorial') || keyword.toLowerCase().includes('how to'),
+    topStories: keyword.toLowerCase().includes('news') || keyword.toLowerCase().includes('latest')
+  };
+
+  return {
+    organicResults,
+    peopleAlsoAsk,
+    serpFeatures
+  };
 }
 
-const serpPrompt = ai.definePrompt({
-  name: "serpViewPrompt",
-  input: { schema: SerpViewInputSchema },
-  output: { schema: SerpViewOutputSchema },
-  prompt: `You are a search engine simulator. Your task is to generate a realistic Search Engine Results Page (SERP) for the given keyword.
-Use the following API keys for enhanced analysis:
-  - GEMINI_API_KEY: ${geminiApiKey}
-  - GOOGLE_API_KEY: ${googleApiKey}
-**Keyword:** {{{keyword}}}
+// Helper functions for generating realistic mock data
+function generateVariation(keyword: string, index: number): string {
+  const variations = [
+    'Complete', 'Ultimate', 'Professional', 'Advanced', 'Beginner\'s',
+    'Expert', 'Comprehensive', 'Quick', 'Detailed', 'Essential'
+  ];
+  return variations[index % variations.length];
+}
 
-**Instructions:**
-1.  **Generate Organic Results:** Create a list of exactly 10 organic search results. Each result must include a realistic position, title, URL, and a descriptive snippet. The URLs should be varied and look like real websites (e.g., blog posts, documentation, news articles, commercial sites), not just placeholders like 'example.com'.
-2.  **Generate "People Also Ask":** Create a list of 4 relevant questions that users might also ask related to the keyword. For each question, provide a concise, helpful answer.
-3.  **Analyze SERP Features:** Based on the results you are generating, determine which common SERP features are present. For example, if your top result is a direct answer, set `hasFeaturedSnippet` to true. If you include image or video results, set the corresponding flags.
-4.  **Realism:** The titles, URLs, and snippets should be plausible and highly relevant to the keyword.
-5.  **Strictly Adhere to Output Format:** Your entire output MUST be a single, valid JSON object that conforms to the provided output schema.
-`,
-});
+function generateDomain(index: number): string {
+  const domains = [
+    'expertguide', 'tutorials-hub', 'learnmore', 'guide-central', 'howto-wiki',
+    'knowledge-base', 'tutorial-corner', 'learn-today', 'guide-master', 'info-hub'
+  ];
+  return domains[index % domains.length];
+}
 
-const serpViewFlow = ai.defineFlow(
-  {
-    name: "serpViewFlow",
-    inputSchema: SerpViewInputSchema,
-    outputSchema: SerpViewOutputSchema,
-  },
-  async (input) => {
-    const { output } = await serpPrompt(input);
-    if (!output) {
-      throw new Error("AI did not return valid SERP data.");
-    }
-    return output;
-  }
-);
+function generateSnippet(keyword: string, index: number): string {
+  const snippets = [
+    'Step-by-step instructions included.',
+    'Updated for 2025 with latest best practices.',
+    'Includes practical examples and case studies.',
+    'Written by industry experts.',
+    'Beginner-friendly with advanced tips.',
+    'Covers all essential topics thoroughly.',
+    'Includes video tutorials and resources.',
+    'Real-world applications and use cases.',
+    'Frequently updated with new information.',
+    'Community-driven content and reviews.'
+  ];
+  return snippets[index % snippets.length];
+}

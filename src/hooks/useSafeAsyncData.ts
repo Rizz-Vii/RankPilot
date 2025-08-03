@@ -62,11 +62,11 @@ export function useSafeAsyncData<T>(
             const result = await fetchFn();
 
             if (isMountedRef.current) {
-                setData(_result);
+                setData(result);
                 setIsStale(false);
                 lastFetchRef.current = Date.now();
                 retryCountRef.current = 0;
-                onSuccess?.(_result);
+                onSuccess?.(result);
             }
         } catch (err) {
             if (!isMountedRef.current) return;
@@ -107,7 +107,7 @@ export function useSafeAsyncData<T>(
         }
 
         // Only fetch if enabled and (no data or data is stale)
-        if (enabled && (data === defaultValue || isStale)) {
+        if (enabled && (_data === defaultValue || isStale)) {
             fetchData();
         }
 
@@ -211,13 +211,16 @@ export const safeAccess = {
     array: <T>(arr: T[] | undefined | null): T[] => arr || [],
     length: (arr: unknown[] | undefined | null): number => arr?.length || 0,
     property: <T>(obj: unknown, path: string, fallback: T): T => {
-        return path.split('.').reduce((curr, _key) => curr?.[key], obj) ?? fallback;
+        const result = path
+            .split('.')
+            .reduce<unknown>((curr, _key) => (curr && typeof curr === 'object' ? (curr as Record<string, unknown>)[_key] : undefined), obj);
+        return result === undefined ? fallback : (result as T);
     },
     number: (_value: unknown, fallback = 0): number => {
         const num = Number(_value);
         return isNaN(num) ? fallback : num;
     },
-    string: (_value: unknown, fallback = ''): string => {
+    string: (value: unknown, fallback = ''): string => {
         return value?.toString() || fallback;
     }
 };

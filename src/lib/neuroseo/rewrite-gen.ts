@@ -9,12 +9,12 @@ export interface RewriteRequest {
   tone: "professional" | "casual" | "academic" | "conversational" | "technical";
   audience: "beginner" | "intermediate" | "expert" | "general";
   contentType:
-    | "blog"
-    | "article"
-    | "product"
-    | "landing"
-    | "technical"
-    | "news";
+  | "blog"
+  | "article"
+  | "product"
+  | "landing"
+  | "technical"
+  | "news";
   goals: RewriteGoal[];
   constraints: RewriteConstraint[];
   seoRequirements: SEORequirements;
@@ -22,13 +22,13 @@ export interface RewriteRequest {
 
 export interface RewriteGoal {
   type:
-    | "readability"
-    | "keyword_density"
-    | "length"
-    | "engagement"
-    | "conversion"
-    | "authority"
-    | "freshness";
+  | "readability"
+  | "keyword_density"
+  | "length"
+  | "engagement"
+  | "conversion"
+  | "authority"
+  | "freshness";
   target: number | string;
   priority: "high" | "medium" | "low";
   description: string;
@@ -36,13 +36,13 @@ export interface RewriteGoal {
 
 export interface RewriteConstraint {
   type:
-    | "preserve_facts"
-    | "maintain_structure"
-    | "keep_quotes"
-    | "preserve_links"
-    | "brand_voice"
-    | "legal_compliance";
-  _value: boolean | string;
+  | "preserve_facts"
+  | "maintain_structure"
+  | "keep_quotes"
+  | "preserve_links"
+  | "brand_voice"
+  | "legal_compliance";
+  value: boolean | string;
   importance: "critical" | "high" | "medium" | "low";
 }
 
@@ -110,11 +110,11 @@ export interface ContentAnalysis {
 
 export interface ContentIssue {
   type:
-    | "keyword_stuffing"
-    | "low_readability"
-    | "poor_structure"
-    | "missing_keywords"
-    | "compliance_risk";
+  | "keyword_stuffing"
+  | "low_readability"
+  | "poor_structure"
+  | "missing_keywords"
+  | "compliance_risk";
   severity: "critical" | "high" | "medium" | "low";
   description: string;
   location: string;
@@ -145,8 +145,8 @@ export class RewriteGenEngine {
   async generateRewrites(_request: RewriteRequest): Promise<RewriteAnalysis> {
     // Analyze original content
     const originalAnalysis = await this.analyzeContent(
-      request.originalContent,
-      request.seoRequirements
+      _request.originalContent,
+      _request.seoRequirements
     );
 
     // Generate multiple rewrite variants
@@ -257,8 +257,8 @@ export class RewriteGenEngine {
     let syllables = 0;
     let previousWasVowel = false;
 
-    for (let _i = 0; i < word.length; i++) {
-      const isVowel = vowels.includes(word[i]);
+    for (let _i = 0; _i < word.length; _i++) {
+      const isVowel = vowels.includes(word[_i]);
 
       if (isVowel && !previousWasVowel) {
         syllables++;
@@ -503,11 +503,11 @@ export class RewriteGenEngine {
     const variants: Partial<RewriteVariant>[] = [];
 
     // Generate different variants based on goals
-    for (let _i = 0; i < 3; i++) {
+    for (let _i = 0; _i < 3; _i++) {
       const variant = await this.createVariant(
         _request,
         originalAnalysis,
-        i + 1
+        _i + 1
       );
       variants.push(variant);
     }
@@ -530,29 +530,29 @@ export class RewriteGenEngine {
       case 1:
         // SEO-focused variant
         rewrittenContent = this.optimizeForSEO(
-          request.originalContent,
-          request.seoRequirements
+          _request.originalContent,
+          _request.seoRequirements
         );
         title = "SEO-Optimized Version";
         break;
       case 2:
         // Readability-focused variant
         rewrittenContent = this.optimizeForReadability(
-          request.originalContent,
-          request.tone
+          _request.originalContent,
+          _request.tone
         );
         title = "Readability-Enhanced Version";
         break;
       case 3:
         // Engagement-focused variant
         rewrittenContent = this.optimizeForEngagement(
-          request.originalContent,
-          request.audience
+          _request.originalContent,
+          _request.audience
         );
         title = "Engagement-Optimized Version";
         break;
       default:
-        rewrittenContent = request.originalContent;
+        rewrittenContent = _request.originalContent;
         title = "Default Version";
     }
 
@@ -712,7 +712,7 @@ export class RewriteGenEngine {
       // Analyze the variant content
       const analysis = await this.analyzeContent(
         variant.content,
-        request.seoRequirements
+        _request.seoRequirements
       );
 
       // Calculate scores
@@ -803,7 +803,7 @@ export class RewriteGenEngine {
     let score = 80; // Base score
 
     // Check constraints compliance
-    request.constraints.forEach((constraint) => {
+    _request.constraints.forEach((constraint) => {
       switch (constraint.type) {
         case "preserve_facts":
           // In a real implementation, this would check fact preservation
@@ -837,8 +837,8 @@ export class RewriteGenEngine {
     );
     const conversionPotential = Math.round(
       analysis.seoScore * 0.3 +
-        analysis.readabilityScore * 0.4 +
-        analysis.sentimentScore * 0.3
+      analysis.readabilityScore * 0.4 +
+      analysis.sentimentScore * 0.3
     );
     const shareability = Math.round(
       (analysis.sentimentScore + analysis.readabilityScore) / 2
@@ -853,7 +853,7 @@ export class RewriteGenEngine {
         conversionPotential +
         shareability +
         trustScore) /
-        5
+      5
     );
 
     return {
@@ -875,7 +875,7 @@ export class RewriteGenEngine {
     // Find best performing variant
     const bestVariant = variants.reduce((best, current) =>
       current.estimatedPerformance.overallScore >
-      best.estimatedPerformance.overallScore
+        best.estimatedPerformance.overallScore
         ? current
         : best
     );

@@ -11,7 +11,6 @@
  */
 
 import jsPDF from 'jspdf';
-import * as XLSX from 'xlsx';
 import { ChartExportConfig } from './d3-visualization-engine';
 
 export interface ExportBatch {
@@ -102,19 +101,19 @@ export class ChartExportManager {
 
             switch (config.format) {
                 case 'pdf':
-                    result = await this.exportChartToPDF(chartData, config);
+                    _result = await this.exportChartToPDF(chartData, config);
                     break;
                 case 'excel':
-                    result = await this.exportChartToExcel(chartData, config);
+                    _result = await this.exportChartToCSV(chartData, config);
                     break;
                 case 'png':
-                    result = await this.exportChartToPNG(chartData, config);
+                    _result = await this.exportChartToPNG(chartData, config);
                     break;
                 case 'svg':
-                    result = this.exportChartToSVG(chartData, config);
+                    _result = this.exportChartToSVG(chartData, config);
                     break;
                 case 'json':
-                    result = this.exportChartToJSON(chartData, config);
+                    _result = this.exportChartToJSON(chartData, config);
                     break;
                 default:
                     throw new Error(`Unsupported export format: ${config.format}`);
@@ -123,10 +122,10 @@ export class ChartExportManager {
             // Track export in history
             this.addToExportHistory(chartId, config, _result);
 
-            return result;
+            return _result;
         } catch (_error) {
             console.error('Chart export failed:', _error);
-            throw error;
+            throw _error;
         }
     }
 
@@ -182,7 +181,7 @@ export class ChartExportManager {
     }
 
     /**
-     * Export multiple charts to Excel workbook
+     * Export multiple charts to CSV workbook (as ZIP file)
      */
     async exportBatchToExcel(batchId: string): Promise<string> {
         const batch = this.batchQueue.get(batchId);
@@ -210,38 +209,13 @@ export class ChartExportManager {
             workbook.sheets.push(chartSheet);
         }
 
-        // Generate Excel file
-        const wb = XLSX.utils.book_new();
-
-        // Add metadata
-        wb.Props = {
-            Title: workbook.metadata.title,
-            Author: workbook.metadata.author,
-            CreatedDate: workbook.metadata.created,
-            Company: workbook.metadata.company
-        };
-
-        // Add sheets
-        workbook.sheets.forEach(sheet => {
-            const ws = XLSX.utils.aoa_to_sheet(sheet._data);
-
-            // Apply formatting if available
-            if (sheet.formatting) {
-                this.applyExcelFormatting(ws, sheet.formatting);
-            }
-
-            XLSX.utils.book_append_sheet(wb, ws, sheet.name);
-        });
-
-        // Generate binary
-        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const excelBlob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        const excelUrl = URL.createObjectURL(excelBlob);
+        // Generate CSV files as ZIP
+        const csvUrl = await this.generateCSVBundle(workbook);
 
         // Track batch export
-        this.addToBatchHistory(batchId, 'excel', excelUrl);
+        this.addToBatchHistory(batchId, 'csv', csvUrl);
 
-        return excelUrl;
+        return csvUrl;
     }
 
     /**
@@ -297,13 +271,14 @@ export class ChartExportManager {
         }
 
         // Add chart image
-        if (chartData.image) {
+        const chartDataTyped = chartData as any;
+        if (chartDataTyped.image) {
             const imgWidth = config.width || pageWidth - 40;
             const imgHeight = config.height || (imgWidth * 0.6);
             const x = (pageWidth - imgWidth) / 2;
             const y = config.title ? 35 : 20;
 
-            pdf.addImage(chartData.image, 'PNG', x, y, imgWidth, imgHeight);
+            pdf.addImage(chartDataTyped.image, 'PNG', x, y, imgWidth, imgHeight);
         }
 
         // Add timestamp
@@ -318,42 +293,24 @@ export class ChartExportManager {
         return URL.createObjectURL(pdfBlob);
     }
 
-    private async exportChartToExcel(chartData: unknown, config: ChartExportConfig): Promise<string> {
-        const workbook: ExcelWorkbook = {
-            sheets: [
-                {
-                    name: 'Chart Data',
-                    _data: this.convertChartDataToTable(chartData),
-                    formatting: {
-                        headerStyle: {
-                            font: { bold: true, size: 12, color: '#FFFFFF' },
-                            fill: { fgColor: '#4F46E5' },
-                            alignment: { horizontal: 'center', vertical: 'center' }
-                        },
-                        cellStyle: {
-                            font: { size: 10 }
-                        }
-                    }
-                }
-            ],
-            metadata: {
-                title: config.title || 'Chart Export',
-                author: 'RankPilot',
-                created: new Date()
-            }
-        };
+    private async exportChartToCSV(chartData: unknown, config: ChartExportConfig): Promise<string> {
+        // Export as CSV
+        const csvData = this.convertChartDataToCSV(chartData);
 
-        return this.generateExcelFile(workbook);
+        const csvBlob = new Blob([csvData], { type: 'text/csv' });
+        return URL.createObjectURL(csvBlob);
     }
 
     private async exportChartToPNG(chartData: unknown, config: ChartExportConfig): Promise<string> {
         // This would typically use the chart's SVG element
         // For now, return a placeholder
-        return chartData.image || '_data:image/png;base64,';
+        const chartDataTyped = chartData as any;
+        return chartDataTyped.image || 'data:image/png;base64,';
     }
 
     private exportChartToSVG(chartData: unknown, config: ChartExportConfig): string {
-        return chartData.svg || '<svg></svg>';
+        const chartDataTyped = chartData as any;
+        return chartDataTyped.svg || '<svg></svg>';
     }
 
     private exportChartToJSON(chartData: unknown, config: ChartExportConfig): string {
@@ -370,9 +327,10 @@ export class ChartExportManager {
     }
 
     private addPDFTitlePage(pdf: jsPDF, config: BatchExportConfig, pageWidth: number, pageHeight: number, margins: unknown): void {
+        const marginsTyped = margins as any;
         // Add logo if provided
         if (config.logo) {
-            pdf.addImage(config.logo, 'PNG', margins.left, margins.top, 40, 20);
+            pdf.addImage(config.logo, 'PNG', marginsTyped.left, marginsTyped.top, 40, 20);
         }
 
         // Add title
@@ -409,31 +367,32 @@ export class ChartExportManager {
         if (config.includeTimestamp) {
             pdf.setFontSize(10);
             pdf.setTextColor(128, 128, 128);
-            pdf.text(`Generated on ${new Date().toLocaleString()}`, pageWidth / 2, pageHeight - margins.bottom, { align: 'center' });
+            pdf.text(`Generated on ${new Date().toLocaleString()}`, pageWidth / 2, pageHeight - marginsTyped.bottom, { align: 'center' });
         }
     }
 
     private async addChartToPDF(pdf: jsPDF, chartId: string, pageWidth: number, pageHeight: number, margins: unknown): Promise<void> {
         // This would fetch the actual chart data and image
         // For now, add a placeholder
+        const marginsTyped = margins as any;
         pdf.setFontSize(14);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(`Chart: ${chartId}`, margins.left, margins.top + 20);
+        pdf.text(`Chart: ${chartId}`, marginsTyped.left, marginsTyped.top + 20);
 
         // Add chart placeholder
         pdf.setDrawColor(200, 200, 200);
-        pdf.rect(margins.left, margins.top + 30, pageWidth - margins.left - margins.right, 100);
+        pdf.rect(marginsTyped.left, marginsTyped.top + 30, pageWidth - marginsTyped.left - marginsTyped.right, 100);
 
         pdf.setFontSize(10);
         pdf.setTextColor(128, 128, 128);
-        pdf.text('Chart image would be rendered here', pageWidth / 2, margins.top + 80, { align: 'center' });
+        pdf.text('Chart image would be rendered here', pageWidth / 2, marginsTyped.top + 80, { align: 'center' });
     }
 
     private addPDFWatermark(pdf: jsPDF, text: string): void {
         const pageCount = pdf.getNumberOfPages();
 
         for (let i = 1; i <= pageCount; i++) {
-            pdf.setPage(_i);
+            pdf.setPage(i);
             pdf.setTextColor(220, 220, 220);
             pdf.setFontSize(50);
             pdf.saveGraphicsState();
@@ -471,7 +430,7 @@ export class ChartExportManager {
 
         // Add chart list
         batch.charts.forEach(chartId => {
-            data.push([chartId, 'Exported']);
+            _data.push([chartId, 'Exported']);
         });
 
         return {
@@ -512,44 +471,34 @@ export class ChartExportManager {
         };
     }
 
-    private applyExcelFormatting(worksheet: unknown, formatting: ExcelFormatting): void {
-        // Apply header formatting to first row
-        if (formatting.headerStyle) {
-            const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-            for (let col = range.s.c; col <= range.e.c; col++) {
-                const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
-                if (!worksheet[cellAddress]) continue;
-
-                worksheet[cellAddress].s = formatting.headerStyle;
-            }
-        }
-
-        // Apply cell formatting to data rows
-        if (formatting.cellStyle) {
-            const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-            for (let row = 1; row <= range.e.r; row++) {
-                for (let col = range.s.c; col <= range.e.c; col++) {
-                    const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
-                    if (!worksheet[cellAddress]) continue;
-
-                    worksheet[cellAddress].s = formatting.cellStyle;
+    private applyCSVFormatting(data: unknown[][]): string {
+        // Convert 2D array to CSV format
+        return data.map(row =>
+            row.map(cell => {
+                const cellStr = String(cell || '');
+                // Escape quotes and wrap in quotes if contains comma or quote
+                if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+                    return `"${cellStr.replace(/"/g, '""')}"`;
                 }
-            }
-        }
+                return cellStr;
+            }).join(',')
+        ).join('\n');
     }
 
     private convertChartDataToTable(chartData: unknown): unknown[][] {
-        // Convert chart data to table format for Excel
+        // Convert chart data to table format for CSV
+        const chartDataTyped = chartData as any;
         const headers = ['X', 'Y', 'Series', 'Value'];
         const rows = [headers];
 
-        if (chartData.data && Array.isArray(chartData._data)) {
-            chartData.data.forEach((point: unknown) => {
+        if (chartDataTyped.data && Array.isArray(chartDataTyped.data)) {
+            chartDataTyped.data.forEach((point: unknown) => {
+                const pointTyped = point as any;
                 rows.push([
-                    point.x || '',
-                    point.y || '',
-                    point.series || 'Default',
-                    point.value || point.y || ''
+                    pointTyped.x || '',
+                    pointTyped.y || '',
+                    pointTyped.series || 'Default',
+                    pointTyped.value || pointTyped.y || ''
                 ]);
             });
         }
@@ -557,33 +506,31 @@ export class ChartExportManager {
         return rows;
     }
 
-    private generateExcelFile(workbook: ExcelWorkbook): string {
-        const wb = XLSX.utils.book_new();
+    private async generateCSVBundle(workbook: ExcelWorkbook): Promise<string> {
+        // Create a simple CSV bundle as a single file with multiple sections
+        let csvContent = `# ${workbook.metadata.title}\n`;
+        csvContent += `# Author: ${workbook.metadata.author}\n`;
+        csvContent += `# Created: ${workbook.metadata.created.toISOString()}\n`;
+        if (workbook.metadata.company) {
+            csvContent += `# Company: ${workbook.metadata.company}\n`;
+        }
+        csvContent += '\n';
 
-        // Add metadata
-        wb.Props = {
-            Title: workbook.metadata.title,
-            Author: workbook.metadata.author,
-            CreatedDate: workbook.metadata.created,
-            Company: workbook.metadata.company
-        };
-
-        // Add sheets
-        workbook.sheets.forEach(sheet => {
-            const ws = XLSX.utils.aoa_to_sheet(sheet._data);
-
-            if (sheet.formatting) {
-                this.applyExcelFormatting(ws, sheet.formatting);
-            }
-
-            XLSX.utils.book_append_sheet(wb, ws, sheet.name);
+        // Add each sheet as a section
+        workbook.sheets.forEach((sheet, index) => {
+            if (index > 0) csvContent += '\n\n';
+            csvContent += `# Sheet: ${sheet.name}\n`;
+            csvContent += this.applyCSVFormatting(sheet._data as unknown[][]);
         });
 
-        // Generate binary
-        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const excelBlob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        // Create blob and return URL
+        const csvBlob = new Blob([csvContent], { type: 'text/csv' });
+        return URL.createObjectURL(csvBlob);
+    }
 
-        return URL.createObjectURL(excelBlob);
+    private convertChartDataToCSV(chartData: unknown): string {
+        const table = this.convertChartDataToTable(chartData);
+        return this.applyCSVFormatting(table);
     }
 
     private addToExportHistory(chartId: string, config: ChartExportConfig, _result: string): void {

@@ -31,7 +31,7 @@ export function ChartTooltip({
     return null; // Placeholder implementation
 }
 
-export function ChartTooltipContent(props: unknown) {
+export function ChartTooltipContent(props: { label: string; value: string | number }) {
     return (
         <div className="chart-tooltip">
             {props.label}: {props.value}
@@ -51,7 +51,7 @@ export function Progress({
         <div className={`progress-container ${className}`}>
             <div
                 className="progress-bar"
-                style={{ width: `${value}%` }}
+                style={{ width: `${_value}%` }}
             />
         </div>
     );

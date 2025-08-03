@@ -67,7 +67,7 @@ export class TaskQueueManager {
       return response;
     } catch (_error) {
       console.error('Error creating task:', _error);
-      throw error;
+      throw _error;
     }
   }
 
@@ -97,7 +97,7 @@ export class TaskQueueManager {
           })),
         },
         scheduleTime: {
-          seconds: Date.now() / 1000 + (index * 30), // Stagger by 30 seconds
+          seconds: Date.now() / 1000 + (_index * 30), // Stagger by 30 seconds
         },
       };
 
@@ -113,7 +113,7 @@ export class TaskQueueManager {
       return responses;
     } catch (_error) {
       console.error('Error creating batch tasks:', _error);
-      throw error;
+      throw _error;
     }
   }
 

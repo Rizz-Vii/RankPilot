@@ -13,8 +13,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
+type Profile = {
+  email?: string;
+  role?: string;
+  subscriptionStatus?: string;
+  subscriptionTier?: string;
+  stripeCustomerId?: string;
+  nextBillingDate?: { seconds: number };
+};
+
 export function UserSubscriptionDebugger() {
-  const { user, profile } = useAuth();
+  const { user, profile } = useAuth() as { user: any; profile: Profile | null };
   const { subscription, loading } = useSubscription();
 
   if (!user) {

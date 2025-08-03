@@ -92,7 +92,7 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps) {
           <CardContent>
             <div className="text-2xl font-bold">
               {Object.values(analytics?.usersByTier || {})
-                .filter((_, _index) => index > 0) // Exclude free tier
+                .filter((_, index) => index > 0) // Exclude free tier
                 .reduce((sum, count) => sum + count, 0)
                 .toLocaleString()}
             </div>

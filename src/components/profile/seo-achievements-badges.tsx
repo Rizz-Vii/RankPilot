@@ -32,9 +32,16 @@ interface Activity {
   metadata?: unknown;
 }
 
+interface Profile {
+  displayName?: string;
+  bio?: string;
+  primaryKeywords?: string;
+  // add other fields as needed
+}
+
 interface SEOAchievementsBadgesProps {
   user: User;
-  profile: unknown;
+  profile: Profile;
   activities: Activity[];
 }
 
@@ -79,7 +86,16 @@ export default function SEOAchievementsBadges({
       earned: auditCount >= 1,
       earnedDate:
         auditCount >= 1
-          ? activities.find((a) => a.type === "audit")?.timestamp.toDate()
+          ? (() => {
+              const ts = activities.find((a) => a.type === "audit")?.timestamp;
+              if (ts && typeof (ts as any).toDate === "function") {
+                return (ts as { toDate: () => Date }).toDate();
+              }
+              if (typeof ts === "string" || typeof ts === "number") {
+                return new Date(ts as string | number);
+              }
+              return undefined;
+            })()
           : undefined,
       progress: Math.min(auditCount, 1),
       requirement: 1,

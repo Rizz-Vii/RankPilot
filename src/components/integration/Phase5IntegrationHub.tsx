@@ -113,7 +113,7 @@ export function Phase5IntegrationHub() {
                 name: 'Enterprise APM',
                 status: 'error',
                 lastUpdate: Date.now(),
-                alerts: [`APM initialization failed: ${error}`]
+                alerts: [`APM initialization failed: ${_error}`]
             });
         }
     };
@@ -125,13 +125,13 @@ export function Phase5IntegrationHub() {
             // Add data points for RankPilot-specific patterns
             anomalyDetector.addDataPoint('performance', {
                 timestamp: Date.now(),
-                _value: 95.5,
+                value: 95.5,
                 metadata: { source: 'core_web_vitals', page: 'dashboard' }
             });
 
             anomalyDetector.addDataPoint('user_behavior', {
                 timestamp: Date.now(),
-                _value: 88.2,
+                value: 88.2,
                 metadata: { metric: 'engagement_score', cohort: 'premium_users' }
             });
 
@@ -150,7 +150,7 @@ export function Phase5IntegrationHub() {
                 name: 'AI Anomaly Detection',
                 status: 'error',
                 lastUpdate: Date.now(),
-                alerts: [`Anomaly detection failed: ${error}`]
+                alerts: [`Anomaly detection failed: ${_error}`]
             });
         }
     };
@@ -181,7 +181,7 @@ export function Phase5IntegrationHub() {
                 name: 'Global Infrastructure',
                 status: 'error',
                 lastUpdate: Date.now(),
-                alerts: [`Global optimization failed: ${error}`]
+                alerts: [`Global optimization failed: ${_error}`]
             });
         }
     };
@@ -206,7 +206,7 @@ export function Phase5IntegrationHub() {
                 name: 'AI Development Automation',
                 status: 'error',
                 lastUpdate: Date.now(),
-                alerts: [`Dev automation failed: ${error}`]
+                alerts: [`Dev automation failed: ${_error}`]
             });
         }
     };
@@ -278,25 +278,31 @@ export function Phase5IntegrationHub() {
 
     const calculateIntegrationMetrics = (data: unknown): IntegrationMetrics => {
         // Complex calculation combining all enterprise systems
+        const d = data as {
+            apm?: Record<string, any>;
+            optimization?: Record<string, any>;
+            automation?: Record<string, any>;
+            anomalies?: Record<string, any>;
+        };
         const overall_health = Math.round((
-            (data.apm?.overall_health || 0) * 0.3 +
-            (data.optimization?.performance_score || 0) * 0.25 +
-            (data.automation?.efficiency_score || 0) * 0.25 +
-            (100 - (data.anomalies?.critical_count || 0) * 10) * 0.2
+            (d.apm?.overall_health || 0) * 0.3 +
+            (d.optimization?.performance_score || 0) * 0.25 +
+            (d.automation?.efficiency_score || 0) * 0.25 +
+            (100 - (d.anomalies?.critical_count || 0) * 10) * 0.2
         ));
 
         const performance_score = Math.round((
-            (data.apm?.performance_score || 0) * 0.4 +
-            (data.optimization?.latency_improvement || 0) * 0.6
+            (d.apm?.performance_score || 0) * 0.4 +
+            (d.optimization?.latency_improvement || 0) * 0.6
         ));
 
         const automation_efficiency = Math.round(
-            data.automation?.efficiency_score || 0
+            d.automation?.efficiency_score || 0
         );
 
         const cost_optimization = Math.round((
-            (data.optimization?.bandwidth_savings || 0) * 0.4 +
-            (data.optimization?.resource_efficiency || 0) * 0.6
+            (d.optimization?.bandwidth_savings || 0) * 0.4 +
+            (d.optimization?.resource_efficiency || 0) * 0.6
         ));
 
         const business_impact = Math.round((
@@ -477,7 +483,7 @@ export function Phase5IntegrationHub() {
                             <CardContent>
                                 {system.metrics && (
                                     <div className="grid grid-cols-2 gap-4 mb-4">
-                                        {Object.entries(system.metrics).map(([_key, value]) => (
+                                        {Object.entries(system.metrics).map(([key, value]) => (
                                             <div key={key} className="text-center">
                                                 <div className="text-lg font-semibold">{value}</div>
                                                 <div className="text-sm text-gray-600 capitalize">

@@ -104,9 +104,9 @@ export default function SemanticMapPage() {
       id: `semantic_${Date.now()}`,
       url,
       topicClusters: sampleTopics.map((topic, _index) => ({
-        id: `cluster_${index}`,
+        id: `cluster_${_index}`,
         topic,
-        keywords: sampleKeywords.slice(_index, index + 3),
+        keywords: sampleKeywords.slice(_index, _index + 3),
         semanticScore: Math.floor(Math.random() * 30) + 70,
         contentGaps: ['Advanced techniques', 'Case studies', 'ROI measurement'],
         relatedTopics: sampleTopics.filter(t => t !== topic).slice(0, 2),
@@ -130,7 +130,7 @@ export default function SemanticMapPage() {
       },
       semanticGraph: {
         nodes: sampleTopics.map((topic, _index) => ({
-          id: `node_${index}`,
+          id: `node_${_index}`,
           label: topic,
           type: 'topic',
           score: Math.random() * 40 + 60
@@ -185,12 +185,12 @@ export default function SemanticMapPage() {
     try {
       const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k);
       const result = await simulateSemanticAnalysis(analysisUrl, keywords);
-      setCurrentResult(_result);
+      setCurrentResult(result);
 
       // Save result to database
       await addDoc(collection(db, 'semanticMapResults'), {
         userId: user.uid,
-        ..._result,
+        ...result,
         createdAt: new Date()
       });
 
@@ -229,7 +229,7 @@ export default function SemanticMapPage() {
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
-  const pieData = currentResult?.topicClusters.map((cluster, _index) => ({
+  const pieData = currentResult?.topicClusters.map((cluster, index) => ({
     name: cluster.topic,
     _value: cluster.semanticScore,
     fill: COLORS[index % COLORS.length]
@@ -270,7 +270,7 @@ export default function SemanticMapPage() {
                 id="analysis-url"
                 placeholder="https://example.com"
                 value={analysisUrl}
-                onChange={(e) => setAnalysisUrl(e.target._value)}
+                onChange={(e) => setAnalysisUrl(e.target.value)}
                 disabled={isAnalyzing}
               />
             </div>
@@ -280,7 +280,7 @@ export default function SemanticMapPage() {
                 id="target-keywords"
                 placeholder="seo, optimization, content marketing"
                 value={targetKeywords}
-                onChange={(e) => setTargetKeywords(e.target._value)}
+                onChange={(e) => setTargetKeywords(e.target.value)}
                 disabled={isAnalyzing}
               />
             </div>
@@ -380,7 +380,7 @@ export default function SemanticMapPage() {
                             dataKey="value"
                             label={({ name, value }) => `${name}: ${value}`}
                           >
-                            {pieData.map((entry, _index) => (
+                            {pieData.map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={entry.fill} />
                             ))}
                           </Pie>
@@ -488,7 +488,7 @@ export default function SemanticMapPage() {
                         <div className="space-y-2">
                           <Label className="text-sm font-medium">Keywords</Label>
                           <div className="flex flex-wrap gap-1">
-                            {cluster.keywords.map((keyword, _index) => (
+                            {cluster.keywords.map((keyword, index) => (
                               <Badge key={index} variant="outline">{keyword}</Badge>
                             ))}
                           </div>
@@ -497,7 +497,7 @@ export default function SemanticMapPage() {
                         <div className="space-y-2">
                           <Label className="text-sm font-medium">Content Gaps</Label>
                           <ul className="text-sm space-y-1">
-                            {cluster.contentGaps.map((gap, _index) => (
+                            {cluster.contentGaps.map((gap, index) => (
                               <li key={index} className="flex items-center gap-2">
                                 <Lightbulb className="h-4 w-4 text-amber-500" />
                                 {gap}
@@ -518,7 +518,7 @@ export default function SemanticMapPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {currentResult.keywordAnalysis.map((keyword, _index) => (
+                      {currentResult.keywordAnalysis.map((keyword, index) => (
                         <div key={index} className="p-4 border rounded-lg space-y-3">
                           <div className="flex items-center justify-between">
                             <h4 className="font-semibold">{keyword.keyword}</h4>
@@ -631,7 +631,7 @@ export default function SemanticMapPage() {
                         
                         <div className="space-y-2">
                           <Label className="text-sm font-medium">Topic Connections</Label>
-                          {currentResult.semanticGraph.edges.map((edge, _index) => (
+                          {currentResult.semanticGraph.edges.map((edge, index) => (
                             <div key={index} className="flex items-center justify-between text-sm p-2 bg-muted rounded">
                               <span>
                                 {currentResult.semanticGraph.nodes.find(n => n.id === edge.source)?.label} 
@@ -652,7 +652,7 @@ export default function SemanticMapPage() {
 
               <TabsContent value="recommendations" className="space-y-4">
                 <div className="space-y-4">
-                  {currentResult.recommendations.map((rec, _index) => (
+                  {currentResult.recommendations.map((rec, index) => (
                     <Card key={index}>
                       <CardContent className="p-6">
                         <div className="flex items-start gap-4">

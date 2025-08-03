@@ -37,7 +37,7 @@ const limiter = rateLimit({
     uniqueTokenPerInterval: 500,
 });
 
-function getClientIP(_request: NextRequest): string {
+function getClientIP(request: NextRequest): string {
     // Try to get IP from various headers
     const forwarded = request.headers.get('x-forwarded-for');
     const realIP = request.headers.get('x-real-ip');
@@ -70,7 +70,7 @@ export async function POST(_request: NextRequest) {
         }
 
         // Parse request body
-        const body: SubscribeRequest = await request.json();
+        const body: SubscribeRequest = await _request.json();
 
         if (!body.subscription || !body.subscription.endpoint) {
             return NextResponse.json(
@@ -107,7 +107,7 @@ export async function POST(_request: NextRequest) {
             userId: body.userId,
             subscription: body.subscription,
             preferences: { ...defaultPreferences, ...body.preferences },
-            userAgent: request.headers.get('user-agent') || 'Unknown',
+            userAgent: _request.headers.get('user-agent') || 'Unknown',
             ipAddress: ip,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
@@ -139,8 +139,8 @@ export async function POST(_request: NextRequest) {
             subscriptionId
         });
 
-    } catch (_error) {
-        console.error('[PWA] Push subscription _error:', _error);
+    } catch (error) {
+        console.error('[PWA] Push subscription _error:', error);
 
         if (error instanceof Error) {
             return NextResponse.json(
@@ -156,10 +156,10 @@ export async function POST(_request: NextRequest) {
     }
 }
 
-export async function DELETE(_request: NextRequest) {
+export async function DELETE(request: NextRequest) {
     try {
         // Rate limiting
-        const ip = getClientIP(_request);
+        const ip = getClientIP(request);
         try {
             await limiter.check(5, ip);
         } catch {

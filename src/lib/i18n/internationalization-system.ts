@@ -489,7 +489,7 @@ export class InternationalizationSystem {
     }
 
     // Translation methods
-    translate(_key: string, values?: InterpolationValues): string {
+    translate(key: string, values?: InterpolationValues): string {
         const translation = this.translations[key];
         if (!translation) {
             console.warn(`Translation missing for _key: ${key}`);
@@ -515,7 +515,7 @@ export class InternationalizationSystem {
         return key;
     }
 
-    translatePlural(_key: string, count: number, values?: InterpolationValues): string {
+    translatePlural(key: string, count: number, values?: InterpolationValues): string {
         const translation = this.translations[key];
         if (!translation) {
             console.warn(`Translation missing for _key: ${key}`);
@@ -543,10 +543,10 @@ export class InternationalizationSystem {
     private interpolate(template: string, values?: InterpolationValues): string {
         if (!values) return template;
 
-        return template.replace(/{{(\w+)}}/g, (match, _key) => {
+        return template.replace(/{{(\w+)}}/g, (match, key) => {
             const value = values[key];
             if (value === undefined) return match;
-            return String(_value);
+            return String(value);
         });
     }
 

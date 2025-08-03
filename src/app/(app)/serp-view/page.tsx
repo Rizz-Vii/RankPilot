@@ -22,12 +22,12 @@ export default function SerpViewPage() {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SerpViewOutput | null>(null);
-  const [_error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   const resultsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (results || _error) {
+    if (results || error) {
       resultsRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
@@ -49,7 +49,7 @@ export default function SerpViewPage() {
         searchEngine: 'google'
       };
       const result = await getSerpData(serpInput);
-      setResults(_result);
+      setResults(result);
 
       if (user) {
         const userActivitiesRef = collection(
@@ -67,7 +67,11 @@ export default function SerpViewPage() {
         });
       }
     } catch (e: unknown) {
-      setError(e.message || "An unexpected error occurred.");
+      if (typeof e === "object" && e !== null && "message" in e) {
+        setError(String((e as { message?: unknown }).message));
+      } else {
+        setError("An unexpected error occurred.");
+      }
     } finally {
       setIsLoading(false);
     }

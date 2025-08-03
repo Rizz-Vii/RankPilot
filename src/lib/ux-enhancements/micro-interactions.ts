@@ -120,7 +120,7 @@ export const analysisStateConfig: Record<
       sound: "success",
     },
   },
-  _error: {
+  error: {
     label: "Error",
     description: "Analysis failed - please retry",
     icon: "alert-circle",
