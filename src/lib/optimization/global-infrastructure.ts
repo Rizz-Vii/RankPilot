@@ -5,6 +5,18 @@
 
 import { EventEmitter } from 'events';
 
+interface OptimizationRecommendation {
+    type: string;
+    priority: 'low' | 'medium' | 'high' | 'critical';
+    description: string;
+    expected_impact: {
+        performance_improvement: number;
+        cost_savings: number;
+        implementation_effort: string;
+    };
+    implementation_steps: string[];
+}
+
 export interface EdgeLocation {
     id: string;
     name: string;
@@ -39,12 +51,14 @@ export interface CacheRule {
     cache_type: 'static' | 'dynamic' | 'api' | 'edge';
     conditions: Array<{
         type: 'path' | 'header' | 'query' | 'method' | 'user_agent';
+        name?: string;
         operator: 'equals' | 'contains' | 'starts_with' | 'regex';
         _value: string;
+        value?: string;
     }>;
     actions: Array<{
         type: 'cache' | 'bypass' | 'purge' | 'transform';
-        parameters: Record<string, any>;
+        parameters: Record<string, unknown>;
     }>;
     priority: number;
     enabled: boolean;
@@ -97,7 +111,7 @@ export interface PerformanceOptimization {
     id: string;
     type: 'compression' | 'minification' | 'image_optimization' | 'prefetch' | 'http2_push';
     enabled: boolean;
-    configuration: Record<string, any>;
+    configuration: Record<string, unknown>;
     impact: {
         size_reduction: number;
         performance_improvement: number;
@@ -121,6 +135,89 @@ export interface DatabaseOptimization {
     implemented_at?: number;
 }
 
+export interface RequestInfo {
+    path: string;
+    method: string;
+    headers: Record<string, string>;
+    query: Record<string, string>;
+}
+
+export interface CacheCondition {
+    type: 'path' | 'header' | 'query' | 'method' | 'user_agent';
+    name?: string;
+    operator: 'equals' | 'contains' | 'starts_with' | 'regex';
+    _value: string;
+    value?: string;
+}
+
+export interface LoadBalancingTarget {
+    id: string;
+    endpoint: string;
+    weight: number;
+    health_check: boolean;
+    status: 'healthy' | 'unhealthy' | 'draining';
+    current_connections: number;
+    response_time: number;
+}
+
+export interface AssetInfo {
+    id: string;
+    type: string;
+    size: number;
+    lastModified: number;
+    path: string;
+    contentType: string;
+}
+
+export interface ClientInfo {
+    region: string;
+    country?: string;
+    city?: string;
+}
+
+export interface AssetOptimizationResult {
+    path: string;
+    original_size: number;
+    optimized_size: number;
+    savings: number;
+    optimizations_applied: string[];
+}
+
+export interface EdgeMetrics {
+    total: number;
+    active: number;
+    avg_latency: number;
+    avg_cache_hit_rate: number;
+    total_bandwidth: number;
+}
+
+export interface CacheMetrics {
+    total_rules: number;
+    active_rules: number;
+    global_hit_rate: number;
+    bandwidth_savings: number;
+}
+
+export interface LoadBalancingMetrics {
+    total_rules: number;
+    healthy_targets: number;
+    avg_response_time: number;
+    request_distribution: Record<string, number>;
+}
+
+export interface OptimizationMetrics {
+    active_optimizations: number;
+    total_size_reduction: number;
+    performance_improvement: number;
+    bandwidth_savings: number;
+}
+
+export interface DatabaseMetrics {
+    active_optimizations: number;
+    avg_query_improvement: number;
+    throughput_increase: number;
+}
+
 export class GlobalInfrastructureOptimizer extends EventEmitter {
     private edgeLocations: Map<string, EdgeLocation> = new Map();
     private cacheRules: Map<string, CacheRule> = new Map();
@@ -128,7 +225,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
     private optimizations: Map<string, PerformanceOptimization> = new Map();
     private databaseOptimizations: Map<string, DatabaseOptimization> = new Map();
     private isOptimizing: boolean = false;
-    private optimizationInterval?: NodeJS.Timer;
+    private optimizationInterval?: ReturnType<typeof setInterval>;
 
     constructor() {
         super();
@@ -157,7 +254,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
 
         this.isOptimizing = false;
         if (this.optimizationInterval) {
-            clearInterval(this.optimizationInterval as NodeJS.Timeout);
+            clearInterval(this.optimizationInterval);
             this.optimizationInterval = undefined;
         }
 
@@ -321,17 +418,21 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         type: 'css' | 'js' | 'image' | 'font';
         size: number;
         content?: string;
-    }>): Promise<Array<{
-        path: string;
-        original_size: number;
-        optimized_size: number;
-        savings: number;
-        optimizations_applied: string[];
-    }>> {
+    }>): Promise<AssetOptimizationResult[]> {
         const results = [];
 
         for (const asset of assets) {
-            const optimized = await this.optimizeAsset(asset);
+            const assetInfo: AssetInfo = {
+                id: asset.path,
+                type: asset.type,
+                size: asset.size,
+                lastModified: Date.now(),
+                path: asset.path,
+                contentType: asset.type === 'css' ? 'text/css' :
+                    asset.type === 'js' ? 'application/javascript' :
+                        asset.type === 'image' ? 'image/*' : 'font/*'
+            };
+            const optimized = await this.optimizeAsset(assetInfo);
             results.push(optimized);
         }
 
@@ -438,18 +539,8 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
     /**
      * Generate optimization recommendations
      */
-    async generateOptimizationRecommendations(): Promise<Array<{
-        type: string;
-        priority: 'low' | 'medium' | 'high' | 'critical';
-        description: string;
-        expected_impact: {
-            performance_improvement: number;
-            cost_savings: number;
-            implementation_effort: string;
-        };
-        implementation_steps: string[];
-    }>> {
-        const recommendations = [];
+    async generateOptimizationRecommendations(): Promise<OptimizationRecommendation[]> {
+        const recommendations: OptimizationRecommendation[] = [];
 
         // Analyze edge performance
         const edgeRecommendations = await this.analyzeEdgePerformance();
@@ -466,10 +557,10 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         // Sort by priority and expected impact
         recommendations.sort((a, b) => {
             const priorityWeight = { critical: 4, high: 3, medium: 2, low: 1 };
-            return priorityWeight[(b as any).priority as keyof typeof priorityWeight] - priorityWeight[(a as any).priority as keyof typeof priorityWeight];
+            return priorityWeight[b.priority] - priorityWeight[a.priority];
         });
 
-        return recommendations as any;
+        return recommendations;
     }
 
     // Private methods
@@ -521,7 +612,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return (latencyScore * 0.3 + cacheScore * 0.3 + uptimeScore * 0.2 + errorScore * 0.2);
     }
 
-    private matchesCacheRule(_request: any, rule: CacheRule): boolean {
+    private matchesCacheRule(_request: RequestInfo, rule: CacheRule): boolean {
         // Check if request path matches rule pattern
         const pathMatches = new RegExp(rule.pattern).test(_request.path);
         if (!pathMatches) return false;
@@ -536,7 +627,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return true;
     }
 
-    private evaluateCondition(_request: any, condition: any): boolean {
+    private evaluateCondition(_request: RequestInfo, condition: CacheCondition): boolean {
         let value: string;
 
         switch (condition.type) {
@@ -547,10 +638,10 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
                 value = _request.method;
                 break;
             case 'header':
-                value = _request.headers[condition.name] || '';
+                value = _request.headers[condition.name || ''] || '';
                 break;
             case 'query':
-                value = _request.query[condition.name] || '';
+                value = _request.query[condition.name || ''] || '';
                 break;
             default:
                 return true;
@@ -575,19 +666,19 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return patterns.length * Math.floor(Math.random() * 100 + 50);
     }
 
-    private getRoundRobinTarget(targets: any[]): string {
+    private getRoundRobinTarget(targets: LoadBalancingTarget[]): string {
         // Simple round-robin implementation
         const index = Date.now() % targets.length;
         return targets[index].id;
     }
 
-    private getLeastConnectionsTarget(targets: any[]): string {
+    private getLeastConnectionsTarget(targets: LoadBalancingTarget[]): string {
         return targets.reduce((min, target) =>
             target.current_connections < min.current_connections ? target : min
         ).id;
     }
 
-    private getWeightedTarget(targets: any[]): string {
+    private getWeightedTarget(targets: LoadBalancingTarget[]): string {
         const totalWeight = targets.reduce((sum, t) => sum + t.weight, 0);
         const random = Math.random() * totalWeight;
 
@@ -602,7 +693,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return targets[0].id;
     }
 
-    private getGeographicTarget(rule: LoadBalancingRule, targets: any[], clientInfo?: any): string {
+    private getGeographicTarget(rule: LoadBalancingRule, targets: LoadBalancingTarget[], clientInfo?: ClientInfo): string {
         if (!rule.geographic_routing.enabled || !clientInfo) {
             return this.getRoundRobinTarget(targets);
         }
@@ -618,13 +709,13 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return this.getRoundRobinTarget(targets);
     }
 
-    private getPerformanceTarget(targets: any[]): string {
+    private getPerformanceTarget(targets: LoadBalancingTarget[]): string {
         return targets.reduce((best, target) =>
             target.response_time < best.response_time ? target : best
         ).id;
     }
 
-    private async optimizeAsset(asset: any): Promise<any> {
+    private async optimizeAsset(asset: AssetInfo): Promise<AssetOptimizationResult> {
         let optimizedSize = asset.size;
         const appliedOptimizations = [];
 
@@ -657,14 +748,14 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         };
     }
 
-    private async simulateOptimizationImplementation(optimization: DatabaseOptimization): Promise<void> {
+    private async simulateOptimizationImplementation(_optimization: DatabaseOptimization): Promise<void> {
         // Simulate implementation delay
         return new Promise(resolve => {
             setTimeout(resolve, Math.random() * 5000 + 1000);
         });
     }
 
-    private calculateEdgeMetrics(): any {
+    private calculateEdgeMetrics(): EdgeMetrics {
         const locations = Array.from(this.edgeLocations.values());
         const active = locations.filter(l => l.status === 'active');
 
@@ -677,7 +768,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         };
     }
 
-    private calculateCacheMetrics(): any {
+    private calculateCacheMetrics(): CacheMetrics {
         const rules = Array.from(this.cacheRules.values());
         const active = rules.filter(r => r.enabled);
 
@@ -689,7 +780,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         };
     }
 
-    private calculateLoadBalancingMetrics(): any {
+    private calculateLoadBalancingMetrics(): LoadBalancingMetrics {
         const rules = Array.from(this.loadBalancingRules.values());
         const allTargets = rules.flatMap(r => r.targets);
         const healthy = allTargets.filter(t => t.status === 'healthy');
@@ -702,7 +793,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         };
     }
 
-    private calculateOptimizationMetrics(): any {
+    private calculateOptimizationMetrics(): OptimizationMetrics {
         const optimizations = Array.from(this.optimizations.values());
         const active = optimizations.filter(o => o.enabled);
 
@@ -714,7 +805,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         };
     }
 
-    private calculateDatabaseMetrics(): any {
+    private calculateDatabaseMetrics(): DatabaseMetrics {
         const optimizations = Array.from(this.databaseOptimizations.values());
         const active = optimizations.filter(o => o.status === 'active');
 
@@ -784,7 +875,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         }
     }
 
-    private async analyzeEdgePerformance(): Promise<unknown[]> {
+    private async analyzeEdgePerformance(): Promise<OptimizationRecommendation[]> {
         const recommendations = [];
 
         for (const location of this.edgeLocations.values()) {
@@ -810,7 +901,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return recommendations;
     }
 
-    private async analyzeCacheEfficiency(): Promise<unknown[]> {
+    private async analyzeCacheEfficiency(): Promise<OptimizationRecommendation[]> {
         const recommendations = [];
 
         for (const rule of this.cacheRules.values()) {
@@ -836,7 +927,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return recommendations;
     }
 
-    private async analyzeDatabasePerformance(): Promise<unknown[]> {
+    private async analyzeDatabasePerformance(): Promise<OptimizationRecommendation[]> {
         // Analyze database performance and suggest optimizations
         return [
             {

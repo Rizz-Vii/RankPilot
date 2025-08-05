@@ -12,13 +12,13 @@ import fetch from "node-fetch";
 import * as cheerio from "cheerio";
 
 // Define the input schema for the SEO audit flow
-const AuditUrlInputSchema = z.object({
+const _AuditUrlInputSchema = z.object({
   url: z.string().describe("The URL to audit."),
 });
-export type AuditUrlInput = z.infer<typeof AuditUrlInputSchema>;
+export type AuditUrlInput = z.infer<typeof _AuditUrlInputSchema>;
 
 // Define the output schema for the SEO audit flow
-const AuditUrlOutputSchema = z.object({
+const _AuditUrlOutputSchema = z.object({
   overallScore: z
     .number()
     .describe("The overall SEO score for the URL (0-100)."),
@@ -47,7 +47,7 @@ const AuditUrlOutputSchema = z.object({
     .string()
     .describe("A brief overall summary of the audit findings."),
 });
-export type AuditUrlOutput = z.infer<typeof AuditUrlOutputSchema>;
+export type AuditUrlOutput = z.infer<typeof _AuditUrlOutputSchema>;
 
 // Mock SEO audit implementation for build safety
 export async function auditUrl(input: AuditUrlInput): Promise<AuditUrlOutput> {
@@ -141,8 +141,8 @@ export async function auditUrl(input: AuditUrlInput): Promise<AuditUrlOutput> {
     overallScore,
     items: mockAuditItems,
     summary: `SEO audit completed for ${url}. Overall score: ${overallScore}/100. ${pageContent
-        ? "Key areas for improvement include meta descriptions and image alt text optimization."
-        : "Content analysis was limited due to fetch restrictions. Focus on technical SEO improvements."
+      ? "Key areas for improvement include meta descriptions and image alt text optimization."
+      : "Content analysis was limited due to fetch restrictions. Focus on technical SEO improvements."
       }`
   };
 }

@@ -349,12 +349,12 @@ export function validateUserAccess(userAccess: unknown): userAccess is UserAcces
     "role" in userAccess &&
     "tier" in userAccess &&
     "status" in userAccess &&
-    typeof (userAccess as any).role === "string" &&
-    ["admin", "user"].includes((userAccess as any).role) &&
-    typeof (userAccess as any).tier === "string" &&
-    TIER_HIERARCHY.includes((userAccess as any).tier) &&
-    typeof (userAccess as any).status === "string" &&
-    ["active", "canceled", "past_due", "free"].includes((userAccess as any).status)
+    typeof (userAccess as { role?: unknown }).role === "string" &&
+    ["admin", "user"].includes((userAccess as { role: string }).role) &&
+    typeof (userAccess as { tier?: unknown }).tier === "string" &&
+    TIER_HIERARCHY.includes((userAccess as { tier: string }).tier as SubscriptionTier) &&
+    typeof (userAccess as { status?: unknown }).status === "string" &&
+    ["active", "canceled", "past_due", "free"].includes((userAccess as { status: string }).status)
   );
 }
 
@@ -371,7 +371,7 @@ export function normalizeUserAccess(dbUser: unknown): UserAccess {
     };
   }
 
-  const userObj = dbUser as Record<string, any>;
+  const userObj = dbUser as Record<string, unknown>;
 
   // Handle admin tier mapping - admin tier gets enterprise features with admin role
   let mappedTier: SubscriptionTier;
@@ -382,14 +382,14 @@ export function normalizeUserAccess(dbUser: unknown): UserAccess {
     mappedRole = "admin"; // But with admin role for special permissions
   } else {
     mappedRole = (userObj.role === "admin" ? "admin" : "user") as UserRole;
-    mappedTier = (TIER_HIERARCHY.includes(userObj.subscriptionTier)
-      ? userObj.subscriptionTier
+    mappedTier = (TIER_HIERARCHY.includes(userObj.subscriptionTier as SubscriptionTier)
+      ? userObj.subscriptionTier as SubscriptionTier
       : "free") as SubscriptionTier;
   }
 
   return {
     role: mappedRole,
     tier: mappedTier,
-    status: userObj.subscriptionStatus || "free",
+    status: (userObj.subscriptionStatus as "active" | "canceled" | "past_due" | "free") || "free",
   };
 }

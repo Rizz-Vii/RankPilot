@@ -3,7 +3,7 @@
 
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', {
     apiVersion: '2025-07-30.basil',
 });
 
@@ -113,15 +113,21 @@ export async function handleSubscriptionSuccess(sessionId: string) {
 
     const subscription = session.subscription as Stripe.Subscription;
     const customer = session.customer as Stripe.Customer;
+    const stripeSubscription = subscription as unknown as {
+        current_period_end: number;
+        trial_end?: number;
+        id: string;
+        status: string;
+    };
 
     return {
         subscriptionId: subscription.id,
         customerId: customer.id,
         status: subscription.status,
-        currentPeriodEnd: (subscription as any).current_period_end * 1000, // Stripe API compatibility
+        currentPeriodEnd: (stripeSubscription.current_period_end) * 1000, // Stripe API compatibility
         userId: session.client_reference_id,
         tier: session.metadata?.tier,
-        trialEnd: (subscription as any).trial_end ? (subscription as any).trial_end * 1000 : null
+        trialEnd: (stripeSubscription.trial_end) ? (stripeSubscription.trial_end) * 1000 : null
     };
 }
 

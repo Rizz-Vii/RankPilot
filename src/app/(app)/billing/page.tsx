@@ -15,7 +15,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   CreditCard,
   Download,
-  Calendar,
   DollarSign,
   AlertTriangle,
   CheckCircle,
@@ -92,7 +91,7 @@ export default function BillingPage() {
     setIsMounted(true);
   }, []);
 
-  const handleUpgrade = () => {
+  const _handleUpgrade = () => {
     toast.info("Redirecting to upgrade options...");
     // Redirect to pricing page with current plan highlighted
   };

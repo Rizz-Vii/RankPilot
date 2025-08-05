@@ -8,7 +8,8 @@
 
 // CommonJS export - only executed in CommonJS environments
 if (typeof module !== "undefined") {
-  module.exports = {
+  const moduleObj = module || {};
+  moduleObj.exports = {
     createTelemetryProvider: () => ({
       start: () => {},
       shutdown: async () => Promise.resolve(),

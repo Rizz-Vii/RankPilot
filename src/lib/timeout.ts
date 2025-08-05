@@ -1,3 +1,5 @@
+// Fix NodeJS type errors
+// Use NodeJS.Timeout type directly (globally available)
 /**
  * Enhanced timeout utility for AI flows with performance monitoring
  */
@@ -29,15 +31,7 @@ export interface TimeoutResult<T> {
   retryAttempts: number;
 }
 
-export function withTimeout<T>(
-  promise: Promise<T>,
-  timeoutMs: number,
-  timeoutMessage?: string
-): Promise<T>;
-export function withTimeout<T>(
-  promise: Promise<T>,
-  options: TimeoutOptions
-): Promise<TimeoutResult<T>>;
+// Only keep the main implementation below
 export function withTimeout<T>(
   promise: Promise<T>,
   timeoutMsOrOptions: number | TimeoutOptions,
@@ -60,8 +54,8 @@ export function withTimeout<T>(
   const startTime = Date.now();
 
   return new Promise((resolve, reject) => {
-    let timeoutId: NodeJS.Timeout;
-    let progressId: NodeJS.Timeout;
+    let timeoutId: ReturnType<typeof setTimeout>;
+    let progressId: ReturnType<typeof setTimeout>;
     let attempts = 0;
 
     const attemptOperation = async (): Promise<void> => {
@@ -75,7 +69,7 @@ export function withTimeout<T>(
         reject(
           new TimeoutError(
             message ||
-              `Operation timed out after ${timeoutMs}ms (attempt ${attempts}/${retryCount + 1})`,
+            `Operation timed out after ${timeoutMs}ms (attempt ${attempts}/${retryCount + 1})`,
             elapsedTime,
             timeoutMs
           )
@@ -169,7 +163,7 @@ export function withAITimeout<T>(
       case "complex":
         timeoutMs = Math.min(baseTimeoutMs * 2, maxTimeoutMs);
         break;
-      case "llm-generation":
+      case "llm-generation": {
         // Estimate based on tokens (rough: 100 tokens per second)
         const estimatedTime = expectedTokens
           ? (expectedTokens / 100) * 1000
@@ -179,6 +173,7 @@ export function withAITimeout<T>(
           maxTimeoutMs
         );
         break;
+      }
       case "data-processing":
         timeoutMs = Math.min(baseTimeoutMs * 3, maxTimeoutMs);
         break;
@@ -191,7 +186,7 @@ export function withAITimeout<T>(
   return withTimeout(promise, {
     timeoutMs,
     timeoutMessage: `AI operation (${operationType}) timed out after ${timeoutMs}ms`,
-    onProgress: (elapsedTime, remainingTime) => {
+    onProgress: (elapsedTime, _remainingTime) => {
       if (
         !slowResponseTriggered &&
         elapsedTime > slowResponseThreshold &&
@@ -204,5 +199,5 @@ export function withAITimeout<T>(
     progressInterval: 500,
     retryCount: operationType === "simple" ? 1 : 0,
     retryDelay: 2000,
-  });
+  }) as Promise<TimeoutResult<T>>;
 }

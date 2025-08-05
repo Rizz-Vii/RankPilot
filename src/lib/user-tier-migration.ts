@@ -8,8 +8,6 @@ import {
   getDocs,
   doc,
   updateDoc,
-  query,
-  where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -126,7 +124,7 @@ export async function identifyAndCorrectUserTiers(): Promise<void> {
     for (const user of usersToUpdate) {
       const newTier =
         TIER_MIGRATION_MAP[
-          user.subscriptionTier as keyof typeof TIER_MIGRATION_MAP
+        user.subscriptionTier as keyof typeof TIER_MIGRATION_MAP
         ];
 
       if (newTier && newTier !== user.subscriptionTier) {

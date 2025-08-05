@@ -126,7 +126,7 @@ export default function RewriteGenPage() {
       id: `rewrite_${Date.now()}`,
       url: inputUrl,
       originalContent: content,
-      analysisType: type as any,
+      analysisType: type as 'comprehensive' | 'seo-focused' | 'readability' | 'conversion',
       contentSuggestions: sampleSections.map((section, _index) => ({
         section,
         originalText: `Original ${section.toLowerCase()} text that could be improved for better SEO performance and user engagement.`,

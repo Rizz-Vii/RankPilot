@@ -4,7 +4,7 @@
 
 import type { SuggestKeywordsOutput } from "@/ai/flows/keyword-suggestions";
 import type { AuditUrlOutput } from "@/ai/flows/seo-audit";
-import type { CompetitorAnalysisOutput } from "@/ai/flows/competitor-analysis";
+import type { CompetitorAnalysisOutput as _CompetitorAnalysisOutput } from "@/ai/flows/competitor-analysis";
 
 export const demoKeywordData: SuggestKeywordsOutput = {
   keywords: [
@@ -90,7 +90,7 @@ export const demoSeoAuditData: AuditUrlOutput = {
     "Good overall SEO foundation with opportunities for improvement in page speed and internal linking structure.",
 };
 
-export function getDemoData(tool: string): any {
+export function getDemoData(tool: string): SuggestKeywordsOutput | AuditUrlOutput | null {
   switch (tool) {
     case "keyword-tool":
       return demoKeywordData;

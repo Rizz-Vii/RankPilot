@@ -1,4 +1,5 @@
 // src/app/(auth)/layout.tsx
+import React from "react";
 import SiteHeader from "@/components/site-header";
 import { AuthMobileSidebar } from "@/components/unified-mobile-sidebar";
 

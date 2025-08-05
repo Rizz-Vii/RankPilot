@@ -91,7 +91,7 @@ export interface TestPlan {
     name: string;
     type: 'unit' | 'integration' | 'e2e' | 'performance' | 'security';
     framework: string;
-    configuration: Record<string, any>;
+    configuration: Record<string, unknown>;
     test_suites: Array<{
         name: string;
         files: string[];
@@ -118,7 +118,7 @@ export interface AutomationWorkflow {
     description: string;
     trigger: {
         type: 'schedule' | 'webhook' | 'file_change' | 'manual';
-        configuration: Record<string, any>;
+        configuration: Record<string, unknown>;
     };
     conditions: Array<{
         type: 'branch' | 'file_pattern' | 'author' | 'time' | 'custom';
@@ -128,7 +128,7 @@ export interface AutomationWorkflow {
     actions: Array<{
         id: string;
         type: 'code_analysis' | 'test_run' | 'deployment' | 'notification' | 'custom';
-        configuration: Record<string, any>;
+        configuration: Record<string, unknown>;
         depends_on: string[];
         timeout: number;
     }>;
@@ -173,7 +173,7 @@ export class AIDevAutomation extends EventEmitter {
     private workflows: Map<string, AutomationWorkflow> = new Map();
     private businessInsights: Map<string, BusinessInsight> = new Map();
     private isRunning: boolean = false;
-    private automationInterval?: NodeJS.Timeout;
+    private automationInterval?: ReturnType<typeof setTimeout>;
 
     constructor() {
         super();
@@ -385,7 +385,7 @@ export class AIDevAutomation extends EventEmitter {
         }
 
         const deploymentId = this.generateDeploymentId();
-        const startTime = Date.now();
+        const _startTime = Date.now();
 
         if (options.dry_run) {
             return this.simulateDeployment(plan, deploymentId);
@@ -449,7 +449,7 @@ export class AIDevAutomation extends EventEmitter {
     /**
      * Execute automation workflow
      */
-    async executeWorkflow(workflowId: string, context: Record<string, any> = {}): Promise<{
+    async executeWorkflow(workflowId: string, context: Record<string, unknown> = {}): Promise<{
         workflow_id: string;
         execution_id: string;
         status: 'success' | 'failed' | 'partial';
@@ -467,7 +467,7 @@ export class AIDevAutomation extends EventEmitter {
         }
 
         const executionId = this.generateExecutionId();
-        const startTime = Date.now();
+        const _startTime = Date.now();
 
         const result = await this.executeWorkflowActions(workflow, executionId, context);
 
@@ -574,7 +574,7 @@ export class AIDevAutomation extends EventEmitter {
         };
     }
 
-    private async applyAutoFix(filePath: string, issue: unknown): Promise<{
+    private async applyAutoFix(_filePath: string, _issue: unknown): Promise<{
         success: boolean;
         original: string;
         fixed: string;
@@ -648,7 +648,12 @@ export class AIDevAutomation extends EventEmitter {
         return recommendations;
     }
 
-    private calculatePerformanceSummary(testResults: unknown[]): any {
+    private calculatePerformanceSummary(testResults: unknown[]): {
+        overall_score: number;
+        passed_tests: number;
+        failed_tests: number;
+        budget_violations: number;
+    } {
         const passed = (testResults as Array<{ passed: boolean }>).filter(r => r.passed).length;
         const failed = testResults.length - passed;
         const budgetViolations = (testResults as Array<{ value: number; threshold: number }>).
@@ -662,8 +667,29 @@ export class AIDevAutomation extends EventEmitter {
         };
     }
 
-    private async executeDeploymentPlan(plan: DeploymentPlan, deploymentId: string, options: unknown): Promise<any> {
-        const stepsExecuted = [];
+    private async executeDeploymentPlan(plan: DeploymentPlan, deploymentId: string, _options: unknown): Promise<{
+        deployment_id: string;
+        status: 'success' | 'failed' | 'rolled_back';
+        steps_executed: Array<{
+            step_id: string;
+            status: 'success' | 'failed' | 'skipped';
+            duration: number;
+            output: string;
+        }>;
+        rollback_performed: boolean;
+        total_duration: number;
+        health_check_results: Array<{
+            check: string;
+            status: 'healthy' | 'unhealthy';
+            response_time: number;
+        }>;
+    }> {
+        const stepsExecuted: Array<{
+            step_id: string;
+            status: 'success' | 'failed' | 'skipped';
+            duration: number;
+            output: string;
+        }> = [];
         let rollbackPerformed = false;
         const startTime = Date.now();
 
@@ -688,10 +714,14 @@ export class AIDevAutomation extends EventEmitter {
                 steps_executed: stepsExecuted,
                 rollback_performed: rollbackPerformed,
                 total_duration: Date.now() - startTime,
-                health_check_results: healthCheckResults
+                health_check_results: healthCheckResults as Array<{
+                    check: string;
+                    status: 'healthy' | 'unhealthy';
+                    response_time: number;
+                }>
             };
 
-        } catch (_error) {
+        } catch {
             return {
                 deployment_id: deploymentId,
                 status: 'failed',
@@ -703,7 +733,12 @@ export class AIDevAutomation extends EventEmitter {
         }
     }
 
-    private async executeDeploymentStep(step: unknown): Promise<any> {
+    private async executeDeploymentStep(step: unknown): Promise<{
+        step_id: string;
+        status: 'success' | 'failed' | 'skipped';
+        duration: number;
+        output: string;
+    }> {
         // Mock step execution
         const startTime = Date.now();
         const success = Math.random() > 0.1; // 90% success rate
@@ -734,12 +769,28 @@ export class AIDevAutomation extends EventEmitter {
         return results;
     }
 
-    private async performRollback(plan: DeploymentPlan): Promise<void> {
+    private async performRollback(_plan: DeploymentPlan): Promise<void> {
         // Mock rollback implementation
         await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    private simulateDeployment(plan: DeploymentPlan, deploymentId: string): any {
+    private simulateDeployment(plan: DeploymentPlan, deploymentId: string): {
+        deployment_id: string;
+        status: 'success' | 'failed' | 'rolled_back';
+        steps_executed: Array<{
+            step_id: string;
+            status: 'success' | 'failed' | 'skipped';
+            duration: number;
+            output: string;
+        }>;
+        rollback_performed: boolean;
+        total_duration: number;
+        health_check_results: Array<{
+            check: string;
+            status: 'healthy' | 'unhealthy';
+            response_time: number;
+        }>;
+    } {
         return {
             deployment_id: deploymentId,
             status: 'success',
@@ -755,7 +806,7 @@ export class AIDevAutomation extends EventEmitter {
         };
     }
 
-    private async analyzePerformanceImpact(timeRange: unknown): Promise<BusinessInsight> {
+    private async analyzePerformanceImpact(_timeRange: unknown): Promise<BusinessInsight> {
         return {
             id: this.generateInsightId(),
             category: 'performance',
@@ -799,7 +850,7 @@ export class AIDevAutomation extends EventEmitter {
         };
     }
 
-    private async analyzeUserEngagement(timeRange: unknown): Promise<BusinessInsight> {
+    private async analyzeUserEngagement(_timeRange: unknown): Promise<BusinessInsight> {
         return {
             id: this.generateInsightId(),
             category: 'user_engagement',
@@ -836,7 +887,7 @@ export class AIDevAutomation extends EventEmitter {
         };
     }
 
-    private async analyzeRevenueMetrics(timeRange: unknown): Promise<BusinessInsight> {
+    private async analyzeRevenueMetrics(_timeRange: unknown): Promise<BusinessInsight> {
         return {
             id: this.generateInsightId(),
             category: 'revenue',
@@ -873,7 +924,7 @@ export class AIDevAutomation extends EventEmitter {
         };
     }
 
-    private async analyzeConversionRates(timeRange: unknown): Promise<BusinessInsight> {
+    private async analyzeConversionRates(_timeRange: unknown): Promise<BusinessInsight> {
         return {
             id: this.generateInsightId(),
             category: 'conversion',
@@ -910,7 +961,18 @@ export class AIDevAutomation extends EventEmitter {
         };
     }
 
-    private async executeWorkflowActions(workflow: AutomationWorkflow, executionId: string, context: unknown): Promise<any> {
+    private async executeWorkflowActions(workflow: AutomationWorkflow, executionId: string, context: unknown): Promise<{
+        workflow_id: string;
+        execution_id: string;
+        status: 'success' | 'failed' | 'partial';
+        actions_executed: Array<{
+            action_id: string;
+            status: 'success' | 'failed' | 'skipped';
+            duration: number;
+            output: unknown;
+        }>;
+        total_duration: number;
+    }> {
         const actionsExecuted = [];
         const startTime = Date.now();
 
@@ -932,7 +994,12 @@ export class AIDevAutomation extends EventEmitter {
         };
     }
 
-    private async executeAction(action: unknown, context: unknown): Promise<any> {
+    private async executeAction(action: unknown, _context: unknown): Promise<{
+        action_id: string;
+        status: 'success' | 'failed' | 'skipped';
+        duration: number;
+        output: unknown;
+    }> {
         const startTime = Date.now();
         const success = Math.random() > 0.1; // 90% success rate
 
@@ -988,7 +1055,7 @@ export class AIDevAutomation extends EventEmitter {
         return `// Sample content for ${filePath}\nconst example = true;`;
     }
 
-    private applyRule(content: string, rule: CodeQualityRule, filePath: string): unknown[] {
+    private applyRule(content: string, rule: CodeQualityRule, _filePath: string): unknown[] {
         // Mock rule application
         if (Math.random() > 0.7) {
             return [{
@@ -1004,7 +1071,13 @@ export class AIDevAutomation extends EventEmitter {
         return [];
     }
 
-    private calculateCodeMetrics(content: string): any {
+    private calculateCodeMetrics(_content: string): {
+        cyclomatic_complexity: number;
+        cognitive_complexity: number;
+        duplication_percentage: number;
+        dependencies_count: number;
+        security_score: number;
+    } {
         return {
             cyclomatic_complexity: Math.floor(Math.random() * 20) + 1,
             cognitive_complexity: Math.floor(Math.random() * 30) + 1,
@@ -1020,7 +1093,7 @@ export class AIDevAutomation extends EventEmitter {
         return Math.max(0, 100 - m.cyclomatic_complexity * 2 - m.duplication_percentage);
     }
 
-    private generateOverallRecommendations(results: CodeAnalysisResult[]): unknown[] {
+    private generateOverallRecommendations(_results: CodeAnalysisResult[]): unknown[] {
         return [
             {
                 type: 'code_quality',
@@ -1035,7 +1108,12 @@ export class AIDevAutomation extends EventEmitter {
         return workflow.success_rate * 0.9 + (success ? 0.1 : 0);
     }
 
-    private calculateCodeQualityMetrics(): any {
+    private calculateCodeQualityMetrics(): {
+        total_files_analyzed: number;
+        average_quality_score: number;
+        issues_auto_fixed: number;
+        manual_fixes_required: number;
+    } {
         return {
             total_files_analyzed: 1250,
             average_quality_score: 87.5,
@@ -1044,7 +1122,12 @@ export class AIDevAutomation extends EventEmitter {
         };
     }
 
-    private calculateTestingMetrics(): any {
+    private calculateTestingMetrics(): {
+        total_test_runs: number;
+        average_pass_rate: number;
+        performance_regressions_detected: number;
+        test_coverage_improvement: number;
+    } {
         return {
             total_test_runs: 156,
             average_pass_rate: 96.2,
@@ -1053,7 +1136,12 @@ export class AIDevAutomation extends EventEmitter {
         };
     }
 
-    private calculateDeploymentMetrics(): any {
+    private calculateDeploymentMetrics(): {
+        total_deployments: number;
+        success_rate: number;
+        average_deployment_time: number;
+        rollbacks_performed: number;
+    } {
         return {
             total_deployments: 45,
             success_rate: 97.8,
@@ -1062,7 +1150,11 @@ export class AIDevAutomation extends EventEmitter {
         };
     }
 
-    private calculateBusinessIntelligenceMetrics(): any {
+    private calculateBusinessIntelligenceMetrics(): {
+        insights_generated: number;
+        actionable_recommendations: number;
+        business_impact_tracked: number;
+    } {
         return {
             insights_generated: 28,
             actionable_recommendations: 67,

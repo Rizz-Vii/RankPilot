@@ -70,7 +70,7 @@ export function safeAnalyticsEvent(eventName: string, eventParams?: unknown): vo
 
   try {
     if (analytics) {
-      logEvent(analytics, eventName, eventParams as Record<string, any> | undefined);
+      logEvent(analytics, eventName, eventParams as Record<string, unknown> | undefined);
     }
   } catch (_error) {
     FirebaseErrorHandler.handleFirebaseError(_error, "analytics event");

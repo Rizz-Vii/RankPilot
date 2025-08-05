@@ -97,6 +97,35 @@ export interface CompetitivePositioning {
   recommendations: string[];
 }
 
+interface ScoreMetrics {
+  seo: number;
+  visibility: number;
+  trust: number;
+  semantic: number;
+}
+
+interface CrawlResultWithSEO extends CrawlResult {
+  seoMetrics?: {
+    overallScore: number;
+  };
+}
+
+interface VisibilityResultWithMetrics {
+  metrics: {
+    overallVisibilityScore: number;
+  };
+}
+
+interface TrustResultWithMetrics {
+  metrics: {
+    overallEATScore: number;
+  };
+}
+
+interface SemanticResultWithScore {
+  overallRelevanceScore: number;
+}
+
 export class NeuroSEOSuite {
   private neuralCrawler: NeuralCrawler;
   private semanticEngine: SemanticMap;
@@ -153,7 +182,7 @@ export class NeuroSEOSuite {
       report.semanticAnalysis = await this.runSemanticPhase(
         report.crawlResults,
         _request.targetKeywords
-      ) as any;
+      ) as SemanticAnalysisResult[];
 
       // Phase 3: AI Visibility Analysis
       console.log("👁️ Starting AI Visibility Analysis phase...");
@@ -236,7 +265,7 @@ export class NeuroSEOSuite {
 
   private async runSemanticPhase(
     crawlResults: CrawlResult[],
-    targetKeywords: string[]
+    _targetKeywords: string[]
   ): Promise<unknown[]> {
     const semanticResults: unknown[] = [];
 
@@ -420,7 +449,7 @@ export class NeuroSEOSuite {
     if (report.crawlResults.length === 0) return 0;
     return Math.round(
       report.crawlResults.reduce(
-        (sum, _result) => sum + ((_result as any).seoMetrics?.overallScore || 0),
+        (sum, _result) => sum + ((_result as CrawlResultWithSEO).seoMetrics?.overallScore || 0),
         0
       ) / report.crawlResults.length
     );
@@ -430,7 +459,7 @@ export class NeuroSEOSuite {
     if (report.visibilityAnalysis.length === 0) return 0;
     return Math.round(
       report.visibilityAnalysis.reduce(
-        (sum, _result) => sum + (_result as any).metrics.overallVisibilityScore,
+        (sum, _result) => sum + ((_result as unknown as VisibilityResultWithMetrics).metrics.overallVisibilityScore || 0),
         0
       ) / report.visibilityAnalysis.length
     );
@@ -440,67 +469,67 @@ export class NeuroSEOSuite {
     if (report.trustAnalysis.length === 0) return 0;
     return Math.round(
       report.trustAnalysis.reduce(
-        (sum, _result) => sum + (_result as any).metrics.overallEATScore,
+        (sum, _result) => sum + ((_result as unknown as TrustResultWithMetrics).metrics.overallEATScore || 0),
         0
       ) / report.trustAnalysis.length
     );
   }
 
   private calculateAverageSemanticScore(report: NeuroSEOReport): number {
-    if ((report as any).semanticAnalysis?.length === 0) return 0;
+    if (report.semanticAnalysis.length === 0) return 0;
     return Math.round(
-      (report as any).semanticAnalysis?.reduce(
-        (sum: number, _result: unknown) => sum + (_result as any).overallRelevanceScore,
+      report.semanticAnalysis.reduce(
+        (sum, _result) => sum + ((_result as unknown as SemanticResultWithScore).overallRelevanceScore || 0),
         0
-      ) / (report as any).semanticAnalysis?.length || 0
+      ) / report.semanticAnalysis.length
     );
   }
 
-  private identifyStrengths(ourScores: any, competitorScores: any[]): string[] {
+  private identifyStrengths(ourScores: ScoreMetrics, competitorScores: ScoreMetrics[]): string[] {
     const strengths: string[] = [];
     const avgCompetitorSEO =
-      competitorScores.reduce((sum, comp) => sum + (comp as any).seo, 0) /
+      competitorScores.reduce((sum, comp) => sum + comp.seo, 0) /
       competitorScores.length;
     const avgCompetitorVisibility =
-      competitorScores.reduce((sum, comp) => sum + (comp as any).visibility, 0) /
+      competitorScores.reduce((sum, comp) => sum + comp.visibility, 0) /
       competitorScores.length;
     const avgCompetitorTrust =
-      competitorScores.reduce((sum, comp) => sum + (comp as any).trust, 0) /
+      competitorScores.reduce((sum, comp) => sum + comp.trust, 0) /
       competitorScores.length;
 
-    if ((ourScores as any).seo > avgCompetitorSEO + 10)
+    if (ourScores.seo > avgCompetitorSEO + 10)
       strengths.push("Strong SEO optimization");
-    if ((ourScores as any).visibility > avgCompetitorVisibility + 10)
+    if (ourScores.visibility > avgCompetitorVisibility + 10)
       strengths.push("High AI visibility");
-    if ((ourScores as any).trust > avgCompetitorTrust + 10)
+    if (ourScores.trust > avgCompetitorTrust + 10)
       strengths.push("Excellent trustworthiness");
-    if ((ourScores as any).semantic > 80) strengths.push("Superior semantic relevance");
+    if (ourScores.semantic > 80) strengths.push("Superior semantic relevance");
 
     return strengths;
   }
 
   private identifyWeaknesses(
-    ourScores: any,
-    competitorScores: any[]
+    ourScores: ScoreMetrics,
+    competitorScores: ScoreMetrics[]
   ): string[] {
     const weaknesses: string[] = [];
     const avgCompetitorSEO =
-      competitorScores.reduce((sum, comp) => sum + (comp as any).seo, 0) /
+      competitorScores.reduce((sum, comp) => sum + comp.seo, 0) /
       competitorScores.length;
     const avgCompetitorVisibility =
-      competitorScores.reduce((sum, comp) => sum + (comp as any).visibility, 0) /
+      competitorScores.reduce((sum, comp) => sum + comp.visibility, 0) /
       competitorScores.length;
     const avgCompetitorTrust =
-      competitorScores.reduce((sum, comp) => sum + (comp as any).trust, 0) /
+      competitorScores.reduce((sum, comp) => sum + comp.trust, 0) /
       competitorScores.length;
 
-    if ((ourScores as any).seo < avgCompetitorSEO - 10)
+    if (ourScores.seo < avgCompetitorSEO - 10)
       weaknesses.push("SEO optimization needs improvement");
-    if ((ourScores as any).visibility < avgCompetitorVisibility - 10)
+    if (ourScores.visibility < avgCompetitorVisibility - 10)
       weaknesses.push("Low AI visibility");
-    if ((ourScores as any).trust < avgCompetitorTrust - 10)
+    if (ourScores.trust < avgCompetitorTrust - 10)
       weaknesses.push("Trust signals need strengthening");
-    if ((ourScores as any).semantic < 60)
+    if (ourScores.semantic < 60)
       weaknesses.push("Semantic relevance could be improved");
 
     return weaknesses;
@@ -536,12 +565,12 @@ export class NeuroSEOSuite {
     return opportunities;
   }
 
-  private identifyThreats(competitorScores: any[]): string[] {
+  private identifyThreats(competitorScores: ScoreMetrics[]): string[] {
     const threats: string[] = [];
 
     const strongCompetitors = competitorScores.filter(
       (comp) =>
-        ((comp as any).seo + (comp as any).visibility + (comp as any).trust + (comp as any).semantic) / 4 > 85
+        (comp.seo + comp.visibility + comp.trust + comp.semantic) / 4 > 85
     );
 
     if (strongCompetitors.length > 0) {
@@ -550,7 +579,7 @@ export class NeuroSEOSuite {
       );
     }
 
-    if (competitorScores.some((comp) => (comp as any).visibility > 90)) {
+    if (competitorScores.some((comp) => comp.visibility > 90)) {
       threats.push("Competitors with superior AI visibility");
     }
 
@@ -558,28 +587,28 @@ export class NeuroSEOSuite {
   }
 
   private generateCompetitiveRecommendations(
-    ourScores: any,
-    competitorScores: any[]
+    ourScores: ScoreMetrics,
+    competitorScores: ScoreMetrics[]
   ): string[] {
     const recommendations: string[] = [];
 
     const avgCompetitorSEO =
-      competitorScores.reduce((sum, comp) => sum + (comp as any).seo, 0) /
+      competitorScores.reduce((sum, comp) => sum + comp.seo, 0) /
       competitorScores.length;
 
-    if ((ourScores as any).seo < avgCompetitorSEO) {
+    if (ourScores.seo < avgCompetitorSEO) {
       recommendations.push(
         "Prioritize SEO optimization to match competitor performance"
       );
     }
 
-    if ((ourScores as any).visibility < 70) {
+    if (ourScores.visibility < 70) {
       recommendations.push(
         "Focus on AI visibility improvements for better LLM citation rates"
       );
     }
 
-    if ((ourScores as any).trust < 80) {
+    if (ourScores.trust < 80) {
       recommendations.push(
         "Strengthen E-A-T signals to build content authority"
       );
@@ -777,7 +806,7 @@ export class NeuroSEOSuite {
   }
 
   // Public method to get usage statistics
-  async getUsageStats(userId: string): Promise<any> {
+  async getUsageStats(userId: string): Promise<unknown> {
     return await this.quotaManager.getUsageStats(userId);
   }
 

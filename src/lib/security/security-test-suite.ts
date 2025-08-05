@@ -181,7 +181,7 @@ export class SecurityTestSuite {
                     blockedAfterAttempts = true;
                     break;
                 }
-            } catch (_error) {
+            } catch {
                 // Network error might indicate blocking
                 blockedAfterAttempts = true;
                 break;
@@ -236,7 +236,7 @@ export class SecurityTestSuite {
                         cvssScore: 5.3
                     });
                 }
-            } catch (_error) {
+            } catch {
                 // Endpoint might not exist, which is acceptable
             }
         }
@@ -245,7 +245,7 @@ export class SecurityTestSuite {
     /**
      * Test account lockout mechanism
      */
-    private async testAccountLockout(testResult: SecurityTestResult): Promise<void> {
+    private async testAccountLockout(_testResult: SecurityTestResult): Promise<void> {
         // This would test if accounts get locked after multiple failed attempts
         // Implementation depends on specific application behavior
     }
@@ -271,7 +271,7 @@ export class SecurityTestSuite {
                     cvssScore: 6.8
                 });
             }
-        } catch (_error) {
+        } catch {
             // MFA endpoint might not exist
         }
     }
@@ -279,7 +279,7 @@ export class SecurityTestSuite {
     /**
      * Test password reset security
      */
-    private async testPasswordResetSecurity(testResult: SecurityTestResult): Promise<void> {
+    private async testPasswordResetSecurity(_testResult: SecurityTestResult): Promise<void> {
         // Test password reset token security and expiration
     }
 
@@ -362,7 +362,7 @@ export class SecurityTestSuite {
                     });
                 }
             }
-        } catch (_error) {
+        } catch {
             // Expected behavior - access should be denied
         }
     }
@@ -370,21 +370,21 @@ export class SecurityTestSuite {
     /**
      * Test horizontal privilege escalation
      */
-    private async testHorizontalPrivilegeEscalation(testResult: SecurityTestResult): Promise<void> {
+    private async testHorizontalPrivilegeEscalation(_testResult: SecurityTestResult): Promise<void> {
         // Test if user can access other users' data
     }
 
     /**
      * Test direct object references
      */
-    private async testDirectObjectReferences(testResult: SecurityTestResult): Promise<void> {
+    private async testDirectObjectReferences(_testResult: SecurityTestResult): Promise<void> {
         // Test for insecure direct object references (IDOR)
     }
 
     /**
      * Test role-based access control
      */
-    private async testRoleBasedAccessControl(testResult: SecurityTestResult): Promise<void> {
+    private async testRoleBasedAccessControl(_testResult: SecurityTestResult): Promise<void> {
         // Test RBAC implementation
     }
 
@@ -415,7 +415,7 @@ export class SecurityTestSuite {
             // Test 3: PII Protection
             await this.testPIIProtection(testResult);
 
-        } catch (_error) {
+        } catch {
             testResult.status = 'failed';
         }
 
@@ -426,21 +426,21 @@ export class SecurityTestSuite {
     /**
      * Test sensitive data exposure
      */
-    private async testSensitiveDataExposure(testResult: SecurityTestResult): Promise<void> {
+    private async testSensitiveDataExposure(_testResult: SecurityTestResult): Promise<void> {
         // Test for sensitive data in responses, logs, etc.
     }
 
     /**
      * Test data encryption
      */
-    private async testDataEncryption(testResult: SecurityTestResult): Promise<void> {
+    private async testDataEncryption(_testResult: SecurityTestResult): Promise<void> {
         // Test encryption implementation
     }
 
     /**
      * Test PII protection
      */
-    private async testPIIProtection(testResult: SecurityTestResult): Promise<void> {
+    private async testPIIProtection(_testResult: SecurityTestResult): Promise<void> {
         // Test Personal Identifiable Information protection
     }
 
@@ -471,7 +471,7 @@ export class SecurityTestSuite {
             // Test 3: API Input Validation
             await this.testAPIInputValidation(testResult);
 
-        } catch (_error) {
+        } catch {
             testResult.status = 'failed';
         }
 
@@ -494,7 +494,7 @@ export class SecurityTestSuite {
                     rateLimited = true;
                     break;
                 }
-            } catch (_error) {
+            } catch {
                 break;
             }
         }
@@ -515,14 +515,14 @@ export class SecurityTestSuite {
     /**
      * Test API authentication
      */
-    private async testAPIAuthentication(testResult: SecurityTestResult): Promise<void> {
+    private async testAPIAuthentication(_testResult: SecurityTestResult): Promise<void> {
         // Test API authentication mechanisms
     }
 
     /**
      * Test API input validation
      */
-    private async testAPIInputValidation(testResult: SecurityTestResult): Promise<void> {
+    private async testAPIInputValidation(_testResult: SecurityTestResult): Promise<void> {
         // Test API input validation and sanitization
     }
 
@@ -553,7 +553,7 @@ export class SecurityTestSuite {
             // Test 3: Secure Cookie Settings
             await this.testSecureCookieSettings(testResult);
 
-        } catch (_error) {
+        } catch {
             testResult.status = 'failed';
         }
 
@@ -564,21 +564,21 @@ export class SecurityTestSuite {
     /**
      * Test session timeout
      */
-    private async testSessionTimeout(testResult: SecurityTestResult): Promise<void> {
+    private async testSessionTimeout(_testResult: SecurityTestResult): Promise<void> {
         // Test session timeout implementation
     }
 
     /**
      * Test session fixation
      */
-    private async testSessionFixation(testResult: SecurityTestResult): Promise<void> {
+    private async testSessionFixation(_testResult: SecurityTestResult): Promise<void> {
         // Test for session fixation vulnerabilities
     }
 
     /**
      * Test secure cookie settings
      */
-    private async testSecureCookieSettings(testResult: SecurityTestResult): Promise<void> {
+    private async testSecureCookieSettings(_testResult: SecurityTestResult): Promise<void> {
         // Test cookie security attributes (HttpOnly, Secure, SameSite)
     }
 
@@ -606,7 +606,7 @@ export class SecurityTestSuite {
             // Test 2: SameSite Cookie Attribute
             await this.testSameSiteCookieAttribute(testResult);
 
-        } catch (_error) {
+        } catch {
             testResult.status = 'failed';
         }
 
@@ -617,14 +617,14 @@ export class SecurityTestSuite {
     /**
      * Test CSRF token implementation
      */
-    private async testCSRFTokenImplementation(testResult: SecurityTestResult): Promise<void> {
+    private async testCSRFTokenImplementation(_testResult: SecurityTestResult): Promise<void> {
         // Test CSRF token presence and validation
     }
 
     /**
      * Test SameSite cookie attribute
      */
-    private async testSameSiteCookieAttribute(testResult: SecurityTestResult): Promise<void> {
+    private async testSameSiteCookieAttribute(_testResult: SecurityTestResult): Promise<void> {
         // Test SameSite cookie attribute implementation
     }
 
@@ -673,7 +673,7 @@ export class SecurityTestSuite {
                 }
             }
 
-        } catch (_error) {
+        } catch {
             testResult.status = 'failed';
         }
 
@@ -702,7 +702,7 @@ export class SecurityTestSuite {
             // Test various injection payloads
             await this.testInjectionVulnerabilities(testResult);
 
-        } catch (_error) {
+        } catch {
             testResult.status = 'failed';
         }
 
@@ -713,7 +713,7 @@ export class SecurityTestSuite {
     /**
      * Test injection vulnerabilities
      */
-    private async testInjectionVulnerabilities(testResult: SecurityTestResult): Promise<void> {
+    private async testInjectionVulnerabilities(_testResult: SecurityTestResult): Promise<void> {
         // Test SQL injection, XSS, command injection, etc.
     }
 
@@ -741,7 +741,7 @@ export class SecurityTestSuite {
             // Test OWASP Top 10 compliance
             await this.testOWASPCompliance(testResult);
 
-        } catch (_error) {
+        } catch {
             testResult.status = 'failed';
         }
 
@@ -752,21 +752,21 @@ export class SecurityTestSuite {
     /**
      * Test GDPR compliance
      */
-    private async testGDPRCompliance(testResult: SecurityTestResult): Promise<void> {
+    private async testGDPRCompliance(_testResult: SecurityTestResult): Promise<void> {
         // Test GDPR compliance requirements
     }
 
     /**
      * Test OWASP compliance
      */
-    private async testOWASPCompliance(testResult: SecurityTestResult): Promise<void> {
+    private async testOWASPCompliance(_testResult: SecurityTestResult): Promise<void> {
         // Test OWASP Top 10 compliance
     }
 
     /**
      * Generate security test report
      */
-    generateReport(): any {
+    generateReport(): unknown {
         const totalTests = this.results.length;
         const passedTests = this.results.filter(r => r.status === 'passed').length;
         const failedTests = this.results.filter(r => r.status === 'failed').length;

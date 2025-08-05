@@ -3,8 +3,8 @@
 
 import { PerformanceDashboard } from "@/components/performance-dashboard";
 import Breadcrumb from "@/components/breadcrumb";
-import MobileToolLayout from "@/components/mobile-tool-layout";
-import { Activity } from "lucide-react";
+import _MobileToolLayout from "@/components/mobile-tool-layout";
+import { Activity as _Activity } from "lucide-react";
 
 export default function PerformancePage() {
   return (

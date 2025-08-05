@@ -17,6 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Activity, Award, TrendingUp, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { Timestamp } from "firebase/firestore";
 
 export default function ProfilePage() {
   const { user, profile, activities, loading: authLoading } = useAuth();
@@ -114,7 +115,7 @@ export default function ProfilePage() {
                   {activities?.filter(
                     (a) =>
                       a.type === "audit" &&
-                      new Date((a as { timestamp: any }).timestamp.toDate()).getMonth() ===
+                      new Date((a.timestamp as Timestamp).toDate()).getMonth() ===
                       new Date().getMonth()
                   ).length || 0}
                 </p>
@@ -136,7 +137,7 @@ export default function ProfilePage() {
                   {activities?.filter(
                     (a) =>
                       a.type === "keyword-research" &&
-                      new Date((a as { timestamp: any }).timestamp.toDate()).getMonth() ===
+                      new Date((a.timestamp as Timestamp).toDate()).getMonth() ===
                       new Date().getMonth()
                   ).length || 0}
                 </p>
@@ -158,7 +159,7 @@ export default function ProfilePage() {
                   {activities?.filter(
                     (a) =>
                       a.type === "serp-analysis" &&
-                      new Date((a as { timestamp: any }).timestamp.toDate()).getMonth() ===
+                      new Date((a.timestamp as Timestamp).toDate()).getMonth() ===
                       new Date().getMonth()
                   ).length || 0}
                 </p>

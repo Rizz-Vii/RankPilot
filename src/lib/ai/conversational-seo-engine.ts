@@ -67,7 +67,7 @@ export interface ConversationResponse {
  */
 export class ConversationalSEOEngine {
     private activeConversations: Map<string, ConversationContext> = new Map();
-    private knowledgeBase: Map<string, any> = new Map();
+    private knowledgeBase: Map<string, unknown> = new Map();
     private personalizedRecommendations: Map<string, string[]> = new Map();
 
     // SEO-specific conversation patterns and responses
@@ -160,7 +160,7 @@ export class ConversationalSEOEngine {
         userMessage: string
     ): Promise<ConversationResponse> {
         const messageType = this.detectMessageIntent(userMessage);
-        const conversationHistory = this.buildConversationHistory(context);
+        const _conversationHistory = this.buildConversationHistory(context);
 
         let _response: ConversationResponse;
 
@@ -433,7 +433,7 @@ export class ConversationalSEOEngine {
         return [...new Set(words)].slice(0, 10);
     }
 
-    private async performSEOAnalysis(urls: string[], userTier: string): Promise<any> {
+    private async performSEOAnalysis(urls: string[], _userTier: string): Promise<unknown> {
         // Simulated NeuroSEO analysis - integrate with actual NeuroSEO orchestrator
         return {
             url: urls[0],
@@ -457,37 +457,51 @@ export class ConversationalSEOEngine {
     }
 
     private generateAnalysisResponse(analysis: unknown): string {
-        const analysisData = analysis as any;
+        const analysisData = analysis as {
+            url?: string;
+            overallScore?: number;
+            issues?: Array<{ type: string; severity: string; count: number }>;
+            opportunities?: string[];
+            performance?: { lcp: number; cls: number; fid: number };
+        };
         return `I've analyzed ${analysisData.url} and found some interesting insights! 
 
 📊 **Overall SEO Score: ${analysisData.overallScore}/100**
 
 🔍 **Key Issues Found:**
-${analysisData.issues.map((issue: any) => `• ${issue.type.replace('-', ' ')} (${issue.severity} priority - ${issue.count} instances)`).join('\n')}
+${analysisData.issues?.map((issue) => `• ${issue.type.replace('-', ' ')} (${issue.severity} priority - ${issue.count} instances)`).join('\n')}
 
 🚀 **Top Opportunities:**
-${analysisData.opportunities.map((opp: string, _i: number) => `${_i + 1}. ${opp}`).join('\n')}
+${analysisData.opportunities?.map((opp: string, _i: number) => `${_i + 1}. ${opp}`).join('\n')}
 
 ⚡ **Performance Metrics:**
-• LCP: ${analysisData.performance.lcp}s (${analysisData.performance.lcp < 2.5 ? 'Good' : 'Needs Improvement'})
-• CLS: ${analysisData.performance.cls} (${analysisData.performance.cls < 0.1 ? 'Good' : 'Needs Improvement'})
-• FID: ${analysisData.performance.fid}ms (${analysisData.performance.fid < 100 ? 'Good' : 'Needs Improvement'})
+• LCP: ${analysisData.performance?.lcp || 'N/A'}s (${(analysisData.performance?.lcp || 0) < 2.5 ? 'Good' : 'Needs Improvement'})
+• CLS: ${analysisData.performance?.cls || 'N/A'} (${(analysisData.performance?.cls || 1) < 0.1 ? 'Good' : 'Needs Improvement'})
+• FID: ${analysisData.performance?.fid || 'N/A'}ms (${(analysisData.performance?.fid || 1000) < 100 ? 'Good' : 'Needs Improvement'})
 
 Would you like me to provide specific recommendations for any of these areas?`;
     }
 
-    private generateAnalysisActionItems(analysis: unknown): Array<any> {
-        const analysisData = analysis as any;
-        return analysisData.issues.map((issue: any) => ({
+    private generateAnalysisActionItems(analysis: unknown): Array<{
+        type: 'analysis' | 'recommendation' | 'tutorial';
+        title: string;
+        description: string;
+        priority: 'high' | 'medium' | 'low';
+        estimatedTime?: string;
+    }> {
+        const analysisData = analysis as {
+            issues?: Array<{ type: string; count: number; severity: string }>
+        };
+        return analysisData.issues?.map((issue) => ({
             type: 'recommendation' as const,
             title: `Fix ${issue.type.replace('-', ' ')} issues`,
             description: `Address ${issue.count} ${issue.type} issues found on your site`,
-            priority: issue.severity as 'high' | 'medium' | 'low',
-            estimatedTime: issue.severity === 'high' ? '1-2 hours' : '30 minutes'
-        }));
+            priority: (issue.severity as 'high' | 'medium' | 'low') || 'medium',
+            estimatedTime: `${Math.ceil(issue.count * 5)} minutes`
+        })) || [];
     }
 
-    private generateFollowUpQuestions(category: string, context: ConversationContext): string[] {
+    private generateFollowUpQuestions(category: string, _context: ConversationContext): string[] {
         const questions: Record<string, string[]> = {
             analysis: [
                 'Would you like me to analyze your competitors?',
@@ -532,8 +546,16 @@ Would you like me to provide specific recommendations for any of these areas?`;
         console.log('[ConversationalSEO] Personalization engine initialized');
     }
 
-    private async loadUserSEOHistory(userId: string): Promise<any> {
-        return advancedCacheManager.get(`seo-history-${userId}`, 'free');
+    private async loadUserSEOHistory(userId: string): Promise<{
+        previousAnalyses: unknown[];
+        commonIssues: string[];
+        improvementAreas: string[];
+    } | undefined> {
+        return advancedCacheManager.get(`seo-history-${userId}`, 'free') as Promise<{
+            previousAnalyses: unknown[];
+            commonIssues: string[];
+            improvementAreas: string[];
+        } | undefined>;
     }
 
     private async generateWelcomeMessage(context: ConversationContext): Promise<ConversationMessage> {
@@ -573,14 +595,14 @@ Just ask me anything about SEO!`,
     }
 
     // Implement remaining helper methods with similar patterns...
-    private buildConversationHistory(context: ConversationContext): string {
-        return context.messages
+    private buildConversationHistory(_context: ConversationContext): string {
+        return _context.messages
             .slice(-5) // Last 5 messages for context
             .map(msg => `${msg.role}: ${msg.content}`)
             .join('\n');
     }
 
-    private requestURLForAnalysis(context: ConversationContext): ConversationResponse {
+    private requestURLForAnalysis(_context: ConversationContext): ConversationResponse {
         const message: ConversationMessage = {
             id: this.generateMessageId(),
             role: 'assistant',
@@ -631,8 +653,8 @@ Just ask me anything about SEO!`,
     }
 
     private personalizeKnowledgeResponse(_response: unknown, context: ConversationContext): string {
-        const responseData = _response as any;
-        return `${responseData.content}\n\nBased on your ${context.userTier} plan, here are my recommendations:\n${responseData.tips.join('\n• ')}`;
+        const responseData = _response as { content?: string; tips?: string[] };
+        return `${responseData.content || 'No content available'}\n\nBased on your ${context.userTier} plan, here are my recommendations:\n${responseData.tips?.join('\n• ') || 'No tips available'}`;
     }
 
     private getBaseSuggestions(messageType: string, userTier: string): string[] {
@@ -649,7 +671,7 @@ Just ask me anything about SEO!`,
     }
 
     private generateKeywordResponse(keywords: string[], analysis: unknown, businessContext: string): string {
-        const analysisData = analysis as any;
+        const analysisData = analysis as { success?: boolean };
         return `Great keyword research request for your ${businessContext} business! 
 
 🎯 **Keywords Analyzed:** ${keywords.join(', ')}
@@ -674,7 +696,13 @@ Would you like me to suggest specific long-tail variations or analyze the compet
         ];
     }
 
-    private generateKeywordActionItems(keywords: string[]): Array<any> {
+    private generateKeywordActionItems(keywords: string[]): Array<{
+        type: 'analysis' | 'recommendation' | 'tutorial';
+        title: string;
+        description: string;
+        priority: 'high' | 'medium' | 'low';
+        estimatedTime?: string;
+    }> {
         return keywords.slice(0, 3).map(keyword => ({
             type: 'analysis' as const,
             title: `Optimize for "${keyword}"`,
@@ -694,7 +722,7 @@ Would you like me to suggest specific long-tail variations or analyze the compet
 
         return `Here's what I know about that technical SEO topic:
 
-${_aiResponse.success ? (_aiResponse.results?.[0]?.output as any)?.answer || 'Let me provide some guidance on this technical aspect.' : 'Let me help you with this technical SEO question.'}
+${_aiResponse.success ? (_aiResponse.results?.[0]?.output as { answer?: string })?.answer || 'Let me provide some guidance on this technical aspect.' : 'Let me help you with this technical SEO question.'}
 
 For your ${context.userTier} plan, I recommend prioritizing the most impactful technical improvements first.
 
@@ -712,7 +740,13 @@ Would you like specific implementation steps or help with any other technical SE
         return suggestions[aspect] || ['Audit technical SEO', 'Check for common issues'];
     }
 
-    private generateTechnicalActionItems(aspect: string): Array<any> {
+    private generateTechnicalActionItems(aspect: string): Array<{
+        type: 'analysis' | 'recommendation' | 'tutorial';
+        title: string;
+        description: string;
+        priority: 'high' | 'medium' | 'low';
+        estimatedTime?: string;
+    }> {
         return [{
             type: 'tutorial' as const,
             title: `${aspect.charAt(0).toUpperCase() + aspect.slice(1)} optimization guide`,
@@ -723,7 +757,10 @@ Would you like specific implementation steps or help with any other technical SE
     }
 
     private generateContentOptimizationResponse(contentType: string, analysis: unknown, keywords: string[]): string {
-        const analysisData = analysis as any;
+        const analysisData = analysis as {
+            success?: boolean;
+            results?: Array<{ output?: { summary_text?: string } }>
+        };
         return `Excellent! Let me help you optimize your ${contentType} content.
 
 📝 **Content Type:** ${contentType.replace('-', ' ')}
@@ -742,7 +779,7 @@ ${analysisData.success ? analysisData.results?.[0]?.output?.summary_text || 'You
 Would you like me to help with any specific optimization technique or review particular content?`;
     }
 
-    private generateContentSuggestions(contentType: string, keywords: string[]): string[] {
+    private generateContentSuggestions(contentType: string, _keywords: string[]): string[] {
         return [
             `Optimize ${contentType} structure`,
             'Improve keyword placement',
@@ -751,7 +788,13 @@ Would you like me to help with any specific optimization technique or review par
         ];
     }
 
-    private generateContentActionItems(contentType: string): Array<any> {
+    private generateContentActionItems(contentType: string): Array<{
+        type: 'analysis' | 'recommendation' | 'tutorial';
+        title: string;
+        description: string;
+        priority: 'high' | 'medium' | 'low';
+        estimatedTime?: string;
+    }> {
         return [{
             type: 'recommendation' as const,
             title: `${contentType} optimization checklist`,
@@ -761,7 +804,7 @@ Would you like me to help with any specific optimization technique or review par
         }];
     }
 
-    private async handleCompetitorAnalysis(context: ConversationContext, userMessage: string): Promise<ConversationResponse> {
+    private async handleCompetitorAnalysis(_context: ConversationContext, _userMessage: string): Promise<ConversationResponse> {
         // Implementation for competitor analysis
         const message: ConversationMessage = {
             id: this.generateMessageId(),
@@ -791,7 +834,7 @@ Would you like me to help with any specific optimization technique or review par
             id: this.generateMessageId(),
             role: 'assistant',
             content: _aiResponse.success
-                ? `${(_aiResponse.results?.[0]?.output as any)?.answer || 'Let me help you with that SEO question.'}\n\nIs there anything specific you'd like to dive deeper into?`
+                ? `${(_aiResponse.results?.[0]?.output as { answer?: string })?.answer || 'Let me help you with that SEO question.'}\n\nIs there anything specific you'd like to dive deeper into?`
                 : 'I\'m here to help with any SEO questions! Could you provide more details about what you\'re trying to achieve?',
             timestamp: Date.now()
         };
@@ -804,7 +847,7 @@ Would you like me to help with any specific optimization technique or review par
         };
     }
 
-    private async handleFallbackResponse(context: ConversationContext, userMessage: string): Promise<ConversationResponse> {
+    private async handleFallbackResponse(_context: ConversationContext, _userMessage: string): Promise<ConversationResponse> {
         const message: ConversationMessage = {
             id: this.generateMessageId(),
             role: 'assistant',

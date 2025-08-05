@@ -56,7 +56,7 @@ export const useRealTimeDashboardData = (userId: string | null) => {
 
   const refresh = useCallback(async () => {
     if (!userId) return;
-    
+
     setLoading(true);
     try {
       const freshData = await DashboardDataService.getUserDashboardData(userId);
@@ -83,7 +83,7 @@ export const useChartData = (
   chartType: "seoTrend" | "keywords" | "backlinks" | "traffic",
   userId: string | null
 ) => {
-  const [chartData, setChartData] = useState<any>(null);
+  const [chartData, setChartData] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -95,7 +95,7 @@ export const useChartData = (
     const fetchChartData = async () => {
       try {
         const dashboardData = await DashboardDataService.getUserDashboardData(userId);
-        
+
         switch (chartType) {
           case "seoTrend":
             setChartData(dashboardData.seoScoreTrend);

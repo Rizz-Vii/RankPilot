@@ -1,5 +1,6 @@
 // src/app/(app)/dashboard/page.tsx - Complete Dynamic Database Integration
 "use client";
+import React from "react";
 import { CoreWebVitalsWidget } from "@/components/performance/core-web-vitals-monitor";
 import ToolGrid from "@/components/tool-grid";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -195,8 +196,9 @@ const SeoScoreTrendChart = ({ _data }: { _data: unknown[]; }) => (
 );
 
 const KeywordVisibilityChart = ({ visibility }: { visibility: unknown; }) => {
-  const score = (visibility as any)?.score || 0;
-  const top10 = (visibility as any)?.top10 || 0;
+  const visibilityData = visibility as Record<string, unknown>;
+  const score = visibilityData?.score || 0;
+  const top10 = visibilityData?.top10 || 0;
   const data = [
     {
       name: "Visibility",
@@ -249,7 +251,7 @@ const KeywordVisibilityChart = ({ visibility }: { visibility: unknown; }) => {
   );
 };
 
-const DomainAuthorityChart = ({ _data }: { _data: any; }) => (
+const DomainAuthorityChart = ({ _data }: { _data: unknown; }) => (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Domain Authority</CardTitle>
@@ -302,7 +304,9 @@ const DomainAuthorityChart = ({ _data }: { _data: any; }) => (
   </Card>
 );
 
-const BacklinksChart = ({ _data }: { _data: any; }) => (
+const BacklinksChart = ({ _data }: { _data: unknown; }) => {
+  const data = _data as Record<string, unknown>;
+  return (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Backlink Growth</CardTitle>
@@ -311,11 +315,11 @@ const BacklinksChart = ({ _data }: { _data: any; }) => (
       </CardDescription>
     </CardHeader>
     <CardContent>
-      {_data && _data.history && _data.history.length > 0 ? (
+      {data && data.history && Array.isArray(data.history) && data.history.length > 0 ? (
         <ChartContainer config={barChartConfig} className="h-[200px] w-full">
           <ResponsiveContainer>
             <BarChart
-              data={_data.history}
+              data={data.history}
               margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
             >
               <CartesianGrid vertical={false} />
@@ -343,9 +347,10 @@ const BacklinksChart = ({ _data }: { _data: any; }) => (
       )}
     </CardContent>
   </Card>
-);
+  );
+};
 
-const TrafficSourcesChart = ({ _data }: { _data: any[]; }) => (
+const TrafficSourcesChart = ({ _data }: { _data: unknown[]; }) => (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Traffic Sources</CardTitle>
@@ -371,14 +376,14 @@ const TrafficSourcesChart = ({ _data }: { _data: any[]; }) => (
                 innerRadius={50}
                 strokeWidth={5}
               >
-                {_data.map((entry: any) => (
+                {_data.map((entry: Record<string, unknown>) => (
                   <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                 ))}
               </Pie>
               <Legend
                 content={({ payload }) => (
                   <div className={styles.legendContainer}>
-                    {payload?.map((entry: any) => (
+                    {payload?.map((entry: Record<string, unknown>) => (
                       <div
                         key={`legend-${entry.value}`}
                         className={styles.legendItem}
@@ -460,7 +465,7 @@ export default function DashboardPage() {
         <header className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-headline font-semibold text-foreground">
-              Welcome, {(profile as any)?.displayName || user?.email}!
+              Welcome, {(profile as Record<string, unknown>)?.displayName || user?.email}!
             </h1>
             <p className="text-muted-foreground font-body">
               Here&apos;s your SEO command center with real-time data.

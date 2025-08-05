@@ -8,7 +8,7 @@ import { z } from "zod";
 
 // --- Zod Schemas and Types ---
 
-const LinkAnalysisInputSchema = z.object({
+const _LinkAnalysisInputSchema = z.object({
   url: z.string().url().describe("The URL to analyze for backlinks."),
 });
 
@@ -29,7 +29,7 @@ const BacklinkSchema = z.object({
     ),
 });
 
-const LinkAnalysisOutputSchema = z.object({
+const _LinkAnalysisOutputSchema = z.object({
   backlinks: z
     .array(BacklinkSchema)
     .describe("An array of discovered backlinks."),
@@ -45,8 +45,8 @@ const LinkAnalysisOutputSchema = z.object({
     .describe("A summary of the backlink profile."),
 });
 
-export type LinkAnalysisInput = z.infer<typeof LinkAnalysisInputSchema>;
-export type LinkAnalysisOutput = z.infer<typeof LinkAnalysisOutputSchema>;
+export type LinkAnalysisInput = z.infer<typeof _LinkAnalysisInputSchema>;
+export type LinkAnalysisOutput = z.infer<typeof _LinkAnalysisOutputSchema>;
 
 // Mock implementation for build compatibility
 export async function analyzeLinks(

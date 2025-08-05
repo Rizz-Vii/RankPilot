@@ -1,11 +1,10 @@
 "use client";
-
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import LoadingScreen from "@/components/ui/loading-screen";
 
 export default function LogoutPage() {
-  const router = useRouter();
+  const router: ReturnType<typeof useRouter> = useRouter();
 
   useEffect(() => {
     const performLogout = async () => {

@@ -52,7 +52,7 @@ export default function InsightsPage() {
           return;
         }
 
-        const simplifiedActivities = activities.map((activity) => ({
+        const _simplifiedActivities = activities.map((activity) => ({
           type: activity.type,
           tool: activity.tool,
           details: activity.details,

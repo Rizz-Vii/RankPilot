@@ -6,7 +6,7 @@ import {
   serverTimestamp,
   getDoc,
 } from "firebase/firestore";
-import { analytics, db } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 
 // Initialize analytics (client-side only)
 const getAnalyticsInstance = () => {
@@ -190,7 +190,7 @@ export const conversionFunnel = {
     step: number,
     stepName: string,
     plan?: string,
-    additionalData?: Record<string, any>
+    additionalData?: Record<string, unknown>
   ) => {
     const instance = getAnalyticsInstance();
     if (typeof window !== "undefined" && instance) {
@@ -263,8 +263,9 @@ export const getAnalyticsDashboard = async () => {
 
 // Helper function to calculate conversion rates
 const calculateConversionRates = (_data: unknown) => {
-  const daily = (_data as any).daily || {};
-  const plans = (_data as any).plans || {};
+  const dataObj = _data as { daily?: Record<string, unknown>; plans?: Record<string, unknown> };
+  const daily = dataObj.daily || {};
+  const plans = dataObj.plans || {};
 
   // Calculate overall conversion rates
   let totalViews = 0;
@@ -272,10 +273,10 @@ const calculateConversionRates = (_data: unknown) => {
   let totalPurchases = 0;
 
   Object.values(daily).forEach((day: unknown) => {
-    const d = day as Record<string, any>;
-    totalViews += d.view_pricing || 0;
-    totalCheckouts += d.begin_checkout || 0;
-    totalPurchases += d.purchase || 0;
+    const d = day as Record<string, unknown>;
+    totalViews += Number(d.view_pricing) || 0;
+    totalCheckouts += Number(d.begin_checkout) || 0;
+    totalPurchases += Number(d.purchase) || 0;
   });
 
   const viewToCheckout =
@@ -287,16 +288,19 @@ const calculateConversionRates = (_data: unknown) => {
 
   // Calculate plan-specific conversion rates
   const planConversions = Object.entries(plans).map(
-    ([plan, metrics]: [string, any]) => ({
-      plan,
-      views: metrics.view_pricing || 0,
-      checkouts: metrics.begin_checkout || 0,
-      purchases: metrics.purchase || 0,
-      conversionRate:
-        metrics.view_pricing > 0
-          ? (metrics.purchase / metrics.view_pricing) * 100
-          : 0,
-    })
+    ([plan, metrics]: [string, unknown]) => {
+      const metricsData = metrics as { view_pricing?: number; begin_checkout?: number; purchase?: number };
+      return {
+        plan,
+        views: metricsData.view_pricing || 0,
+        checkouts: metricsData.begin_checkout || 0,
+        purchases: metricsData.purchase || 0,
+        conversionRate:
+          (metricsData.view_pricing || 0) > 0
+            ? ((metricsData.purchase || 0) / (metricsData.view_pricing || 1)) * 100
+            : 0,
+      };
+    }
   );
 
   return {

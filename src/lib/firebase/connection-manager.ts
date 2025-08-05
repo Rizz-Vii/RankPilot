@@ -66,7 +66,7 @@ class FirestoreConnectionManager {
                 try {
                     connectFirestoreEmulator(this.db, 'localhost', 8080);
                     console.log('🔧 Connected to Firestore emulator');
-                } catch (_error) {
+                } catch {
                     // Emulator connection already exists - ignore error
                     console.log('🔧 Firestore emulator already connected');
                 }

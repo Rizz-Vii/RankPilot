@@ -2,12 +2,12 @@
 // Implementation Date: August 2, 2025
 // Priority: CRITICAL - Memory Leak Prevention + TypeScript 5.8.3 Compliance
 
-import { exec } from 'child_process';
+import { exec, ChildProcess } from 'child_process';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { promisify } from 'util';
 
-const execAsync = promisify(exec);
+const _execAsync = promisify(exec);
 
 export interface TypeScriptError {
     file: string;
@@ -103,8 +103,8 @@ export class MemorySafeTypeScriptGuardianAgent implements RankPilotAgent {
 
     private backupPath = './.typescript-guardian-backups';
     private fixedFiles: string[] = [];
-    private activeProcesses: Set<any> = new Set();
-    private cleanupTimer: NodeJS.Timeout | null = null;
+    private activeProcesses: Set<ChildProcess> = new Set();
+    private cleanupTimer: ReturnType<typeof setTimeout> | null = null;
     private isCleanedUp = false;
 
     constructor() {
@@ -203,10 +203,11 @@ export class MemorySafeTypeScriptGuardianAgent implements RankPilotAgent {
      */
     private async analyzeTypeScriptErrorsSafely(): Promise<TypeScriptError[]> {
         try {
-            const { stdout, stderr } = await this.execWithTimeout('npm run typecheck', this.memoryConstraints.childProcessTimeout);
+            await this.execWithTimeout('npm run typecheck', this.memoryConstraints.childProcessTimeout);
             return [];
-        } catch (_error: any) {
-            const output = _error.stdout || _error.stderr || '';
+        } catch (error: unknown) {
+            const output = (error as { stdout?: string; stderr?: string }).stdout ||
+                (error as { stdout?: string; stderr?: string }).stderr || '';
             return this.parseTypeScriptErrors(output);
         }
     }
@@ -331,8 +332,9 @@ export class MemorySafeTypeScriptGuardianAgent implements RankPilotAgent {
         try {
             await this.execWithTimeout('npm run typecheck', this.memoryConstraints.childProcessTimeout);
             return { success: true, errorCount: 0, previousErrorCount: 11 };
-        } catch (_error: any) {
-            const output = _error.stdout || _error.stderr || '';
+        } catch (error: unknown) {
+            const output = (error as { stdout?: string; stderr?: string }).stdout ||
+                (error as { stdout?: string; stderr?: string }).stderr || '';
             const errors = this.parseTypeScriptErrors(output);
             return { success: false, errorCount: errors.length, previousErrorCount: 11 };
         }
@@ -382,8 +384,8 @@ export class MemorySafeTypeScriptGuardianAgent implements RankPilotAgent {
         this.activeProcesses.clear();
 
         // Force garbage collection if available
-        if (global.gc) {
-            global.gc();
+        if (typeof globalThis !== 'undefined' && (globalThis as { gc?: () => void }).gc) {
+            (globalThis as { gc: () => void }).gc();
         }
     }
 
@@ -432,8 +434,8 @@ export class MemorySafeTypeScriptGuardianAgent implements RankPilotAgent {
             await this.cleanupOldBackups();
 
             // Force garbage collection if available
-            if (global.gc) {
-                global.gc();
+            if (typeof globalThis !== 'undefined' && (globalThis as { gc?: () => void }).gc) {
+                (globalThis as { gc: () => void }).gc();
             }
 
             console.log('✅ Memory cleanup completed successfully');

@@ -9,11 +9,11 @@ export interface LLMQuery {
   intent: "informational" | "navigational" | "transactional" | "commercial";
   targetKeywords: string[];
   expectedAnswerType:
-    | "definition"
-    | "comparison"
-    | "howto"
-    | "list"
-    | "opinion";
+  | "definition"
+  | "comparison"
+  | "howto"
+  | "list"
+  | "opinion";
 }
 
 export interface LLMResponse {
@@ -68,10 +68,10 @@ export interface VisibilityReport {
 
 export interface VisibilityRecommendation {
   type:
-    | "content_optimization"
-    | "authority_building"
-    | "technical_improvement"
-    | "citation_enhancement";
+  | "content_optimization"
+  | "authority_building"
+  | "technical_improvement"
+  | "citation_enhancement";
   title: string;
   description: string;
   priority: "high" | "medium" | "low";
@@ -362,7 +362,7 @@ export class AIVisibilityEngine {
     const citations: CitationAnalysis[] = [];
 
     for (let i = 0; i < queries.length; i++) {
-      const query = queries[i];
+      const _query = queries[i];
       const response = responses[i];
 
       const targetSource = response.sources.find(
@@ -456,7 +456,7 @@ export class AIVisibilityEngine {
     const averageCitationPosition =
       citedQueries.length > 0
         ? citedQueries.reduce((sum, c) => sum + (c.citationPosition || 0), 0) /
-          citedQueries.length
+        citedQueries.length
         : 0;
 
     const overallVisibilityScore = Math.round(citationRate * 100);
@@ -584,9 +584,11 @@ export class AIVisibilityEngine {
     responses.forEach((_response) => {
       _response.sources.forEach((source) => {
         if (competitorStats.has(source.url)) {
-          const stats = competitorStats.get(source.url)!;
-          stats.citations++;
-          stats.positions.push(source.citationPosition);
+          const stats = competitorStats.get(source.url);
+          if (stats) {
+            stats.citations++;
+            stats.positions.push(source.citationPosition);
+          }
         }
       });
     });

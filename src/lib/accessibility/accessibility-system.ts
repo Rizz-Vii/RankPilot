@@ -202,8 +202,9 @@ export class AccessibilityManager {
 
     private getElementLabel(element: HTMLElement): string {
         // Try aria-label first
-        if (element.getAttribute('aria-label')) {
-            return element.getAttribute('aria-label')!;
+        const ariaLabel = element.getAttribute('aria-label');
+        if (ariaLabel) {
+            return ariaLabel;
         }
 
         // Try aria-labelledby
@@ -249,7 +250,7 @@ export class AccessibilityManager {
             altKey: shortcut.modifiers.includes('alt'),
             shiftKey: shortcut.modifiers.includes('shift'),
             metaKey: shortcut.modifiers.includes('meta'),
-        } as any);
+        } as KeyboardEvent);
 
         this.shortcuts.set(key, shortcut);
     }
@@ -320,20 +321,21 @@ export class AccessibilityManager {
     private initializeVoiceRecognition() {
         if (typeof window === 'undefined') return;
 
-        const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+        const SpeechRecognition = window.SpeechRecognition || (window as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
         if (!SpeechRecognition) return;
 
-        this.recognition = new SpeechRecognition();
-        (this.recognition as any).continuous = true;
-        (this.recognition as any).interimResults = false;
-        (this.recognition as any).lang = 'en-US';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        this.recognition = new (SpeechRecognition as any)();
+        (this.recognition as { continuous: boolean }).continuous = true;
+        (this.recognition as { interimResults: boolean }).interimResults = false;
+        (this.recognition as { lang: string }).lang = 'en-US';
 
-        (this.recognition as any).onresult = (event: any) => {
+        (this.recognition as { onresult: (event: { results: { transcript: string }[][] }) => void }).onresult = (event) => {
             const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
             this.processVoiceCommand(transcript);
         };
 
-        (this.recognition as any).onerror = (event: any) => {
+        (this.recognition as { onerror: (event: { error: string }) => void }).onerror = (event) => {
             console.error('Speech recognition error:', event.error);
             this.announceError(`Voice recognition error: ${event.error}`);
         };
@@ -343,7 +345,7 @@ export class AccessibilityManager {
 
     startListening() {
         if (this.recognition && !this.isListening) {
-            (this.recognition as any).start();
+            (this.recognition as { start: () => void }).start();
             this.isListening = true;
             this.announce('Voice commands enabled', 'polite', 'status');
         }
@@ -351,7 +353,7 @@ export class AccessibilityManager {
 
     stopListening() {
         if (this.recognition && this.isListening) {
-            (this.recognition as any).stop();
+            (this.recognition as { stop: () => void }).stop();
             this.isListening = false;
             this.announce('Voice commands disabled', 'polite', 'status');
         }
@@ -437,7 +439,7 @@ export class AccessibilityManager {
     }
 
     isVoiceSupported(): boolean {
-        return !!(window.SpeechRecognition || (window as any).webkitSpeechRecognition);
+        return !!(window.SpeechRecognition || (window as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition);
     }
 
     isListeningToVoice(): boolean {

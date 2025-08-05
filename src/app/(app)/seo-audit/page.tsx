@@ -109,9 +109,7 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
                 className="text-xs"
               />
               <XAxis dataKey="score" type="number" hide />
-              <ChartTooltip
-                content={(props: any) => <ChartTooltipContent {...props} />}
-              />
+              <ChartTooltip content={<ChartTooltipContent />} />
               <Bar dataKey="score" radius={5} />
             </BarChart>
           </ChartContainer>

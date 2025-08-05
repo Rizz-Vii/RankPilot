@@ -46,7 +46,7 @@ export function middleware(_request: NextRequest) {
     "https://*.paypal.com " +
     "https://www.paypal.com " +
     "https://*.cloudfunctions.net " +
-    (process.env.NODE_ENV !== "production"
+    (typeof process !== "undefined" && process.env.NODE_ENV !== "production"
       ? "http://localhost:* ws://localhost:*"
       : ""),
     // Media

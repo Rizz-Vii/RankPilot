@@ -1,10 +1,15 @@
 "use client";
 
+import React from "react";
 import { useUI } from "@/context/UIContext";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { Button } from "./button";
+import { Card, CardContent, CardHeader, CardTitle } from "./card";
+import { Badge } from "./badge";
 
 interface MainPanelProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export function MainPanel({ children }: MainPanelProps) {

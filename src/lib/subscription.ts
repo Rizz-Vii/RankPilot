@@ -1,6 +1,6 @@
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, type UpdateData, type DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { STRIPE_PLANS, PlanType } from "./stripe";
+import { PlanType } from "./stripe";
 
 export interface SubscriptionData {
   status: "active" | "canceled" | "past_due" | "free";
@@ -41,7 +41,7 @@ export async function updateUserSubscription(
   subscriptionData: Partial<SubscriptionData>
 ): Promise<void> {
   try {
-    const updateData: Record<string, any> = {};
+    const updateData: UpdateData<DocumentData> = {};
 
     if (subscriptionData.status) {
       updateData.subscriptionStatus = subscriptionData.status;

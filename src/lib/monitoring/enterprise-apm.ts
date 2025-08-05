@@ -1,3 +1,5 @@
+// Fix NodeJS type errors
+// NodeJS type fix: use ReturnType<typeof setInterval>
 /**
  * Enterprise Application Performance Monitoring System
  * Phase 5 Priority 1: Advanced APM with custom KPIs for SEO performance
@@ -12,7 +14,7 @@ export interface APMMetric {
     unit: string;
     timestamp: number;
     tags: Record<string, string>;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 
 export interface PerformanceEvent {
@@ -93,7 +95,7 @@ export interface DashboardWidget {
         chartType?: 'line' | 'bar' | 'pie' | 'area';
         aggregation?: 'sum' | 'avg' | 'min' | 'max' | 'count';
         groupBy?: string[];
-        filters?: Record<string, any>;
+        filters?: Record<string, unknown>;
     };
     position: { x: number; y: number; width: number; height: number; };
     refreshInterval?: number;
@@ -105,7 +107,7 @@ export class EnterpriseAPM extends EventEmitter {
     private alerts: Map<string, AlertRule> = new Map();
     private dashboards: Map<string, Dashboard> = new Map();
     private isCollecting: boolean = false;
-    private collectors: Map<string, NodeJS.Timer> = new Map();
+    private collectors: Map<string, ReturnType<typeof setInterval>> = new Map();
 
     constructor() {
         super();
@@ -149,7 +151,7 @@ export class EnterpriseAPM extends EventEmitter {
 
         // Clear all collectors
         this.collectors.forEach(timer => {
-            if (timer) clearInterval(timer as NodeJS.Timeout);
+            if (timer) clearInterval(timer);
         });
         this.collectors.clear();
 
@@ -171,12 +173,14 @@ export class EnterpriseAPM extends EventEmitter {
             this.metrics.set(key, []);
         }
 
-        const metricSeries = this.metrics.get(key)!;
-        metricSeries.push(fullMetric);
+        const metricSeries = this.metrics.get(key);
+        if (metricSeries) {
+            metricSeries.push(fullMetric);
 
-        // Keep only last 1000 metrics per series
-        if (metricSeries.length > 1000) {
-            metricSeries.shift();
+            // Keep only last 1000 metrics per series
+            if (metricSeries.length > 1000) {
+                metricSeries.shift();
+            }
         }
 
         // Check alert rules
@@ -308,7 +312,7 @@ export class EnterpriseAPM extends EventEmitter {
     /**
      * Get dashboard data
      */
-    getDashboardData(dashboardId: string): any {
+    getDashboardData(dashboardId: string): unknown {
         const dashboard = this.dashboards.get(dashboardId);
         if (!dashboard) throw new Error(`Dashboard ${dashboardId} not found`);
 
@@ -336,7 +340,12 @@ export class EnterpriseAPM extends EventEmitter {
         const metrics = this.getMetrics({ timeRange });
 
         // Analyze performance patterns
-        const insights = await this.analyzePerformancePatterns(events, metrics);
+        const insights = await this.analyzePerformancePatterns(events, metrics) as {
+            summary: string;
+            issues: Array<{ severity: string; description: string; recommendation: string; }>;
+            trends: Array<{ metric: string; trend: 'up' | 'down' | 'stable'; change: number; }>;
+            predictions: Array<{ metric: string; prediction: number; confidence: number; }>;
+        };
 
         return insights;
     }
@@ -436,7 +445,7 @@ export class EnterpriseAPM extends EventEmitter {
     private startSystemResourceMonitoring(): void {
         const collector = setInterval(() => {
             if (typeof window !== 'undefined' && 'performance' in window) {
-                const memory = (performance as any).memory;
+                const memory = (performance as Performance & { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number; } }).memory;
                 if (memory) {
                     this.recordMetric({
                         name: 'system.memory_usage',
@@ -497,25 +506,25 @@ export class EnterpriseAPM extends EventEmitter {
         // Extract Core Web Vitals metrics
         this.recordMetric({
             name: 'performance.lcp',
-            _value: (_event as any).performance?.lcp || 0,
+            _value: _event.performance?.lcp || 0,
             unit: 'ms',
             tags: {
-                page: (_event as any).name || 'unknown',
-                userTier: (_event as any).userTier || 'free',
-                device: (_event as any).device?.type || 'unknown',
-                country: (_event as any).location?.country || 'unknown'
+                page: _event.name || 'unknown',
+                userTier: _event.userTier || 'free',
+                device: _event.device?.type || 'unknown',
+                country: _event.location?.country || 'unknown'
             }
         });
 
         // Extract user engagement metrics
-        if ((_event as any).type === 'user-interaction') {
+        if (_event.type === 'user-interaction') {
             this.recordMetric({
                 name: 'user.engagement',
-                _value: (_event as any).duration || 0,
+                _value: _event.duration || 0,
                 unit: 'ms',
                 tags: {
-                    interaction: (_event as any).name || 'unknown',
-                    userTier: (_event as any).userTier || 'free'
+                    interaction: _event.name || 'unknown',
+                    userTier: _event.userTier || 'free'
                 }
             });
         }
@@ -528,7 +537,10 @@ export class EnterpriseAPM extends EventEmitter {
         for (const metric of metrics) {
             const key = groupBy.map(field => metric.tags[field] || 'unknown').join('-');
             if (!groups.has(key)) groups.set(key, []);
-            groups.get(key)!.push(metric);
+            const group = groups.get(key);
+            if (group) {
+                group.push(metric);
+            }
         }
 
         const results: APMMetric[] = [];
@@ -568,7 +580,7 @@ export class EnterpriseAPM extends EventEmitter {
         return results;
     }
 
-    private executeWidgetQuery(widget: DashboardWidget): any {
+    private executeWidgetQuery(widget: DashboardWidget): unknown {
         // Simplified query execution
         return this.getMetrics({
             name: widget.query,
@@ -576,7 +588,7 @@ export class EnterpriseAPM extends EventEmitter {
         });
     }
 
-    private async analyzePerformancePatterns(events: PerformanceEvent[], metrics: APMMetric[]): Promise<any> {
+    private async analyzePerformancePatterns(_events: PerformanceEvent[], _metrics: APMMetric[]): Promise<unknown> {
         // Simplified AI analysis - real implementation would use ML models
         return {
             summary: 'Performance analysis completed',
@@ -586,7 +598,7 @@ export class EnterpriseAPM extends EventEmitter {
         };
     }
 
-    private exportToCSV(metrics: APMMetric[], events: PerformanceEvent[]): string {
+    private exportToCSV(metrics: APMMetric[], _events: PerformanceEvent[]): string {
         // Simplified CSV export
         const headers = 'timestamp,type,name,_value,unit,tags\n';
         const rows = metrics.map(m =>
@@ -688,7 +700,7 @@ export class EnterpriseAPM extends EventEmitter {
             browser: navigator.userAgent,
             os: navigator.platform,
             screen: { width: window.screen.width, height: window.screen.height },
-            connection: (navigator as any).connection?.effectiveType || 'unknown'
+            connection: (navigator as Navigator & { connection?: { effectiveType: string } }).connection?.effectiveType || 'unknown'
         };
     }
 

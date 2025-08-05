@@ -28,6 +28,34 @@ export interface PerformanceTargets {
     globalLatency: number;
 }
 
+export interface TrendData {
+    direction: 'up' | 'down' | 'stable';
+    strength: number; // 0-1 scale
+    confidence?: number; // 0-1 scale
+}
+
+export interface MetricValue {
+    value: number;
+    timestamp: number;
+    source: string;
+}
+
+export interface SeasonalityData {
+    pattern: 'strong' | 'weak' | 'none';
+    intensity?: number; // 0-1 scale
+}
+
+export interface VolatilityData {
+    level: 'high' | 'medium' | 'low';
+    variance?: number; // Statistical variance
+}
+
+export interface ScalingResult {
+    newCapacity: number;
+    performanceImprovement: number;
+    status?: 'success' | 'partial' | 'failed';
+}
+
 export interface ResourceAllocation {
     functions: {
         memory: number;
@@ -399,51 +427,44 @@ export class EnterpriseAutoScaler {
         return squaredDifferences.reduce((a: number, b: number) => a + b, 0) / _data.length;
     }
 
-    private calculateTrendPrediction(trends: unknown, timeHorizon: number): number {
+    private calculateTrendPrediction(trends: TrendData, _timeHorizon: number): number {
         // Simplified trend extrapolation
-        const trendsData = trends as any;
         const lastValue = this.getLastKnownValue('concurrent_users');
-        const trendMultiplier = trendsData.direction === 'up' ? 1 + (trendsData.strength * 0.1) :
-            trendsData.direction === 'down' ? 1 - (trendsData.strength * 0.1) : 1;
+        const trendMultiplier = trends.direction === 'up' ? 1 + (trends.strength * 0.1) :
+            trends.direction === 'down' ? 1 - (trends.strength * 0.1) : 1;
 
         return lastValue * trendMultiplier;
     }
 
-    private calculateSeasonalAdjustment(seasonality: unknown): number {
+    private calculateSeasonalAdjustment(seasonality: SeasonalityData): number {
         // Simplified seasonal adjustment
-        const seasonalityData = seasonality as any;
-        switch (seasonalityData.pattern) {
+        switch (seasonality.pattern) {
             case 'strong': return 1.15; // 15% increase for strong patterns
             case 'weak': return 1.05;   // 5% increase for weak patterns
             default: return 1.0;        // No adjustment
         }
     }
 
-    private calculateVolatilityBuffer(volatility: unknown): number {
+    private calculateVolatilityBuffer(volatility: VolatilityData): number {
         // Add buffer based on volatility
-        const volatilityData = volatility as any;
-        switch (volatilityData.level) {
+        switch (volatility.level) {
             case 'high': return 50;   // Add 50 units buffer
             case 'medium': return 25; // Add 25 units buffer
             default: return 10;       // Add 10 units buffer
         }
     }
 
-    private calculatePredictionConfidence(trends: unknown, seasonality: unknown, volatility: unknown): number {
-        const trendsData = trends as any;
-        const seasonalityData = seasonality as any;
-        const volatilityData = volatility as any;
-
+    private calculatePredictionConfidence(trends: TrendData, seasonality: SeasonalityData, volatility: VolatilityData): number {
         let confidence = 0.7; // Base confidence
 
         // Adjust based on trend strength
-        confidence += trendsData.strength * 0.2;
+        confidence += trends.strength * 0.2;
 
         // Adjust based on seasonality
-        if (seasonalityData.pattern === 'strong') confidence += 0.1;
+        if (seasonality.pattern === 'strong') confidence += 0.1;
 
         // Adjust based on volatility (higher volatility = lower confidence)
-        switch (volatilityData.level) {
+        switch (volatility.level) {
             case 'high': confidence -= 0.3; break;
             case 'medium': confidence -= 0.1; break;
         }
@@ -572,9 +593,8 @@ export class EnterpriseAutoScaler {
         };
     }
 
-    private async validateScalingSuccess(action: ScalingAction, _result: unknown): Promise<void> {
+    private async validateScalingSuccess(action: ScalingAction, result: ScalingResult): Promise<void> {
         // Validate that scaling was successful
-        const result = _result as any;
         if (result.newCapacity !== action.targetCapacity) {
             throw new Error(`Scaling target not achieved: expected ${action.targetCapacity}, got ${result.newCapacity}`);
         }

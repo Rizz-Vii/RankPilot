@@ -47,16 +47,16 @@ export default function SettingsPage() {
     const [mounted, setMounted] = useState(false);
 
     // Priority 3 Feature Hooks
-    const { theme, preferences, setPreferences } = useTheme();
-    const { language, translate, isRTL, formatNumber, formatCurrency, formatDate } = useI18n();
+    const { theme: _theme, preferences, setPreferences } = useTheme();
+    const { language, translate: _translate, isRTL, formatNumber, formatCurrency, formatDate } = useI18n();
     const {
-        announce,
-        announceAction,
+        announce: _announce,
+        announceAction: _announceAction,
         isVoiceSupported,
         isVoiceEnabled,
         setIsVoiceEnabled,
-        startListening,
-        stopListening,
+        startListening: _startListening,
+        stopListening: _stopListening,
         announcements
     } = useAccessibility();
 

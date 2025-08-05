@@ -114,7 +114,7 @@ async function runSystematicPhases() {
 
 async function applyVariableNameFixes() {
     // Apply common variable name fixes
-    const commonFixes = [
+    const _commonFixes = [
         { from: 'error\\.', to: '_error.' },
         { from: 'result\\.', to: '_result.' },
         { from: 'response\\.', to: '_response.' },

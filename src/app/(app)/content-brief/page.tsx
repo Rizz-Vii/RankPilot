@@ -34,6 +34,7 @@ import {
   RadialBarChart,
   ResponsiveContainer
 } from "recharts";
+import React from "react";
 
 const ResultCard = ({
   title,

@@ -14,12 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Check,
   Crown,
-  Zap,
-  Shield,
   CreditCard,
-  Star,
-  TrendingUp,
-  Users,
   Rocket,
 } from "lucide-react";
 import Link from "next/link";

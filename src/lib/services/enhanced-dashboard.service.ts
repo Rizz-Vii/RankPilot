@@ -15,12 +15,9 @@ import {
     orderBy,
     limit,
     getDocs,
-    doc,
-    getDoc,
     Timestamp
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { DashboardData } from "./dashboard-data.service";
 
 export class EnhancedDashboardService {
 

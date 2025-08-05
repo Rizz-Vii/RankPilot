@@ -243,7 +243,7 @@ export function useToolAccess() {
  */
 export interface Subscription {
   tier: TierType;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export function filterNavBySubscription(
@@ -293,7 +293,7 @@ export function filterNavBySubscription(
           return true;
         });
 
-        (filteredItem as any).children = filteredChildren;
+        (filteredItem as { children?: NavItem[] }).children = filteredChildren;
       }
 
       return filteredItem;

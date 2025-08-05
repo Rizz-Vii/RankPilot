@@ -4,7 +4,6 @@
 
 import { exec } from 'child_process';
 import * as fs from 'fs/promises';
-import * as path from 'path';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
@@ -15,6 +14,14 @@ export interface IDEIntegration {
     resumeTypeScriptWatcher(): Promise<boolean>;
     checkFileOpenInEditor(filePath: string): Promise<boolean>;
     createFileBackup(filePath: string): Promise<string>;
+}
+
+export interface TypeScriptError {
+    file: string;
+    line?: number;
+    column?: number;
+    message: string;
+    code?: string;
 }
 
 export interface SmartFixPattern {
@@ -43,13 +50,13 @@ export class IDESafeTypeScriptGuardianAgent {
         {
             errorCode: 'TS2304',
             description: 'Variable naming mismatch: error vs _error',
-            shouldSkip: (content, filePath) => {
+            shouldSkip: (content, _filePath) => {
                 // Skip if intentional underscore usage
                 return content.includes('// eslint-disable') ||
                     content.includes('_error: unknown');
             },
             pattern: /Cannot find name 'error'\./g,
-            replacement: (match, ...groups) => {
+            replacement: (match, ..._groups) => {
                 // Find the context and fix variable name
                 return match.replace('error', '_error');
             },
@@ -58,11 +65,11 @@ export class IDESafeTypeScriptGuardianAgent {
         {
             errorCode: 'TS2304',
             description: 'Variable naming mismatch: result vs _result',
-            shouldSkip: (content, filePath) => {
+            shouldSkip: (content, _filePath) => {
                 return content.includes('_result: unknown');
             },
             pattern: /Cannot find name 'result'\./g,
-            replacement: (match, ...groups) => {
+            replacement: (match, ..._groups) => {
                 return match.replace('result', '_result');
             },
             riskLevel: 'low'
@@ -70,11 +77,11 @@ export class IDESafeTypeScriptGuardianAgent {
         {
             errorCode: 'TS2304',
             description: 'Variable naming mismatch: response vs _response',
-            shouldSkip: (content, filePath) => {
+            shouldSkip: (content, _filePath) => {
                 return content.includes('_response: unknown');
             },
             pattern: /Cannot find name 'response'\./g,
-            replacement: (match, ...groups) => {
+            replacement: (match, ..._groups) => {
                 return match.replace('response', '_response');
             },
             riskLevel: 'low'
@@ -82,11 +89,11 @@ export class IDESafeTypeScriptGuardianAgent {
         {
             errorCode: 'TS2304',
             description: 'Variable naming mismatch: data vs _data',
-            shouldSkip: (content, filePath) => {
+            shouldSkip: (content, _filePath) => {
                 return content.includes('_data: unknown');
             },
             pattern: /Cannot find name 'data'\./g,
-            replacement: (match, ...groups) => {
+            replacement: (match, ..._groups) => {
                 return match.replace('data', '_data');
             },
             riskLevel: 'low'
@@ -94,7 +101,7 @@ export class IDESafeTypeScriptGuardianAgent {
         {
             errorCode: 'TS2551',
             description: 'Property access fix: value vs _value',
-            shouldSkip: (content, filePath) => {
+            shouldSkip: (content, _filePath) => {
                 return content.includes('e.target.value') && !content.includes('_value');
             },
             pattern: /Property 'value' does not exist.*Did you mean '_value'\?/g,
@@ -104,7 +111,7 @@ export class IDESafeTypeScriptGuardianAgent {
         {
             errorCode: 'TS18046',
             description: 'Unknown type assertion fix',
-            shouldSkip: (content, filePath) => {
+            shouldSkip: (content, _filePath) => {
                 return content.includes('as Error') || content.includes(': Error');
             },
             pattern: /is of type 'unknown'/g,
@@ -114,7 +121,7 @@ export class IDESafeTypeScriptGuardianAgent {
         {
             errorCode: 'TS2571',
             description: 'Unknown type conversion - but skip if already fixed',
-            shouldSkip: (content, filePath) => {
+            shouldSkip: (content, _filePath) => {
                 // Skip if file already has proper Record types
                 return content.includes('Record<string, any>') &&
                     !content.includes(': unknown =');
@@ -243,7 +250,7 @@ export class IDESafeTypeScriptGuardianAgent {
     /**
      * Analyze TypeScript errors without conflicting with IDE
      */
-    private async analyzeTypeScriptErrorsSafely(): Promise<any[]> {
+    private async analyzeTypeScriptErrorsSafely(): Promise<TypeScriptError[]> {
         try {
             // Use a different approach that doesn't conflict with IDE
             console.log('🔍 Using IDE-safe error analysis...');
@@ -253,7 +260,7 @@ export class IDESafeTypeScriptGuardianAgent {
             const errors = this.parseTypeScriptErrors(stdout);
 
             // Filter out errors in files currently open in IDE
-            const safeErrors: any[] = [];
+            const safeErrors: TypeScriptError[] = [];
             for (const error of errors) {
                 const isOpen = await this.ideIntegration.checkFileOpenInEditor(error.file);
                 if (!isOpen) {
@@ -270,7 +277,7 @@ export class IDESafeTypeScriptGuardianAgent {
     /**
      * Apply smart fixes that avoid IDE conflicts
      */
-    private async applySmartFileFixes(filePath: string, fileErrors: any[]): Promise<boolean> {
+    private async applySmartFileFixes(filePath: string, fileErrors: TypeScriptError[]): Promise<boolean> {
         try {
             // Create backup first
             const backupPath = await this.ideIntegration.createFileBackup(filePath);
@@ -324,12 +331,14 @@ export class IDESafeTypeScriptGuardianAgent {
                 if (error.code === 'TS18046' && error.message.includes("is of type 'unknown'")) {
                     // Add type assertion as Error
                     const lines = content.split('\n');
-                    const errorLine = lines[error.line - 1];
-                    if (errorLine && errorLine.includes('.message')) {
-                        lines[error.line - 1] = errorLine.replace(/(\w+)\.message/, '($1 as Error).message');
-                        content = lines.join('\n');
-                        modified = true;
-                        console.log(`✅ Fixed: Added (error as Error) assertion in ${filePath}`);
+                    if (error.line && error.line > 0 && error.line <= lines.length) {
+                        const errorLine = lines[error.line - 1];
+                        if (errorLine && errorLine.includes('.message')) {
+                            lines[error.line - 1] = errorLine.replace(/(\w+)\.message/, '($1 as Error).message');
+                            content = lines.join('\n');
+                            modified = true;
+                            console.log(`✅ Fixed: Added (error as Error) assertion in ${filePath}`);
+                        }
                     }
                 }
             }
@@ -350,8 +359,8 @@ export class IDESafeTypeScriptGuardianAgent {
     /**
      * Parse TypeScript compiler output into structured errors
      */
-    private parseTypeScriptErrors(output: string): any[] {
-        const errors: any[] = [];
+    private parseTypeScriptErrors(output: string): TypeScriptError[] {
+        const errors: TypeScriptError[] = [];
         const lines = output.split('\n');
 
         for (const line of lines) {

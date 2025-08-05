@@ -171,7 +171,7 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
                     });
                 }
 
-            } catch (_error) {
+            } catch {
                 console.log(`⚠️  ${tier} tier test execution failed, continuing with next tier...`);
                 this.testResults.push({
                     name: `Role-based test: ${tier}`,
@@ -192,13 +192,13 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
             const startTime = Date.now();
 
             // Run Lighthouse performance tests
-            const { stdout: lighthouseOutput } = await execAsync(
+            await execAsync(
                 'npx lighthouse http://localhost:3000 --output=json --output-path=./lighthouse-report.json --chrome-flags="--headless"',
                 { timeout: 180000 }
             );
 
             // Run Playwright performance tests
-            const { stdout: playwrightOutput } = await execAsync(
+            await execAsync(
                 'npx playwright test --config=playwright.config.performance.ts',
                 { timeout: 120000 }
             );
@@ -213,7 +213,7 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
 
             console.log(`✅ Performance tests completed (${duration}ms)`);
 
-        } catch (_error) {
+        } catch {
             console.log('⚠️  Performance tests encountered issues, but infrastructure validated');
             this.testResults.push({
                 name: 'Performance Tests (Core Web Vitals)',
@@ -232,7 +232,7 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
         try {
             const startTime = Date.now();
 
-            const { stdout } = await execAsync(
+            await execAsync(
                 'npx playwright test --config=playwright.config.mobile.ts',
                 { timeout: 120000 }
             );
@@ -247,7 +247,7 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
 
             console.log(`✅ Mobile tests completed (${duration}ms)`);
 
-        } catch (_error) {
+        } catch {
             console.log('⚠️  Mobile tests encountered issues, validating mobile-responsive utilities...');
 
             // Validate mobile utilities exist
@@ -276,7 +276,7 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
             const startTime = Date.now();
 
             // Check for axe-core accessibility testing
-            const { stdout } = await execAsync(
+            await execAsync(
                 'npx playwright test --grep="accessibility|a11y|wcag"',
                 { timeout: 120000 }
             );
@@ -291,7 +291,7 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
 
             console.log(`✅ Accessibility tests completed (${duration}ms)`);
 
-        } catch (_error) {
+        } catch {
             console.log('⚠️  Accessibility tests need enhancement, validating touch targets...');
 
             // Validate 48px touch targets in CSS
@@ -389,7 +389,7 @@ export default defineConfig({
      * Validate test users for role-based testing
      */
     private async validateTestUsers(): Promise<void> {
-        const testUsers = [
+        const _testUsers = [
             'abbas_ali_rizvi@hotmail.com', // Free tier
             'starter@rankpilot.com',        // Starter tier
             'agency@rankpilot.com',         // Agency tier

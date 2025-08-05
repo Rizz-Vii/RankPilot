@@ -26,7 +26,7 @@ interface WorkflowRequestBody {
     workflowId?: string;
     templateId?: string;
     name?: string;
-    customizations?: Record<string, any>;
+    customizations?: Record<string, unknown>;
     status?: 'active' | 'paused' | 'disabled';
 }
 
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
         const body: WorkflowRequestBody = await request.json();
 
         switch (body.action) {
-            case 'create':
+            case 'create': {
                 if (!body.templateId) {
                     return NextResponse.json(
                         { _error: 'Template ID is required for workflow creation' },
@@ -95,8 +95,9 @@ export async function POST(request: NextRequest) {
                         created: workflow.metadata.created
                     }
                 });
+            }
 
-            case 'execute':
+            case 'execute': {
                 if (!body.workflowId) {
                     return NextResponse.json(
                         { _error: 'Workflow ID is required for execution' },
@@ -109,8 +110,9 @@ export async function POST(request: NextRequest) {
                     success: true,
                     execution: _result
                 });
+            }
 
-            case 'list':
+            case 'list': {
                 const userWorkflows = zapierWorkflowBuilder.getUserWorkflows(userId);
                 return NextResponse.json({
                     success: true,
@@ -128,8 +130,9 @@ export async function POST(request: NextRequest) {
                         updated: w.metadata.updated
                     }))
                 });
+            }
 
-            case 'update':
+            case 'update': {
                 if (!body.workflowId || !body.status) {
                     return NextResponse.json(
                         { _error: 'Workflow ID and status are required for update' },
@@ -149,8 +152,9 @@ export async function POST(request: NextRequest) {
                     success: true,
                     message: `Workflow status updated to ${body.status}`
                 });
+            }
 
-            case 'delete':
+            case 'delete': {
                 if (!body.workflowId) {
                     return NextResponse.json(
                         { _error: 'Workflow ID is required for deletion' },
@@ -170,8 +174,9 @@ export async function POST(request: NextRequest) {
                     success: true,
                     message: 'Workflow deleted successfully'
                 });
+            }
 
-            case 'templates':
+            case 'templates': {
                 const templates = zapierWorkflowBuilder.getTemplates();
                 return NextResponse.json({
                     success: true,
@@ -185,8 +190,9 @@ export async function POST(request: NextRequest) {
                         setupInstructions: t.setupInstructions
                     }))
                 });
+            }
 
-            case 'analytics':
+            case 'analytics': {
                 if (!body.workflowId) {
                     return NextResponse.json(
                         { _error: 'Workflow ID is required for analytics' },
@@ -206,6 +212,7 @@ export async function POST(request: NextRequest) {
                     success: true,
                     analytics
                 });
+            }
 
             default:
                 return NextResponse.json(

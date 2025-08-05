@@ -239,7 +239,8 @@ export default function TeamChatPage() {
         lastSeen: serverTimestamp(),
         isTyping: false
       });
-    } catch (_error) {
+    } catch (error) {
+      console.log('User presence document does not exist, creating new one:', error);
       // Document doesn't exist, create it
       await addDoc(collection(db, 'userPresence'), {
         userId: user.uid,

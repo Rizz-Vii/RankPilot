@@ -126,7 +126,7 @@ class ResponseCache<T> {
 
 class RequestBatcher<T> {
   private pendingRequests = new Map<string, BatchRequest<T>[]>();
-  private batchTimeouts = new Map<string, NodeJS.Timeout>();
+  private batchTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly maxBatchSize: number;
   private readonly batchTimeoutMs: number;
   private readonly maxWaitMs: number;
@@ -155,7 +155,11 @@ class RequestBatcher<T> {
         this.pendingRequests.set(batchKey, []);
       }
 
-      const requests = this.pendingRequests.get(batchKey)!;
+      const requests = this.pendingRequests.get(batchKey);
+      if (!requests) {
+        console.error('Failed to get requests for batch key:', batchKey);
+        return;
+      }
       requests.push(_request);
 
       // Process immediately if batch is full
@@ -223,7 +227,9 @@ class RequestBatcher<T> {
 }
 
 class AIResponseOptimizer {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private caches = new Map<string, ResponseCache<any>>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private batchers = new Map<string, RequestBatcher<any>>();
 
   private getCache<T>(
@@ -233,7 +239,11 @@ class AIResponseOptimizer {
     if (!this.caches.has(operationType)) {
       this.caches.set(operationType, new ResponseCache<T>(options));
     }
-    return this.caches.get(operationType)!;
+    const cache = this.caches.get(operationType);
+    if (!cache) {
+      throw new Error(`Cache not found for operation type: ${operationType}`);
+    }
+    return cache as ResponseCache<T>;
   }
 
   private getBatcher<T>(
@@ -243,7 +253,11 @@ class AIResponseOptimizer {
     if (!this.batchers.has(operationType)) {
       this.batchers.set(operationType, new RequestBatcher<T>(options));
     }
-    return this.batchers.get(operationType)!;
+    const batcher = this.batchers.get(operationType);
+    if (!batcher) {
+      throw new Error(`Batcher not found for operation type: ${operationType}`);
+    }
+    return batcher as RequestBatcher<T>;
   }
 
   async optimizeRequest<T, A extends unknown[]>(
@@ -257,7 +271,7 @@ class AIResponseOptimizer {
       enableBatching = false,
       keyGenerator = (...args) => JSON.stringify(args),
       operationType: timeoutOperationType = "simple",
-      ...restOptions
+      ..._restOptions
     } = options;
 
     return withPerformanceMonitoring(operationType, async () => {
@@ -353,13 +367,13 @@ class AIResponseOptimizer {
     }
   }
 
-  getCacheStats(operationType?: string): Record<string, any> {
+  getCacheStats(operationType?: string): Record<string, unknown> {
     if (operationType) {
       const cache = this.caches.get(operationType);
       return cache ? { [operationType]: cache.getStats() } : {};
     }
 
-    const stats: Record<string, any> = {};
+    const stats: Record<string, unknown> = {};
     this.caches.forEach((cache, type) => {
       stats[type] = cache.getStats();
     });
@@ -367,7 +381,7 @@ class AIResponseOptimizer {
   }
 
   getHealthStatus(): {
-    cacheHealth: Record<string, any>;
+    cacheHealth: Record<string, unknown>;
     performanceHealth: unknown;
     recommendations: string[];
   } {
@@ -377,12 +391,13 @@ class AIResponseOptimizer {
 
     // Analyze cache performance
     Object.entries(cacheStats).forEach(([type, stats]) => {
-      if (stats.hitRate < 30) {
+      const cacheStatistics = stats as { hitRate?: number; size?: number };
+      if (cacheStatistics.hitRate && cacheStatistics.hitRate < 30) {
         recommendations.push(
           `Consider increasing cache TTL for ${type} operations`
         );
       }
-      if (stats.size > 80) {
+      if (cacheStatistics.size && cacheStatistics.size > 80) {
         recommendations.push(
           `Consider increasing cache size for ${type} operations`
         );

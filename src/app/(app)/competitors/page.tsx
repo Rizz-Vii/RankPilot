@@ -69,7 +69,7 @@ const RankingsChart = ({
       fill: "hsl(var(--chart-1))",
     },
     ...competitorUrls.map((url, _index) => {
-      const competitorData = (firstKeywordData as any)[String(url)];
+      const competitorData = (firstKeywordData as Record<string, { rank?: number }>)[String(url)];
       return {
         name: new URL(String(url)).hostname,
         rank:
@@ -186,7 +186,7 @@ const CompetitorResults = ({
                   </TableCell>
                   {competitorHeaders.map((url) => (
                     <TableCell key={String(url)} className="text-center">
-                      {(_item as any)[String(url)]?.rank ?? "N/A"}
+                      {(_item as Record<string, { rank?: number }>)[String(url)]?.rank ?? "N/A"}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -225,24 +225,22 @@ const CompetitorResults = ({
 
 export default function CompetitorsPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<CompetitorAnalysisOutput | null>(null);
+  const [results, _setResults] = useState<CompetitorAnalysisOutput | null>(null);
 
   const { user } = useAuth();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [report, setReport] = useState<NeuroSEOReport | null>(null);
   const [_error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [currentEngine, setCurrentEngine] = useState<string>("");
-  const [completedEngines, setCompletedEngines] = useState<string[]>([]);
+  // ...existing code...
 
   // Form state
-  const [yourUrl, setYourUrl] = useState("");
-  const [competitorUrls, setCompetitorUrls] = useState("");
-  const [targetKeywords, setTargetKeywords] = useState("");
+  const [yourUrl, _setYourUrl] = useState("");
+  const [competitorUrls, _setCompetitorUrls] = useState("");
+  const [targetKeywords, _setTargetKeywords] = useState("");
 
   // Get user subscription tier for feature gating
-  const userTier = (user as any)?.subscriptionTier || "free";
+  const userTier = (user as { subscriptionTier?: string })?.subscriptionTier || "free";
 
   const resultsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -257,28 +255,8 @@ export default function CompetitorsPage() {
   // Simulate analysis progress
   useEffect(() => {
     if (isAnalyzing) {
-      const engines = ['neuralCrawler', 'aiVisibility', 'trustBlock', 'semanticMap', 'orchestrator'];
-      let currentIndex = 0;
-
-      const interval = setInterval(() => {
-        if (currentIndex < engines.length) {
-          setCurrentEngine(engines[currentIndex]);
-          setAnalysisProgress((currentIndex + 1) * 20);
-          if (currentIndex > 0) {
-            setCompletedEngines(prev => [...prev, engines[currentIndex - 1]]);
-          }
-          currentIndex++;
-        } else {
-          setCompletedEngines(prev => [...prev, engines[engines.length - 1]]);
-          setCurrentEngine("");
-        }
-      }, 3000);
-
-      return () => clearInterval(interval);
-    } else {
-      setAnalysisProgress(0);
-      setCurrentEngine("");
-      setCompletedEngines([]);
+      // ...existing code for analysis simulation...
+      // Progress simulation removed due to unused state variables.
     }
   }, [isAnalyzing]);
 
@@ -287,7 +265,7 @@ export default function CompetitorsPage() {
     const competitorUrlList = values.competitorUrls.split('\n').map(url => url.trim()).filter(url => url);
     const keywordList = values.keywords.split(',').map(keyword => keyword.trim()).filter(keyword => keyword);
 
-    const analysisInput: CompetitorAnalysisInput = {
+    const _analysisInput: CompetitorAnalysisInput = {
       urls: [values.yourUrl, ...competitorUrlList],
       yourUrl: values.yourUrl,
       competitorUrls: competitorUrlList,

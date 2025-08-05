@@ -341,12 +341,17 @@ export class EnterpriseFirestoreSharding {
 
         // Process results and handle failures
         const successfulResults = results
-            .filter((_result): _result is PromiseFulfilledResult<any> => _result.status === 'fulfilled')
-            .map(_result => (_result as PromiseFulfilledResult<any>).value);
+            .filter((_result): _result is PromiseFulfilledResult<{
+                documents: unknown[];
+                count: number;
+                latency: number;
+                shardId: string;
+            }> => _result.status === 'fulfilled')
+            .map(_result => _result.value);
 
         const failedResults = results
             .filter((_result): _result is PromiseRejectedResult => _result.status === 'rejected')
-            .map(_result => (_result as PromiseRejectedResult).reason);
+            .map(_result => _result.reason);
 
         if (failedResults.length > 0) {
             console.warn(`Some shard queries failed:`, failedResults);
@@ -398,7 +403,7 @@ export class EnterpriseFirestoreSharding {
         // Optimize field selection for large documents
         if (collection === 'neuroSeoAnalyses' && userContext?.expectedResultSize && userContext.expectedResultSize > 100) {
             // Add field selection for large result sets
-            (optimizedQuery as any).select = this.getEssentialFields(collection, userContext.tier);
+            (optimizedQuery as { select?: string[] }).select = this.getEssentialFields(collection, userContext.tier);
         }
 
         // Generate index recommendations
@@ -625,8 +630,7 @@ export class EnterpriseFirestoreSharding {
 
                 // Check user context
                 if (userContext && typeof userContext === 'object' && userContext !== null && field in userContext) {
-                    // @ts-ignore
-                    if ((userContext as any)[field] === value) {
+                    if ((userContext as Record<string, unknown>)[field] === value) {
                         continue;
                     }
                 }
@@ -643,7 +647,7 @@ export class EnterpriseFirestoreSharding {
     private async executeShardQuery(
         shard: Shard,
         query: FirestoreQuery,
-        consistencyLevel: string
+        _consistencyLevel: string
     ): Promise<{
         documents: unknown[];
         count: number;
@@ -672,17 +676,21 @@ export class EnterpriseFirestoreSharding {
         query: FirestoreQuery
     ): Promise<{ documents: unknown[]; totalCount: number; }> {
         // Combine all documents
-        const allDocuments = results.flatMap(r => r.documents) as any[];
+        const allDocuments = results.flatMap(r => r.documents);
 
         // Apply sorting if specified
         if (query.orderBy && query.orderBy.length > 0) {
-            allDocuments.sort((a: any, b: any) => {
+            allDocuments.sort((a: unknown, b: unknown) => {
                 for (const order of query.orderBy!) {
-                    const aVal = (a as any)[order.field];
-                    const bVal = (b as any)[order.field];
+                    const aVal = (a as Record<string, unknown>)[order.field];
+                    const bVal = (b as Record<string, unknown>)[order.field];
 
-                    if (aVal < bVal) return order.direction === 'asc' ? -1 : 1;
-                    if (aVal > bVal) return order.direction === 'asc' ? 1 : -1;
+                    // Safe comparison for unknown types
+                    const aStr = String(aVal);
+                    const bStr = String(bVal);
+
+                    if (aStr < bStr) return order.direction === 'asc' ? -1 : 1;
+                    if (aStr > bStr) return order.direction === 'asc' ? 1 : -1;
                 }
                 return 0;
             });

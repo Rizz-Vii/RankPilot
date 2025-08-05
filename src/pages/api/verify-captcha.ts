@@ -7,8 +7,9 @@ export default async function handler(
 ) {
   const { token } = req.body;
 
+  const secretKey = typeof process !== "undefined" ? process.env.RECAPTCHA_SECRET_KEY : "";
   const response = await fetch(
-    `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${token}`,
+    `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${token}`,
     { method: "POST" }
   );
 

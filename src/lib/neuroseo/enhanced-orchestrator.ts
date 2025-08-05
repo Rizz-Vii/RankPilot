@@ -56,6 +56,31 @@ interface NeuroSEOReport {
     cached: boolean;
 }
 
+interface NeuroSEOAnalysisResult {
+    seoScore: number;
+    performance: number;
+    accessibility: number;
+    bestPractices: number;
+    keywords: KeywordAnalysis[];
+    backlinks: BacklinkAnalysis;
+}
+
+interface KeywordAnalysis {
+    keyword: string;
+    position: number;
+    volume: number;
+    difficulty: number;
+}
+
+interface BacklinkAnalysis {
+    total: number;
+    quality: {
+        high: number;
+        medium: number;
+        low: number;
+    };
+}
+
 interface CacheEntry {
     _data: NeuroSEOReport;
     timestamp: number;
@@ -67,7 +92,7 @@ export class EnhancedNeuroSEOOrchestrator {
     private static instance: EnhancedNeuroSEOOrchestrator;
     private processingQueue: Map<string, Promise<NeuroSEOReport>> = new Map();
     private cache: Map<string, CacheEntry> = new Map();
-    private cleanupInterval: NodeJS.Timeout | null = null;
+    private cleanupInterval: ReturnType<typeof setInterval> | null = null;
     private readonly CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
     private readonly MAX_CACHE_SIZE = 100; // LRU cache size
     private readonly MAX_CONCURRENT_REQUESTS = 3;
@@ -112,7 +137,10 @@ export class EnhancedNeuroSEOOrchestrator {
             logger.info('Analysis in progress - Waiting for completion', {
                 cacheKey: cacheKey.substring(0, 16) + '...'
             });
-            const result = await this.processingQueue.get(cacheKey)!;
+            const result = await this.processingQueue.get(cacheKey);
+            if (!result) {
+                throw new Error('Processing queue result is undefined');
+            }
             return { ...result, cached: false };
         }
 
@@ -161,7 +189,7 @@ export class EnhancedNeuroSEOOrchestrator {
 
         // Memory-optimized processing with chunking
         const urlChunks = this.chunkArray(_request.urls, 3); // Process 3 URLs at a time
-        const analysisResults: any[] = [];
+        const analysisResults: NeuroSEOAnalysisResult[] = [];
 
         for (let i = 0; i < urlChunks.length; i++) {
             const chunk = urlChunks[i];
@@ -203,19 +231,22 @@ export class EnhancedNeuroSEOOrchestrator {
     }
 
     private generateComprehensiveReport(
-        analysisResults: any[],
+        analysisResults: NeuroSEOAnalysisResult[],
         _request: NeuroSEOAnalysisRequest,
         analysisId: string
     ): NeuroSEOReport {
-        const avgScore = (field: string) =>
-            analysisResults.reduce((sum, _result: any) => sum + _result[field], 0) / analysisResults.length;
+        const avgScore = (field: keyof NeuroSEOAnalysisResult) =>
+            analysisResults.reduce((sum, result) => {
+                const value = result[field];
+                return sum + (typeof value === 'number' ? value : 0);
+            }, 0) / analysisResults.length;
 
         const overallScore = Math.round(
             (avgScore('seoScore') + avgScore('performance') + avgScore('accessibility') + avgScore('bestPractices')) / 4
         );
 
-        const allKeywords = analysisResults.flatMap((result: any) => result.keywords);
-        const totalBacklinks = analysisResults.reduce((sum, _result: any) => sum + _result.backlinks.total, 0);
+        const allKeywords = analysisResults.flatMap((result) => result.keywords);
+        const totalBacklinks = analysisResults.reduce((sum, result) => sum + result.backlinks.total, 0);
 
         return {
             analysisId,
@@ -252,9 +283,20 @@ export class EnhancedNeuroSEOOrchestrator {
         }));
     }
 
-    private generateMockBacklinks() {
+    private generateMockBacklinks(): BacklinkAnalysis {
         const total = 50 + Math.floor(Math.random() * 200);
-        return { total };
+        const high = Math.floor(total * 0.2);
+        const medium = Math.floor(total * 0.3);
+        const low = total - high - medium;
+
+        return {
+            total,
+            quality: {
+                high,
+                medium,
+                low
+            }
+        };
     }
 
     private generateRecommendations(score: number): Array<{

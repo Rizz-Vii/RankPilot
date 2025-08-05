@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import "./seo-achievements-badges.css";
 import {
   Card,

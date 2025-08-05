@@ -30,9 +30,17 @@ export const connectionPoolConfig: ConnectionPoolConfig = {
   retryDelay: 1000, // 1 second
 };
 
+interface PooledConnection {
+  id: string;
+  connection: unknown;
+  createdAt: Date;
+  lastUsed: Date;
+  isActive: boolean;
+}
+
 export class ConnectionPoolManager {
   private static instance: ConnectionPoolManager;
-  private activeConnections: Map<string, any> = new Map();
+  private activeConnections: Map<string, PooledConnection> = new Map();
   private connectionCounts: Map<string, number> = new Map();
 
   private constructor() { }
@@ -76,12 +84,20 @@ export class ConnectionPoolManager {
       if (process.env.NODE_ENV === 'development' && !this.activeConnections.has(connectionKey)) {
         try {
           connectFirestoreEmulator(db, 'localhost', 8080);
-        } catch (_error) {
+        } catch {
           // Emulator already connected or not available
         }
       }
 
-      this.activeConnections.set(connectionKey, db);
+      const pooledConnection: PooledConnection = {
+        id: connectionKey,
+        connection: db,
+        createdAt: new Date(),
+        lastUsed: new Date(),
+        isActive: true
+      };
+
+      this.activeConnections.set(connectionKey, pooledConnection);
       this.incrementConnectionCount(connectionKey);
 
       // Set up connection cleanup
@@ -148,15 +164,21 @@ export class ConnectionPoolManager {
           }
 
           return _response;
-        } catch (error) {
-          throw error;
         } finally {
           this.activeRequests--;
         }
       }
     };
 
-    this.activeConnections.set(poolKey, pool);
+    const pooledConnection: PooledConnection = {
+      id: poolKey,
+      connection: pool,
+      createdAt: new Date(),
+      lastUsed: new Date(),
+      isActive: true
+    };
+
+    this.activeConnections.set(poolKey, pooledConnection);
     return pool;
   }
 
@@ -197,13 +219,15 @@ export class ConnectionPoolManager {
   private scheduleConnectionCleanup(_key: string) {
     setTimeout(() => {
       if (this.connectionCounts.has(_key)) {
-        const lastUsed = this.connectionCounts.get(_key)!;
-        const now = Date.now();
+        const lastUsed = this.connectionCounts.get(_key);
+        if (lastUsed !== undefined) {
+          const now = Date.now();
 
-        if (now - lastUsed > connectionPoolConfig.idleTimeout) {
-          this.activeConnections.delete(_key);
-          this.connectionCounts.delete(_key);
-          console.log(`Auto-cleaned connection: ${_key}`);
+          if (now - lastUsed > connectionPoolConfig.idleTimeout) {
+            this.activeConnections.delete(_key);
+            this.connectionCounts.delete(_key);
+            console.log(`Auto-cleaned connection: ${_key}`);
+          }
         }
       }
     }, connectionPoolConfig.idleTimeout);

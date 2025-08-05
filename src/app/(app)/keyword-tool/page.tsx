@@ -43,17 +43,25 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 // Enhanced keyword data structure for NeuroSEO™ SemanticMap™
-interface EnhancedKeywordData {
+interface _EnhancedKeywordData {
   keyword: string;
   searchVolume: number;
   difficulty: number;
   competition: "low" | "medium" | "high";
   cpc: number;
-  trend: "rising" | "stable" | "declining";
-  semanticCluster: string;
-  intent: "informational" | "commercial" | "transactional" | "navigational";
-  topicalRelevance: number;
-  opportunities: string[];
+  opportunity: number;
+  trends: number[];
+  intent: "informational" | "navigational" | "commercial" | "transactional";
+  relatedQuestions: string[];
+  semanticGroups: string[];
+}
+
+interface KeywordResultsData {
+  keywords: Array<{
+    keyword: string;
+    searchVolume: number;
+    difficulty: number;
+  }>;
 }
 
 const getProgressColor = (score: number) => {
@@ -62,7 +70,7 @@ const getProgressColor = (score: number) => {
   return "bg-success";
 };
 
-const KeywordResults = ({ results }: { results: unknown; }) => {
+const KeywordResults = ({ results }: { results: KeywordResultsData; }) => {
   const { toast } = useToast();
 
   const copyToClipboard = (text: string) => {
@@ -74,7 +82,7 @@ const KeywordResults = ({ results }: { results: unknown; }) => {
           description: "Keywords copied to clipboard.",
         });
       })
-      .catch((err) => {
+      .catch((_err) => {
         toast({
           variant: "destructive",
           title: "Copy Failed",
@@ -94,7 +102,7 @@ const KeywordResults = ({ results }: { results: unknown; }) => {
       <div className="block md:hidden">
             <MobileResultsCard
           title="Keyword Suggestions"
-              subtitle={`${(results as any).suggestions?.length || 0} keywords found`}
+              subtitle={`${results.keywords?.length || 0} keywords found`}
           icon={<Search className="h-5 w-5" />}
           actions={
             <Button
@@ -102,7 +110,7 @@ const KeywordResults = ({ results }: { results: unknown; }) => {
               size="sm"
               onClick={() =>
                 copyToClipboard(
-                      ((results as any).suggestions || []).map((k: any) => k.keyword).join(", ")
+                      (results.keywords || []).map((k) => k.keyword).join(", ")
                 )
               }
             >
@@ -111,7 +119,7 @@ const KeywordResults = ({ results }: { results: unknown; }) => {
           }
         >
           <div className="space-y-3">
-                {(results as any).keywords.map((keyword: any, _index: number) => (
+                {results.keywords.map((keyword, _index: number) => (
                   <div key={_index} className="p-3 bg-gray-50 rounded-lg">
                 <div className="flex justify-between items-start mb-2">
                   <span className="font-medium text-sm">{keyword.keyword}</span>
@@ -152,7 +160,7 @@ const KeywordResults = ({ results }: { results: unknown; }) => {
                 size="sm"
                 onClick={() =>
                   copyToClipboard(
-                        (results as any).keywords.map((k: any) => k.keyword).join(", ")
+                        results.keywords.map((k) => k.keyword).join(", ")
                   )
                 }
                 className="font-body"
@@ -175,7 +183,7 @@ const KeywordResults = ({ results }: { results: unknown; }) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                    {(results as any).keywords.map((keyword: any, _index: number) => (
+                    {results.keywords.map((keyword, _index: number) => (
                       <TableRow key={_index}>
                     <TableCell className="font-medium font-body">
                           {keyword.keyword}
@@ -210,7 +218,7 @@ const KeywordResults = ({ results }: { results: unknown; }) => {
 export default function KeywordToolPage() {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<any | null>(null);
+  const [results, setResults] = useState<KeywordResultsData | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   // Performance feedback integration
@@ -263,7 +271,7 @@ export default function KeywordToolPage() {
           tool: "Keyword Tool",
           timestamp: serverTimestamp(),
           details: values,
-          resultsSummary: `Searched for keywords related to "${values.topic}". Found ${(result as any)?.suggestions?.length || 0} suggestions.`,
+          resultsSummary: `Searched for keywords related to "${values.topic}". Found ${(result as unknown as KeywordResultsData)?.keywords?.length || 0} suggestions.`,
         });
       }
     } catch (_error) {

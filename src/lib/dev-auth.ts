@@ -53,10 +53,13 @@ export const loginAsDevUser = async (
       return userCredential.user;
     } else {
       // Use email/password for regular users
+      if (!userCreds.password) {
+        throw new Error('Password is required for non-admin users');
+      }
       const userCredential = await signInWithEmailAndPassword(
         auth,
         userCreds.email,
-        userCreds.password!
+        userCreds.password
       );
       console.log(`Logged in as ${userType} user:`, userCredential.user.email);
       return userCredential.user;
@@ -88,10 +91,10 @@ const createMockUser = (userType: "free" | "starter"): User => {
     providerData: [],
     refreshToken: "",
     tenantId: null,
-    delete: async () => {},
+    delete: async () => { },
     getIdToken: async () => "mock-token",
-    getIdTokenResult: async () => ({}) as any,
-    reload: async () => {},
+    getIdTokenResult: async () => ({}) as Record<string, unknown>,
+    reload: async () => { },
     toJSON: () => ({}),
     phoneNumber: null,
     photoURL: null,

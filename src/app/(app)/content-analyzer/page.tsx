@@ -1,7 +1,7 @@
 // src/app/(app)/seo-audit/page.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import {
   NeuroSEOActionableTasks,
@@ -82,7 +82,7 @@ export default function SeoAuditPage() {
   const resultRef = useRef<HTMLDivElement>(null);
 
   // Get user subscription tier for feature gating
-  const userTier = (user as any)?.subscriptionTier || "free";
+  const userTier = (user as Record<string, unknown>)?.subscriptionTier || "free";
 
   // Scroll to results when analysis completes
   useEffect(() => {
@@ -467,7 +467,7 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
               />
               <XAxis dataKey="score" type="number" hide />
               <ChartTooltip
-                content={(props: any) => <ChartTooltipContent {...props} />}
+                content={<ChartTooltipContent />}
               />
               <Bar dataKey="score" radius={5} />
             </BarChart>
@@ -487,9 +487,7 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
             >
               <PieChart>
                 <ChartTooltip
-                  content={(props: any) => (
-                    <ChartTooltipContent {...props} nameKey="name" hideLabel />
-                  )}
+                  content={<ChartTooltipContent hideLabel />}
                 />
                 <Pie data={imageData} dataKey="value">
                   <Cell key="withAlt" fill="var(--color-withAlt)" />
@@ -504,7 +502,7 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
   );
 };
 
-const AuditResults = ({ results }: { results: AuditUrlOutput; }) => (
+const _AuditResults = ({ results }: { results: AuditUrlOutput; }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}

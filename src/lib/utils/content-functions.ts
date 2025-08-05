@@ -71,7 +71,7 @@ export async function generateContentBrief(input: ContentBriefInput): Promise<Co
 // INSIGHTS GENERATION
 // ============================================================================
 
-export async function generateInsights(input: { keywords: string[]; urls: string[]; }): Promise<GenerateInsightsOutput> {
+export async function generateInsights(_input: { keywords: string[]; urls: string[]; }): Promise<GenerateInsightsOutput> {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1500));
 

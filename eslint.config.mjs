@@ -1,6 +1,14 @@
 import js from "@eslint/js";
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
+import globals from "globals";
+import { FlatCompat } from "@eslint/eslintrc";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const compat = new FlatCompat({ baseDirectory: __dirname });
 
 export default [
   {
@@ -20,6 +28,8 @@ export default [
     ],
   },
   js.configs.recommended,
+  // Legacy config support (example, add more as needed)
+  ...compat.extends("plugin:import/typescript"),
   {
     // Node.js JavaScript files (including Firebase Functions)
     files: [
@@ -40,27 +50,11 @@ export default [
       ecmaVersion: "latest",
       sourceType: "module",
       globals: {
-        // Node.js globals
-        console: "readonly",
-        process: "readonly",
-        Buffer: "readonly",
-        global: "readonly",
-        __dirname: "readonly",
-        __filename: "readonly",
-        require: "readonly",
-        module: "readonly",
-        exports: "readonly",
-        setTimeout: "readonly",
-        clearTimeout: "readonly",
-        setInterval: "readonly",
-        clearInterval: "readonly",
-        setImmediate: "readonly",
-        clearImmediate: "readonly",
-        // Web APIs available in Node.js
-        URL: "readonly",
-        URLSearchParams: "readonly",
-        // Firebase admin SDK globals
+        ...globals.node,
+        // Add custom globals if needed
         FirebaseFirestore: "readonly",
+        NodeJS: "readonly",
+        process: "readonly",
       },
     },
     rules: {
@@ -78,8 +72,9 @@ export default [
       "no-undef": "error",
     },
   },
+  // Functions/src TypeScript files (use functions/tsconfig.json)
   {
-    files: ["**/*.{ts,tsx}"],
+    files: ["functions/src/**/*.ts", "functions/src/**/*.tsx"],
     plugins: {
       "@typescript-eslint": typescriptEslint,
     },
@@ -87,55 +82,17 @@ export default [
       parser: tsParser,
       ecmaVersion: "latest",
       sourceType: "module",
-      globals: {
-        // Browser globals
-        window: "readonly",
-        document: "readonly",
-        navigator: "readonly",
-        localStorage: "readonly",
-        sessionStorage: "readonly",
-        console: "readonly",
-        setTimeout: "readonly",
-        clearTimeout: "readonly",
-        setInterval: "readonly",
-        clearInterval: "readonly",
-        fetch: "readonly",
-        btoa: "readonly",
-        atob: "readonly",
-        Image: "readonly",
-        performance: "readonly",
-        confirm: "readonly",
-        // Node.js globals for Next.js and testing utilities
-        process: "readonly",
-        Buffer: "readonly",
-        global: "readonly",
-        __dirname: "readonly",
-        __filename: "readonly",
-        require: "readonly",
-        module: "readonly",
-        exports: "readonly",
-        // TypeScript globals
-        NodeJS: "readonly",
-        React: "readonly",
-        // Testing globals (Playwright, Jest, etc.)
-        describe: "readonly",
-        it: "readonly",
-        test: "readonly",
-        expect: "readonly",
-        beforeAll: "readonly",
-        beforeEach: "readonly",
-        afterAll: "readonly",
-        afterEach: "readonly",
-        jest: "readonly",
-        // Firebase admin SDK globals
-        FirebaseFirestore: "readonly",
-      },
       parserOptions: {
-        project: "./tsconfig.json",
-        tsconfigRootDir: process.cwd(),
+        project: path.resolve(__dirname, "./functions/tsconfig.json"),
+        tsconfigRootDir: __dirname,
         ecmaFeatures: {
           jsx: true,
         },
+      },
+      globals: {
+        ...globals.node,
+        NodeJS: "readonly",
+        process: "readonly",
       },
     },
     rules: {
@@ -153,10 +110,54 @@ export default [
       "no-var": "error",
       "no-console": "off",
       "no-debugger": "warn",
-      "no-unused-vars": "off", // Turn off base rule
-      "no-undef": "error", // Keep this for proper global checking
-      "no-redeclare": "warn", // Function overloads are common in TS
-      "no-case-declarations": "warn", // Switch case declarations
+      "no-unused-vars": "off",
+      "no-undef": "error",
+      "no-redeclare": "warn",
+      "no-case-declarations": "warn",
+    },
+  },
+  // Main src TypeScript files (use root tsconfig.json)
+  {
+    files: ["src/**/*.ts", "src/**/*.tsx"],
+    plugins: {
+      "@typescript-eslint": typescriptEslint,
+    },
+    languageOptions: {
+      parser: tsParser,
+      ecmaVersion: "latest",
+      sourceType: "module",
+      parserOptions: {
+        project: path.resolve(__dirname, "./tsconfig.json"),
+        tsconfigRootDir: __dirname,
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+      globals: {
+        ...globals.browser,
+        // Add custom browser globals if needed
+        process: "readonly",
+      },
+    },
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-non-null-assertion": "warn",
+      "prefer-const": "warn",
+      "no-var": "error",
+      "no-console": "off",
+      "no-debugger": "warn",
+      "no-unused-vars": "off",
+      "no-undef": "error",
+      "no-redeclare": "warn",
+      "no-case-declarations": "warn",
     },
   },
   {
@@ -166,6 +167,16 @@ export default [
       "prefer-const": "warn",
       "no-var": "error",
       "no-console": "off",
+    },
+  },
+  // Jest test files
+  {
+    files: ["**/*.test.{js,ts,jsx,tsx}", "**/*.spec.{js,ts,jsx,tsx}"],
+    languageOptions: {
+      globals: globals.jest,
+    },
+    rules: {
+      // Optionally add Jest-specific rules here
     },
   },
   {

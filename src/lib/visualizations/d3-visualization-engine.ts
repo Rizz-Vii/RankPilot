@@ -8,7 +8,7 @@
  * - Interactive charts with zoom, pan, and filtering
  * - Real-time data updates and animations
  * - Export capabilities (PNG, SVG, PDF)
- * - Respon            .attr('fill', (d: ChartDataPoint, _i: number) => colors[((typeof d.category === 'number' ? d.category : _i) % colors.length)]);ive design with mobile optimization
+ * - Responsive design with mobile optimization
  */
 
 import * as d3 from 'd3';
@@ -79,7 +79,7 @@ export interface ChartExportConfig {
 }
 
 export class D3VisualizationEngine {
-    private charts: Map<string, any> = new Map();
+    private charts: Map<string, { svg: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>; config: ChartConfig; type: string }> = new Map();
     private colorSchemes: Map<string, string[]> = new Map();
 
     constructor() {
@@ -158,14 +158,17 @@ export class D3VisualizationEngine {
                 .attr('d', line);
 
             if (config.options.animations) {
-                const totalLength = path.node()!.getTotalLength();
-                path
-                    .attr('stroke-dasharray', totalLength + ' ' + totalLength)
-                    .attr('stroke-dashoffset', totalLength)
-                    .transition()
-                    .duration(2000)
-                    .ease(d3.easeLinear)
-                    .attr('stroke-dashoffset', 0);
+                const pathNode = path.node();
+                if (pathNode) {
+                    const totalLength = pathNode.getTotalLength();
+                    path
+                        .attr('stroke-dasharray', totalLength + ' ' + totalLength)
+                        .attr('stroke-dashoffset', totalLength)
+                        .transition()
+                        .duration(2000)
+                        .ease(d3.easeLinear)
+                        .attr('stroke-dashoffset', 0);
+                }
             }
 
             // Add data points
@@ -227,7 +230,7 @@ export class D3VisualizationEngine {
             .data(config._data)
             .enter().append('rect')
             .attr('class', 'bar')
-            .attr('x', d => xScale(String(d.x))!)
+            .attr('x', d => xScale(String(d.x)) || 0)
             .attr('width', xScale.bandwidth())
             .attr('y', height)
             .attr('height', 0)
@@ -273,16 +276,16 @@ export class D3VisualizationEngine {
             .attr('transform', `translate(${width / 2}, ${height / 2})`);
 
         // Create pie generator
-        const pie = d3.pie<any>()
-            .value(d => d._value)
+        const pie = d3.pie<ChartDataPoint>()
+            .value(d => Number(d.y))
             .sort(null);
 
         // Create arc generator
-        const arc = d3.arc<any>()
+        const arc = d3.arc<d3.PieArcDatum<ChartDataPoint>>()
             .innerRadius(0)
             .outerRadius(radius);
 
-        const outerArc = d3.arc<any>()
+        const outerArc = d3.arc<d3.PieArcDatum<ChartDataPoint>>()
             .innerRadius(radius * 0.9)
             .outerRadius(radius * 0.9);
 
@@ -293,7 +296,7 @@ export class D3VisualizationEngine {
             .attr('class', 'slice');
 
         const paths = slices.append('path')
-            .attr('d', arc as any)
+            .attr('d', arc)
             .attr('fill', (d, _i) => colors[_i % colors.length])
             .attr('stroke', '#fff')
             .attr('stroke-width', 2);
@@ -306,7 +309,7 @@ export class D3VisualizationEngine {
                     const i = d3.interpolate(d.startAngle, d.endAngle);
                     return (t: number) => {
                         d.endAngle = i(t);
-                        return arc(d as any) as string;
+                        return arc(d) || '';
                     };
                 });
         }
@@ -320,11 +323,11 @@ export class D3VisualizationEngine {
         // Add labels
         if (config.options.legend) {
             const labels = slices.append('text')
-                .attr('transform', d => `translate(${outerArc.centroid(d as any)})`)
+                .attr('transform', d => `translate(${outerArc.centroid(d)})`)
                 .attr('dy', '0.35em')
                 .style('text-anchor', 'middle')
                 .style('font-size', '12px')
-                .text(d => d.data.label);
+                .text(d => String(d.data.x || ''));
 
             if (config.options.animations) {
                 labels
@@ -441,8 +444,8 @@ export class D3VisualizationEngine {
             .data(config._data)
             .enter().append('rect')
             .attr('class', 'cell')
-            .attr('x', (d: ChartDataPoint) => xScale(String(d.x))!)
-            .attr('y', (d: ChartDataPoint) => yScale(String(d.y))!)
+            .attr('x', (d: ChartDataPoint) => xScale(String(d.x)) || 0)
+            .attr('y', (d: ChartDataPoint) => yScale(String(d.y)) || 0)
             .attr('width', xScale.bandwidth())
             .attr('height', yScale.bandwidth())
             .attr('fill', (d: ChartDataPoint) => colorScale(Number(d.value || 0)));
@@ -483,6 +486,9 @@ export class D3VisualizationEngine {
         }
 
         const svg = chart.svg.node();
+        if (!svg) {
+            throw new Error('SVG element not found for chart');
+        }
 
         switch (exportConfig.format) {
             case 'svg':
@@ -507,7 +513,7 @@ export class D3VisualizationEngine {
             throw new Error(`Chart ${chartId} not found`);
         }
 
-        chart.config.data = newData;
+        chart.config._data = newData;
 
         // Recreate chart with new data based on type
         const containerId = chart.svg.node()?.parentElement?.id;
@@ -535,7 +541,7 @@ export class D3VisualizationEngine {
     /**
      * Helper methods
      */
-    private createSVG(containerId: string, config: ChartConfig): d3.Selection<SVGGElement, unknown, HTMLElement, any> {
+    private createSVG(containerId: string, config: ChartConfig): d3.Selection<SVGGElement, unknown, HTMLElement, unknown> {
         const container = d3.select(`#${containerId}`);
 
         const svg = container.append('svg')
@@ -545,7 +551,9 @@ export class D3VisualizationEngine {
 
         return svg.append('g')
             .attr('transform', `translate(${config.margin.left}, ${config.margin.top})`);
-    } private getChartDimensions(config: ChartConfig): { width: number; height: number; } {
+    }
+
+    private getChartDimensions(config: ChartConfig): { width: number; height: number; } {
         return {
             width: config.width - config.margin.left - config.margin.right,
             height: config.height - config.margin.top - config.margin.bottom
@@ -553,14 +561,22 @@ export class D3VisualizationEngine {
     }
 
     private getColorScheme(scheme: string): string[] {
-        return this.colorSchemes.get(scheme) || this.colorSchemes.get('default')!;
+        return this.colorSchemes.get(scheme) || this.colorSchemes.get('default') || [
+            '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'
+        ];
     }
 
     private clearContainer(containerId: string): void {
         d3.select(`#${containerId}`).selectAll('*').remove();
     }
 
-    private addXAxis(svg: unknown, scale: unknown, height: number, axisConfig?: AxisConfig): void {
+    // Overload axis/grid helpers to accept correct D3 scale types
+    private addXAxis(
+        svg: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>,
+        scale: d3.ScaleTime<number, number> | d3.ScaleLinear<number, number> | d3.ScaleBand<string>,
+        height: number,
+        axisConfig?: AxisConfig
+    ): void {
         const axis = d3.axisBottom(scale as any);
 
         if (axisConfig?.tickCount) {
@@ -568,10 +584,10 @@ export class D3VisualizationEngine {
         }
 
         if (axisConfig?.tickFormat) {
-            axis.tickFormat((d: unknown) => d3.format(axisConfig.tickFormat!)(d as any));
+            axis.tickFormat((d: unknown) => d3.format(axisConfig.tickFormat || '.2f')(Number(d)));
         }
 
-        const xAxis = (svg as any).append('g')
+        const xAxis = svg.append('g')
             .attr('class', 'x-axis')
             .attr('transform', `translate(0, ${height})`)
             .call(axis);
@@ -579,7 +595,7 @@ export class D3VisualizationEngine {
         if (axisConfig?.label) {
             xAxis.append('text')
                 .attr('class', 'axis-label')
-                .attr('x', (scale as any).range()[1] / 2)
+                .attr('x', scale.range ? scale.range()[1] / 2 : 0)
                 .attr('y', 40)
                 .style('text-anchor', 'middle')
                 .style('fill', 'black')
@@ -587,7 +603,11 @@ export class D3VisualizationEngine {
         }
     }
 
-    private addYAxis(svg: unknown, scale: unknown, axisConfig?: AxisConfig): void {
+    private addYAxis(
+        svg: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>,
+        scale: d3.ScaleLinear<number, number> | d3.ScaleBand<string> | d3.ScaleTime<number, number>,
+        axisConfig?: AxisConfig
+    ): void {
         const axis = d3.axisLeft(scale as any);
 
         if (axisConfig?.tickCount) {
@@ -595,10 +615,10 @@ export class D3VisualizationEngine {
         }
 
         if (axisConfig?.tickFormat) {
-            axis.tickFormat((d: unknown) => d3.format(axisConfig.tickFormat!)(d as any));
+            axis.tickFormat((d: unknown) => d3.format(axisConfig.tickFormat || '.2f')(Number(d)));
         }
 
-        const yAxis = (svg as any).append('g')
+        const yAxis = svg.append('g')
             .attr('class', 'y-axis')
             .call(axis);
 
@@ -607,39 +627,68 @@ export class D3VisualizationEngine {
                 .attr('class', 'axis-label')
                 .attr('transform', 'rotate(-90)')
                 .attr('y', -40)
-                .attr('x', -(scale as any).range()[0] / 2)
+                .attr('x', scale && (scale as { range?: () => number[] }).range ? -(scale as { range: () => number[] }).range()[0] / 2 : 0)
                 .style('text-anchor', 'middle')
                 .style('fill', 'black')
                 .text(axisConfig.label);
         }
     }
 
-    private addGrid(svg: unknown, xScale: unknown, yScale: unknown, width: number, height: number): void {
+    private addGrid(
+        svg: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>,
+        xScale: d3.ScaleTime<number, number> | d3.ScaleLinear<number, number> | d3.ScaleBand<string>,
+        yScale: d3.ScaleLinear<number, number> | d3.ScaleBand<string> | d3.ScaleTime<number, number>,
+        width: number,
+        height: number
+    ): void {
         // Add X grid lines
-        (svg as any).append('g')
-            .attr('class', 'grid')
-            .attr('transform', `translate(0, ${height})`)
-            .call(d3.axisBottom(xScale as any)
-                .tickSize(-height)
-                .tickFormat(() => '')
-            )
-            .style('stroke-dasharray', '3,3')
-            .style('opacity', 0.3);
+        if ('bandwidth' in xScale) {
+            svg.append('g')
+                .attr('class', 'grid')
+                .attr('transform', `translate(0, ${height})`)
+                .call(d3.axisBottom(xScale as d3.ScaleBand<string>)
+                    .tickSize(-height)
+                    .tickFormat(() => '')
+                )
+                .style('stroke-dasharray', '3,3')
+                .style('opacity', 0.3);
+        } else {
+            svg.append('g')
+                .attr('class', 'grid')
+                .attr('transform', `translate(0, ${height})`)
+                .call(d3.axisBottom(xScale as d3.AxisScale<d3.AxisDomain>)
+                    .tickSize(-height)
+                    .tickFormat(() => '')
+                )
+                .style('stroke-dasharray', '3,3')
+                .style('opacity', 0.3);
+        }
 
         // Add Y grid lines
-        (svg as any).append('g')
-            .attr('class', 'grid')
-            .call(d3.axisLeft(yScale as any)
-                .tickSize(-width)
-                .tickFormat(() => '')
-            )
-            .style('stroke-dasharray', '3,3')
-            .style('opacity', 0.3);
+        if ('bandwidth' in yScale) {
+            svg.append('g')
+                .attr('class', 'grid')
+                .call(d3.axisLeft(yScale as d3.ScaleBand<string>)
+                    .tickSize(-width)
+                    .tickFormat(() => '')
+                )
+                .style('stroke-dasharray', '3,3')
+                .style('opacity', 0.3);
+        } else {
+            svg.append('g')
+                .attr('class', 'grid')
+                .call(d3.axisLeft(yScale as d3.AxisScale<d3.AxisDomain>)
+                    .tickSize(-width)
+                    .tickFormat(() => '')
+                )
+                .style('stroke-dasharray', '3,3')
+                .style('opacity', 0.3);
+        }
     }
 
-    private addTitle(svg: unknown, config: ChartConfig): void {
+    private addTitle(svg: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>, config: ChartConfig): void {
         if (config.options.title) {
-            (svg as any).append('text')
+            svg.append('text')
                 .attr('class', 'chart-title')
                 .attr('x', (config.width - config.margin.left - config.margin.right) / 2)
                 .attr('y', -config.margin.top / 2)
@@ -651,7 +700,7 @@ export class D3VisualizationEngine {
         }
 
         if (config.options.subtitle) {
-            (svg as any).append('text')
+            svg.append('text')
                 .attr('class', 'chart-subtitle')
                 .attr('x', (config.width - config.margin.left - config.margin.right) / 2)
                 .attr('y', -config.margin.top / 2 + 20)
@@ -663,7 +712,7 @@ export class D3VisualizationEngine {
     }
 
     private addLegend(svg: unknown, series: string[], colors: string[], config: ChartConfig): void {
-        const legend = (svg as any).append('g')
+        const legend = (svg as d3.Selection<SVGGElement, unknown, HTMLElement, unknown>).append('g')
             .attr('class', 'legend')
             .attr('transform', `translate(${config.width - config.margin.right + 20}, 20)`);
 
@@ -716,7 +765,10 @@ export class D3VisualizationEngine {
     }
 
     private formatTooltipContent(_data: unknown): string {
-        const entries = Object.entries(_data as any)
+        if (!_data) {
+            return '';
+        }
+        const entries = Object.entries(_data as Record<string, unknown>)
             .filter(([key]) => !['series', 'category'].includes(key))
             .map(([key, value]) => `<strong>${key}:</strong> ${value}`)
             .join('<br>');
@@ -735,7 +787,7 @@ export class D3VisualizationEngine {
 
     private exportAsSVG(svg: SVGElement, config: ChartExportConfig): string {
         const serializer = new XMLSerializer();
-        let svgString = serializer.serializeToString(svg.parentElement!);
+        let svgString = serializer.serializeToString(svg.parentElement ?? svg);
 
         if (config.background) {
             svgString = svgString.replace('<svg', `<svg style="background-color: ${config.background}"`);
@@ -746,7 +798,8 @@ export class D3VisualizationEngine {
 
     private async exportAsPNG(svg: SVGElement, config: ChartExportConfig): Promise<string> {
         const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d')!;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Failed to get 2D context for PNG export');
 
         const img = new Image();
         const svgData = this.exportAsSVG(svg, config);
@@ -775,16 +828,16 @@ export class D3VisualizationEngine {
     private async exportAsPDF(svg: SVGElement, config: ChartExportConfig): Promise<string> {
         // For PDF export, we'll return a placeholder URL
         // In production, integrate with jsPDF or similar library
-        const pngData = await this.exportAsPNG(svg, config);
+        const _pngData = await this.exportAsPNG(svg, config);
 
-        // Mock PDF generation
+        // Mock PDF generation - in production would use pngData to generate PDF
         return `_data:application/pdf;base64,${btoa('PDF content would be here')}`;
     }
 
     private exportAsJSON(chart: unknown, config: ChartExportConfig): string {
         const exportData = {
-            type: (chart as any).type,
-            config: (chart as any).config,
+            type: (chart as Record<string, unknown>).type,
+            config: (chart as Record<string, unknown>).config,
             exportConfig: config,
             timestamp: Date.now()
         };

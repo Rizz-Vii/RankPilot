@@ -12,17 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  CheckCircle,
-  Download,
-  Mail,
-  Calendar,
-  CreditCard,
-  ArrowRight,
-  Receipt,
-  Star,
-  Rocket,
-} from "lucide-react";
+import { CheckCircle, Download, Mail, Calendar, CreditCard, ArrowRight, Star, Rocket } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -55,9 +45,7 @@ export default function PaymentSuccess() {
   const [isLoading, setIsLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
 
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
 
   const plan = searchParams?.get("plan") || "agency";
   const amount = searchParams?.get("amount") || "79";

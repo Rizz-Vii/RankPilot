@@ -19,7 +19,7 @@ export interface MemoryAlert {
 
 export class MemoryMonitor {
     private static instance: MemoryMonitor | null = null;
-    private monitoringInterval: NodeJS.Timeout | null = null;
+    private monitoringInterval: ReturnType<typeof setInterval> | null = null;
     private memoryHistory: MemoryStats[] = [];
     private alertThresholds = {
         warning: 100 * 1024 * 1024, // 100MB

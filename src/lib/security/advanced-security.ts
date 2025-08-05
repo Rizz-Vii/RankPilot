@@ -12,6 +12,25 @@
 import { rateLimit } from '@/lib/utils/rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 
+// Security event interfaces
+interface SecurityEventBase {
+    type: string;
+    timestamp: number;
+    details?: Record<string, unknown>;
+}
+
+interface ThreatDetectedEvent extends SecurityEventBase {
+    type: 'threat_detected';
+    details: {
+        threatType: string;
+        severity: 'low' | 'medium' | 'high' | 'critical';
+        source?: string;
+        description?: string;
+    };
+}
+
+type SecurityEvent = SecurityEventBase | ThreatDetectedEvent;
+
 // Security configuration
 const SECURITY_CONFIG = {
     // Rate limiting configurations for different endpoints
@@ -48,7 +67,7 @@ const SECURITY_CONFIG = {
 
     // Threat detection patterns
     THREAT_PATTERNS: [
-        /(\<script[^>]*\>)/i, // XSS detection
+        /(<script[^>]*>)/i, // XSS detection
         /(union.*select|select.*from|insert.*into|delete.*from)/i, // SQL injection
         /(\.\.\/|\.\.\\)/i, // Path traversal
         /(<iframe|<object|<embed)/i, // Potential malicious embeds
@@ -318,22 +337,23 @@ export class SecurityMonitor {
         console.log('[SECURITY_MONITOR]', event);
     }
 
-    getRecentEvents(limit = 100): unknown[] {
-        return this.events.slice(-limit);
+    getRecentEvents(limit = 100): SecurityEvent[] {
+        return this.events.slice(-limit) as SecurityEvent[];
     }
 
-    getEventsByType(eventType: string, limit = 100): unknown[] {
+    getEventsByType(eventType: string, limit = 100): SecurityEvent[] {
         return this.events
-            .filter(event => (event as any).type === eventType)
-            .slice(-limit);
+            .filter(event => (event as SecurityEvent).type === eventType)
+            .slice(-limit) as SecurityEvent[];
     }
 
     getThreatSummary(): { [_key: string]: number; } {
         const summary: { [_key: string]: number; } = {};
 
         for (const event of this.events) {
-            if ((event as any).type === 'threat_detected') {
-                const threatType = (event as any).details?.threatType || 'unknown';
+            const securityEvent = event as SecurityEvent;
+            if (securityEvent.type === 'threat_detected') {
+                const threatType = (securityEvent as ThreatDetectedEvent).details.threatType || 'unknown';
                 summary[threatType] = (summary[threatType] || 0) + 1;
             }
         }
@@ -352,7 +372,7 @@ export function validateCompliance(_request: NextRequest): {
     const issues: string[] = [];
 
     // Check for required security headers in response
-    const requiredHeaders = [
+    const _requiredHeaders = [
         'X-Frame-Options',
         'X-Content-Type-Options',
         'X-XSS-Protection',

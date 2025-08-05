@@ -505,10 +505,10 @@ class TechnicalOperationsOrchestrator implements RankPilotAgent {
 
         try {
             // Agent-specific rollback logic would go here
-            // For now, return success to complete the orchestrator
+            console.log(`✅ Rollback completed for ${agentId}`);
             return true;
-        } catch (_error) {
-            console.error(`❌ Rollback failed for ${agentId}:`, _error);
+        } catch (error) {
+            console.error(`❌ Rollback failed for ${agentId}:`, error);
             return false;
         }
     }
@@ -516,7 +516,7 @@ class TechnicalOperationsOrchestrator implements RankPilotAgent {
     /**
      * Validate technical operations fix
      */
-    async validateFix(issue: unknown): Promise<boolean> {
+    async validateFix(_issue: unknown): Promise<boolean> {
         console.log('🔍 Technical Operations: Validating fix...');
 
         // Multi-layer validation

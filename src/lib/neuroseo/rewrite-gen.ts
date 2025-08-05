@@ -615,7 +615,7 @@ export class RewriteGenEngine {
       technical: ["Subsequently", "Therefore", "Additionally", "Moreover"],
     };
 
-    const toneTransitions =
+    const _toneTransitions =
       transitions[tone as keyof typeof transitions] || transitions.professional;
 
     // Simplify complex words (basic example)

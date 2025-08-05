@@ -1,6 +1,11 @@
 /**
  * Multi-Model AI Orchestration System
- * Implements Priority 1 Advanced AI Optimization from DevReady Phase 3
+ * Implements Prexport class MultiModelOrchestrator {
+    private mcpManager: MCPServiceManager;
+    private distributedCache: Map<string, unknown> = new Map();
+    private quotaManager: Map<string, number> = new Map();
+    private batchQueue: Map<string, MultiModelRequest[]> = new Map();
+    private performanceMetrics: Map<string, number[]> = new Map(); 1 Advanced AI Optimization from DevReady Phase 3
  * 
  * Features:
  * - Multi-model HuggingFace integration for model diversity
@@ -59,7 +64,7 @@ interface ModelConfig {
  */
 export class MultiModelOrchestrator {
     private mcpManager: MCPServiceManager;
-    private distributedCache: Map<string, any> = new Map();
+    private distributedCache: Map<string, unknown> = new Map();
     private quotaManager: Map<string, number> = new Map();
     private batchQueue: Map<string, MultiModelRequest[]> = new Map();
     private performanceMetrics: Map<string, number[]> = new Map();
@@ -133,7 +138,7 @@ export class MultiModelOrchestrator {
      */
     async processRequest(_request: MultiModelRequest): Promise<MultiModelResponse> {
         const startTime = Date.now();
-        const requestId = this.generateRequestId();
+        const _requestId = this.generateRequestId();
 
         try {
             // 1. Validate quota
@@ -154,7 +159,7 @@ export class MultiModelOrchestrator {
             const cachedResult = this.distributedCache.get(cacheKey);
             if (cachedResult) {
                 return {
-                    ...cachedResult,
+                    ...(cachedResult as MultiModelResponse),
                     cacheHits: 1,
                     quotaRemaining: this.getQuotaRemaining(_request.userId, _request.userTier)
                 };
@@ -219,7 +224,7 @@ export class MultiModelOrchestrator {
         // If specific models requested, filter to those
         if (_request.options?.models) {
             candidates = candidates.filter(model =>
-                _request.options!.models!.includes(model.name)
+                _request.options?.models?.includes(model.name) ?? false
             );
         }
 
@@ -324,7 +329,7 @@ export class MultiModelOrchestrator {
     /**
      * Aggregate results from multiple models
      */
-    private aggregateResults(results: unknown[], task: string): any {
+    private aggregateResults(results: unknown[], task: string): unknown {
         if (results.length === 0) return null;
 
         switch (task) {
@@ -337,27 +342,43 @@ export class MultiModelOrchestrator {
             case 'question-answering':
                 return this.aggregateQAResults(results);
             default:
-                return (results[0] as any)?.output;
+                return (results[0] as Record<string, unknown>)?.output;
         }
     }
 
-    private aggregateSentimentResults(results: unknown[]): any {
-        const sentiments = results.map(r => (r as any).output?.[0]);
-        const avgScore = sentiments.reduce((sum, s) => sum + (s?.score || 0), 0) / sentiments.length;
-        const dominantLabel = sentiments.sort((a, b) => (b?.score || 0) - (a?.score || 0))[0]?.label;
+    private aggregateSentimentResults(results: unknown[]): {
+        label: unknown;
+        score: number;
+        consensus: number;
+    } {
+        const sentiments = results.map(r => {
+            const resultData = r as { output?: [{ label?: string; score?: number }] };
+            return resultData.output?.[0];
+        });
+
+        const validSentiments = sentiments.filter((s): s is { label?: string; score?: number } => Boolean(s));
+
+        const avgScore = validSentiments.reduce((sum, s) => sum + (s.score || 0), 0) / validSentiments.length;
+        const dominantSentiment = validSentiments.sort((a, b) => (b.score || 0) - (a.score || 0))[0];
+        const dominantLabel = dominantSentiment?.label;
 
         return {
             label: dominantLabel,
             score: avgScore,
-            consensus: sentiments.filter(s => s?.label === dominantLabel).length / sentiments.length
+            consensus: validSentiments.filter(s => s.label === dominantLabel).length / validSentiments.length
         };
     }
 
-    private aggregateClassificationResults(results: unknown[]): any {
+    private aggregateClassificationResults(results: unknown[]): {
+        label: string | undefined;
+        confidence: number;
+        alternatives: [string, number][];
+    } {
         // Implement voting mechanism for classification
         const votes = new Map<string, number>();
         results.forEach(result => {
-            const label = (result as any).output?.[0]?.label;
+            const resultData = result as { output?: [{ label?: string }] };
+            const label = resultData.output?.[0]?.label;
             if (label) {
                 votes.set(label, (votes.get(label) || 0) + 1);
             }
@@ -371,15 +392,28 @@ export class MultiModelOrchestrator {
         };
     }
 
-    private aggregateSummarizationResults(results: unknown[]): any {
+    private aggregateSummarizationResults(results: unknown[]): string | null {
         // Select best summary based on length and coherence
-        const summaries = results.map(r => (r as any).output?.[0]?.summary_text).filter(Boolean);
+        const summaries = results
+            .map(r => {
+                const resultData = r as { output?: [{ summary_text?: string }] };
+                return resultData.output?.[0]?.summary_text;
+            })
+            .filter((summary): summary is string => Boolean(summary));
         return summaries.length > 0 ? summaries[0] : null;
     }
 
-    private aggregateQAResults(results: unknown[]): any {
+    private aggregateQAResults(results: unknown[]): { score: number } | null {
         // Select answer with highest confidence
-        const answers = results.map(r => (r as any).output).filter(Boolean);
+        const answers = results
+            .map(r => {
+                const resultData = r as { output?: { score?: number } };
+                return resultData.output;
+            })
+            .filter((answer): answer is { score: number } => Boolean(answer && typeof answer.score === 'number'));
+
+        if (answers.length === 0) return null;
+
         return answers.sort((a, b) => (b.score || 0) - (a.score || 0))[0];
     }
 
@@ -422,10 +456,16 @@ export class MultiModelOrchestrator {
         return `${_request.task}-${inputStr}-${JSON.stringify(_request.options)}`;
     }
 
-    private calculateConfidence(output: unknown, model: ModelConfig): number {
+    private calculateConfidence(output: unknown, _model: ModelConfig): number {
         // Implement confidence calculation based on model type and output
-        if ((output as any)?.[0]?.score) return (output as any)[0].score;
-        if ((output as any)?.score) return (output as any).score;
+        const outputData = output as { score?: number } | [{ score?: number }];
+
+        if (Array.isArray(outputData) && outputData[0]?.score) {
+            return outputData[0].score;
+        }
+        if (!Array.isArray(outputData) && outputData?.score) {
+            return outputData.score;
+        }
         return 0.8; // Default confidence
     }
 
@@ -444,7 +484,7 @@ export class MultiModelOrchestrator {
 
     private async processBatchQueue(): Promise<void> {
         // Implementation for batch queue processing
-        for (const [userId, requests] of this.batchQueue.entries()) {
+        for (const [_userId, requests] of this.batchQueue.entries()) {
             if (requests.length >= 5) { // Process when batch reaches 5 requests
                 const batch = requests.splice(0, 5);
                 // Process batch in background
@@ -464,8 +504,11 @@ export class MultiModelOrchestrator {
         models.forEach((model, _index) => {
             const result = results[_index];
             if (result) {
+                const resultData = result as { processingTime?: number };
                 const metrics = this.performanceMetrics.get(model.name) || [];
-                metrics.push((result as any).processingTime);
+                if (resultData.processingTime) {
+                    metrics.push(resultData.processingTime);
+                }
                 if (metrics.length > 100) metrics.shift(); // Keep last 100 measurements
                 this.performanceMetrics.set(model.name, metrics);
             }

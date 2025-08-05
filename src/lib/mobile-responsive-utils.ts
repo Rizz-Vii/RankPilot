@@ -7,6 +7,22 @@ import { useEffect, useState } from "react";
  * A collection of hooks and utilities for responsive mobile design
  */
 
+// Type definitions for Navigator with connection property
+interface NetworkConnection extends EventTarget {
+  downlink?: number;
+  effectiveType?: string;
+  rtt?: number;
+  saveData?: boolean;
+}
+
+interface NavigatorWithConnection extends Navigator {
+  connection?: NetworkConnection;
+}
+
+interface NavigatorWithMSTouch extends Navigator {
+  msMaxTouchPoints?: number;
+}
+
 // Standard breakpoints based on Tailwind CSS defaults
 export const breakpoints = {
   xs: 0,
@@ -107,7 +123,7 @@ export function useNetworkStatus() {
 
   useEffect(() => {
     const updateNetworkStatus = () => {
-      const nav = navigator as any; // For Navigator with connection property
+      const nav = navigator as NavigatorWithConnection;
 
       setStatus({
         online: navigator.onLine,
@@ -124,8 +140,9 @@ export function useNetworkStatus() {
     window.addEventListener("offline", updateNetworkStatus);
 
     // Listen for connection changes if supported
-    if ((navigator as any).connection) {
-      (navigator as any).connection.addEventListener(
+    const navWithConnection = navigator as NavigatorWithConnection;
+    if (navWithConnection.connection) {
+      navWithConnection.connection.addEventListener(
         "change",
         updateNetworkStatus
       );
@@ -135,8 +152,9 @@ export function useNetworkStatus() {
       window.removeEventListener("online", updateNetworkStatus);
       window.removeEventListener("offline", updateNetworkStatus);
 
-      if ((navigator as any).connection) {
-        (navigator as any).connection.removeEventListener(
+      const navWithConnection = navigator as NavigatorWithConnection;
+      if (navWithConnection.connection) {
+        navWithConnection.connection.removeEventListener(
           "change",
           updateNetworkStatus
         );
@@ -157,8 +175,8 @@ export function useTouchDevice() {
     const detectTouch = () => {
       setIsTouch(
         "ontouchstart" in window ||
-          navigator.maxTouchPoints > 0 ||
-          (navigator as any).msMaxTouchPoints > 0
+        navigator.maxTouchPoints > 0 ||
+        ((navigator as NavigatorWithMSTouch).msMaxTouchPoints || 0) > 0
       );
     };
 
@@ -295,7 +313,7 @@ export function useNetworkAwareFetching(
 
     // Check data saver preference if available
     const updateConnectionInfo = () => {
-      const connection = (navigator as any).connection;
+      const connection = (navigator as NavigatorWithConnection).connection;
 
       if (connection) {
         setNetworkStatus({
@@ -311,7 +329,8 @@ export function useNetworkAwareFetching(
 
     if (options.enableSaveData && "connection" in navigator) {
       updateConnectionInfo();
-      (navigator as any).connection.addEventListener(
+      const navWithConnection = navigator as NavigatorWithConnection;
+      navWithConnection.connection?.addEventListener(
         "change",
         updateConnectionInfo
       );
@@ -325,7 +344,8 @@ export function useNetworkAwareFetching(
     // Cleanup
     return () => {
       if (options.enableSaveData && "connection" in navigator) {
-        (navigator as any).connection.removeEventListener(
+        const navWithConnection = navigator as NavigatorWithConnection;
+        navWithConnection.connection?.removeEventListener(
           "change",
           updateConnectionInfo
         );
@@ -353,7 +373,7 @@ export function getAdaptiveImageProps(
   }
 ): { src: string; loading: "lazy" | "eager"; quality?: number } {
   // Check for network conditions
-  const connection = (navigator as any).connection;
+  const connection = (navigator as NavigatorWithConnection).connection;
   const isSlowConnection =
     connection?.effectiveType === "2g" ||
     connection?.effectiveType === "slow-2g";

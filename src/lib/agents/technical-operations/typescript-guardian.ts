@@ -231,11 +231,11 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
      */
     private async analyzeTypeScriptErrors(): Promise<TypeScriptError[]> {
         try {
-            const { stdout, stderr } = await execAsync('npm run typecheck');
+            await execAsync('npm run typecheck');
             // If typecheck passes, no errors to fix
             return [];
-        } catch (_error: any) {
-            const output = _error.stdout || _error.stderr || '';
+        } catch (_error: unknown) {
+            const output = (_error as { stdout?: string; stderr?: string }).stdout || (_error as { stdout?: string; stderr?: string }).stderr || '';
             return this.parseTypeScriptErrors(output);
         }
     }
@@ -485,8 +485,8 @@ class DataCorruptionError extends Error {
         try {
             await execAsync('npm run typecheck');
             return { success: true, errorCount: 0, previousErrorCount: 11 };
-        } catch (_error: any) {
-            const output = _error.stdout || _error.stderr || '';
+        } catch (_error: unknown) {
+            const output = (_error as { stdout?: string; stderr?: string }).stdout || (_error as { stdout?: string; stderr?: string }).stderr || '';
             const errors = this.parseTypeScriptErrors(output);
             return { success: false, errorCount: errors.length, previousErrorCount: 11 };
         }

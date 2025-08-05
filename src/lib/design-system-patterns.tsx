@@ -1,15 +1,18 @@
 // Design System Component Patterns for RankPilot NeuroSEO™
 // Based on homepage and site-header professional patterns
 
-import { Button } from "@/components/ui/button";
+import {
+  Button as _Button,
+} from "@/components/ui/button";
 import { EnhancedButton } from "@/components/ui/enhanced-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import React from "react";
 
 // ===== ERROR HANDLING PATTERNS =====
 
 // ❌ AVOID: Arbitrary error colors
-const ErrorMessageBad = ({ message }: { message: string }) => (
+const _ErrorMessageBad = ({ message }: { message: string }) => (
   <p className="text-sm text-red-500 mt-1">{message}</p>
 );
 
@@ -260,9 +263,9 @@ export {
 // ===== USAGE EXAMPLES =====
 
 // Example page implementation following patterns
-const ExamplePage = () => (
+const _ExamplePage = () => (
   <PageLayout
-    title="NeuroSEO™ Dashboard"
+    title="RankPilot"
     description="Professional AI-powered SEO intelligence platform"
   >
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

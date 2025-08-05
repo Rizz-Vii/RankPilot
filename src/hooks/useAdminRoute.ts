@@ -4,7 +4,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import LoadingScreen from "@/components/ui/loading-screen";
+import _LoadingScreen from "@/components/loading-screen";
 
 export default function useAdminRoute() {
   const { user, loading, role } = useAuth();

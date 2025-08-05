@@ -1,6 +1,5 @@
 ﻿"use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 
 export default function CheckoutCancelPage() {
-  const router = useRouter();
+  const _router = useRouter();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-background to-orange-50 flex items-center justify-center p-4">

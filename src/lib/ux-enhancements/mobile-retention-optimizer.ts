@@ -1,9 +1,15 @@
+
+ 
 /**
  * Mobile-First Retention Optimization System
  * Ensures 48px touch targets and mobile performance compliance
  * Research-backed: 70% of users abandon sites with poor mobile UX
  */
 
+// Declare browser globals for ESLint
+declare const window: Window;
+declare const document: Document;
+declare const performance: Performance;
 import { z } from "zod";
 
 export const TouchTargetSchema = z.object({
@@ -316,15 +322,15 @@ export class MobileRetentionOptimizer {
     const complianceRate =
       touchTargets.length > 0
         ? (touchTargets.filter((t) => t.isCompliant).length /
-            touchTargets.length) *
-          100
+          touchTargets.length) *
+        100
         : 100;
 
     const overallScore = Math.round(
       (complianceRate +
         accessibilityScore +
         performanceMetrics.mobileFriendlyScore) /
-        3
+      3
     );
 
     const recommendations = this.generateRecommendations(

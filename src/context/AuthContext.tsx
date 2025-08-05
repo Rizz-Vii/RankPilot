@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<string | null>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<unknown>(null);
   const [activities, setActivities] = useState<UserActivity[]>([]);
 
   // Use mock auth in development
@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
         setRole(userData?.role || null);
-        setProfile(userData || null);
+        setProfile(userData as unknown || null);
       } else {
         setRole(null);
         setProfile(null);

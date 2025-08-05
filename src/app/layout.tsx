@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import React from "react";
 import { ClientLayout } from "@/components/client-layout";
 import type { Metadata } from "next";
 

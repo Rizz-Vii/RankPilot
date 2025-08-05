@@ -30,7 +30,7 @@ export interface ActivityData {
   type: string;
   tool: string;
   timestamp: unknown; // Firestore serverTimestamp()
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   resultsSummary: string;
 }
 
@@ -38,7 +38,7 @@ export interface ActivityData {
 export function createStandardActivity(
   type: (typeof ACTIVITY_TYPES)[keyof typeof ACTIVITY_TYPES],
   tool: (typeof TOOL_NAMES)[keyof typeof TOOL_NAMES],
-  details: Record<string, any>,
+  details: Record<string, unknown>,
   resultsSummary: string
 ): ActivityData {
   return {

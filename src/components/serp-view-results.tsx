@@ -1,4 +1,5 @@
 // src/components/serp-view-results.tsx
+import React from "react";
 import type { SerpViewOutput } from "@/ai/flows/serp-view";
 import {
   Card,

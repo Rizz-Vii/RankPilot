@@ -124,7 +124,7 @@ export class EnterpriseGlobalLoadBalancer {
     private endpoints: Map<string, GlobalEndpoint> = new Map();
     private loadBalancingRules: Map<string, LoadBalancingRule> = new Map();
     private cdnConfiguration: CDNConfiguration;
-    private healthCheckInterval: NodeJS.Timeout | null = null;
+    private healthCheckInterval: ReturnType<typeof setInterval> | null = null;
 
     constructor() {
         this.cdnConfiguration = this.initializeCDNConfiguration();

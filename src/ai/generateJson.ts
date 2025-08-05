@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { gemini15Flash } from "@genkit-ai/googleai"; // Import the model reference
 import { ai } from "./genkit";
-import { z, ZodType } from "zod";
+import { ZodType } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 // Initialize the OpenAI client for fallback
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -21,7 +21,7 @@ export async function generateJson(
   systemPrompt: string,
   userPrompt: string,
   outputSchema: ZodType
-): Promise<any> {
+): Promise<unknown> {
   // --- Attempt 1: Primary Provider (Google Gemini via Genkit) ---
   try {
     // Using the configured `ai` instance with a schema directly returns the parsed object.
@@ -42,8 +42,9 @@ export async function generateJson(
     const error = _error as Error;
     console.warn("Primary AI provider (Google) failed. Reason:", error.message);
     // If it's a service _error, try the fallback. Otherwise, fail fast.
+    const errorWithCause = error as Error & { cause?: { status?: number } };
     if (
-      (error.cause as any)?.status === 503 ||
+      errorWithCause.cause?.status === 503 ||
       (error.message && error.message.includes("overloaded"))
     ) {
       console.log("Falling back to secondary provider (OpenAI)...");

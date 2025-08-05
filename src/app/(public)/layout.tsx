@@ -1,5 +1,6 @@
 // src/app/(public)/layout.tsx
 import SiteHeader from "@/components/site-header";
+import React from "react";
 
 export default function PublicLayout({
   children,

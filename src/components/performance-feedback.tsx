@@ -127,7 +127,8 @@ export function PerformanceFeedback({
 
       setIsVisible(false);
       resetForm();
-    } catch (_error) {
+    } catch (error) {
+      console.error('Failed to submit feedback:', error);
       toast({
         variant: "destructive",
         title: "Submission failed",

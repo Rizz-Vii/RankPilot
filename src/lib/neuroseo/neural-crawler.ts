@@ -65,7 +65,12 @@ export class NeuralCrawler {
   async crawl(url: string, options: CrawlOptions = {}): Promise<CrawlResult> {
     await this.initialize();
 
-    const page = await this.browser!.newPage();
+    const browser = this.browser;
+    if (!browser) {
+      throw new Error('Browser not initialized');
+    }
+
+    const page = await browser.newPage();
     const startTime = Date.now();
 
     try {
@@ -199,7 +204,7 @@ export class NeuralCrawler {
         try {
           const data = JSON.parse(script.textContent || "");
           schemaData.push(data);
-        } catch (e) {
+        } catch {
           // Ignore invalid JSON
         }
       });
@@ -364,7 +369,7 @@ export class NeuralCrawler {
   private extractKeyEntities(content: string): string[] {
     // Simplified entity extraction (would use NER in production)
     const words = content.split(/\s+/);
-    const entities: string[] = [];
+    const _entities: string[] = [];
 
     // Look for capitalized words that might be entities
     const capitalizedWords = words.filter(

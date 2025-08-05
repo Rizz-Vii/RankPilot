@@ -142,9 +142,9 @@ export async function getUserById(uid: string): Promise<FirestoreUser | null> {
 
 // Console helper - run in browser dev tools
 if (typeof window !== "undefined") {
-  (window as any).getAllUsers = getAllUsers;
-  (window as any).displayAllUsers = displayAllUsers;
-  (window as any).getUserById = getUserById;
+  (window as unknown as { getAllUsers: typeof getAllUsers; displayAllUsers: typeof displayAllUsers; getUserById: typeof getUserById; }).getAllUsers = getAllUsers;
+  (window as unknown as { getAllUsers: typeof getAllUsers; displayAllUsers: typeof displayAllUsers; getUserById: typeof getUserById; }).displayAllUsers = displayAllUsers;
+  (window as unknown as { getAllUsers: typeof getAllUsers; displayAllUsers: typeof displayAllUsers; getUserById: typeof getUserById; }).getUserById = getUserById;
   console.log(
     "🚀 User utilities available: getAllUsers(), displayAllUsers(), getUserById()"
   );

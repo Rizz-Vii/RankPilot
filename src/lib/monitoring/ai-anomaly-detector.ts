@@ -80,7 +80,7 @@ export class AIAnomalyDetector extends EventEmitter {
     private anomalies: Map<string, Anomaly> = new Map();
     private models: Map<string, any> = new Map();
     private isAnalyzing: boolean = false;
-    private analysisInterval?: NodeJS.Timer;
+    private analysisInterval?: ReturnType<typeof setInterval>;
 
     constructor() {
         super();
@@ -109,7 +109,7 @@ export class AIAnomalyDetector extends EventEmitter {
 
         this.isAnalyzing = false;
         if (this.analysisInterval) {
-            clearInterval(this.analysisInterval as NodeJS.Timeout);
+            clearInterval(this.analysisInterval);
             this.analysisInterval = undefined;
         }
 

@@ -7,9 +7,8 @@
  * - GenerateInsightsOutput - The return type for the generateInsights function.
  */
 
-import { ai } from "@/ai/genkit";
 import { z } from "zod";
-const geminiApiKey = process.env.GEMINI_API_KEY;
+const _geminiApiKey = process.env.GEMINI_API_KEY;
 const googleApiKey = process.env.GOOGLE_API_KEY;
 
 console.log("GEMINI_API_KEY:", process.env.GEMINI_API_KEY);
@@ -18,16 +17,16 @@ console.log("GOOGLE_API_KEY:", googleApiKey);
 const ActivitySchema = z.object({
   type: z.string(),
   tool: z.string(),
-  details: z.any().optional(),
+  details: z.unknown().optional(),
   resultsSummary: z.string().optional(),
 });
 
-const GenerateInsightsInputSchema = z.object({
+const _GenerateInsightsInputSchema = z.object({
   activities: z
     .array(ActivitySchema)
     .describe("A list of recent user activities."),
 });
-export type GenerateInsightsInput = z.infer<typeof GenerateInsightsInputSchema>;
+export type GenerateInsightsInput = z.infer<typeof _GenerateInsightsInputSchema>;
 
 const InsightSchema = z.object({
   id: z
@@ -60,13 +59,13 @@ const InsightSchema = z.object({
     .describe("The text for the action link button (e.g., 'View Audit')."),
 });
 
-const GenerateInsightsOutputSchema = z.object({
+const _GenerateInsightsOutputSchema = z.object({
   insights: z
     .array(InsightSchema)
     .describe("An array of generated SEO insights."),
 });
 export type GenerateInsightsOutput = z.infer<
-  typeof GenerateInsightsOutputSchema
+  typeof _GenerateInsightsOutputSchema
 >;
 
 export async function generateInsights(
@@ -85,7 +84,12 @@ export async function generateInsights(
   return { insights };
 }
 
-function generateInsightsFromActivities(activities: any[]): Array<{
+function generateInsightsFromActivities(activities: Array<{
+  type: string;
+  tool: string;
+  details?: unknown;
+  resultsSummary?: string;
+}>): Array<{
   id: string;
   title: string;
   description: string;

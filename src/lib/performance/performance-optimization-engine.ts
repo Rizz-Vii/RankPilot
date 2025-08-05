@@ -84,7 +84,7 @@ export class PerformanceOptimizationEngine extends EventEmitter {
     private activeOptimizations: Map<string, any> = new Map();
     private performanceAlerts: PerformanceAlert[] = [];
     private optimizationHistory: OptimizationResult[] = [];
-    private monitoringInterval: NodeJS.Timeout | null = null;
+    private monitoringInterval: ReturnType<typeof setInterval> | null = null;
     private resourcePool: Map<string, any> = new Map();
     private cacheManager: Map<string, any> = new Map();
 

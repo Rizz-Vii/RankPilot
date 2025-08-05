@@ -125,7 +125,8 @@ export default function AdminUserManagement() {
       }
 
       setUsers(usersList);
-    } catch (_error) {
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -168,7 +169,8 @@ export default function AdminUserManagement() {
         title: "Success",
         description: `User ${actionType}d successfully.`,
       });
-    } catch (_error) {
+    } catch (error) {
+      console.error(`Failed to ${actionType} user:`, error);
       toast({
         variant: "destructive",
         title: "Error",

@@ -1,5 +1,15 @@
 /**
- * Custom Dashboard Builder System
+ * Custom Dashboard         type: 'neuroseo' | 'analytics' | 'keywords' | 'performance' | 'custom';
+        query: string;
+        filters?: Record<string, unknown>;
+        refreshInterval?: number; // seconds
+    };
+    visualization: {
+        chartType?: 'line' | 'bar' | 'pie' | 'scatter' | 'area' | 'heatmap';
+        colorScheme?: string;
+        showLegend?: boolean;
+        showGrid?: boolean;
+        customConfig?: Record<string, unknown>;tem
  * Implements Priority 2 Enterprise Features from DevReady Phase 3
  * 
  * Features:
@@ -24,7 +34,7 @@ export interface DashboardWidget {
     dataSource: {
         type: 'neuroseo' | 'analytics' | 'keywords' | 'performance' | 'custom';
         query: string;
-        filters?: Record<string, any>;
+        filters?: Record<string, unknown>;
         refreshInterval?: number; // seconds
     };
     visualization: {
@@ -32,7 +42,7 @@ export interface DashboardWidget {
         colorScheme?: string;
         showLegend?: boolean;
         showGrid?: boolean;
-        customConfig?: Record<string, any>;
+        customConfig?: Record<string, unknown>;
     };
     styling: {
         backgroundColor?: string;
@@ -107,8 +117,8 @@ export interface DashboardTemplate {
 export class CustomDashboardBuilder {
     private dashboards: Map<string, DashboardLayout> = new Map();
     private templates: Map<string, DashboardTemplate> = new Map();
-    private dataProviders: Map<string, any> = new Map();
-    private realTimeSubscriptions: Map<string, NodeJS.Timeout> = new Map();
+    private dataProviders: Map<string, unknown> = new Map();
+    private realTimeSubscriptions: Map<string, ReturnType<typeof setTimeout>> = new Map();
 
     // Pre-built widget templates for quick setup
     private widgetTemplates: Record<string, Partial<DashboardWidget>> = {
@@ -328,7 +338,13 @@ export class CustomDashboardBuilder {
     /**
      * Get widget data with real-time updates
      */
-    async getWidgetData(widgetId: string, widget: DashboardWidget): Promise<any> {
+    async getWidgetData(widgetId: string, widget: DashboardWidget): Promise<{
+        widgetId: string;
+        data: unknown;
+        timestamp: number;
+        refreshInterval?: number;
+        error?: string;
+    }> {
         const { dataSource } = widget;
         const provider = this.dataProviders.get(dataSource.type);
 
@@ -337,7 +353,7 @@ export class CustomDashboardBuilder {
         }
 
         try {
-            const data = await provider.query(dataSource.query, dataSource.filters);
+            const data = await (provider as { query: (query: string, filters?: Record<string, unknown>) => Promise<unknown> }).query(dataSource.query, dataSource.filters);
 
             return {
                 widgetId,
@@ -349,8 +365,8 @@ export class CustomDashboardBuilder {
             console.error(`[DashboardBuilder] Data fetch error for widget ${widgetId}:`, _error);
             return {
                 widgetId,
-                _data: null,
-                _error: 'Failed to fetch data',
+                data: null,
+                error: 'Failed to fetch data',
                 timestamp: Date.now()
             };
         }
@@ -584,7 +600,7 @@ export class CustomDashboardBuilder {
     private setupDataProviders(): void {
         // NeuroSEO Data Provider
         this.dataProviders.set('neuroseo', {
-            query: async (queryType: string, filters?: unknown) => {
+            query: async (queryType: string, _filters?: unknown) => {
                 // Mock NeuroSEO data - integrate with actual NeuroSEO orchestrator
                 switch (queryType) {
                     case 'overview-metrics':
@@ -608,7 +624,7 @@ export class CustomDashboardBuilder {
 
         // Keywords Data Provider
         this.dataProviders.set('keywords', {
-            query: async (queryType: string, filters?: unknown) => {
+            query: async (queryType: string, _filters?: unknown) => {
                 switch (queryType) {
                     case 'ranking-trends':
                         return Array.from({ length: 30 }, (_, _i) => ({
@@ -623,7 +639,7 @@ export class CustomDashboardBuilder {
 
         // Performance Data Provider
         this.dataProviders.set('performance', {
-            query: async (queryType: string, filters?: unknown) => {
+            query: async (queryType: string, _filters?: unknown) => {
                 switch (queryType) {
                     case 'vitals-history':
                         return Array.from({ length: 30 }, (_, _i) => ({
@@ -664,7 +680,7 @@ export class CustomDashboardBuilder {
             dataSource !== null &&
             'refreshInterval' in dataSource &&
             typeof (dataSource as { refreshInterval?: number }).refreshInterval === 'number' &&
-            (dataSource as { refreshInterval?: number }).refreshInterval! > 0
+            ((dataSource as { refreshInterval?: number }).refreshInterval || 0) > 0
         ) {
             const refreshInterval = (dataSource as { refreshInterval: number }).refreshInterval;
             const interval = setInterval(async () => {
@@ -695,7 +711,28 @@ export class CustomDashboardBuilder {
                 colors?: Record<string, string>;
             };
         }
-    ): Promise<any> {
+    ): Promise<{
+        dashboard: {
+            name: string;
+            description: string;
+            created: number;
+            updated: number;
+        };
+        widgets: Array<{ widget: DashboardWidget; _data: unknown; }>;
+        metadata: {
+            exportedAt: number;
+            format: string;
+            options?: {
+                includeData?: boolean;
+                dateRange?: { start: string; end: string; };
+                branding?: {
+                    logo?: string;
+                    companyName?: string;
+                    colors?: Record<string, string>;
+                };
+            };
+        };
+    }> {
         const exportData = {
             dashboard: {
                 name: dashboard.name,
@@ -724,7 +761,10 @@ export class CustomDashboardBuilder {
         return exportData;
     }
 
-    private async exportToPDF(_data: unknown, branding?: unknown): Promise<any> {
+    private async exportToPDF(_data: unknown, _branding?: unknown): Promise<{
+        success: boolean;
+        downloadUrl: string;
+    }> {
         // Mock PDF export - integrate with actual PDF generation library
         return {
             success: true,
@@ -732,7 +772,10 @@ export class CustomDashboardBuilder {
         };
     }
 
-    private async exportToExcel(_data: unknown, branding?: unknown): Promise<any> {
+    private async exportToExcel(_data: unknown, _branding?: unknown): Promise<{
+        success: boolean;
+        downloadUrl: string;
+    }> {
         // Mock Excel export - integrate with actual Excel generation library
         return {
             success: true,
@@ -740,7 +783,10 @@ export class CustomDashboardBuilder {
         };
     }
 
-    private async exportToJSON(_data: unknown): Promise<any> {
+    private async exportToJSON(_data: unknown): Promise<{
+        success: boolean;
+        downloadUrl: string;
+    }> {
         return {
             success: true,
             downloadUrl: '/api/downloads/dashboard-export.json'

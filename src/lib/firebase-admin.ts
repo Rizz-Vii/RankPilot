@@ -61,7 +61,7 @@ function initializeFirebaseAdmin(): admin.app.App {
   throw new Error('No valid Firebase admin configuration found');
 }
 
-function createMockAdmin(): any {
+function createMockAdmin(): Record<string, unknown> {
   // Mock admin for development/build mode
   return {
     auth: () => ({

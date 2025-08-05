@@ -50,7 +50,7 @@ export async function createTelemetryProvider(): Promise<TelemetryProvider> {
  * @returns A Promise that resolves to a TelemetryProvider instance.
  */
 async function createRealProvider(): Promise<TelemetryProvider> {
-  let sdkInstance: any | null = null; // Holds the OpenTelemetry Node.js SDK instance
+  let sdkInstance: unknown = null; // Holds the OpenTelemetry Node.js SDK instance
 
   try {
     // Dynamically import all necessary OpenTelemetry packages.
@@ -72,12 +72,12 @@ async function createRealProvider(): Promise<TelemetryProvider> {
     const { OTLPTraceExporter } = await import(
       "@opentelemetry/exporter-trace-otlp-http"
     );
-    const { OTLPMetricExporter } = await import(
-      "@opentelemetry/exporter-metrics-otlp-http"
-    );
-    const { PeriodicExportingMetricReader } = await import(
-      "@opentelemetry/sdk-metrics"
-    );
+    // const { OTLPMetricExporter } = await import(
+    //   "@opentelemetry/exporter-metrics-otlp-http"
+    // );
+    // const { PeriodicExportingMetricReader } = await import(
+    //   "@opentelemetry/sdk-metrics"
+    // );
     const {
       LoggerProvider,
       ConsoleLogRecordExporter,
@@ -169,7 +169,9 @@ async function createRealProvider(): Promise<TelemetryProvider> {
     });
 
     // Start the OpenTelemetry SDK. This initializes all configured components.
-    await sdkInstance.start();
+    if (sdkInstance && typeof sdkInstance === 'object' && sdkInstance !== null && 'start' in sdkInstance) {
+      await (sdkInstance as { start: () => Promise<void> }).start();
+    }
 
     // --- Set Global API Instances ---
     // Set the global tracer, meter, and logger instances. This allows other parts
@@ -192,13 +194,16 @@ async function createRealProvider(): Promise<TelemetryProvider> {
     // Listen for SIGTERM signal (e.g., from process managers like PM2, Docker).
     // This ensures that all buffered telemetry data is flushed before the process exits.
     process.on("SIGTERM", () => {
-      sdkInstance
-        .shutdown()
-        .then(() => console.log("OpenTelemetry SDK shut down gracefully."))
-        .catch((_error: Error) =>
-          console.error("Error shutting down OpenTelemetry:", _error)
-        )
-        .finally(() => process.exit(0)); // Ensure process exits after shutdown attempt
+      if (sdkInstance && typeof sdkInstance === 'object' && sdkInstance !== null && 'shutdown' in sdkInstance) {
+        (sdkInstance as { shutdown: () => Promise<void> }).shutdown()
+          .then(() => console.log("OpenTelemetry SDK shut down gracefully."))
+          .catch((_error: Error) =>
+            console.error("Error shutting down OpenTelemetry:", _error)
+          )
+          .finally(() => process.exit(0)); // Ensure process exits after shutdown attempt
+      } else {
+        process.exit(0);
+      }
     });
 
     // Return the TelemetryProvider interface with the active instances.
@@ -207,8 +212,8 @@ async function createRealProvider(): Promise<TelemetryProvider> {
         console.log("OpenTelemetry SDK started.");
       },
       shutdown: async () => {
-        if (sdkInstance) {
-          await sdkInstance.shutdown();
+        if (sdkInstance && typeof sdkInstance === 'object' && sdkInstance !== null && 'shutdown' in sdkInstance) {
+          await (sdkInstance as { shutdown: () => Promise<void> }).shutdown();
           console.log("OpenTelemetry SDK shut down.");
         }
       },

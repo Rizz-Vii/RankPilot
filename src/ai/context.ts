@@ -18,9 +18,17 @@ export interface AuditContext {
         seo: number;
         bestPractices: number;
     };
-    issues: string[];
-    suggestions: string[];
-    lastAnalyzed: string;
+    recommendations: string[];
+    timestamp: Date;
+    issues?: string[];
+    suggestions?: string[];
+    lastAnalyzed?: string;
+}
+
+export interface NeuroSEOContext {
+    type: 'url_analysis' | 'general_insights' | 'error';
+    _data: unknown;
+    insights: string;
 }
 
 export interface SiteContext {
@@ -79,6 +87,8 @@ export async function getAuditContext(uid: string, url: string): Promise<AuditCo
                 seo: auditData.score?.seo || 0,
                 bestPractices: auditData.score?.bestPractices || 0,
             },
+            recommendations: auditData.suggestions || [],
+            timestamp: auditData.createdAt?.toDate?.() || new Date(),
             issues: auditData.issues || [],
             suggestions: auditData.suggestions || [],
             lastAnalyzed: auditData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
@@ -146,7 +156,7 @@ export async function getSiteContext(uid: string): Promise<SiteContext> {
  * Fetches admin-level context for system management chatbot
  * Includes system metrics, monitoring _data, and insights
  */
-export async function getAdminContext(adminLevel: 'admin' | 'enterprise'): Promise<AdminContext> {
+export async function getAdminContext(_adminLevel: 'admin' | 'enterprise'): Promise<AdminContext> {
     try {
         // Get system metrics (aggregated _data)
         const usersRef = collection(db, 'users');
@@ -270,7 +280,7 @@ function getAvailableFeatures(tier: PlanType, isAdmin: boolean): string[] {
  * Integrates with NeuroSEO™ Suite for enhanced context
  * Provides AI-powered insights for chatbot responses
  */
-export async function getNeuroSEOContext(uid: string, url?: string): Promise<any> {
+export async function getNeuroSEOContext(uid: string, url?: string): Promise<NeuroSEOContext | null> {
     try {
         const neuroSEO = new NeuroSEOSuite();
 
@@ -297,8 +307,8 @@ export async function getNeuroSEOContext(uid: string, url?: string): Promise<any
             _data: null,
             insights: 'NeuroSEO™ Suite ready to analyze your content',
         };
-    } catch (_error) {
-        console.error('Error fetching NeuroSEO context:', _error);
+    } catch (error) {
+        console.error('Error fetching NeuroSEO context:', error);
         return {
             type: 'error',
             _data: null,
@@ -314,7 +324,7 @@ export async function getNeuroSEOContext(uid: string, url?: string): Promise<any
 const contextCache = new Map<string, { _data: unknown; timestamp: number; }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-export function getCachedContext(_key: string): any | null {
+export function getCachedContext(_key: string): unknown | null {
     const cached = contextCache.get(_key);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
         return cached._data;

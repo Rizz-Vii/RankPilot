@@ -184,7 +184,7 @@ export class NeuroSEOMCPOrchestrator {
     async generateStrategicInsights(analysisResults: unknown): Promise<MCPResponse> {
         try {
             const safeAnalysis = typeof analysisResults === 'object' && analysisResults !== null
-                ? analysisResults as { [key: string]: any }
+                ? analysisResults as { [key: string]: unknown }
                 : {};
 
             const problemStatement = `

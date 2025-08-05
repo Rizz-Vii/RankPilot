@@ -18,7 +18,7 @@ export interface CacheConfig {
     persistToDisk: boolean;
 }
 
-export interface CacheEntry<T = any> {
+export interface CacheEntry<_T = unknown> {
     _key: string;
     _value: unknown; // Allow any type for flexibility with serialization
     timestamp: number;
@@ -101,7 +101,7 @@ export class AdvancedCacheManager {
     /**
      * Get cached data with intelligent multi-layer lookup
      */
-    async get<T = any>(_key: string, userTier: string = 'free'): Promise<T | null> {
+    async get<T = unknown>(_key: string, _userTier: string = 'free'): Promise<T | null> {
         const startTime = Date.now();
 
         try {
@@ -110,7 +110,7 @@ export class AdvancedCacheManager {
             if (entry && this.isValidEntry(entry)) {
                 this.recordCacheHit(_key, 'memory', Date.now() - startTime);
                 entry.hits++;
-                return this.deserializeValue(entry._value as string);
+                return this.deserializeValue(entry._value as string) as T;
             }
 
             // 2. Check distributed cache (Redis-like)
@@ -119,7 +119,7 @@ export class AdvancedCacheManager {
                 // Promote to memory cache for faster future access
                 this.memoryCache.set(_key, { ...entry, hits: entry.hits + 1 });
                 this.recordCacheHit(_key, 'distributed', Date.now() - startTime);
-                return this.deserializeValue(entry._value as string);
+                return this.deserializeValue(entry._value as string) as T;
             }
 
             // 3. Cache miss
@@ -135,7 +135,7 @@ export class AdvancedCacheManager {
     /**
      * Set cached data with intelligent distribution across layers
      */
-    async set<T = any>(
+    async set<T = unknown>(
         _key: string,
         _value: T,
         userTier: string = 'free',
@@ -203,7 +203,7 @@ export class AdvancedCacheManager {
     /**
      * Batch get operation for enterprise clients
      */
-    async getBatch<T = any>(keys: string[], userTier: string = 'free'): Promise<Record<string, T | null>> {
+    async getBatch<T = unknown>(keys: string[], userTier: string = 'free'): Promise<Record<string, T | null>> {
         const results: Record<string, T | null> = {};
 
         // Process in parallel for performance
@@ -219,12 +219,12 @@ export class AdvancedCacheManager {
     /**
      * Batch set operation for enterprise clients
      */
-    async setBatch<T = any>(
-        entries: Array<{ _key: string; _value: T; options?: any; }>,
+    async setBatch<T = unknown>(
+        entries: Array<{ _key: string; _value: T; options?: { ttl?: number; tags?: string[]; forceDistributed?: boolean; }; }>,
         userTier: string = 'free'
     ): Promise<boolean[]> {
         const promises = entries.map(({ _key, _value, options }) =>
-            this.set(_key, _value, userTier, options as any)
+            this.set(_key, _value, userTier, options)
         );
 
         return Promise.all(promises);
@@ -257,7 +257,7 @@ export class AdvancedCacheManager {
      */
     async warmCache(warmingPlan: Array<{
         _key: string;
-        generator: () => Promise<any>;
+        generator: () => Promise<unknown>;
         userTier: string;
         tags?: string[];
     }>): Promise<void> {
@@ -356,7 +356,7 @@ export class AdvancedCacheManager {
         return JSON.stringify(_value);
     }
 
-    private deserializeValue(_value: string): any {
+    private deserializeValue(_value: string): unknown {
         try {
             return JSON.parse(_value);
         } catch {
@@ -375,16 +375,16 @@ export class AdvancedCacheManager {
 
     private encryptValue(_value: string): string {
         // Simplified encryption simulation (in production, use proper encryption)
-        return Buffer.from(_value).toString('base64');
+        return btoa(_value);
     }
 
     private decryptValue(_value: string): string {
         // Simplified decryption simulation
-        return Buffer.from(_value, 'base64').toString();
+        return atob(_value);
     }
 
     private calculateSize(_value: string): number {
-        return Buffer.byteLength(_value, 'utf8');
+        return new Blob([_value]).size;
     }
 
     private isSensitiveData(_value: unknown): boolean {

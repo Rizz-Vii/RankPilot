@@ -237,10 +237,11 @@ export class EnhancedTypeScriptGuardianAgent implements RankPilotAgent {
      */
     private async analyzeTypeScriptErrors(): Promise<TypeScriptError[]> {
         try {
-            const { stdout } = await execAsync('npx tsc --noEmit --pretty false');
+            await execAsync('npx tsc --noEmit --pretty false');
             return []; // No errors if command succeeds
-        } catch (execError: any) {
-            const output = execError.stdout || execError.stderr || '';
+        } catch (execError: unknown) {
+            const output = (execError as { stdout?: string; stderr?: string }).stdout ||
+                (execError as { stdout?: string; stderr?: string }).stderr || '';
             return this.parseTypeScriptErrors(output);
         }
     }
@@ -405,8 +406,9 @@ export class EnhancedTypeScriptGuardianAgent implements RankPilotAgent {
         try {
             await execAsync('npx tsc --noEmit --pretty false');
             return { success: true, errorCount: 0 };
-        } catch (checkError: any) {
-            const output = checkError.stdout || checkError.stderr || '';
+        } catch (checkError: unknown) {
+            const output = (checkError as { stdout?: string; stderr?: string }).stdout ||
+                (checkError as { stdout?: string; stderr?: string }).stderr || '';
             const errorCount = (output.match(/error TS\d+:/g) || []).length;
             return { success: false, errorCount };
         }

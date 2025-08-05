@@ -14,7 +14,7 @@ class CustomIncrementalCache extends IncrementalCache {
     try {
       return await super.get(_key, ctx);
     } catch (_error) {
-      console.warn("Cache get _error:", error.message);
+      console.warn("Cache get _error:", _error.message);
       return null;
     }
   }
@@ -23,7 +23,7 @@ class CustomIncrementalCache extends IncrementalCache {
     try {
       return await super.set(_key, _data, ctx);
     } catch (_error) {
-      console.warn("Cache set _error:", error.message);
+      console.warn("Cache set _error:", _error.message);
       return;
     }
   }

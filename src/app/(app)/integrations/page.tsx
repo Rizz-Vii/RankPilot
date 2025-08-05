@@ -125,7 +125,7 @@ const INTEGRATION_TYPES = [
 
 export default function IntegrationsPage() {
   const { user, loading: authLoading } = useAuth();
-  const { subscription, canUseFeature } = useSubscription();
+  const { canUseFeature } = useSubscription();
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);

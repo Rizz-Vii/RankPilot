@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { ChatBot } from "@/components/chat";
 import { PerformanceIndicator, WebVitalsMonitor } from "@/components/performance/web-vitals-monitor";
 import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";

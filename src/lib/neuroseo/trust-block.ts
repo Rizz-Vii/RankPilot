@@ -37,12 +37,12 @@ export interface ContentCredibility {
 
 export interface TrustSignal {
   type:
-    | "author"
-    | "source"
-    | "publication"
-    | "citation"
-    | "review"
-    | "endorsement";
+  | "author"
+  | "source"
+  | "publication"
+  | "citation"
+  | "review"
+  | "endorsement";
   _value: string;
   weight: number;
   confidence: number;
@@ -80,10 +80,10 @@ export interface TrustMetrics {
 
 export interface TrustImprovement {
   category:
-    | "expertise"
-    | "authoritativeness"
-    | "trustworthiness"
-    | "compliance";
+  | "expertise"
+  | "authoritativeness"
+  | "trustworthiness"
+  | "compliance";
   title: string;
   description: string;
   implementation: string;
@@ -280,10 +280,10 @@ export class TrustBlockEngine {
 
   private async assessContentCredibility(
     content: string,
-    contentType: string
+    _contentType: string
   ): Promise<ContentCredibility> {
     const words = content.split(/\s+/);
-    const sentences = content
+    const _sentences = content
       .split(/[.!?]+/)
       .filter((s) => s.trim().length > 0);
 
@@ -296,7 +296,7 @@ export class TrustBlockEngine {
     // Expertise alignment
     const expertiseAlignment = this.assessExpertiseAlignment(
       content,
-      contentType
+      _contentType
     );
 
     // Freshness assessment
@@ -314,7 +314,7 @@ export class TrustBlockEngine {
         expertiseAlignment +
         freshness +
         comprehensiveness) /
-        5
+      5
     );
 
     return {
@@ -700,7 +700,7 @@ export class TrustBlockEngine {
 
   private checkRequiredDisclaimers(
     content: string,
-    contentType: string
+    _contentType: string
   ): Array<{
     type: "medical" | "financial" | "legal" | "general";
     required: boolean;
@@ -1016,7 +1016,7 @@ export class TrustBlockEngine {
 
   private async benchmarkCompetitors(
     competitorUrls: string[],
-    contentType: string
+    _contentType: string
   ): Promise<CompetitorTrustAnalysis> {
     // Simulate competitor analysis
     const competitors = competitorUrls.map((url) => ({
@@ -1030,9 +1030,9 @@ export class TrustBlockEngine {
     const averageEATScore =
       competitors.length > 0
         ? Math.round(
-            competitors.reduce((sum, comp) => sum + comp.eatScore, 0) /
-              competitors.length
-          )
+          competitors.reduce((sum, comp) => sum + comp.eatScore, 0) /
+          competitors.length
+        )
         : 75;
 
     const industryBenchmark = {

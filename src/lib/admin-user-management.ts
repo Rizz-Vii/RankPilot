@@ -1,13 +1,13 @@
 import {
   doc,
-  getDoc,
-  setDoc,
   updateDoc,
   serverTimestamp,
   collection,
   query,
   where,
   getDocs,
+  type UpdateData,
+  type DocumentData,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -62,7 +62,7 @@ export async function adminUpdateUserSubscription(
     }
 
     // Prepare update data
-    const updateData: { [key: string]: any } = {
+    const updateData: UpdateData<DocumentData> = {
       subscriptionStatus: update.status,
       subscriptionTier: update.tier,
       updatedAt: serverTimestamp(),

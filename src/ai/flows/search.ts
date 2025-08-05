@@ -73,6 +73,9 @@ const searchFeaturesFlow = ai.defineFlow(
   },
   async (input) => {
     const { output } = await searchPrompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('Search generation failed - no output received');
+    }
+    return output;
   }
 );

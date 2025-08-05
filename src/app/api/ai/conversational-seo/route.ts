@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
         const { action, sessionId, message, userId, userTier } = body;
 
         switch (action) {
-            case 'start':
+            case 'start': {
                 if (!userId || !userTier) {
                     return NextResponse.json({
                         success: false,
@@ -29,8 +29,9 @@ export async function POST(request: NextRequest) {
                         message: 'Conversation started successfully'
                     }
                 });
+            }
 
-            case 'message':
+            case 'message': {
                 if (!sessionId || !message) {
                     return NextResponse.json({
                         success: false,
@@ -44,8 +45,7 @@ export async function POST(request: NextRequest) {
                     success: true,
                     _data: response
                 });
-
-            default:
+            } default:
                 return NextResponse.json({
                     success: false,
                     _error: 'Invalid action. Supported actions: start, message'

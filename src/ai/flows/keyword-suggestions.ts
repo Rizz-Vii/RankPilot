@@ -55,7 +55,7 @@ export async function suggestKeywords(
       const cacheKey = `${input.topic.toLowerCase().trim()}-${input.includeLongTailKeywords}`;
 
       return optimizeOpenAI(
-        (prompt: string) =>
+        (_prompt: string) =>
           suggestKeywordsFlow({
             topic: input.topic,
             includeLongTailKeywords: input.includeLongTailKeywords,
@@ -104,6 +104,9 @@ const suggestKeywordsFlow = ai.defineFlow(
   },
   async (input) => {
     const { output } = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('Keyword suggestions generation failed - no output received');
+    }
+    return output;
   }
 );

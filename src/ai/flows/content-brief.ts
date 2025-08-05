@@ -101,6 +101,9 @@ const contentBriefFlow = ai.defineFlow(
   },
   async (input) => {
     const { output } = await briefPrompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('Content brief generation failed - no output received');
+    }
+    return output;
   }
 );

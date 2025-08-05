@@ -6,7 +6,7 @@
 
 import { z } from "zod";
 
-const AnalyzeContentInputSchema = z.object({
+const _AnalyzeContentInputSchema = z.object({
   content: z.string().describe("The content to analyze and optimize for SEO."),
   targetKeyword: z.string().describe("The primary keyword to optimize for."),
   additionalKeywords: z
@@ -19,7 +19,7 @@ const AnalyzeContentInputSchema = z.object({
     .describe("The type of content being optimized."),
 });
 
-const AnalyzeContentOutputSchema = z.object({
+const _AnalyzeContentOutputSchema = z.object({
   seoScore: z.number().min(0).max(100),
   suggestions: z.array(
     z.object({
@@ -54,17 +54,17 @@ const AnalyzeContentOutputSchema = z.object({
   readabilityScore: z.number().min(0).max(100),
 });
 
-export type AnalyzeContentInput = z.infer<typeof AnalyzeContentInputSchema>;
-export type AnalyzeContentOutput = z.infer<typeof AnalyzeContentOutputSchema>;
+export type AnalyzeContentInput = z.infer<typeof _AnalyzeContentInputSchema>;
+export type AnalyzeContentOutput = z.infer<typeof _AnalyzeContentOutputSchema>;
 
 export async function analyzeContent(
   input: AnalyzeContentInput
 ): Promise<AnalyzeContentOutput> {
-  
+
   // Calculate basic keyword density
   const words = input.content.toLowerCase().split(/\s+/);
   const totalWords = words.length;
-  const keywordCount = words.filter(word => 
+  const keywordCount = words.filter((word: string) =>
     word.includes(input.targetKeyword.toLowerCase())
   ).length;
   const keywordDensity = totalWords > 0 ? (keywordCount / totalWords) * 100 : 0;
@@ -82,7 +82,7 @@ export async function analyzeContent(
       {
         category: "structure",
         suggestion: "Add more H2 and H3 headings to improve content structure",
-        priority: "medium", 
+        priority: "medium",
         impact: "Better content organization and user experience"
       },
       {
@@ -109,8 +109,8 @@ export async function analyzeContent(
     metaDescription: `Learn everything about ${input.targetKeyword}. Expert insights, actionable tips, and proven strategies to help you succeed.`,
     keywordDensity: {
       [input.targetKeyword]: keywordDensity,
-      ...(input.additionalKeywords?.reduce((acc, keyword) => {
-        const count = words.filter(word => word.includes(keyword.toLowerCase())).length;
+      ...(input.additionalKeywords?.reduce((acc: Record<string, number>, keyword: string) => {
+        const count = words.filter((word: string) => word.includes(keyword.toLowerCase())).length;
         acc[keyword] = totalWords > 0 ? (count / totalWords) * 100 : 0;
         return acc;
       }, {} as Record<string, number>) || {})

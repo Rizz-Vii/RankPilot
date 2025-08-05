@@ -256,7 +256,7 @@ function generateUUID(): string {
         const arr = new Uint8Array(16);
         globalThis.crypto.getRandomValues(arr);
         // Adapted from StackOverflow: https://stackoverflow.com/a/2117523
-        let hex = Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+        const hex = Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
         return (
             hex.substring(0, 8) + '-' +
             hex.substring(8, 12) + '-' +

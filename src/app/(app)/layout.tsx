@@ -1,6 +1,7 @@
 ﻿// src/app/(app)/layout.tsx
 "use client";
 
+import React from "react";
 import {
   FeedbackToast,
   GlobalLoadingIndicator,

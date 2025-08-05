@@ -6,10 +6,10 @@
 
 import { z } from "zod";
 
-const SerpViewInputSchema = z.object({
+const _SerpViewInputSchema = z.object({
   keyword: z.string().describe("The keyword to search for."),
 });
-export type SerpViewInput = z.infer<typeof SerpViewInputSchema>;
+export type SerpViewInput = z.infer<typeof _SerpViewInputSchema>;
 
 const OrganicResultSchema = z.object({
   position: z.number().describe("The ranking position."),
@@ -38,7 +38,7 @@ const SerpFeaturesSchema = z.object({
     .describe("Whether the SERP contains a 'Top Stories' news section."),
 });
 
-const SerpViewOutputSchema = z.object({
+const _SerpViewOutputSchema = z.object({
   organicResults: z
     .array(OrganicResultSchema)
     .describe("The top 10 organic search results."),
@@ -51,7 +51,7 @@ const SerpViewOutputSchema = z.object({
     "An analysis of common SERP features present for this keyword."
   ),
 });
-export type SerpViewOutput = z.infer<typeof SerpViewOutputSchema>;
+export type SerpViewOutput = z.infer<typeof _SerpViewOutputSchema>;
 
 export async function getSerpData(
   input: SerpViewInput

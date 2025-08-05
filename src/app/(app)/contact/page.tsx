@@ -17,13 +17,9 @@ import {
   Mail,
   Phone,
   MessageSquare,
-  Clock,
   HelpCircle,
   CheckCircle,
-  CreditCard,
-  Shield,
   Users,
-  Zap,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";

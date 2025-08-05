@@ -145,7 +145,10 @@ class PerformanceMonitor {
     }
 
     const successfulOps = metrics.filter((m) => m.success);
-    const durations = metrics.map((m) => m.duration!).sort((a, b) => a - b);
+    const durations = metrics
+      .filter((m) => m.duration !== undefined)
+      .map((m) => m.duration as number)
+      .sort((a, b) => a - b);
     const cacheHits = metrics.filter((m) => m.cacheHit).length;
 
     // Error aggregation
@@ -153,8 +156,10 @@ class PerformanceMonitor {
     metrics
       .filter((m) => m.error)
       .forEach((m) => {
-        const error = m.error!;
-        errorCounts.set(error, (errorCounts.get(error) || 0) + 1);
+        const error = m.error;
+        if (error) {
+          errorCounts.set(error, (errorCounts.get(error) || 0) + 1);
+        }
       });
 
     const commonErrors = Array.from(errorCounts.entries())
@@ -258,12 +263,15 @@ export const performanceMonitor = new PerformanceMonitor();
 
 // Decorator for automatic performance monitoring
 export function monitorPerformance(operationType: string) {
-  return function <T extends (...args: unknown[]) => Promise<any>>(
+  return function <T extends (...args: unknown[]) => Promise<unknown>>(
     target: unknown,
     propertyName: string,
     descriptor: TypedPropertyDescriptor<T>
   ) {
-    const method = descriptor.value!;
+    const method = descriptor.value;
+    if (!method) {
+      throw new Error("Method not found for performance monitoring");
+    }
 
     descriptor.value = async function (this: unknown, ...args: unknown[]) {
       const operationId = performanceMonitor.startOperation(operationType);

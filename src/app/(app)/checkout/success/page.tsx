@@ -13,7 +13,7 @@ import { motion } from "framer-motion";
 export default function CheckoutSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [showConfetti, setShowConfetti] = useState(true);
 
   const sessionId = searchParams?.get("session_id");
