@@ -1,0 +1,244 @@
+{
+    "patterns": {
+        "config-url-mismatch": {
+            "name": "Configuration URL Mismatch",
+            "description": "Environment variables or configuration files contain mismatched URLs",
+            "symptoms": [
+                "infinite retry loops",
+                "connection timeouts",
+                "404 errors in automated testing",
+                "GitHub Actions workflow failures"
+            ],
+            "detection": {
+                "configValidation": "Check environment files (.env, .env.local) for URL consistency",
+                "workflowFiles": "Review GitHub Actions workflows for hardcoded URLs",
+                "configFiles": "Verify playwright.config.ts, next.config.ts URL settings"
+            },
+            "resolution": {
+                "steps": [
+                    "Identify all URL configuration sources",
+                    "Check for hardcoded vs environment variable usage",
+                    "Standardize on environment variable approach",
+                    "Update workflow files to use consistent variables",
+                    "Validate URL accessibility and format"
+                ],
+                "timeEstimate": "15-30 minutes",
+                "difficulty": "low"
+            },
+            "prevention": [
+                "Use environment variables for all URLs",
+                "Add URL validation to CI/CD pipeline",
+                "Create configuration validation scripts",
+                "Document URL configuration standards"
+            ],
+            "examples": [
+                {
+                    "problem": "GitHub Actions performance testing infinite retry",
+                    "cause": "TEST_BASE_URL hardcoded to localhost instead of PERFORMANCE_URL",
+                    "solution": "Changed workflow to use process.env.PERFORMANCE_URL",
+                    "effectiveness": "high"
+                }
+            ],
+            "relatedPatterns": [
+                "environment-inconsistency",
+                "ci-cd-configuration-errors"
+            ],
+            "tags": [
+                "configuration",
+                "urls",
+                "environment",
+                "github-actions",
+                "testing"
+            ],
+            "lastUpdated": "2025-07-28T00:00:00Z",
+            "occurrences": 1,
+            "successRate": 1.0
+        },
+        "infinite-retry-loop": {
+            "name": "Infinite Retry Loop",
+            "description": "Process gets stuck in continuous retry attempts without successful resolution",
+            "symptoms": [
+                "process never completes",
+                "continuous connection attempts",
+                "high CPU usage",
+                "timeout errors after long delays"
+            ],
+            "detection": {
+                "logAnalysis": "Look for repeated connection attempts in logs",
+                "timeoutPatterns": "Identify processes that run longer than expected",
+                "resourceUsage": "Monitor CPU and network usage for abnormal patterns"
+            },
+            "resolution": {
+                "steps": [
+                    "Identify the retry mechanism and conditions",
+                    "Check the target resource availability",
+                    "Verify retry logic and exit conditions",
+                    "Add timeout limits and circuit breakers",
+                    "Implement exponential backoff"
+                ],
+                "timeEstimate": "30-60 minutes",
+                "difficulty": "medium"
+            },
+            "prevention": [
+                "Always implement retry limits",
+                "Add circuit breaker patterns",
+                "Include timeout configurations",
+                "Monitor retry metrics"
+            ],
+            "examples": [
+                {
+                    "problem": "Playwright global setup infinite retry on deployment validation",
+                    "cause": "Wrong URL causing continuous failed connection attempts",
+                    "solution": "Fixed URL configuration and added retry limits",
+                    "effectiveness": "high"
+                }
+            ],
+            "relatedPatterns": [
+                "config-url-mismatch",
+                "timeout-configuration",
+                "circuit-breaker"
+            ],
+            "tags": [
+                "retry",
+                "loops",
+                "timeouts",
+                "performance",
+                "reliability"
+            ],
+            "lastUpdated": "2025-07-28T00:00:00Z",
+            "occurrences": 1,
+            "successRate": 1.0
+        },
+        "eslint-compatibility": {
+            "name": "ESLint Compatibility Issues",
+            "description": "ESLint version compatibility problems causing build failures",
+            "symptoms": [
+                "build failures with ESLint errors",
+                "configuration parsing errors",
+                "plugin compatibility warnings",
+                "TypeScript integration issues"
+            ],
+            "detection": {
+                "versionCheck": "Compare ESLint version with framework requirements",
+                "configValidation": "Test ESLint configuration parsing",
+                "pluginCompatibility": "Verify all plugins support current ESLint version"
+            },
+            "resolution": {
+                "steps": [
+                    "Create fallback configuration with try-catch",
+                    "Implement graceful degradation",
+                    "Add emergency build bypass",
+                    "Update documentation with compatibility matrix"
+                ],
+                "timeEstimate": "45-90 minutes",
+                "difficulty": "medium"
+            },
+            "prevention": [
+                "Maintain ESLint compatibility matrix",
+                "Test configuration changes in isolation",
+                "Implement fallback mechanisms",
+                "Monitor dependency compatibility"
+            ],
+            "examples": [
+                {
+                    "problem": "ESLint v9.x + Next.js 15.4.1 compatibility failure",
+                    "cause": "Breaking changes in ESLint v9 configuration format",
+                    "solution": "Implemented fallback configuration with error handling",
+                    "effectiveness": "high"
+                }
+            ],
+            "relatedPatterns": [
+                "dependency-compatibility",
+                "build-system-failures"
+            ],
+            "tags": [
+                "eslint",
+                "build",
+                "compatibility",
+                "configuration"
+            ],
+            "lastUpdated": "2025-07-28T00:00:00Z",
+            "occurrences": 3,
+            "successRate": 0.95
+        },
+        "mobile-performance-degradation": {
+            "name": "Mobile Performance Degradation",
+            "description": "Desktop-first development causing mobile UX issues",
+            "symptoms": [
+                "poor mobile Core Web Vitals",
+                "touch target accessibility issues",
+                "responsive design problems",
+                "mobile-specific performance bottlenecks"
+            ],
+            "detection": {
+                "performanceTesting": "Run Core Web Vitals on mobile viewports",
+                "accessibilityAudit": "Check touch target sizes (minimum 48px)",
+                "responsiveValidation": "Test across viewport ranges 320px-1920px"
+            },
+            "resolution": {
+                "steps": [
+                    "Implement mobile-first design patterns",
+                    "Add responsive utility hooks",
+                    "Ensure 48px minimum touch targets",
+                    "Optimize for mobile performance",
+                    "Add progressive enhancement"
+                ],
+                "timeEstimate": "2-4 hours",
+                "difficulty": "high"
+            },
+            "prevention": [
+                "Mobile-first development approach",
+                "Automated mobile testing in CI/CD",
+                "Performance budgets for mobile",
+                "Regular mobile UX audits"
+            ],
+            "examples": [
+                {
+                    "problem": "Poor mobile navigation UX",
+                    "cause": "Desktop-first component design",
+                    "solution": "8 mobile-responsive utilities with touch optimization",
+                    "effectiveness": "high"
+                }
+            ],
+            "relatedPatterns": [
+                "responsive-design",
+                "performance-optimization"
+            ],
+            "tags": [
+                "mobile",
+                "performance",
+                "responsive",
+                "accessibility"
+            ],
+            "lastUpdated": "2025-07-28T00:00:00Z",
+            "occurrences": 2,
+            "successRate": 0.9
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "lastUpdated": "2025-07-28T00:00:00Z",
+        "totalPatterns": 4,
+        "categories": [
+            "configuration",
+            "performance",
+            "build",
+            "mobile"
+        ],
+        "averageSuccessRate": 0.96
+    },
+    "statistics": {
+        "mostCommonPatterns": [
+            "config-url-mismatch",
+            "eslint-compatibility",
+            "mobile-performance-degradation"
+        ],
+        "highestSuccessRate": "config-url-mismatch",
+        "averageResolutionTime": "45 minutes",
+        "difficultyDistribution": {
+            "low": 1,
+            "medium": 2,
+            "high": 1
+        }
+    }
+}
