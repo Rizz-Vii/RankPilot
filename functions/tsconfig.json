@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
     "rootDir": "src",
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "target": "ES2020",
-    "lib": ["es2020"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",
+    "lib": ["es2022", "dom"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
@@ -19,5 +19,5 @@
   },
   "compileOnSave": true,
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "lib"]
+  "exclude": ["node_modules", "lib", "dist", "build"]
 }

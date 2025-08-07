@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": false,
     "skipLibCheck": true,
     "strict": true,
@@ -17,38 +13,27 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    "plugins": [{ "name": "next" }],
+    "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@/styles/*": [
-        "./src/styles/*"
-      ],
-      "@/constants/*": [
-        "./src/constants/*"
-      ],
-      "@/context/*": [
-        "./src/context/*"
-      ]
+      "@/*": ["src/*"]
     }
   },
   "include": [
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
     "functions/**/*.ts",
-    "playwright.config.new.mjs"
+    "playwright.config.*.ts",
+    ".next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "backups/**/*",
     ".typescript-guardian-backups/**/*",
-    "docs-backup-*/**/*"
+    "docs-backup-*/**/*",
+    "dist",
+    "build",
+    "lib"
   ]
 }

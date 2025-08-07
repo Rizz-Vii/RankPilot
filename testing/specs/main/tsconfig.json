@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
     "noEmit": true,
-    "module": "commonjs",
-    "target": "es2022",
+    "module": "NodeNext",
+    "target": "ES2022",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "allowSyntheticDefaultImports": true,
     "lib": ["es2022", "dom"],
     "baseUrl": "../",
@@ -16,11 +16,12 @@
     }
   },
   "include": [
-    ".",
+    "../src/**/*.ts",
+    "../src/**/*.tsx",
     "**/*.spec.ts",
     "**/*.test.ts",
     "../playwright.config.ts",
     "../playwright.config.*.ts"
   ],
-  "exclude": ["node_modules", "dist", "build"]
+  "exclude": ["node_modules", "dist", "build", "lib"]
 }

@@ -54,14 +54,23 @@ export const getPerformanceDashboard = onCall(
       const metricsReport = MetricsCollector.generateReport();
       const cacheStats = AIResponseCache.getStats();
 
+      // Cast summary to expected type
+      const summary = metricsReport.summary as {
+        totalFunctions: number;
+        totalExecutions: number;
+        totalErrors: number;
+        overallErrorRate: number;
+        averageExecutionTime: number;
+      };
+
       const dashboardData = {
         overview: {
-          totalFunctions: metricsReport.summary.totalFunctions,
+          totalFunctions: summary.totalFunctions,
           activeExperiments: 0, // Placeholder
           cacheHitRate: cacheStats.hitRate,
-          overallSuccessRate: 100 - metricsReport.summary.overallErrorRate,
+          overallSuccessRate: 100 - summary.overallErrorRate,
           averageResponseTime: calculateAverageResponseTime(metricsReport),
-          totalRequests24h: metricsReport.summary.totalExecutions,
+          totalRequests24h: summary.totalExecutions,
           activeUsers: getActiveUsersCount(),
           systemHealth: assessSystemHealth(metricsReport)
         },

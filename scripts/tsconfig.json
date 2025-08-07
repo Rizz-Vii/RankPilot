@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
@@ -12,9 +12,9 @@
     "isolatedModules": true,
     "baseUrl": ".",
     "paths": {
-      "*": ["../node_modules/*", "../src/*"]
+      "@/*": ["src/*"]
     }
   },
-  "include": ["./**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["../src/**/*.ts", "../src/**/*.tsx", "./**/*.ts"],
+  "exclude": ["node_modules", "dist", "build", "lib"]
 }

@@ -139,8 +139,6 @@ async function generateKeywords(
   includeMetrics: boolean
 ): Promise<KeywordSuggestion[]> {
   try {
-    const ai = getAI(`keywords-${language}`);
-
     const prompt = `Generate ${count} SEO keyword suggestions for "${query}" in ${language}.
 
 Requirements:
@@ -163,17 +161,10 @@ Format:
   ]
 }`;
 
-    const result = await ai.generate({
-      prompt,
-      config: {
-        temperature: 0.7,
-        maxOutputTokens: 1000,
-      }
-    });
-
-    const parsedResult = JSON.parse(result.text());
+    // Use default model or specify as needed
+    const result = await getAI(prompt, undefined, { temperature: 0.7, maxOutputTokens: 1000 });
+    const parsedResult = JSON.parse(result);
     return parsedResult.keywords || [];
-
   } catch (error) {
     logger.warn("AI keyword generation failed, using fallback", {
       error: error instanceof Error ? error.message : String(error),
@@ -185,15 +176,9 @@ Format:
 
 async function generateRelatedQueries(query: string, language: string): Promise<string[]> {
   try {
-    const ai = getAI(`queries-${language}`);
     const prompt = `Generate 5 related search queries for "${query}" in ${language}. Return as JSON array of strings.`;
-
-    const result = await ai.generate({
-      prompt,
-      config: { temperature: 0.8, maxOutputTokens: 200 }
-    });
-
-    return JSON.parse(result.text());
+    const result = await getAI(prompt, undefined, { temperature: 0.8, maxOutputTokens: 200 });
+    return JSON.parse(result);
   } catch (error) {
     logger.warn("Related queries generation failed", {
       error: error instanceof Error ? error.message : String(error),

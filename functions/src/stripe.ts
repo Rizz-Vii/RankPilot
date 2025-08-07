@@ -20,7 +20,7 @@ function getStripe(): Stripe {
       throw new Error("STRIPE_SECRET_KEY environment variable is not set");
     }
     stripe = new Stripe(secretKey, {
-      apiVersion: "2025-06-30.basil",
+      apiVersion: "2025-07-30.basil",
     });
   }
   return stripe;

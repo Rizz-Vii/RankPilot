@@ -25,7 +25,7 @@ describe("Firebase Functions Basic Test Suite", () => {
 
       expect(trace.traceId).to.be.a("string");
       expect(trace.traceId).to.have.length.greaterThan(10);
-      expect(trace.functionName).to.equal("test-function");
+      expect(trace._functionName).to.equal("test-function");
       expect(trace.userId).to.equal("user123");
       expect(trace.userTier).to.be.a("string");
     });
@@ -61,18 +61,10 @@ describe("Firebase Functions Basic Test Suite", () => {
   describe("MetricsCollector", () => {
     it("should record function execution metrics", () => {
       const executionData = {
-        timestamp: Date.now(),
-        functionName: "test-function",
-        userId: "user123",
-        duration: 1000,
-        memoryUsed: 64,
+        _functionName: "test-function",
+        executionTime: 1000,
         success: true,
-        userTier: "starter" as const,
-        businessData: {
-          aiTokensUsed: 50,
-          cacheHit: false,
-          resultCount: 10
-        }
+        memoryUsage: 64
       };
 
       expect(() => {
@@ -147,18 +139,10 @@ describe("Firebase Functions Basic Test Suite", () => {
 
       // Record metrics
       MetricsCollector.recordExecution({
-        timestamp: Date.now(),
-        functionName: "integration-test",
-        userId: "integration-user",
-        duration: 1200,
-        memoryUsed: 96,
+        _functionName: "integration-test",
+        executionTime: 1200,
         success: true,
-        userTier: "agency" as const,
-        businessData: {
-          aiTokensUsed: 150,
-          cacheHit: false,
-          resultCount: 1
-        }
+        memoryUsage: 96
       });
 
       // Complete trace

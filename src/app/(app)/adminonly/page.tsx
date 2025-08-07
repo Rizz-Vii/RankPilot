@@ -22,6 +22,7 @@ import {
 import AdminUserManagement from "@/components/admin/admin-user-management";
 import AdminSystemMetrics from "@/components/admin/admin-system-metrics";
 import AdminAnalytics from "@/components/admin/admin-analytics";
+import { AdminAnalyticsDashboard } from "@/components/admin/admin-analytics-dashboard";
 import AdminSettings from "@/components/admin/admin-settings";
 import { AdminUserSubscriptionManager } from "@/components/admin/AdminUserSubscriptionManager";
 
@@ -89,7 +90,10 @@ export default function AdminOnlyPage() {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
-          <AdminAnalytics />
+          {/* New comprehensive analytics dashboard for admins */}
+          <AdminAnalyticsDashboard />
+          {/* Optionally keep legacy analytics below for comparison */}
+          {/* <AdminAnalytics /> */}
         </TabsContent>
 
         <TabsContent value="system" className="space-y-6">

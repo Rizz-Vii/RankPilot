@@ -212,7 +212,7 @@ export class PWAManager {
                 applicationServerKey: this.urlBase64ToUint8Array(
                     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
                     'BMqSvZWj5OwrOhNM2NQpjqPzqKJFVj1DdM7Z4lNXfqGoCz4O9g-GNp2K7-Qh-ILRgYlCjFkf8ZKqVl_qDlH-J9U'
-                )
+                ) as BufferSource
             });
 
             // Send subscription to server

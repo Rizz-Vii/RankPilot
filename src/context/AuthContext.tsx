@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { User } from "firebase/auth";
+import { User as FirebaseUser } from "firebase/auth"; // This line is unchanged
 import { auth, db } from "@/lib/firebase";
 import { useMockAuth } from "@/lib/dev-auth";
 import { ensureUserSubscription } from "@/lib/user-subscription-sync";
@@ -16,6 +16,7 @@ import {
   getDocs,
 } from "firebase/firestore";
 
+
 interface UserActivity {
   id: string;
   type: string;
@@ -25,7 +26,12 @@ interface UserActivity {
   resultsSummary?: string;
 }
 
-interface AuthContextType {
+// Extend Firebase User with optional teamId
+export interface User extends FirebaseUser {
+  teamId?: string;
+}
+
+export interface AuthContextType {
   user: User | null;
   loading: boolean;
   role: string | null;
@@ -33,13 +39,16 @@ interface AuthContextType {
   activities: UserActivity[];
 }
 
-const AuthContext = createContext<AuthContextType>({
+
+const defaultAuthContext: AuthContextType = {
   user: null,
   loading: true,
   role: null,
   profile: null,
   activities: [],
-});
+};
+
+const AuthContext = createContext<AuthContextType>(defaultAuthContext);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -50,37 +59,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Use mock auth in development
   const { user: mockUser } = useMockAuth();
-  const isDevelopment = process.env.NODE_ENV === "development";
+  const isDevelopment = typeof window !== "undefined" && process.env.NODE_ENV === "development";
 
-  useEffect(() => {
-    // Always use Firebase auth, but also listen for mock auth events in development
-    const unsubscribe = auth.onAuthStateChanged(handleAuthStateChange);
 
-    // In development, also listen for mock auth events
-    if (isDevelopment) {
-      const handleMockAuthEvent = (event: CustomEvent) => {
-        const mockUser = event.detail;
-        handleAuthStateChange(mockUser);
-      };
 
-      window.addEventListener(
-        "mockUserLogin",
-        handleMockAuthEvent as EventListener
-      );
-
-      return () => {
-        unsubscribe();
-        window.removeEventListener(
-          "mockUserLogin",
-          handleMockAuthEvent as EventListener
-        );
-      };
-    }
-
-    return () => unsubscribe();
-  }, [isDevelopment]);
-
-  const handleAuthStateChange = async (currentUser: User | null) => {
+  const handleAuthStateChange = async (currentUser: FirebaseUser | null) => {
     setUser(currentUser);
     if (currentUser) {
       // Ensure user has proper subscription data
@@ -98,6 +81,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const userData = userDocSnap.data();
         setRole(userData?.role || null);
         setProfile(userData || null);
+        // Attach teamId from Firestore user doc if present
+        setUser({ ...currentUser, teamId: userData?.teamId });
       } else {
         setRole(null);
         setProfile(null);
@@ -133,6 +118,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     setLoading(false);
   };
+
+  useEffect(() => {
+    // Always use Firebase auth, but also listen for mock auth events in development
+    const unsubscribe = auth.onAuthStateChanged(handleAuthStateChange);
+
+    // In development, also listen for mock auth events
+    let removeMockListener: (() => void) | undefined;
+    if (isDevelopment) {
+      const handleMockAuthEvent = (event: CustomEvent) => {
+        const mockUser = event.detail;
+        handleAuthStateChange(mockUser);
+      };
+      window.addEventListener(
+        "mockUserLogin",
+        handleMockAuthEvent as EventListener
+      );
+      removeMockListener = () =>
+        window.removeEventListener(
+          "mockUserLogin",
+          handleMockAuthEvent as EventListener
+        );
+    }
+
+    return () => {
+      unsubscribe();
+      if (removeMockListener) removeMockListener();
+    };
+  }, [isDevelopment]);
+
+
 
   return (
     <AuthContext.Provider value={{ user, loading, role, profile, activities }}>

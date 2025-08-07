@@ -224,6 +224,15 @@ export const managementItems: NavItem[] = [
     description: "Performance metrics and analytics",
     requiredTier: "starter",
   },
+  // Admin link now in Management group
+  {
+    title: "Admin",
+    href: "/adminonly",
+    icon: Shield,
+    description: "Administrative controls and user management",
+    adminOnly: true,
+    
+  },
 ];
 
 // User Navigation - Profile only (no Settings duplication)
@@ -234,13 +243,6 @@ export const userItems: NavItem[] = [
     icon: User,
     description: "User profile and account settings",
     // Free tier - basic profile
-  },
-  {
-    title: "Admin",
-    href: "/adminonly",
-    icon: Shield,
-    description: "Administrative controls and user management",
-    adminOnly: true,
   },
 ];
 
@@ -314,13 +316,13 @@ export const standaloneNavItems: NavItem[] = standaloneItems;
 
 // Flat navigation items for backward compatibility and mobile (FIXED: Remove duplication)
 export const flatNavItems: NavItem[] = [
-  ...managementItems.slice(0, 2), // Dashboard, Insights
+  ...managementItems.slice(0, 3), // Dashboard, Insights, Performance
   ...neuroSEOItems.slice(0, 1), // NeuroSEO Dashboard
   ...seoToolsItems, // All SEO tools
   ...competitiveItems, // Competitive tools
   ...teamCollaborationItems, // Team collaboration tools
-  ...managementItems.slice(2), // Performance
-  // NOTE: userItems are now only in Account & Settings group to prevent duplication
+  // Admin is now in managementItems
+  ...userItems, // Profile only
 ];
 
 // Helper functions
