@@ -19,6 +19,7 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
 import { useSerpKeywordMetrics } from '@/hooks/useSerpKeywordMetrics';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
@@ -80,6 +81,7 @@ export default function SerpViewPage() {
   };
 
   const serpMetrics = useSerpKeywordMetrics();
+  const isMobile = useIsMobile();
   return (
     <main className="container mx-auto py-6 space-y-6">
       <ToolPageHeader
@@ -88,15 +90,15 @@ export default function SerpViewPage() {
         badges={composeToolHeaderBadges("serp-view", null)}
         showBreadcrumb
       />
-    <div className="space-y-6"
+    <div
       className={cn(
-        "mx-auto transition-all duration-500",
+        "space-y-6 mx-auto transition-all duration-500",
         submitted ? "max-w-7xl" : "max-w-xl"
       )}
     >
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3">
         {serpMetrics.kpis.map(k => (
-          <MetricCard key={k.key} label={k.label} value={Number(k.value).toFixed(1)} delta={k.delta} deltaLabel="" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
+          <MetricCard size={isMobile ? 'sm' : 'md'} key={k.key} label={k.label} value={Number(k.value).toFixed(1)} delta={k.delta} deltaLabel="" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
         ))}
       </div>
       <LazyDataTable

@@ -142,6 +142,14 @@ export const seoToolsItems: NavItem[] = [
     description: "AI-powered content briefs and strategy",
     requiredTier: "starter",
   },
+  {
+    title: "Content Briefs",
+    href: "/content-briefs",
+    icon: FileText,
+    description: "Brief performance & historical dashboard",
+    requiredTier: "starter",
+    badge: "New",
+  },
 ];
 
 // Competitive Intelligence Navigation - Sales Optimized

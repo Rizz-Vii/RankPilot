@@ -7,6 +7,7 @@ import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { useContentBriefMetrics } from '@/hooks/useContentBriefMetrics';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 
@@ -15,6 +16,7 @@ export const metadata = { title: 'Content Briefs' };
 export default function ContentBriefsPage() {
   const [months, setMonths] = useState(6);
   const live = useContentBriefMetrics(months);
+  const isMobile = useIsMobile();
   // Fallback to marketing mock metrics until dedicated content mocks are added
   const mock = getMockMetrics('marketing');
   const data = (live.kpis.length ? live : { kpis: mock.kpis, rows: [], loading: live.loading }) as any;
@@ -29,7 +31,7 @@ export default function ContentBriefsPage() {
           <p className="text-muted-foreground max-w-3xl">Track creation velocity, word targets and optimization progress across recent briefs.</p>
           <PeriodSelector value={months} onChange={setMonths} />
         </header>
-        <section className="grid gap-4 md:grid-cols-3">
+        <section className="grid gap-4 grid-cols-2 md:grid-cols-3">
           {data.kpis.map((k: any) => (
             <MetricCard
               key={k.key}
@@ -39,6 +41,7 @@ export default function ContentBriefsPage() {
               deltaLabel="vs prev"
               trend={<TrendSparkline data={k.trend} />}
               intent={k.intent || 'neutral'}
+              size={isMobile ? 'sm' : 'md'}
             />
           ))}
         </section>
