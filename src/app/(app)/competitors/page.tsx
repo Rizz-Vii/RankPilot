@@ -36,8 +36,8 @@ import { useCompetitorAnalysisMetrics } from '@/hooks/useCompetitorAnalysisMetri
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { PeriodSelector } from '@/components/metrics/PeriodSelector';
-import { useState } from 'react';
-import { useEffect, useRef, useState } from "react";
+import { LazyDataTable } from '@/components/metrics/LazyDataTable';
+import { useEffect, useRef, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -388,14 +388,38 @@ export default function CompetitorsPage() {
         ]}
         showBreadcrumb
       />
-      <div className="space-y-6">
-        <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="space-y-10">
+        <div className="flex items-start justify-between flex-wrap gap-6">
           <div className="grid gap-4 md:grid-cols-3">
             {comp.kpis.map(k => (
               <MetricCard key={k.key} label={k.label} value={k.value} delta={k.delta} deltaLabel="vs prev" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
             ))}
           </div>
           <PeriodSelector value={months} onChange={setMonths} />
+        </div>
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Competitive Analyses</h2>
+          <LazyDataTable
+            columns={[
+              { key: 'period', header: 'Period', render: (r: any) => r.period || '-' },
+              { key: 'competitors', header: 'Competitors', render: (r: any) => (r.competitors ? r.competitors.length : (r.competitorUrls ? r.competitorUrls.length : '-')) },
+              { key: 'avgDA', header: 'Avg DA', render: (r: any) => {
+                  const over = r.analysis?.overview || [];
+                  if (!over.length) return '-';
+                  const avg = over.reduce((s: number, o: any) => s + (o.domainAuthority || 0), 0) / over.length;
+                  return avg.toFixed(1);
+                } },
+              { key: 'gaps', header: 'Gaps', render: (r: any) => {
+                  const over = r.analysis?.overview || [];
+                  if (!over.length) return '-';
+                  const max = over.reduce((m: number, o: any) => Math.max(m, o.domainAuthority || 0), 0);
+                  return over.filter((o: any) => (o.domainAuthority || 0) < max - 5).length;
+                } },
+            ]}
+            rows={comp.rows}
+            loading={comp.loading}
+            empty="No analyses yet"
+          />
         </div>
       <div
         className={cn(
