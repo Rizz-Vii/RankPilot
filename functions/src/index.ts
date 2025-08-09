@@ -4,7 +4,8 @@ import { setGlobalOptions } from "firebase-functions/v2";
 // Core feature functions
 import { adminChatHandler, customerChatHandler } from "./chatbot";
 import { testMinimal } from "./test-minimal";
-import { exportUserData, requestAccountDeletion } from "./user-data";
+// NodeNext requires explicit .js extension in source imports for ESM correctness
+import { exportUserData, requestAccountDeletion } from "./user-data.js";
 
 // Export keyword suggestions (production)
 export { getKeywordSuggestionsEnhanced } from "./api/production-keyword-suggestions";
