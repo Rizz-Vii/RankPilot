@@ -29,7 +29,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-interface PrivacySettingsCardProps {
+export interface PrivacySettingsCardProps {
   user: User;
   profile: any;
 }
@@ -80,6 +80,13 @@ export default function PrivacySettingsCard({
       const functions = getFunctions();
       const exportFn = httpsCallable(functions, "exportUserData");
       const res: any = await exportFn({ userId: user.uid });
+      // Record export timestamp for audit trail
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, { lastExportAt: new Date(), updatedAt: new Date() });
+      } catch (e) {
+        console.warn('Failed to record lastExportAt', e);
+      }
       // Trigger download locally
       const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -104,6 +111,13 @@ export default function PrivacySettingsCard({
       const functions = getFunctions();
       const delFn = httpsCallable(functions, "requestAccountDeletion");
       await delFn({ userId: user.uid });
+      // Mark deletion requested timestamp
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, { deletionRequestedAt: new Date(), updatedAt: new Date() });
+      } catch (e) {
+        console.warn('Failed to record deletionRequestedAt', e);
+      }
       toast({ variant: 'destructive', title: 'Deletion Scheduled', description: 'Your account has been scheduled for deletion.' });
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Deletion Failed', description: e.message || 'Unable to schedule deletion.' });

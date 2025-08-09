@@ -2,143 +2,175 @@
 
 import { AccessibilityAnnouncer } from '@/components/accessibility/AccessibilityAnnouncer';
 import { LanguageSelector } from '@/components/i18n/LanguageSelector';
-import AccountSettingsForm from "@/components/settings/account-settings-form";
-import NotificationSettingsForm from "@/components/settings/notification-settings-form";
-import PrivacySettingsCard from "@/components/settings/privacy-settings-card";
-import SecuritySettingsForm from "@/components/settings/security-settings-form";
 import { ThemeConfiguration } from '@/components/theme/ThemeConfiguration';
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import LoadingScreen from "@/components/ui/loading-screen";
-import {
-    Animated
-} from '@/components/ui/micro-interactions';
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/context/AuthContext";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/context/AuthContext';
 import { useAccessibility } from '@/lib/accessibility/accessibility-system';
 import { useI18n } from '@/lib/i18n/internationalization-system';
 import { useTheme } from '@/lib/themes/theme-system';
-import {
-    Accessibility,
-    Bell,
-    CreditCard,
-    ExternalLink,
-    Globe,
-    Lock,
-    Palette,
-    Settings,
-    Shield,
-    User
-} from "lucide-react";
-import Link from "next/link";
-import React, { useState } from "react";
+import { Accessibility, Bell, CreditCard, ExternalLink, Globe, Lock, Palette, Shield, User } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import Link from 'next/link';
+import React, { useState } from 'react';
+import { ToolPageHeader } from '@/components/tool-page-header';
+import { Skeleton } from '@/components/ui/skeleton';
+
+import AccountSettingsForm from '@/components/settings/account-settings-form';
+import NotificationSettingsForm from '@/components/settings/notification-settings-form';
+import PrivacySettingsCard from '@/components/settings/privacy-settings-card';
+import SecuritySettingsForm from '@/components/settings/security-settings-form';
 
 export default function SettingsPage() {
     const { user, profile, loading: authLoading } = useAuth();
-    const [mounted, setMounted] = useState(false);
-
-    // Priority 3 Feature Hooks
-    const { theme, preferences, setPreferences } = useTheme();
+    const [hydrated, setHydrated] = useState(false);
+    const { preferences, setPreferences, theme, setTheme } = useTheme();
     const { language, translate, isRTL, formatNumber, formatCurrency, formatDate } = useI18n();
-    const {
-        announce,
-        announceAction,
-        isVoiceSupported,
-        isVoiceEnabled,
-        setIsVoiceEnabled,
-        startListening,
-        stopListening,
-        announcements
-    } = useAccessibility();
+        const { isVoiceSupported, isVoiceEnabled, setIsVoiceEnabled, announcements } = useAccessibility();
+    const [activeTab, setActiveTab] = useState('account');
 
-    const [defaultTab, setDefaultTab] = useState("account");
+    const tr = (key: string, fallback: string) => {
+        const v = translate(key);
+        return v === key ? fallback : v;
+    };
+
+    const formatRelative = (date: Date) => formatDistanceToNow(date, { addSuffix: true });
 
     React.useEffect(() => {
-        setMounted(true);
-
-        // Get the tab from URL parameters for deep linking (client-side only)
-        if (typeof window !== "undefined") {
+        setHydrated(true);
+        if (typeof window !== 'undefined') {
             const searchParams = new URLSearchParams(window.location.search);
-            const tabParam = searchParams.get("tab");
-            if (tabParam) {
-                setDefaultTab(tabParam);
-            }
+            const tabParam = searchParams.get('tab');
+            if (tabParam) setActiveTab(tabParam);
         }
     }, []);
 
-    if (authLoading || !mounted) {
-        return <LoadingScreen fullScreen text="Loading settings..." />;
-    }
+    React.useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const url = new URL(window.location.href);
+        url.searchParams.set('tab', activeTab);
+        window.history.replaceState({}, '', url.toString());
+    }, [activeTab]);
 
-    if (!user || !profile) {
-        return null;
-    }
+        // Initialize preference toggles & theme from profile once hydrated
+        React.useEffect(() => {
+            if (!hydrated || !profile?.preferences) return;
+            const prefs = profile.preferences || {};
+            const initPrefs: Record<string, any> = {};
+            if (typeof prefs.highContrast === 'boolean') initPrefs.highContrast = prefs.highContrast;
+            if (typeof prefs.reducedMotion === 'boolean') initPrefs.reducedMotion = prefs.reducedMotion;
+            if (typeof prefs.fontSize === 'string') initPrefs.fontSize = prefs.fontSize;
+            if (typeof prefs.colorBlindnessSupport === 'boolean') initPrefs.colorBlindnessSupport = prefs.colorBlindnessSupport;
+            if (prefs.customColors) initPrefs.customColors = prefs.customColors;
+            if (Object.keys(initPrefs).length) setPreferences(initPrefs);
+            if (typeof prefs.mode === 'string') setTheme(prefs.mode);
+            if (typeof prefs.voiceCommands === 'boolean') setIsVoiceEnabled(prefs.voiceCommands);
+        }, [hydrated, profile, setPreferences, setIsVoiceEnabled, setTheme]);
+
+        // Persist accessibility/theme preferences & voice commands (debounced)
+        React.useEffect(() => {
+            if (!user || !hydrated) return;
+            const timeout = setTimeout(async () => {
+                try {
+                    const userRef = doc(db, 'users', user.uid);
+                    await updateDoc(userRef, {
+                        'preferences.highContrast': preferences.highContrast ?? false,
+                        'preferences.reducedMotion': preferences.reducedMotion ?? false,
+                        'preferences.fontSize': preferences.fontSize,
+                        'preferences.colorBlindnessSupport': preferences.colorBlindnessSupport ?? false,
+                        'preferences.customColors': preferences.customColors ?? null,
+                        'preferences.mode': theme,
+                        'preferences.voiceCommands': isVoiceEnabled ?? false,
+                        updatedAt: new Date()
+                    });
+                } catch (e) {
+                    // silent failure – persistence is best-effort
+                    console.warn('Failed to persist accessibility/theme preferences', e);
+                }
+            }, 500); // debounce 500ms
+            return () => clearTimeout(timeout);
+        }, [preferences.highContrast, preferences.reducedMotion, preferences.fontSize, preferences.colorBlindnessSupport, preferences.customColors, theme, isVoiceEnabled, user, hydrated]);
+
+            // Persist language preference
+            React.useEffect(() => {
+                if (!user || !hydrated) return;
+                const timeout = setTimeout(async () => {
+                    try {
+                        const userRef = doc(db, 'users', user.uid);
+                        await updateDoc(userRef, {
+                            'preferences.language': language,
+                            updatedAt: new Date()
+                        });
+                    } catch (e) {
+                        console.warn('Failed to persist language preference', e);
+                    }
+                }, 400);
+                return () => clearTimeout(timeout);
+            }, [language, user, hydrated]);
+
+    const loadingState = authLoading || !hydrated;
+    if (!user || !profile) return null;
 
     return (
         <div className={`max-w-6xl mx-auto space-y-8 ${isRTL ? 'rtl' : 'ltr'}`}>
             <AccessibilityAnnouncer />
-
-            <Animated variant="slideUp" className="flex items-center gap-3">
-                <Settings className="h-8 w-8 text-primary" />
-                <div>
-                    <h1 className="text-3xl font-bold font-headline">Account Settings</h1>
-                    <p className="text-muted-foreground font-body">
-                        Manage your account preferences, security, accessibility, and internationalization settings.
-                    </p>
-                </div>
-            </Animated>
-
-            <Tabs defaultValue={defaultTab} className="space-y-6">
+            <ToolPageHeader
+                title={tr('settings.header.title', 'Account Settings')}
+                description={tr('settings.header.desc', 'Manage your account preferences, security, accessibility, and internationalization settings.')}
+                badges={[{ label: tr('common.secure', 'Secure'), variant: 'outline' }, { label: 'User', variant: 'secondary' }]}
+                showBreadcrumb
+            />
+            <div role="status" aria-live="polite" className="sr-only">
+                {loadingState ? tr('status.loading', 'Loading settings…') : tr('status.ready', 'Settings ready')}
+            </div>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6" aria-label={tr('settings.tabs.label', 'Account settings sections')}>
                 <TabsList className="grid w-full grid-cols-8 lg:grid-cols-8">
-                    <TabsTrigger value="account" className="flex items-center gap-2">
+                    <TabsTrigger value="account" className="flex items-center gap-2" aria-label={tr('settings.tabs.account', 'Account')}>
                         <User className="h-4 w-4" />
-                        <span className="hidden sm:inline">Account</span>
+                        <span className="hidden sm:inline">{tr('settings.tabs.account', 'Account')}</span>
                     </TabsTrigger>
-                    <TabsTrigger value="appearance" className="flex items-center gap-2">
+                    <TabsTrigger value="appearance" className="flex items-center gap-2" aria-label={tr('settings.tabs.theme', 'Theme')}>
                         <Palette className="h-4 w-4" />
-                        <span className="hidden sm:inline">Theme</span>
+                        <span className="hidden sm:inline">{tr('settings.tabs.theme', 'Theme')}</span>
                     </TabsTrigger>
-                    <TabsTrigger value="accessibility" className="flex items-center gap-2">
+                    <TabsTrigger value="accessibility" className="flex items-center gap-2" aria-label={tr('settings.tabs.accessibility', 'Accessibility')}>
                         <Accessibility className="h-4 w-4" />
-                        <span className="hidden sm:inline">A11y</span>
+                        <span className="hidden sm:inline">{tr('settings.tabs.accessibilityShort', 'A11y')}</span>
                     </TabsTrigger>
-                    <TabsTrigger value="language" className="flex items-center gap-2">
+                    <TabsTrigger value="language" className="flex items-center gap-2" aria-label={tr('settings.tabs.language', 'Language')}>
                         <Globe className="h-4 w-4" />
-                        <span className="hidden sm:inline">Language</span>
+                        <span className="hidden sm:inline">{tr('settings.tabs.language', 'Language')}</span>
                     </TabsTrigger>
-                    <TabsTrigger value="security" className="flex items-center gap-2">
+                    <TabsTrigger value="security" className="flex items-center gap-2" aria-label={tr('settings.tabs.security', 'Security')}>
                         <Shield className="h-4 w-4" />
-                        <span className="hidden sm:inline">Security</span>
+                        <span className="hidden sm:inline">{tr('settings.tabs.security', 'Security')}</span>
                     </TabsTrigger>
-                    <TabsTrigger value="notifications" className="flex items-center gap-2">
+                    <TabsTrigger value="notifications" className="flex items-center gap-2" aria-label={tr('settings.tabs.notifications', 'Notifications')}>
                         <Bell className="h-4 w-4" />
-                        <span className="hidden sm:inline">Notifications</span>
+                        <span className="hidden sm:inline">{tr('settings.tabs.notifications', 'Notifications')}</span>
                     </TabsTrigger>
-                    <TabsTrigger value="billing" className="flex items-center gap-2">
+                    <TabsTrigger value="billing" className="flex items-center gap-2" aria-label={tr('settings.tabs.billing', 'Billing')}>
                         <CreditCard className="h-4 w-4" />
-                        <span className="hidden sm:inline">Billing</span>
+                        <span className="hidden sm:inline">{tr('settings.tabs.billing', 'Billing')}</span>
                     </TabsTrigger>
-                    <TabsTrigger value="privacy" className="flex items-center gap-2">
+                    <TabsTrigger value="privacy" className="flex items-center gap-2" aria-label={tr('settings.tabs.privacy', 'Privacy')}>
                         <Lock className="h-4 w-4" />
-                        <span className="hidden sm:inline">Privacy</span>
+                        <span className="hidden sm:inline">{tr('settings.tabs.privacy', 'Privacy')}</span>
                     </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="account" className="space-y-6">
-                    <AccountSettingsForm user={user} profile={profile} />
+                    {loadingState ? <Skeleton className="h-64 w-full" /> : <AccountSettingsForm user={user} profile={profile} />}
                 </TabsContent>
 
                 <TabsContent value="appearance" className="space-y-6">
-                    <ThemeConfiguration />
+                    {loadingState ? <Skeleton className="h-64 w-full" /> : <ThemeConfiguration />}
                 </TabsContent>
 
                 <TabsContent value="accessibility" className="space-y-6">
@@ -146,70 +178,48 @@ export default function SettingsPage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Accessibility className="h-5 w-5" />
-                                Accessibility Features
+                                {tr('settings.accessibility.title', 'Accessibility Features')}
                             </CardTitle>
-                            <CardDescription>
-                                Enhance your experience with accessibility options
-                            </CardDescription>
+                            <CardDescription>{tr('settings.accessibility.desc', 'Enhance your experience with accessibility options')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <Label>High Contrast Mode</Label>
-                                            <p className="text-sm text-muted-foreground">
-                                                Enhanced visibility for users with visual impairments
-                                            </p>
+                                            <Label>{tr('settings.accessibility.highContrast', 'High Contrast Mode')}</Label>
+                                            <p className="text-sm text-muted-foreground">{tr('settings.accessibility.highContrastDesc', 'Enhanced visibility for users with visual impairments')}</p>
                                         </div>
-                                        <Switch
-                                            checked={preferences.highContrast}
-                                            onCheckedChange={(checked) => setPreferences({ highContrast: checked })}
-                                        />
+                                        <Switch checked={preferences.highContrast} onCheckedChange={(c) => setPreferences({ highContrast: c })} />
                                     </div>
-
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <Label>Reduced Motion</Label>
-                                            <p className="text-sm text-muted-foreground">
-                                                Minimize animations for motion-sensitive users
-                                            </p>
+                                            <Label>{tr('settings.accessibility.reducedMotion', 'Reduced Motion')}</Label>
+                                            <p className="text-sm text-muted-foreground">{tr('settings.accessibility.reducedMotionDesc', 'Minimize animations for motion-sensitive users')}</p>
                                         </div>
-                                        <Switch
-                                            checked={preferences.reducedMotion}
-                                            onCheckedChange={(checked) => setPreferences({ reducedMotion: checked })}
-                                        />
+                                        <Switch checked={preferences.reducedMotion} onCheckedChange={(c) => setPreferences({ reducedMotion: c })} />
                                     </div>
-
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <Label>Voice Commands</Label>
-                                            <p className="text-sm text-muted-foreground">
-                                                Use voice commands to navigate the interface
-                                            </p>
+                                            <Label>{tr('settings.accessibility.voiceCommands', 'Voice Commands')}</Label>
+                                            <p className="text-sm text-muted-foreground">{tr('settings.accessibility.voiceCommandsDesc', 'Use voice commands to navigate the interface')}</p>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <Switch
-                                                checked={isVoiceEnabled}
-                                                onCheckedChange={setIsVoiceEnabled}
-                                                disabled={!isVoiceSupported}
-                                            />
+                                            <Switch checked={isVoiceEnabled} onCheckedChange={setIsVoiceEnabled} disabled={!isVoiceSupported} />
                                             {!isVoiceSupported && <Badge variant="secondary">Unsupported</Badge>}
                                         </div>
                                     </div>
                                 </div>
-
                                 <div className="space-y-4">
-                                    <h4 className="font-medium">Live Announcements</h4>
+                                    <h4 className="font-medium">{tr('settings.accessibility.liveAnnouncements', 'Live Announcements')}</h4>
                                     <div className="h-32 overflow-y-auto border rounded p-3 text-sm">
                                         {announcements.length === 0 ? (
-                                            <p className="text-muted-foreground">No recent announcements</p>
+                                            <p className="text-muted-foreground">{tr('settings.accessibility.noAnnouncements', 'No recent announcements')}</p>
                                         ) : (
-                                            announcements.map((announcement) => (
-                                                <div key={announcement.id} className="mb-2 last:mb-0">
-                                                    <span className={`inline-block w-2 h-2 rounded-full mr-2 ${announcement.priority === 'assertive' ? 'bg-red-500' : 'bg-blue-500'
-                                                        }`} />
-                                                    {announcement.message}
+                                            announcements.map(a => (
+                                                <div key={a.id} className="mb-2 last:mb-0">
+                                                    <span className={`inline-block w-2 h-2 rounded-full mr-2 ${a.priority === 'assertive' ? 'bg-red-500' : 'bg-blue-500'}`} />
+                                                    {a.message}
                                                 </div>
                                             ))
                                         )}
@@ -225,47 +235,27 @@ export default function SettingsPage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Globe className="h-5 w-5" />
-                                Language & Region
+                                {tr('settings.language.title', 'Language & Region')}
                             </CardTitle>
-                            <CardDescription>
-                                Choose your preferred language and regional settings
-                            </CardDescription>
+                            <CardDescription>{tr('settings.language.desc', 'Choose your preferred language and regional settings')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-4">
                                     <div>
-                                        <Label className="text-base font-medium">Interface Language</Label>
-                                        <p className="text-sm text-muted-foreground mb-3">
-                                            Choose your preferred language for the interface
-                                        </p>
+                                        <Label className="text-base font-medium">{tr('settings.language.interfaceLabel', 'Interface Language')}</Label>
+                                        <p className="text-sm text-muted-foreground mb-3">{tr('settings.language.interfaceDesc', 'Choose your preferred language for the interface')}</p>
                                         <LanguageSelector variant="button" />
                                     </div>
                                 </div>
-
                                 <div className="space-y-4">
-                                    <h4 className="font-medium">Language Information</h4>
+                                    <h4 className="font-medium">{tr('settings.language.info', 'Language Information')}</h4>
                                     <div className="space-y-3 text-sm">
-                                        <div className="flex justify-between">
-                                            <span>Current Language:</span>
-                                            <span className="font-medium">{language.toUpperCase()}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Text Direction:</span>
-                                            <span>{isRTL ? 'Right-to-Left' : 'Left-to-Right'}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Sample Number:</span>
-                                            <span>{formatNumber(1234567.89)}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Sample Currency:</span>
-                                            <span>{formatCurrency(1234.56)}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Sample Date:</span>
-                                            <span>{formatDate(new Date())}</span>
-                                        </div>
+                                        <div className="flex justify-between"><span>{tr('settings.language.current', 'Current Language:')}</span><span className="font-medium">{language.toUpperCase()}</span></div>
+                                        <div className="flex justify-between"><span>{tr('settings.language.direction', 'Text Direction:')}</span><span>{isRTL ? 'Right-to-Left' : 'Left-to-Right'}</span></div>
+                                        <div className="flex justify-between"><span>{tr('settings.language.sampleNumber', 'Sample Number:')}</span><span>{formatNumber(1234567.89)}</span></div>
+                                        <div className="flex justify-between"><span>{tr('settings.language.sampleCurrency', 'Sample Currency:')}</span><span>{formatCurrency(1234.56)}</span></div>
+                                        <div className="flex justify-between"><span>{tr('settings.language.sampleDate', 'Sample Date:')}</span><span>{formatDate(new Date())}</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -274,11 +264,11 @@ export default function SettingsPage() {
                 </TabsContent>
 
                 <TabsContent value="security" className="space-y-6">
-                    <SecuritySettingsForm user={user} />
+                    {loadingState ? <Skeleton className="h-64 w-full" /> : <SecuritySettingsForm user={user} />}
                 </TabsContent>
 
                 <TabsContent value="notifications" className="space-y-6">
-                    <NotificationSettingsForm user={user} profile={profile} />
+                    {loadingState ? <Skeleton className="h-64 w-full" /> : <NotificationSettingsForm user={user} profile={profile} />}
                 </TabsContent>
 
                 <TabsContent value="billing" className="space-y-6">
@@ -286,28 +276,21 @@ export default function SettingsPage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <CreditCard className="h-5 w-5" />
-                                Billing & Subscription
+                                {tr('settings.billing.title', 'Billing & Subscription')}
                             </CardTitle>
-                            <CardDescription>
-                                Manage your subscription plan and billing information
-                            </CardDescription>
+                            <CardDescription>{tr('settings.billing.desc', 'Manage your subscription plan and billing information')}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="text-center py-8">
                                 <div className="mb-4">
                                     <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                                    <h3 className="text-lg font-semibold mb-2">
-                                        Complete Billing Management
-                                    </h3>
-                                    <p className="text-muted-foreground mb-6">
-                                        Access your full billing dashboard with subscription
-                                        details, payment history, and plan management.
-                                    </p>
+                                    <h3 className="text-lg font-semibold mb-2">{tr('settings.billing.ctaTitle', 'Complete Billing Management')}</h3>
+                                    <p className="text-muted-foreground mb-6">{tr('settings.billing.ctaDesc', 'Access your full billing dashboard with subscription details, payment history, and plan management.')}</p>
                                 </div>
                                 <Link href="/settings/billing">
                                     <Button className="gap-2">
                                         <CreditCard className="h-4 w-4" />
-                                        Go to Billing Dashboard
+                                        {tr('settings.billing.go', 'Go to Billing Dashboard')}
                                         <ExternalLink className="h-4 w-4" />
                                     </Button>
                                 </Link>
@@ -317,7 +300,56 @@ export default function SettingsPage() {
                 </TabsContent>
 
                 <TabsContent value="privacy" className="space-y-6">
-                    <PrivacySettingsCard user={user} profile={profile} />
+                    {loadingState ? <Skeleton className="h-64 w-full" /> : <PrivacySettingsCard user={user} profile={profile} />}
+                            {!loadingState && (profile?.lastExportAt || profile?.deletionRequestedAt) && (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-sm">{tr('settings.privacy.auditTrail','Privacy Audit Trail')}</CardTitle>
+                                        <CardDescription>{tr('settings.privacy.auditTrailDesc','Recent privacy-related account actions')}</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="text-sm space-y-2">
+                                        {profile?.lastExportAt && (
+                                            <div className="flex justify-between">
+                                                <span>{tr('settings.privacy.lastExport','Last Data Export')}:</span>
+                                                <span>
+                                                    {formatRelative(new Date(profile.lastExportAt.seconds ? profile.lastExportAt.seconds * 1000 : profile.lastExportAt))}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {profile?.deletionRequestedAt && (
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex justify-between">
+                                                    <span>{tr('settings.privacy.deletionRequested','Deletion Requested')}:</span>
+                                                    <span>{formatRelative(new Date(profile.deletionRequestedAt.seconds ? profile.deletionRequestedAt.seconds * 1000 : profile.deletionRequestedAt))}</span>
+                                                </div>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="self-end h-7 text-xs"
+                                                    onClick={async () => {
+                                                        const confirmMsg = tr('settings.privacy.cancelDeletionConfirm','Cancel scheduled deletion and keep your account?');
+                                                        if (!window.confirm(confirmMsg)) return;
+                                                        try {
+                                                            const userRef = doc(db, 'users', user.uid);
+                                                            await updateDoc(userRef, { deletionRequestedAt: null, status: 'active', updatedAt: new Date() });
+                                                        } catch (e) {
+                                                            console.warn('Failed to cancel deletion', e);
+                                                        }
+                                                    }}
+                                                >{tr('settings.privacy.cancelDeletion','Cancel Deletion')}</Button>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            )}
+                    {profile?.deletionRequestedAt && (
+                        <Card className="border-destructive/40">
+                            <CardHeader>
+                                <CardTitle className="text-destructive text-sm">{tr('settings.privacy.deletionScheduled', 'Account Deletion Scheduled')}</CardTitle>
+                                <CardDescription>{tr('settings.privacy.deletionScheduledDesc', 'Your account is pending deletion. Contact support to cancel.')}</CardDescription>
+                            </CardHeader>
+                        </Card>
+                    )}
                 </TabsContent>
             </Tabs>
         </div>

@@ -41,7 +41,7 @@ const notificationSchema = z.object({
 
 type NotificationFormValues = z.infer<typeof notificationSchema>;
 
-interface NotificationSettingsFormProps {
+export interface NotificationSettingsFormProps {
   user: User;
   profile: any;
 }

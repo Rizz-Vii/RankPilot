@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useI18n } from '@/lib/i18n/internationalization-system';
 import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,6 +21,9 @@ const placeholderQueries = [
 
 export default function GlobalSearch() {
   const [query, setQuery] = useState("");
+  const [history, setHistory] = useState<string[]>([]);
+  const { translate } = useI18n();
+  const tr = (k: string, fallback: string) => { const v = translate(k); return v === k ? fallback : v; };
   const [results, setResults] = useState<SearchOutput["results"]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -76,6 +80,11 @@ export default function GlobalSearch() {
       try {
         const response = await searchFeatures({ query: debouncedQuery });
         setResults(response.results);
+        // store history (dedupe & cap 10) - debounced write
+        setHistory(prev => {
+          const next = [debouncedQuery, ...prev.filter(q => q !== debouncedQuery)].slice(0,10);
+          return next;
+        });
       } catch (error) {
         console.error("Search failed:", error);
         setResults([]);
@@ -102,6 +111,22 @@ export default function GlobalSearch() {
     };
   }, []);
 
+  // Load history
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('rp_search_history');
+      if (raw) setHistory(JSON.parse(raw));
+    } catch {}
+  }, []);
+
+  // Debounced write of history
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try { localStorage.setItem('rp_search_history', JSON.stringify(history)); } catch {}
+    }, 400);
+    return () => clearTimeout(t);
+  }, [history]);
+
   return (
     <div className="relative" ref={searchContainerRef}>
       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -113,7 +138,7 @@ export default function GlobalSearch() {
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => setIsFocused(true)}
       />
-      <AnimatePresence>
+  <AnimatePresence>
         {isFocused && query.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -157,8 +182,32 @@ export default function GlobalSearch() {
                 </div>
               )}
             {!isLoading && debouncedQuery.length < 3 && query.length > 0 && (
-              <div className="p-4 text-center text-muted-foreground">
-                Keep typing to search...
+              <div className="p-4 text-center text-muted-foreground space-y-3">
+                <div>Keep typing to search...</div>
+                {history.length > 0 && (
+                  <div className="text-left">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="text-xs uppercase tracking-wide">{tr('globalSearch.recent','Recent')}</div>
+                      <button
+                        type="button"
+                        onClick={() => { setHistory([]); localStorage.removeItem('rp_search_history'); }}
+                        className="text-[10px] uppercase tracking-wide text-muted-foreground hover:text-foreground"
+                        aria-label={tr('globalSearch.clearRecent','Clear recent searches')}
+                      >{tr('globalSearch.clear','Clear')}</button>
+                    </div>
+                    <ul className="space-y-1">
+                      {history.map(h => (
+                        <li key={h}>
+                          <button
+                            type="button"
+                            onClick={() => { setQuery(h); setIsFocused(true); }}
+                            className="w-full text-left px-2 py-1 rounded hover:bg-accent text-sm"
+                          >{h}</button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
           </motion.div>

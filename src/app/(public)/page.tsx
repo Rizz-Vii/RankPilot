@@ -7,6 +7,7 @@ import { Rocket, Search, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { AuthAwareHero } from "@/components/auth-aware-homepage";
+import { LanguageSelector } from "@/components/i18n/LanguageSelector";
 import {
   Dialog,
   DialogContent,
@@ -126,8 +127,13 @@ export default function HomePage() {
         id="main-content"
         className="flex-grow flex flex-col items-center px-4 py-12 text-foreground"
       >
-        {/* Hero */}
-        <AuthAwareHero />
+        {/* Hero with language selector */}
+        <div className="w-full max-w-6xl flex flex-col items-stretch gap-4">
+          <div className="flex justify-end order-1">
+            <LanguageSelector variant="compact" showLabel={false} />
+          </div>
+          <AuthAwareHero />
+        </div>
 
         {/* Feature Highlights with animated icons */}
         <section

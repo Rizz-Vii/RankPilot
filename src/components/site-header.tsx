@@ -9,7 +9,7 @@ import { EnhancedButton } from "@/components/ui/enhanced-button";
 import { useAuth } from "@/context/AuthContext";
 import { useHydration } from "@/components/HydrationContext";
 import { useIsMobile } from "@/lib/mobile-responsive-utils";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Menu, X, User, LogOut, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { signOut } from "firebase/auth";
@@ -23,6 +23,11 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { PublicMobileSidebar } from "@/components/unified-mobile-sidebar";
+import GlobalSearch from "@/components/global-search";
+import { LanguageSelector } from "@/components/i18n/LanguageSelector";
+import { CommandPaletteButton } from "@/components/command-palette";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { useTheme } from "@/lib/themes/theme-system";
 
 const navigationItems = [
   { href: "/features", label: "Features", external: false },
@@ -36,6 +41,15 @@ export default function SiteHeader() {
   const hydrated = useHydration();
   const isMobile = useIsMobile();
   const [scrolled, setScrolled] = useState(false);
+  const { theme, setTheme, isDark } = useTheme();
+
+  const toggleTheme = () => {
+    // cycle light -> dark -> high-contrast -> auto -> light
+    const order: any[] = ["light", "dark", "high-contrast", "auto"];
+    const idx = order.indexOf(theme);
+    const next = order[(idx + 1) % order.length];
+    setTheme(next);
+  };
 
   const handleLogout = async () => {
     try {
@@ -65,7 +79,8 @@ export default function SiteHeader() {
         Skip to main content
       </a>
 
-      <motion.header
+  <TooltipProvider delayDuration={200}>
+  <motion.header
         className={cn(
           "sticky top-0 w-full z-50 transition-all duration-300",
           scrolled
@@ -97,8 +112,51 @@ export default function SiteHeader() {
             ))}
           </nav>
 
-          {/* Desktop Auth Buttons */}
+          {/* Desktop Utility + Auth Cluster */}
           <div className="hidden md:flex items-center space-x-4">
+            {/* Global Search */}
+            <div className="hidden lg:block w-[210px] xl:w-[260px]">
+              <GlobalSearch />
+            </div>
+            {/* Collapse utilities into command palette for md-only screens */}
+            <div className="flex items-center gap-2">
+              <div className="hidden lg:flex items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <EnhancedButton
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Toggle theme"
+                      onClick={toggleTheme}
+                    >
+                      {theme === 'high-contrast' ? <Sun className="h-5 w-5" /> : isDark() ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                    </EnhancedButton>
+                  </TooltipTrigger>
+                  <TooltipContent>Cycle Theme</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <LanguageSelector variant="compact" showLabel={false} />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>Language</TooltipContent>
+                </Tooltip>
+              </div>
+              {/* md screens show condensed command palette */}
+              <div className="lg:hidden">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <CommandPaletteButton />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Command (Ctrl/Cmd+K)
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </div>
             {!hydrated ? (
               // Loading skeleton
               <div className="flex items-center space-x-2">
@@ -163,7 +221,8 @@ export default function SiteHeader() {
           {/* Unified Mobile Sidebar */}
           <PublicMobileSidebar className="md:hidden" />
         </div>
-      </motion.header>
+  </motion.header>
+  </TooltipProvider>
     </>
   );
 }

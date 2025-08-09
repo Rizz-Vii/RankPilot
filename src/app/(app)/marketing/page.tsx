@@ -54,7 +54,7 @@ export default function MarketingDashboardRoot() {
           <section className="space-y-4">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Usage & Quotas</h2>
             <div className="grid gap-4 md:grid-cols-3">
-              {data.quotas.map(q => (
+              {data.quotas.map((q: any) => (
                 <div key={q.key} className="rounded-xl border p-4 space-y-3">
                   <div className="flex items-center justify-between text-sm font-medium">
                     <span>{q.label}</span>

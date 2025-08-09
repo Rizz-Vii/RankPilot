@@ -44,7 +44,7 @@ const formSchema = z.object({
 
 type AccountFormValues = z.infer<typeof formSchema>;
 
-interface AccountSettingsFormProps {
+export interface AccountSettingsFormProps {
   user: User;
   profile: any;
 }
