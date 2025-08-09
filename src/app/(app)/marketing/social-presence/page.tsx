@@ -12,8 +12,6 @@ import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 
-export const metadata = { title: 'Social Presence | Marketing Automation' };
-
 export default function SocialPresencePage() {
   const [months, setMonths] = useState(6);
   const live = useMarketingCampaignMetrics(months);

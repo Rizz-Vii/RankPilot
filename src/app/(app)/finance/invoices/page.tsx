@@ -11,8 +11,6 @@ import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 
-export const metadata = { title: 'Invoices' };
-
 export default function InvoicesPage() {
   const [months, setMonths] = useState(6);
   const live = useFinanceInvoiceMetrics(months);

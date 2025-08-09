@@ -13,8 +13,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 
-export const metadata = { title: 'Content Briefs' };
-
 export default function ContentBriefsPage() {
   const [months, setMonths] = useState(6);
   const live = useContentBriefMetrics(months);
