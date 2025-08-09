@@ -34,6 +34,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, BarChart3, Users } from "lucide-react";
 import { useCompetitorAnalysisMetrics } from '@/hooks/useCompetitorAnalysisMetrics';
 import { MetricCard } from '@/components/metrics/MetricCard';
+import KPIGrid from '@/components/metrics/KPIGrid';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
@@ -392,11 +393,20 @@ export default function CompetitorsPage() {
       />
       <div className="space-y-10 px-2 sm:px-0">
         <div className="flex items-start justify-between flex-wrap gap-6">
-          <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-3">
+          <KPIGrid
+            loading={comp.loading && !comp.kpis.length}
+            skeleton={
+              <div className="rounded-md border p-3 space-y-3 animate-pulse">
+                <div className="h-3 w-1/2 bg-muted rounded" />
+                <div className="h-6 w-2/3 bg-muted rounded" />
+                <div className="h-2 w-1/3 bg-muted rounded" />
+              </div>
+            }
+          >
             {comp.kpis.map(k => (
               <MetricCard size={isMobile ? 'sm' : 'md'} key={k.key} label={k.label} value={k.value} delta={k.delta} deltaLabel="vs prev" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
             ))}
-          </div>
+          </KPIGrid>
           <PeriodSelector value={months} onChange={setMonths} />
         </div>
         <div className="space-y-3">

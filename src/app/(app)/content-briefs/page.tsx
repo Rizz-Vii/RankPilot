@@ -6,6 +6,8 @@ import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
+import { ToolPageHeader } from '@/components/tool-page-header';
+import KPIGrid from '@/components/metrics/KPIGrid';
 import { useContentBriefMetrics } from '@/hooks/useContentBriefMetrics';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
@@ -26,12 +28,21 @@ export default function ContentBriefsPage() {
   return (
     <FeatureGate feature="content_briefs" requiredTier="agency" showUpgrade>
       <div className="p-4 sm:p-6 space-y-8">
-        <header className="space-y-2">
-          <h1 className="text-2xl font-semibold tracking-tight leading-tight">Content Briefs</h1>
-          <p className="text-muted-foreground max-w-3xl">Track creation velocity, word targets and optimization progress across recent briefs.</p>
+        <ToolPageHeader
+          title="Content Briefs"
+          description="Track creation velocity, word targets and optimization progress across recent briefs."
+          badges={[{ label: 'Strategy', variant: 'secondary' }]}
+          showBreadcrumb
+        >
           <PeriodSelector value={months} onChange={setMonths} />
-        </header>
-        <section className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-3">
+        </ToolPageHeader>
+        <KPIGrid loading={live.loading} skeleton={
+          <div className="rounded-md border p-3 space-y-3 animate-pulse">
+            <div className="h-3 w-1/2 bg-muted rounded" />
+            <div className="h-6 w-2/3 bg-muted rounded" />
+            <div className="h-2 w-1/3 bg-muted rounded" />
+          </div>
+        }>
           {data.kpis.map((k: any) => (
             <MetricCard
               key={k.key}
@@ -44,7 +55,7 @@ export default function ContentBriefsPage() {
               size={isMobile ? 'sm' : 'md'}
             />
           ))}
-        </section>
+        </KPIGrid>
   <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Briefs</h2>
           <LazyDataTable
