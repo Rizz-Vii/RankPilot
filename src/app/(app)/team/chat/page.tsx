@@ -12,6 +12,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
+import { VirtualizedMessageList } from "@/components/chat/VirtualizedMessageList";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
@@ -110,6 +112,8 @@ export default function TeamChatPage() {
   const { user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [channels, setChannels] = useState<ChatChannel[]>([]);
+  const [channelsLoading, setChannelsLoading] = useState(true);
+  const [messagesLoading, setMessagesLoading] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState<UserPresence[]>([]);
   const [activeChannel, setActiveChannel] = useState("general");
   const [newMessage, setNewMessage] = useState("");
@@ -207,6 +211,7 @@ export default function TeamChatPage() {
       limit(100)
     );
 
+    setMessagesLoading(true);
     const unsubscribeMessages = onSnapshot(messagesQuery, (snapshot) => {
       const newMessages: ChatMessage[] = [];
       snapshot.forEach((doc) => {
@@ -219,7 +224,7 @@ export default function TeamChatPage() {
         } as ChatMessage);
       });
       setMessages(newMessages);
-      scrollToBottom();
+      setMessagesLoading(false);
     });
 
     // Listen to user presence
@@ -247,7 +252,8 @@ export default function TeamChatPage() {
   useEffect(() => {
     if (!user || !teamId) return;
 
-    setChannels(defaultChannels);
+  setChannels(defaultChannels);
+  setChannelsLoading(false);
     // Update user presence to online
     updateUserPresence('online');
 
@@ -452,7 +458,16 @@ export default function TeamChatPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
-            {channels.map((channel) => {
+            {channelsLoading && (
+              <div className="space-y-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="w-full">
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                ))}
+              </div>
+            )}
+            {!channelsLoading && channels.map((channel) => {
               const Icon = getChannelIcon(channel.type);
               return (
                 <Button
@@ -558,35 +573,35 @@ export default function TeamChatPage() {
 
           {/* Messages Area */}
           <CardContent className="flex-1 flex flex-col min-h-0">
-            <ScrollArea className="flex-1 mb-4">
-              <div className="space-y-4 pr-4">
-                {filteredMessages.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                    <h3 className="text-lg font-semibold mb-2">
-                      {searchQuery ? 'No messages found' : 'Start the conversation'}
-                    </h3>
-                    <p>
-                      {searchQuery 
-                        ? 'Try adjusting your search terms'
-                        : 'Be the first to send a message in this channel'
-                      }
-                    </p>
-                  </div>
-                ) : (
-                  filteredMessages.map((message, index) => {
-                    const isConsecutive = index > 0 && 
+            <div className="flex-1 mb-4">
+              {messagesLoading && (
+                <div className="space-y-4 pr-4">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="flex gap-3">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-40" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-2/3" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {!messagesLoading && (
+                <VirtualizedMessageList
+                  items={filteredMessages}
+                  className="pr-4"
+                  renderItem={(message, index) => {
+                    const isConsecutive = index > 0 &&
                       filteredMessages[index - 1].authorId === message.authorId &&
-                      (message.timestamp.getTime() - filteredMessages[index - 1].timestamp.getTime()) < 300000; // 5 minutes
-
+                      (message.timestamp.getTime() - filteredMessages[index - 1].timestamp.getTime()) < 300000;
                     return (
                       <motion.div
                         key={message.id}
-                        initial={{ opacity: 0, y: 10 }}
+                        initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className={`group relative ${
-                          selectedMessage === message.id ? 'bg-muted/50 rounded-lg p-2' : ''
-                        }`}
+                        className={`group relative py-1 ${selectedMessage === message.id ? 'bg-muted/50 rounded-lg px-2' : ''}`}
                         onMouseEnter={() => setSelectedMessage(message.id)}
                         onMouseLeave={() => setSelectedMessage(null)}
                       >
@@ -599,20 +614,14 @@ export default function TeamChatPage() {
                               </AvatarFallback>
                             </Avatar>
                           )}
-                          
                           <div className={`flex-1 ${isConsecutive ? 'ml-11' : ''}`}>
                             {!isConsecutive && (
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="font-medium text-sm">{message.authorName}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  {formatDistanceToNow(message.timestamp, { addSuffix: true })}
-                                </span>
-                                {message.edited && (
-                                  <Badge variant="outline" className="text-xs">edited</Badge>
-                                )}
+                                <span className="text-xs text-muted-foreground">{formatDistanceToNow(message.timestamp, { addSuffix: true })}</span>
+                                {message.edited && (<Badge variant="outline" className="text-xs">edited</Badge>)}
                               </div>
                             )}
-                            
                             {message.replyTo && (
                               <div className="mb-2 p-2 border-l-2 border-muted bg-muted/50 rounded text-sm">
                                 <div className="flex items-center gap-2 text-muted-foreground mb-1">
@@ -621,12 +630,7 @@ export default function TeamChatPage() {
                                 </div>
                               </div>
                             )}
-                            
-                            <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                              {message.content}
-                            </div>
-                            
-                            {/* Reactions */}
+                            <div className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</div>
                             {Object.keys(message.reactions).length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {Object.entries(message.reactions).map(([emoji, userIds]) => (
@@ -643,8 +647,6 @@ export default function TeamChatPage() {
                               </div>
                             )}
                           </div>
-                          
-                          {/* Message Actions */}
                           <AnimatePresence>
                             {selectedMessage === message.id && (
                               <motion.div
@@ -653,34 +655,20 @@ export default function TeamChatPage() {
                                 exit={{ opacity: 0, scale: 0.8 }}
                                 className="flex items-center gap-1 absolute top-0 right-0 bg-background border rounded shadow-sm"
                               >
-                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
-                                  <Heart className="h-3 w-3" />
-                                </Button>
-                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
-                                  <ThumbsUp className="h-3 w-3" />
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost" 
-                                  className="h-7 w-7 p-0"
-                                  onClick={() => setReplyingTo(message)}
-                                >
-                                  <Reply className="h-3 w-3" />
-                                </Button>
-                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
-                                  <MoreVertical className="h-3 w-3" />
-                                </Button>
+                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0"><Heart className="h-3 w-3" /></Button>
+                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0"><ThumbsUp className="h-3 w-3" /></Button>
+                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setReplyingTo(message)}><Reply className="h-3 w-3" /></Button>
+                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0"><MoreVertical className="h-3 w-3" /></Button>
                               </motion.div>
                             )}
                           </AnimatePresence>
                         </div>
                       </motion.div>
                     );
-                  })
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-            </ScrollArea>
+                  }}
+                />
+              )}
+            </div>
 
             {/* Typing Indicator */}
             {typingUsers.length > 0 && (
