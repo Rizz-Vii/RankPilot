@@ -8,8 +8,6 @@ import { QuotaBar } from '@/components/metrics/QuotaBar';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 
-export const metadata = { title: 'Sales Pipeline' };
-
 export default function SalesPipelinePage() {
   const data = getMockMetrics('sales');
   useEffect(() => { trackDashboardView('sales'); }, []);

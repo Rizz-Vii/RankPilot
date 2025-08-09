@@ -8,8 +8,6 @@ import { getMockMetrics } from '@/lib/domain/mockMetrics';
 import { useSalesDealsMetrics } from '@/hooks/useSalesDealsMetrics';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 
-export const metadata = { title: 'Sales Deals' };
-
 export default function SalesDealsPage() {
   const fallback = getMockMetrics('sales');
   const metrics = useSalesDealsMetrics();

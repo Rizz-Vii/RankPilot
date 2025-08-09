@@ -7,8 +7,6 @@ import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 
-export const metadata = { title: 'Sales Dashboard' };
-
 export default function SalesDashboardRoot() {
   const data = getMockMetrics('sales');
   useEffect(() => { trackDashboardView('sales'); }, []);

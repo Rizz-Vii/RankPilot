@@ -7,8 +7,6 @@ import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 
-export const metadata = { title: 'Sales Outreach' };
-
 export default function SalesOutreachPage() {
   const data = getMockMetrics('sales');
   useEffect(() => { trackDashboardView('sales'); }, []);
