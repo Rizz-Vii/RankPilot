@@ -25,13 +25,13 @@ export default function ContentBriefsPage() {
 
   return (
     <FeatureGate feature="content_briefs" requiredTier="agency" showUpgrade>
-      <div className="p-6 space-y-8">
+      <div className="p-4 sm:p-6 space-y-8">
         <header className="space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight">Content Briefs</h1>
+          <h1 className="text-2xl font-semibold tracking-tight leading-tight">Content Briefs</h1>
           <p className="text-muted-foreground max-w-3xl">Track creation velocity, word targets and optimization progress across recent briefs.</p>
           <PeriodSelector value={months} onChange={setMonths} />
         </header>
-        <section className="grid gap-4 grid-cols-2 md:grid-cols-3">
+        <section className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-3">
           {data.kpis.map((k: any) => (
             <MetricCard
               key={k.key}
@@ -45,7 +45,7 @@ export default function ContentBriefsPage() {
             />
           ))}
         </section>
-        <section className="space-y-3">
+  <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Briefs</h2>
           <LazyDataTable
             columns={[

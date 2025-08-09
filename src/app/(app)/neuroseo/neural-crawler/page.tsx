@@ -288,8 +288,22 @@ Key areas of focus include content quality assessment, competitive analysis, per
   };
 
   const provenance: any = null; // placeholder until real provenance integrated
+  const ResultsSkeleton = () => (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4" aria-hidden="true">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <Card key={i} className="animate-pulse">
+          <CardContent className="p-4 space-y-3">
+            <div className="h-3 w-1/2 bg-muted rounded" />
+            <div className="h-6 w-2/3 bg-muted rounded" />
+            <div className="h-2 w-1/3 bg-muted rounded" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
   return (
-    <main className="container mx-auto py-6 space-y-6">
+    <main className="container mx-auto py-6 px-3 sm:px-6 space-y-6">
       <ToolPageHeader
         title="NeuralCrawler™"
         description="Intelligent web content extraction with JavaScript rendering."
@@ -359,6 +373,12 @@ Key areas of focus include content quality assessment, competitive analysis, per
 
       {/* Results */}
       <AnimatePresence>
+        {isAnalyzing && !currentResult && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Preparing Analysis</h2>
+            <ResultsSkeleton />
+          </motion.div>
+        )}
         {currentResult && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}

@@ -390,9 +390,9 @@ export default function CompetitorsPage() {
         ]}
         showBreadcrumb
       />
-      <div className="space-y-10">
+      <div className="space-y-10 px-2 sm:px-0">
         <div className="flex items-start justify-between flex-wrap gap-6">
-          <div className="grid gap-4 grid-cols-2 md:grid-cols-3">
+          <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-3">
             {comp.kpis.map(k => (
               <MetricCard size={isMobile ? 'sm' : 'md'} key={k.key} label={k.label} value={k.value} delta={k.delta} deltaLabel="vs prev" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
             ))}

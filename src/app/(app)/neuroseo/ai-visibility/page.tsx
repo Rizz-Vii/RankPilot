@@ -138,7 +138,7 @@ export default function AIVisibilityEnginePage() {
 
   const provenance: any = null; // placeholder until backend adds source
   return (
-    <main className="container mx-auto py-6 space-y-6">
+    <main className="container mx-auto py-6 px-3 sm:px-6 space-y-6">
       <ToolPageHeader
         title="AI Visibility Engine"
         description="Optimize your content for AI-powered search and discovery."
@@ -234,6 +234,22 @@ export default function AIVisibilityEnginePage() {
       </motion.div>
 
       {/* Results */}
+      {!results && loading && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Preparing Visibility Report</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4" aria-hidden="true">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-4 space-y-3">
+                  <div className="h-3 w-1/2 bg-muted rounded" />
+                  <div className="h-6 w-2/3 bg-muted rounded" />
+                  <div className="h-2 w-1/3 bg-muted rounded" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </motion.div>
+      )}
       {results && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -242,7 +258,7 @@ export default function AIVisibilityEnginePage() {
           className="space-y-6"
         >
           {/* Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">AI Visibility Score</CardTitle>
@@ -444,6 +460,11 @@ export default function AIVisibilityEnginePage() {
               </div>
             </TabsContent>
           </Tabs>
+        </motion.div>
+      )}
+      {!loading && !results && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12 text-sm text-muted-foreground">
+          Enter a URL & query above to run AI visibility analysis.
         </motion.div>
       )}
   </main>

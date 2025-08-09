@@ -429,7 +429,7 @@ export default function TeamChatPage() {
   };
 
   return (
-    <main className="container mx-auto py-6 flex flex-col h-[calc(100vh-8rem)]">
+    <main className="container mx-auto py-4 sm:py-6 flex flex-col h-[calc(100vh-6rem)] overscroll-contain">
       <ToolPageHeader
         title="Team Chat"
         description="Real-time collaboration and communication"
