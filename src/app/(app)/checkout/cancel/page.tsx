@@ -44,7 +44,7 @@ export default function CheckoutCancelPage() {
             {/* Why Upgrade Section */}
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 border border-blue-100">
               <h3 className="font-semibold text-lg mb-4 text-blue-900">
-                Why upgrade to RankPilot Pro?
+                Why upgrade your plan?
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="flex items-center gap-2">
@@ -77,7 +77,7 @@ export default function CheckoutCancelPage() {
                     Limited Time Offer
                   </h4>
                   <p className="text-sm text-yellow-700">
-                    Get 20% off your first year with annual billing!
+                    Get 2 months free with annual billing.
                   </p>
                 </div>
               </div>

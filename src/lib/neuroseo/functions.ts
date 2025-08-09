@@ -19,6 +19,10 @@ export async function getSerpData(input: any) {
     return { keyword: '', results: [], totalResults: 0 };
 }
 
-export async function auditUrl(input: any) {
-    return { url: input.url, overallScore: 85, items: [], remainingQuota: 100 };
+/**
+ * DEPRECATED: Use runSEOAudit (Cloud Function) via ai-service instead.
+ * This stub is kept to avoid breaking legacy imports but will throw to surface incorrect usage.
+ */
+export async function auditUrl(_input: any) {
+    throw new Error('auditUrl stub deprecated. Use runSEOAudit from ai-service.');
 }

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ToolPageHeader } from "@/components/tool-page-header";
+import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -134,31 +136,15 @@ export default function AIVisibilityEnginePage() {
     URL.revokeObjectURL(url_export);
   };
 
+  const provenance: any = null; // placeholder until backend adds source
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-purple-100 rounded-lg">
-            <Eye className="h-8 w-8 text-purple-600" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">AI Visibility Engine</h1>
-            <p className="text-muted-foreground">
-              Optimize your content for AI-powered search and discovery
-            </p>
-          </div>
-        </div>
-        
-        <Badge variant="secondary" className="flex items-center gap-1">
-          <Zap className="h-3 w-3" />
-          NeuroSEO™ AI
-        </Badge>
-      </motion.div>
+    <main className="container mx-auto py-6 space-y-6">
+      <ToolPageHeader
+        title="AI Visibility Engine"
+        description="Optimize your content for AI-powered search and discovery."
+        badges={composeToolHeaderBadges("ai-visibility", provenance)}
+        showBreadcrumb
+      />
 
       {/* Analysis Form */}
       <motion.div 
@@ -460,6 +446,6 @@ export default function AIVisibilityEnginePage() {
           </Tabs>
         </motion.div>
       )}
-    </div>
+  </main>
   );
 }

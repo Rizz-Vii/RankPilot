@@ -252,7 +252,7 @@ export default function HomePage() {
             Enterprise-grade insights, professional results, proven ROI.
           </p>
           <Button size="lg" variant="secondary" asChild>
-            <Link href="/register">Start Free Enterprise Trial</Link>
+            <Link href="/register">Start 7‑Day Free Trial</Link>
           </Button>
         </motion.section>
 
@@ -322,29 +322,11 @@ export default function HomePage() {
           id="pricing"
           className="mt-24 mb-24 text-center max-w-6xl w-full"
         >
-          <h2 className="text-3xl font-bold mb-6">
-            Simple, Transparent Pricing
-          </h2>
+          <h2 className="text-3xl font-bold mb-6">Simple, Transparent Pricing</h2>
           <div className="grid md:grid-cols-3 gap-6">
-            <PricingCard
-              title="Free"
-              price="$0/mo"
-              features={["5 audits/month", "Basic Reports", "Limited Keywords"]}
-            />
-            <PricingCard
-              title="Starter"
-              price="$29/mo"
-              features={["50 audits", "Full Reports", "Competitor Tracking"]}
-            />
-            <PricingCard
-              title="Agency"
-              price="$99/mo"
-              features={[
-                "Unlimited Everything",
-                "White Label",
-                "Priority Support",
-              ]}
-            />
+            <PricingCard title="Starter" price="$19/mo" features={["50 audits/month", "Full Reports", "Competitor Tracking"]} />
+            <PricingCard title="Agency" price="$49/mo" features={["Unlimited Everything", "White Label", "Priority Support"]} />
+            <PricingCard title="Enterprise" price="$99/mo" features={["Custom Integrations", "Dedicated Manager", "Advanced Security"]} />
           </div>
         </section>
       </main>
@@ -380,6 +362,7 @@ function PricingCard({
   price: string;
   features: string[];
 }) {
+  const planParam = title.toLowerCase();
   return (
     <Card className="h-full">
       <CardHeader>
@@ -395,7 +378,7 @@ function PricingCard({
       </CardContent>
       <CardFooter>
         <Button className="w-full" asChild>
-          <Link href="/register">Choose Plan</Link>
+          <Link href={`/pricing?plan=${planParam}`}>Choose Plan</Link>
         </Button>
       </CardFooter>
     </Card>

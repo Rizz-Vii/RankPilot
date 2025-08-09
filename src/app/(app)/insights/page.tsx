@@ -26,6 +26,7 @@ import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
 import { AlertTriangle, ArrowRight, Lightbulb } from "lucide-react";
 import Link from "next/link";
+import { ToolPageHeader } from "@/components/tool-page-header";
 
 export default function InsightsPage() {
   const { user, activities, loading: authLoading } = useAuth();
@@ -103,15 +104,13 @@ export default function InsightsPage() {
   };
 
   return (
-    <main className="max-w-4xl mx-auto">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold font-headline">
-          Actionable Insights
-        </h1>
-        <p className="text-muted-foreground font-body">
-          AI-generated recommendations based on your recent activity.
-        </p>
-      </header>
+    <main className="container mx-auto py-6 max-w-4xl">
+      <ToolPageHeader
+        title="Actionable Insights"
+        description="AI-generated recommendations based on your recent activity."
+        badges={[{ label: "AI", variant: "outline", className: "text-primary border-primary/40" }]}
+        showBreadcrumb
+      />
 
       {error && (
         <Card className="border-destructive">

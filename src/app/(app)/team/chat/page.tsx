@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { ToolPageHeader } from "@/components/tool-page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -57,7 +59,9 @@ import {
   updateDoc,
   doc,
   serverTimestamp,
-  getDocs
+  getDocs,
+  setDoc,
+  getDoc
 } from "firebase/firestore";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -114,6 +118,11 @@ export default function TeamChatPage() {
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [channelMuted, setChannelMuted] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [isCallOpen, setIsCallOpen] = useState(false);
+  const [activeCall, setActiveCall] = useState<{ id: string; type: 'audio' | 'video'; channelId: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -166,13 +175,33 @@ export default function TeamChatPage() {
     }
   ];
 
+  // Resolve teamId for scoping chat
+  const [teamId, setTeamId] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      if (!user?.uid) return;
+      // Try memberIds lookup first
+      const tQ = query(collection(db, 'teams'), where('memberIds', 'array-contains', user.uid));
+      const tSnap = await getDocs(tQ);
+      if (!tSnap.empty) {
+        setTeamId(tSnap.docs[0].id);
+        return;
+      }
+      // Fallback to users/{uid}.teamId
+      const uSnap = await getDoc(doc(db, 'users', user.uid));
+      const tId = uSnap.exists() ? (uSnap.data() as any)?.teamId : (user as any)?.teamId;
+      if (typeof tId === 'string') setTeamId(tId);
+    })();
+  }, [user?.uid]);
+
   // Set up real-time listeners
   useEffect(() => {
-    if (!user) return;
+    if (!user || !teamId) return;
 
     // Listen to messages in active channel
     const messagesQuery = query(
-      collection(db, 'chatMessages'),
+      collection(db, 'teamChats', teamId, 'messages'),
       where('channelId', '==', activeChannel),
       orderBy('timestamp', 'asc'),
       limit(100)
@@ -194,7 +223,7 @@ export default function TeamChatPage() {
     });
 
     // Listen to user presence
-    const presenceQuery = query(collection(db, 'userPresence'));
+  const presenceQuery = query(collection(db, 'presence'));
     const unsubscribePresence = onSnapshot(presenceQuery, (snapshot) => {
       const users: UserPresence[] = [];
       snapshot.forEach((doc) => {
@@ -212,66 +241,89 @@ export default function TeamChatPage() {
       unsubscribeMessages();
       unsubscribePresence();
     };
-  }, [user, activeChannel]);
+  }, [user, teamId, activeChannel]);
 
   // Initialize channels and user presence
   useEffect(() => {
-    if (!user) return;
+    if (!user || !teamId) return;
 
     setChannels(defaultChannels);
-    
     // Update user presence to online
     updateUserPresence('online');
 
     return () => {
       updateUserPresence('offline');
     };
-  }, [user]);
+  }, [user, teamId]);
 
   const updateUserPresence = async (status: 'online' | 'away' | 'busy' | 'offline') => {
     if (!user) return;
 
     try {
-      await updateDoc(doc(db, 'userPresence', user.uid), {
+      await setDoc(doc(db, 'presence', user.uid), {
         userName: user.displayName || user.email?.split('@')[0] || 'User',
         userAvatar: user.photoURL,
         status,
         lastSeen: serverTimestamp(),
         isTyping: false
-      });
+      }, { merge: true });
     } catch (error) {
-      // Document doesn't exist, create it
-      await addDoc(collection(db, 'userPresence'), {
-        userId: user.uid,
-        userName: user.displayName || user.email?.split('@')[0] || 'User',
-        userAvatar: user.photoURL,
-        status,
-        lastSeen: serverTimestamp(),
-        isTyping: false
-      });
+      console.warn('Presence update failed:', error);
     }
   };
+
+  // Load channel settings from localStorage when channel/team changes
+  useEffect(() => {
+    if (!teamId) return;
+    try {
+      const key = `chat:${teamId}:${activeChannel}:settings`;
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setChannelMuted(!!parsed.muted);
+        setNotificationsEnabled(parsed.notificationsEnabled !== false);
+      } else {
+        setChannelMuted(false);
+        setNotificationsEnabled(true);
+      }
+    } catch (e) {
+      // no-op on parse error
+    }
+  }, [teamId, activeChannel]);
+
+  // Persist channel settings
+  useEffect(() => {
+    if (!teamId) return;
+    try {
+      const key = `chat:${teamId}:${activeChannel}:settings`;
+      localStorage.setItem(key, JSON.stringify({
+        muted: channelMuted,
+        notificationsEnabled,
+      }));
+    } catch (e) {
+      // ignore storage errors
+    }
+  }, [teamId, activeChannel, channelMuted, notificationsEnabled]);
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !user) return;
 
     try {
-      const messageData = {
+      const messageData: any = {
         content: newMessage.trim(),
         authorId: user.uid,
         authorName: user.displayName || user.email?.split('@')[0] || 'User',
-        authorAvatar: user.photoURL,
+        authorAvatar: user.photoURL ?? null,
         channelId: activeChannel,
         timestamp: serverTimestamp(),
         type: 'text' as const,
         reactions: {},
-        replyTo: replyingTo?.id
       };
+      if (replyingTo?.id) messageData.replyTo = replyingTo.id;
 
-      await addDoc(collection(db, 'chatMessages'), messageData);
+      await addDoc(collection(db, 'teamChats', teamId!, 'messages'), messageData);
       setNewMessage("");
       setReplyingTo(null);
-      
       // Update channel last message
       const channelIndex = channels.findIndex(c => c.id === activeChannel);
       if (channelIndex >= 0) {
@@ -325,40 +377,68 @@ export default function TeamChatPage() {
         reactions[emoji].push(user.uid);
       }
 
-      await updateDoc(doc(db, 'chatMessages', messageId), { reactions });
+      await updateDoc(doc(db, 'teamChats', teamId!, 'messages', messageId), { reactions });
     } catch (error) {
       console.error('Reaction error:', error);
     }
   };
+  const filteredMessages = messages.filter((message) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      message.content.toLowerCase().includes(q) ||
+      message.authorName.toLowerCase().includes(q)
+    );
+  });
 
-  const filteredMessages = messages.filter(message =>
-    searchQuery === "" || 
-    message.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    message.authorName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const getChannelIcon = (type: string) => {
+  function getChannelIcon(type: ChatChannel['type']) {
     switch (type) {
-      case 'general': return Hash;
-      case 'support': return Users;
-      case 'development': return Zap;
-      case 'announcements': return Bell;
-      case 'random': return Smile;
-      default: return Hash;
+      case 'support':
+        return Bell;
+      case 'development':
+        return Zap;
+      case 'announcements':
+        return Star;
+      case 'random':
+        return Smile;
+      default:
+        return Hash;
+    }
+  }
+
+  // Start an audio/video call by posting a system message (rules-safe)
+  const startCall = async (type: 'audio' | 'video') => {
+    if (!user || !teamId) return;
+    const id = `${type}-${Date.now()}`;
+    setActiveCall({ id, type, channelId: activeChannel });
+    setIsCallOpen(true);
+    try {
+      await addDoc(collection(db, 'teamChats', teamId, 'messages'), {
+        type: 'system',
+        content: `${type === 'video' ? 'Video' : 'Audio'} call started by ${user.displayName || user.email?.split('@')[0] || 'User'}`,
+        authorId: 'system',
+        authorName: 'System',
+        authorAvatar: null,
+        channelId: activeChannel,
+        timestamp: serverTimestamp(),
+        reactions: {},
+      });
+    } catch (e) {
+      console.warn('Failed to post system message', e);
     }
   };
 
   return (
-    <div className="container mx-auto p-6 h-[calc(100vh-8rem)] flex flex-col">
-      <div className="flex items-center gap-3 mb-6">
-        <MessageCircle className="h-8 w-8 text-blue-600" />
-        <div>
-          <h1 className="text-3xl font-bold">Team Chat</h1>
-          <p className="text-muted-foreground">
-            Real-time collaboration and communication
-          </p>
-        </div>
-      </div>
+    <main className="container mx-auto py-6 flex flex-col h-[calc(100vh-8rem)]">
+      <ToolPageHeader
+        title="Team Chat"
+        description="Real-time collaboration and communication"
+        badges={[
+          { label: "Collaboration", variant: "secondary" },
+          { label: "Enterprise", variant: "outline", className: "text-primary border-primary/40" },
+        ]}
+        showBreadcrumb
+      />
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-0">
         {/* Channels Sidebar */}
@@ -463,13 +543,13 @@ export default function TeamChatPage() {
                     className="pl-10 w-64"
                   />
                 </div>
-                <Button size="sm" variant="ghost">
+                <Button size="sm" variant="ghost" onClick={() => startCall('audio')}>
                   <Phone className="h-4 w-4" />
                 </Button>
-                <Button size="sm" variant="ghost">
+                <Button size="sm" variant="ghost" onClick={() => startCall('video')}>
                   <Video className="h-4 w-4" />
                 </Button>
-                <Button size="sm" variant="ghost">
+                <Button size="sm" variant="ghost" onClick={() => setIsSettingsOpen(true)}>
                   <Settings className="h-4 w-4" />
                 </Button>
               </div>
@@ -672,6 +752,57 @@ export default function TeamChatPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+
+      {/* Settings Dialog */}
+      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Channel Settings</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">Mute channel</div>
+                <div className="text-sm text-muted-foreground">Silence notifications for this channel</div>
+              </div>
+              <Button variant={channelMuted ? 'default' : 'outline'} size="sm" onClick={() => setChannelMuted(v => !v)}>
+                {channelMuted ? 'Muted' : 'Unmuted'}
+              </Button>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">Notifications</div>
+                <div className="text-sm text-muted-foreground">Enable desktop notifications</div>
+              </div>
+              <Button variant={notificationsEnabled ? 'default' : 'outline'} size="sm" onClick={() => setNotificationsEnabled(v => !v)}>
+                {notificationsEnabled ? 'On' : 'Off'}
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsSettingsOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Call Modal */}
+      <Dialog open={isCallOpen} onOpenChange={setIsCallOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{activeCall?.type === 'video' ? 'Video Call' : 'Audio Call'} Started</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <div>Channel: #{activeChannel}</div>
+            {activeCall && (
+              <div className="text-sm text-muted-foreground">Call ID: {activeCall.id}</div>
+            )}
+            <div className="text-sm">This is a preview call modal. A system message has been posted in the channel.</div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsCallOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+  </main>
   );
 }

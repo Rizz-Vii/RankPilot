@@ -5,7 +5,7 @@ import { db } from "@/lib/firebase";
 const TIER_QUOTAS = {
   free: { monthlyAnalyses: 3, keywordTracking: 10, competitorTracking: 3 },
   starter: { monthlyAnalyses: 20, keywordTracking: 50, competitorTracking: 10 },
-  professional: {
+  agency: {
     monthlyAnalyses: 100,
     keywordTracking: 200,
     competitorTracking: 25,
@@ -20,7 +20,7 @@ const TIER_QUOTAS = {
 
 interface UserSubscriptionSetup {
   email: string;
-  tier: "starter" | "professional" | "enterprise";
+  tier: "starter" | "agency" | "enterprise";
   monthsPrepaid: number;
   testMode?: boolean;
 }
@@ -110,9 +110,9 @@ async function createUserSubscription(
     displayName: extractDisplayName(setup.email),
     ...(setup.testMode &&
       !isFreeTier && {
-        stripeCustomerId: `cus_test_${userId.slice(0, 8)}`,
-        stripeSubscriptionId: `sub_test_${userId.slice(0, 8)}`,
-      }),
+      stripeCustomerId: `cus_test_${userId.slice(0, 8)}`,
+      stripeSubscriptionId: `sub_test_${userId.slice(0, 8)}`,
+    }),
     ...(setup.monthsPrepaid > 0 && {
       nextBillingDate: nextBillingDate,
       currentPeriodEnd: nextBillingDate,
@@ -176,9 +176,9 @@ async function createDefaultUser(userId: string, email: string): Promise<void> {
 
 function getPlanPrice(tier: string): number {
   const prices: Record<string, number> = {
-    starter: 29,
-    professional: 79,
-    enterprise: 199,
+    starter: 19,
+    agency: 49,
+    enterprise: 99,
   };
   return prices[tier] || 0;
 }

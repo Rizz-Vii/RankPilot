@@ -51,6 +51,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { STRIPE_PLANS } from "@/lib/stripe";
 
 interface SubscriptionUser {
   id: string;
@@ -144,13 +145,13 @@ export function SubscriptionManagement() {
 
           // Calculate revenue (rough estimate)
           if (user.subscription.tier === "starter") {
-            tempStats.revenue += 29;
+            tempStats.revenue += STRIPE_PLANS.starter.price.monthly;
             tempStats.starterCount++;
           } else if (user.subscription.tier === "agency") {
-            tempStats.revenue += 79;
+            tempStats.revenue += STRIPE_PLANS.agency.price.monthly;
             tempStats.agencyCount++;
           } else if (user.subscription.tier === "enterprise") {
-            tempStats.revenue += 199;
+            tempStats.revenue += STRIPE_PLANS.enterprise.price.monthly;
             tempStats.enterpriseCount++;
           }
         } else if (user.subscription.status === "canceled") {
@@ -281,7 +282,7 @@ export function SubscriptionManagement() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">agency Plans</CardTitle>
+            <CardTitle className="text-sm font-medium">Agency Plans</CardTitle>
             <Crown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -427,7 +428,7 @@ export function SubscriptionManagement() {
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm">agency</span>
+                        <span className="text-sm">Agency</span>
                         <span className="text-sm font-medium">
                           {stats.agencyCount}
                         </span>
@@ -449,21 +450,21 @@ export function SubscriptionManagement() {
                   <CardContent>
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-sm">Starter ($29)</span>
+                        <span className="text-sm">Starter (${STRIPE_PLANS.starter.price.monthly})</span>
                         <span className="text-sm font-medium">
-                          ${stats.starterCount * 29}
+                          ${stats.starterCount * STRIPE_PLANS.starter.price.monthly}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm">agency ($79)</span>
+                        <span className="text-sm">Agency (${STRIPE_PLANS.agency.price.monthly})</span>
                         <span className="text-sm font-medium">
-                          ${stats.agencyCount * 79}
+                          ${stats.agencyCount * STRIPE_PLANS.agency.price.monthly}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm">Enterprise ($199)</span>
+                        <span className="text-sm">Enterprise (${STRIPE_PLANS.enterprise.price.monthly})</span>
                         <span className="text-sm font-medium">
-                          ${stats.enterpriseCount * 199}
+                          ${stats.enterpriseCount * STRIPE_PLANS.enterprise.price.monthly}
                         </span>
                       </div>
                     </div>

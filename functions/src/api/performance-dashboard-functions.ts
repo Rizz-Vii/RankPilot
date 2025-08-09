@@ -211,28 +211,28 @@ export const abTestManagement = onCall(httpsOptions, async (request: CallableReq
     let responseData;
 
     switch (action) {
-    case "list":
-      responseData = {
-        experiments: [], // Would come from AIPromptABTesting
-        summary: {
-          total: 0,
-          active: 0,
-          completed: 0
-        }
-      };
-      break;
+      case "list":
+        responseData = {
+          experiments: [], // Would come from AIPromptABTesting
+          summary: {
+            total: 0,
+            active: 0,
+            completed: 0
+          }
+        };
+        break;
 
-    case "create":
-      responseData = {
-        message: "A/B test creation would be implemented here",
-        experimentId: `exp_${Date.now()}`
-      };
-      break;
+      case "create":
+        responseData = {
+          message: "A/B test creation would be implemented here",
+          experimentId: `exp_${Date.now()}`
+        };
+        break;
 
-    default:
-      responseData = {
-        availableActions: ["list", "create", "analyze", "stop"]
-      };
+      default:
+        responseData = {
+          availableActions: ["list", "create", "analyze", "stop"]
+        };
     }
 
     StructuredLogger.completeTrace(trace.traceId, {
@@ -300,3 +300,11 @@ export const healthCheck = onCall(httpsOptions, async (request: CallableRequest)
     throw new Error(`Health check error: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 });
+
+// ---------------------------------------------------------------------------
+// Backward compatibility aliases (previous duplicate file exported these names)
+// ---------------------------------------------------------------------------
+export const getPerformanceDashboard = performanceDashboard;
+export const getRealtimeMetrics = realtimeMetrics;
+export const getFunctionMetrics = functionMetrics;
+export const performanceHealthCheck = healthCheck;

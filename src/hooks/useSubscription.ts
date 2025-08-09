@@ -55,13 +55,13 @@ export function useSubscription() {
 
         const subData: SubscriptionData = userData
           ? {
-              status: userData.subscriptionStatus || "free",
-              tier: userData.subscriptionTier || "free",
-              customerId: userData.stripeCustomerId,
-              subscriptionId: userData.stripeSubscriptionId,
-              currentPeriodEnd: userData.nextBillingDate?.toDate(),
-              cancelAtPeriodEnd: userData.cancelAtPeriodEnd || false,
-            }
+            status: userData.subscriptionStatus || "free",
+            tier: userData.subscriptionTier || "free",
+            customerId: userData.stripeCustomerId,
+            subscriptionId: userData.stripeSubscriptionId,
+            currentPeriodEnd: userData.nextBillingDate?.toDate(),
+            cancelAtPeriodEnd: userData.cancelAtPeriodEnd || false,
+          }
           : { status: "free", tier: "free" };
 
         let planInfo;
@@ -177,13 +177,13 @@ export function useSubscription() {
 
         const subData: SubscriptionData = userData
           ? {
-              status: userData.subscriptionStatus || "free",
-              tier: userData.subscriptionTier || "free",
-              customerId: userData.stripeCustomerId,
-              subscriptionId: userData.stripeSubscriptionId,
-              currentPeriodEnd: userData.nextBillingDate?.toDate(),
-              cancelAtPeriodEnd: userData.cancelAtPeriodEnd || false,
-            }
+            status: userData.subscriptionStatus || "free",
+            tier: userData.subscriptionTier || "free",
+            customerId: userData.stripeCustomerId,
+            subscriptionId: userData.stripeSubscriptionId,
+            currentPeriodEnd: userData.nextBillingDate?.toDate(),
+            cancelAtPeriodEnd: userData.cancelAtPeriodEnd || false,
+          }
           : { status: "free", tier: "free" };
 
         let planInfo;
@@ -241,7 +241,7 @@ export function usePlanComparison() {
       price: STRIPE_PLANS.starter.price.monthly,
       features: STRIPE_PLANS.starter.features,
       limits: STRIPE_PLANS.starter.limits,
-      popular: true,
+      popular: false,
     },
     {
       tier: "agency" as const,
@@ -249,6 +249,14 @@ export function usePlanComparison() {
       price: STRIPE_PLANS.agency.price.monthly,
       features: STRIPE_PLANS.agency.features,
       limits: STRIPE_PLANS.agency.limits,
+      popular: true,
+    },
+    {
+      tier: "enterprise" as const,
+      name: STRIPE_PLANS.enterprise.name,
+      price: STRIPE_PLANS.enterprise.price.monthly,
+      features: STRIPE_PLANS.enterprise.features,
+      limits: STRIPE_PLANS.enterprise.limits,
       popular: false,
     },
   ];

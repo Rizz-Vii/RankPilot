@@ -54,7 +54,7 @@ export function AdminUserSubscriptionManager() {
   // Form state
   const [email, setEmail] = useState("");
   const [tier, setTier] = useState<
-    "free" | "starter" | "professional" | "enterprise"
+  "free" | "starter" | "agency" | "enterprise"
   >("starter");
   const [status, setStatus] = useState<
     "free" | "active" | "canceled" | "past_due"
@@ -216,12 +216,12 @@ export function AdminUserSubscriptionManager() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="starter">Starter ($29/month)</SelectItem>
-                  <SelectItem value="professional">
-                    Professional ($79/month)
+                  <SelectItem value="starter">Starter ($19/month)</SelectItem>
+                  <SelectItem value="agency">
+                    Agency ($49/month)
                   </SelectItem>
                   <SelectItem value="enterprise">
-                    Enterprise ($199/month)
+                    Enterprise ($99/month)
                   </SelectItem>
                 </SelectContent>
               </Select>

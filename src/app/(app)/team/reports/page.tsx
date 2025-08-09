@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { ToolPageHeader } from "@/components/tool-page-header";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useRouter } from "next/navigation";
@@ -55,6 +56,8 @@ import {
   Clock,
 } from "lucide-react";
 import { toast } from "sonner";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, getDocs, query, where, orderBy, doc, deleteDoc, serverTimestamp, getDoc } from "firebase/firestore";
 
 interface Report {
   id: string;
@@ -122,90 +125,48 @@ export default function TeamReportsPage() {
     },
   });
 
-  // Mock data for demonstration
-  const mockReports: Report[] = [
-    {
-      id: "1",
-      title: "Monthly SEO Performance Report",
-      description: "Comprehensive monthly overview of SEO metrics and progress",
-      type: "monthly",
-      status: "published",
-      createdBy: "john@example.com",
-      createdAt: new Date("2024-01-01"),
-      lastModified: new Date("2024-01-15"),
-      metrics: {
-        totalViews: 156,
-        downloads: 42,
-        shares: 8,
-      },
-      content: {
-        keywordTracking: true,
-        competitorAnalysis: true,
-        contentPerformance: true,
-        technicalSEO: true,
-      },
-      recipients: ["team@company.com", "manager@company.com"],
-      tags: ["monthly", "overview", "performance"],
-    },
-    {
-      id: "2",
-      title: "Q1 Competitive Analysis",
-      description: "Quarterly deep dive into competitor strategies and positioning",
-      type: "quarterly",
-      status: "scheduled",
-      createdBy: "sarah@example.com",
-      createdAt: new Date("2024-01-10"),
-      lastModified: new Date("2024-01-20"),
-      scheduledDate: new Date("2024-04-01"),
-      metrics: {
-        totalViews: 89,
-        downloads: 23,
-        shares: 5,
-      },
-      content: {
-        keywordTracking: false,
-        competitorAnalysis: true,
-        contentPerformance: false,
-        technicalSEO: false,
-      },
-      recipients: ["executives@company.com"],
-      tags: ["quarterly", "competitors", "analysis"],
-    },
-    {
-      id: "3",
-      title: "Weekly Content Performance",
-      description: "Weekly tracking of content engagement and search performance",
-      type: "weekly",
-      status: "draft",
-      createdBy: "mike@example.com",
-      createdAt: new Date("2024-01-22"),
-      lastModified: new Date("2024-01-22"),
-      metrics: {
-        totalViews: 0,
-        downloads: 0,
-        shares: 0,
-      },
-      content: {
-        keywordTracking: true,
-        competitorAnalysis: false,
-        contentPerformance: true,
-        technicalSEO: true,
-      },
-      recipients: ["content-team@company.com"],
-      tags: ["weekly", "content", "engagement"],
-    },
-  ];
+  const [teamId, setTeamId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchReports();
-  }, []);
+    if (!user?.uid) return;
+    (async () => {
+      // Resolve teamId
+      const tQ = query(collection(db, 'teams'), where('memberIds', 'array-contains', user.uid));
+      const tSnap = await getDocs(tQ);
+      if (!tSnap.empty) setTeamId(tSnap.docs[0].id);
+      else {
+        const uSnap = await getDoc(doc(db, 'users', user.uid));
+        const tId = uSnap.exists() ? (uSnap.data() as any)?.teamId : (user as any)?.teamId;
+        if (typeof tId === 'string') setTeamId(tId);
+      }
+    })();
+  }, [user?.uid]);
 
   const fetchReports = async () => {
     try {
       setLoading(true);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setReports(mockReports);
+      if (!teamId) { setReports([]); return; }
+      const q = query(collection(db, 'teams', teamId, 'reports'), orderBy('lastModified', 'desc'));
+      const snap = await getDocs(q);
+      const items: Report[] = snap.docs.map(d => {
+        const data = d.data() as any;
+        return {
+          id: d.id,
+          title: data.title,
+          description: data.description,
+          type: data.type,
+          status: data.status,
+          createdBy: data.createdBy,
+          createdAt: data.createdAt?.toDate?.() || new Date(),
+          lastModified: data.lastModified?.toDate?.() || new Date(),
+          scheduledDate: data.scheduledDate?.toDate?.(),
+          metrics: data.metrics || { totalViews: 0, downloads: 0, shares: 0 },
+          content: data.content || { keywordTracking: true, competitorAnalysis: true, contentPerformance: true, technicalSEO: false },
+          recipients: data.recipients || [],
+          tags: data.tags || [],
+        } as Report;
+      });
+      setReports(items);
     } catch (error) {
       console.error("Error fetching reports:", error);
       toast.error("Failed to load reports");
@@ -221,27 +182,22 @@ export default function TeamReportsPage() {
         return;
       }
 
-      const newReport: Report = {
-        id: Math.random().toString(36).substr(2, 9),
+      if (!teamId) { toast.error('Team not resolved'); return; }
+      await addDoc(collection(db, 'teams', teamId, 'reports'), {
         title: reportForm.title,
         description: reportForm.description,
         type: reportForm.type,
         status: reportForm.status,
-        createdBy: user?.email || "",
-        createdAt: new Date(),
-        lastModified: new Date(),
-        scheduledDate: reportForm.scheduledDate ? new Date(reportForm.scheduledDate) : undefined,
-        metrics: {
-          totalViews: 0,
-          downloads: 0,
-          shares: 0,
-        },
+        createdBy: user?.email || user?.uid,
+        createdAt: serverTimestamp(),
+        lastModified: serverTimestamp(),
+        scheduledDate: reportForm.status === 'scheduled' && reportForm.scheduledDate ? new Date(reportForm.scheduledDate) : null,
+        metrics: { totalViews: 0, downloads: 0, shares: 0 },
         content: reportForm.content,
-        recipients: reportForm.recipients.split(",").map((r) => r.trim()),
-        tags: reportForm.tags.split(",").map((t) => t.trim()),
-      };
-
-      setReports([newReport, ...reports]);
+        recipients: reportForm.recipients.split(',').map(r => r.trim()).filter(Boolean),
+        tags: reportForm.tags.split(',').map(t => t.trim()).filter(Boolean),
+      });
+      await fetchReports();
       setShowCreateDialog(false);
       setReportForm({
         title: "",
@@ -267,6 +223,8 @@ export default function TeamReportsPage() {
 
   const handleDeleteReport = async (reportId: string) => {
     try {
+      if (!teamId) return;
+      await deleteDoc(doc(db, 'teams', teamId, 'reports', reportId));
       setReports(reports.filter((r) => r.id !== reportId));
       toast.success("Report deleted successfully");
     } catch (error) {
@@ -295,6 +253,8 @@ export default function TeamReportsPage() {
     return matchesSearch && matchesType && matchesStatus;
   });
 
+  useEffect(() => { if (teamId) fetchReports(); }, [teamId]);
+
   if (authLoading || loading) {
     return <LoadingScreen fullScreen text="Loading team reports..." />;
   }
@@ -305,27 +265,16 @@ export default function TeamReportsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push("/team")}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Team
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <FileText className="h-8 w-8 text-primary" />
-            Team Reports
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Create, manage, and share SEO performance reports with your team
-          </p>
-        </div>
+    <main className="container mx-auto py-6 space-y-8">
+      <ToolPageHeader
+        title="Team Reports"
+        description="Create, manage, and share SEO performance reports with your team"
+        badges={[
+          { label: "Collaboration", variant: "secondary" },
+          { label: "Enterprise", variant: "outline", className: "text-primary border-primary/40" },
+        ]}
+        showBreadcrumb
+      >
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2">
@@ -457,10 +406,10 @@ export default function TeamReportsPage() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+      </ToolPageHeader>
 
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+  {/* Filters */}
+  <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -497,8 +446,8 @@ export default function TeamReportsPage() {
         </Select>
       </div>
 
-      {/* Reports Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+  {/* Reports Grid */}
+  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredReports.map((report) => (
           <Card key={report.id} className="hover:shadow-lg transition-shadow">
             <CardHeader className="pb-3">
@@ -659,6 +608,6 @@ export default function TeamReportsPage() {
           </Button>
         </div>
       )}
-    </div>
+  </main>
   );
 }

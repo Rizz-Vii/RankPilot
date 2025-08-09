@@ -81,16 +81,16 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="inset-0 flex items-center justify-center bg-gray-100">
+    <div className="inset-0 flex items-center justify-center bg-background">
       <form
         onSubmit={handleRegister}
-        className="w-full max-w-md p-8 space-y-6 rounded-1xl shadow-xl border bg-white -mt-16"
+        className="w-full max-w-md p-8 space-y-6 rounded-1xl shadow-xl border bg-card text-card-foreground -mt-16"
       >
-        <h2 className="text-2xl font-bold text-center text-gray-800 underline mb-2">
+        <h2 className="text-2xl font-bold text-center mb-2">
           Register
         </h2>
         <div>
-          <label htmlFor="email" className="block font-medium mb-1">
+          <label htmlFor="email" className="block font-medium mb-1 text-foreground">
             Email
           </label>
           <input
@@ -100,14 +100,15 @@ export default function RegisterPage() {
             autoComplete="email"
             aria-label="Email address"
             aria-describedby="email-error"
+              placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition"
+              className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground ring-1 ring-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition"
           />
           <p id="email-error" className="text-xs text-red-600 mt-1">{errors.email}</p>
         </div>
         <div className="relative">
-          <label htmlFor="password" className="block font-medium mb-1">
+          <label htmlFor="password" className="block font-medium mb-1 text-foreground">
             Password
           </label>
           <input
@@ -117,15 +118,16 @@ export default function RegisterPage() {
             autoComplete="new-password"
             aria-label="Password"
             aria-describedby="password-error"
+              placeholder="Create a password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg pr-10 focus:outline-none focus:border-blue-500 transition"
+              className="w-full px-3 py-2 border border-input rounded-lg pr-10 bg-background text-foreground ring-1 ring-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition"
           />
           <button
             type="button"
             tabIndex={-1}
             aria-label={showPassword ? "Hide password" : "Show password"}
-            className="absolute right-3 top-9 text-gray-600"
+            className="absolute right-3 top-9 text-muted-foreground"
             onClick={() => setShowPassword((v) => !v)}
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -133,7 +135,7 @@ export default function RegisterPage() {
           <p id="password-error" className="text-xs text-red-600 mt-1">{errors.password}</p>
         </div>
         <div className="relative">
-          <label htmlFor="confirmPassword" className="block font-medium mb-1">
+          <label htmlFor="confirmPassword" className="block font-medium mb-1 text-foreground">
             Confirm Password
           </label>
           <input
@@ -143,15 +145,16 @@ export default function RegisterPage() {
             autoComplete="new-password"
             aria-label="Confirm password"
             aria-describedby="confirmPassword-error"
+              placeholder="Re-enter your password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg pr-10 focus:outline-none focus:border-blue-500 transition"
+              className="w-full px-3 py-2 border border-input rounded-lg pr-10 bg-background text-foreground ring-1 ring-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition"
           />
           <button
             type="button"
             tabIndex={-1}
             aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
-            className="absolute right-3 top-9 text-gray-600"
+            className="absolute right-3 top-9 text-muted-foreground"
             onClick={() => setShowConfirm((v) => !v)}
           >
             {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -176,9 +179,9 @@ export default function RegisterPage() {
               onChange={(e) => setAgreeTerms(e.target.checked)}
               className="mr-2"
             />
-            <label htmlFor="terms" className="text-sm">
+            <label htmlFor="terms" className="text-sm text-foreground">
               I agree to the{" "}
-              <a href="/terms" className="underline text-blue-600">
+              <a href="/terms" className="underline text-primary">
                 Terms & Conditions
               </a>
             </label>
@@ -192,13 +195,13 @@ export default function RegisterPage() {
         )}
         <button
           type="submit"
-          className="w-full py-2 rounded-lg bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition"
+          className="w-full py-2 rounded-lg bg-primary text-primary-foreground font-semibold text-lg hover:bg-primary/90 transition"
         >
           Register
         </button>
-        <p className="text-center text-sm text-gray-600">
+        <p className="text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link href="/login" className="text-blue-600 hover:underline">
+          <Link href="/login" className="text-primary hover:underline">
             Login
           </Link>
         </p>

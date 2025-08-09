@@ -98,7 +98,7 @@ const dataProcessing = [
 
 export default function CookiesPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Hero Section */}
       <motion.section
         className="pt-32 pb-16 px-4"
@@ -109,20 +109,20 @@ export default function CookiesPage() {
       >
         <div className="max-w-4xl mx-auto text-center">
           <div className="flex justify-center mb-6">
-            <div className="p-4 bg-blue-100 rounded-2xl">
-              <Cookie className="h-12 w-12 text-blue-600" />
+            <div className="p-4 bg-primary/10 rounded-2xl">
+              <Cookie className="h-12 w-12 text-primary" />
             </div>
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             Cookie Policy
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             This policy explains how RankPilot uses cookies and similar
             technologies to provide, improve, and protect our services. Your
             privacy and control matter to us.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+            <Button size="lg" className="bg-primary hover:bg-primary/90">
               <Settings className="mr-2 h-5 w-5" />
               Manage Cookie Preferences
             </Button>
@@ -143,15 +143,15 @@ export default function CookiesPage() {
         custom={1}
       >
         <div className="max-w-4xl mx-auto">
-          <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+      <Card className="bg-gradient-to-r from-primary to-purple-600 text-white">
             <CardContent className="p-8">
               <h2 className="text-2xl font-bold mb-4">What Are Cookies?</h2>
-              <p className="text-blue-100 mb-4">
+        <p className="text-primary-foreground/80 mb-4">
                 Cookies are small text files stored on your device when you
                 visit websites. They help websites remember your preferences,
                 keep you logged in, and provide personalized experiences.
               </p>
-              <p className="text-blue-100">
+        <p className="text-primary-foreground/80">
                 We use cookies responsibly and transparently, giving you control
                 over non-essential cookies while ensuring our website functions
                 properly for your SEO analysis needs.
@@ -171,10 +171,10 @@ export default function CookiesPage() {
             custom={2}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
               Types of Cookies We Use
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Different cookies serve different purposes. Here's what each type
               does and how you can control them.
             </p>
@@ -193,8 +193,8 @@ export default function CookiesPage() {
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <cookie.icon className="h-5 w-5 text-blue-600" />
+                        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                          <cookie.icon className="h-5 w-5 text-primary" />
                         </div>
                         <CardTitle className="text-lg">{cookie.type}</CardTitle>
                       </div>
@@ -204,15 +204,15 @@ export default function CookiesPage() {
                         {cookie.canDisable ? "Optional" : "Required"}
                       </div>
                     </div>
-                    <p className="text-gray-600">{cookie.description}</p>
+                    <p className="text-muted-foreground">{cookie.description}</p>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div>
-                        <h4 className="font-semibold text-gray-900 mb-2">
+                        <h4 className="font-semibold text-foreground mb-2">
                           Examples:
                         </h4>
-                        <ul className="text-sm text-gray-600 space-y-1">
+                        <ul className="text-sm text-muted-foreground space-y-1">
                           {cookie.examples.map((example, exampleIndex) => (
                             <li
                               key={exampleIndex}
@@ -224,7 +224,7 @@ export default function CookiesPage() {
                           ))}
                         </ul>
                       </div>
-                      <div className="flex items-center text-sm text-gray-500">
+                      <div className="flex items-center text-sm text-muted-foreground">
                         <Clock className="h-4 w-4 mr-1" />
                         Retention: {cookie.retention}
                       </div>
@@ -247,10 +247,10 @@ export default function CookiesPage() {
             custom={7}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
               Data Processing Details
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Transparency about how we process cookie data and our legal basis
               for each purpose
             </p>
@@ -261,7 +261,7 @@ export default function CookiesPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
+                    <tr className="border-b border-border bg-muted/30">
                       <th className="text-left p-4 font-semibold">Purpose</th>
                       <th className="text-left p-4 font-semibold">
                         Data Collected
@@ -283,15 +283,15 @@ export default function CookiesPage() {
                         className="border-b border-gray-100 hover:bg-gray-50"
                       >
                         <td className="p-4 font-medium">{item.purpose}</td>
-                        <td className="p-4 text-gray-600">{item.data}</td>
+                        <td className="p-4 text-muted-foreground">{item.data}</td>
                         <td className="p-4">
                           <span
-                            className={`px-2 py-1 rounded text-xs font-medium ${item.legalBasis === "Consent" ? "bg-blue-100 text-blue-800" : "bg-orange-100 text-orange-800"}`}
+                            className={`px-2 py-1 rounded text-xs font-medium ${item.legalBasis === "Consent" ? "bg-primary/10 text-primary" : "bg-orange-100 text-orange-800"}`}
                           >
                             {item.legalBasis}
                           </span>
                         </td>
-                        <td className="p-4 text-gray-600">{item.retention}</td>
+                        <td className="p-4 text-muted-foreground">{item.retention}</td>
                       </motion.tr>
                     ))}
                   </tbody>
@@ -363,12 +363,12 @@ export default function CookiesPage() {
         custom={13}
       >
         <div className="max-w-4xl mx-auto">
-          <Card className="bg-gray-900 text-white">
+            <Card className="bg-gradient-to-r from-primary to-purple-600 text-white">
             <CardContent className="p-12 text-center">
               <h2 className="text-3xl font-bold mb-6">
                 Questions About Cookies?
               </h2>
-              <p className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
+              <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
                 Our privacy team is here to help with any questions about
                 cookies, data processing, or your privacy rights.
               </p>
@@ -377,16 +377,12 @@ export default function CookiesPage() {
                   <Settings className="mr-2 h-5 w-5" />
                   Update Cookie Preferences
                 </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="border-gray-600 text-gray-300 hover:bg-gray-800"
-                >
+                <Button variant="outline" size="lg" className="border-transparent bg-white text-primary hover:bg-white/90">
                   Contact Privacy Team
                 </Button>
               </div>
 
-              <div className="mt-8 pt-8 border-t border-gray-700 text-sm text-gray-400">
+              <div className="mt-8 pt-8 border-t border-white/30 text-sm text-primary-foreground/80">
                 <p>
                   Last updated: July 24, 2025 • We'll notify you of any
                   significant changes to this policy

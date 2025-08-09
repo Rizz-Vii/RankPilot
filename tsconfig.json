@@ -25,7 +25,8 @@
     "src/**/*.tsx",
     "functions/**/*.ts",
     "playwright.config.*.ts",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "types/**/*.d.ts"
   ],
   "exclude": [
     "node_modules",

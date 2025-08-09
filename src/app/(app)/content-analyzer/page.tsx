@@ -1,7 +1,8 @@
-// src/app/(app)/seo-audit/page.tsx
+// src/app/(app)/content-analyzer/page.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ToolPageHeader } from "@/components/tool-page-header";
 
 import {
   NeuroSEOActionableTasks,
@@ -64,7 +65,7 @@ import {
 } from "lucide-react";
 
 // Enhanced SEO Audit with NeuroSEO™ Integration
-export default function SeoAuditPage() {
+export default function ContentAnalyzerPage() {
   const { user } = useAuth();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [report, setReport] = useState<NeuroSEOReport | null>(null);
@@ -254,16 +255,13 @@ export default function SeoAuditPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
-      {/* Header */}
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-2">
-          NeuroSEO™ Comprehensive Audit
-        </h1>
-        <p className="text-muted-foreground text-lg">
-          Advanced 6-engine AI analysis for complete SEO optimization
-        </p>
-      </div>
+    <main className="container mx-auto py-6 space-y-8">
+      <ToolPageHeader
+        title="Content Analyzer"
+        description="AI-powered multi-engine content quality and optimization audit."
+        badges={[{ label: "Beta", variant: "outline" }, { label: "NeuroSEO™", variant: "secondary" }]}
+        showBreadcrumb
+      />
 
       {/* Analysis Form */}
       <Card>
@@ -406,7 +404,7 @@ export default function SeoAuditPage() {
           )}
         </div>
       )}
-    </div>
+  </main>
   );
 }
 

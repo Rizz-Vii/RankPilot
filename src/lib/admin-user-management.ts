@@ -13,7 +13,7 @@ import { db } from "@/lib/firebase";
 
 interface AdminUserUpdate {
   email: string;
-  tier: "free" | "starter" | "professional" | "enterprise";
+  tier: "free" | "starter" | "agency" | "enterprise";
   status: "free" | "active" | "canceled" | "past_due";
   monthsToAdd?: number;
   paymentHistoryMonths?: number;

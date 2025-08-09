@@ -23,7 +23,11 @@ import {
   CheckCircle,
   AlertTriangle,
   RefreshCw,
+  Zap,
+  Target,
+  Rocket,
 } from "lucide-react";
+import { TierChip, TierIcon } from "@/components/tiers/tier-icons";
 import type { User } from "firebase/auth";
 import { useState, useEffect } from "react";
 import { httpsCallable } from "firebase/functions";
@@ -254,7 +258,11 @@ export default function BillingSettingsCard({
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-primary" />
+              <TierIcon
+                tier={billingData.subscriptionTier === "agency" ? "agency" : billingData.subscriptionTier === "starter" ? "starter" : "free"}
+                size={40}
+                className="shadow-sm"
+              />
               Current Plan
             </CardTitle>
             {getStatusBadge(billingData.subscriptionStatus)}
@@ -266,7 +274,10 @@ export default function BillingSettingsCard({
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-2xl font-bold">{currentPlan.name}</h3>
+              <h3 className="text-2xl font-bold flex items-center gap-2">
+                {currentPlan.name}
+                <TierChip tier={billingData.subscriptionTier === "agency" ? "agency" : billingData.subscriptionTier === "starter" ? "starter" : "free"} />
+              </h3>
               <p className="text-muted-foreground">
                 {billingData.subscriptionTier === "free"
                   ? "Free plan"
@@ -302,7 +313,10 @@ export default function BillingSettingsCard({
                         className="border-2 hover:border-primary/50 transition-colors"
                       >
                         <CardContent className="p-4">
-                          <h5 className="font-semibold mb-2">{plan.name}</h5>
+                          <div className="flex items-center justify-between mb-2">
+                            <h5 className="font-semibold flex items-center gap-2">{plan.name}</h5>
+                            <TierIcon tier={key === "agency" ? "agency" : "starter"} size={32} />
+                          </div>
                           <p className="text-lg font-bold mb-2">
                             ${plan.price.monthly}/mo
                           </p>

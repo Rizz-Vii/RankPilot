@@ -159,7 +159,7 @@ const successMetrics = [
 
 export default function CaseStudiesPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Hero Section */}
       <motion.section
         className="pt-32 pb-16 px-4"
@@ -169,19 +169,19 @@ export default function CaseStudiesPage() {
         custom={0}
       >
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             Real Results from
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
               {" "}
               AI-Powered SEO
             </span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Discover how businesses across industries are achieving
             unprecedented growth with RankPilot's NeuroSEO™ Suite. These aren't
             just numbers—they're transformations.
           </p>
-          <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+          <Button size="lg" className="bg-primary hover:bg-primary/90">
             <Brain className="mr-2 h-5 w-5" />
             Start Your Success Story
           </Button>
@@ -202,16 +202,16 @@ export default function CaseStudiesPage() {
               >
                 <Card className="text-center hover:shadow-lg transition-shadow duration-300">
                   <CardContent className="p-6">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                      <metric.icon className="h-6 w-6 text-blue-600" />
+                    <div className="w-12 h-12 bg-primary/10 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                      <metric.icon className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="text-3xl font-bold text-gray-900 mb-2">
+                    <div className="text-3xl font-bold text-foreground mb-2">
                       {metric.value}
                     </div>
-                    <div className="font-semibold text-gray-700 mb-1">
+                    <div className="font-semibold text-foreground mb-1">
                       {metric.label}
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-muted-foreground">
                       {metric.description}
                     </div>
                   </CardContent>
@@ -235,7 +235,7 @@ export default function CaseStudiesPage() {
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               Success Stories
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               See how different industries leverage NeuroSEO™ to achieve
               remarkable growth
             </p>
@@ -251,10 +251,10 @@ export default function CaseStudiesPage() {
                 custom={index + 6}
               >
                 <Card
-                  className={`hover:shadow-xl transition-shadow duration-300 ${study.featured ? "ring-2 ring-blue-500 shadow-lg" : ""}`}
+                  className={`hover:shadow-xl transition-shadow duration-300 ${study.featured ? "ring-2 ring-primary shadow-lg" : ""}`}
                 >
                   {study.featured && (
-                    <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2">
+                    <div className="bg-gradient-to-r from-primary to-purple-600 text-white px-6 py-2">
                       <div className="flex items-center justify-center">
                         <Award className="h-4 w-4 mr-2" />
                         <span className="text-sm font-semibold">
@@ -270,7 +270,7 @@ export default function CaseStudiesPage() {
                         <CardTitle className="text-2xl mb-2">
                           {study.title}
                         </CardTitle>
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-4">
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
                           <span>
                             <strong>Company:</strong> {study.company}
                           </span>
@@ -283,11 +283,7 @@ export default function CaseStudiesPage() {
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {study.tags.map((tag, tagIndex) => (
-                            <Badge
-                              key={tagIndex}
-                              variant="secondary"
-                              className="bg-blue-100 text-blue-800"
-                            >
+                            <Badge key={tagIndex} variant="secondary" className="bg-primary/10 text-primary">
                               {tag}
                             </Badge>
                           ))}
@@ -299,25 +295,25 @@ export default function CaseStudiesPage() {
                   <CardContent>
                     <div className="grid lg:grid-cols-3 gap-6">
                       <div>
-                        <h4 className="font-semibold text-gray-900 mb-2">
+                        <h4 className="font-semibold text-foreground mb-2">
                           Challenge
                         </h4>
-                        <p className="text-gray-600 text-sm">
+                        <p className="text-muted-foreground text-sm">
                           {study.challenge}
                         </p>
                       </div>
 
                       <div>
-                        <h4 className="font-semibold text-gray-900 mb-2">
+                        <h4 className="font-semibold text-foreground mb-2">
                           Solution
                         </h4>
-                        <p className="text-gray-600 text-sm">
+                        <p className="text-muted-foreground text-sm">
                           {study.solution}
                         </p>
                       </div>
 
                       <div>
-                        <h4 className="font-semibold text-gray-900 mb-3">
+                        <h4 className="font-semibold text-foreground mb-3">
                           Results
                         </h4>
                         <div className="space-y-2">
@@ -326,7 +322,7 @@ export default function CaseStudiesPage() {
                               key={resultIndex}
                               className="flex justify-between items-center text-sm"
                             >
-                              <span className="text-gray-600">
+                              <span className="text-muted-foreground">
                                 {result.metric}
                               </span>
                               <span className={`font-bold ${result.color}`}>
@@ -338,7 +334,7 @@ export default function CaseStudiesPage() {
                       </div>
                     </div>
 
-                    <div className="mt-6 pt-6 border-t border-gray-200">
+                    <div className="mt-6 pt-6 border-t border-border">
                       <Button variant="outline" className="w-full group">
                         Read Full Case Study
                         <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -361,12 +357,12 @@ export default function CaseStudiesPage() {
         custom={10}
       >
         <div className="max-w-4xl mx-auto">
-          <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+      <Card className="bg-gradient-to-r from-primary to-purple-600 text-white">
             <CardContent className="p-12 text-center">
               <h2 className="text-3xl font-bold mb-6">
                 Ready to Write Your Success Story?
               </h2>
-              <p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto">
+        <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
                 Join hundreds of businesses already achieving unprecedented
                 growth with RankPilot's AI-powered SEO platform.
               </p>
@@ -378,7 +374,7 @@ export default function CaseStudiesPage() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="border-white text-white hover:bg-white hover:text-blue-600"
+                  className="border-transparent bg-white text-primary hover:bg-white/90"
                 >
                   Schedule Strategy Call
                 </Button>

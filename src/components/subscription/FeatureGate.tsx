@@ -2,6 +2,7 @@
 
 import { ReactNode } from "react";
 import { useSubscription } from "@/hooks/useSubscription";
+import { TIER_HIERARCHY } from "@/lib/access-control";
 import {
   Card,
   CardContent,
@@ -28,20 +29,23 @@ export function FeatureGate({
   fallback,
   showUpgrade = true,
 }: FeatureGateProps) {
-  const { subscription, canUseFeature } = useSubscription();
+  const { subscription, canUseFeature, userAccess, loading } = useSubscription();
+
+  // Avoid showing an upgrade prompt while subscription state is loading
+  if (loading) {
+    return null;
+  }
 
   // Check if user has access to the feature
   const hasAccess = feature ? canUseFeature(feature) : true;
 
-  // Check if user meets the required tier
+  // Determine effective tier (normalized: admin -> enterprise) and check requirement
   const meetsTierRequirement = requiredTier
     ? (() => {
-        if (!subscription?.tier) return false;
-
-        const tierHierarchy = ["starter", "agency", "enterprise"];
-        const userTierIndex = tierHierarchy.indexOf(subscription.tier);
-        const requiredTierIndex = tierHierarchy.indexOf(requiredTier);
-
+        const effectiveTier = (userAccess?.tier || subscription?.tier || "free") as typeof TIER_HIERARCHY[number];
+        const userTierIndex = TIER_HIERARCHY.indexOf(effectiveTier);
+        const requiredTierIndex = TIER_HIERARCHY.indexOf(requiredTier);
+        if (userTierIndex === -1 || requiredTierIndex === -1) return false;
         return userTierIndex >= requiredTierIndex;
       })()
     : true;
@@ -191,7 +195,7 @@ export function UsageLimit({
 // Higher-order component for page-level access control
 export function withSubscriptionAccess<P extends object>(
   Component: React.ComponentType<P>,
-  requiredTier?: "starter" | "agency"
+  requiredTier?: "starter" | "agency" | "enterprise"
 ) {
   return function SubscriptionProtectedComponent(props: P) {
     const { subscription, loading } = useSubscription();
@@ -200,11 +204,22 @@ export function withSubscriptionAccess<P extends object>(
       return <div>Loading...</div>;
     }
 
-    const hasAccess = requiredTier
-      ? subscription?.tier === requiredTier ||
-        (requiredTier === "starter" && subscription?.tier === "agency") ||
-        subscription?.tier === "agency"
-      : true;
+    if (!requiredTier) {
+      return <Component {...props} />;
+    }
+
+    const userTier = subscription?.tier;
+    if (!userTier) {
+      return (
+        <div className="container mx-auto px-4 py-8">
+          <FeatureGate requiredTier={requiredTier} />
+        </div>
+      );
+    }
+
+    const userIndex = TIER_HIERARCHY.indexOf(userTier as any);
+    const requiredIndex = TIER_HIERARCHY.indexOf(requiredTier as any);
+    const hasAccess = userIndex !== -1 && requiredIndex !== -1 && userIndex >= requiredIndex;
 
     if (!hasAccess) {
       return (

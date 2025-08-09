@@ -2,8 +2,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ToolPageHeader } from "@/components/tool-page-header";
+import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 
 import { SeoAuditForm } from "@/components/forms/seo-forms";
+import { MobileToolCard, MobileResultsCard } from "@/components/mobile-tool-layout";
+import LoadingState from "@/components/loading-state";
 import {
   Card,
   CardContent,
@@ -29,6 +33,8 @@ import {
 import LoadingScreen from "@/components/ui/loading-screen";
 import { useAuth } from "@/context/AuthContext";
 import { getDemoData } from "@/lib/demo-data";
+import { runSEOAudit } from "@/lib/services/ai-service";
+import { adaptSEOAuditResponse, type SEOAuditUnifiedResponse } from "@/lib/adapters/seo-audit-adapter";
 import { db } from "@/lib/firebase";
 import { TimeoutError, withTimeout } from "@/lib/timeout";
 import { cn } from "@/lib/utils";
@@ -47,7 +53,8 @@ import {
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertTriangle
+  AlertTriangle,
+  ListChecks
 } from "lucide-react";
 
 // Enhanced SEO Audit with NeuroSEO™ Integration
@@ -147,64 +154,245 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
   );
 };
 
+// Loading skeleton components
+const AuditLoadingSkeleton = () => (
+  <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+    <LoadingState
+      isLoading={true}
+      title="Running SEO Audit"
+      subtitle="Analyzing structure, performance & on-page signals..."
+      showTips={false}
+      variant="default"
+    />
+    {/* Mobile skeleton */}
+    <div className="block md:hidden space-y-4">
+      <Card className="bg-muted/30 animate-pulse">
+        <CardHeader className="pb-3">
+          <div className="h-4 w-40 bg-muted rounded mb-3" />
+          <div className="flex items-center gap-4">
+            <div className="h-10 w-12 bg-muted rounded" />
+            <div className="flex-1 space-y-2">
+              <div className="h-3 w-3/4 bg-muted rounded" />
+              <div className="h-3 w-1/2 bg-muted rounded" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0 space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-start gap-3">
+              <div className="h-5 w-5 bg-muted rounded" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 w-2/3 bg-muted rounded" />
+                <div className="h-3 w-5/6 bg-muted rounded" />
+              </div>
+              <div className="h-3 w-8 bg-muted rounded" />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
+    {/* Desktop skeleton */}
+    <div className="hidden md:block">
+      <Card className="animate-pulse">
+        <CardHeader>
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-16 bg-muted rounded" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-40 bg-muted rounded" />
+              <div className="h-3 w-1/2 bg-muted rounded" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 gap-8">
+          <div className="space-y-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex items-start gap-4">
+                <div className="h-5 w-5 bg-muted rounded" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 w-2/3 bg-muted rounded" />
+                  <div className="h-3 w-5/6 bg-muted rounded" />
+                </div>
+                <div className="h-3 w-10 bg-muted rounded" />
+              </div>
+            ))}
+          </div>
+          <div className="h-[250px] w-full bg-muted/40 rounded-md" />
+        </CardContent>
+      </Card>
+    </div>
+  </motion.div>
+);
+
+// Map unified adapter output back into legacy AuditUrlOutput shape for existing UI until full refactor.
+function mapUnifiedToLegacy(r: SEOAuditUnifiedResponse): AuditUrlOutput {
+  return {
+    url: r.url || '',
+    overallScore: r.overallScore,
+    summary: r.summary,
+    items: r.items.map(it => ({
+      id: it.id,
+      name: it.name,
+      title: it.name,
+      description: it.details,
+      details: it.details,
+  status: it.status === 'good' ? 'pass' : it.status === 'error' ? 'fail' : 'warning',
+  score: it.score,
+  impact: (it as any).impact || (it.status === 'error' ? 'high' : it.status === 'warning' ? 'medium' : 'low'),
+      recommendation: ''
+    })),
+    performance: { lcp: 0, fid: 0, cls: 0, ttfb: 0 },
+    accessibility: { score: 0, issues: 0 },
+    seo: { score: 0, metaTitle: true, metaDescription: true, headings: true }
+  };
+}
+
 const AuditResults = ({ results }: { results: AuditUrlOutput; }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5 }}
   >
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-headline">Audit Results</CardTitle>
-        <div className="flex items-center gap-4 pt-2">
-          <span className="text-4xl font-bold text-primary">
-            {results.overallScore}
-          </span>
-          <div className="w-full">
-            <p className="font-semibold">Overall Score</p>
-            <Progress value={results.overallScore} className="mt-1" />
+    {/* Mobile */}
+    <div className="block md:hidden space-y-6">
+      <MobileResultsCard
+        title="Audit Score"
+        subtitle={`Overall Score: ${results.overallScore}/100`}
+        icon={<AlertCircle className="h-5 w-5" />}
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <span className="text-4xl font-bold text-primary">{results.overallScore}</span>
+            <div className="flex-1">
+              <p className="text-sm font-semibold">Overall Score</p>
+              <Progress value={results.overallScore} className="mt-1" />
+            </div>
           </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">{results.summary}</p>
         </div>
-        <CardDescription className="pt-2">{results.summary}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid md:grid-cols-2 gap-8">
-          <motion.div
-            className="space-y-4"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {results.items.map((item) => {
-              const Icon = statusIcons[item.status] || AlertCircle;
-              const color =
-                statusColors[item.status] || "text-muted-foreground";
+      </MobileResultsCard>
+      {/* High Impact Issues (mobile) */}
+      {results.items.some(i => i.status === 'fail' || i.impact === 'high') && (
+        <Card className="border-destructive/40">
+          <CardHeader className="pb-2">
+            <CardTitle className="font-headline text-base text-destructive">High Impact Issues</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-0">
+            {results.items.filter(i => i.status === 'fail' || i.impact === 'high').map(item => {
+              const iconKey = item.status === 'fail' ? 'fail' : item.status; // statusIcons keys: pass | fail | warning
+              const Icon = statusIcons[iconKey] || AlertCircle;
+              const color = item.status === 'fail' ? 'text-destructive' : 'text-warning';
               return (
-                <motion.div
-                  key={item.id}
-                  className="flex items-start gap-4"
-                  variants={itemVariants}
-                >
+                <div key={item.id} className="flex items-start gap-3">
                   <Icon className={`mt-1 h-5 w-5 flex-shrink-0 ${color}`} />
                   <div className="flex-1">
-                    <p className="font-semibold">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {item.details}
-                    </p>
+                    <p className="text-sm font-medium">{item.name}</p>
+                    <p className="text-xs text-muted-foreground">{item.details}</p>
                   </div>
-                  <span className={`font-semibold text-sm ${color}`}>
-                    {item.score}/100
-                  </span>
-                </motion.div>
+                  <span className={`text-xs font-semibold ${color}`}>{item.score}</span>
+                </div>
               );
             })}
-          </motion.div>
-          <div>
-            <AuditCharts items={results.items} />
+          </CardContent>
+        </Card>
+      )}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="font-headline text-base">Key Findings</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-0">
+          {results.items.map((item) => {
+            const Icon = statusIcons[item.status] || AlertCircle;
+            const color = statusColors[item.status] || "text-muted-foreground";
+            return (
+              <div key={item.id} className="flex items-start gap-3">
+                <Icon className={`mt-1 h-5 w-5 flex-shrink-0 ${color}`} />
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{item.name}</p>
+                  <p className="text-xs text-muted-foreground">{item.details}</p>
+                </div>
+                <span className={`text-xs font-semibold ${color}`}>{item.score}</span>
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="font-headline text-base">Breakdown</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <AuditCharts items={results.items} />
+        </CardContent>
+      </Card>
+    </div>
+    {/* Desktop */}
+    <div className="hidden md:block">
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-headline">Audit Results</CardTitle>
+          <div className="flex items-center gap-4 pt-2">
+            <span className="text-4xl font-bold text-primary">{results.overallScore}</span>
+            <div className="w-full">
+              <p className="font-semibold">Overall Score</p>
+              <Progress value={results.overallScore} className="mt-1" />
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+          <CardDescription className="pt-2">{results.summary}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 gap-8">
+            <motion.div
+              className="space-y-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {results.items.some(i => i.status === 'fail' || i.impact === 'high') && (
+                <div className="rounded-md border border-destructive/40 p-3 bg-destructive/5">
+                  <p className="font-semibold text-destructive mb-2">High Impact Issues</p>
+                  {results.items.filter(i => i.status === 'fail' || i.impact === 'high').map(item => {
+                    const iconKey = item.status === 'fail' ? 'fail' : item.status;
+                    const Icon = statusIcons[iconKey] || AlertCircle;
+                    const color = item.status === 'fail' ? 'text-destructive' : 'text-warning';
+                    return (
+                      <div key={item.id} className="flex items-start gap-3 mb-2 last:mb-0">
+                        <Icon className={`mt-1 h-5 w-5 flex-shrink-0 ${color}`} />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{item.name}</p>
+                          <p className="text-xs text-muted-foreground">{item.details}</p>
+                        </div>
+                        <span className={`text-xs font-semibold ${color}`}>{item.score}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {results.items.map((item) => {
+                const Icon = statusIcons[item.status] || AlertCircle;
+                const color = statusColors[item.status] || "text-muted-foreground";
+                return (
+                  <motion.div
+                    key={item.id}
+                    className="flex items-start gap-4"
+                    variants={itemVariants}
+                  >
+                    <Icon className={`mt-1 h-5 w-5 flex-shrink-0 ${color}`} />
+                    <div className="flex-1">
+                      <p className="font-semibold">{item.name}</p>
+                      <p className="text-sm text-muted-foreground">{item.details}</p>
+                    </div>
+                    <span className={`font-semibold text-sm ${color}`}>{item.score}/100</span>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+            <div>
+              <AuditCharts items={results.items} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   </motion.div>
 );
 
@@ -212,6 +400,9 @@ export default function SeoAuditPage() {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<AuditUrlOutput | null>(null);
+  const [provenance, setProvenance] = useState<'live'|'cache'|'fallback'|null>(null);
+  const [quota, setQuota] = useState<{limit:number;used:number;remaining:number}|null>(null);
+  const [timing, setTiming] = useState<number| null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
@@ -230,35 +421,22 @@ export default function SeoAuditPage() {
     setSubmitted(true);
     setResults(null);
     setError(null);
+    setProvenance(null);
+    setQuota(null);
+    setTiming(null);
     try {
-      // Try to get real data with timeout
-      const result = await withTimeout(
-        Promise.resolve({
-          url: values.url,
-          overallScore: 85,
-          summary: 'Good SEO performance with some areas for improvement',
-          items: [],
-          performance: {
-            lcp: 2.3,
-            fid: 12,
-            cls: 0.08,
-            ttfb: 450
-          },
-          accessibility: {
-            score: 92,
-            issues: 3
-          },
-          seo: {
-            score: 88,
-            metaTitle: true,
-            metaDescription: true,
-            headings: true
-          }
-        }),
-        15000, // 15 second timeout
-        "SEO audit is taking longer than expected. Using demo data instead."
+      const startedAt = Date.now();
+      // Real backend call with timeout & fallback to demo
+      const raw = await withTimeout(
+        runSEOAudit({ url: values.url, checkMobile: true }),
+        20000,
+        "SEO audit is taking longer than expected. Using fallback data."
       );
-      setResults(result);
+      const unified = adaptSEOAuditResponse(raw, { startedAt });
+      setProvenance(unified.source || null);
+      if (unified.quota) setQuota(unified.quota);
+      setTiming(unified.totalProcessingTime);
+      setResults(mapUnifiedToLegacy(unified));
 
       if (user) {
         const userActivitiesRef = collection(
@@ -273,23 +451,28 @@ export default function SeoAuditPage() {
           timestamp: serverTimestamp(),
           details: {
             url: values.url,
-            overallScore: result.overallScore,
+            overallScore: unified.overallScore,
+            provenance: unified.source,
+            cacheHit: unified.cacheHit,
+            totalProcessingTime: unified.totalProcessingTime
           },
-          resultsSummary: `Audited ${values.url}. Overall Score: ${result.overallScore}/100.`,
+          resultsSummary: `Audited ${values.url}. Overall Score: ${unified.overallScore}/100 (${unified.source}).`,
         });
       }
     } catch (e: any) {
-      if (e instanceof TimeoutError) {
-        console.warn("SEO audit timed out, using demo data:", e.message);
-        // Use demo data as fallback
+      const msg = e?.message || '';
+      const shouldDemo = e instanceof TimeoutError || /(internal|cors|network|failed)/i.test(msg);
+      if (shouldDemo) {
+        console.warn("SEO audit using demo fallback due to:", msg);
         const demoData = getDemoData("seo-audit");
         if (demoData) {
           setResults(demoData);
+          setProvenance('fallback');
         } else {
-          setError("Analysis timed out and no demo data available.");
+          setError("Audit failed and no demo data available.");
         }
       } else {
-        setError(e.message || "An unexpected error occurred during the audit.");
+        setError(msg || "An unexpected error occurred during the audit.");
       }
     } finally {
       setIsLoading(false);
@@ -297,39 +480,49 @@ export default function SeoAuditPage() {
   };
 
   return (
-    <main
-      className={cn(
-        "mx-auto transition-all duration-500",
-        submitted ? "max-w-7xl" : "max-w-xl"
-      )}
-    >
-      {/* Page Title - DevLast Task 8: Accessibility & Semantics */}
-      <header className="mb-8 text-center">
-        <h1 className="text-3xl font-bold font-headline text-primary mb-2">
-          SEO Website Audit
-        </h1>
-        <p className="text-muted-foreground font-body">
-          Comprehensive SEO analysis and optimization recommendations for any website.
-        </p>
-      </header>
-
-      <section
+    <main className="container mx-auto py-6">
+      <ToolPageHeader
+        title="SEO Audit"
+        description="Comprehensive SEO analysis and optimization recommendations for any website."
+        badges={composeToolHeaderBadges("seo-audit", provenance)}
+        showBreadcrumb
+      >
+        {provenance && (
+          <div className="text-xs text-muted-foreground border rounded-md px-2 py-1 bg-muted/30 max-w-[240px]">
+            <p className="font-semibold mb-1">Provenance Legend</p>
+            <ul className="space-y-0.5">
+              <li><span className="font-medium">Live Data:</span> Fresh AI analysis.</li>
+              <li><span className="font-medium">Cache:</span> Recent cached result (faster, same accuracy).</li>
+              <li><span className="font-medium">Demo Data:</span> Fallback when live processing fails or times out.</li>
+            </ul>
+          </div>
+        )}
+      </ToolPageHeader>
+      <div
+        className={cn(
+          "mx-auto transition-all duration-500",
+          submitted ? "max-w-7xl" : "max-w-xl"
+        )}
+      >
+      <div
         className={cn(
           "grid gap-8 transition-all duration-500",
           submitted ? "lg:grid-cols-3" : "lg:grid-cols-1"
         )}
       >
         <motion.div layout className="lg:col-span-1">
-          <SeoAuditForm onSubmit={handleSubmit} isLoading={isLoading} />
+          <MobileToolCard
+            title="SEO Audit"
+            description="Run a technical & on-page SEO analysis for your target URL."
+            icon={<ListChecks className="h-5 w-5" />}
+          >
+            <SeoAuditForm onSubmit={handleSubmit} isLoading={isLoading} />
+          </MobileToolCard>
         </motion.div>
 
         <div className="lg:col-span-2" ref={resultsRef}>
-          <AnimatePresence mode="wait">
-            {isLoading && (
-              <motion.div key="loading">
-                <LoadingScreen text="Auditing page..." />
-              </motion.div>
-            )}
+          <AnimatePresence>
+            {isLoading && <AuditLoadingSkeleton />}
             {error && (
               <motion.div
                 key="error"
@@ -350,13 +543,24 @@ export default function SeoAuditPage() {
               </motion.div>
             )}
             {results && (
-              <motion.div key="results">
+              <motion.div key="results" className="space-y-4">
+                {(quota || timing) && (
+                  <div className="text-xs text-muted-foreground flex flex-wrap gap-4">
+                    {quota && quota.limit > -1 && (
+                      <span>Quota: {quota.used}/{quota.limit} (remaining {quota.remaining})</span>
+                    )}
+                    {typeof timing === 'number' && (
+                      <span>Processed in {(timing/1000).toFixed(2)}s</span>
+                    )}
+                  </div>
+                )}
                 <AuditResults results={results} />
               </motion.div>
             )}
           </AnimatePresence>
         </div>
-      </section>
+      </div>
+      </div>
     </main>
   );
 }

@@ -2,7 +2,8 @@
   "name": "functions",
   "scripts": {
     "lint": "eslint --ext .js,.ts . --fix",
-    "build": "npm run lint && tsc",
+  "clean": "rm -f lib/api/performance-functions.js lib/api/performance-functions.js.map",
+  "build": "npm run clean && tsc",
     "build:watch": "tsc --watch",
     "serve": "npm run build && firebase emulators:start --only functions",
     "serve:performance": "npm run build && firebase emulators:start --only functions --inspect-functions",

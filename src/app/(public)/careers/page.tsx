@@ -115,7 +115,7 @@ const benefits = [
 
 export default function CareersPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Hero Section */}
       <motion.section
         className="pt-32 pb-16 px-4"
@@ -306,7 +306,7 @@ export default function CareersPage() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="border-white text-white hover:bg-white hover:text-blue-600"
+                  className="border-transparent bg-white text-primary hover:bg-white/90"
                 >
                   Contact Talent Team
                 </Button>

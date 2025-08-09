@@ -32,7 +32,12 @@ const USERS = [
 async function seed() {
   // Create projects
   for (const project of PROJECTS) {
-    await db.collection('projects').doc(project.id).set(project, { merge: true });
+    await db.collection('projects').doc(project.id).set({
+      ...project,
+      teamId: TEAM_ID,
+      // Optional owner for owner-based rules; tie to admin user in this seed
+      userId: 'UFGrzIf2N3UTPd5Xz7vT8tMZpHJ3'
+    }, { merge: true });
   }
   // Create integrations
   for (const integration of INTEGRATIONS) {

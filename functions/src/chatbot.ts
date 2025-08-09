@@ -37,22 +37,22 @@ try {
   logger.error("Failed to initialize OpenAI client", error);
 }// Types for request/response
 interface ChatRequest {
-    uid: string;
-    message: string;
-    url?: string;
-    sessionId?: string;
-    chatType: "customer" | "admin";
+  uid: string;
+  message: string;
+  url?: string;
+  sessionId?: string;
+  chatType: "customer" | "admin";
 }
 
 interface ChatResponse {
-    response: string;
-    sessionId: string;
-    timestamp: string;
-    tokensUsed: number;
-    context: {
-        type: string;
-        dataUsed: string[];
-    };
+  response: string;
+  sessionId: string;
+  timestamp: string;
+  tokensUsed: number;
+  context: {
+    type: string;
+    dataUsed: string[];
+  };
 }
 
 /**
@@ -65,6 +65,8 @@ export const customerChatHandler = onCall(
     memory: "1GiB",
     timeoutSeconds: 30,
     secrets: ["OPENAI_API_KEY"], // Firebase Functions v2 secrets
+    // Allow server-to-server calls from our Next.js API without App Check during development
+    enforceAppCheck: false,
   },
   async (request) => {
     try {
@@ -191,6 +193,8 @@ export const adminChatHandler = onCall(
     memory: "1GiB",
     timeoutSeconds: 45,
     secrets: ["OPENAI_API_KEY"], // Firebase Functions v2 secrets
+    // Allow server-to-server calls from our Next.js API without App Check during development
+    enforceAppCheck: false,
   },
   async (request) => {
     try {

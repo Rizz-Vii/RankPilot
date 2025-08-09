@@ -19,6 +19,10 @@ export function useKeyboardNavigation(config: KeyboardNavConfig = {}) {
   const { setLastFocusedElement, scrollToTop } = useUI();
 
   const handleTab = useCallback((e: KeyboardEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+      return; // don't trap tab inside regular typing contexts
+    }
     if (e.key === "Tab") {
       const focusable = document.querySelectorAll(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -38,6 +42,10 @@ export function useKeyboardNavigation(config: KeyboardNavConfig = {}) {
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return; // ignore global shortcuts while typing
+      }
       // Store last focused element
       if (document.activeElement instanceof HTMLElement) {
         setLastFocusedElement(document.activeElement);

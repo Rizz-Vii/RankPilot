@@ -80,7 +80,8 @@ export default function BlogPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="container mx-auto px-4 py-12">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">SEO Blog</h1>
@@ -96,7 +97,7 @@ export default function BlogPage() {
             return (
               <article
                 key={index}
-                className="group bg-white border border-gray-200 rounded-lg overflow-hidden hover:border-primary/50 hover:shadow-lg transition-all duration-200"
+                className="group bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 hover:shadow-lg transition-all duration-200"
               >
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
@@ -147,7 +148,7 @@ export default function BlogPage() {
           })}
         </div>
 
-        <div className="mt-16 bg-gradient-to-r from-primary/10 to-blue-50 border border-primary/20 rounded-lg p-8">
+  <div className="mt-16 bg-gradient-to-r from-primary/10 to-muted border border-primary/20 rounded-lg p-8">
           <div className="text-center">
             <h2 className="text-2xl font-semibold mb-4">
               Ready to Implement These Strategies?
@@ -188,13 +189,14 @@ export default function BlogPage() {
             <input
               type="email"
               placeholder="Enter your email"
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="flex-1 px-4 py-2 border border-input rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
             <button className="bg-primary text-primary-foreground px-6 py-2 rounded-md hover:bg-primary/90 transition-colors">
               Subscribe
             </button>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

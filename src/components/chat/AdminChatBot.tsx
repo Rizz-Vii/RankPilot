@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthContext';
+import { auth } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -30,6 +31,7 @@ import {
     X
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import DOMPurify from 'isomorphic-dompurify';
 
 // Types
 interface AdminChatMessage {
@@ -70,6 +72,7 @@ export default function AdminChatBot({ className }: AdminChatBotProps) {
     const [sessionId, setSessionId] = useState<string>('');
     const [error, setError] = useState<string>('');
     const [activeTab, setActiveTab] = useState('chat');
+    const [isComposing, setIsComposing] = useState(false);
 
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -131,11 +134,12 @@ What would you like to analyze today?`,
 
     // Send message to API
     const sendMessage = async () => {
-        if (!inputValue.trim() || isLoading || !user || !isAdmin) return;
+        const messageToSend = inputValue.trim();
+        if (!messageToSend || isLoading || !user || !isAdmin) return;
 
         const userMessage: AdminChatMessage = {
             id: `admin_user_${Date.now()}`,
-            message: inputValue,
+            message: messageToSend,
             response: '',
             timestamp: new Date().toISOString(),
             isUser: true,
@@ -148,8 +152,12 @@ What would you like to analyze today?`,
         setError('');
 
         try {
-            // Get user token
-            const token = await user.getIdToken();
+            // Get fresh user token to avoid 401 from stale tokens
+            const curr = auth.currentUser || (user as any);
+            if (!curr || typeof curr.getIdToken !== 'function') {
+                throw new Error('Authentication failed. Please sign in again and retry.');
+            }
+            const token = await curr.getIdToken(true);
 
             const response = await fetch('/api/chat/admin', {
                 method: 'POST',
@@ -158,14 +166,21 @@ What would you like to analyze today?`,
                     'Authorization': `Bearer ${token}`,
                 },
                 body: JSON.stringify({
-                    message: inputValue,
+                    message: messageToSend,
                     sessionId: sessionId || undefined,
                 }),
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to send admin message');
+                let errMsg = 'Failed to send admin message';
+                try {
+                    const errorData = await response.json();
+                    errMsg = errorData.error || errMsg;
+                } catch {}
+                if (response.status === 401) {
+                    errMsg = 'Authentication failed. Please sign in again and retry.';
+                }
+                throw new Error(errMsg);
             }
 
             const data: AdminChatResponse = await response.json();
@@ -200,10 +215,19 @@ What would you like to analyze today?`,
     };
 
     // Handle Enter key press
-    const handleKeyPress = (e: React.KeyboardEvent) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        e.stopPropagation();
+        // @ts-ignore
+        if (typeof e.nativeEvent?.stopImmediatePropagation === 'function') {
+            // @ts-ignore
+            e.nativeEvent.stopImmediatePropagation();
+        }
+        // Avoid sending during IME composition
+        const composing = (e.nativeEvent as any)?.isComposing || isComposing;
+        if (composing) return;
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            sendMessage();
+            void sendMessage();
         }
     };
 
@@ -318,9 +342,18 @@ What would you like to analyze today?`,
                                                             : "bg-gray-100 text-gray-900"
                                                     )}
                                                 >
-                                                    <div className="whitespace-pre-wrap">
-                                                        {msg.isUser ? msg.message : msg.response}
-                                                    </div>
+                                                    {msg.isUser ? (
+                                                        <div className="whitespace-pre-wrap">
+                                                            {msg.message}
+                                                        </div>
+                                                    ) : (
+                                                        <div
+                                                            className="prose prose-sm max-w-none"
+                                                            dangerouslySetInnerHTML={{
+                                                                __html: DOMPurify.sanitize(msg.response || ''),
+                                                            }}
+                                                        />
+                                                    )}
 
                                                     {!msg.isUser && (
                                                         <div className="mt-2 flex items-center gap-2 flex-wrap">
@@ -381,7 +414,9 @@ What would you like to analyze today?`,
                                             ref={inputRef}
                                             value={inputValue}
                                             onChange={(e) => setInputValue(e.target.value)}
-                                            onKeyPress={handleKeyPress}
+                                            onKeyDown={handleKeyDown}
+                                            onCompositionStart={() => setIsComposing(true)}
+                                            onCompositionEnd={() => setIsComposing(false)}
                                             placeholder="Ask about system performance, users, errors..."
                                             disabled={isLoading || !isAdmin}
                                             className="flex-1"
@@ -412,10 +447,11 @@ What would you like to analyze today?`,
                                             key={index}
                                             variant="outline"
                                             className="w-full justify-start gap-2 h-auto p-3"
-                                            onClick={() => {
+                                            onClick={async () => {
                                                 setInputValue(cmd.command);
                                                 setActiveTab('chat');
-                                                setTimeout(() => sendMessage(), 100);
+                                                // Wait a tick to ensure state update is applied, then send
+                                                setTimeout(() => { void sendMessage(); }, 0);
                                             }}
                                             disabled={isLoading || !isAdmin}
                                         >

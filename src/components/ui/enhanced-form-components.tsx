@@ -80,18 +80,18 @@ export function EnhancedButton({
     ...props
 }: EnhancedButtonProps) {
     const variants = {
-        primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
-        secondary: "bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500",
-        outline: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500",
-        ghost: "text-gray-700 hover:bg-gray-100 focus:ring-gray-500",
-        destructive: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
-    };
+        primary: "bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/90 focus:ring-ring",
+        outline: "border border-input bg-card text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-ring",
+        ghost: "text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-ring",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 focus:ring-ring",
+    } as const;
 
     const sizes = {
         sm: cn(spacing.touch.min, "px-3 text-sm"),
         base: cn(spacing.touch.comfortable, "px-4"),
         lg: cn(spacing.touch.large, "px-6 text-lg"),
-    };
+    } as const;
 
     return (
         <button
@@ -151,13 +151,15 @@ export function EnhancedSelect({
     return (
         <select
             className={cn(
-                "block w-full rounded-md border-gray-300 shadow-sm",
-                "focus:border-blue-500 focus:ring-blue-500",
+                "block w-full rounded-md border border-input shadow-sm",
+                "bg-card text-foreground",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background",
                 spacing.touch.comfortable,
-                "bg-white text-gray-900",
-                "disabled:bg-gray-50 disabled:text-gray-500",
+                "disabled:bg-muted disabled:text-muted-foreground",
                 className
             )}
+            // Prevent hydration warnings if extensions add attributes
+            suppressHydrationWarning={true}
             {...props}
         >
             {placeholder && (

@@ -22,7 +22,7 @@ export interface NavItem {
   label?: string;
   disabled?: boolean;
   adminOnly?: boolean;
-  requiredTier?: "starter" | "agency";
+  requiredTier?: "starter" | "agency" | "enterprise";
   feature?: string;
 }
 
@@ -58,7 +58,7 @@ export const navItems: NavItem[] = [
     href: "/competitors",
     icon: Users,
     requiredTier: "starter", // Starter and above
-    feature: "competitor-analysis",
+    feature: "competitor_analysis", // aligned to access-control key
   },
   {
     title: "SERP View",

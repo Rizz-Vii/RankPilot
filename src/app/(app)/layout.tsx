@@ -15,6 +15,8 @@ import {
   SidebarHeader,
   SidebarContent,
   SidebarFooter,
+  SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { AppLogo, AppName } from "@/constants/nav";
 import Link from "next/link";
@@ -58,7 +60,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         <div className="flex h-screen w-screen bg-background pt-16 md:pt-0">
           <Sidebar className="flex flex-col">
-            <SidebarHeader className="p-4 flex items-center justify-between shrink-0">
+            <SidebarHeader className="p-4 flex items-center justify-between shrink-0 gap-2">
               <Link
                 href="/"
                 className="flex items-center gap-2 group-data-[state=collapsed]:justify-center"
@@ -68,6 +70,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   {AppName}
                 </span>
               </Link>
+              {/* Desktop collapse/expand button */}
+              <div className="hidden md:flex">
+                <SidebarTrigger className="h-9 w-9 rounded-md hover:bg-sidebar-accent" />
+              </div>
             </SidebarHeader>
             <SidebarContent className="flex-1 overflow-hidden">
               <ScrollArea className="h-full">
@@ -102,7 +108,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                           {role === "admin" ? "Administrator" : "User"}
                         </p>
                         <div className="flex items-center gap-1">
-                          {subscription?.tier === "agency" && (
+                          {(subscription?.tier === "agency" || subscription?.tier === "enterprise") && (
                             <Crown className="h-3 w-3 text-purple-500" />
                           )}
                           {subscription?.tier === "starter" && (

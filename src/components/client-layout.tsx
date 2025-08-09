@@ -7,10 +7,12 @@ import SiteFooter from "@/components/site-footer";
 import { Toaster } from "@/components/ui/toaster";
 import { UIProvider } from "@/context/UIContext";
 import { Toaster as SonnerToaster } from "sonner";
+import { DevHydrationSanitizer } from "@/components/dev/DevHydrationSanitizer";
 
 export function ClientLayout({ children }: { children: React.ReactNode; }) {
   return (
     <UIProvider>
+  <DevHydrationSanitizer />
       {children}
       <Toaster />
       <SonnerToaster position="top-right" richColors />

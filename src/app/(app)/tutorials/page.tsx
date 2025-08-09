@@ -55,7 +55,7 @@ interface Tutorial {
   difficulty: "beginner" | "intermediate" | "advanced";
   duration: string; // e.g., "10 min"
   type: "video" | "article" | "interactive";
-  requiredTier: "free" | "professional" | "enterprise";
+  requiredTier: "free" | "agency" | "enterprise";
   feature?: string; // Feature flag for specific functionality
   tags: string[];
   thumbnail?: string;
@@ -206,7 +206,7 @@ export default function TutorialsPage() {
           difficulty: "intermediate",
           duration: "20 min",
           type: "video",
-          requiredTier: "professional",
+          requiredTier: "agency",
           feature: "serp_analysis",
           tags: ["serp", "competition", "ranking"],
           popularity: 5,
@@ -237,7 +237,7 @@ export default function TutorialsPage() {
           difficulty: "advanced",
           duration: "25 min",
           type: "video",
-          requiredTier: "professional",
+          requiredTier: "agency",
           tags: ["advanced", "clustering", "semantic"],
           popularity: 4,
           lastUpdated: new Date("2024-07-05"),
@@ -267,7 +267,7 @@ export default function TutorialsPage() {
           difficulty: "intermediate",
           duration: "16 min",
           type: "article",
-          requiredTier: "professional",
+          requiredTier: "agency",
           feature: "content_brief",
           tags: ["brief", "planning", "strategy"],
           popularity: 5,
@@ -284,7 +284,7 @@ export default function TutorialsPage() {
           difficulty: "intermediate",
           duration: "22 min",
           type: "video",
-          requiredTier: "professional",
+          requiredTier: "agency",
           feature: "competitor_analysis",
           tags: ["competitors", "analysis", "strategy"],
           popularity: 5,
@@ -301,7 +301,7 @@ export default function TutorialsPage() {
           difficulty: "advanced",
           duration: "30 min",
           type: "video",
-          requiredTier: "professional",
+          requiredTier: "agency",
           feature: "link_analysis",
           tags: ["links", "backlinks", "authority"],
           popularity: 4,
@@ -386,7 +386,7 @@ export default function TutorialsPage() {
           difficulty: "intermediate",
           duration: "25 min",
           type: "video",
-          requiredTier: "professional",
+          requiredTier: "agency",
           feature: "neuroseo",
           tags: ["ai", "neuroseo", "automation"],
           popularity: 5,
@@ -459,10 +459,10 @@ export default function TutorialsPage() {
 
   const checkTutorialAccess = (tutorial: Tutorial): boolean => {
     // Check tier requirement
-    if (tutorial.requiredTier === "enterprise" && tier !== "enterprise") {
+  if (tutorial.requiredTier === "enterprise" && tier !== "enterprise") {
       return false;
     }
-    if (tutorial.requiredTier === "professional" && tier === "free") {
+  if (tutorial.requiredTier === "agency" && tier === "free") {
       return false;
     }
 
@@ -504,7 +504,7 @@ export default function TutorialsPage() {
     switch (requiredTier) {
       case "free":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-      case "professional":
+  case "agency":
         return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
       case "enterprise":
         return "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200";

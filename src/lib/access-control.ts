@@ -206,6 +206,49 @@ export const FEATURE_ACCESS: Record<string, FeatureConfig> = {
     requiredTier: "enterprise",
     description: "Advanced analytics and reporting",
   },
+  // Marketing (enterprise)
+  marketing_email_campaigns: {
+    requiredTier: "enterprise",
+    description: "Enterprise AI-driven email campaign automation",
+  },
+  marketing_lead_generation: {
+    requiredTier: "enterprise",
+    description: "Automated AI lead capture & enrichment",
+  },
+  marketing_social_presence: {
+    requiredTier: "enterprise",
+    description: "Multi-channel social scheduling & optimization",
+  },
+  marketing_content_generation: {
+    requiredTier: "enterprise",
+    description: "Cross-format marketing asset generation",
+  },
+  // Sales (progressive)
+  sales_pipeline: {
+    requiredTier: "starter",
+    description: "Sales pipeline visibility & velocity metrics",
+  },
+  sales_deals: {
+    requiredTier: "agency",
+    description: "Deal management & forecasting",
+  },
+  sales_outreach: {
+    requiredTier: "agency",
+    description: "AI-assisted outbound sequencing",
+  },
+  // Finance (progressive)
+  finance_billing_overview: {
+    requiredTier: "starter",
+    description: "Billing overview & quota tracking",
+  },
+  finance_invoices: {
+    requiredTier: "starter",
+    description: "Historical invoices & receipts",
+  },
+  finance_revenue_analytics: {
+    requiredTier: "agency",
+    description: "Revenue, churn & LTV analytics",
+  },
 } as const;
 
 // =============================================================================

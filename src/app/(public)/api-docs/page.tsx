@@ -102,7 +102,7 @@ print(analysis.results)`,
 
 export default function ApiDocsPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Hero Section */}
       <motion.section
         className="pt-32 pb-16 px-4"
@@ -113,19 +113,19 @@ export default function ApiDocsPage() {
       >
         <div className="max-w-4xl mx-auto text-center">
           <div className="flex justify-center mb-6">
-            <div className="p-4 bg-blue-100 rounded-2xl">
-              <Code2 className="h-12 w-12 text-blue-600" />
+            <div className="p-4 bg-primary/10 rounded-2xl">
+              <Code2 className="h-12 w-12 text-primary" />
             </div>
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             RankPilot API Documentation
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Integrate the power of NeuroSEO™ into your applications with our
             comprehensive RESTful API. Built for developers, designed for scale.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+            <Button size="lg" className="bg-primary hover:bg-primary/90">
               <Key className="mr-2 h-5 w-5" />
               Get API Key
             </Button>
@@ -147,7 +147,7 @@ export default function ApiDocsPage() {
             custom={1}
             className="mb-12"
           >
-            <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+            <Card className="bg-gradient-to-r from-primary to-purple-600 text-white">
               <CardContent className="p-8">
                 <h2 className="text-2xl font-bold mb-4">Quick Start</h2>
                 <div className="grid md:grid-cols-3 gap-6">
@@ -157,7 +157,7 @@ export default function ApiDocsPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Get API Key</h3>
-                      <p className="text-blue-100 text-sm">
+                      <p className="text-primary-foreground/80 text-sm">
                         Sign up and generate your API key from the dashboard
                       </p>
                     </div>
@@ -168,7 +168,7 @@ export default function ApiDocsPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Make Request</h3>
-                      <p className="text-blue-100 text-sm">
+                      <p className="text-primary-foreground/80 text-sm">
                         Use our SDKs or direct HTTP calls to access NeuroSEO™
                       </p>
                     </div>
@@ -179,7 +179,7 @@ export default function ApiDocsPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Get Results</h3>
-                      <p className="text-blue-100 text-sm">
+                      <p className="text-primary-foreground/80 text-sm">
                         Receive AI-powered SEO insights in JSON format
                       </p>
                     </div>
@@ -201,10 +201,10 @@ export default function ApiDocsPage() {
             custom={2}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
               Core Endpoints
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Access the full power of NeuroSEO™ through these carefully
               designed API endpoints
             </p>
@@ -227,16 +227,16 @@ export default function ApiDocsPage() {
                           variant={
                             endpoint.method === "GET" ? "secondary" : "default"
                           }
-                          className={`${endpoint.method === "GET" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"} font-mono`}
+                          className={`${endpoint.method === "GET" ? "bg-green-100 text-green-800" : "bg-primary/10 text-primary"} font-mono`}
                         >
                           {endpoint.method}
                         </Badge>
-                        <code className="text-lg font-mono text-gray-800">
+                        <code className="text-lg font-mono text-foreground">
                           {endpoint.endpoint}
                         </code>
                       </div>
                       <div className="flex-1">
-                        <p className="text-gray-600">{endpoint.description}</p>
+                        <p className="text-muted-foreground">{endpoint.description}</p>
                         <div className="flex flex-wrap gap-2 mt-2">
                           {endpoint.parameters.map((param, paramIndex) => (
                             <Badge
@@ -272,10 +272,10 @@ export default function ApiDocsPage() {
             custom={7}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
               SDK Examples
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Get started quickly with our official SDKs and code examples
             </p>
           </motion.div>
@@ -325,9 +325,9 @@ export default function ApiDocsPage() {
           <div className="grid md:grid-cols-3 gap-6">
             <Card className="text-center">
               <CardContent className="p-6">
-                <Shield className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                <Shield className="h-12 w-12 text-primary mx-auto mb-4" />
                 <h3 className="font-bold text-lg mb-2">Secure & Reliable</h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-muted-foreground text-sm">
                   Enterprise-grade security with 99.9% uptime SLA
                 </p>
               </CardContent>
@@ -335,9 +335,9 @@ export default function ApiDocsPage() {
 
             <Card className="text-center">
               <CardContent className="p-6">
-                <Zap className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                <Zap className="h-12 w-12 text-primary mx-auto mb-4" />
                 <h3 className="font-bold text-lg mb-2">High Performance</h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-muted-foreground text-sm">
                   Sub-second response times with global CDN
                 </p>
               </CardContent>
@@ -345,11 +345,11 @@ export default function ApiDocsPage() {
 
             <Card className="text-center">
               <CardContent className="p-6">
-                <Book className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                <Book className="h-12 w-12 text-primary mx-auto mb-4" />
                 <h3 className="font-bold text-lg mb-2">
                   Complete Documentation
                 </h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-muted-foreground text-sm">
                   Comprehensive guides and interactive examples
                 </p>
               </CardContent>

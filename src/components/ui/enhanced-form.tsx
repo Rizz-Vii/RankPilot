@@ -140,8 +140,10 @@ export function EnhancedForm({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+    if (target.isContentEditable) return; // never auto-submit from contentEditable
     if (submitOnEnter && e.key === "Enter" && !e.shiftKey) {
-      const target = e.target as HTMLElement;
       // Don't submit on Enter for textareas
       if (target.tagName.toLowerCase() !== "textarea") {
         handleSubmit(e as any);

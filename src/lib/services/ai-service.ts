@@ -6,6 +6,7 @@
 
 import { functions } from "@/lib/firebase";
 import { httpsCallable } from "firebase/functions";
+import { auth } from "@/lib/firebase";
 
 // Backend function references
 const analyzeContentFunction = httpsCallable(functions, "analyzeContent");
@@ -47,6 +48,26 @@ export interface KeywordSuggestionsRequest {
     includeMetrics?: boolean;
 }
 
+export interface KeywordSuggestionItem {
+    keyword: string;
+    searchVolume?: number;
+    competition?: "low" | "medium" | "high";
+    difficulty?: number;
+    intent?: "informational" | "commercial" | "transactional" | "navigational";
+}
+
+export interface KeywordSuggestionsResponse {
+    suggestions: KeywordSuggestionItem[];
+    relatedQueries?: string[];
+    totalProcessingTime: number;
+    cacheHit: boolean;
+    plan?: string;
+    quota?: { limit: number; used: number; remaining: number };
+    // Provenance of data returned by backend function
+    // live: fresh AI generation, cache: in-memory function cache hit, fallback: locally generated emergency data
+    source?: "live" | "cache" | "fallback";
+}
+
 export interface SEOAuditRequest {
     url: string;
     depth?: number;
@@ -71,28 +92,136 @@ export async function analyzeContent(request: ContentAnalysisRequest): Promise<C
  * Get keyword suggestions using backend Cloud Function
  * Optimized with caching and memory management
  */
-export async function getKeywordSuggestions(request: KeywordSuggestionsRequest) {
-    try {
-        const result = await getKeywordSuggestionsFunction(request);
-        return result.data;
-    } catch (error) {
-        console.error("Keyword suggestions failed:", error);
-        throw new Error("Failed to get keyword suggestions. Please try again.");
+export async function fetchKeywordSuggestions(request: KeywordSuggestionsRequest): Promise<KeywordSuggestionsResponse> {
+    const maxAttempts = 2;
+    let lastError: any = null;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            const result = await getKeywordSuggestionsFunction(request);
+            return result.data as KeywordSuggestionsResponse;
+        } catch (error: any) {
+            lastError = error;
+            const code: string | undefined = error?.code;
+            const rawMessage: string | undefined = error?.message;
+            console.warn(`Keyword suggestions attempt ${attempt} failed`, { code, rawMessage });
+
+            // Retry only on transient errors
+            if (attempt < maxAttempts && code && (code.includes("unavailable") || code.includes("internal"))) {
+                await new Promise(r => setTimeout(r, 400 * attempt));
+                continue;
+            }
+
+            // Map Firebase Functions error codes to user friendly messages
+            if (code) {
+                if (code.includes("unauthenticated")) {
+                    throw new Error("Authentication required. Please sign in again.");
+                }
+                if (code.includes("resource-exhausted")) {
+                    if (/Daily keyword research limit reached/i.test(rawMessage || "")) {
+                        throw new Error("Daily keyword research limit reached. Try again tomorrow or upgrade your plan for a higher quota.");
+                    }
+                    if (/Too many requests/i.test(rawMessage || "")) {
+                        throw new Error("You're sending requests too quickly. Please wait a second and try again.");
+                    }
+                    throw new Error("Quota or rate limit reached. Please slow down or upgrade your plan.");
+                }
+                if (code.includes("invalid-argument")) {
+                    throw new Error(rawMessage?.replace(/^functions\/invalid-argument: /, '') || "Invalid request. Check your input and try again.");
+                }
+                if (code.includes("internal") || code.includes("unavailable")) {
+                    throw new Error("Service is temporarily unavailable. Please retry shortly; fallback demo data will load on timeout.");
+                }
+            }
+
+            // Fallback generic message
+            throw new Error("Failed to get keyword suggestions. Please try again.");
+        }
     }
+
+    // Should not reach here, but safeguard
+    throw new Error(lastError?.message || "Failed to get keyword suggestions.");
 }
 
 /**
  * Run SEO audit using backend Cloud Function with web crawling
  * Integrated with NeuroSEO's NeuralCrawler for comprehensive analysis
  */
-export async function runSEOAudit(request: SEOAuditRequest) {
-    try {
-        const result = await runSeoAuditFunction(request);
-        return result.data;
-    } catch (error) {
-        console.error("SEO audit failed:", error);
-        throw new Error("Failed to run SEO audit. Please try again.");
+export interface SEOAuditResponse {
+    url?: string;
+    overallScore: number;
+    items: any[]; // normalized later by adapter
+    summary?: string;
+    totalProcessingTime?: number;
+    cacheHit?: boolean;
+    quota?: { limit: number; used: number; remaining: number };
+    source?: "live" | "cache" | "fallback";
+}
+
+export async function runSEOAudit(request: SEOAuditRequest): Promise<SEOAuditResponse> {
+    const maxAttempts = 2;
+    let lastError: any = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            const result = await runSeoAuditFunction(request);
+            return result.data as SEOAuditResponse;
+        } catch (error: any) {
+            lastError = error;
+            const code: string | undefined = error?.code;
+            const rawMessage: string | undefined = error?.message;
+            console.warn(`SEO audit attempt ${attempt} failed`, { code, rawMessage });
+
+            // If likely transport/internal issue, attempt proxy fallback once (no retry loop recursion)
+            const isTransportIssue = [rawMessage, code].some(v => typeof v === 'string' && /(cors|failed|network|fetch|internal)/i.test(v || '')) || code === undefined;
+            if (attempt === maxAttempts && isTransportIssue) {
+                try {
+                    const idToken = await auth.currentUser?.getIdToken();
+                    const proxyResp = await fetch('/api/seo-audit/run', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
+                        },
+                        body: JSON.stringify(request)
+                    });
+                    if (proxyResp.ok) {
+                        return await proxyResp.json() as SEOAuditResponse;
+                    }
+                } catch (proxyErr) {
+                    console.warn('Proxy fallback failed', proxyErr);
+                }
+            }
+
+            // Retry transient errors
+            if (attempt < maxAttempts && code && (code.includes("unavailable") || code.includes("internal"))) {
+                await new Promise(r => setTimeout(r, 400 * attempt));
+                continue;
+            }
+
+            if (code) {
+                if (code.includes("unauthenticated")) {
+                    throw new Error("Authentication required. Please sign in again.");
+                }
+                if (code.includes("resource-exhausted")) {
+                    if (/Daily SEO audit limit reached/i.test(rawMessage || "")) {
+                        throw new Error("Daily SEO audit limit reached. Try again tomorrow or upgrade your plan for a higher quota.");
+                    }
+                    if (/Too many requests/i.test(rawMessage || "")) {
+                        throw new Error("You're sending requests too quickly. Please wait a moment and try again.");
+                    }
+                    throw new Error("Quota or rate limit reached. Please slow down or upgrade your plan.");
+                }
+                if (code.includes("invalid-argument")) {
+                    throw new Error(rawMessage?.replace(/^functions\/invalid-argument: /, '') || "Invalid request. Check your input and try again.");
+                }
+                if (code.includes("internal") || code.includes("unavailable")) {
+                    throw new Error("Service is temporarily unavailable. Retrying may help; fallback demo data will load on timeout.");
+                }
+            }
+            throw new Error("Failed to run SEO audit. Please try again.");
+        }
     }
+    throw new Error(lastError?.message || "Failed to run SEO audit. Please try again.");
 }
 
 /**

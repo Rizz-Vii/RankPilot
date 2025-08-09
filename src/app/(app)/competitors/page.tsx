@@ -2,13 +2,8 @@
 "use client";
 
 import CompetitorAnalysisForm from "@/components/competitor-analysis-form";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ToolPageHeader } from "@/components/tool-page-header";
 import {
   ChartConfig,
   ChartContainer,
@@ -37,6 +32,11 @@ import type {
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, BarChart3, Users } from "lucide-react";
+import { useCompetitorAnalysisMetrics } from '@/hooks/useCompetitorAnalysisMetrics';
+import { MetricCard } from '@/components/metrics/MetricCard';
+import { TrendSparkline } from '@/components/metrics/TrendSparkline';
+import { PeriodSelector } from '@/components/metrics/PeriodSelector';
+import { useState } from 'react';
 import { useEffect, useRef, useState } from "react";
 import {
   Bar,
@@ -375,13 +375,34 @@ export default function CompetitorsPage() {
     }
   };
 
+  const [months, setMonths] = useState(6);
+  const comp = useCompetitorAnalysisMetrics(months);
   return (
-    <div
-      className={cn(
-        "mx-auto transition-all duration-500",
-        submitted ? "max-w-7xl" : "max-w-xl"
-      )}
-    >
+    <main className="container mx-auto py-6 space-y-6">
+      <ToolPageHeader
+        title="Competitor Analysis"
+        description="Analyze competitor rankings, content gaps, and strategic opportunities."
+        badges={[
+          { label: "NeuroSEO™", variant: "outline", className: "text-primary border-primary/40" },
+          { label: "Competitive Intelligence", variant: "secondary" }
+        ]}
+        showBreadcrumb
+      />
+      <div className="space-y-6">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            {comp.kpis.map(k => (
+              <MetricCard key={k.key} label={k.label} value={k.value} delta={k.delta} deltaLabel="vs prev" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
+            ))}
+          </div>
+          <PeriodSelector value={months} onChange={setMonths} />
+        </div>
+      <div
+        className={cn(
+          "mx-auto transition-all duration-500",
+          submitted ? "max-w-7xl" : "max-w-xl"
+        )}
+      >
       <div
         className={cn(
           "grid gap-8 transition-all duration-500",
@@ -396,7 +417,7 @@ export default function CompetitorsPage() {
         </motion.div>
 
         <div className="lg:col-span-2" ref={resultsRef}>
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {isLoading && (
               <motion.div key="loading">
                 <LoadingScreen text="Analyzing rankings..." />
@@ -429,6 +450,7 @@ export default function CompetitorsPage() {
           </AnimatePresence>
         </div>
       </div>
-    </div>
+  </div></div>
+    </main>
   );
 }

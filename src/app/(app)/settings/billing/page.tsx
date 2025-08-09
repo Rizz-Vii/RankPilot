@@ -70,6 +70,12 @@ function BillingPage() {
                         Agency
                       </Badge>
                     )}
+                    {subscription?.tier === "enterprise" && (
+                      <Badge variant="default" className="bg-purple-600">
+                        <Crown className="w-3 h-3 mr-1" />
+                        Enterprise
+                      </Badge>
+                    )}
                     {subscription?.tier === "free" && (
                       <Badge variant="outline">Free Plan</Badge>
                     )}
@@ -120,7 +126,7 @@ function BillingPage() {
                 </ul>
               </div>
 
-              {subscription?.tier === "free" && (
+        {subscription?.tier === "free" && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <p className="text-sm text-blue-800 mb-3">
                     <strong>Upgrade to unlock more features:</strong> Get more
@@ -133,20 +139,20 @@ function BillingPage() {
                       className="bg-blue-600 hover:bg-blue-700"
                       onClick={() => handleUpgrade("starter")}
                     >
-                      Upgrade to Starter ($29/mo)
+          Upgrade to Starter ($19/mo)
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleUpgrade("agency")}
                     >
-                      View Agency Plan ($99/mo)
+          View Agency Plan ($49/mo)
                     </Button>
                   </div>
                 </div>
               )}
 
-              {subscription?.tier === "starter" && (
+      {subscription?.tier === "starter" && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <p className="text-sm text-yellow-800 mb-3">
                     <strong>Ready for unlimited access?</strong> Upgrade to
@@ -158,7 +164,7 @@ function BillingPage() {
                     className="bg-yellow-600 hover:bg-yellow-700"
                     onClick={() => handleUpgrade("agency")}
                   >
-                    Upgrade to Agency ($99/mo)
+        Upgrade to Agency ($49/mo)
                   </Button>
                 </div>
               )}
@@ -274,7 +280,7 @@ function BillingPage() {
       <div className="mb-8">
         <h2 className="text-2xl font-bold mb-4">Available Plans</h2>
         <div className="grid md:grid-cols-3 gap-6">
-          {plans.map((plan) => (
+          {plans.filter(p => p.tier !== 'free').map((plan) => (
             <Card
               key={plan.tier}
               className={`relative ${plan.tier === subscription?.tier ? "ring-2 ring-primary" : ""}`}
@@ -292,6 +298,9 @@ function BillingPage() {
                 <div className="flex items-center justify-center gap-2 mb-2">
                   {plan.tier === "agency" && (
                     <Crown className="w-5 h-5 text-yellow-500" />
+                  )}
+                  {plan.tier === "enterprise" && (
+                    <Crown className="w-5 h-5 text-purple-500" />
                   )}
                   {plan.tier === "starter" && (
                     <Zap className="w-5 h-5 text-primary" />
@@ -323,14 +332,6 @@ function BillingPage() {
                   <Button disabled className="w-full">
                     <CheckCircle className="w-4 h-4 mr-2" />
                     Current Plan
-                  </Button>
-                ) : plan.tier === "free" ? (
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    disabled={subscription?.tier === "free"}
-                  >
-                    Downgrade to Free
                   </Button>
                 ) : (
                   <Button
@@ -367,7 +368,7 @@ function BillingPage() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">$29.00</p>
+                  <p className="font-medium">$19.00</p>
                   <Badge
                     variant="outline"
                     className="text-green-600 border-green-600"
@@ -387,7 +388,7 @@ function BillingPage() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">$29.00</p>
+                  <p className="font-medium">$19.00</p>
                   <Badge
                     variant="outline"
                     className="text-green-600 border-green-600"
@@ -407,7 +408,7 @@ function BillingPage() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">$29.00</p>
+                  <p className="font-medium">$19.00</p>
                   <Badge
                     variant="outline"
                     className="text-green-600 border-green-600"

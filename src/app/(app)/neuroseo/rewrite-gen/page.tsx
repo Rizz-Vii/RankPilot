@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { ToolPageHeader } from "@/components/tool-page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +31,7 @@ import {
   FileText
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, query, where, orderBy, limit, getDocs } from "firebase/firestore";
@@ -305,17 +307,17 @@ export default function RewriteGenPage() {
     { name: 'Conversion', improvement: currentResult.metrics.conversionPotential }
   ] : [];
 
+  // Placeholder provenance source (future: integrate real backend source)
+  const provenance: any = null;
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <PenTool className="h-8 w-8 text-orange-600" />
-        <div>
-          <h1 className="text-3xl font-bold">RewriteGen™</h1>
-          <p className="text-muted-foreground">
-            AI-powered content rewriting and optimization
-          </p>
-        </div>
-      </div>
+    <main className="container mx-auto py-6 space-y-6">
+      <ToolPageHeader
+        title="RewriteGen™"
+        description="AI-powered content rewriting and optimization."
+        badges={composeToolHeaderBadges("rewrite-gen", provenance)}
+        showBreadcrumb
+      />
 
       {/* Analysis Input */}
       <Card>
@@ -417,7 +419,7 @@ export default function RewriteGenPage() {
       </Card>
 
       {/* Results */}
-      <AnimatePresence>
+  <AnimatePresence>
         {currentResult && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -809,6 +811,6 @@ export default function RewriteGenPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </main>
   );
 }

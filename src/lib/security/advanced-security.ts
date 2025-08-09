@@ -206,17 +206,29 @@ function applyCORS(request: NextRequest, response: NextResponse): NextResponse {
  * Apply security headers to response
  */
 function applySecurityHeaders(response: NextResponse): NextResponse {
+    const isProd = process.env.NODE_ENV === 'production';
     // Apply basic security headers
     for (const [header, value] of Object.entries(SECURITY_CONFIG.SECURITY_HEADERS)) {
         response.headers.set(header, value);
     }
 
-    // Build Content Security Policy
-    const cspDirectives = Object.entries(SECURITY_CONFIG.CSP)
-        .map(([directive, sources]) => `${directive} ${sources.join(' ')}`)
-        .join('; ');
-
-    response.headers.set('Content-Security-Policy', cspDirectives);
+    // Development overrides: relax headers and skip strict CSP to enable Next.js dev runtime
+    if (!isProd) {
+        // Allow iframes on same origin (Stripe, playgrounds in dev)
+        response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+        // Relax payments to avoid noisy warnings in dev
+        response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(self)');
+        // Skip enforcing CSP in development to avoid breaking HMR and eval-based transforms
+        response.headers.delete('Content-Security-Policy');
+        // Optionally set report-only relaxed CSP (commented out for now)
+        // response.headers.set('Content-Security-Policy-Report-Only', "default-src 'self' http://localhost:*; connect-src 'self' http://localhost:* ws://localhost:*; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data: https:");
+    } else {
+        // Production: Build and apply strict CSP
+        const cspDirectives = Object.entries(SECURITY_CONFIG.CSP)
+            .map(([directive, sources]) => `${directive} ${sources.join(' ')}`)
+            .join('; ');
+        response.headers.set('Content-Security-Policy', cspDirectives);
+    }
 
     // Add security monitoring headers
     response.headers.set('X-Security-Scan', 'enabled');
@@ -249,6 +261,7 @@ function logSecurityEvent(request: NextRequest, eventType: string, details?: any
  */
 export async function securityMiddleware(request: NextRequest): Promise<NextResponse> {
     const startTime = Date.now();
+    const isProd = process.env.NODE_ENV === 'production';
 
     // Handle OPTIONS requests for CORS
     if (request.method === 'OPTIONS') {
@@ -256,18 +269,22 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
         return applyCORS(request, response);
     }
 
-    // Apply rate limiting
+    // Apply rate limiting (disable strict enforcement in development)
     const rateLimitPassed = await applyRateLimit(request);
     if (!rateLimitPassed) {
         logSecurityEvent(request, 'rate_limit_exceeded');
-        return new NextResponse('Rate limit exceeded', { status: 429 });
+        if (isProd) {
+            return new NextResponse('Rate limit exceeded', { status: 429 });
+        }
     }
 
-    // Detect threats
+    // Detect threats (log in dev, block only in production)
     const threatCheck = detectThreats(request);
     if (threatCheck.isThreat) {
         logSecurityEvent(request, 'threat_detected', { threatType: threatCheck.threatType });
-        return new NextResponse('Request blocked for security reasons', { status: 403 });
+        if (isProd) {
+            return new NextResponse('Request blocked for security reasons', { status: 403 });
+        }
     }
 
     // Create response

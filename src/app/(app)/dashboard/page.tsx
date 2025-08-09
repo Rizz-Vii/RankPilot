@@ -1,6 +1,8 @@
 // src/app/(app)/dashboard/page.tsx - Complete Dynamic Database Integration
 "use client";
 import { CoreWebVitalsWidget } from "@/components/performance/core-web-vitals-monitor";
+import { ToolPageHeader } from "@/components/tool-page-header";
+import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import ToolGrid from "@/components/tool-grid";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -451,30 +453,19 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto py-8 px-4 space-y-8" data-testid="dashboard-content">
-      <motion.div
-        className="space-y-4"
-        initial="hidden"
-        animate="visible"
-        variants={itemVariants}
-        layoutId="dashboard-header"
+      <ToolPageHeader
+        title={`Welcome, ${profile?.displayName || user?.email}!`}
+        description="Your SEO command center with real-time data."
+        badges={composeToolHeaderBadges("dashboard", null)}
+        showBreadcrumb
       >
-        <header className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-headline font-semibold text-foreground">
-              Welcome, {profile?.displayName || user?.email}!
-            </h1>
-            <p className="text-muted-foreground font-body">
-              Here&apos;s your SEO command center with real-time data.
-            </p>
-          </div>
-          {dataLoading && (
-            <Button variant="ghost" size="sm" disabled>
-              <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-              Loading...
-            </Button>
-          )}
-        </header>
-      </motion.div>
+        {dataLoading && (
+          <Button variant="ghost" size="sm" disabled>
+            <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+            Loading...
+          </Button>
+        )}
+      </ToolPageHeader>
 
       <motion.div
         className={styles.metricsGrid}

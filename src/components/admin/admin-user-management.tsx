@@ -197,11 +197,11 @@ export default function AdminUserManagement() {
             Admin
           </Badge>
         );
-      case "pro":
+  case "agency":
         return (
           <Badge className="bg-blue-100 text-blue-800">
             <Crown className="h-3 w-3 mr-1" />
-            Pro
+            Agency
           </Badge>
         );
       case "suspended":
@@ -278,7 +278,7 @@ export default function AdminUserManagement() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Pro Users
+                  Agency Users
                 </p>
                 <p className="text-2xl font-bold">
                   {
@@ -346,7 +346,7 @@ export default function AdminUserManagement() {
                 <SelectItem value="all">All Roles</SelectItem>
                 <SelectItem value="user">Users</SelectItem>
                 <SelectItem value="admin">Admins</SelectItem>
-                <SelectItem value="pro">Pro Users</SelectItem>
+                <SelectItem value="agency">Agency Users</SelectItem>
                 <SelectItem value="suspended">Suspended</SelectItem>
               </SelectContent>
             </Select>

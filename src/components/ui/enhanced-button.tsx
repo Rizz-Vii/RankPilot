@@ -24,8 +24,8 @@ const enhancedButtonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         gradient:
           "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 active:scale-95",
-        success: "bg-green-600 text-white hover:bg-green-700 active:scale-95",
-        warning: "bg-yellow-600 text-white hover:bg-yellow-700 active:scale-95",
+  success: "bg-success text-success-foreground hover:bg-success/90 active:scale-95",
+  warning: "bg-warning text-warning-foreground hover:bg-warning/90 active:scale-95",
       },
       size: {
         default: "h-10 px-4 py-2",

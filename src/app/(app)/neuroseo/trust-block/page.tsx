@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { ToolPageHeader } from "@/components/tool-page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +29,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, query, where, orderBy, limit, getDocs } from "firebase/firestore";
@@ -301,17 +303,16 @@ export default function TrustBlockPage() {
     impact: signal.impact === 'high' ? 100 : signal.impact === 'medium' ? 70 : 40
   })) || [];
 
+  const provenance: any = null; // future backend source integration placeholder
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Shield className="h-8 w-8 text-green-600" />
-        <div>
-          <h1 className="text-3xl font-bold">TrustBlock™</h1>
-          <p className="text-muted-foreground">
-            E-A-T optimization and content authenticity analysis
-          </p>
-        </div>
-      </div>
+    <main className="container mx-auto py-6 space-y-6">
+      <ToolPageHeader
+        title="TrustBlock™"
+        description="E-A-T optimization and content authenticity analysis."
+        badges={composeToolHeaderBadges("trust-block", provenance)}
+        showBreadcrumb
+      />
 
       {/* Analysis Input */}
       <Card>
@@ -718,6 +719,6 @@ export default function TrustBlockPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </main>
   );
 }

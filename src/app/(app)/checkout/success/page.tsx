@@ -65,7 +65,7 @@ export default function CheckoutSuccessPage() {
             </motion.div>
 
             <CardTitle className="text-3xl font-bold text-green-700 mb-4">
-              Welcome to RankPilot Pro! 🎉
+              Subscription Activated 🎉
             </CardTitle>
 
             <p className="text-lg text-muted-foreground max-w-md mx-auto">

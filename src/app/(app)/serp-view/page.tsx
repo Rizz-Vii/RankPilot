@@ -2,6 +2,8 @@
 "use client";
 
 import SerpViewForm from "@/components/serp-view-form";
+import { ToolPageHeader } from "@/components/tool-page-header";
+import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import SerpViewResults from "@/components/serp-view-results";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import LoadingScreen from "@/components/ui/loading-screen";
@@ -16,6 +18,10 @@ import type {
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
+import { useSerpKeywordMetrics } from '@/hooks/useSerpKeywordMetrics';
+import { MetricCard } from '@/components/metrics/MetricCard';
+import { TrendSparkline } from '@/components/metrics/TrendSparkline';
+import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { useEffect, useRef, useState } from "react";
 
 export default function SerpViewPage() {
@@ -73,13 +79,32 @@ export default function SerpViewPage() {
     }
   };
 
+  const serpMetrics = useSerpKeywordMetrics();
   return (
-    <div
+    <main className="container mx-auto py-6 space-y-6">
+      <ToolPageHeader
+        title="SERP View"
+        description="Visualize live search results structure and ranking signals."
+        badges={composeToolHeaderBadges("serp-view", null)}
+        showBreadcrumb
+      />
+    <div className="space-y-6"
       className={cn(
         "mx-auto transition-all duration-500",
         submitted ? "max-w-7xl" : "max-w-xl"
       )}
     >
+      <div className="grid gap-4 md:grid-cols-3">
+        {serpMetrics.kpis.map(k => (
+          <MetricCard key={k.key} label={k.label} value={Number(k.value).toFixed(1)} delta={k.delta} deltaLabel="" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
+        ))}
+      </div>
+      <LazyDataTable
+        columns={[{ key:'keyword', header:'Keyword'}, { key:'topUrl', header:'Top URL', render: (r:any)=> (r.results?.[0]?.url||'') }, { key:'top3', header:'Top3', render:(r:any)=> (r.results?.some((x:any)=> x.position<=3)? 'Yes':'No') }]}
+        rows={serpMetrics.rows.map(r=> ({ ...r, top3: r.results?.some((x:any)=> x.position<=3) }))}
+        loading={serpMetrics.loading}
+        empty="No SERP snapshots"
+      />
       <div
         className={cn(
           "grid gap-8 transition-all duration-500",
@@ -120,5 +145,6 @@ export default function SerpViewPage() {
         </div>
       </div>
     </div>
+    </main>
   );
 }

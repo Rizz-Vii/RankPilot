@@ -48,7 +48,7 @@ const defaultAuthContext: AuthContextType = {
   activities: [],
 };
 
-const AuthContext = createContext<AuthContextType>(defaultAuthContext);
+export const AuthContext = createContext<AuthContextType>(defaultAuthContext);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -81,11 +81,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const userData = userDocSnap.data();
         setRole(userData?.role || null);
         setProfile(userData || null);
-        // Attach teamId from Firestore user doc if present
-        setUser({ ...currentUser, teamId: userData?.teamId });
+        // Attach teamId from Firestore user doc if present without breaking User prototype methods
+        try {
+          (currentUser as any).teamId = userData?.teamId;
+        } catch {}
+        setUser(currentUser as User);
       } else {
         setRole(null);
         setProfile(null);
+        setUser(currentUser as User);
       }
 
       // Fetch user activities

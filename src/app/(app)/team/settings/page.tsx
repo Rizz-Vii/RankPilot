@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ToolPageHeader } from "@/components/tool-page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, doc, getDoc, updateDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, documentId } from "firebase/firestore";
 import { useAuth } from "@/context/AuthContext";
 
 export default function TeamSettingsPage() {
@@ -29,34 +30,64 @@ export default function TeamSettingsPage() {
     setLoading(true);
     (async () => {
       try {
-        // Find team where user is a member
-        const teamQuery = query(collection(db, "teams"), where("members", "array-contains", { userId: user.uid }));
-        const teamSnap = await getDocs(teamQuery);
+        // 1) Prefer teams where current user's UID is in scalar memberIds array
+        //    (array-contains works on primitives, not nested objects)
         let teamDoc: Team | null = null;
-        if (!teamSnap.empty) {
-          teamDoc = { id: teamSnap.docs[0].id, ...teamSnap.docs[0].data() } as Team;
+        const byMemberIdsQ = query(collection(db, "teams"), where("memberIds", "array-contains", user.uid));
+        const byMemberIdsSnap = await getDocs(byMemberIdsQ);
+        if (!byMemberIdsSnap.empty) {
+          teamDoc = { id: byMemberIdsSnap.docs[0].id, ...byMemberIdsSnap.docs[0].data() } as Team;
         }
-        // Fallback: try by user.teamId if available
-        if (!teamDoc && typeof user.teamId === "string") {
-          const docSnap = await getDoc(doc(db, "teams", user.teamId));
+
+        // 2) Fallback: read users/{uid}.teamId and load that team
+        if (!teamDoc) {
+          const userDocSnap = await getDoc(doc(db, "users", user.uid));
+          const teamIdFromUser = userDocSnap.exists() ? (userDocSnap.data() as any)?.teamId : undefined;
+          if (typeof teamIdFromUser === "string" && teamIdFromUser) {
+            const teamSnap = await getDoc(doc(db, "teams", teamIdFromUser));
+            if (teamSnap.exists()) {
+              teamDoc = { id: teamSnap.id, ...teamSnap.data() } as Team;
+            }
+          }
+        }
+
+        // 3) Legacy fallback (if your auth user object was extended elsewhere)
+        if (!teamDoc && typeof (user as any).teamId === "string") {
+          const docSnap = await getDoc(doc(db, "teams", (user as any).teamId));
           if (docSnap.exists()) teamDoc = { id: docSnap.id, ...docSnap.data() } as Team;
         }
         if (!teamDoc) throw new Error("Team not found");
 
-        // Fetch all projects
-        const projectsSnap = await getDocs(collection(db, "projects"));
-        const allProjectsArr = projectsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Fetch only the team's projects (limit 10 per 'in' query)
+        const projectIds: string[] = Array.isArray((teamDoc as any).projects) ? (teamDoc as any).projects : [];
+        let allProjectsArr: any[] = [];
+        if (projectIds.length > 0) {
+          try {
+            const chunk = <T,>(arr: T[], size: number) => arr.reduce<T[][]>((acc, _, i) => (i % size ? acc : [...acc, arr.slice(i, i + size)]), []);
+            const chunks = chunk(projectIds, 10);
+            for (const ids of chunks) {
+              const projQ = query(collection(db, "projects"), where(documentId(), "in", ids));
+              const projSnap = await getDocs(projQ);
+              allProjectsArr = allProjectsArr.concat(projSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+            }
+          } catch (projErr) {
+            console.warn("Project fetch skipped due to permissions or network:", projErr);
+            // Fallback to minimal project list with IDs only
+            allProjectsArr = projectIds.map(id => ({ id, name: id }));
+          }
+        }
 
         setTeam(teamDoc);
         setAllProjects(allProjectsArr);
         setEditState({
-          name: teamDoc.name,
-          description: teamDoc.description,
-          members: teamDoc.members,
-          projects: allProjectsArr.filter(p => teamDoc.projects.includes(p.id)),
-          integrations: teamDoc.integrations,
+          name: (teamDoc as any).name ?? "",
+          description: (teamDoc as any).description ?? "",
+          members: Array.isArray((teamDoc as any).members) ? (teamDoc as any).members : [],
+          projects: allProjectsArr.filter(p => Array.isArray((teamDoc as any).projects) && (teamDoc as any).projects.includes(p.id)),
+          integrations: Array.isArray((teamDoc as any).integrations) ? (teamDoc as any).integrations : [],
         });
       } catch (e: any) {
+        console.error("TeamSettings load error:", e);
         setError("Failed to load team data.");
       } finally {
         setLoading(false);
@@ -106,7 +137,16 @@ export default function TeamSettingsPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-10 space-y-8">
+    <main className="container mx-auto py-6 space-y-8">
+      <ToolPageHeader
+        title="Team Settings"
+        description="Configure your team's details, members, integrations, and permissions"
+        badges={[
+          { label: "Collaboration", variant: "secondary" },
+          { label: "Enterprise", variant: "outline", className: "text-primary border-primary/40" },
+        ]}
+        showBreadcrumb
+      />
       {loading && <div>Loading...</div>}
       {error && <div className="text-red-500">{error}</div>}
       {!loading && team && editState && (
@@ -286,6 +326,6 @@ export default function TeamSettingsPage() {
           </div>
         </>
       )}
-    </div>
+  </main>
   );
 }

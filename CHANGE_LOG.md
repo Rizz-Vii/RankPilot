@@ -287,3 +287,29 @@ code --list-extensions | wc -l
 **📝 Change Log Generated:** July 30, 2025  
 **🔧 Session Status:** Infrastructure Restoration Complete - Ready for Validation  
 **🚀 Next Action:** Reload VS Code window to apply optimizations
+
+---
+
+## ♻️ August 9, 2025 Deployment Readiness Enhancements
+
+### Summary
+
+1. Added missing export for `runSeoAudit` so SEO audit function is now deployable.
+2. Consolidated duplicate performance monitoring functions: removed `performance-functions.ts` in favor of canonical `performance-dashboard-functions.ts` implementation (exports: `performanceDashboard`, `realtimeMetrics`, `functionMetrics`, `abTestManagement`, `healthCheck`).
+3. Enhanced `runSeoAudit` to:
+    - Initialize Firestore (idempotent) and persist each live audit under `audits/{uid}/urls`.
+    - Support `forceFresh` parameter to bypass in-memory cache.
+    - Provide historical fallback using most recent stored audit (phase log: `historical_fallback`) before generic synthetic fallback.
+    - Record quota, processing time, and provenance unchanged; adds persistence metadata.
+4. Removed obsolete compiled artifacts (`lib/api/performance-functions.js*`) to prevent accidental deployment of deprecated functions.
+
+### Deployment Notes
+
+- Full functions deploy will now include SEO audit + canonical performance suite.
+- Historical audit data enables UI continuity even during transient crawl/AI failures.
+- Recommend running: `npm --prefix functions run build && firebase deploy --only functions` from repo root (or within `functions/`).
+
+### Follow-Up
+
+- Consider backfilling existing audit documents with a standardized `score.overall` field if absent for consistency.
+- Add Firestore index if querying audits by `url` and `createdAt` becomes frequent (compound index: `audits/{uid}/urls` collection on `url ASC, createdAt DESC`).

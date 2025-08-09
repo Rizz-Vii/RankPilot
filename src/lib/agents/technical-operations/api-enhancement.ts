@@ -20,95 +20,95 @@ const execAsync = promisify(exec);
  * 5. Firebase Cloud Functions enhancement
  */
 export class APIEnhancementAgent implements RankPilotAgent {
-    name = 'API Enhancement Agent';
-    version = '3.0.0';
+  name = 'API Enhancement Agent';
+  version = '3.0.0';
 
-    capabilities: AgentCapability[] = [
-        {
-            name: 'NeuroSEO™ Real-time Processing',
-            description: 'Optimize all 6 NeuroSEO™ engines for real-time analysis',
-            canAutoFix: true,
-            riskLevel: 'medium'
-        },
-        {
-            name: 'Stripe Webhook Validation',
-            description: 'Complete Stripe integration with webhook security',
-            canAutoFix: true,
-            riskLevel: 'high'
-        },
-        {
-            name: 'Real-time Data Streaming',
-            description: 'Implement WebSocket-based real-time updates',
-            canAutoFix: true,
-            riskLevel: 'medium'
-        },
-        {
-            name: 'API Performance Optimization',
-            description: 'Optimize API routes for production load',
-            canAutoFix: true,
-            riskLevel: 'low'
-        },
-        {
-            name: 'Firebase Functions Enhancement',
-            description: 'Optimize Cloud Functions for australia-southeast2',
-            canAutoFix: true,
-            riskLevel: 'medium'
-        }
-    ];
-
-    safetyConstraints: SafetyConstraint = {
-        requiresBackup: true,
-        requiresHumanApproval: false,
-        rollbackAvailable: true,
-        maxConcurrentFixes: 2
-    };
-
-    private backupPath = './.api-enhancement-backups';
-    private apiMetrics: Array<{ endpoint: string, optimized: boolean, responseTime: number; }> = [];
-
-    /**
-     * Main execution method - Phase 3 implementation
-     */
-    async execute(): Promise<boolean> {
-        console.log('🎯 API Enhancement Agent - Phase 3 Execution Starting...');
-
-        try {
-            // Step 1: Enhance NeuroSEO™ Suite for real-time processing
-            await this.enhanceNeuroSEOSuite();
-
-            // Step 2: Implement Stripe webhook validation
-            await this.implementStripeWebhooks();
-
-            // Step 3: Setup real-time data streaming
-            await this.setupRealTimeStreaming();
-
-            // Step 4: Optimize API route performance
-            await this.optimizeAPIRoutes();
-
-            // Step 5: Enhance Firebase Cloud Functions
-            await this.enhanceFirebaseFunctions();
-
-            // Step 6: Generate API enhancement report
-            await this.generateAPIReport();
-
-            console.log('✅ API Enhancement Agent - Phase 3 Complete!');
-            return true;
-
-        } catch (error) {
-            console.error('🚨 API Enhancement Agent execution failed:', error);
-            await this.rollback();
-            return false;
-        }
+  capabilities: AgentCapability[] = [
+    {
+      name: 'NeuroSEO™ Real-time Processing',
+      description: 'Optimize all 6 NeuroSEO™ engines for real-time analysis',
+      canAutoFix: true,
+      riskLevel: 'medium'
+    },
+    {
+      name: 'Stripe Webhook Validation',
+      description: 'Complete Stripe integration with webhook security',
+      canAutoFix: true,
+      riskLevel: 'high'
+    },
+    {
+      name: 'Real-time Data Streaming',
+      description: 'Implement WebSocket-based real-time updates',
+      canAutoFix: true,
+      riskLevel: 'medium'
+    },
+    {
+      name: 'API Performance Optimization',
+      description: 'Optimize API routes for production load',
+      canAutoFix: true,
+      riskLevel: 'low'
+    },
+    {
+      name: 'Firebase Functions Enhancement',
+      description: 'Optimize Cloud Functions for australia-southeast2',
+      canAutoFix: true,
+      riskLevel: 'medium'
     }
+  ];
 
-    /**
-     * Enhance NeuroSEO™ Suite for real-time processing
-     */
-    private async enhanceNeuroSEOSuite(): Promise<void> {
-        console.log('🔧 Enhancing NeuroSEO™ Suite for real-time processing...');
+  safetyConstraints: SafetyConstraint = {
+    requiresBackup: true,
+    requiresHumanApproval: false,
+    rollbackAvailable: true,
+    maxConcurrentFixes: 2
+  };
 
-        // Enhance the main NeuroSEO API route for real-time processing
-        const neuroSEORoute = `/**
+  private backupPath = './.api-enhancement-backups';
+  private apiMetrics: Array<{ endpoint: string, optimized: boolean, responseTime: number; }> = [];
+
+  /**
+   * Main execution method - Phase 3 implementation
+   */
+  async execute(): Promise<boolean> {
+    console.log('🎯 API Enhancement Agent - Phase 3 Execution Starting...');
+
+    try {
+      // Step 1: Enhance NeuroSEO™ Suite for real-time processing
+      await this.enhanceNeuroSEOSuite();
+
+      // Step 2: Implement Stripe webhook validation
+      await this.implementStripeWebhooks();
+
+      // Step 3: Setup real-time data streaming
+      await this.setupRealTimeStreaming();
+
+      // Step 4: Optimize API route performance
+      await this.optimizeAPIRoutes();
+
+      // Step 5: Enhance Firebase Cloud Functions
+      await this.enhanceFirebaseFunctions();
+
+      // Step 6: Generate API enhancement report
+      await this.generateAPIReport();
+
+      console.log('✅ API Enhancement Agent - Phase 3 Complete!');
+      return true;
+
+    } catch (error) {
+      console.error('🚨 API Enhancement Agent execution failed:', error);
+      await this.rollback();
+      return false;
+    }
+  }
+
+  /**
+   * Enhance NeuroSEO™ Suite for real-time processing
+   */
+  private async enhanceNeuroSEOSuite(): Promise<void> {
+    console.log('🔧 Enhancing NeuroSEO™ Suite for real-time processing...');
+
+    // Enhance the main NeuroSEO API route for real-time processing
+    const neuroSEORoute = `/**
  * NeuroSEO™ API Routes - Enhanced Real-time Processing
  * Phase 3 Enhancement by API Enhancement Agent
  */
@@ -150,7 +150,8 @@ export async function POST(request: NextRequest) {
     // Dynamic import with enhanced error handling
     let neuroSEO;
     try {
-      const { NeuroSEOSuite } = await import("../../../lib/neuroseo/index.js");
+  // Use proxy file with .js extension to satisfy NodeNext explicit extension rule
+  const { NeuroSEOSuite } = await import("../../../lib/neuroseo.js");
       neuroSEO = new NeuroSEOSuite();
     } catch (error) {
       console.warn('[NeuroSEO API] Failed to initialize NeuroSEO Suite:', error);
@@ -340,24 +341,24 @@ export async function GET(request: NextRequest) {
   }
 }`;
 
-        await fs.writeFile('src/app/api/neuroseo/route.ts', neuroSEORoute);
+    await fs.writeFile('src/app/api/neuroseo/route.ts', neuroSEORoute);
 
-        this.apiMetrics.push({
-            endpoint: 'NeuroSEO™ Suite API',
-            optimized: true,
-            responseTime: 250
-        });
+    this.apiMetrics.push({
+      endpoint: 'NeuroSEO™ Suite API',
+      optimized: true,
+      responseTime: 250
+    });
 
-        console.log('✅ NeuroSEO™ Suite enhanced for real-time processing');
-    }
+    console.log('✅ NeuroSEO™ Suite enhanced for real-time processing');
+  }
 
-    /**
-     * Implement Stripe webhook validation
-     */
-    private async implementStripeWebhooks(): Promise<void> {
-        console.log('🔧 Implementing Stripe webhook validation...');
+  /**
+   * Implement Stripe webhook validation
+   */
+  private async implementStripeWebhooks(): Promise<void> {
+    console.log('🔧 Implementing Stripe webhook validation...');
 
-        const stripeWebhookRoute = `/**
+    const stripeWebhookRoute = `/**
  * Stripe Webhook Handler - Enhanced Security & Validation
  * Phase 3 Enhancement by API Enhancement Agent
  */
@@ -577,25 +578,25 @@ function getSubscriptionTier(priceId: string): string {
   return priceMapping[priceId] || 'free';
 }`;
 
-        await fs.mkdir('src/app/api/webhooks/stripe', { recursive: true });
-        await fs.writeFile('src/app/api/webhooks/stripe/route.ts', stripeWebhookRoute);
+    await fs.mkdir('src/app/api/webhooks/stripe', { recursive: true });
+    await fs.writeFile('src/app/api/webhooks/stripe/route.ts', stripeWebhookRoute);
 
-        this.apiMetrics.push({
-            endpoint: 'Stripe Webhooks',
-            optimized: true,
-            responseTime: 150
-        });
+    this.apiMetrics.push({
+      endpoint: 'Stripe Webhooks',
+      optimized: true,
+      responseTime: 150
+    });
 
-        console.log('✅ Stripe webhook validation implemented');
-    }
+    console.log('✅ Stripe webhook validation implemented');
+  }
 
-    /**
-     * Setup real-time data streaming
-     */
-    private async setupRealTimeStreaming(): Promise<void> {
-        console.log('🔧 Setting up real-time data streaming...');
+  /**
+   * Setup real-time data streaming
+   */
+  private async setupRealTimeStreaming(): Promise<void> {
+    console.log('🔧 Setting up real-time data streaming...');
 
-        const streamingRoute = `/**
+    const streamingRoute = `/**
  * Real-time Data Streaming API
  * Phase 3 Enhancement by API Enhancement Agent
  */
@@ -754,26 +755,26 @@ export async function POST(request: NextRequest) {
   }
 }`;
 
-        await fs.mkdir('src/app/api/streaming', { recursive: true });
-        await fs.writeFile('src/app/api/streaming/route.ts', streamingRoute);
+    await fs.mkdir('src/app/api/streaming', { recursive: true });
+    await fs.writeFile('src/app/api/streaming/route.ts', streamingRoute);
 
-        this.apiMetrics.push({
-            endpoint: 'Real-time Streaming',
-            optimized: true,
-            responseTime: 50
-        });
+    this.apiMetrics.push({
+      endpoint: 'Real-time Streaming',
+      optimized: true,
+      responseTime: 50
+    });
 
-        console.log('✅ Real-time data streaming implemented');
-    }
+    console.log('✅ Real-time data streaming implemented');
+  }
 
-    /**
-     * Optimize API route performance
-     */
-    private async optimizeAPIRoutes(): Promise<void> {
-        console.log('🔧 Optimizing API route performance...');
+  /**
+   * Optimize API route performance
+   */
+  private async optimizeAPIRoutes(): Promise<void> {
+    console.log('🔧 Optimizing API route performance...');
 
-        // Create performance monitoring middleware
-        const performanceMiddleware = `/**
+    // Create performance monitoring middleware
+    const performanceMiddleware = `/**
  * API Performance Monitoring Middleware
  * Phase 3 Enhancement by API Enhancement Agent
  */
@@ -906,11 +907,11 @@ export function withPerformanceMonitoring(
 
 export { PerformanceMonitor };`;
 
-        await fs.mkdir('src/lib/api', { recursive: true });
-        await fs.writeFile('src/lib/api/performance-monitoring.ts', performanceMiddleware);
+    await fs.mkdir('src/lib/api', { recursive: true });
+    await fs.writeFile('src/lib/api/performance-monitoring.ts', performanceMiddleware);
 
-        // Create API health check endpoint
-        const healthCheckRoute = `/**
+    // Create API health check endpoint
+    const healthCheckRoute = `/**
  * API Health Check Endpoint
  * Phase 3 Enhancement by API Enhancement Agent
  */
@@ -1041,26 +1042,26 @@ async function checkStreaming() {
   }
 }`;
 
-        await fs.mkdir('src/app/api/health', { recursive: true });
-        await fs.writeFile('src/app/api/health/route.ts', healthCheckRoute);
+    await fs.mkdir('src/app/api/health', { recursive: true });
+    await fs.writeFile('src/app/api/health/route.ts', healthCheckRoute);
 
-        this.apiMetrics.push({
-            endpoint: 'API Health Check',
-            optimized: true,
-            responseTime: 25
-        });
+    this.apiMetrics.push({
+      endpoint: 'API Health Check',
+      optimized: true,
+      responseTime: 25
+    });
 
-        console.log('✅ API route performance optimization completed');
-    }
+    console.log('✅ API route performance optimization completed');
+  }
 
-    /**
-     * Enhance Firebase Cloud Functions
-     */
-    private async enhanceFirebaseFunctions(): Promise<void> {
-        console.log('🔧 Enhancing Firebase Cloud Functions...');
+  /**
+   * Enhance Firebase Cloud Functions
+   */
+  private async enhanceFirebaseFunctions(): Promise<void> {
+    console.log('🔧 Enhancing Firebase Cloud Functions...');
 
-        // Create enhanced Firebase function configuration
-        const functionsConfig = `/**
+    // Create enhanced Firebase function configuration
+    const functionsConfig = `/**
  * Enhanced Firebase Cloud Functions Configuration
  * Phase 3 Enhancement by API Enhancement Agent
  * Region: australia-southeast2
@@ -1232,11 +1233,11 @@ function generateEngineResult(engineName: string) {
   };
 }`;
 
-        await fs.mkdir('functions/src', { recursive: true });
-        await fs.writeFile('functions/src/index.ts', functionsConfig);
+    await fs.mkdir('functions/src', { recursive: true });
+    await fs.writeFile('functions/src/index.ts', functionsConfig);
 
-        // Create Firebase functions package.json
-        const functionsPkg = `{
+    // Create Firebase functions package.json
+    const functionsPkg = `{
   "name": "rankpilot-functions",
   "version": "3.0.0",
   "description": "RankPilot Firebase Cloud Functions - Phase 3 Enhanced",
@@ -1263,26 +1264,26 @@ function generateEngineResult(engineName: string) {
   "private": true
 }`;
 
-        await fs.writeFile('functions/package.json', functionsPkg);
+    await fs.writeFile('functions/package.json', functionsPkg);
 
-        this.apiMetrics.push({
-            endpoint: 'Firebase Cloud Functions',
-            optimized: true,
-            responseTime: 200
-        });
+    this.apiMetrics.push({
+      endpoint: 'Firebase Cloud Functions',
+      optimized: true,
+      responseTime: 200
+    });
 
-        console.log('✅ Firebase Cloud Functions enhanced for australia-southeast2');
-    }
+    console.log('✅ Firebase Cloud Functions enhanced for australia-southeast2');
+  }
 
-    /**
-     * Generate comprehensive API enhancement report
-     */
-    private async generateAPIReport(): Promise<void> {
-        const totalEndpoints = this.apiMetrics.length;
-        const optimizedEndpoints = this.apiMetrics.filter(e => e.optimized).length;
-        const avgResponseTime = this.apiMetrics.reduce((sum, e) => sum + e.responseTime, 0) / totalEndpoints;
+  /**
+   * Generate comprehensive API enhancement report
+   */
+  private async generateAPIReport(): Promise<void> {
+    const totalEndpoints = this.apiMetrics.length;
+    const optimizedEndpoints = this.apiMetrics.filter(e => e.optimized).length;
+    const avgResponseTime = this.apiMetrics.reduce((sum, e) => sum + e.responseTime, 0) / totalEndpoints;
 
-        const report = `# 🚀 API Enhancement Agent Report - Phase 3
+    const report = `# 🚀 API Enhancement Agent Report - Phase 3
 Generated: ${new Date().toISOString()}
 Agent: API Enhancement Agent v3.0.0
 
@@ -1295,8 +1296,8 @@ Agent: API Enhancement Agent v3.0.0
 
 ## 🎯 Enhanced Endpoints
 ${this.apiMetrics.map(endpoint =>
-            `- **${endpoint.endpoint}**: ${endpoint.optimized ? '✅ OPTIMIZED' : '❌ PENDING'} (${endpoint.responseTime}ms)`
-        ).join('\n')}
+      `- **${endpoint.endpoint}**: ${endpoint.optimized ? '✅ OPTIMIZED' : '❌ PENDING'} (${endpoint.responseTime}ms)`
+    ).join('\n')}
 
 ## 🔥 Key Achievements
 
@@ -1349,33 +1350,33 @@ ${this.apiMetrics.map(endpoint =>
 **Ready for Phase 4**: Production deployment to Firebase hosting.
 `;
 
-        await fs.writeFile('./api-enhancement-report.md', report);
-        console.log('📊 API enhancement report generated: api-enhancement-report.md');
-    }
+    await fs.writeFile('./api-enhancement-report.md', report);
+    console.log('📊 API enhancement report generated: api-enhancement-report.md');
+  }
 
-    /**
-     * Validate fix implementation
-     */
-    async validateFix(): Promise<boolean> {
-        const optimizationRate = this.apiMetrics.filter(e => e.optimized).length / this.apiMetrics.length;
-        return optimizationRate >= 0.8; // 80% optimization rate threshold
-    }
+  /**
+   * Validate fix implementation
+   */
+  async validateFix(): Promise<boolean> {
+    const optimizationRate = this.apiMetrics.filter(e => e.optimized).length / this.apiMetrics.length;
+    return optimizationRate >= 0.8; // 80% optimization rate threshold
+  }
 
-    /**
-     * Rollback changes if needed
-     */
-    async rollback(): Promise<boolean> {
-        console.log('🔄 Rolling back API Enhancement changes...');
+  /**
+   * Rollback changes if needed
+   */
+  async rollback(): Promise<boolean> {
+    console.log('🔄 Rolling back API Enhancement changes...');
 
-        try {
-            // Backup was created, could restore from backup
-            console.log('✅ Rollback completed');
-            return true;
-        } catch (error) {
-            console.error('❌ Rollback failed:', error);
-            return false;
-        }
+    try {
+      // Backup was created, could restore from backup
+      console.log('✅ Rollback completed');
+      return true;
+    } catch (error) {
+      console.error('❌ Rollback failed:', error);
+      return false;
     }
+  }
 }
 
 // Export singleton instance

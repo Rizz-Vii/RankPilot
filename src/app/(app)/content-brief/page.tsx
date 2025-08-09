@@ -2,6 +2,8 @@
 "use client";
 
 import ContentBriefForm from "@/components/content-brief-form";
+import { ToolPageHeader } from "@/components/tool-page-header";
+import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import {
   Card,
   CardContent,
@@ -260,6 +262,13 @@ export default function ContentBriefPage() {
   };
 
   return (
+    <main className="container mx-auto py-6 space-y-6">
+      <ToolPageHeader
+        title="Content Brief Generator"
+        description="Generate data-driven content briefs with semantic insights."
+        badges={composeToolHeaderBadges("content-brief", null)}
+        showBreadcrumb
+      />
     <div
       className={cn(
         "mx-auto transition-all duration-500",
@@ -308,5 +317,6 @@ export default function ContentBriefPage() {
         </div>
       </div>
     </div>
+    </main>
   );
 }

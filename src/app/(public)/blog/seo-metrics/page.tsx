@@ -10,7 +10,8 @@ export const metadata: Metadata = {
 
 export default function SEOMetricsBlogPage() {
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
       <Link
         href="/blog"
         className="inline-flex items-center text-primary hover:underline mb-6"
@@ -282,6 +283,7 @@ export default function SEOMetricsBlogPage() {
           </Link>
         </div>
       </article>
+      </div>
     </div>
   );
 }

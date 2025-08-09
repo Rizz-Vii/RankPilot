@@ -26,8 +26,8 @@ export const STRIPE_PLANS = {
       yearly: "price_starter_yearly",
     },
     price: {
-      monthly: 29,
-      yearly: 290,
+      monthly: 19,
+      yearly: 182, // ~20% off
     },
     features: [
       "50 audits/month",
@@ -51,8 +51,8 @@ export const STRIPE_PLANS = {
       yearly: "price_agency_yearly",
     },
     price: {
-      monthly: 99,
-      yearly: 990,
+      monthly: 49,
+      yearly: 470, // ~20% off
     },
     features: [
       "Unlimited audits",
@@ -78,8 +78,8 @@ export const STRIPE_PLANS = {
       yearly: "price_enterprise_yearly",
     },
     price: {
-      monthly: 299,
-      yearly: 2990,
+      monthly: 99,
+      yearly: 950, // ~20% off
     },
     features: [
       "Everything in Agency",

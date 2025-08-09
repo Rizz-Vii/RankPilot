@@ -2,6 +2,8 @@
 "use client";
 
 import LinkAnalysisForm from "@/components/link-analysis-form";
+import { ToolPageHeader } from "@/components/tool-page-header";
+import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import {
   Card,
   CardContent,
@@ -216,6 +218,13 @@ export default function LinkViewPage() {
   };
 
   return (
+    <main className="container mx-auto py-6 space-y-6">
+      <ToolPageHeader
+        title="Link View Analyzer"
+        description="Evaluate backlink quality and domain authority distribution."
+        badges={composeToolHeaderBadges("link-view", null)}
+        showBreadcrumb
+      />
     <div
       className={cn(
         "mx-auto transition-all duration-500",
@@ -270,5 +279,6 @@ export default function LinkViewPage() {
         </div>
       </div>
     </div>
+    </main>
   );
 }

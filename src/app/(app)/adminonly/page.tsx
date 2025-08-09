@@ -12,18 +12,14 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  ShieldCheck,
-  Users,
-  BarChart3,
-  Settings,
-  Database,
-} from "lucide-react";
+import { ShieldCheck, Users, BarChart3, Settings, Database } from "lucide-react";
+import { ToolPageHeader } from "@/components/tool-page-header";
 import AdminUserManagement from "@/components/admin/admin-user-management";
 import AdminSystemMetrics from "@/components/admin/admin-system-metrics";
 import AdminAnalytics from "@/components/admin/admin-analytics";
 import { AdminAnalyticsDashboard } from "@/components/admin/admin-analytics-dashboard";
 import AdminSettings from "@/components/admin/admin-settings";
+import AdminSupport from "@/components/admin/admin-support";
 import { AdminUserSubscriptionManager } from "@/components/admin/AdminUserSubscriptionManager";
 
 export default function AdminOnlyPage() {
@@ -43,19 +39,16 @@ export default function AdminOnlyPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
-      <div className="flex items-center gap-3">
-        <ShieldCheck className="h-8 w-8 text-success" />
-        <div>
-          <h1 className="text-3xl font-bold font-headline">Admin Dashboard</h1>
-          <p className="text-muted-foreground font-body">
-            Manage users, monitor system health, and analyze platform metrics.
-          </p>
-        </div>
-      </div>
+    <main className="container mx-auto py-6 space-y-8">
+      <ToolPageHeader
+        title="Admin Dashboard"
+        description="Manage users, monitor system health, and analyze platform metrics."
+        badges={[{ label: "Admin", variant: "outline", className: "border-destructive/40 text-destructive" }]}
+        showBreadcrumb
+      />
 
       <Tabs defaultValue="users" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Users
@@ -70,6 +63,10 @@ export default function AdminOnlyPage() {
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Analytics
+          </TabsTrigger>
+          <TabsTrigger value="support" className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4" />
+            Support
           </TabsTrigger>
           <TabsTrigger value="system" className="flex items-center gap-2">
             <Database className="h-4 w-4" />
@@ -96,6 +93,10 @@ export default function AdminOnlyPage() {
           {/* <AdminAnalytics /> */}
         </TabsContent>
 
+        <TabsContent value="support" className="space-y-6">
+          <AdminSupport />
+        </TabsContent>
+
         <TabsContent value="system" className="space-y-6">
           <AdminSystemMetrics />
         </TabsContent>
@@ -104,6 +105,6 @@ export default function AdminOnlyPage() {
           <AdminSettings />
         </TabsContent>
       </Tabs>
-    </div>
+  </main>
   );
 }

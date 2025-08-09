@@ -115,7 +115,7 @@ const dataHandling = [
 
 export default function SecurityPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Hero Section */}
       <motion.section
         className="pt-32 pb-16 px-4"
@@ -126,20 +126,20 @@ export default function SecurityPage() {
       >
         <div className="max-w-4xl mx-auto text-center">
           <div className="flex justify-center mb-6">
-            <div className="p-4 bg-blue-100 rounded-2xl">
-              <Shield className="h-12 w-12 text-blue-600" />
+            <div className="p-4 bg-primary/10 rounded-2xl">
+              <Shield className="h-12 w-12 text-primary" />
             </div>
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             Enterprise-Grade Security
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Your data security is our top priority. RankPilot implements
             military-grade encryption, zero-knowledge architecture, and
             industry-leading compliance standards.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+            <Button size="lg" className="bg-primary hover:bg-primary/90">
               <FileCheck className="mr-2 h-5 w-5" />
               View Security Report
             </Button>
@@ -181,13 +181,13 @@ export default function SecurityPage() {
               >
                 <Card className="h-full hover:shadow-lg transition-shadow duration-300">
                   <CardHeader>
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                      <feature.icon className="h-6 w-6 text-blue-600" />
+                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                      <feature.icon className="h-6 w-6 text-primary" />
                     </div>
                     <CardTitle className="text-lg">{feature.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-600">{feature.description}</p>
+                    <p className="text-muted-foreground">{feature.description}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -209,7 +209,7 @@ export default function SecurityPage() {
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               Compliance & Certifications
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Meeting global regulatory requirements and industry standards
             </p>
           </motion.div>
@@ -237,7 +237,7 @@ export default function SecurityPage() {
                       </div>
                       <div className="flex-1">
                         <h3 className="font-bold text-lg mb-2">{item.title}</h3>
-                        <p className="text-gray-600">{item.description}</p>
+                        <p className="text-muted-foreground">{item.description}</p>
                         {item.status === "in-progress" && (
                           <p className="text-yellow-600 text-sm mt-2 font-medium">
                             Certification in progress - Expected Q2 2025
@@ -266,7 +266,7 @@ export default function SecurityPage() {
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               Data Handling & Retention
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Transparent data practices with minimal retention and maximum
               security
             </p>
@@ -277,7 +277,7 @@ export default function SecurityPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
+                    <tr className="border-b border-border bg-muted/30">
                       <th className="text-left p-4 font-semibold">
                         Data Category
                       </th>
@@ -303,9 +303,9 @@ export default function SecurityPage() {
                         className="border-b border-gray-100 hover:bg-gray-50"
                       >
                         <td className="p-4 font-medium">{item.category}</td>
-                        <td className="p-4 text-gray-600">{item.retention}</td>
-                        <td className="p-4 text-gray-600">{item.encryption}</td>
-                        <td className="p-4 text-gray-600">{item.access}</td>
+                        <td className="p-4 text-muted-foreground">{item.retention}</td>
+                        <td className="p-4 text-muted-foreground">{item.encryption}</td>
+                        <td className="p-4 text-muted-foreground">{item.access}</td>
                       </motion.tr>
                     ))}
                   </tbody>
@@ -325,10 +325,10 @@ export default function SecurityPage() {
         custom={18}
       >
         <div className="max-w-4xl mx-auto">
-          <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+      <Card className="bg-gradient-to-r from-primary to-purple-600 text-white">
             <CardContent className="p-12 text-center">
               <h2 className="text-3xl font-bold mb-6">Security Questions?</h2>
-              <p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto">
+        <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
                 Our security team is available to answer questions about our
                 practices, compliance status, or to discuss enterprise security
                 requirements.
@@ -341,7 +341,7 @@ export default function SecurityPage() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="border-white text-white hover:bg-white hover:text-blue-600"
+                  className="border-transparent bg-white text-primary hover:bg-white/90"
                 >
                   <FileCheck className="mr-2 h-5 w-5" />
                   Download Security Datasheet

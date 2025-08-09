@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { FeatureGate } from "@/components/subscription/FeatureGate";
+import { ToolPageHeader } from "@/components/tool-page-header";
 import { TutorialAccess } from "@/components/tutorials/TutorialAccess";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -55,6 +56,8 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { db } from "@/lib/firebase";
+import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { toast } from "sonner";
 
 interface TeamMember {
@@ -103,52 +106,55 @@ export default function TeamManagementPage() {
   const [isInviting, setIsInviting] = useState(false);
 
   const fetchTeamMembers = useCallback(async () => {
+    if (!user?.uid) return;
     try {
-      // Mock data - replace with actual API call
-      const mockMembers: TeamMember[] = [
-        {
-          id: "1",
-          email: "john.doe@company.com",
-          name: "John Doe",
-          role: "owner",
-          status: "active",
-          avatar: "/avatars/john.jpg",
-          joinedAt: new Date("2024-01-15"),
-          lastActive: new Date("2024-07-20"),
-        },
-        {
-          id: "2",
-          email: "jane.smith@company.com",
-          name: "Jane Smith",
-          role: "admin",
-          status: "active",
-          joinedAt: new Date("2024-02-01"),
-          lastActive: new Date("2024-07-19"),
-        },
-        {
-          id: "3",
-          email: "mike.wilson@company.com",
-          name: "Mike Wilson",
-          role: "member",
-          status: "pending",
-          joinedAt: new Date("2024-07-18"),
-          lastActive: new Date("2024-07-18"),
-        },
-      ];
-      setTeamMembers(mockMembers);
+      // Locate the team via memberIds or user.profile.teamId
+      let teamData: any | null = null;
+      const teamsQ = query(collection(db, "teams"), where("memberIds", "array-contains", user.uid));
+      const teamsSnap = await getDocs(teamsQ);
+      if (!teamsSnap.empty) {
+        teamData = teamsSnap.docs[0].data();
+      }
+      if (!teamData) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const teamId = userDoc.exists() ? (userDoc.data() as any)?.teamId : (user as any)?.teamId;
+        if (teamId) {
+          const teamSnap = await getDoc(doc(db, "teams", teamId));
+          if (teamSnap.exists()) teamData = teamSnap.data();
+        }
+      }
+
+      if (!teamData) {
+        toast.error("Team not found");
+        setTeamMembers([]);
+        return;
+      }
+
+      const membersArr = Array.isArray(teamData.members) ? teamData.members : [];
+      const mapped: TeamMember[] = membersArr.map((m: any) => ({
+        id: m.userId || m.id || m.email || crypto.randomUUID(),
+        email: m.email || "",
+        name: m.name || m.email?.split("@")[0] || "Member",
+        role: (m.role || "member") as TeamMember["role"],
+        status: (m.status || "active") as TeamMember["status"],
+        avatar: m.avatar,
+        joinedAt: m.joinedAt?.toDate ? m.joinedAt.toDate() : new Date(),
+        lastActive: m.lastActive?.toDate ? m.lastActive.toDate() : new Date(),
+      }));
+      setTeamMembers(mapped);
     } catch (error) {
       console.error("Error fetching team members:", error);
       toast.error("Failed to load team members");
     } finally {
       setLoading(false);
     }
-  }, []); // Empty dependency array since this is mock data
+  }, [user?.uid]);
 
   useEffect(() => {
     if (user && canUseFeature("team_management")) {
       fetchTeamMembers();
     }
-  }, [user, canUseFeature, fetchTeamMembers]); // Include fetchTeamMembers in dependencies
+  }, [user, canUseFeature, fetchTeamMembers]);
 
   const sendInvite = async () => {
     if (!inviteForm.email) {
@@ -248,20 +254,16 @@ export default function TeamManagementPage() {
 
   return (
     <FeatureGate requiredTier="enterprise">
-      <main className="max-w-6xl mx-auto space-y-8">
-        <header className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Users className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-3xl font-bold font-headline">
-                Team Management
-              </h1>
-              <p className="text-muted-foreground font-body">
-                Manage your team members and their access permissions.
-              </p>
-            </div>
-          </div>
-
+      <main className="container mx-auto py-6 space-y-8">
+        <ToolPageHeader
+          title="Team Management"
+          description="Manage team members, roles, permissions, and collaboration."
+          badges={[
+            { label: "Collaboration", variant: "secondary" },
+            { label: "Enterprise", variant: "outline", className: "text-primary border-primary/40" }
+          ]}
+          showBreadcrumb
+        >
           <div className="flex items-center gap-3">
             <TutorialAccess
               feature="team_management"
@@ -353,7 +355,7 @@ export default function TeamManagementPage() {
               </DialogContent>
             </Dialog>
           </div>
-        </header>
+        </ToolPageHeader>
 
         {/* Team Collaboration Quick Access */}
         <div className="grid gap-4 md:grid-cols-3">

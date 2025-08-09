@@ -6,7 +6,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import {
@@ -53,7 +53,28 @@ const TEST_USERS = {
 export function DevUserSwitcher() {
   const { user, role } = useAuth();
   const { subscription } = useSubscription();
-  const [showDebugInfo, setShowDebugInfo] = useState(false);
+  const STORAGE_KEY = "dev_user_switcher_expanded_v1";
+  const [expanded, setExpanded] = useState(true);
+  const [showDebugInfo, setShowDebugInfo] = useState(false); // nested debug toggle (optional)
+
+  // Restore persisted expanded state (default true)
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (raw !== null) setExpanded(raw === "true");
+    } catch {}
+  }, []);
+
+  const persistExpanded = useCallback((value: boolean) => {
+    try { window.localStorage.setItem(STORAGE_KEY, value ? "true" : "false"); } catch {}
+  }, []);
+
+  const toggleExpanded = () => {
+    setExpanded((prev) => {
+      persistExpanded(!prev);
+      return !prev;
+    });
+  };
 
   if (process.env.NODE_ENV !== "development") {
     return null;
@@ -91,87 +112,132 @@ export function DevUserSwitcher() {
   const currentTier = getCurrentUserTier();
 
   return (
-    <div className="fixed bottom-4 left-4 bg-background/95 backdrop-blur-sm border border-border text-foreground rounded-lg shadow-lg text-sm z-[9999] max-w-sm">
-      {/* Header */}
-      <div className="p-4 border-b border-border">
-        <div className="font-semibold text-primary flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-            Dev Mode
-          </div>
-          <button
-            onClick={() => setShowDebugInfo(!showDebugInfo)}
-            className="p-1 hover:bg-muted rounded transition-colors"
-            title="Toggle Debug Info"
-          >
-            {showDebugInfo ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
-        </div>
-        {user && (
-          <div className="text-xs text-muted-foreground mt-1">
-            <span className="text-green-600 font-medium">●</span> {user.email}
-            {currentTier && (
-              <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-medium">
-                {currentTier.toUpperCase()}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* User Switcher */}
-      <div className="p-4 space-y-2">
-        <div className="flex items-center gap-2 mb-3">
-          <User className="w-4 h-4" />
-          <span className="font-medium">Switch Test User</span>
-        </div>
-        
-        {Object.entries(TEST_USERS).map(([tier, config]) => (
-          <button
-            key={tier}
-            onClick={() => handleUserSwitch(tier as keyof typeof TEST_USERS)}
-            className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${
-              user?.email === config.email
-                ? "bg-primary text-primary-foreground"
-                : "hover:bg-muted"
-            }`}
-          >
-            <div className="font-medium">{config.displayName}</div>
-            <div className="text-xs text-muted-foreground">
-              {tier.charAt(0).toUpperCase() + tier.slice(1)} Tier • {config.email}
-            </div>
-          </button>
-        ))}
-        
+    <div className="fixed bottom-4 left-4 z-[9999] text-sm">
+      {/* Collapsed pill */}
+      {!expanded && (
         <button
-          onClick={() => handleUserSwitch("logout")}
-          className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${
-            !user ? "bg-destructive text-destructive-foreground" : "hover:bg-muted"
-          }`}
+          onClick={toggleExpanded}
+          className="group flex items-center gap-2 rounded-full bg-background/90 backdrop-blur-sm border border-border px-3 py-2 shadow-lg hover:bg-background transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
+          aria-label="Expand developer user switcher"
         >
-          <div className="font-medium">Logout</div>
-          <div className="text-xs text-muted-foreground">Sign out current user</div>
-        </button>
-      </div>
-
-      {/* Debug Info (Collapsible) */}
-      {showDebugInfo && (
-        <div className="p-4 border-t border-border bg-muted/30">
-          <div className="flex items-center gap-2 mb-3">
-            <Bug className="w-4 h-4" />
-            <span className="font-medium">Debug Info</span>
+          <div className="relative flex items-center gap-1 text-xs font-medium text-primary">
+            <span className="inline-flex items-center gap-1">
+              <User className="h-4 w-4" /> Dev
+            </span>
+            <ChevronUp className="h-3.5 w-3.5 opacity-70 group-hover:opacity-100" />
           </div>
-          <div className="space-y-1 text-xs">
-            <div><span className="font-medium text-blue-600">User:</span> {user?.email || "Not logged in"}</div>
-            <div><span className="font-medium text-blue-600">Role:</span> {role || "None"}</div>
-            <div><span className="font-medium text-blue-600">Subscription Tier:</span> {subscription?.tier || "Unknown"}</div>
-            <div><span className="font-medium text-blue-600">Plan Name:</span> {subscription?.planName || "None"}</div>
-            <div><span className="font-medium text-blue-600">Status:</span> {subscription?.status || "Unknown"}</div>
-            <div><span className="font-medium text-blue-600">User Access Tier:</span> {subscription?.userAccess?.tier || "Unknown"}</div>
-            <div className="pt-2 border-t border-border/50">
-              <span className="font-medium text-green-600">Current Tier Match:</span> {currentTier || "Unknown"}
+        </button>
+      )}
+
+      {/* Expanded Panel */}
+      {expanded && (
+        <div className="bg-background/95 backdrop-blur-sm border border-border text-foreground rounded-lg shadow-xl max-w-sm w-[320px] animate-in fade-in slide-in-from-bottom-2">
+          {/* Header */}
+          <div className="p-3 border-b border-border flex items-start justify-between">
+            <div className="flex flex-col gap-1 min-w-0">
+              <div className="font-semibold text-primary flex items-center gap-2">
+                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" aria-hidden="true"></div>
+                <span className="truncate">Dev Mode</span>
+              </div>
+              {user && (
+                <div className="text-[11px] text-muted-foreground flex items-center gap-1 truncate">
+                  <span className="text-green-600 font-medium">●</span>
+                  <span className="truncate max-w-[170px]">{user.email}</span>
+                  {currentTier && (
+                    <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-medium">
+                      {currentTier.toUpperCase()}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-1">
+              <button
+                onClick={() => setShowDebugInfo((p) => !p)}
+                className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-muted/70 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
+                title="Toggle debug details"
+                aria-label="Toggle debug info"
+              >
+                {showDebugInfo ? <Bug className="h-4 w-4" /> : <Bug className="h-4 w-4 opacity-60" />}
+              </button>
+              <button
+                onClick={toggleExpanded}
+                className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-muted/70 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
+                title="Collapse switcher"
+                aria-label="Collapse dev switcher"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </button>
             </div>
           </div>
+
+          {/* Body Scroll Container */}
+            <div className="max-h-[55vh] overflow-y-auto p-3 space-y-4">
+              {/* User Switcher */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <User className="w-3.5 h-3.5" />
+                  <span>Switch User</span>
+                </div>
+                <div className="grid grid-cols-1 gap-1">
+                  {Object.entries(TEST_USERS).map(([tier, config]) => (
+                    <button
+                      key={tier}
+                      onClick={() => handleUserSwitch(tier as keyof typeof TEST_USERS)}
+                      className={`group relative flex flex-col rounded-md border px-2.5 py-2 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 ${
+                        user?.email === config.email
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                          : "hover:bg-muted/70 border-border/60"
+                      }`}
+                    >
+                      <span className="text-[13px] font-medium leading-tight truncate flex items-center gap-2">
+                        {config.displayName}
+                        {user?.email === config.email && (
+                          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-primary-foreground/15 text-primary-foreground/90">
+                            ACTIVE
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-[10px] mt-0.5 opacity-80 truncate">
+                        {tier.charAt(0).toUpperCase() + tier.slice(1)} • {config.email}
+                      </span>
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => handleUserSwitch("logout")}
+                    className={`group relative flex flex-col rounded-md border px-2.5 py-2 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 ${
+                      !user
+                        ? "bg-destructive text-destructive-foreground border-destructive"
+                        : "hover:bg-muted/70 border-border/60"
+                    }`}
+                  >
+                    <span className="text-[13px] font-medium leading-tight">Logout</span>
+                    <span className="text-[10px] mt-0.5 opacity-80">
+                      Sign out current user
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Debug Info */}
+              {showDebugInfo && (
+                <div className="space-y-2 border-t pt-3 border-border/60">
+                  <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    <Bug className="w-3.5 h-3.5" />
+                    <span>Debug Info</span>
+                  </div>
+                  <div className="space-y-1 text-[11px] leading-tight">
+                    <div><span className="font-medium text-blue-600">User:</span> {user?.email || "Not logged in"}</div>
+                    <div><span className="font-medium text-blue-600">Role:</span> {role || "None"}</div>
+                    <div><span className="font-medium text-blue-600">Subscription:</span> {subscription?.tier || "Unknown"}</div>
+                    <div><span className="font-medium text-blue-600">Plan Name:</span> {subscription?.planName || "None"}</div>
+                    <div><span className="font-medium text-blue-600">Status:</span> {subscription?.status || "Unknown"}</div>
+                    <div><span className="font-medium text-blue-600">Access Tier:</span> {subscription?.userAccess?.tier || "Unknown"}</div>
+                    <div className="pt-1 border-t border-border/40"><span className="font-medium text-green-600">Current Tier Match:</span> {currentTier || "Unknown"}</div>
+                  </div>
+                </div>
+              )}
+            </div>
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { ToolPageHeader } from "@/components/tool-page-header";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useRouter } from "next/navigation";
@@ -57,6 +58,8 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query, where, orderBy, addDoc, serverTimestamp, doc, getDoc, deleteDoc } from "firebase/firestore";
 
 interface Project {
   id: string;
@@ -115,80 +118,48 @@ export default function TeamProjectsPage() {
     deadline: "",
   });
 
-  // Mock data for demonstration
-  const mockProjects: Project[] = [
-    {
-      id: "1",
-      name: "E-commerce SEO Campaign",
-      description: "Comprehensive SEO optimization for online store",
-      status: "active",
-      priority: "high",
-      assignedMembers: ["john@example.com", "jane@example.com"],
-      keywords: ["online shopping", "buy products", "e-commerce store"],
-      targetUrls: ["https://example-store.com"],
-      createdAt: new Date("2024-01-15"),
-      updatedAt: new Date("2024-01-20"),
-      deadline: new Date("2024-03-01"),
-      progress: 75,
-      metrics: {
-        totalKeywords: 150,
-        rankedKeywords: 112,
-        avgPosition: 8.5,
-        trafficIncrease: 35,
-      },
-    },
-    {
-      id: "2",
-      name: "Blog Content Strategy",
-      description: "Content planning and optimization for company blog",
-      status: "planning",
-      priority: "medium",
-      assignedMembers: ["sarah@example.com"],
-      keywords: ["tech blog", "industry insights", "tutorials"],
-      targetUrls: ["https://example.com/blog"],
-      createdAt: new Date("2024-01-18"),
-      updatedAt: new Date("2024-01-22"),
-      deadline: new Date("2024-02-15"),
-      progress: 25,
-      metrics: {
-        totalKeywords: 80,
-        rankedKeywords: 20,
-        avgPosition: 15.2,
-        trafficIncrease: 12,
-      },
-    },
-    {
-      id: "3",
-      name: "Local SEO Optimization",
-      description: "Improve local search visibility for physical locations",
-      status: "completed",
-      priority: "high",
-      assignedMembers: ["mike@example.com", "lisa@example.com"],
-      keywords: ["local business", "near me", "location services"],
-      targetUrls: ["https://example-local.com"],
-      createdAt: new Date("2023-12-01"),
-      updatedAt: new Date("2024-01-10"),
-      deadline: new Date("2024-01-15"),
-      progress: 100,
-      metrics: {
-        totalKeywords: 60,
-        rankedKeywords: 58,
-        avgPosition: 3.2,
-        trafficIncrease: 85,
-      },
-    },
-  ];
+  const [teamId, setTeamId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchProjects();
-  }, []);
+    if (!user?.uid) return;
+    (async () => {
+      const tQ = query(collection(db, 'teams'), where('memberIds', 'array-contains', user.uid));
+      const tSnap = await getDocs(tQ);
+      if (!tSnap.empty) setTeamId(tSnap.docs[0].id);
+      else {
+        const uSnap = await getDoc(doc(db, 'users', user.uid));
+        const tId = uSnap.exists() ? (uSnap.data() as any)?.teamId : (user as any)?.teamId;
+        if (typeof tId === 'string') setTeamId(tId);
+      }
+    })();
+  }, [user?.uid]);
 
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setProjects(mockProjects);
+      if (!teamId) { setProjects([]); return; }
+      // Read projects with teamId
+      const q = query(collection(db, 'projects'), where('teamId', '==', teamId), orderBy('name'));
+      const snap = await getDocs(q);
+      const items: Project[] = snap.docs.map(d => {
+        const data = d.data() as any;
+        return {
+          id: d.id,
+          name: data.name,
+          description: data.description,
+          status: data.status || 'active',
+          priority: data.priority || 'medium',
+          assignedMembers: data.assignedMembers || [],
+          keywords: data.keywords || [],
+          targetUrls: data.targetUrls || [],
+          createdAt: data.createdAt?.toDate?.() || new Date(),
+          updatedAt: data.updatedAt?.toDate?.() || new Date(),
+          deadline: data.deadline?.toDate?.(),
+          progress: data.progress ?? 0,
+          metrics: data.metrics || { totalKeywords: 0, rankedKeywords: 0, avgPosition: 0, trafficIncrease: 0 },
+        } as Project;
+      });
+      setProjects(items);
     } catch (error) {
       console.error("Error fetching projects:", error);
       toast.error("Failed to load projects");
@@ -204,28 +175,24 @@ export default function TeamProjectsPage() {
         return;
       }
 
-      const newProject: Project = {
-        id: Math.random().toString(36).substr(2, 9),
+      if (!teamId) { toast.error('Team not resolved'); return; }
+      await addDoc(collection(db, 'projects'), {
         name: projectForm.name,
         description: projectForm.description,
         status: projectForm.status,
         priority: projectForm.priority,
-        assignedMembers: [user?.email || ""],
-        keywords: projectForm.keywords.split(",").map((k) => k.trim()),
-        targetUrls: projectForm.targetUrls.split(",").map((u) => u.trim()),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deadline: projectForm.deadline ? new Date(projectForm.deadline) : undefined,
+        assignedMembers: [user?.email || user?.uid],
+        keywords: projectForm.keywords.split(',').map(k => k.trim()).filter(Boolean),
+        targetUrls: projectForm.targetUrls.split(',').map(u => u.trim()).filter(Boolean),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        deadline: projectForm.deadline ? new Date(projectForm.deadline) : null,
         progress: 0,
-        metrics: {
-          totalKeywords: 0,
-          rankedKeywords: 0,
-          avgPosition: 0,
-          trafficIncrease: 0,
-        },
-      };
-
-      setProjects([newProject, ...projects]);
+        metrics: { totalKeywords: 0, rankedKeywords: 0, avgPosition: 0, trafficIncrease: 0 },
+        teamId,
+        userId: user?.uid
+      });
+      await fetchProjects();
       setShowCreateDialog(false);
       setProjectForm({
         name: "",
@@ -245,7 +212,8 @@ export default function TeamProjectsPage() {
 
   const handleDeleteProject = async (projectId: string) => {
     try {
-      setProjects(projects.filter((p) => p.id !== projectId));
+  await deleteDoc(doc(db, 'projects', projectId));
+  setProjects(projects.filter((p) => p.id !== projectId));
       toast.success("Project deleted successfully");
     } catch (error) {
       console.error("Error deleting project:", error);
@@ -264,6 +232,8 @@ export default function TeamProjectsPage() {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
+  useEffect(() => { if (teamId) fetchProjects(); }, [teamId]);
+
   if (authLoading || loading) {
     return <LoadingScreen fullScreen text="Loading team projects..." />;
   }
@@ -274,162 +244,151 @@ export default function TeamProjectsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push("/team")}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Team
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              <Folder className="h-8 w-8 text-primary" />
-              Team Projects
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Manage and track your team's SEO projects and campaigns
-            </p>
-          </div>
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                New Project
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Create New Project</DialogTitle>
-                <DialogDescription>
-                  Set up a new SEO project for your team to collaborate on.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Project Name</Label>
-                    <Input
-                      id="name"
-                      value={projectForm.name}
-                      onChange={(e) =>
-                        setProjectForm({ ...projectForm, name: e.target.value })
-                      }
-                      placeholder="Enter project name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select
-                      value={projectForm.status}
-                      onValueChange={(value: Project["status"]) =>
-                        setProjectForm({ ...projectForm, status: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="planning">Planning</SelectItem>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="paused">Paused</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+    <main className="container mx-auto py-6 space-y-8">
+      <ToolPageHeader
+        title="Team Projects"
+        description="Manage and track your team's SEO projects and campaigns"
+        badges={[
+          { label: "Collaboration", variant: "secondary" },
+          { label: "Enterprise", variant: "outline", className: "text-primary border-primary/40" },
+        ]}
+        showBreadcrumb
+      >
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogTrigger asChild>
+            <Button className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              New Project
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Create New Project</DialogTitle>
+              <DialogDescription>
+                Set up a new SEO project for your team to collaborate on.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Project Name</Label>
+                  <Input
+                    id="name"
+                    value={projectForm.name}
+                    onChange={(e) =>
+                      setProjectForm({ ...projectForm, name: e.target.value })
+                    }
+                    placeholder="Enter project name"
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={projectForm.description}
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    value={projectForm.status}
+                    onValueChange={(value: Project["status"]) =>
+                      setProjectForm({ ...projectForm, status: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="planning">Planning</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="paused">Paused</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={projectForm.description}
+                  onChange={(e) =>
+                    setProjectForm({
+                      ...projectForm,
+                      description: e.target.value,
+                    })
+                  }
+                  placeholder="Describe the project goals and scope"
+                  rows={3}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="priority">Priority</Label>
+                  <Select
+                    value={projectForm.priority}
+                    onValueChange={(value: Project["priority"]) =>
+                      setProjectForm({ ...projectForm, priority: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="critical">Critical</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="deadline">Deadline</Label>
+                  <Input
+                    id="deadline"
+                    type="date"
+                    value={projectForm.deadline}
                     onChange={(e) =>
                       setProjectForm({
                         ...projectForm,
-                        description: e.target.value,
+                        deadline: e.target.value,
                       })
                     }
-                    placeholder="Describe the project goals and scope"
-                    rows={3}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="priority">Priority</Label>
-                    <Select
-                      value={projectForm.priority}
-                      onValueChange={(value: Project["priority"]) =>
-                        setProjectForm({ ...projectForm, priority: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="critical">Critical</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="deadline">Deadline</Label>
-                    <Input
-                      id="deadline"
-                      type="date"
-                      value={projectForm.deadline}
-                      onChange={(e) =>
-                        setProjectForm({
-                          ...projectForm,
-                          deadline: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="keywords">Target Keywords</Label>
-                  <Input
-                    id="keywords"
-                    value={projectForm.keywords}
-                    onChange={(e) =>
-                      setProjectForm({ ...projectForm, keywords: e.target.value })
-                    }
-                    placeholder="keyword 1, keyword 2, keyword 3"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="urls">Target URLs</Label>
-                  <Input
-                    id="urls"
-                    value={projectForm.targetUrls}
-                    onChange={(e) =>
-                      setProjectForm({ ...projectForm, targetUrls: e.target.value })
-                    }
-                    placeholder="https://example.com, https://example.com/page"
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCreateDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleCreateProject}>Create Project</Button>
+              <div className="space-y-2">
+                <Label htmlFor="keywords">Target Keywords</Label>
+                <Input
+                  id="keywords"
+                  value={projectForm.keywords}
+                  onChange={(e) =>
+                    setProjectForm({ ...projectForm, keywords: e.target.value })
+                  }
+                  placeholder="keyword 1, keyword 2, keyword 3"
+                />
               </div>
-            </DialogContent>
-          </Dialog>
-      </div>
+              <div className="space-y-2">
+                <Label htmlFor="urls">Target URLs</Label>
+                <Input
+                  id="urls"
+                  value={projectForm.targetUrls}
+                  onChange={(e) =>
+                    setProjectForm({ ...projectForm, targetUrls: e.target.value })
+                  }
+                  placeholder="https://example.com, https://example.com/page"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowCreateDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleCreateProject}>Create Project</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </ToolPageHeader>
 
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+  {/* Filters */}
+  <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -467,8 +426,8 @@ export default function TeamProjectsPage() {
           </Select>
       </div>
 
-      {/* Projects Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+  {/* Projects Grid */}
+  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map((project) => {
             const StatusIcon = statusConfig[project.status].icon;
             return (
@@ -608,6 +567,6 @@ export default function TeamProjectsPage() {
           </Button>
         </div>
       )}
-    </div>
+  </main>
   );
 }

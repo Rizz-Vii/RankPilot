@@ -59,8 +59,27 @@ export class PWAManager {
     }
 
     private async initializePWA() {
-        // Register service worker
-        if ('serviceWorker' in navigator) {
+        const enablePWA = process.env.NEXT_PUBLIC_ENABLE_PWA === 'true' || process.env.NODE_ENV === 'production';
+
+        // In development, proactively unregister any existing service workers to avoid stale caches
+        if (!enablePWA && 'serviceWorker' in navigator) {
+            try {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                for (const reg of regs) {
+                    await reg.unregister();
+                }
+                // Also prompt the controller to stop if present
+                if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+                }
+                console.info('[PWA] Service workers unregistered in development');
+            } catch (e) {
+                console.warn('[PWA] Failed to unregister service workers in development:', e);
+            }
+        }
+
+        // Register service worker only when enabled
+        if (enablePWA && 'serviceWorker' in navigator) {
             try {
                 this.registration = await navigator.serviceWorker.register('/sw.js', {
                     scope: '/'
@@ -88,12 +107,14 @@ export class PWAManager {
             }
         }
 
-        // Handle install prompt
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            this.installPrompt = e as PWAInstallPrompt;
-            this.showInstallPrompt();
-        });
+        // Handle install prompt (only when PWA is enabled)
+        if (enablePWA) {
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                this.installPrompt = e as PWAInstallPrompt;
+                this.showInstallPrompt();
+            });
+        }
 
         // Handle app installed
         window.addEventListener('appinstalled', () => {
@@ -111,8 +132,10 @@ export class PWAManager {
             this.isOnline = false;
         });
 
-        // Initialize push notifications
-        this.initializePushNotifications();
+        // Initialize push notifications only when PWA is enabled
+        if (enablePWA) {
+            this.initializePushNotifications();
+        }
     }
 
     private handleServiceWorkerMessage(event: MessageEvent) {
@@ -189,24 +212,34 @@ export class PWAManager {
     }
 
     private async initializePushNotifications() {
-        if (!('Notification' in window) || !('PushManager' in window)) {
-            console.log('[PWA] Push notifications not supported');
-            return;
-        }
-
-        // Request notification permission
-        if (Notification.permission === 'default') {
-            const permission = await Notification.requestPermission();
-            console.log('[PWA] Notification permission:', permission);
+        // Passive capability check only; do not request permission automatically
+        try {
+            if (!('Notification' in window) || !('PushManager' in window)) {
+                console.log('[PWA] Push notifications not supported');
+                return;
+            }
+            console.log('[PWA] Notification permission (current):', Notification.permission);
+        } catch (e) {
+            // Ignore in environments that lack Notification
         }
     }
 
     async subscribeToPushNotifications(userId: string): Promise<boolean> {
-        if (!this.registration || Notification.permission !== 'granted') {
+        if (!this.registration) {
             return false;
         }
 
         try {
+            // Request permission only when user opts-in
+            if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') return false;
+            }
+
+            if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
+                return false;
+            }
+
             const subscription = await this.registration.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: this.urlBase64ToUint8Array(
@@ -274,7 +307,8 @@ export class PWAManager {
     }
 
     async showNotification(title: string, options: Partial<NotificationOptions> = {}) {
-        if (!this.registration || Notification.permission !== 'granted') {
+        // Guard for unsupported Notification API or missing registration
+        if (!this.registration || typeof Notification === 'undefined' || Notification.permission !== 'granted') {
             return;
         }
 
@@ -404,11 +438,16 @@ export function usePWA() {
     const pwaManager = PWAManager.getInstance();
 
     useEffect(() => {
-        // Check initial states
-        setIsInstallable(pwaManager.isInstallable());
-        setIsInstalled(pwaManager.isInstalled());
-        setConnectionStatus(pwaManager.getConnectionStatus());
-        setNotificationsEnabled(Notification.permission === 'granted');
+        // Check initial states (with guards to avoid throwing in unsupported contexts)
+        try { setIsInstallable(pwaManager.isInstallable()); } catch { }
+        try { setIsInstalled(pwaManager.isInstalled()); } catch { }
+        try { setConnectionStatus(pwaManager.getConnectionStatus()); } catch { }
+        try {
+            const granted = typeof Notification !== 'undefined' && Notification.permission === 'granted';
+            setNotificationsEnabled(granted);
+        } catch {
+            setNotificationsEnabled(false);
+        }
 
         // Listen for PWA events
         const handleInstallPrompt = () => {
@@ -423,16 +462,20 @@ export function usePWA() {
         const handleOnline = () => setConnectionStatus('online');
         const handleOffline = () => setConnectionStatus('offline');
 
-        window.addEventListener('pwa-install-prompt', handleInstallPrompt);
-        window.addEventListener('appinstalled', handleAppInstalled);
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
+        if (typeof window !== 'undefined') {
+            window.addEventListener('pwa-install-prompt', handleInstallPrompt);
+            window.addEventListener('appinstalled', handleAppInstalled);
+            window.addEventListener('online', handleOnline);
+            window.addEventListener('offline', handleOffline);
+        }
 
         return () => {
-            window.removeEventListener('pwa-install-prompt', handleInstallPrompt);
-            window.removeEventListener('appinstalled', handleAppInstalled);
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('pwa-install-prompt', handleInstallPrompt);
+                window.removeEventListener('appinstalled', handleAppInstalled);
+                window.removeEventListener('online', handleOnline);
+                window.removeEventListener('offline', handleOffline);
+            }
         };
     }, []);
 

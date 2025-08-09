@@ -14,7 +14,7 @@ export const TIER_ALIASES: Record<string, TierName> = {
   free: "free",
   starter: "starter",
   agency: "agency",
-  professional: "agency", // Map professional to agency for compatibility
+  professional: "agency", // Legacy alias: map to agency
   enterprise: "enterprise",
 };
 

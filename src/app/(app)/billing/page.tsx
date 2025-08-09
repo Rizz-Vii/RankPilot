@@ -33,8 +33,8 @@ import { toast } from "sonner";
 // Mock data - replace with actual API calls
 const mockBillingData = {
   currentPlan: {
-    name: "Professional",
-    price: 79,
+    name: "Agency",
+    price: 49,
     billingCycle: "monthly",
     nextBillingDate: "2024-02-15",
     status: "active",
@@ -50,25 +50,25 @@ const mockBillingData = {
     {
       id: "inv_001",
       date: "2024-01-15",
-      amount: 79,
+  amount: 49,
       status: "paid",
-      description: "Professional Plan - Monthly",
+  description: "Agency Plan - Monthly",
       downloadUrl: "/invoices/inv_001.pdf",
     },
     {
       id: "inv_002",
       date: "2023-12-15",
-      amount: 79,
+  amount: 49,
       status: "paid",
-      description: "Professional Plan - Monthly",
+  description: "Agency Plan - Monthly",
       downloadUrl: "/invoices/inv_002.pdf",
     },
     {
       id: "inv_003",
       date: "2023-11-15",
-      amount: 79,
+  amount: 49,
       status: "paid",
-      description: "Professional Plan - Monthly",
+  description: "Agency Plan - Monthly",
       downloadUrl: "/invoices/inv_003.pdf",
     },
   ],
@@ -92,9 +92,13 @@ export default function BillingPage() {
     setIsMounted(true);
   }, []);
 
-  const handleUpgrade = () => {
+  const handleUpgrade = (plan?: string) => {
     toast.info("Redirecting to upgrade options...");
-    // Redirect to pricing page with current plan highlighted
+    // Redirect to pricing page with optional preselected plan
+    if (typeof window !== "undefined") {
+      const url = plan ? `/pricing?plan=${plan}` : "/pricing";
+      window.location.href = url;
+    }
   };
 
   const handleDowngrade = () => {
@@ -233,11 +237,9 @@ export default function BillingPage() {
                 <Separator />
 
                 <div className="flex gap-3">
-                  <Button asChild>
-                    <Link href="/pricing">
+                  <Button onClick={() => handleUpgrade()}>
                       <TrendingUp className="h-4 w-4 mr-2" />
                       Upgrade Plan
-                    </Link>
                   </Button>
                   <Button variant="outline" onClick={handleDowngrade}>
                     Downgrade

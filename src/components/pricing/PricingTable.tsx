@@ -6,8 +6,10 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Check, Crown, Zap } from 'lucide-react';
+import { Building2, Check, Crown } from 'lucide-react';
+import { TierIcon, TierChip } from '@/components/tiers/tier-icons';
 import { useState } from 'react';
+import { STRIPE_PLANS } from '@/lib/stripe';
 
 interface PricingTableProps {
     currentTier?: string;
@@ -43,72 +45,37 @@ export function PricingTable({ currentTier = 'free', onUpgrade }: PricingTablePr
         }
     };
 
-    const tiers = [
-        {
-            key: 'free',
-            name: 'Free Tier',
-            price: 0,
-            description: 'Perfect for getting started',
-            icon: <Zap className="h-6 w-6" />,
-            features: [
-                '10 NeuroSEO™ queries/month',
-                'Basic keyword research',
-                'Website analysis',
-                'Dashboard access',
-                'Community support'
-            ],
-            buttonText: 'Current Plan',
-            popular: false
-        },
-        {
-            key: 'starter',
-            name: 'Starter',
-            price: 29,
-            description: 'Great for small businesses',
-            icon: <Check className="h-6 w-6" />,
-            features: [
-                '100 NeuroSEO™ queries/month',
-                'Content analyzer',
-                'Competitor tracking (5)',
-                'Email support',
-                '14-day free trial'
-            ],
+    const tiers = (['starter', 'agency', 'enterprise'] as const).map((key) => {
+        const plan = STRIPE_PLANS[key];
+        const meta = {
+            starter: {
+                description: 'Great for small businesses',
+                icon: <TierIcon tier="starter" size={48} className="shadow-sm" />,
+                popular: false,
+            },
+            agency: {
+                description: 'Perfect for agencies',
+                icon: <TierIcon tier="agency" size={48} className="shadow-sm" />,
+                popular: true,
+            },
+            enterprise: {
+                description: 'For large organizations',
+                icon: <TierIcon tier="enterprise" size={48} className="shadow-sm" />,
+                popular: false,
+            },
+        }[key];
+
+        return {
+            key,
+            name: plan.name,
+            price: plan.price.monthly,
+            description: meta.description,
+            icon: meta.icon,
+            features: plan.features,
             buttonText: 'Start Free Trial',
-            popular: true
-        },
-        {
-            key: 'agency',
-            name: 'Agency',
-            price: 99,
-            description: 'Perfect for agencies',
-            icon: <Crown className="h-6 w-6" />,
-            features: [
-                '500 NeuroSEO™ queries/month',
-                'Full competitor intelligence',
-                'White-label reporting',
-                'Team collaboration (5 users)',
-                'Priority support'
-            ],
-            buttonText: 'Start Free Trial',
-            popular: false
-        },
-        {
-            key: 'enterprise',
-            name: 'Enterprise',
-            price: 299,
-            description: 'For large organizations',
-            icon: <Building2 className="h-6 w-6" />,
-            features: [
-                'Unlimited NeuroSEO™ queries',
-                'Advanced API access',
-                'Custom integrations',
-                'Unlimited team members',
-                'Dedicated account manager'
-            ],
-            buttonText: 'Start Free Trial',
-            popular: false
-        }
-    ];
+            popular: meta.popular,
+        };
+    });
 
     return (
         <div className="py-24 bg-background">
@@ -123,7 +90,7 @@ export function PricingTable({ currentTier = 'free', onUpgrade }: PricingTablePr
                     </p>
                 </div>
 
-                <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 gap-8 lg:max-w-none lg:grid-cols-4">
+                <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 gap-8 lg:max-w-none lg:grid-cols-3">
                     {tiers.map((tier) => (
                         <Card
                             key={tier.key}
@@ -136,9 +103,7 @@ export function PricingTable({ currentTier = 'free', onUpgrade }: PricingTablePr
                             )}
 
                             <CardHeader className="text-center">
-                                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                                    {tier.icon}
-                                </div>
+                                <div className="mx-auto">{tier.icon}</div>
                                 <CardTitle className="text-xl font-semibold">{tier.name}</CardTitle>
                                 <CardDescription>{tier.description}</CardDescription>
 
@@ -148,14 +113,12 @@ export function PricingTable({ currentTier = 'free', onUpgrade }: PricingTablePr
                                             ${tier.price}
                                         </span>
                                         <span className="text-sm font-semibold leading-6 text-muted-foreground">
-                                            /month AUD
+                                            /month USD
                                         </span>
                                     </div>
-                                    {tier.key !== 'free' && (
-                                        <p className="mt-2 text-sm text-muted-foreground">
-                                            Billed monthly • Cancel anytime
-                                        </p>
-                                    )}
+                                    <p className="mt-2 text-sm text-muted-foreground">
+                                        7-day free trial • Billed monthly • Cancel anytime
+                                    </p>
                                 </div>
                             </CardHeader>
 
@@ -175,22 +138,19 @@ export function PricingTable({ currentTier = 'free', onUpgrade }: PricingTablePr
                                     disabled={currentTier === tier.key || loading === tier.key}
                                     onClick={() => handleUpgrade(tier.key)}
                                 >
-                                    {loading === tier.key ? (
-                                        'Processing...'
-                                    ) : currentTier === tier.key ? (
-                                        'Current Plan'
-                                    ) : tier.key === 'free' ? (
-                                        'Free Forever'
-                                    ) : (
-                                        tier.buttonText
-                                    )}
+                                    {loading === tier.key
+                                        ? 'Processing...'
+                                        : currentTier === tier.key
+                                        ? 'Current Plan'
+                                        : tier.buttonText}
                                 </Button>
 
-                                {currentTier === tier.key && (
-                                    <p className="mt-2 text-center text-sm text-muted-foreground">
-                                        You&apos;re currently on this plan
-                                    </p>
-                                )}
+                                                                <div className="mt-4 flex items-center justify-center gap-2">
+                                                                    <TierChip tier={tier.key} />
+                                                                    {currentTier === tier.key && (
+                                                                        <span className="text-xs text-muted-foreground">Current Plan</span>
+                                                                    )}
+                                                                </div>
                             </CardContent>
                         </Card>
                     ))}

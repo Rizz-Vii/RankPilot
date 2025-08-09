@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { TIER_HIERARCHY } from "@/lib/access-control";
 import {
   LayoutDashboard,
   KeyRound,
@@ -25,6 +26,15 @@ import {
   Map,
   MessageCircle,
   FolderOpen,
+  Megaphone,
+  Mail,
+  Share2,
+  PenTool,
+  Briefcase,
+  DollarSign,
+  Receipt,
+  CreditCard,
+  FileText,
 } from "lucide-react";
 
 export interface NavItem {
@@ -54,14 +64,15 @@ export interface NavGroup {
 
 // Enhanced NeuroSEO™ Suite Navigation - Sales Optimized
 export const neuroSEOItems: NavItem[] = [
+  // Free: single representative tool
   {
     title: "NeuroSEO™",
     href: "/neuroseo",
     icon: Brain,
     description: "AI-powered content analysis dashboard (Free demo)",
     badge: "AI",
-    // Free tier - demo access
   },
+  // Starter: unlock core analysis trio (crawler, semantic, trust)
   {
     title: "NeuralCrawler™",
     href: "/neuroseo/neural-crawler",
@@ -83,6 +94,7 @@ export const neuroSEOItems: NavItem[] = [
     description: "E-A-T optimization and content authenticity",
     requiredTier: "starter",
   },
+  // Agency: advanced visibility + rewrite
   {
     title: "AI Visibility Engine",
     href: "/neuroseo/ai-visibility",
@@ -101,13 +113,14 @@ export const neuroSEOItems: NavItem[] = [
 
 // SEO Tools Navigation - Sales Optimized
 export const seoToolsItems: NavItem[] = [
+  // Free: one entry point
   {
     title: "Keyword Tool",
     href: "/keyword-tool",
     icon: KeyRound,
     description: "AI-driven keyword research and analysis (Free)",
-    // Free tier - basic keyword research
   },
+  // Starter: core on-page + audit + brief
   {
     title: "Content Analyzer",
     href: "/content-analyzer",
@@ -133,21 +146,23 @@ export const seoToolsItems: NavItem[] = [
 
 // Competitive Intelligence Navigation - Sales Optimized
 export const competitiveItems: NavItem[] = [
+  // Free: teaser (competitors locked at starter to encourage upgrade?) -> give SERP View free instead for breadth
+  {
+    title: "SERP View",
+    href: "/serp-view",
+    icon: TrendingUp,
+    description: "Search engine results page visualization (Free preview)",
+  },
+  // Starter: unlock basic competitors
   {
     title: "Competitors",
     href: "/competitors",
     icon: Users,
     description: "Competitor analysis and benchmarking",
-    requiredTier: "agency",
-    feature: "competitor-analysis",
+    requiredTier: "starter",
+    feature: "competitor_analysis",
   },
-  {
-    title: "SERP View",
-    href: "/serp-view",
-    icon: TrendingUp,
-    description: "Search engine results page visualization",
-    requiredTier: "agency",
-  },
+  // Agency: deeper link intelligence
   {
     title: "Link View",
     href: "/link-view",
@@ -159,6 +174,16 @@ export const competitiveItems: NavItem[] = [
 
 // Team Collaboration Navigation - Sales Optimized
 export const teamCollaborationItems: NavItem[] = [
+  // Starter: can be invited (view dashboard read-only) -> represent with Team Dashboard locked until agency? We'll give chat at agency only per request (invitation concept handled elsewhere)
+  {
+    title: "Team Dashboard",
+    href: "/team",
+    icon: Users,
+    description: "Team overview (view/invite at starter via share)",
+    requiredTier: "starter",
+    feature: "team_management",
+  },
+  // Agency: collaboration core
   {
     title: "Team Chat",
     href: "/team/chat",
@@ -168,13 +193,14 @@ export const teamCollaborationItems: NavItem[] = [
     feature: "team_management",
   },
   {
-    title: "Team Dashboard",
-    href: "/team",
+    title: "Team Settings",
+    href: "/team/settings",
     icon: Users,
-    description: "Team overview and member management",
-    requiredTier: "enterprise",
+    description: "Team configuration & member management",
+    requiredTier: "agency",
     feature: "team_management",
   },
+  // Enterprise: advanced project & reporting
   {
     title: "Team Projects",
     href: "/team/projects",
@@ -191,13 +217,55 @@ export const teamCollaborationItems: NavItem[] = [
     requiredTier: "enterprise",
     feature: "team_management",
   },
+];
+
+// Sales Navigation (progressive unlock)
+export const salesItems: NavItem[] = [
   {
-    title: "Team Settings",
-    href: "/team/settings",
-    icon: Users,
-    description: "Team configuration and member management",
+    title: "Pipeline",
+    href: "/sales/pipeline",
+    icon: Briefcase,
+    description: "Track opportunities & stages",
+    requiredTier: "starter",
+  },
+  {
+    title: "Deals",
+    href: "/sales/deals",
+    icon: Target,
+    description: "Manage active deals & close rate",
     requiredTier: "agency",
-    feature: "team_management",
+  },
+  {
+    title: "Outreach",
+    href: "/sales/outreach",
+    icon: Mail,
+    description: "AI-assisted outbound sequences",
+    requiredTier: "agency",
+  },
+];
+
+// Finance Navigation (tiered depth)
+export const financeItems: NavItem[] = [
+  {
+    title: "Billing Overview",
+    href: "/finance/billing",
+    icon: CreditCard,
+    description: "Plan usage & spend summary",
+    requiredTier: "starter",
+  },
+  {
+    title: "Invoices",
+    href: "/finance/invoices",
+    icon: FileText,
+    description: "Historical invoices & receipts",
+    requiredTier: "starter",
+  },
+  {
+    title: "Revenue Analytics",
+    href: "/finance/revenue",
+    icon: BarChart3,
+    description: "MRR / churn / LTV metrics",
+    requiredTier: "agency",
   },
 ];
 
@@ -224,6 +292,28 @@ export const managementItems: NavItem[] = [
     description: "Performance metrics and analytics",
     requiredTier: "starter",
   },
+  // Cross-domain dashboards (new groups surfaced centrally)
+  {
+    title: "Sales Dashboard",
+    href: "/sales",
+    icon: Target,
+    description: "Funnel velocity & deal health overview",
+    requiredTier: "starter",
+  },
+  {
+    title: "Finance Dashboard",
+    href: "/finance",
+    icon: DollarSign,
+    description: "Billing, revenue & quota spend summary",
+    requiredTier: "starter",
+  },
+  {
+    title: "Marketing Dashboard",
+    href: "/marketing",
+    icon: Megaphone,
+    description: "Enterprise marketing automation intelligence",
+    requiredTier: "enterprise",
+  },
   // Admin link now in Management group
   {
     title: "Admin",
@@ -231,7 +321,7 @@ export const managementItems: NavItem[] = [
     icon: Shield,
     description: "Administrative controls and user management",
     adminOnly: true,
-    
+
   },
 ];
 
@@ -259,6 +349,73 @@ export const standaloneItems: NavItem[] = [
 
 // Enhanced Navigation Groups
 export const navGroups: NavGroup[] = [
+  // Reordered: Management first so Dashboard (first page) is primary
+  {
+    title: "Management",
+    icon: LayoutDashboard,
+    id: "management",
+    description: "Dashboard and performance tracking",
+    items: managementItems,
+    defaultExpanded: true,
+    collapsible: true,
+  },
+  {
+    title: "Marketing Automation",
+    icon: Megaphone,
+    id: "marketing",
+    description: "Enterprise AI marketing & growth automation",
+    badge: "Enterprise",
+    items: [
+      {
+        title: "Email Campaigns",
+        href: "/marketing/email-campaigns",
+        icon: Mail,
+        description: "AI-driven email sequencing & performance",
+        requiredTier: "enterprise",
+      },
+      {
+        title: "Lead Generation",
+        href: "/marketing/lead-generation",
+        icon: Target,
+        description: "Automated lead capture & enrichment",
+        requiredTier: "enterprise",
+      },
+      {
+        title: "Social Presence",
+        href: "/marketing/social-presence",
+        icon: Share2,
+        description: "AI scheduling & multi-channel publishing",
+        requiredTier: "enterprise",
+      },
+      {
+        title: "Marketing Content Gen",
+        href: "/marketing/content-generation",
+        icon: PenTool,
+        description: "Long-form & campaign asset generation",
+        requiredTier: "enterprise",
+      },
+    ],
+    defaultExpanded: false,
+    collapsible: true,
+  },
+  {
+    title: "Sales",
+    icon: Briefcase,
+    id: "sales",
+    description: "Pipeline & deal acceleration",
+    items: salesItems,
+    defaultExpanded: false,
+    collapsible: true,
+  },
+  {
+    title: "Finance",
+    icon: DollarSign,
+    id: "finance",
+    description: "Billing & revenue intelligence",
+    items: financeItems,
+    defaultExpanded: false,
+    collapsible: true,
+  },
   {
     title: "NeuroSEO™ Suite",
     icon: Brain,
@@ -266,7 +423,7 @@ export const navGroups: NavGroup[] = [
     description: "AI-powered SEO analysis and optimization",
     badge: "AI",
     items: neuroSEOItems,
-    defaultExpanded: true,
+    defaultExpanded: false,
     collapsible: true,
   },
   {
@@ -275,7 +432,7 @@ export const navGroups: NavGroup[] = [
     id: "seo-tools",
     description: "Essential SEO analysis and optimization tools",
     items: seoToolsItems,
-    defaultExpanded: true,
+    defaultExpanded: false,
     collapsible: true,
   },
   {
@@ -299,15 +456,6 @@ export const navGroups: NavGroup[] = [
     defaultExpanded: false,
     collapsible: true,
   },
-  {
-    title: "Management",
-    icon: LayoutDashboard,
-    id: "management",
-    description: "Dashboard and performance tracking",
-    items: managementItems,
-    defaultExpanded: false,
-    collapsible: true,
-  },
   // NOTE: Removed "Account & Settings" group - Profile now standalone, Settings at bottom
 ];
 
@@ -321,6 +469,8 @@ export const flatNavItems: NavItem[] = [
   ...seoToolsItems, // All SEO tools
   ...competitiveItems, // Competitive tools
   ...teamCollaborationItems, // Team collaboration tools
+  ...salesItems,
+  ...financeItems,
   // Admin is now in managementItems
   ...userItems, // Profile only
 ];
@@ -328,81 +478,58 @@ export const flatNavItems: NavItem[] = [
 // Helper functions
 export const getVisibleNavGroups = (
   userTier?: string,
-  isAdmin?: boolean
+  isAdmin?: boolean,
+  options: { includeLocked?: boolean } = {}
 ): NavGroup[] => {
+  const includeLocked = options.includeLocked ?? true; // now we default to showing locked items disabled for upsell
   return navGroups
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) => {
-        // Check admin access
-        if (item.adminOnly && !isAdmin) return false;
+    .map((group) => {
+      const processedItems = group.items
+        .map((item) => {
+          // Admin restriction
+          if (item.adminOnly && !isAdmin) return null;
+          if (!item.requiredTier) return { ...item, disabled: false };
+          if (!userTier) {
+            return includeLocked
+              ? { ...item, disabled: true }
+              : null;
+          }
+          const userIndex = TIER_HIERARCHY.indexOf(userTier as any);
+          const requiredIndex = TIER_HIERARCHY.indexOf(
+            item.requiredTier as any
+          );
+          if (userIndex === -1 || requiredIndex === -1) {
+            return includeLocked ? { ...item, disabled: true } : null;
+          }
+          const unlocked = userIndex >= requiredIndex;
+          if (!unlocked && !includeLocked) return null;
+          return { ...item, disabled: !unlocked };
+        })
+        .filter(Boolean) as NavItem[];
 
-        // Check tier access
-        if (item.requiredTier) {
-          if (!userTier) return false;
-          const tierHierarchy = [
-            "free",
-            "starter",
-            "agency",
-            "enterprise",
-            "admin",
-          ];
-          const userTierIndex = tierHierarchy.indexOf(userTier);
-          const requiredTierIndex = tierHierarchy.indexOf(item.requiredTier);
-          if (userTierIndex < requiredTierIndex) return false;
-        }
-
-        return true;
-      }),
-    }))
-    .filter((group) => {
-      // Filter out groups with no visible items
-      if (group.items.length === 0) return false;
-
-      // Check group-level tier requirements
-      if (group.requiredTier) {
-        if (!userTier) return false;
-        const tierHierarchy = [
-          "free",
-          "starter",
-          "agency",
-          "enterprise",
-          "admin",
-        ];
-        const userTierIndex = tierHierarchy.indexOf(userTier);
-        const requiredTierIndex = tierHierarchy.indexOf(group.requiredTier);
-        if (userTierIndex < requiredTierIndex) return false;
-      }
-
-      return true;
-    });
+      return { ...group, items: processedItems };
+    })
+    .filter((group) => group.items.length > 0);
 };
 
 export const getVisibleNavItems = (
   userTier?: string,
-  isAdmin?: boolean
+  isAdmin?: boolean,
+  options: { includeLocked?: boolean } = {}
 ): NavItem[] => {
-  return flatNavItems.filter((item) => {
-    // Check admin access
-    if (item.adminOnly && !isAdmin) return false;
-
-    // Check tier access
-    if (item.requiredTier) {
-      if (!userTier) return false;
-      const tierHierarchy = [
-        "free",
-        "starter",
-        "agency",
-        "enterprise",
-        "admin",
-      ];
-      const userTierIndex = tierHierarchy.indexOf(userTier);
-      const requiredTierIndex = tierHierarchy.indexOf(item.requiredTier);
-      if (userTierIndex < requiredTierIndex) return false;
-    }
-
-    return true;
-  });
+  const includeLocked = options.includeLocked ?? true;
+  return flatNavItems
+    .map((item) => {
+      if (item.adminOnly && !isAdmin) return null;
+      if (!item.requiredTier) return { ...item, disabled: false };
+      if (!userTier) return includeLocked ? { ...item, disabled: true } : null;
+      const userIndex = TIER_HIERARCHY.indexOf(userTier as any);
+      const requiredIndex = TIER_HIERARCHY.indexOf(item.requiredTier as any);
+      const unlocked = userIndex >= requiredIndex;
+      if (!unlocked && !includeLocked) return null;
+      return { ...item, disabled: !unlocked };
+    })
+    .filter(Boolean) as NavItem[];
 };
 
 export const findNavItemByHref = (href: string): NavItem | undefined => {
@@ -438,7 +565,8 @@ export interface NavState {
 }
 
 export const defaultNavState: NavState = {
-  expandedGroups: new Set(["neuroseo", "seo-tools", "user-settings"]),
+  // With single-group expansion we open only Management by default
+  expandedGroups: new Set(["management"]),
   activeGroup: undefined,
   activeItem: undefined,
 };

@@ -17,6 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Activity, Award, TrendingUp, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { ToolPageHeader } from "@/components/tool-page-header";
 
 export default function ProfilePage() {
   const { user, profile, activities, loading: authLoading } = useAuth();
@@ -51,16 +52,13 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
-      <div className="flex items-center gap-3">
-        <User className="h-8 w-8 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold font-headline">Your SEO Profile</h1>
-          <p className="text-muted-foreground font-body">
-            Your professional SEO identity and activity history.
-          </p>
-        </div>
-      </div>
+    <main className="container mx-auto py-6 space-y-8">
+      <ToolPageHeader
+        title="Your SEO Profile"
+        description="Professional SEO identity, achievements, and activity history."
+        badges={[{ label: "User", variant: "secondary" }]}
+        showBreadcrumb
+      />
 
       <Tabs defaultValue={defaultTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
@@ -167,6 +165,6 @@ export default function ProfilePage() {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+  </main>
   );
 }

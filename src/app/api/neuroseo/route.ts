@@ -4,6 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+// Note: defer importing NeuroSEOSuite until runtime to avoid build-time
+// evaluation of modules that may touch Firebase client SDK.
 
 // Disable static optimization for this API route
 export const dynamic = 'force-dynamic';
@@ -12,7 +14,7 @@ export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { urls, targetKeywords, analysisType, userPlan, userId } = body;
+    const { urls, targetKeywords, analysisType, userPlan, userId, competitorUrls } = body;
 
     // Validate required fields
     if (!urls || !Array.isArray(urls) || urls.length === 0) {
@@ -22,50 +24,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Dynamic import to prevent build-time issues - FIXED PATH
-    let neuroSEO;
-    try {
-      const neuroSEOModule = await import("../../../lib/neuroseo/index.js");
-      const { NeuroSEOSuite } = neuroSEOModule;
-      neuroSEO = new NeuroSEOSuite();
-    } catch (error) {
-      console.warn('[NeuroSEO API] Failed to initialize NeuroSEO Suite:', error);
-      // Return mock response during build/development
-      return NextResponse.json({
-        analysis: {
-          overview: {
-            score: 85,
-            timestamp: new Date().toISOString(),
-            analysisType: analysisType || "comprehensive",
-            buildMode: true
-          },
-          engines: {
-            neuralCrawler: { status: "mock", score: 85 },
-            semanticMap: { status: "mock", score: 80 },
-            aiVisibility: { status: "mock", score: 90 },
-            trustBlock: { status: "mock", score: 85 },
-            rewriteGen: { status: "mock", score: 88 },
-            orchestrator: { status: "mock", score: 87 }
-          }
-        },
-        message: "NeuroSEO™ Suite - Build Mode Mock Response"
-      });
-    }
+    // Initialize suite (lazy import to prevent build-time side effects)
+    // We use explicit .js because NodeNext requires an extension for relative imports.
+    // noEmit=true means TS won't output .js for .ts sources, so we supply a real hand-written proxy file neuroseo.js.
+    const { NeuroSEOSuite, NeuroSEOReportSchema } = await import("../../../lib/neuroseo.js");
+    const neuroSEO = new NeuroSEOSuite();
 
     // Run comprehensive analysis instead of returning mocks
     const report = await neuroSEO.runAnalysis({
       urls: Array.isArray(urls) ? urls : [urls],
       targetKeywords: targetKeywords || [],
+      competitorUrls: Array.isArray(competitorUrls) ? competitorUrls : (competitorUrls ? [competitorUrls] : undefined),
       analysisType: analysisType || "comprehensive",
       userPlan: userPlan || "free",
       userId: userId || "anonymous",
     });
-
-    return NextResponse.json(report);
-  } catch (error) {
+    const validated = NeuroSEOReportSchema.safeParse(report);
+    if (!validated.success) {
+      return NextResponse.json({ error: 'Report schema validation failed', issues: validated.error.issues }, { status: 422 });
+    }
+    return NextResponse.json(validated.data);
+  } catch (error: any) {
+    // Surface error details for debugging (mask stack in production)
+    console.error('[NeuroSEO API] POST error', error);
     return NextResponse.json(
-      { error: "Failed to process analysis request" },
-      { status: 400 }
+      { error: error?.message || "Failed to process analysis request", details: process.env.NODE_ENV !== 'production' ? (error?.stack || String(error)) : undefined },
+      { status: 500 }
     );
   }
 }
@@ -75,31 +59,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId") || "anonymous";
 
-    // Dynamic import for GET as well - FIXED PATH
-    let neuroSEO;
-    try {
-      const neuroSEOModule = await import("../../../lib/neuroseo/index.js");
-      const { NeuroSEOSuite } = neuroSEOModule;
-      neuroSEO = new NeuroSEOSuite();
-    } catch (error) {
-      console.warn('[NeuroSEO API] GET - Failed to initialize NeuroSEO Suite:', error);
-      // Return mock usage stats
-      return NextResponse.json({
-        usage: {
-          auditsPerformed: 0,
-          keywordSearches: 0,
-          reportsGenerated: 0,
-          competitorAnalyses: 0
-        },
-        limits: {
-          auditsPerMonth: 5,
-          keywords: 10,
-          reports: 5,
-          competitorAnalyses: 3
-        },
-        buildMode: true
-      });
-    }
+    // Initialize suite (lazy import to prevent build-time side effects)
+    const { NeuroSEOSuite } = await import("../../../lib/neuroseo.js");
+    const neuroSEO = new NeuroSEOSuite();
 
     // Get actual usage statistics from quota manager
     const usageStats = {

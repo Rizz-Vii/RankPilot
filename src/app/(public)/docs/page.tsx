@@ -68,7 +68,7 @@ const documentationSections = [
 
 export default function DocumentationPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Hero Section */}
       <motion.section
         className="pt-32 pb-16 px-4"
@@ -79,19 +79,19 @@ export default function DocumentationPage() {
       >
         <div className="max-w-4xl mx-auto text-center">
           <div className="flex justify-center mb-6">
-            <div className="p-4 bg-blue-100 rounded-2xl">
-              <Book className="h-12 w-12 text-blue-600" />
+            <div className="p-4 bg-primary/10 rounded-2xl">
+              <Book className="h-12 w-12 text-primary" />
             </div>
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             RankPilot Documentation
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Complete guides, API references, and best practices for mastering
             AI-first SEO with RankPilot's NeuroSEO™ Suite.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+            <Button size="lg" className="bg-primary hover:bg-primary/90">
               <Zap className="mr-2 h-5 w-5" />
               Quick Start Guide
             </Button>
@@ -118,12 +118,12 @@ export default function DocumentationPage() {
                 <Card className="h-full hover:shadow-lg transition-shadow duration-300">
                   <CardHeader>
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <section.icon className="h-6 w-6 text-blue-600" />
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <section.icon className="h-6 w-6 text-primary" />
                       </div>
                       <CardTitle className="text-xl">{section.title}</CardTitle>
                     </div>
-                    <p className="text-gray-600">{section.description}</p>
+                    <p className="text-muted-foreground">{section.description}</p>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-3">
@@ -131,7 +131,7 @@ export default function DocumentationPage() {
                         <li key={itemIndex}>
                           <Link
                             href={item.href}
-                            className="flex items-center justify-between group text-gray-700 hover:text-blue-600 transition-colors"
+                            className="flex items-center justify-between group text-foreground hover:text-primary transition-colors"
                           >
                             <span>{item.title}</span>
                             <ExternalLink className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -174,7 +174,7 @@ export default function DocumentationPage() {
                   <Button
                     variant="outline"
                     size="lg"
-                    className="border-white text-white hover:bg-white hover:text-blue-600"
+                    className="border-transparent bg-white text-primary hover:bg-white/90"
                   >
                     Contact Support
                   </Button>

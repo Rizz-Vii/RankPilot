@@ -150,7 +150,7 @@ export default function AdminTierMigration() {
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Old Tier Names:</h4>
               <div className="space-y-1">
-                <Badge variant="outline">starter → professional</Badge>
+                <Badge variant="outline">starter → agency</Badge>
                 <Badge variant="outline">agency → enterprise</Badge>
               </div>
             </div>
@@ -159,7 +159,7 @@ export default function AdminTierMigration() {
               <h4 className="text-sm font-medium">Current Valid Tiers:</h4>
               <div className="space-y-1">
                 <Badge variant="secondary">free</Badge>
-                <Badge variant="secondary">professional ($49/mo)</Badge>
+                <Badge variant="secondary">agency ($49/mo)</Badge>
                 <Badge variant="secondary">enterprise ($149/mo)</Badge>
               </div>
             </div>

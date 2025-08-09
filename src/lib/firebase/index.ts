@@ -1,12 +1,21 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getFunctions } from "firebase/functions";
+import { getStorage } from "firebase/storage";
+import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
 // Firebase configuration from environment variables with fallbacks
 // Firebase configuration from environment variables with fallbacks
-const firebaseConfig = {
+const firebaseConfig: {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  appId: string;
+  measurementId?: string;
+} = {
   apiKey:
     process.env.NEXT_PUBLIC_FIREBASE_API_KEY ||
     "AIzaSyB_HzRrVdysW3o-UXUdCkPqW9rH4fWWjyY",
@@ -22,6 +31,8 @@ const firebaseConfig = {
   appId:
     process.env.NEXT_PUBLIC_FIREBASE_APP_ID ||
     "1:283736429782:web:a3e387a3a79a592121e577",
+  // Only needed for Analytics; ensure provided in production builds
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || undefined,
 };
 
 // Initialize Firebase using a singleton pattern
@@ -34,14 +45,34 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 
 // Initialize Cloud Functions and get a reference to the service
-export const functions = getFunctions(app);
+// Use explicit region (project standard: australia-southeast2) to avoid default us-central1 CORS issues
+export const functions = getFunctions(app, "australia-southeast2");
 
-// Initialize Analytics (only in browser and if supported)
+// Storage (for media uploads in chat, etc.)
+export const storage = getStorage(app);
+
+// Optional: connect to emulator in local dev if env flag set
+if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_USE_FUNCTIONS_EMULATOR === 'true') {
+  try {
+    connectFunctionsEmulator(functions, 'localhost', 5001);
+  } catch { }
+}
+
+// Initialize Analytics (only in browser, production, and if supported)
 let analytics: any = null;
-if (typeof window !== "undefined") {
+if (
+  typeof window !== "undefined" &&
+  process.env.NODE_ENV === "production" &&
+  !!firebaseConfig.measurementId
+) {
   isSupported().then((supported) => {
     if (supported) {
-      analytics = getAnalytics(app);
+      try {
+        analytics = getAnalytics(app);
+      } catch {
+        // Silently ignore analytics init errors in production
+        analytics = null;
+      }
     }
   });
 }

@@ -72,9 +72,8 @@ const getReceiptEmailTemplate = (data: {
           </div>
           
             <h3>Your ${data.plan} Features Include:</h3>
-            ${
-              data.plan === "Starter"
-                ? `
+            ${data.plan === "Starter"
+      ? `
               <div class="feature-item">
                 <span class="feature-icon">📊</span>
                 <span>50 Link Analyses per month</span>
@@ -88,8 +87,8 @@ const getReceiptEmailTemplate = (data: {
                 <span>Email Support</span>
               </div>
             `
-                : data.plan === "Agency"
-                  ? `
+      : data.plan === "Agency"
+        ? `
               <div class="feature-item">
                 <span class="feature-icon">♾️</span>
                 <span>Unlimited Link Analyses</span>
@@ -107,8 +106,8 @@ const getReceiptEmailTemplate = (data: {
                 <span>Custom Integrations</span>
               </div>
             `
-                  : ""
-            }
+        : ""
+    }
           ${data.invoiceUrl ? `<a href="${data.invoiceUrl}" class="btn">Download Invoice</a>` : ""}
           
           <h3>What's Next?</h3>
@@ -168,9 +167,8 @@ const getWelcomeEmailTemplate = (data: {
           
           <div class="feature-list">
             <h3>Your ${data.plan} Features Include:</h3>
-            ${
-              data.plan === "Professional"
-                ? `
+            ${data.plan === "Agency" || data.plan === "Starter" || data.plan === "Enterprise"
+      ? `
               <div class="feature-item">
                 <span class="feature-icon">📊</span>
                 <span>100 Link Analyses per month</span>
@@ -188,8 +186,8 @@ const getWelcomeEmailTemplate = (data: {
                 <span>API Access</span>
               </div>
             `
-                : data.plan === "Enterprise"
-                  ? `
+      : data.plan === "Enterprise"
+        ? `
               <div class="feature-item">
                 <span class="feature-icon">♾️</span>
                 <span>Unlimited Link Analyses</span>
@@ -207,7 +205,7 @@ const getWelcomeEmailTemplate = (data: {
                 <span>Custom Integrations</span>
               </div>
             `
-                  : `
+        : `
               <div class="feature-item">
                 <span class="feature-icon">📈</span>
                 <span>10 Link Analyses per month</span>
@@ -221,7 +219,7 @@ const getWelcomeEmailTemplate = (data: {
                 <span>Email Support</span>
               </div>
             `
-            }
+    }
           </div>
           
           <h3>Getting Started Guide:</h3>

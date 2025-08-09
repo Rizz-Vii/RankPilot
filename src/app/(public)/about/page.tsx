@@ -63,7 +63,7 @@ const values = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+  <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Hero Section */}
       <motion.section
         className="pt-32 pb-16 px-4"
@@ -73,20 +73,20 @@ export default function AboutPage() {
         custom={0}
       >
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             Revolutionizing SEO with
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
               {" "}
               AI Intelligence
             </span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             RankPilot is the world's first AI-native SEO platform, combining the
             power of 6 specialized NeuroSEO™ engines to deliver insights that
             traditional tools simply cannot match.
           </p>
           <div className="flex justify-center">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+            <Button size="lg" className="bg-primary hover:bg-primary/90">
               <Zap className="mr-2 h-5 w-5" />
               Experience the Future of SEO
             </Button>
@@ -140,10 +140,10 @@ export default function AboutPage() {
             custom={2}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
               Our Values
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               These core principles guide everything we do at RankPilot
             </p>
           </motion.div>
@@ -160,14 +160,14 @@ export default function AboutPage() {
                 <Card className="h-full hover:shadow-lg transition-shadow duration-300">
                   <CardHeader>
                     <div className="flex items-center space-x-3">
-                      <div className="p-3 bg-blue-100 rounded-lg">
-                        <value.icon className="h-6 w-6 text-blue-600" />
+                      <div className="p-3 bg-primary/10 rounded-lg">
+                        <value.icon className="h-6 w-6 text-primary" />
                       </div>
                       <CardTitle className="text-xl">{value.title}</CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-600">{value.description}</p>
+                    <p className="text-muted-foreground">{value.description}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -186,8 +186,8 @@ export default function AboutPage() {
       >
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Team</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold text-foreground mb-4">Our Team</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               A passionate group of AI researchers, engineers, and SEO experts
               united by a vision to transform search optimization
             </p>
@@ -208,10 +208,10 @@ export default function AboutPage() {
                       <Users className="h-8 w-8 text-white" />
                     </div>
                     <CardTitle className="text-lg">{member.name}</CardTitle>
-                    <p className="text-blue-600 font-medium">{member.role}</p>
+                    <p className="text-primary font-medium">{member.role}</p>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-600">{member.description}</p>
+                    <p className="text-muted-foreground">{member.description}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -229,7 +229,7 @@ export default function AboutPage() {
         custom={11}
       >
         <div className="max-w-4xl mx-auto text-center">
-          <Card className="bg-gray-900 text-white">
+          <Card className="bg-gradient-to-r from-primary to-purple-600 text-white">
             <CardContent className="p-12">
               <h2 className="text-3xl font-bold mb-6">
                 Ready to Transform Your SEO?
@@ -240,14 +240,10 @@ export default function AboutPage() {
                 intelligence.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+                <Button size="lg" className="bg-primary hover:bg-primary/90">
                   Start Free Trial
                 </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="border-gray-600 text-gray-300 hover:bg-gray-800"
-                >
+                <Button variant="outline" size="lg" className="border-transparent bg-white text-primary hover:bg-white/90">
                   <Link href="/contact">Get in Touch</Link>
                 </Button>
               </div>

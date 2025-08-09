@@ -5,6 +5,8 @@ export function middleware(request: NextRequest) {
   // Get response
   const response = NextResponse.next();
 
+  const isLocal = process.env.NODE_ENV !== "production" || request.nextUrl.hostname === "localhost";
+
   // Add security headers - Enhanced with complete domain coverage
   const cspHeader = [
     // Default directives
@@ -67,14 +69,16 @@ export function middleware(request: NextRequest) {
     "worker-src 'self' blob:",
   ].join("; ");
   const securityHeaders = {
-    // Content Security Policy
-    "Content-Security-Policy": cspHeader,
+    // Content Security Policy (apply only in production to avoid breaking Next dev runtime)
+    ...(process.env.NODE_ENV === "production"
+      ? { "Content-Security-Policy": cspHeader }
+      : {}),
 
     // Prevent MIME type sniffing
     "X-Content-Type-Options": "nosniff",
 
-    // Prevent clickjacking
-    "X-Frame-Options": "DENY",
+    // Prevent clickjacking (align with Next headers)
+    "X-Frame-Options": "SAMEORIGIN",
 
     // XSS Protection
     "X-XSS-Protection": "1; mode=block",
@@ -82,9 +86,10 @@ export function middleware(request: NextRequest) {
     // Referrer Policy
     "Referrer-Policy": "strict-origin-when-cross-origin",
 
-    // Permissions Policy
-    "Permissions-Policy":
-      "camera=(), microphone=(), geolocation=(), payment=()",
+    // Permissions Policy (relax payment in local dev to avoid Stripe console noise)
+    "Permissions-Policy": isLocal
+      ? "camera=(), microphone=(), geolocation=(), payment=(self)"
+      : "camera=(), microphone=(), geolocation=(), payment=()",
 
     // HSTS
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",

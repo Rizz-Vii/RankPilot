@@ -139,14 +139,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="inset-0 flex items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-6 rounded-1xl shadow-xl border bg-white">
-        <h2 className="text-2xl font-bold text-center underline mb-2">Login</h2>
+    <div className="inset-0 flex items-center justify-center bg-background">
+      <div className="w-full max-w-md p-8 space-y-6 rounded-1xl shadow-xl border bg-card text-card-foreground">
+        <h2 className="text-2xl font-bold text-center mb-2">Login</h2>
         <form onSubmit={handleLogin} className="space-y-4" noValidate>
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium mb-1 text-gray-700"
+              className="block text-sm font-medium mb-1 text-foreground"
             >
               Email
             </label>
@@ -154,9 +154,10 @@ export default function LoginPage() {
               id="email"
               type="email"
               required
+              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition"
+              className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground ring-1 ring-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition"
               disabled={loading}
             />
             {errors.email && (
@@ -166,7 +167,7 @@ export default function LoginPage() {
           <div className="relative">
             <label
               htmlFor="password"
-              className="block text-sm font-medium mb-1 text-gray-700"
+              className="block text-sm font-medium mb-1 text-foreground"
             >
               Password
             </label>
@@ -174,15 +175,16 @@ export default function LoginPage() {
               id="password"
               type={showPassword ? "text" : "password"}
               required
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg pr-10 focus:outline-none focus:border-blue-500 transition"
+              className="w-full px-3 py-2 border border-input rounded-lg pr-10 bg-background text-foreground ring-1 ring-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition"
               disabled={loading}
             />
             <button
               type="button"
               tabIndex={-1}
-              className="absolute right-3 top-9 text-gray-600"
+              className="absolute right-3 top-9 text-muted-foreground"
               onClick={() => setShowPassword((v) => !v)}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -197,12 +199,12 @@ export default function LoginPage() {
           <button
             type="submit"
             data-testid="login-button"
-            className="w-full py-2 rounded-lg bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition"
+            className="w-full py-2 rounded-lg bg-primary text-primary-foreground font-semibold text-lg hover:bg-primary/90 transition"
             disabled={loading}
           >
             Login
           </button>
-          <p className="text-center text-xs text-gray-500 mt-2">
+          <p className="text-center text-xs text-muted-foreground mt-2">
             For your convenience, your session will remain active until you
             choose to log out.
           </p>
@@ -213,7 +215,7 @@ export default function LoginPage() {
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-gray-500">
+            <span className="bg-card px-2 text-muted-foreground">
               Or continue with
             </span>
           </div>
@@ -221,16 +223,16 @@ export default function LoginPage() {
 
         <button
           onClick={handleGoogleSignIn}
-          className="w-full inline-flex items-center justify-center py-2 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="w-full inline-flex items-center justify-center py-2 border border-input rounded-lg shadow-sm bg-card text-sm font-medium text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background"
           disabled={loading}
         >
           <GoogleIcon />
           Sign in with Google
         </button>
 
-        <p className="text-center text-sm text-gray-600">
+        <p className="text-center text-sm text-muted-foreground">
           Don't have an account?{" "}
-          <Link href="/register" className="text-blue-600 hover:underline">
+          <Link href="/register" className="text-primary hover:underline">
             Register
           </Link>
         </p>

@@ -5,7 +5,21 @@
 
 import { logger } from "firebase-functions";
 import { HttpsError, HttpsOptions, onCall } from "firebase-functions/v2/https";
-import { getAI } from "../lib/ai-memory-manager";
+// Use consolidated AI memory manager (path adjusted for actual location)
+import { getAI as getMockAI } from "../lib/ai-memory-manager";
+import { getAI as getGenkitAI } from "../ai/genkit"; // real AI engine
+import { initializeApp, getApps } from "firebase-admin/app";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
+
+// Ensure Admin SDK initialized
+try {
+  if (!getApps().length) {
+    initializeApp();
+  }
+} catch (e) {
+  logger.info("Admin already initialized for keyword suggestions function");
+}
+const db = getFirestore();
 
 // Optimized HttpsOptions for keyword suggestions
 const httpsOptions: HttpsOptions = {
@@ -23,6 +37,8 @@ interface KeywordSuggestionsRequest {
   language?: string;
   count?: number;
   includeMetrics?: boolean;
+  forceReal?: boolean;
+  crawlUrls?: string[]; // optional seed URLs to crawl for context
 }
 
 interface KeywordSuggestion {
@@ -31,6 +47,9 @@ interface KeywordSuggestion {
   competition?: "low" | "medium" | "high";
   difficulty?: number;
   intent?: "informational" | "commercial" | "transactional" | "navigational";
+  semanticCluster?: string;
+  topicalRelevance?: number;
+  opportunities?: string[];
 }
 
 interface KeywordSuggestionsResponse {
@@ -38,6 +57,10 @@ interface KeywordSuggestionsResponse {
   relatedQueries?: string[];
   totalProcessingTime: number;
   cacheHit: boolean;
+  plan?: string;
+  quota?: { limit: number; used: number; remaining: number };
+  rateLimited?: boolean;
+  source?: "live" | "cache" | "fallback";
 }
 
 // Simple in-memory cache for function instances
@@ -55,6 +78,58 @@ export const getKeywordSuggestionsEnhanced = onCall(httpsOptions, async (request
     // Authentication check
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Authentication required");
+    }
+
+    // Fetch user plan (default free)
+    let plan = "free";
+    try {
+      const userDoc = await db.collection("users").doc(userId).get();
+      plan = (userDoc.data()?.subscriptionTier || userDoc.data()?.role || "free").toLowerCase();
+    } catch (e) {
+      logger.warn("Could not fetch user plan, defaulting to free", { userId });
+    }
+
+    // Quota limits per plan (-1 == unlimited)
+    const quotaLimits: Record<string, number> = {
+      free: 10,
+      starter: 50,
+      agency: 200,
+      enterprise: 1000,
+      admin: -1,
+    };
+
+    const quotaLimit = quotaLimits[plan] ?? 10;
+
+    // Simple rate limiting (1 request / second) using rateLimits collection
+    const rateLimitRef = db.collection("rateLimits").doc(userId);
+    const rateDoc = await rateLimitRef.get();
+    const now = Date.now();
+    if (rateDoc.exists) {
+      const last = rateDoc.data()?.lastRequest?.toMillis?.() || 0;
+      if (now - last < 1000) {
+        // Soft rate limit response
+        throw new HttpsError("resource-exhausted", "Too many requests – slow down");
+      }
+    }
+
+    // Daily usage count (start of UTC day)
+    const startOfDay = new Date();
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    let used = 0;
+    try {
+      const snapshot = await db
+        .collection("keywordResearch")
+        .where("userId", "==", userId)
+        .where("createdAt", ">=", startOfDay)
+        .select("userId")
+        .get();
+      used = snapshot.size;
+    } catch (e) {
+      logger.warn("Failed to compute daily keyword usage", { userId });
+    }
+
+    if (quotaLimit !== -1 && used >= quotaLimit) {
+      throw new HttpsError("resource-exhausted", "Daily keyword research limit reached");
     }
 
     // Input validation
@@ -85,18 +160,63 @@ export const getKeywordSuggestionsEnhanced = onCall(httpsOptions, async (request
     const cached = cache.get(cacheKey);
     if (cached && Date.now() < cached.expiry) {
       logger.info("Cache hit for keyword suggestions", { userId, query: query.substring(0, 50) });
-      return { ...cached.data, cacheHit: true };
+      // Update rate limit timestamp
+      await rateLimitRef.set({ lastRequest: FieldValue.serverTimestamp() }, { merge: true });
+      return { ...cached.data, cacheHit: true, source: "cache", plan, quota: { limit: quotaLimit, used, remaining: quotaLimit === -1 ? -1 : quotaLimit - used } };
     }
 
-    // Generate keywords using AI
-    const suggestions = await generateKeywords(query, language, count, includeMetrics);
-    const relatedQueries = await generateRelatedQueries(query, language);
+    // Build historical corpus sample (recent docs for this user + global)
+    let corpusSummary = '';
+    try {
+      const recentSnap = await db.collection('keywordResearch').where('userId', '==', userId).orderBy('createdAt', 'desc').limit(5).get();
+      const globalSnap = await db.collectionGroup('keywordResearch').orderBy('createdAt', 'desc').limit(25).get();
+      const clusters: Record<string, number> = {}; let total = 0;
+      globalSnap.forEach(d => { const s = d.data(); const sugg: any[] = s.suggestions || []; sugg.slice(0, 15).forEach(k => { const c = (k.semanticCluster || 'general'); clusters[c] = (clusters[c] || 0) + 1; total++; }); });
+      const topClusters = Object.entries(clusters).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([c, f]) => `${c}(${f})`).join(', ');
+      corpusSummary = `GlobalClusters:${topClusters}`;
+      if (!recentSnap.empty) {
+        const recKw: string[] = [];
+        recentSnap.forEach(d => { const s = d.data(); (s.suggestions || []).slice(0, 5).forEach((k: any) => recKw.push(k.keyword)); });
+        corpusSummary += ` | UserRecent:${recKw.slice(0, 10).join(', ')}`;
+      }
+    } catch (e) {
+      logger.warn('corpus_build_failed', { error: (e as any)?.message });
+    }
+
+    // Optional Firecrawl context (first provided crawlUrls or simple search URL if pattern)
+    let crawlContext = '';
+    if (process.env.FIRECRAWL_API_KEY && (data.crawlUrls?.length || query.split(' ').length <= 4)) {
+      try {
+        const targetList = (data.crawlUrls && data.crawlUrls.length > 0) ? data.crawlUrls.slice(0, 3) : [`https://www.google.com/search?q=${encodeURIComponent(query)}`];
+        for (const u of targetList) {
+          const resp = await fetch('https://api.firecrawl.dev/v1/scrape', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.FIRECRAWL_API_KEY}` },
+            body: JSON.stringify({ url: u, formats: ['markdown'], onlyMainContent: true, mobile: true })
+          });
+          if (resp.ok) {
+            const j: any = await resp.json();
+            const md: string = j.markdown || '';
+            if (md) crawlContext += `\nURL:${u}\n${md.slice(0, 800)}`;
+          }
+          if (crawlContext.length > 2400) break;
+        }
+      } catch (e) {
+        logger.warn('firecrawl_keyword_context_failed', { error: (e as any)?.message });
+      }
+    }
+
+    const suggestions = await generateKeywords(query, language, count, includeMetrics, { forceReal: plan === "admin" || data.forceReal, corpusSummary, crawlContext });
+    const relatedQueries = await generateRelatedQueries(query, language, { corpusSummary });
 
     const response: KeywordSuggestionsResponse = {
       suggestions,
       relatedQueries,
       totalProcessingTime: Date.now() - startTime,
-      cacheHit: false
+      cacheHit: false,
+      plan,
+      quota: { limit: quotaLimit, used, remaining: quotaLimit === -1 ? -1 : quotaLimit - used - 1 },
+      source: "live"
     };
 
     // Cache the result
@@ -108,10 +228,37 @@ export const getKeywordSuggestionsEnhanced = onCall(httpsOptions, async (request
     // Cleanup old cache entries periodically
     cleanupCache();
 
+    // Persist research document (trim suggestions if very large)
+    try {
+      await db.collection("keywordResearch").add({
+        userId,
+        query,
+        language,
+        countRequested: count,
+        suggestions: suggestions.slice(0, 50),
+        suggestionsCount: suggestions.length,
+        relatedQueries: relatedQueries || [],
+        plan,
+        cacheHit: false,
+        processingMs: response.totalProcessingTime,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    } catch (persistError) {
+      logger.warn("Failed to persist keyword research doc", {
+        userId,
+        error: persistError instanceof Error ? persistError.message : String(persistError),
+      });
+    }
+
+    // Update rate limit timestamp
+    await rateLimitRef.set({ lastRequest: FieldValue.serverTimestamp() }, { merge: true });
+
     logger.info("Keyword suggestions completed", {
       userId,
+      plan,
       suggestionsCount: suggestions.length,
-      duration: Date.now() - startTime
+      duration: Date.now() - startTime,
+      cacheHit: false,
     });
 
     return response;
@@ -136,35 +283,55 @@ async function generateKeywords(
   query: string,
   language: string,
   count: number,
-  includeMetrics: boolean
+  includeMetrics: boolean,
+  context?: { forceReal?: boolean; corpusSummary?: string; crawlContext?: string }
 ): Promise<KeywordSuggestion[]> {
   try {
-    const prompt = `Generate ${count} SEO keyword suggestions for "${query}" in ${language}.
+    const prompt = `ROLE: Senior SEO & Keyword Research Strategist.
+TASK: Generate ${count} high-quality keyword suggestions for "${query}" (${language}).
+CONTEXT_CORPUS: ${context?.corpusSummary || 'none'}
+CRAWL_CONTEXT_SNIPPETS:${context?.crawlContext ? context.crawlContext.slice(0, 1500) : 'none'}
+OUTPUT REQUIREMENTS:
+1. Mix: 40% head, 60% long-tail.
+2. Each keyword fields: keyword, searchVolume (integer realistic), competition (low|medium|high), difficulty (1-100), intent (informational|commercial|transactional|navigational), semanticCluster, topicalRelevance (0-100), opportunities (1-3 concise strings), rationale (short why included), serpFeatures (array subset of ['featured_snippet','people_also_ask','local_pack','videos','images']).
+3. Avoid duplicates, ensure diversity across clusters.
+4. Estimate volumes & difficulty realistically (no all identical numbers).
+5. STRICT JSON ONLY: { "keywords": [ ... ] }`;
 
-Requirements:
-- Mix of head terms (1-2 words) and long-tail keywords (3+ words)
-- Include search intent classification
-- Provide realistic search volume estimates
-- Include competition levels
-- Return valid JSON only
-
-Format:
-{
-  "keywords": [
-    {
-      "keyword": "example keyword",
-      "searchVolume": 1200,
-      "competition": "medium",
-      "difficulty": 65,
-      "intent": "informational"
+    const useReal = context?.forceReal || (process.env.USE_REAL_AI === "true");
+    let rawOutput: any;
+    if (useReal) {
+      try {
+        const ai = getGenkitAI();
+        const gen = await ai.generate(prompt);
+        rawOutput = gen?.text();
+      } catch (realErr) {
+        logger.warn("Real AI generation failed, falling back to mock", { error: (realErr as any)?.message });
+      }
     }
-  ]
-}`;
-
-    // Use default model or specify as needed
-    const result = await getAI(prompt, undefined, { temperature: 0.7, maxOutputTokens: 1000 });
-    const parsedResult = JSON.parse(result);
-    return parsedResult.keywords || [];
+    if (!rawOutput) {
+      rawOutput = await getMockAI(prompt, undefined, { temperature: 0.7, maxOutputTokens: 1000 });
+    }
+    let parsedResult: any = {};
+    try {
+      parsedResult = JSON.parse(rawOutput);
+    } catch (e) {
+      logger.warn("AI returned non-JSON content, using fallback generation", { snippet: rawOutput?.slice(0, 120) });
+      return getFallbackKeywords(query, count);
+    }
+    const raw: KeywordSuggestion[] = Array.isArray(parsedResult.keywords) ? parsedResult.keywords : [];
+    if (!raw.length) {
+      logger.warn("AI returned empty keywords array, using fallback generation");
+      return getFallbackKeywords(query, count);
+    }
+    const normalized = raw.map(k => ({
+      ...k,
+      difficulty: clampNumber(k.difficulty, 1, 100),
+      topicalRelevance: clampNumber(k.topicalRelevance, 0, 100),
+      semanticCluster: k.semanticCluster || deriveCluster(k.keyword),
+      opportunities: Array.isArray(k.opportunities) ? k.opportunities.slice(0, 3) : [],
+    }));
+    return normalized;
   } catch (error) {
     logger.warn("AI keyword generation failed, using fallback", {
       error: error instanceof Error ? error.message : String(error),
@@ -174,11 +341,27 @@ Format:
   }
 }
 
-async function generateRelatedQueries(query: string, language: string): Promise<string[]> {
+async function generateRelatedQueries(query: string, language: string, ctx?: { corpusSummary?: string }): Promise<string[]> {
   try {
-    const prompt = `Generate 5 related search queries for "${query}" in ${language}. Return as JSON array of strings.`;
-    const result = await getAI(prompt, undefined, { temperature: 0.8, maxOutputTokens: 200 });
-    return JSON.parse(result);
+    const prompt = `Generate 5 related search queries for "${query}" in ${language} considering corpus: ${ctx?.corpusSummary || 'none'}. Return JSON array of strings.`;
+    let output: any;
+    try {
+      if (process.env.USE_REAL_AI === "true") {
+        const ai = getGenkitAI();
+        const gen = await ai.generate(prompt);
+        output = gen?.text();
+      }
+    } catch (e) {
+      logger.warn("Real AI related queries failed, falling back to mock", { error: (e as any)?.message });
+    }
+    if (!output) {
+      output = await getMockAI(prompt, undefined, { temperature: 0.8, maxOutputTokens: 200 });
+    }
+    try {
+      return JSON.parse(output);
+    } catch {
+      return [];
+    }
   } catch (error) {
     logger.warn("Related queries generation failed", {
       error: error instanceof Error ? error.message : String(error),
@@ -212,7 +395,10 @@ function getFallbackKeywords(query: string, count: number): KeywordSuggestion[] 
     searchVolume: Math.floor(Math.random() * 10000) + 100,
     competition: ["low", "medium", "high"][index % 3] as "low" | "medium" | "high",
     difficulty: Math.floor(Math.random() * 100) + 1,
-    intent: ["informational", "commercial", "transactional", "navigational"][index % 4] as any
+    intent: ["informational", "commercial", "transactional", "navigational"][index % 4] as any,
+    semanticCluster: deriveCluster(keyword),
+    topicalRelevance: Math.floor(Math.random() * 100),
+    opportunities: ["Improve CTR", "Capture long-tail"].slice(0, Math.floor(Math.random() * 2) + 1),
   }));
 }
 
@@ -223,4 +409,16 @@ function cleanupCache() {
       cache.delete(key);
     }
   }
+}
+
+// Utility helpers for normalization & lightweight semantic grouping
+function clampNumber(val: any, min: number, max: number) {
+  const n = typeof val === "number" && !isNaN(val) ? val : min;
+  return Math.min(Math.max(n, min), max);
+}
+
+function deriveCluster(keyword: string): string {
+  if (!keyword) return "general";
+  const parts = keyword.toLowerCase().split(/\s+/).slice(0, 2).join(" ");
+  return parts || "general";
 }

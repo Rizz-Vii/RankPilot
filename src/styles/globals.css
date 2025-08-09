@@ -15,6 +15,11 @@ html {
   min-height: 100vh;
 }
 
+/* Headings use headline font for consistent hierarchy */
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Space Grotesk", sans-serif;
+}
+
 @layer base {
   :root {
     --background: 210 20% 91%; /* #E0E5E8 */
@@ -26,8 +31,9 @@ html {
     --popover: 210 20% 98%;
     --popover-foreground: 210 25% 25%;
 
-    --primary: 210 40% 60%; /* #6699CC */
-    --primary-foreground: 0 0% 100%; /* White */
+  /* Darker primary for better contrast against white text */
+  --primary: 210 70% 45%;
+  --primary-foreground: 0 0% 100%; /* White */
 
     --secondary: 210 20% 85%; /* A darker shade of the background */
     --secondary-foreground: 210 25% 25%;
@@ -117,6 +123,26 @@ html {
     --warning: 48 96% 63%;
     --warning-foreground: 48 96% 13%;
   }
+}
+
+/* Subtle elevation for form controls inside cards */
+.bg-card input:not([type="checkbox"]):not([type="radio"]),
+.bg-card textarea,
+.bg-card select {
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+  transition: box-shadow 150ms ease;
+}
+
+.bg-card input:hover:not([type="checkbox"]):not([type="radio"]),
+.bg-card textarea:hover,
+.bg-card select:hover {
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+}
+
+.dark .bg-card input:not([type="checkbox"]):not([type="radio"]),
+.dark .bg-card textarea,
+.dark .bg-card select {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 @layer base {

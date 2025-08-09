@@ -179,7 +179,7 @@ export default function UnifiedMobileSidebar({
                         {role === "admin" ? "Administrator" : "User"}
                       </p>
                       <div className="flex items-center gap-1">
-                        {subscription?.tier === "agency" && (
+                        {(subscription?.tier === "agency" || subscription?.tier === "enterprise") && (
                           <Crown className="h-3 w-3 text-purple-500" />
                         )}
                         {subscription?.tier === "starter" && (

@@ -254,6 +254,15 @@ export function addPerformanceMonitoring(request: NextRequest, response: NextRes
 export function edgeMiddleware(request: NextRequest): NextResponse {
     const startTime = Date.now();
 
+    // In development, avoid edge optimizations and disable caching to prevent stale/cached 404s
+    if (process.env.NODE_ENV !== 'production') {
+        const devResponse = NextResponse.next();
+        devResponse.headers.set('Cache-Control', 'no-store, must-revalidate');
+        devResponse.headers.set('X-Edge-Optimized', 'disabled-dev');
+        devResponse.headers.set('X-Processing-Time', `${Date.now() - startTime}ms`);
+        return devResponse;
+    }
+
     // Try optimizations in order of priority
     let response = optimizeStaticAssets(request) ||
         optimizeAPIResponses(request) ||

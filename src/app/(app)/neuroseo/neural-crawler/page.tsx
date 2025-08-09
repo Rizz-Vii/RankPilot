@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { ToolPageHeader } from "@/components/tool-page-header";
+import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -285,17 +287,15 @@ Key areas of focus include content quality assessment, competitive analysis, per
     toast.success("Results exported successfully!");
   };
 
+  const provenance: any = null; // placeholder until real provenance integrated
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Brain className="h-8 w-8 text-blue-600" />
-        <div>
-          <h1 className="text-3xl font-bold">NeuralCrawler™</h1>
-          <p className="text-muted-foreground">
-            Intelligent web content extraction with JavaScript rendering
-          </p>
-        </div>
-      </div>
+    <main className="container mx-auto py-6 space-y-6">
+      <ToolPageHeader
+        title="NeuralCrawler™"
+        description="Intelligent web content extraction with JavaScript rendering."
+        badges={composeToolHeaderBadges("neural-crawler", provenance)}
+        showBreadcrumb
+      />
 
       {/* Analysis Input */}
       <Card>
@@ -660,6 +660,6 @@ Key areas of focus include content quality assessment, competitive analysis, per
           </CardContent>
         </Card>
       )}
-    </div>
+  </main>
   );
 }

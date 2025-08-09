@@ -21,6 +21,13 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
+    // Determine if the authenticated user is a member of a given team
+    function isTeamMember(teamId) {
+      return isAuthenticated() &&
+        teamId != null &&
+        (request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.memberIds);
+    }
+
     // By default, deny all reads and writes
     match /{document=**} {
       allow read, write: if false;
@@ -135,12 +142,18 @@ service cloud.firestore {
 
     // Projects Collection - FIXED MISSING RULES
     match /projects/{projectId} {
-      allow read: if isAuthenticated() && 
-                     (resource.data.userId == request.auth.uid || isAdmin());
+    allow read: if isAuthenticated() && (
+             // Owner can read
+             resource.data.userId == request.auth.uid 
+             // Team members can read team projects
+             || (resource.data.teamId != null && isTeamMember(resource.data.teamId))
+             // Admin override
+             || isAdmin()
+           );
       allow create: if isAuthenticated() && 
                        request.auth.uid == request.resource.data.userId;
       allow update: if isAuthenticated() && 
-                       (resource.data.userId == request.auth.uid || isAdmin());
+             (resource.data.userId == request.auth.uid || isAdmin());
       allow delete: if isAuthenticated() && 
                        (resource.data.userId == request.auth.uid || isAdmin());
     }
@@ -183,6 +196,20 @@ service cloud.firestore {
                        (resource.data.userId == request.auth.uid || isAdmin());
     }
     
+    // Teams Collection - allow team reads for authenticated users (tighten later)
+    match /teams/{teamId} {
+      // For development, allow authenticated reads so the app can load team configs
+      allow read: if isAuthenticated() || isAdmin();
+      // Restrict mutations to admins for safety
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Integrations collection (if used in UI)
+    match /integrations/{integrationId} {
+      allow read: if isAuthenticated() || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
     // Link Analyses Collection - MISSING RULES CAUSING PERMISSION ERRORS  
     match /linkAnalyses/{analysisId} {
       allow read: if isAuthenticated() && 
@@ -194,6 +221,54 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && 
                        (resource.data.userId == request.auth.uid || isAdmin());
     }
+
+    // Sales Deals Collection - NEW
+    match /salesDeals/{dealId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Marketing Campaigns Collection - NEW
+    match /marketingCampaigns/{campaignId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Finance Invoices Collection - NEW
+    match /financeInvoices/{invoiceId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Content Briefs Collection - NEW (historical seeding)
+    match /contentBriefs/{briefId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Competitor Analyses Collection - NEW (historical seeding)
+    match /competitorAnalyses/{analysisId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // SERP Data Collection - NEW (historical seeding)
+    match /serpData/{serpId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
     
     // User Presence System - Fix for presence tracking errors
     match /presence/{userId} {
@@ -203,9 +278,40 @@ service cloud.firestore {
     }
     
     // Team Chat System - Fix for team management errors
-    match /teamChats/{chatId} {
+    match /teamChats/{teamId} {
+      // Team messages subcollection
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() && isTeamMember(teamId);
+        allow create: if isAuthenticated() && isTeamMember(teamId);
+        allow update, delete: if isAuthenticated() && isTeamMember(teamId);
+      }
+    }
+
+    // Presence
+    match /presence/{userId} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Team Reports
+    match /teams/{teamId}/reports/{reportId} {
+      allow read: if isAuthenticated() && isTeamMember(teamId);
+      allow create: if isAuthenticated() && isTeamMember(teamId);
+      allow update, delete: if isAuthenticated() && isTeamMember(teamId);
+    }
+
+    // Support Messages - Admin Inbox
+    match /supportMessages/{messageId} {
+      // Admins can view and manage support messages
+      allow read: if isAdmin();
+      allow create: if false; // Created by server via Admin SDK only
+      allow update, delete: if isAdmin();
+
+      // Replies subcollection
+      match /replies/{replyId} {
+        allow read: if isAdmin();
+        allow create, update, delete: if isAdmin();
+      }
     }
   }
 }

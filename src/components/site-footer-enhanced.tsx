@@ -145,6 +145,7 @@ export default function SiteFooter() {
                 required
                 className="flex-1"
                 disabled={isSubscribing}
+                suppressHydrationWarning
               />
               <Button
                 type="submit"

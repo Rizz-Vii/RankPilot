@@ -80,7 +80,7 @@ interface EnhancedTestUserProfile {
   role: string;
   subscriptionTier: string;
   subscriptionStatus: 'active' | 'trialing' | 'past_due';
-  
+
   // Profile with realistic business context
   profile: {
     company: string;
@@ -92,7 +92,7 @@ interface EnhancedTestUserProfile {
     timezone: string;
     language: string;
   };
-  
+
   // Usage and limits matching tier
   usage: {
     neuroSeoAnalyses: number;
@@ -102,7 +102,7 @@ interface EnhancedTestUserProfile {
     teamMembers: number;
     apiCalls: number;
   };
-  
+
   limits: {
     neuroSeoAnalyses: number;
     keywordSearches: number;
@@ -111,7 +111,7 @@ interface EnhancedTestUserProfile {
     teamMembers: number;
     apiCalls: number;
   };
-  
+
   // Test-specific data for feature testing
   testData: {
     projects: Array<{
@@ -131,7 +131,7 @@ interface EnhancedTestUserProfile {
       role: string;
     }>;
   };
-  
+
   // Timestamps
   createdAt: Timestamp;
   lastLoginAt: Timestamp;
@@ -515,17 +515,17 @@ const ENHANCED_TEST_PROFILES: Record<string, EnhancedTestUserProfile> = {
 export class EnhancedTestUserSeeder {
   async seedAllTestUsers() {
     console.log("🧪 Seeding enhanced test users with comprehensive data...");
-    
+
     for (const [tier, userData] of Object.entries(ENHANCED_TEST_PROFILES)) {
       await this.seedTestUser(tier, userData);
     }
-    
+
     console.log("✅ All enhanced test users seeded successfully!");
   }
 
   private async seedTestUser(tier: string, userData: EnhancedTestUserProfile) {
     console.log(`  🔄 Seeding ${tier} user: ${userData.email}`);
-    
+
     try {
       // Create or update Firebase Auth user
       let firebaseUser;
@@ -747,6 +747,7 @@ export class EnhancedTestUserSeeder {
           name: `${userData.profile.company} Team`,
           description: `Test team for ${tier} tier testing`,
           plan: tier,
+          memberIds: (userData.testData.teamMembers || []).map(member => `${userData.uid}_member_${member.email.split('@')[0]}`),
           members: userData.testData.teamMembers?.map(member => ({
             userId: `${userData.uid}_member_${member.email.split('@')[0]}`,
             email: member.email,
@@ -793,7 +794,7 @@ export class EnhancedTestUserSeeder {
       });
 
       console.log(`    ✅ Seeded comprehensive data for ${tier} user`);
-      
+
     } catch (error) {
       console.error(`    ❌ Failed to seed ${tier} user:`, error);
       throw error;
@@ -802,7 +803,7 @@ export class EnhancedTestUserSeeder {
 
   async cleanTestData() {
     console.log("🧹 Cleaning existing test data...");
-    
+
     // Clean test users' data
     for (const userData of Object.values(ENHANCED_TEST_PROFILES)) {
       try {
@@ -832,13 +833,13 @@ export class EnhancedTestUserSeeder {
 
         // Delete user document
         await db.collection('users').doc(userData.uid).delete();
-        
+
         console.log(`    ✅ Cleaned data for ${userData.email}`);
       } catch (error) {
         console.log(`    ⚠️  Warning: Could not clean all data for ${userData.email}`);
       }
     }
-    
+
     console.log("✅ Test data cleanup completed");
   }
 }
@@ -846,9 +847,9 @@ export class EnhancedTestUserSeeder {
 // CLI execution
 if (require.main === module) {
   const seeder = new EnhancedTestUserSeeder();
-  
+
   const command = process.argv[2];
-  
+
   if (command === 'clean') {
     seeder.cleanTestData()
       .then(() => process.exit(0))

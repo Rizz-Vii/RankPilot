@@ -53,12 +53,30 @@ export function PWAInstallPrompt({ className, showInAppHeader = false }: PWAInst
     const [isInstalling, setIsInstalling] = useState(false);
     const [showPrompt, setShowPrompt] = useState(false);
     const [showUpdateAlert, setShowUpdateAlert] = useState(false);
+    const [dismissed, setDismissed] = useState<boolean>(() => {
+        try {
+            return localStorage.getItem('pwa_prompt_dismissed') === 'true';
+        } catch {
+            return false;
+        }
+    });
+
+    const isIOS = typeof window !== 'undefined' && /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+    const isStandalone = typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true);
 
     useEffect(() => {
-        if (isInstallable && !isInstalled && !showInAppHeader) {
-            setShowPrompt(true);
+        if (!dismissed && !showInAppHeader) {
+            // For iOS Safari, A2HS is manual; show guide when not installed
+            if (isIOS && !isStandalone) {
+                setShowPrompt(true);
+                return;
+            }
+            // For other browsers, show when installable
+            if (isInstallable && !isInstalled) {
+                setShowPrompt(true);
+            }
         }
-    }, [isInstallable, isInstalled, showInAppHeader]);
+    }, [isInstallable, isInstalled, showInAppHeader, dismissed, isIOS, isStandalone]);
 
     const handleInstall = async () => {
         setIsInstalling(true);
@@ -73,10 +91,14 @@ export function PWAInstallPrompt({ className, showInAppHeader = false }: PWAInst
     };
 
     const handleNotificationToggle = async (enabled: boolean) => {
-        if (enabled) {
-            await enableNotifications();
-        } else {
-            await disableNotifications();
+        try {
+            if (enabled) {
+                await enableNotifications();
+            } else {
+                await disableNotifications();
+            }
+        } catch (e) {
+            // Silently ignore on unsupported devices
         }
     };
 
@@ -203,7 +225,7 @@ export function PWAInstallPrompt({ className, showInAppHeader = false }: PWAInst
                                     {notificationsEnabled ? (
                                         <Bell className="h-4 w-4 text-blue-500" />
                                     ) : (
-                                        <BellOff className="h-4 w-4 text-gray-500" />
+                                        <BellOff className="h-4 w-4 text-muted-foreground" />
                                     )}
                                     <span className="text-sm font-medium">Notifications</span>
                                 </div>
@@ -215,29 +237,41 @@ export function PWAInstallPrompt({ className, showInAppHeader = false }: PWAInst
 
                             {/* Install Actions */}
                             <div className="flex gap-2">
-                                <Button
-                                    onClick={handleInstall}
-                                    disabled={isInstalling}
-                                    className="flex-1 gap-2"
-                                >
-                                    {isInstalling ? (
-                                        <RefreshCw className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <Download className="h-4 w-4" />
-                                    )}
-                                    {isInstalling ? 'Installing...' : 'Install App'}
-                                </Button>
+                                {!isIOS && isInstallable && !isInstalled && (
+                                    <Button
+                                        onClick={handleInstall}
+                                        disabled={isInstalling}
+                                        className="flex-1 gap-2"
+                                    >
+                                        {isInstalling ? (
+                                            <RefreshCw className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <Download className="h-4 w-4" />
+                                        )}
+                                        {isInstalling ? 'Installing...' : 'Install App'}
+                                    </Button>
+                                )}
                                 <Button
                                     variant="outline"
-                                    onClick={() => setShowPrompt(false)}
+                                    onClick={() => {
+                                        setShowPrompt(false);
+                                        try { localStorage.setItem('pwa_prompt_dismissed', 'true'); } catch {}
+                                        setDismissed(true);
+                                    }}
                                 >
-                                    Maybe Later
+                                    Continue on Web
                                 </Button>
                             </div>
 
                             {/* Install Instructions */}
                             <div className="text-xs text-muted-foreground text-center">
-                                <p>The app will be added to your home screen and can be used offline</p>
+                                {isIOS ? (
+                                    <p>
+                                        On iPhone (Safari or Chrome), tap the Share button, then "Add to Home Screen" to install the app.
+                                    </p>
+                                ) : (
+                                    <p>The app will be added to your home screen and can be used offline</p>
+                                )}
                             </div>
                         </CardContent>
                     </Card>

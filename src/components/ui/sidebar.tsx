@@ -144,6 +144,10 @@ const SidebarProvider = forwardRef<HTMLDivElement, SidebarProviderProps>(
     // Adds a keyboard shortcut to toggle the sidebar.
     useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
+        const target = event.target as HTMLElement | null;
+        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+          return; // ignore while typing
+        }
         if (
           event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
           (event.metaKey || event.ctrlKey)

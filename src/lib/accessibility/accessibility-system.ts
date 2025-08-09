@@ -225,6 +225,10 @@ export class AccessibilityManager {
     // Keyboard navigation
     private initializeKeyboardNavigation() {
         document.addEventListener('keydown', (e) => {
+            const target = e.target as HTMLElement | null;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+                return; // don't execute global shortcuts while typing
+            }
             const shortcutKey = this.createShortcutKey(e);
             const shortcut = this.shortcuts.get(shortcutKey);
 

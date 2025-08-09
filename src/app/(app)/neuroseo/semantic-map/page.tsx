@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { ToolPageHeader } from "@/components/tool-page-header";
+import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -242,17 +244,15 @@ export default function SemanticMapPage() {
     prominence: keyword.prominence
   })) || [];
 
+  const provenance: any = null; // future provenance integration
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Network className="h-8 w-8 text-purple-600" />
-        <div>
-          <h1 className="text-3xl font-bold">SemanticMap™</h1>
-          <p className="text-muted-foreground">
-            Advanced NLP analysis and topic visualization
-          </p>
-        </div>
-      </div>
+    <main className="container mx-auto py-6 space-y-6">
+      <ToolPageHeader
+        title="SemanticMap™"
+        description="Advanced NLP analysis and topic visualization."
+        badges={composeToolHeaderBadges("semantic-map", provenance)}
+        showBreadcrumb
+      />
 
       {/* Analysis Input */}
       <Card>
@@ -688,6 +688,6 @@ export default function SemanticMapPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+  </main>
   );
 }

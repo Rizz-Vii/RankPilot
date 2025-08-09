@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -28,7 +28,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Zap, Target, Rocket } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface EnhancedAppNavProps {
@@ -52,48 +52,82 @@ export function EnhancedAppNav({
   const [navState, setNavState] = useState<NavState>(defaultNavState);
   const [visibleGroups, setVisibleGroups] = useState<NavGroup[]>([]);
   const [mounted, setMounted] = useState(false);
+  const EXPANDED_STORAGE_KEY = "enhanced_nav_expanded_groups_v1";
+
+  // Helper: persist expanded group state (desktop only)
+  const persistExpanded = useCallback((expanded: Set<string>) => {
+    try {
+      const arr = Array.from(expanded);
+      window.localStorage.setItem(EXPANDED_STORAGE_KEY, JSON.stringify(arr));
+    } catch {}
+  }, []);
 
   // Initialize navigation state
   useEffect(() => {
     setMounted(true);
     try {
-      const groups = getVisibleNavGroups(userTier, isAdmin);
+  const groups = getVisibleNavGroups(userTier, isAdmin, { includeLocked: true });
       setVisibleGroups(groups);
 
-      // Set initial expanded state based on current pathname
+      // Restore persisted expanded groups (desktop only)
+      let restored: string[] | null = null;
+      if (!mobile) {
+        try {
+          const raw = window.localStorage.getItem(EXPANDED_STORAGE_KEY);
+            if (raw) restored = JSON.parse(raw);
+        } catch {}
+      }
+
       const activeGroup = groups.find((group) =>
         group.items.some((item) => item.href === pathname)
       );
 
-      if (activeGroup) {
-        setNavState((prev) => ({
+      setNavState((prev) => {
+        let expanded = new Set<string>(prev.expandedGroups);
+
+        // If mobile: collapse all except active (for focus) to reduce scroll noise
+        if (mobile) {
+          expanded = new Set(activeGroup ? [activeGroup.id] : []);
+        } else if (restored && restored.length) {
+          expanded = new Set(restored.filter((id) => groups.some((g) => g.id === id)));
+        } else {
+          // Ensure hero groups exist; keep default but add active if missing
+          if (activeGroup && !expanded.has(activeGroup.id)) {
+            expanded.add(activeGroup.id);
+          }
+        }
+
+        // Normalize to a single expanded group (active group preferred)
+        if (expanded.size > 1) {
+          const chosen = activeGroup?.id || Array.from(expanded)[0];
+          expanded = new Set([chosen]);
+        }
+        return {
           ...prev,
-          expandedGroups: new Set([...prev.expandedGroups, activeGroup.id]),
-          activeGroup: activeGroup.id,
-          activeItem: pathname || undefined,
-        }));
-      }
+          expandedGroups: expanded,
+          activeGroup: activeGroup?.id || prev.activeGroup,
+          activeItem: pathname || prev.activeItem,
+        };
+      });
     } catch (error) {
-      const fallback = handleNavError(
-        error as Error,
-        "EnhancedAppNav initialization"
-      );
+      const fallback = handleNavError(error as Error, "EnhancedAppNav initialization");
       console.warn(fallback.message);
     }
-  }, [userTier, isAdmin, pathname]);
+  }, [userTier, isAdmin, pathname, mobile]);
 
+  // Persist whenever expanded groups change (desktop only)
+  useEffect(() => {
+    if (!mobile && mounted) {
+      persistExpanded(navState.expandedGroups);
+    }
+  }, [navState.expandedGroups, persistExpanded, mobile, mounted]);
+
+  // Enforce only one expanded group at a time
   const toggleGroup = useCallback((groupId: string) => {
     setNavState((prev) => {
-      const newExpanded = new Set(prev.expandedGroups);
-      if (newExpanded.has(groupId)) {
-        newExpanded.delete(groupId);
-      } else {
-        newExpanded.add(groupId);
-      }
-      return {
-        ...prev,
-        expandedGroups: newExpanded,
-      };
+      const isOpen = prev.expandedGroups.has(groupId);
+      const newExpanded = isOpen ? new Set<string>() : new Set<string>([groupId]);
+      return { ...prev, expandedGroups: newExpanded };
     });
   }, []);
 
@@ -104,15 +138,78 @@ export function EnhancedAppNav({
         ...prev,
         activeItem: item.href,
         activeGroup: groupId,
+        expandedGroups: mobile ? new Set<string>() : prev.expandedGroups,
       }));
       onItemClickAction?.(item);
     },
-    [onItemClickAction]
+      [onItemClickAction, mobile]
   );
+
+  // -----------------------------------------------------------------------
+  // Tier + Feature Badge System
+  // -----------------------------------------------------------------------
+  const tierVisual = {
+    starter: {
+      label: "Starter",
+      icon: Zap,
+      classes:
+        "bg-sky-500/15 text-sky-300 border border-sky-400/30 shadow-[0_0_0_1px_rgba(56,189,248,0.25)]",
+    },
+    agency: {
+      label: "Agency",
+      icon: Target,
+      classes:
+        "bg-violet-500/15 text-violet-300 border border-violet-400/30 shadow-[0_0_0_1px_rgba(167,139,250,0.25)]",
+    },
+    enterprise: {
+      label: "Enterprise",
+      icon: Rocket,
+      classes:
+        "bg-amber-500/15 text-amber-300 border border-amber-400/30 shadow-[0_0_0_1px_rgba(251,191,36,0.25)]",
+    },
+  } as const;
+
+  const tierOrder: Array<keyof typeof tierVisual> = [
+    "starter",
+    "agency",
+    "enterprise",
+  ];
+
+  const getTierBadge = useCallback(
+    (tier?: string) => {
+      if (!tier) return null;
+      if (tier in tierVisual) return tierVisual[tier as keyof typeof tierVisual];
+      return null;
+    },
+    []
+  );
+
+  // Feature badges now suppressed unless also locked (kept for potential future use)
+  const featureBadgeClass = useCallback(() => "", []);
+
+  // Highest tier among LOCKED items only (relative to current user)
+  const getGroupLockedTier = (group: NavGroup) => {
+    if (!userTier) return null; // can't determine without user tier
+    let highest: keyof typeof tierVisual | undefined;
+    group.items.forEach((item) => {
+      if (item.requiredTier && tierOrder.includes(item.requiredTier)) {
+        const userIndex = tierOrder.indexOf(userTier as any);
+        const reqIndex = tierOrder.indexOf(item.requiredTier);
+        if (userIndex === -1 || reqIndex > userIndex) {
+          if (!highest) highest = item.requiredTier;
+          else if (tierOrder.indexOf(item.requiredTier) > tierOrder.indexOf(highest)) {
+            highest = item.requiredTier;
+          }
+        }
+      }
+    });
+    return highest ? tierVisual[highest] : null;
+  };
 
   const renderNavItem = useCallback(
     (item: NavItem, groupId: string, index: number) => {
-      const isActive = pathname === item.href;
+  const isActive = pathname === item.href;
+  const groupActive = navState.activeGroup === groupId;
       const Icon = item.icon;
 
       return (
@@ -126,23 +223,30 @@ export function EnhancedAppNav({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link
+                  <Link
                   href={item.href}
                   onClick={() => handleItemClick(item, groupId)}
-                  className={cn(
-                    "tool-link group flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-sm font-medium transition-all duration-200",
-                    "hover:bg-accent hover:text-accent-foreground w-full min-w-0",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                    "min-h-[44px] touch-manipulation", // WCAG touch target size
-                    {
-                      "bg-accent text-accent-foreground shadow-sm": isActive,
-                      "text-muted-foreground hover:text-foreground": !isActive,
-                      "justify-center px-2": collapsed,
-                      "opacity-50 cursor-not-allowed pointer-events-none":
-                        item.disabled,
-                    },
-                    className
-                  )}
+                    className={cn(
+                      "tool-link group flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 relative",
+                      "w-full min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 min-h-[44px] touch-manipulation",
+                      // Hover: increased brightness (previous /12 -> now /20 ~ +25% visual) & text uplift
+                      "hover:bg-primary/20 hover:text-primary group-hover/sidebar-wrapper:text-primary",
+                      {
+                        // Active item stays brightest
+                        "text-primary bg-gradient-to-r from-primary/25 via-primary/15 to-primary/5 shadow-sm ring-1 ring-primary/35": isActive,
+                        // Active group non-selected
+                        "text-primary/90 group-hover:text-primary": !isActive && groupActive && !item.disabled,
+                        // Idle baseline
+                        "text-primary/75 group-hover:text-primary": !isActive && !groupActive && !item.disabled,
+                        // Disabled
+                        "text-primary/40": item.disabled && !isActive,
+                        // Collapsed
+                        "justify-center px-2": collapsed,
+                        // Disable pointer
+                        "opacity-50 cursor-not-allowed pointer-events-none": item.disabled,
+                      },
+                      className
+                    )}
                   aria-current={isActive ? "page" : undefined}
                   aria-label={`${item.title}${item.description ? `. ${item.description}` : ""}${item.requiredTier ? `. Requires ${item.requiredTier} plan` : ""}`}
                   title={collapsed ? item.title : item.description}
@@ -150,10 +254,14 @@ export function EnhancedAppNav({
                 >
                   {/* Icon */}
                   <Icon
-                    className={cn("h-4 w-4 shrink-0 transition-colors", {
-                      "text-primary": isActive,
-                      "group-hover:text-primary": !isActive,
-                    })}
+                    className={cn(
+                      "h-4 w-4 shrink-0 transition-colors",
+                      isActive
+                        ? "text-primary group-hover/sidebar-wrapper:text-primary"
+                        : groupActive
+                          ? "text-primary/95 group-hover:text-primary group-hover/sidebar-wrapper:text-primary"
+                          : "text-primary/80 group-hover:text-primary group-hover/sidebar-wrapper:text-primary"
+                    )}
                     aria-hidden="true"
                   />
 
@@ -164,41 +272,51 @@ export function EnhancedAppNav({
                         {item.title}
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
-                        {item.badge && (
-                          <Badge
-                            variant={isActive ? "default" : "secondary"}
-                            className="h-4 px-1.5 text-xs"
-                            aria-label={`${item.badge} feature`}
-                          >
-                            {item.badge}
-                          </Badge>
-                        )}
-                        {item.requiredTier && (
-                          <Badge
-                            variant="outline"
-                            className="h-4 px-1.5 text-xs"
-                            aria-label={`Requires ${item.requiredTier} plan`}
-                          >
-                            {item.requiredTier}
-                          </Badge>
-                        )}
+                        {/* Show single badge ONLY if locked (disabled) */}
+                        {item.disabled && item.requiredTier && (() => {
+                          const data = getTierBadge(item.requiredTier);
+                          if (!data) return null;
+                          const TierIcon = data.icon;
+                          return (
+                            <Badge
+                              className={cn(
+                                "h-5 w-5 p-0 flex items-center justify-center rounded-md backdrop-blur-sm border",
+                                data.classes,
+                                "shadow-sm"
+                              )}
+                              aria-label={`Locked: ${data.label} tier required`}
+                            >
+                              <TierIcon className="h-3.5 w-3.5" />
+                              <span className="sr-only">{data.label}</span>
+                            </Badge>
+                          );
+                        })()}
                       </div>
                     </>
                   )}
 
                   {/* Active indicator */}
                   {isActive && (
-                    <motion.div
-                      layoutId="activeNavItem"
-                      className="absolute inset-y-0 left-0 w-1 bg-primary rounded-r-lg"
-                      initial={false}
-                      transition={{
-                        type: "spring",
-                        bounce: 0.2,
-                        duration: 0.6,
-                      }}
-                      aria-hidden="true"
-                    />
+                    <>
+                      {/* Left Accent Bar */}
+                      <motion.div
+                        layoutId="activeNavItem-bar"
+                        className="absolute inset-y-1 left-0 w-1 rounded-r bg-gradient-to-b from-primary via-primary/90 to-primary/70"
+                        initial={false}
+                        transition={{ type: "spring", bounce: 0.25, duration: 0.5 }}
+                        aria-hidden="true"
+                      />
+                      {/* Subtle glow */}
+                      <motion.div
+                        layoutId="activeNavItem-glow"
+                        className="absolute inset-0 -z-10 rounded-lg bg-primary/10 blur-[1px]"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.4 }}
+                        aria-hidden="true"
+                      />
+                    </>
                   )}
                 </Link>
               </TooltipTrigger>
@@ -249,15 +367,19 @@ export function EnhancedAppNav({
               <Button
                 variant="ghost"
                 className={cn(
-                  "w-full justify-between p-2 h-auto font-medium text-sm min-h-[44px]",
-                  "hover:bg-accent hover:text-accent-foreground",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                  "touch-manipulation", // Better touch handling
+                  "w-full justify-between p-2 h-auto font-medium text-sm min-h-[44px] transition-colors",
+                  isActive
+                    ? "bg-primary/25 text-primary ring-1 ring-primary/40 hover:bg-primary/30"
+                    : "text-primary/75 hover:text-primary hover:bg-primary/15 group-hover/sidebar-wrapper:text-primary",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 touch-manipulation",
                   {
-                    "bg-accent/50 text-accent-foreground": isActive,
                     "justify-center": collapsed,
                   }
                 )}
+                onFocus={() => {
+                  // When collapsed, focusing a group trigger should expand it for keyboard users
+                  if (collapsed && !isExpanded) toggleGroup(group.id);
+                }}
                 disabled={!group.collapsible}
                 title={collapsed ? group.title : group.description}
                 aria-expanded={group.collapsible ? isExpanded : undefined}
@@ -277,14 +399,24 @@ export function EnhancedAppNav({
                   {!collapsed && (
                     <>
                       <span className="truncate text-sm">{group.title}</span>
-                      {group.badge && (
-                        <Badge
-                          variant={isActive ? "default" : "secondary"}
-                          className="h-5 px-1.5 text-xs"
-                        >
-                          {group.badge}
-                        </Badge>
-                      )}
+                      {/* Single group badge only if group contains locked items */}
+                      {(() => {
+                        const data = getGroupLockedTier(group);
+                        if (!data) return null;
+                        const TierIcon = data.icon;
+                        return (
+                          <Badge
+                            className={cn(
+                              "h-5 w-5 p-0 flex items-center justify-center rounded-md backdrop-blur-sm border",
+                              data.classes
+                            )}
+                            aria-label={`Locked items up to ${data.label} tier`}
+                          >
+                            <TierIcon className="h-3.5 w-3.5" />
+                            <span className="sr-only">{data.label}</span>
+                          </Badge>
+                        );
+                      })()}
                     </>
                   )}
                 </div>
@@ -310,9 +442,13 @@ export function EnhancedAppNav({
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="ml-2 space-y-2 border-l border-border pl-2.5"
+                    className="ml-2 space-y-1 border-l border-border pl-2.5"
                     role="list"
                     aria-label={`${group.title} navigation items`}
+                    variants={{
+                      show: { transition: { staggerChildren: 0.035 } },
+                      hide: {},
+                    }}
                   >
                     {group.items.map((item, itemIndex) =>
                       renderNavItem(item, group.id, itemIndex)
@@ -330,37 +466,69 @@ export function EnhancedAppNav({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               className="absolute left-16 z-50 w-48 rounded-md border bg-popover p-2 shadow-lg"
+              role="menu"
+              aria-label={`${group.title} items`}
             >
               <div className="space-y-1">
                 <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
                   {group.title}
                 </div>
-                {group.items.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => handleItemClick(item, group.id)}
-                    className={cn(
-                      "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm",
-                      "hover:bg-accent hover:text-accent-foreground",
-                      {
-                        "bg-accent text-accent-foreground":
-                          pathname === item.href,
-                      }
-                    )}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.title}</span>
-                    {item.badge && (
-                      <Badge
-                        variant="secondary"
-                        className="ml-auto h-4 px-1 text-xs"
-                      >
-                        {item.badge}
-                      </Badge>
-                    )}
-                  </Link>
-                ))}
+                {group.items.map((item) => {
+                  const itemActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => handleItemClick(item, group.id)}
+                      className={cn(
+                        "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors",
+                        "hover:bg-primary/20 hover:text-primary group-hover/sidebar-wrapper:text-primary disabled:opacity-40 disabled:pointer-events-none",
+                        {
+                          "bg-accent text-accent-foreground": itemActive,
+                          "opacity-60": item.disabled,
+                          // Tint non-active items within the active group
+                          "text-primary/90 group-hover:text-primary": !itemActive && navState.activeGroup === group.id && !item.disabled,
+                        }
+                      )}
+                      aria-disabled={item.disabled || undefined}
+                      tabIndex={item.disabled ? -1 : 0}
+                    >
+                      <item.icon
+                        className={cn(
+                          "h-4 w-4 transition-colors",
+                          itemActive
+                            ? "text-primary group-hover/sidebar-wrapper:text-primary"
+                            : navState.activeGroup === group.id && !item.disabled
+                              ? "text-primary/95 group-hover:text-primary group-hover/sidebar-wrapper:text-primary"
+                              : !item.disabled
+                                ? "text-primary/80 group-hover:text-primary group-hover/sidebar-wrapper:text-primary"
+                                : "text-primary/40"
+                        )}
+                      />
+                      <span>{item.title}</span>
+                      {/* Collapsed: show icon badge only if locked */}
+                      {item.disabled && item.requiredTier && (() => {
+                        const data = getTierBadge(item.requiredTier);
+                        if (!data) return null;
+                        const TierIcon = data.icon;
+                        return (
+                          <Badge
+                            className={cn(
+                              "ml-auto h-5 w-5 p-0 flex items-center justify-center rounded-md backdrop-blur-sm border",
+                              data.classes
+                            )}
+                          >
+                            <TierIcon className="h-3.5 w-3.5" />
+                            <span className="sr-only">{data.label}</span>
+                          </Badge>
+                        );
+                      })()}
+                      {item.disabled && (
+                        <span className="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">Upgrade</span>
+                      )}
+                    </Link>
+                  );
+                })}
               </div>
             </motion.div>
           )}
@@ -393,7 +561,15 @@ export function EnhancedAppNav({
 
   return (
     <nav
-      className={cn("space-y-3 min-w-fit max-w-xs", className)}
+      className={cn(
+        "space-y-3",
+        mobile
+          ? "w-full max-w-full px-1"
+          : "max-w-[15.5rem] w-[14.5rem]",
+        !mobile && collapsed && "w-16 max-w-[4.5rem]",
+        "[&_.tool-link]:whitespace-nowrap [&_.tool-link]:truncate",
+        className
+      )}
       role="navigation"
       aria-label="Main navigation"
     >
@@ -429,11 +605,13 @@ export function EnhancedMobileNav({
       initial={{ y: "100%" }}
       animate={{ y: 0 }}
       exit={{ y: "100%" }}
-      transition={{ type: "spring", damping: 30, stiffness: 300 }}
-      className="fixed inset-x-0 bottom-0 z-[60] rounded-t-xl border-t bg-background p-4 shadow-lg"
+      transition={{ type: "spring", damping: 32, stiffness: 340 }}
+      className="fixed inset-x-0 bottom-0 z-[60] rounded-t-2xl border-t bg-background/98 backdrop-blur-xl shadow-2xl pt-2 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] px-4 sm:px-6"
+      role="dialog"
+      aria-label="Mobile navigation"
     >
-      <div className="mx-auto h-1 w-10 rounded-full bg-muted-foreground/20 mb-4" />
-      <div className="max-h-[60vh] overflow-y-auto">
+      <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-muted-foreground/25" />
+      <div className="max-h-[62vh] overflow-y-auto overscroll-contain pr-1 -mr-1 focus:outline-none" tabIndex={-1}>
         <EnhancedAppNav
           userTier={userTier}
           isAdmin={isAdmin}

@@ -1,4 +1,4 @@
-import { getAnalytics, logEvent, setUserProperties } from "firebase/analytics";
+import { logEvent, setUserProperties } from "firebase/analytics";
 import {
   doc,
   updateDoc,
@@ -8,17 +8,8 @@ import {
 } from "firebase/firestore";
 import { analytics, db } from "@/lib/firebase";
 
-// Initialize analytics (client-side only)
-const getAnalyticsInstance = () => {
-  if (typeof window !== "undefined") {
-    try {
-      return getAnalytics();
-    } catch {
-      return null;
-    }
-  }
-  return null;
-};
+// Resolve analytics instance (only set in production via firebase/index)
+const getAnalyticsInstance = () => (typeof window !== "undefined" ? analytics : null);
 
 // Payment Analytics Events
 export const trackPaymentEvents = {
