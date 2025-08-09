@@ -4,6 +4,7 @@ import { setGlobalOptions } from "firebase-functions/v2";
 // Core feature functions
 import { adminChatHandler, customerChatHandler } from "./chatbot";
 import { testMinimal } from "./test-minimal";
+import { exportUserData, requestAccountDeletion } from "./user-data";
 
 // Export keyword suggestions (production)
 export { getKeywordSuggestionsEnhanced } from "./api/production-keyword-suggestions";
@@ -17,7 +18,7 @@ export { performanceDashboard, realtimeMetrics, functionMetrics, abTestManagemen
 setGlobalOptions({ region: "australia-southeast2" });
 
 // Export chatbot & utility test function
-export { adminChatHandler, customerChatHandler, testMinimal };
+export { adminChatHandler, customerChatHandler, testMinimal, exportUserData, requestAccountDeletion };
 
 // Note: sendBillingReminder exists as scheduled function in production
 // but is not exported here to avoid deployment conflicts

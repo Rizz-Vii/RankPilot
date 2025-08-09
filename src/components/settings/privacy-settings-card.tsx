@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Lock, Download, Trash2, AlertTriangle } from "lucide-react";
 import type { User } from "firebase/auth";
 import { useState } from "react";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { useToast } from "@/hooks/use-toast";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -73,22 +74,42 @@ export default function PrivacySettingsCard({
     }
   };
 
-  const handleDataExport = () => {
-    // This would trigger a data export process
-    toast({
-      title: "Data Export Requested",
-      description: "Your data export will be emailed to you within 24 hours.",
-    });
+  const handleDataExport = async () => {
+    try {
+      setIsLoading(true);
+      const functions = getFunctions();
+      const exportFn = httpsCallable(functions, "exportUserData");
+      const res: any = await exportFn({ userId: user.uid });
+      // Trigger download locally
+      const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rankpilot-export-${user.uid}-${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({ title: 'Export Ready', description: 'Your data export has downloaded.' });
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Export Failed', description: e.message || 'Unable to export data.' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleAccountDeletion = () => {
-    // This would trigger account deletion process
-    toast({
-      variant: "destructive",
-      title: "Account Deletion Requested",
-      description:
-        "Your account deletion request has been submitted. This action cannot be undone.",
-    });
+  const handleAccountDeletion = async () => {
+    try {
+      setIsLoading(true);
+      const functions = getFunctions();
+      const delFn = httpsCallable(functions, "requestAccountDeletion");
+      await delFn({ userId: user.uid });
+      toast({ variant: 'destructive', title: 'Deletion Scheduled', description: 'Your account has been scheduled for deletion.' });
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Deletion Failed', description: e.message || 'Unable to schedule deletion.' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
