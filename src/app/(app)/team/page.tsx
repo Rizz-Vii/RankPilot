@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import LoadingScreen from "@/components/ui/loading-screen";
+// Removed full-screen LoadingScreen in favor of inline skeleton rows
 import {
   Select,
   SelectContent,
@@ -57,19 +57,10 @@ import {
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { toast } from "sonner";
-
-interface TeamMember {
-  id: string;
-  email: string;
-  name: string;
-  role: "owner" | "admin" | "member" | "viewer";
-  status: "active" | "pending" | "inactive";
-  avatar?: string;
-  joinedAt: Date;
-  lastActive: Date;
-}
+import { subscribeToTeamMembers, inviteTeamMember, updateTeamMemberRole as apiUpdateRole, removeTeamMember as apiRemoveMember, resendTeamInvite, transferTeamOwnership, TeamMember, canModifyMember, canRemoveMember } from "@/lib/services/team.service";
+// Old one-off Firestore fetch utilities removed now that realtime subscription is stable
+// TeamMember now imported from service layer
 
 const ROLES = {
   owner: "Full access and billing management",
@@ -104,124 +95,94 @@ export default function TeamManagementPage() {
     message: "",
   });
   const [isInviting, setIsInviting] = useState(false);
+  const [transferLoadingId, setTransferLoadingId] = useState<string | null>(null);
 
-  const fetchTeamMembers = useCallback(async () => {
+  const initSubscription = useCallback(() => {
     if (!user?.uid) return;
-    try {
-      // Locate the team via memberIds or user.profile.teamId
-      let teamData: any | null = null;
-      const teamsQ = query(collection(db, "teams"), where("memberIds", "array-contains", user.uid));
-      const teamsSnap = await getDocs(teamsQ);
-      if (!teamsSnap.empty) {
-        teamData = teamsSnap.docs[0].data();
+    const unsubscribePromise = subscribeToTeamMembers({
+      userId: user.uid,
+      onData: (members) => {
+        setTeamMembers(members);
+        setLoading(false);
+      },
+      onError: (err) => {
+        console.error("Team subscription error", err);
+        toast.error("Team updates failed");
+        setLoading(false);
       }
-      if (!teamData) {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        const teamId = userDoc.exists() ? (userDoc.data() as any)?.teamId : (user as any)?.teamId;
-        if (teamId) {
-          const teamSnap = await getDoc(doc(db, "teams", teamId));
-          if (teamSnap.exists()) teamData = teamSnap.data();
-        }
-      }
-
-      if (!teamData) {
-        toast.error("Team not found");
-        setTeamMembers([]);
-        return;
-      }
-
-      const membersArr = Array.isArray(teamData.members) ? teamData.members : [];
-      const mapped: TeamMember[] = membersArr.map((m: any) => ({
-        id: m.userId || m.id || m.email || crypto.randomUUID(),
-        email: m.email || "",
-        name: m.name || m.email?.split("@")[0] || "Member",
-        role: (m.role || "member") as TeamMember["role"],
-        status: (m.status || "active") as TeamMember["status"],
-        avatar: m.avatar,
-        joinedAt: m.joinedAt?.toDate ? m.joinedAt.toDate() : new Date(),
-        lastActive: m.lastActive?.toDate ? m.lastActive.toDate() : new Date(),
-      }));
-      setTeamMembers(mapped);
-    } catch (error) {
-      console.error("Error fetching team members:", error);
-      toast.error("Failed to load team members");
-    } finally {
-      setLoading(false);
-    }
+    });
+    return unsubscribePromise;
   }, [user?.uid]);
 
   useEffect(() => {
     if (user && canUseFeature("team_management")) {
-      fetchTeamMembers();
+      const maybeUnsub = initSubscription();
+      return () => { maybeUnsub?.then?.(u => u()); };
     }
-  }, [user, canUseFeature, fetchTeamMembers]);
+  }, [user, canUseFeature, initSubscription]);
 
   const sendInvite = async () => {
     if (!inviteForm.email) {
-      toast.error("Please enter an email address");
+      toast.error("Enter an email address");
       return;
     }
-
+    // basic duplicate guard
+    if (teamMembers.some(m => m.email.toLowerCase() === inviteForm.email.toLowerCase())) {
+      toast.error("User already invited or a member");
+      return;
+    }
     setIsInviting(true);
     try {
-      // Mock implementation - replace with actual API call
-      const newMember: TeamMember = {
-        id: Date.now().toString(),
-        email: inviteForm.email,
-        name: inviteForm.email.split("@")[0],
-        role: inviteForm.role,
-        status: "pending",
-        joinedAt: new Date(),
-        lastActive: new Date(),
-      };
-
-      setTeamMembers([...teamMembers, newMember]);
+      await inviteTeamMember({ email: inviteForm.email, role: inviteForm.role, message: inviteForm.message });
+      toast.success("Invitation sent");
       setInviteForm({ email: "", role: "member", message: "" });
       setIsInviteDialogOpen(false);
-      toast.success("Invitation sent successfully");
-    } catch (error) {
-      console.error("Error sending invite:", error);
-      toast.error("Failed to send invitation");
-    } finally {
-      setIsInviting(false);
-    }
+    } catch (e:any) {
+      console.error(e);
+      toast.error(e.message || "Invite failed");
+    } finally { setIsInviting(false); }
   };
 
-  const updateMemberRole = async (
-    memberId: string,
-    newRole: TeamMember["role"]
-  ) => {
+  const updateMemberRole = async (memberId: string, newRole: TeamMember["role"]) => {
+    const original = teamMembers.find(m => m.id === memberId);
+    if (!original) return;
+    if (!canModifyMember(user?.uid || "", original, teamMembers)) {
+      toast.error("Insufficient permissions");
+      return;
+    }
+    // optimistic
+    setTeamMembers(teamMembers.map(m => m.id === memberId ? { ...m, role: newRole } : m));
     try {
-      setTeamMembers(
-        teamMembers.map((member) =>
-          member.id === memberId ? { ...member, role: newRole } : member
-        )
-      );
-      toast.success("Member role updated successfully");
-    } catch (error) {
-      console.error("Error updating member role:", error);
-      toast.error("Failed to update member role");
+      await apiUpdateRole(memberId, newRole);
+      toast.success("Role updated");
+    } catch (e:any) {
+      // rollback
+      setTeamMembers(teamMembers.map(m => m.id === memberId ? original : m));
+      toast.error(e.message || "Role update failed");
     }
   };
 
   const removeMember = async (memberId: string) => {
+    const target = teamMembers.find(m => m.id === memberId);
+    if (!target) return;
+    if (!canRemoveMember(target, teamMembers)) {
+      toast.error("Cannot remove this member");
+      return;
+    }
+    const prev = teamMembers;
+    setTeamMembers(teamMembers.filter(m => m.id !== memberId));
     try {
-      setTeamMembers(teamMembers.filter((member) => member.id !== memberId));
-      toast.success("Member removed successfully");
-    } catch (error) {
-      console.error("Error removing member:", error);
-      toast.error("Failed to remove member");
+      await apiRemoveMember(memberId);
+      toast.success("Member removed");
+    } catch (e:any) {
+      setTeamMembers(prev); // rollback
+      toast.error(e.message || "Remove failed");
     }
   };
 
   const resendInvite = async (memberId: string) => {
-    try {
-      // Mock implementation
-      toast.success("Invitation resent successfully");
-    } catch (error) {
-      console.error("Error resending invite:", error);
-      toast.error("Failed to resend invitation");
-    }
+    try { await resendTeamInvite(memberId); toast.success("Invitation resent"); }
+    catch (e:any) { toast.error(e.message || "Resend failed"); }
   };
 
   const getStatusIcon = (status: TeamMember["status"]) => {
@@ -248,13 +209,13 @@ export default function TeamManagementPage() {
     }
   };
 
-  if (authLoading || loading) {
-    return <LoadingScreen fullScreen text="Loading team management..." />;
-  }
+  const currentUserMember = teamMembers.find(m => m.userId === user?.uid || m.id === user?.uid);
+  const isOwner = currentUserMember?.role === 'owner';
+  const isLoading = authLoading || loading;
 
   return (
     <FeatureGate requiredTier="enterprise">
-      <main className="container mx-auto py-6 space-y-8">
+  <main className="container mx-auto py-6 space-y-8" data-testid="team-management-page">
         <ToolPageHeader
           title="Team Management"
           description="Manage team members, roles, permissions, and collaboration."
@@ -276,7 +237,7 @@ export default function TeamManagementPage() {
               onOpenChange={setIsInviteDialogOpen}
             >
               <DialogTrigger asChild>
-                <Button className="gap-2">
+                <Button className="gap-2" data-testid="invite-member-button">
                   <UserPlus className="h-4 w-4" />
                   Invite Member
                 </Button>
@@ -412,7 +373,7 @@ export default function TeamManagementPage() {
         </div>
 
         {/* Team Stats */}
-        <div className="grid gap-4 md:grid-cols-3">
+  <div className="grid gap-4 md:grid-cols-3" data-testid="team-stats">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -428,7 +389,7 @@ export default function TeamManagementPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card data-testid="pending-invites-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Pending Invites
@@ -445,7 +406,7 @@ export default function TeamManagementPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card data-testid="admin-users-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Admin Users</CardTitle>
               <Shield className="h-4 w-4 text-muted-foreground" />
@@ -472,19 +433,43 @@ export default function TeamManagementPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="overflow-x-auto" data-testid="team-members-table">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Member</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Active</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead scope="col">Member</TableHead>
+                  <TableHead scope="col">Role</TableHead>
+                  <TableHead scope="col">Status</TableHead>
+                  <TableHead scope="col">Last Active</TableHead>
+                  <TableHead scope="col" className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {teamMembers.map((member) => (
-                  <TableRow key={member.id}>
+                {isLoading && (
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={`skeleton-${i}`} data-testid={`team-member-skeleton-${i}`}> 
+                      <TableCell colSpan={5} className="py-4">
+                        <div className="flex items-center gap-4 animate-pulse">
+                          <div className="h-8 w-8 rounded-full bg-muted" />
+                          <div className="flex-1 grid grid-cols-4 gap-4">
+                            <div className="h-4 bg-muted rounded col-span-2" />
+                            <div className="h-4 bg-muted rounded col-span-1" />
+                            <div className="h-4 bg-muted rounded col-span-1" />
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+                {!isLoading && teamMembers.length === 0 && (
+                  <TableRow data-testid="empty-team-state">
+                    <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                      No team members yet. Invite your first collaborator.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!isLoading && teamMembers.map((member) => (
+                  <TableRow key={member.id} data-testid={`team-member-row-${member.id}`}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
@@ -534,6 +519,7 @@ export default function TeamManagementPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => resendInvite(member.id)}
+                            data-testid={`resend-invite-${member.id}`}
                           >
                             Resend
                           </Button>
@@ -546,7 +532,7 @@ export default function TeamManagementPage() {
                               updateMemberRole(member.id, value)
                             }
                           >
-                            <SelectTrigger className="w-[100px]">
+                            <SelectTrigger className="w-[100px]" data-testid={`role-select-${member.id}`}>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -557,12 +543,38 @@ export default function TeamManagementPage() {
                           </Select>
                         )}
 
-                        {member.role !== "owner" && (
+                        {isOwner && member.role !== 'owner' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={transferLoadingId === member.id}
+                            onClick={async () => {
+                              if (!confirm(`Transfer ownership to ${member.name}? This will reduce your permissions.`)) return;
+                              setTransferLoadingId(member.id);
+                              try {
+                                await transferTeamOwnership(member.id);
+                                toast.success("Ownership transferred");
+                              } catch (e:any) {
+                                toast.error(e.message || 'Transfer failed');
+                              } finally {
+                                setTransferLoadingId(null);
+                              }
+                            }}
+                            className="text-purple-600 hover:text-purple-700"
+                            data-testid={`transfer-ownership-${member.id}`}
+                          >
+                            {transferLoadingId === member.id ? 'Transferring...' : 'Make Owner'}
+                          </Button>
+                        )}
+
+                        {member.role !== "owner" && canRemoveMember(member, teamMembers) && (
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => removeMember(member.id)}
                             className="text-red-600 hover:text-red-700"
+                            aria-label={`Remove ${member.name}`}
+                            data-testid={`remove-member-${member.id}`}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -573,6 +585,7 @@ export default function TeamManagementPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
 

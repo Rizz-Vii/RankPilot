@@ -7,7 +7,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import type { NavItem } from "@/constants/nav";
 
 // Define comprehensive tier types
-export type TierName = "free" | "starter" | "agency" | "enterprise";
+export type TierName = "free" | "starter" | "agency" | "enterprise" | "admin";
 
 // Tier mapping for backward compatibility
 export const TIER_ALIASES: Record<string, TierName> = {
@@ -16,6 +16,7 @@ export const TIER_ALIASES: Record<string, TierName> = {
   agency: "agency",
   professional: "agency", // Legacy alias: map to agency
   enterprise: "enterprise",
+  admin: "admin",
 };
 
 // Define tools/features available per tier
@@ -109,6 +110,41 @@ export const TIER_TOOL_ACCESS = {
     ] as const,
     restrictions: {
       auditsPerMonth: -1, // unlimited
+      reportsPerMonth: -1,
+      keywordTracking: -1,
+      competitorTracking: -1,
+      exportFormats: ["PDF", "CSV", "Excel", "PowerPoint", "Custom"] as const,
+      supportType: "dedicated" as const,
+    },
+  },
+  // Admin tier: mirrors enterprise capabilities (super-set / operational role)
+  admin: {
+    maxTools: -1, // unlimited (full platform access)
+    allowedTools: [
+      "basic-audit",
+      "keyword-research",
+      "simple-reports",
+      "competitor-analysis",
+      "technical-audit",
+      "content-analysis",
+      "advanced-reports",
+      "rank-tracking",
+      "backlink-analysis",
+      "site-performance",
+      "white-label-reports",
+      "api-access",
+      "team-collaboration",
+      "custom-integrations",
+      "bulk-operations",
+      "automated-reporting",
+      "enterprise-features",
+      "custom-development",
+      "advanced-analytics",
+      // Reserved for future admin-only operational tools
+      // "system-admin",
+    ] as const,
+    restrictions: {
+      auditsPerMonth: -1,
       reportsPerMonth: -1,
       keywordTracking: -1,
       competitorTracking: -1,
@@ -262,6 +298,7 @@ export function filterNavBySubscription(
         agency: 2,
         professional: 2,
         enterprise: 3,
+        admin: 4,
       };
       const userTierLevel =
         tierHierarchy[subscription.tier as keyof typeof tierHierarchy] ?? -1;

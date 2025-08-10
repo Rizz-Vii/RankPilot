@@ -183,14 +183,6 @@ export const competitiveItems: NavItem[] = [
 // Team Collaboration Navigation - Sales Optimized
 export const teamCollaborationItems: NavItem[] = [
   // Starter: can be invited (view dashboard read-only) -> represent with Team Dashboard locked until agency? We'll give chat at agency only per request (invitation concept handled elsewhere)
-  {
-    title: "Team Dashboard",
-    href: "/team",
-    icon: Users,
-    description: "Team overview (view/invite at starter via share)",
-    requiredTier: "starter",
-    feature: "team_management",
-  },
   // Agency: collaboration core
   {
     title: "Team Chat",
@@ -299,6 +291,15 @@ export const managementItems: NavItem[] = [
     icon: BarChart3,
     description: "Performance metrics and analytics",
     requiredTier: "starter",
+  },
+  // Moved from Team Collaboration group per request
+  {
+    title: "Team Dashboard",
+    href: "/team",
+    icon: Users,
+    description: "Team overview (view/invite at starter via share)",
+    requiredTier: "starter",
+    feature: "team_management",
   },
   // Cross-domain dashboards (new groups surfaced centrally)
   {
@@ -472,7 +473,7 @@ export const standaloneNavItems: NavItem[] = standaloneItems;
 
 // Flat navigation items for backward compatibility and mobile (FIXED: Remove duplication)
 export const flatNavItems: NavItem[] = [
-  ...managementItems.slice(0, 3), // Dashboard, Insights, Performance
+  ...managementItems.slice(0, 4), // Dashboard, Insights, Performance, Team Dashboard
   ...neuroSEOItems.slice(0, 1), // NeuroSEO Dashboard
   ...seoToolsItems, // All SEO tools
   ...competitiveItems, // Competitive tools

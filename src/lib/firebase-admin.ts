@@ -115,13 +115,5 @@ try {
 } catch (e) {
   console.warn('[Firebase Admin] Could not apply ignoreUndefinedProperties:', (e as any)?.message);
 }
-try {
-  // Allow omitting optional undefined fields without errors
-  // (No-op in newer SDKs if already the default)
-  // @ts-ignore - settings may exist depending on firestore version
-  adminDb.settings?.({ ignoreUndefinedProperties: true });
-} catch (e) {
-  console.warn('[Firebase Admin] Failed to apply ignoreUndefinedProperties:', (e as any)?.message);
-}
 export const adminAuth = app.auth();
 export { app as adminApp };

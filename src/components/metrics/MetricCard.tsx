@@ -16,6 +16,7 @@ interface MetricCardProps {
   className?: string;
   intent?: 'neutral' | 'success' | 'warning' | 'danger';
   size?: 'sm' | 'md' | 'lg';
+  badge?: React.ReactNode; // small badge (target progress, etc.)
 }
 
 const intentStyles: Record<string, string> = {
@@ -37,7 +38,8 @@ export function MetricCard({
   footer,
   className,
   intent = 'neutral',
-  size = 'md'
+  size = 'md',
+  badge
 }: MetricCardProps) {
   const formattedDelta = delta != null ? (typeof delta === 'number' ? delta.toFixed(precision) : delta) : null;
   const positive = delta != null && typeof delta === 'number' ? delta >= 0 : undefined;
@@ -55,7 +57,7 @@ export function MetricCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1 min-w-0">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground truncate">{label}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground truncate flex items-center gap-1">{label} {badge}</p>
             <div className="flex items-baseline gap-2 flex-wrap">
               <span className="text-2xl font-semibold tabular-nums leading-none">
                 {loading ? '—' : value}

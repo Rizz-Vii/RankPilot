@@ -117,6 +117,14 @@ export class AIAnomalyDetector extends EventEmitter {
     }
 
     /**
+     * Dispose all timers / resources (useful for tests & HMR)
+     */
+    dispose(): void {
+        this.stopAnalysis();
+        this.removeAllListeners();
+    }
+
+    /**
      * Add data point for analysis
      */
     addDataPoint(metric: string, dataPoint: DataPoint): void {

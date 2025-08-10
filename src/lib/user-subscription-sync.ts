@@ -81,6 +81,9 @@ async function createUserSubscription(
 ): Promise<void> {
   const currentDate = new Date();
   const isFreeTier = setup.monthsPrepaid === 0;
+  // 7-day trial for any newly created free-tier (monthsPrepaid === 0) test user
+  const FREE_TRIAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+  const freeTrialEnd = new Date(Date.now() + FREE_TRIAL_MS);
   const paymentHistory = [];
   let nextBillingDate = new Date(currentDate);
 
@@ -131,7 +134,7 @@ async function createUserSubscription(
       billingCycle: "monthly",
       subscriptionStartDate:
         paymentHistory.length > 0 ? paymentHistory[0].date : currentDate,
-      trialEnd: null,
+      trialEnd: isFreeTier ? freeTrialEnd : null,
       customerSince:
         paymentHistory.length > 0 ? paymentHistory[0].date : currentDate,
       lifetimeValue: paymentHistory.reduce(
@@ -146,6 +149,9 @@ async function createUserSubscription(
 }
 
 async function createDefaultUser(userId: string, email: string): Promise<void> {
+  // Apply 7-day free tier trial to every brand new registration
+  const FREE_TRIAL_MS = 7 * 24 * 60 * 60 * 1000;
+  const trialEnd = new Date(Date.now() + FREE_TRIAL_MS);
   const userData = {
     email: email,
     subscriptionStatus: "free",
@@ -164,7 +170,7 @@ async function createDefaultUser(userId: string, email: string): Promise<void> {
       planType: "free",
       billingCycle: null,
       subscriptionStartDate: new Date(),
-      trialEnd: null,
+      trialEnd, // 7-day free access window
       customerSince: new Date(),
       lifetimeValue: 0,
       isTestCustomer: false,

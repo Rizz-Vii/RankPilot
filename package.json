@@ -171,8 +171,23 @@
     "agents:enable": "RANKPILOT_AGENTS_ENABLED=true npm run dev",
     "dev:safe": "RANKPILOT_AGENTS_ENABLED=false npm run dev-no-turbopack",
     "chat:backfill-actions": "ts-node scripts/backfill-chat-action-progress.ts",
-    "chat:backfill-actions:full": "ts-node scripts/backfill-chat-action-progress.ts --full",
-    "site:ingest": "ts-node scripts/ingest-site-content.ts"
+  "chat:backfill-actions:full": "ts-node scripts/backfill-chat-action-progress.ts --full",
+  "site:ingest": "ts-node scripts/ingest-site-content.ts",
+  "cycles": "node scripts/check-cycles.mjs"
+  },
+  "scriptsMeta": {
+  "_info": "Grouped meta commands for simplified dev workflow",
+  "cycles": "Runs dependency cycle detection via madge"
+  },
+  "pruneScripts": {
+    "core": ["dev", "build", "start", "test", "lint"],
+    "perf": ["build:analyze", "lighthouse:audit"],
+    "security": ["security-check"]
+  },
+  "additionalScripts": {
+    "deps:audit": "npm audit --omit=dev",
+    "deps:unused": "depcheck --ignore-bin-package=true --skip-missing=true",
+    "deps:report": "node scripts/report-deps.js"
   },
   "dependencies": {
     "@genkit-ai/firebase": "^1.14.0",
@@ -212,7 +227,6 @@
     "@types/d3": "^7.4.3",
     "@types/lru-cache": "^7.10.10",
     "@types/nodemailer": "^6.4.17",
-    "@types/stripe": "^8.0.416",
     "@types/xlsx": "^0.0.36",
     "canvas-confetti": "^1.9.3",
     "cheerio": "^1.1.0",
@@ -267,7 +281,6 @@
     "@opentelemetry/winston-transport": "^0.14.0",
     "@playwright/test": "^1.54.0",
     "@types/chai": "^5.2.2",
-    "@types/firebase": "^2.4.32",
     "@types/mocha": "^10.0.10",
     "@types/node": "^20.19.8",
     "@types/node-fetch": "^2.6.12",
@@ -282,7 +295,9 @@
     "critters": "^0.0.23",
     "cross-env": "^7.0.3",
     "eslint": "^9.32.0",
-    "eslint-config-next": "^15.4.6",
+  "eslint-config-next": "^15.3.4",
+  "depcheck": "^1.4.7",
+  "madge": "^8.0.0",
     "firebase-tools": "^13.35.0",
     "lighthouse": "^12.8.0",
     "markdownlint-cli": "^0.45.0",

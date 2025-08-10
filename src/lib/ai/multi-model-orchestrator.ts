@@ -63,6 +63,8 @@ export class MultiModelOrchestrator {
     private quotaManager: Map<string, number> = new Map();
     private batchQueue: Map<string, MultiModelRequest[]> = new Map();
     private performanceMetrics: Map<string, number[]> = new Map();
+    private quotaResetIntervalId?: ReturnType<typeof setInterval>;
+    private batchProcessingIntervalId?: ReturnType<typeof setInterval>;
 
     // Model configurations for intelligent selection
     private readonly modelConfigs: ModelConfig[] = [
@@ -388,7 +390,7 @@ export class MultiModelOrchestrator {
      */
     private initializeQuotaManager(): void {
         // Initialize quota tracking for users
-        setInterval(() => {
+        this.quotaResetIntervalId = setInterval(() => {
             this.quotaManager.clear(); // Reset hourly quotas
         }, 3600000); // 1 hour
     }
@@ -437,7 +439,7 @@ export class MultiModelOrchestrator {
 
     private setupBatchProcessing(): void {
         // Process batch queue every 100ms for enterprise clients
-        setInterval(() => {
+        this.batchProcessingIntervalId = setInterval(() => {
             this.processBatchQueue();
         }, 100);
     }
@@ -488,7 +490,26 @@ export class MultiModelOrchestrator {
 
         return analytics;
     }
+
+    /**
+     * Clean up internal recurring timers (useful for tests / HMR).
+     */
+    dispose(): void {
+        if (this.quotaResetIntervalId) clearInterval(this.quotaResetIntervalId);
+        if (this.batchProcessingIntervalId) clearInterval(this.batchProcessingIntervalId);
+        this.quotaResetIntervalId = undefined;
+        this.batchProcessingIntervalId = undefined;
+    }
 }
 
-// Export singleton instance
-export const multiModelOrchestrator = new MultiModelOrchestrator();
+// Export singleton instance with hot-reload guard to prevent accumulating intervals in dev
+declare const globalThis: any; // ensure TS doesn't complain in varied runtimes
+if (!globalThis.__multiModelOrchestrator) {
+    globalThis.__multiModelOrchestrator = new MultiModelOrchestrator();
+} else {
+    // On HMR, make sure old timers are cleared before replacing (optional safety)
+    if (globalThis.__multiModelOrchestrator.dispose) {
+        // no dispose call here to retain state; uncomment if needed
+    }
+}
+export const multiModelOrchestrator: MultiModelOrchestrator = globalThis.__multiModelOrchestrator;

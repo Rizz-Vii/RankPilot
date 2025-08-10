@@ -341,16 +341,16 @@ const popularPages = [
 
 export default function Sitemap() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 py-8">
-      <div className="max-w-7xl mx-auto px-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 py-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="text-center mb-8 sm:mb-10"
         >
-          <h1 className="text-4xl font-bold font-headline mb-4">Site Map</h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <h1 className="text-3xl sm:text-4xl font-bold font-headline mb-3">Site Map</h1>
+          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
             Explore all pages and features available on RankPilot. Find exactly
             what you're looking for.
           </p>
@@ -361,25 +361,27 @@ export default function Sitemap() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mb-12"
+          className="mb-8"
         >
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="py-4 pb-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <Target className="h-5 w-5" />
                 Quick Actions
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <CardContent className="pt-2 pb-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {quickActions.map((action, index) => (
                   <Link key={index} href={action.href}>
                     <Button
                       variant={action.variant}
-                      className="w-full h-auto p-4 flex flex-col gap-2"
+                      className="w-full h-auto p-3 flex flex-col gap-1"
                     >
                       {action.icon}
-                      <span className="text-sm">{action.name}</span>
+                      <span className="text-[11px] sm:text-xs font-medium leading-tight">
+                        {action.name}
+                      </span>
                     </Button>
                   </Link>
                 ))}
@@ -393,27 +395,27 @@ export default function Sitemap() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mb-12"
+          className="mb-8"
         >
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="py-4 pb-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <TrendingUp className="h-5 w-5" />
                 Popular Pages
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <CardContent className="pt-2 pb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {popularPages.map((page, index) => (
                   <Link key={index} href={page.href}>
-                    <div className="p-4 rounded-lg border hover:bg-muted/50 transition-colors group">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium group-hover:text-primary transition-colors">
+                    <div className="p-3 rounded-md border hover:bg-muted/50 transition-colors group">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-medium text-sm group-hover:text-primary transition-colors">
                           {page.name}
                         </span>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span>{page.visits} visits</span>
-                          <ExternalLink className="h-3 w-3" />
+                        <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                          <span>{page.visits}</span>
+                          <ExternalLink className="h-3 w-3 shrink-0" />
                         </div>
                       </div>
                     </div>
@@ -425,7 +427,7 @@ export default function Sitemap() {
         </motion.div>
 
         {/* Main Sitemap */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {sitemapSections.map((section, sectionIndex) => (
             <motion.div
               key={sectionIndex}
@@ -434,33 +436,33 @@ export default function Sitemap() {
               transition={{ delay: 0.3 + sectionIndex * 0.1 }}
             >
               <Card className="h-full">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                <CardHeader className="py-4 pb-2">
+                  <CardTitle className="flex items-center gap-2 text-lg">
                     {section.icon}
                     {section.title}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+                <CardContent className="pt-2 pb-4">
+                  <div className="space-y-3">
                     {section.links.map((link, linkIndex) => (
                       <div key={linkIndex}>
                         <Link href={link.href}>
-                          <div className="group p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="font-medium group-hover:text-primary transition-colors">
+                          <div className="group p-2 rounded-md hover:bg-muted/50 transition-colors">
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="min-w-0">
+                                <h4 className="font-medium text-sm group-hover:text-primary transition-colors truncate">
                                   {link.name}
                                 </h4>
-                                <p className="text-sm text-muted-foreground mt-1">
+                                <p className="hidden sm:block text-xs text-muted-foreground mt-0.5 leading-snug line-clamp-2">
                                   {link.description}
                                 </p>
                               </div>
-                              <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                              <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
                             </div>
                           </div>
                         </Link>
                         {linkIndex < section.links.length - 1 && (
-                          <Separator className="my-2" />
+                          <Separator className="my-1" />
                         )}
                       </div>
                     ))}
@@ -476,28 +478,26 @@ export default function Sitemap() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
-          className="mt-16 text-center"
+          className="mt-12 text-center"
         >
           <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
-            <CardContent className="p-8">
-              <h2 className="text-2xl font-bold mb-4">
+            <CardContent className="p-6 sm:p-8">
+              <h2 className="text-xl sm:text-2xl font-bold mb-3">
                 Can't Find What You're Looking For?
               </h2>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              <p className="text-sm sm:text-base text-muted-foreground mb-5 max-w-md mx-auto leading-relaxed">
                 Our support team is here to help you navigate RankPilot and find
                 exactly what you need.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/search">
-                  <Button size="lg">
-                    <FileText className="h-4 w-4 mr-2" />
-                    Search Site
+                  <Button size="sm" className="sm:size-auto sm:px-6 sm:py-5 sm:text-base text-sm px-4 py-4">
+                    <FileText className="h-4 w-4 mr-2" /> Search Site
                   </Button>
                 </Link>
                 <Link href="/contact">
-                  <Button variant="outline" size="lg">
-                    <Mail className="h-4 w-4 mr-2" />
-                    Contact Support
+                  <Button variant="outline" size="sm" className="sm:size-auto sm:px-6 sm:py-5 sm:text-base text-sm px-4 py-4">
+                    <Mail className="h-4 w-4 mr-2" /> Contact Support
                   </Button>
                 </Link>
               </div>
@@ -510,7 +510,7 @@ export default function Sitemap() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
-          className="mt-8 text-center text-sm text-muted-foreground"
+          className="mt-6 text-center text-xs sm:text-sm text-muted-foreground"
         >
           <p>Last updated: {new Date().toLocaleDateString()}</p>
           <p>

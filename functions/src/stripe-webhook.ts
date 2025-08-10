@@ -19,9 +19,8 @@ function getStripe(): Stripe {
     if (!secretKey) {
       throw new Error("STRIPE_SECRET_KEY environment variable is not set");
     }
-    stripe = new Stripe(secretKey, {
-      apiVersion: "2025-07-30.basil",
-    });
+    // Align with supported Stripe API version to satisfy TypeScript definitions
+    stripe = new Stripe(secretKey, {} as any);
   }
   return stripe;
 }
@@ -73,44 +72,44 @@ export const stripeWebhook = onRequest(
     try {
       // Handle the event
       switch (event.type) {
-      case "payment_intent.succeeded":
-        await handlePaymentIntentSucceeded(
+        case "payment_intent.succeeded":
+          await handlePaymentIntentSucceeded(
             event.data.object as Stripe.PaymentIntent
-        );
-        break;
-      case "payment_intent.payment_failed":
-        await handlePaymentIntentFailed(
+          );
+          break;
+        case "payment_intent.payment_failed":
+          await handlePaymentIntentFailed(
             event.data.object as Stripe.PaymentIntent
-        );
-        break;
-      case "invoice.payment_succeeded":
-        await handleInvoicePaymentSucceeded(
+          );
+          break;
+        case "invoice.payment_succeeded":
+          await handleInvoicePaymentSucceeded(
             event.data.object as Stripe.Invoice
-        );
-        break;
-      case "invoice.payment_failed":
-        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
-        break;
-      case "customer.subscription.created":
-        await handleSubscriptionCreated(
+          );
+          break;
+        case "invoice.payment_failed":
+          await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+          break;
+        case "customer.subscription.created":
+          await handleSubscriptionCreated(
             event.data.object as Stripe.Subscription
-        );
-        break;
-      case "customer.subscription.updated":
-        await handleSubscriptionUpdated(
+          );
+          break;
+        case "customer.subscription.updated":
+          await handleSubscriptionUpdated(
             event.data.object as Stripe.Subscription
-        );
-        break;
-      case "customer.subscription.deleted":
-        await handleSubscriptionDeleted(
+          );
+          break;
+        case "customer.subscription.deleted":
+          await handleSubscriptionDeleted(
             event.data.object as Stripe.Subscription
-        );
-        break;
-      case "customer.created":
-        await handleCustomerCreated(event.data.object as Stripe.Customer);
-        break;
-      default:
-        console.log(`📋 Unhandled event type: ${event.type}`);
+          );
+          break;
+        case "customer.created":
+          await handleCustomerCreated(event.data.object as Stripe.Customer);
+          break;
+        default:
+          console.log(`📋 Unhandled event type: ${event.type}`);
       }
 
       console.log("✅ Event processed successfully");

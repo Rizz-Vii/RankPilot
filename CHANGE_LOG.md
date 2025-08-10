@@ -1,3 +1,22 @@
+# 2025-08-10: Removed self-reexport JS stubs for dashboard charts
+
+Refactor: Eliminated `*.js` stub re-export files in `src/components/dashboard/` (seo-score-trend, traffic-sources-chart, keyword-visibility-chart, backlinks-chart, domain-authority-chart) in favor of direct dynamic imports of `.tsx` modules.
+Added: `allowImportingTsExtensions` in `tsconfig.json` to permit explicit `.tsx` specifiers until broader barrel strategy is adopted.
+Added: Custom ESLint rule `no-self-reexport` and codemod script `scripts/codemods/remove-self-reexport-stubs.mjs` for future automated cleanup.
+Rollback Plan:
+
+1. Recreate stub file (e.g. `seo-score-trend.js`) with `export { default } from './seo-score-trend.tsx';` if bundler regression occurs.
+2. Revert dynamic import paths in `src/app/(app)/dashboard/page.tsx` from `.tsx` back to `.js`.
+3. Remove `allowImportingTsExtensions` from `tsconfig.json` if not needed elsewhere.
+4. Disable rule by commenting `'custom-rules/no-self-reexport'` in `eslint.config.mjs`.
+   Verification: Typecheck + dashboard page render (charts load, no recursion warnings).
+
+Security Hardening (2025-08-10):
+
+- Added ESLint guard against committed `serviceAccount.json`.
+- Introduced template `docs/security/serviceAccount.example.json` and updated security protocols.
+- Action required: remove real `serviceAccount.json` from git history (BFG or git filter-repo) and rotate exposed credentials.
+
 # 🚀 RankPilot Comprehensive Change Log
 
 **Session Date:** July 30, 2025  
@@ -79,28 +98,28 @@ trialEnd: (subscription as any).trial_end ? (subscription as any).trial_end * 10
 
 ```json
 {
-    "recommendations": [
-        "ms-vscode.vscode-typescript-next",    // TypeScript support
-        "bradlc.vscode-tailwindcss",           // Tailwind CSS IntelliSense
-        "esbenp.prettier-vscode",              // Code formatting
-        "GitHub.copilot",                      // AI assistance
-        "GitHub.copilot-chat",                 // AI chat
-        "ms-playwright.playwright",            // Testing framework
-        "zerotask.firebase-configuration-schema", // Firebase support
-        "ms-vscode.powershell",                // PowerShell scripting
-        "davidanson.vscode-markdownlint"       // Markdown linting
-    ],
-    "unwantedRecommendations": [
-        "ms-vscode.vscode-typescript",         // Conflicts with typescript-next
-        "ms-python.python",                   // Removed - not needed for this project
-        "ms-python.debugpy",                  // Removed - Python debugging
-        "ms-python.vscode-pylance",           // Removed - Python language server
-        "ms-toolsai.jupyter",                 // Removed - Jupyter notebooks
-        "ms-toolsai.jupyter-keymap",          // Removed - Jupyter shortcuts
-        "ms-toolsai.jupyter-renderers",       // Removed - Jupyter renderers
-        "ms-toolsai.vscode-jupyter-cell-tags", // Removed - Jupyter features
-        "ms-toolsai.vscode-jupyter-slideshow" // Removed - Jupyter slideshow
-    ]
+  "recommendations": [
+    "ms-vscode.vscode-typescript-next", // TypeScript support
+    "bradlc.vscode-tailwindcss", // Tailwind CSS IntelliSense
+    "esbenp.prettier-vscode", // Code formatting
+    "GitHub.copilot", // AI assistance
+    "GitHub.copilot-chat", // AI chat
+    "ms-playwright.playwright", // Testing framework
+    "zerotask.firebase-configuration-schema", // Firebase support
+    "ms-vscode.powershell", // PowerShell scripting
+    "davidanson.vscode-markdownlint" // Markdown linting
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-typescript", // Conflicts with typescript-next
+    "ms-python.python", // Removed - not needed for this project
+    "ms-python.debugpy", // Removed - Python debugging
+    "ms-python.vscode-pylance", // Removed - Python language server
+    "ms-toolsai.jupyter", // Removed - Jupyter notebooks
+    "ms-toolsai.jupyter-keymap", // Removed - Jupyter shortcuts
+    "ms-toolsai.jupyter-renderers", // Removed - Jupyter renderers
+    "ms-toolsai.vscode-jupyter-cell-tags", // Removed - Jupyter features
+    "ms-toolsai.vscode-jupyter-slideshow" // Removed - Jupyter slideshow
+  ]
 }
 ```
 
@@ -297,10 +316,10 @@ code --list-extensions | wc -l
 1. Added missing export for `runSeoAudit` so SEO audit function is now deployable.
 2. Consolidated duplicate performance monitoring functions: removed `performance-functions.ts` in favor of canonical `performance-dashboard-functions.ts` implementation (exports: `performanceDashboard`, `realtimeMetrics`, `functionMetrics`, `abTestManagement`, `healthCheck`).
 3. Enhanced `runSeoAudit` to:
-    - Initialize Firestore (idempotent) and persist each live audit under `audits/{uid}/urls`.
-    - Support `forceFresh` parameter to bypass in-memory cache.
-    - Provide historical fallback using most recent stored audit (phase log: `historical_fallback`) before generic synthetic fallback.
-    - Record quota, processing time, and provenance unchanged; adds persistence metadata.
+   - Initialize Firestore (idempotent) and persist each live audit under `audits/{uid}/urls`.
+   - Support `forceFresh` parameter to bypass in-memory cache.
+   - Provide historical fallback using most recent stored audit (phase log: `historical_fallback`) before generic synthetic fallback.
+   - Record quota, processing time, and provenance unchanged; adds persistence metadata.
 4. Removed obsolete compiled artifacts (`lib/api/performance-functions.js*`) to prevent accidental deployment of deprecated functions.
 
 ### Deployment Notes

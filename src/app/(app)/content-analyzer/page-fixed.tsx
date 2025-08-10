@@ -128,22 +128,26 @@ export default function ContentAnalyzerPage() {
         if (isAnalyzing) {
             const engines = ['semanticMap', 'rewriteGen', 'trustBlock', 'aiVisibility'];
             let currentIndex = 0;
+            const pendingTimeouts: number[] = [];
 
             const interval = setInterval(() => {
                 if (currentIndex < engines.length) {
                     setCurrentEngine(engines[currentIndex]);
                     setAnalysisProgress((currentIndex + 1) * (100 / engines.length));
-
-                    setTimeout(() => {
+                    const timeoutId = window.setTimeout(() => {
                         setCompletedEngines(prev => [...prev, engines[currentIndex]]);
                         currentIndex++;
                     }, 2000);
+                    pendingTimeouts.push(timeoutId);
                 } else {
                     clearInterval(interval);
                 }
             }, 3000);
 
-            return () => clearInterval(interval);
+            return () => {
+                clearInterval(interval);
+                pendingTimeouts.forEach(id => clearTimeout(id));
+            };
         } else {
             setAnalysisProgress(0);
             setCurrentEngine("");

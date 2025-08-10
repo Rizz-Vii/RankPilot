@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -20,9 +20,42 @@ import {
   CheckCircle,
   XCircle,
   Database,
-  Zap,
   RefreshCw,
+  Download,
+  BarChart3,
 } from "lucide-react";
+import dynamic from 'next/dynamic';
+// Dynamic sparkline import (client only)
+// Removed explicit .js extension so Next resolves the .tsx module; ensures LatencySparkline export is found.
+// Import TSX module (extensionless for Next.js). Ensure no duplicate .js wrapper exists.
+const LatencySparkline = dynamic<any>(() => import('./performance/latency-sparkline').then(m => m.LatencySparkline || m.default), { ssr: false, loading: () => <div className="h-9 w-full bg-muted rounded" /> });
+
+// Threshold adaptive progress bar wrapper
+const AdaptiveProgress: React.FC<{ value: number; thresholds?: { good: number; warn: number }; label: string; invert?: boolean }> = ({ value, thresholds = { good: 90, warn: 70 }, label, invert }) => {
+  const pct = Math.max(0, Math.min(100, value));
+  const state = (() => {
+    if (invert) {
+      if (pct <= thresholds.good) return 'good';
+      if (pct <= thresholds.warn) return 'warn';
+      return 'bad';
+    }
+    if (pct >= thresholds.good) return 'good';
+    if (pct >= thresholds.warn) return 'warn';
+    return 'bad';
+  })();
+  const color = state === 'good' ? 'bg-emerald-500' : state === 'warn' ? 'bg-amber-500' : 'bg-rose-500';
+  return (
+    <div className="mt-2" role="group" aria-label={label}>
+      <Progress value={pct} className="h-2 bg-muted" aria-label={label} />
+      <div className="-mt-2 h-2 w-full pointer-events-none relative">
+        <div className={`absolute inset-0 ${color} rounded-full transition-all mix-blend-multiply opacity-60`} style={{ transform: `translateX(-${100 - pct}%)` }} aria-hidden="true" />
+      </div>
+    </div>
+  );
+};
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [latencySamples, setLatencySamples] = useState<number[]>([]);
+  const [showPercentileTable, setShowPercentileTable] = useState(false);
 import { performanceMonitor } from "@/lib/performance-monitor";
 import { aiOptimizer } from "@/lib/ai-optimizer";
 
@@ -40,9 +73,26 @@ interface PerformanceStats {
 export function PerformanceDashboard() {
   const [stats, setStats] = useState<PerformanceStats | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [selectedTimeRange, setSelectedTimeRange] = useState<
-    "5m" | "1h" | "24h"
-  >("5m");
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [selectedTimeRange, setSelectedTimeRange] = useState<"5m" | "1h" | "24h">("5m");
+  const liveRegionRef = useRef<HTMLDivElement | null>(null);
+
+  // Persist time range selection
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = window.localStorage.getItem('perfRange');
+    if (stored === '5m' || stored === '1h' || stored === '24h') setSelectedTimeRange(stored);
+    const ar = window.localStorage.getItem('perfAutoRefresh');
+    if (ar === '0') setAutoRefresh(false);
+  }, []);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('perfRange', selectedTimeRange);
+  }, [selectedTimeRange]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('perfAutoRefresh', autoRefresh ? '1' : '0');
+  }, [autoRefresh]);
 
   const refreshStats = async () => {
     setIsRefreshing(true);
@@ -75,7 +125,7 @@ export function PerformanceDashboard() {
       const overallCacheHitRate =
         totalCacheOps > 0 ? (totalCacheHits / totalCacheOps) * 100 : 0;
 
-      setStats({
+  const newStats: PerformanceStats = {
         totalOperations: aggregates.totalOperations,
         successRate: aggregates.successRate,
         averageDuration: aggregates.averageDuration,
@@ -84,7 +134,13 @@ export function PerformanceDashboard() {
         activeOperations: 0, // This would come from real-time monitoring
         healthStatus: healthStatus.status,
         recentErrors: healthStatus.issues,
-      });
+      };
+      setStats(newStats);
+  setLatencySamples(performanceMonitor.getMetrics(undefined, timeRangeMs).map(m => m.duration || 0));
+      // Announce concise update
+      if (liveRegionRef.current) {
+        liveRegionRef.current.textContent = `Updated: ops ${newStats.totalOperations}, success ${newStats.successRate.toFixed(1)} percent, p95 ${newStats.p95Duration.toFixed(0)} ms.`;
+      }
     } catch (error) {
       console.error("Failed to refresh performance stats:", error);
     } finally {
@@ -93,28 +149,22 @@ export function PerformanceDashboard() {
   };
 
   useEffect(() => {
-    refreshStats();
-    const interval = setInterval(refreshStats, 10000); // Refresh every 10 seconds
+    refreshStats().then(() => setInitialLoading(false));
+    if (!autoRefresh) return; // Skip interval if paused
+    const interval = setInterval(() => { refreshStats(); }, 10000);
     return () => clearInterval(interval);
-  }, [selectedTimeRange]);
+  }, [selectedTimeRange, autoRefresh]);
 
-  if (!stats) {
+  if (!stats && initialLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" />
-            AI Performance Dashboard
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid gap-4">
+        <div className="h-20 bg-muted rounded animate-pulse" />
+        <div className="h-40 bg-muted rounded animate-pulse" />
+        <div className="h-32 bg-muted rounded animate-pulse" />
+      </div>
     );
   }
+  if (!stats) return null;
 
   const getHealthStatusColor = (status: string) => {
     switch (status) {
@@ -145,7 +195,7 @@ export function PerformanceDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+  <div className="flex items-center justify-between" aria-label="Performance dashboard header">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">
             Performance Dashboard
@@ -155,33 +205,75 @@ export function PerformanceDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Tabs
-            value={selectedTimeRange}
-            onValueChange={(value) => setSelectedTimeRange(value as any)}
-          >
-            <TabsList>
-              <TabsTrigger value="5m">5m</TabsTrigger>
-              <TabsTrigger value="1h">1h</TabsTrigger>
-              <TabsTrigger value="24h">24h</TabsTrigger>
+          <Tabs value={selectedTimeRange} onValueChange={(value) => setSelectedTimeRange(value as any)}>
+            <TabsList aria-label="Select time range" role="tablist">
+              <TabsTrigger value="5m" aria-label="5 minutes range">5m</TabsTrigger>
+              <TabsTrigger value="1h" aria-label="1 hour range">1h</TabsTrigger>
+              <TabsTrigger value="24h" aria-label="24 hours range">24h</TabsTrigger>
             </TabsList>
           </Tabs>
+          <Button
+            variant={autoRefresh ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => setAutoRefresh(a => !a)}
+            aria-pressed={autoRefresh}
+            title={autoRefresh ? "Pause auto refresh" : "Resume auto refresh"}
+          >
+            {autoRefresh ? 'Pause' : 'Resume'}
+          </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={refreshStats}
             disabled={isRefreshing}
+            aria-label="Refresh metrics"
           >
             <RefreshCw
               className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
             />
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const json = performanceMonitor.exportMetrics();
+              const blob = new Blob([json], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = 'performance-metrics.json'; a.click();
+              URL.revokeObjectURL(url);
+            }}
+            title="Export JSON"
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const metrics = performanceMonitor.getMetrics();
+              const headers = ['operationType','duration','success','cacheHit','error'];
+              const rows = metrics.map(m => [m.operationType, m.duration ?? '', m.success, m.cacheHit ?? '', (m.error||'').replace(/,/g,';')]);
+              const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = 'performance-metrics.csv'; a.click();
+              URL.revokeObjectURL(url);
+            }}
+            title="Export CSV"
+          >
+            <BarChart3 className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
+      <div className="sr-only" aria-live="polite" ref={liveRegionRef} />
+
       {/* Health Status */}
-      <Card>
+    <Card role="region" aria-labelledby="system-health-title">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <CardTitle id="system-health-title" className="flex items-center gap-2">
             {getHealthStatusIcon(stats.healthStatus)}
             System Health
           </CardTitle>
@@ -213,7 +305,7 @@ export function PerformanceDashboard() {
       </Card>
 
       {/* Key Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" role="list" aria-label="Key performance indicators">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -231,7 +323,7 @@ export function PerformanceDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+    <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -240,7 +332,7 @@ export function PerformanceDashboard() {
             <div className="text-2xl font-bold">
               {stats.successRate.toFixed(1)}%
             </div>
-            <Progress value={stats.successRate} className="mt-2" />
+            <AdaptiveProgress value={stats.successRate} label="Success rate" thresholds={{ good: 97, warn: 93 }} />
           </CardContent>
         </Card>
 
@@ -258,10 +350,13 @@ export function PerformanceDashboard() {
             <p className="text-xs text-muted-foreground">
               P95: {stats.p95Duration.toFixed(0)}ms
             </p>
+            <div className="mt-2">
+              <LatencySparkline samples={latencySamples} id="latency-sparkline" describedBy="latency-percentiles-desc" />
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
+    <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Cache Hit Rate
@@ -272,17 +367,73 @@ export function PerformanceDashboard() {
             <div className="text-2xl font-bold">
               {stats.cacheHitRate.toFixed(1)}%
             </div>
-            <Progress value={stats.cacheHitRate} className="mt-2" />
+            <AdaptiveProgress value={stats.cacheHitRate} label="Cache hit rate" thresholds={{ good: 60, warn: 30 }} />
           </CardContent>
         </Card>
       </div>
 
+      {/* Percentile Distribution Badges */}
+      {latencySamples.length > 4 && (
+        <div className="flex flex-col gap-2" aria-label="Latency percentiles" aria-describedby="latency-percentiles-desc">
+          <p id="latency-percentiles-desc" className="sr-only">Latency percentiles summarizing distribution for the selected time range.</p>
+          <div className="flex flex-wrap gap-2 text-[11px]">
+          {(() => {
+            const ordered = [...latencySamples].sort((a,b)=>a-b);
+            const pick = (p: number) => ordered[Math.min(ordered.length -1, Math.floor(p * (ordered.length -1)))];
+            const p50 = pick(0.50);
+            const p90 = pick(0.90);
+            const p99 = pick(0.99);
+            return [
+              { label: 'p50', val: p50 },
+              { label: 'p90', val: p90 },
+              { label: 'p99', val: p99 },
+            ].map(x => (
+              <span key={x.label} className="inline-flex items-center gap-1 rounded bg-muted/60 px-2 py-0.5 font-medium border border-border/50">
+                <span className="uppercase text-muted-foreground">{x.label}</span>
+                <span className="tabular-nums">{Math.round(x.val)}ms</span>
+              </span>
+            ));
+          })()}
+          </div>
+          <div>
+            <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => setShowPercentileTable(v=>!v)} aria-expanded={showPercentileTable} aria-controls="percentile-table">
+              {showPercentileTable ? 'Hide Distribution Table' : 'Show Distribution Table'}
+            </Button>
+          </div>
+          {showPercentileTable && (
+            <div id="percentile-table" className="overflow-auto rounded border border-border/50">
+              <table className="min-w-full text-[11px]">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="text-left px-2 py-1 font-medium">Percentile</th>
+                    <th className="text-left px-2 py-1 font-medium">Value (ms)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {['0.50','0.75','0.90','0.95','0.99'].map(p => {
+                    const ordered = [...latencySamples].sort((a,b)=>a-b);
+                    const idx = Math.min(ordered.length -1, Math.floor(parseFloat(p) * (ordered.length -1)));
+                    const val = ordered[idx];
+                    return (
+                      <tr key={p} className="odd:bg-background even:bg-muted/30">
+                        <td className="px-2 py-1">p{p.replace('0.','')}</td>
+                        <td className="px-2 py-1 tabular-nums">{Math.round(val)}ms</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Detailed Metrics */}
       <Tabs defaultValue="operations" className="w-full">
-        <TabsList>
-          <TabsTrigger value="operations">Operations</TabsTrigger>
-          <TabsTrigger value="cache">Cache Performance</TabsTrigger>
-          <TabsTrigger value="errors">Error Analysis</TabsTrigger>
+        <TabsList aria-label="Detailed metrics sections">
+          <TabsTrigger value="operations" aria-label="Operations metrics">Operations</TabsTrigger>
+          <TabsTrigger value="cache" aria-label="Cache performance metrics">Cache Performance</TabsTrigger>
+          <TabsTrigger value="errors" aria-label="Error analysis metrics">Error Analysis</TabsTrigger>
         </TabsList>
 
         <TabsContent value="operations" className="space-y-4">

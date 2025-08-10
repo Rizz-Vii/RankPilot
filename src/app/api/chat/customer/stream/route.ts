@@ -300,8 +300,7 @@ export async function POST(req: NextRequest) {
                             .then(() => openaiKey ? maybeClusterKeywords({ uid, sessionId: currentSessionId, apiKey: openaiKey }).catch(() => { }) : null)
                             .catch(() => { });
                     } catch { /* ignore persistence errors */ }
-                    -                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ final: true, sessionId: currentSessionId, timestamp: new Date().toISOString(), tokensUsed })}\n\n`));
-                    +                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ final: true, sessionId: currentSessionId, timestamp: new Date().toISOString(), tokensUsed, provider, fallback: provider !== 'openai', openaiCircuitOpen: openAICircuitOpen() })}\n\n`));
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ final: true, sessionId: currentSessionId, timestamp: new Date().toISOString(), tokensUsed, provider, fallback: provider !== 'openai', openaiCircuitOpen: openAICircuitOpen() })}\n\n`));
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
                 } catch (e: any) {

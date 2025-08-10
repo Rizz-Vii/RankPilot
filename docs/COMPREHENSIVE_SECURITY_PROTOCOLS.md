@@ -186,6 +186,7 @@ This section provides step-by-step instructions for secure rotation of credentia
 3. Save the new JSON file temporarily
 4. Update .env.test with the new credentials
 5. Delete the JSON file after updating
+6. Never commit the raw key: if `serviceAccount.json` appears in git, remove it immediately, add only `docs/security/serviceAccount.example.json`, and set `GOOGLE_APPLICATION_CREDENTIALS` to a secure path outside the repo.
 
 ### API Keys Rotation
 

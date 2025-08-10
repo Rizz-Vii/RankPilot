@@ -744,6 +744,9 @@ export default function TeamChatPage() {
       {/* Settings Dialog */}
       <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
         <DialogContent>
+          {/* Accessibility: provide hidden description to satisfy dialog requirements */}
+          <div className="sr-only" id="team-chat-dialog-desc">Team chat management dialog</div>
+          {/* existing dialog content follows */}
           <DialogHeader>
             <DialogTitle>Channel Settings</DialogTitle>
           </DialogHeader>

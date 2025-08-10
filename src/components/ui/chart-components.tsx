@@ -39,23 +39,6 @@ export function ChartTooltipContent(props: any) {
     );
 }
 
-// Progress component
-export function Progress({
-    value,
-    className = ""
-}: {
-    value: number;
-    className?: string;
-}) {
-    return (
-        <div className={`progress-container ${className}`}>
-            <div
-                className="progress-bar"
-                style={{ width: `${value}%` }}
-            />
-        </div>
-    );
-}
 
 // Alert components
 export function AlertCircle({
@@ -81,5 +64,14 @@ export function AlertCircle({
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
+    );
+}
+
+// Simple Progress stub to maintain backward compatibility after refactor
+export function Progress({ value = 0, className = "" }: { value?: number; className?: string }) {
+    return (
+        <div className={`w-full h-2 rounded bg-muted overflow-hidden ${className}`}> 
+            <div className="h-full bg-primary transition-all" style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
+        </div>
     );
 }

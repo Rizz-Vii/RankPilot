@@ -1,121 +1,124 @@
-# Copilot Instructions for RankPilot (Studio)
+## RankPilot (Studio) – AI Agent Working Guide
 
-## Project Overview
+Purpose: Enable immediate, safe productivity. Keep responses concise, code-first, project-aware.
 
-- **Product:** RankPilot (internal: Studio) is a production-ready AI-first SEO SaaS platform
-- **Status:** Phase 4 - Production Readiness (all core features implemented)
-- **Frontend:** Next.js (App Router), React, Tailwind CSS, shadcn/ui
-- **Backend:** Firebase Cloud Functions (Node.js), Firestore (NoSQL)
-- **AI/Processing:** NeuroSEO™ Suite (6 engines), OpenAI API (GPT-4o), Genkit AI flows
-- **Authentication:** Firebase Auth with 5-tier access (Free/Starter/Agency/Enterprise/Admin)
-- **CI/CD:** GitHub Actions, Firebase Hosting, comprehensive Playwright testing (153 tests)
+### 1. Core Architecture
+- Next.js App Router (`/src/app`) + Tailwind + shadcn/ui. All protected feature pages live in `(app)`; auth flows in `(auth)`; marketing/public in `(public)`.
+- Firestore is the single realtime data source; Cloud Functions (`/functions`) extend heavy / scheduled logic.
+- AI layer: NeuroSEO™ Suite (`/src/lib/neuroseo/`) + supplementary Genkit flows (`/src/ai/flows/`). Always route complex SEO analyses through the Orchestrator entrypoint, not individual engines directly.
+- 5-tier subscription gating (Free→Admin) enforced via `FeatureGate`, hooks (`useProtectedRoute`, enhanced auth utils), and nav visibility rules.
 
-## 🧠 PilotBuddy Autonomous Learning System
+### 2. Data & Realtime Patterns
+- Campaign analytics unify multiple actions into `marketingCampaigns` collection; recent work: lead/content/social/email actions emit summary documents (see `marketing-automation.ts`).
+- Metrics hook pattern: `useMarketingCampaignMetrics` uses `onSnapshot` + in-memory aggregation + `addOptimistic` for instant UX. When adding new contributing actions, emit a minimal campaign doc with: `{ name, channel, impressions, clicks, leads, spend, revenue, period }`.
+- Derive `period` via shared helper (e.g., `YYYY-MM`). Never compute ROI/CTR on write—those are derived client-side.
 
+### 3. Critical Conventions
+- Hydration: Never conditionally hide inputs pre-hydration. Always render, disable via `useHydration()` until ready.
+- Mobile-first: Maintain 48px interactive target rule; use responsive utilities in `src/lib/mobile-responsive-utils.ts`.
+- ESLint fallback safety: If lint crashes (v9 / Next mismatch) auto-fallback to `eslint.config.emergency.mjs` pattern before blocking build.
+- AI service resilience: Wrap multi-engine calls with orchestrator; degrade gracefully (skip non-critical engines) instead of failing whole request.
+- Deterministic dev AI: Local marketing/content pseudo-AI utilities use seeded hash; preserve seeds when extending to keep predictability for tests.
+
+### 4. Testing & Quality
+- Playwright test suite (161 files) organized under `testing/specs/organized/`; add new UI flows there—avoid legacy `specs/main/` unless maintaining backwards compatibility.
+- Use `TestOrchestrator` + unified test users (`enhanced-auth.ts`) for any new role-based scenario; never hardcode credentials in tests.
+- Warm/page performance tests rely on cache manifests; when adding performance-sensitive routes, update warming config if present.
+
+### 5. Build / Run Essentials
+- Primary dev: `npm run dev-no-turbopack` (stable) or `npm run dev:turbo` (fast iterate).
+- Genkit AI local flows: `npm run genkit:dev`.
+- Emergency build (skip typecheck) only if CI blocking: `scripts/build-skip-typecheck.js` (document usage afterward).
+
+### 6. Feature Gating & Navigation
+- Add new feature: declare nav item with `requiredTier` and optional badge; wrap page content in `FeatureGate` with matching tier constant.
+- In multi-tier logic prefer inheritance (higher tiers get lower tier features automatically) — follow existing tier arrays; do not duplicate.
+
+### 7. Firestore Write Patterns
+- Always include `userId` and optional `teamId` for multi-tenant safety; timestamp fields: `createdAt`, and `updatedAt` on mutable docs.
+- For synthetic summary docs (marketing), keep write minimal, let client derive advanced metrics; avoid storing computed CTR/ROI.
+- Batch or parallel writes sparingly; prioritize deterministic order for tests.
+
+### 8. Error & Degradation Strategy
+- Prefer silent downgrade (reduced feature subset) over throwing for: mobile detection failure, non-critical AI engine timeout, navigation analytics.
+- Surface user-visible toasts only when action-level intent fails (e.g., content generation, lead import).
+
+### 9. Security & Secrets
+- Never commit raw credentials: reference `/docs/SECURITY_ROTATION.md` for rotation steps. If a new secret needed, add placeholder env key + doc update, not inline values.
+
+## RankPilot (Studio) – AI Agent Quick Operating Guide
+
+Goal: Fast, safe, high‑signal contributions. Be terse, code‑first, path‑specific.
+3. Emit campaign summary if it should appear in unified analytics.
+### Core Architecture
+- Next.js App Router: `(app)` protected, `(auth)` auth, `(public)` marketing. Tailwind + shadcn/ui.
+- Data: Firestore realtime; heavy / scheduled in Cloud Functions (`/functions`).
+- AI: NeuroSEO™ Suite orchestrator (`/src/lib/neuroseo/`) is SINGLE entry; extra flows in `/src/ai/flows/`.
+- Access: 5-tier (Free→Admin) via `FeatureGate`, `useProtectedRoute`, enhanced auth utils.
+- If creating ≥3 related docs, trigger consolidation (`pilotScripts/documentation/consolidate-documentation.ps1`).
+### Data / Realtime
+- Marketing metrics: write minimal doc to `marketingCampaigns` `{ name, channel, impressions, clicks, leads, spend, revenue, period }` (derive `period` `YYYY-MM`). No ROI/CTR persisted—compute client‑side.
+- Hook: `useMarketingCampaignMetrics` gives optimistic aggregation; emit minimal doc then rely on it.
+- Lint crash → fallback config → log note.
+### Critical Conventions
+- Hydration: Never hide form/content pre-hydration; render & `disabled={!hydrated}` via `useHydration()`.
+- Mobile: 48px targets; use `src/lib/mobile-responsive-utils.ts` helpers.
+- Firestore writes: always `userId`, optional `teamId`, `createdAt`, `updatedAt` (on mutation).
+- Deterministic pseudo-AI: Preserve seeding & hashing logic when extending local mock utilities.
+- AI resilience: Orchestrator must degrade (skip failing engine) not crash entire analysis.
+- Lint fallback: On ESLint v9/Next crash fallback to `eslint.config.emergency.mjs`.
+Feedback welcome: clarify any section if an agent encounters ambiguity.
+### Testing
+- Add new tests only in `testing/specs/organized/` (keep `specs/main/` stable legacy).
+- Use `TestOrchestrator` + unified users (`testing/utils/enhanced-auth.ts`). Never embed credentials.
+- Update warming / performance manifests if adding perf‑sensitive route (search "warming").
 ### Pattern Recognition Memory
-
-**ESLint Compatibility Patterns:**
-
+### Build / Run
+- Dev: `npm run dev-no-turbopack` (stable) or `npm run dev:turbo`.
+- AI flows dev: `npm run genkit:dev`.
+- CI unblock: `node scripts/build-skip-typecheck.js` then note in `CHANGE_LOG.md`.
 - Issue: ESLint v9.x + Next.js 15.4.1 compatibility failures
-- Solution: Graceful fallback configuration with try-catch error handling
-- Prevention: Monitor dependency compatibility matrices before updates
+### Feature Gating / Nav
+- Add nav item (respect inheritance) + wrap page in `<FeatureGate requiredTier="x"/>`.
+- Do NOT duplicate tier arrays—reuse constants.
 - Template: Always implement fallback mechanisms for critical build tooling
-
-**Testing Framework Evolution:**
-
+### Firestore Pattern
+- Minimal writes; derive analytics client-side. Limit batch writes; deterministic ordering aids tests.
 - Issue: Fragmented test utilities and inconsistent authentication
-- Solution: Enhanced testing framework with TestOrchestrator and graceful error handling
-- Prevention: Design testing utilities as first-class citizens from start
+### Degradation & Errors
+- Silent downgrade for non-critical failures (mobile detect, ancillary AI engine, nav analytics).
+- Toast only on user-intent failure (generation/import). Avoid noisy background errors.
 - Template: Centralized test orchestration with retry mechanisms
-
+### Security
+- No plaintext secrets. Add placeholder env + doc reference (`/docs/SECURITY_ROTATION.md`).
 **Mobile Performance Optimization:**
+### Automated Action (Marketing) Playbook
+1. Deterministic utility in `/src/lib/...` (keep seed).
+2. Minimal Firestore metrics doc (+ required IDs & timestamps).
+3. Emit summary doc for unified analytics.
+4. Update page: invoke action, optimistic insert via metrics hook, toast success/failure.
+5. Add organized test (tier gate + success path).
 
-- Issue: Desktop-first development causing mobile UX degradation
-- Solution: 8 mobile-responsive utilities with 48px WCAG-compliant touch targets
-- Prevention: Mobile-first development with progressive enhancement
-- Template: Component design with mobile optimization baked in
-
-**Authentication System Complexity:**
-
+### Documentation
+- ≥3 related new docs → run consolidation script (dry-run first).
+- Cross-cutting change → update `/docs/PROJECT_STATUS_AND_NEXT_STEPS.md`.
 - Issue: 5-tier subscription system creating testing overhead
-- Solution: Enhanced authentication utilities with tier-based routing
-- Prevention: Abstract complex authorization into reusable utilities
-- Template: Tier systems with clear inheritance and fallbacks
+### Rapid Triage
+- Lint crash → switch to `eslint.config.emergency.mjs`.
+- Metrics drift → confirm doc shape & `period` field.
+- AI spike failures → log failing engine IDs; continue orchestrator partial response.
+### NeuroSEO™ Usage
+```tsx
+import { NeuroSEOSuite } from "@/lib/neuroseo";
+await new NeuroSEOSuite().runAnalysis({ urls, targetKeywords, analysisType, userPlan, userId });
+```
 
-**NeuroSEO™ Suite Integration:**
+### Agent Output Expectations
+- Prefer precise file edits (patches) over explanation.
+- Cite exact paths; stay concise; no generic advice.
+- Ask only when genuinely blocked.
 
-- Issue: 6 AI engines requiring orchestration and quota management
-- Solution: Orchestrator pattern with unified API and quota tracking
-- Prevention: Design AI service architecture with degradation strategies
-- Template: AI service orchestration with graceful degradation
-
-**Documentation Consolidation & Organization:**
-
-- Issue: 17+ scattered documentation files creating maintenance overhead
-- Solution: Automated consolidation into 6 comprehensive documents
-- Template: Safety-first PowerShell automation with backup/rollback
-- Prevention: Consolidate when 3+ related files exist in same domain
-
-### Autonomous Decision Framework
-
-**When Build Fails:**
-
-1. Check ESLint compatibility first
-2. Apply fallback configuration pattern
-3. Use emergency build script if needed
-4. Update documentation with resolution
-
-**When Tests Are Unstable:**
-
-1. Apply retry mechanisms and timeout adjustments
-2. Use enhanced authentication utilities
-3. Implement graceful error handling patterns
-4. Enhance test orchestration
-
-**When Mobile Issues Arise:**
-
-1. Activate mobile-first component patterns
-2. Ensure 48px minimum touch targets
-3. Apply responsive utility patterns
-4. Test across viewport ranges (320px-1920px)
-
-**When Authentication Errors Occur:**
-
-1. Use enhanced auth utilities with dev mode fallbacks
-2. Check tier-based access patterns
-3. Verify subscription system inheritance
-4. Apply graceful authentication degradation
-
-**When AI Services Fail:**
-
-1. Implement orchestrator pattern with quota management
-2. Apply service degradation strategies
-3. Use caching for AI responses
-4. Monitor service uptime and quotas
-
-**When Documentation Becomes Scattered:**
-
-1. Apply consolidation pattern (3+ related files → consolidate)
-2. Use `pilotScripts/documentation/consolidate-documentation.ps1`
-3. Create comprehensive documents with TOC and structured content
-4. Update navigation and cross-references
-
-**When Manual Tasks Become Repetitive:**
-
-1. Identify automation opportunity (frequency >= weekly OR error-prone)
-2. Create PowerShell script with safety features (dry-run, backup, logging)
-3. Place in appropriate pilotScripts/ subdirectory
-4. Document in pilotScripts/README.md with usage examples
-
-### Dynamic Content System
-
-**Auto-Generated Insights:** Updated every development session
-**Script Reference Map:** All automation scripts categorized and tracked
-**Configuration Monitoring:** Real-time status of critical config files
-**Pattern Evolution:** Continuous learning from issue resolution history
-**Metrics Tracking:** Build success, test stability, performance scores
-
-### Critical File References
+Feedback welcome: request clarification if any pattern unclear.
 
 **Enhanced Testing Framework:**
 

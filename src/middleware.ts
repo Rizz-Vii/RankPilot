@@ -87,9 +87,14 @@ export function middleware(request: NextRequest) {
     "Referrer-Policy": "strict-origin-when-cross-origin",
 
     // Permissions Policy (relax payment in local dev to avoid Stripe console noise)
-    "Permissions-Policy": isLocal
-      ? "camera=(), microphone=(), geolocation=(), payment=(self)"
-      : "camera=(), microphone=(), geolocation=(), payment=()",
+    // Allow microphone for voice note feature; keep camera blocked. If you must disable voice recording set RP_DISABLE_MIC=1.
+    "Permissions-Policy": process.env.RP_DISABLE_MIC === "1"
+      ? (isLocal
+        ? "camera=(), microphone=(), geolocation=(), payment=(self)"
+        : "camera=(), microphone=(), geolocation=(), payment=()")
+      : (isLocal
+        ? "camera=(), microphone=(self), geolocation=(), payment=(self)"
+        : "camera=(), microphone=(self), geolocation=(), payment=()"),
 
     // HSTS
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",

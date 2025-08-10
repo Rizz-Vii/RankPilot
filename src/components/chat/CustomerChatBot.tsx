@@ -639,8 +639,9 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
     };
 
     // Voice note recorder (basic placeholder without backend upload)
+    const [micBlocked, setMicBlocked] = useState(false);
     const startRecording = async () => {
-        if (!navigator.mediaDevices?.getUserMedia) return;
+        if (!navigator.mediaDevices?.getUserMedia) { setError('Microphone not supported in this browser'); return; }
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             const recorder = new MediaRecorder(stream);
@@ -650,14 +651,23 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                 const blob = new Blob(recordedChunksRef.current, { type: 'audio/webm' });
                 setPendingAudio(blob);
                 setAnnouncements(a => [...a.slice(-3), 'Voice note recorded']);
+                // stop tracks to release hardware
+                stream.getTracks().forEach(t => t.stop());
             };
             recorder.start();
             audioRecorderRef.current = recorder;
             setAnnouncements(a => [...a.slice(-3), 'Recording started']);
-        } catch {}
+        } catch (e: any) {
+            setMicBlocked(true);
+            const msg = e?.name === 'NotAllowedError'
+                ? 'Microphone access denied by browser or site permissions policy.'
+                : e?.message || 'Unable to access microphone';
+            setError(msg);
+            setAnnouncements(a => [...a.slice(-3), 'Microphone blocked']);
+        }
     };
     const stopRecording = () => {
-        audioRecorderRef.current?.stop();
+        try { audioRecorderRef.current?.stop(); } catch {}
         audioRecorderRef.current = null;
     };
     const attachAudio = async () => {
