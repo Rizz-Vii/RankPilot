@@ -7,8 +7,8 @@ function generateSiteMap(paths: string[]) {
   return `<?xml version="1.0" encoding="UTF-8"?>
    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
      ${paths
-       .map((path) => {
-         return `
+      .map((path) => {
+        return `
            <url>
                <loc>${`${URL}${path}`}</loc>
                <lastmod>${new Date().toISOString()}</lastmod>
@@ -16,8 +16,8 @@ function generateSiteMap(paths: string[]) {
                <priority>0.8</priority>
            </url>
          `;
-       })
-       .join("")}
+      })
+      .join("")}
    </urlset>
  `;
 }
@@ -25,6 +25,8 @@ function generateSiteMap(paths: string[]) {
 export async function GET() {
   const publicPaths = [
     "/",
+    "/features",
+    "/pricing",
     "/seo-audit",
     "/keyword-tool",
     "/content-analyzer",
@@ -32,6 +34,8 @@ export async function GET() {
     "/serp-view",
     "/link-view",
     "/content-brief",
+    "/finance/accounting",
+    "/neuroseo",
     "/privacy",
     "/guides/broken-links",
     "/guides/xml-sitemap",

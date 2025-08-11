@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
+import { useProvenance } from "@/hooks/useProvenance";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +30,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
+import { tagSynthetic } from '@/lib/synthetic/synthetic-utils';
 import { db } from "@/lib/firebase";
 import { collection, addDoc, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { toast } from "sonner";
@@ -99,6 +101,7 @@ interface CrawlHistory {
 
 export default function NeuralCrawlerPage() {
   const { user } = useAuth();
+  const { provenance, setProvenance, markLive, markFallback } = useProvenance();
   const [crawlUrl, setCrawlUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -145,6 +148,7 @@ export default function NeuralCrawlerPage() {
   };
 
   const simulateAnalysis = async (url: string): Promise<CrawlResult> => {
+    setProvenance(null);
     // Simulate progressive analysis
     for (let i = 0; i <= 100; i += 10) {
       setAnalysisProgress(i);
@@ -152,7 +156,7 @@ export default function NeuralCrawlerPage() {
     }
 
     // Generate realistic crawl data
-    const mockResult: CrawlResult = {
+  const mockResult: CrawlResult = {
       id: `crawl_${Date.now()}`,
       url,
       title: "Complete SEO Guide for Modern Businesses | Expert Strategies",
@@ -219,7 +223,8 @@ Key areas of focus include content quality assessment, competitive analysis, per
       createdAt: new Date()
     };
 
-    return mockResult;
+  markLive();
+  return tagSynthetic(mockResult);
   };
 
   const handleAnalyze = async () => {
@@ -287,7 +292,6 @@ Key areas of focus include content quality assessment, competitive analysis, per
     toast.success("Results exported successfully!");
   };
 
-  const provenance: any = null; // placeholder until real provenance integrated
   const ResultsSkeleton = () => (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4" aria-hidden="true">
       {Array.from({ length: 4 }).map((_, i) => (

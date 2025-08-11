@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getLogger } from '@/lib/logging/app-logger';
 import nodemailer from "nodemailer";
 import { z } from "zod";
 import { adminDb } from "@/lib/firebase-admin";
@@ -21,7 +22,7 @@ function getTransport() {
     }
     return {
         sendMail: async (opts: any) => {
-            console.log("[support reply fallback] would send:", JSON.stringify(opts, null, 2));
+            getLogger('support-reply').warn('email.send.fallback', { to: opts.to, subject: opts.subject });
             return { messageId: `dev-fallback-${Date.now()}` };
         },
     } as unknown as nodemailer.Transporter;
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, id: info.messageId });
     } catch (err: any) {
-        console.error("/api/support/reply error:", err);
+        getLogger('support-reply').error('reply.error', { error: err?.message });
         return NextResponse.json({ message: err?.message || "Internal error" }, { status: 500 });
     }
 }

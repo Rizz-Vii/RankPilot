@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
+// DEPRECATED EXPERIMENTAL NAV PAGE (2025-08-11): pending deletion.
 const mockNavItems = [
   { title: "Dashboard", href: "/dashboard", icon: "📊" },
   { title: "Keyword Tool", href: "/keyword-tool", icon: "🔑" },

@@ -5,6 +5,9 @@ interface SiteRetrievalParams {
     queryEmbedding: number[];
     topK?: number;
     collectionId?: string; // future support for multiple collections
+    pageSize?: number; // internal batch size for scanning (default 250)
+    pageCursor?: string; // optional last doc id for continued paging
+    maxScan?: number; // safety cap on total docs scanned (default 1000)
 }
 
 function cosine(a: number[], b: number[]) {
@@ -17,17 +20,44 @@ function cosine(a: number[], b: number[]) {
     return dot / (Math.sqrt(na) * Math.sqrt(nb) + 1e-8);
 }
 
-export async function retrieveSiteChunks({ uid, queryEmbedding, topK = 4, collectionId = 'default' }: SiteRetrievalParams) {
-    // TODO: add paging if collection grows large; for now sample first N docs
-    const snapshot = await adminDb.collection('siteContent').doc(uid).collection(collectionId).limit(250).get();
+export async function retrieveSiteChunks({ uid, queryEmbedding, topK = 4, collectionId = 'default', pageSize = 250, pageCursor, maxScan = 1000 }: SiteRetrievalParams) {
+    // Paging implementation: iteratively scan batches until maxScan or exhaustion.
+    // For large collections a future vector index should replace full scan.
+    // Firestore admin SDK: use FieldPath.documentId() via (adminDb as any).firestore?.FieldPath or import from firebase-admin
+    // Fallback: no explicit order (natural) if FieldPath unavailable
+    let colBase = adminDb.collection('siteContent').doc(uid).collection(collectionId);
+    let col: any;
+    try {
+        const adminAny: any = adminDb as any;
+        const FieldPath = adminAny.constructor?.FieldPath || adminAny.firestore?.FieldPath;
+        col = FieldPath ? colBase.orderBy(FieldPath.documentId()) : colBase;
+    } catch {
+        col = colBase;
+    }
     const scored: Array<{ score: number; content: string; meta: any }> = [];
-    snapshot.docs.forEach(doc => {
-        const data: any = doc.data();
-        if (Array.isArray(data.embedding)) {
-            const score = cosine(queryEmbedding, data.embedding as number[]);
-            scored.push({ score, content: data.content, meta: data.meta });
+    let scanned = 0;
+    let lastDocId = pageCursor;
+    while (scanned < maxScan && scored.length < Math.max(topK * 4, topK + 8)) { // oversample factor
+        let q = col.limit(pageSize);
+        if (lastDocId) {
+            const lastSnap = await adminDb.collection('siteContent').doc(uid).collection(collectionId).doc(lastDocId).get();
+            if (lastSnap.exists) q = col.startAfter(lastSnap.id).limit(pageSize);
         }
-    });
+        const snapshot = await q.get();
+        if (snapshot.empty) break;
+        snapshot.docs.forEach((doc: any) => {
+            scanned++;
+            if (scanned > maxScan) return;
+            const data: any = doc.data();
+            if (Array.isArray(data.embedding)) {
+                const score = cosine(queryEmbedding, data.embedding as number[]);
+                scored.push({ score, content: data.content, meta: { ...(data.meta || {}), id: doc.id } });
+            }
+            lastDocId = doc.id;
+        });
+        if (snapshot.size < pageSize) break; // end reached
+    }
     scored.sort((a, b) => b.score - a.score);
-    return scored.slice(0, topK);
+    const top = scored.slice(0, topK);
+    return { chunks: top, nextCursor: lastDocId, scanned };
 }

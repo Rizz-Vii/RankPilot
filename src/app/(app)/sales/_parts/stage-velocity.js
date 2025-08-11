@@ -1,1 +1,1 @@
-export { default } from './stage-velocity';
+export { default } from './stage-velocity.tsx';

@@ -241,13 +241,24 @@ export default function ContentAnalyzerPage() {
 
       setReport(mockReport);
 
-      // Save to Firestore
+      // Save to Firestore (sanitize undefined nested fields)
       if (user) {
+        const sanitize = (obj: any): any => {
+          if (obj === null || typeof obj !== 'object') return obj;
+          if (Array.isArray(obj)) return obj.map(sanitize);
+          const out: any = {};
+            Object.entries(obj).forEach(([k, v]) => {
+              if (v === undefined) return; // skip undefined
+              out[k] = sanitize(v);
+            });
+          return out;
+        };
+        const safeReport = sanitize(mockReport);
         await addDoc(collection(db, "seoAudits"), {
           userId: user.uid,
           url: url,
-          report: mockReport,
-          timestamp: serverTimestamp(),
+          report: safeReport,
+          createdAt: serverTimestamp(),
         });
       }
 

@@ -29,12 +29,14 @@ import {
   TrendingUp
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { createDeterministicRng, randomInt, randomFloat, tagSynthetic } from '@/lib/synthetic/synthetic-utils';
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { toast } from "sonner";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { useProvenance } from "@/hooks/useProvenance";
 
 interface AuthorCredentials {
   name: string;
@@ -105,6 +107,7 @@ interface TrustBlockResult {
 
 export default function TrustBlockPage() {
   const { user } = useAuth();
+  const { provenance, markLive, markFallback, setProvenance } = useProvenance();
   const [analysisUrl, setAnalysisUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -112,94 +115,100 @@ export default function TrustBlockPage() {
   const [selectedTab, setSelectedTab] = useState("overview");
 
   const simulateTrustAnalysis = async (url: string): Promise<TrustBlockResult> => {
+    setProvenance(null);
     // Simulate progressive analysis
     for (let i = 0; i <= 100; i += 15) {
       setAnalysisProgress(i);
       await new Promise(resolve => setTimeout(resolve, 400));
     }
-
+    const rng = createDeterministicRng([url, 'trust-block']);
+    const pickStatus = (thresholds: number[], labels: Array<'present' | 'missing' | 'weak' | 'strong'>) => {
+      const r = rng();
+      for (let i=0;i<thresholds.length;i++) if (r < thresholds[i]) return labels[i];
+      return labels[labels.length-1];
+    };
     const mockResult: TrustBlockResult = {
       id: `trust_${Date.now()}`,
       url,
       eatScore: {
-        expertise: Math.floor(Math.random() * 30) + 70,
-        authoritativeness: Math.floor(Math.random() * 30) + 65,
-        trustworthiness: Math.floor(Math.random() * 25) + 75,
-        overall: Math.floor(Math.random() * 25) + 70,
+        expertise: randomInt(rng,70,100),
+        authoritativeness: randomInt(rng,65,95),
+        trustworthiness: randomInt(rng,75,100),
+        overall: randomInt(rng,70,95),
         breakdown: {
-          contentQuality: Math.floor(Math.random() * 30) + 70,
-          authorCredibility: Math.floor(Math.random() * 25) + 65,
-          siteReputation: Math.floor(Math.random() * 30) + 60,
-          userExperience: Math.floor(Math.random() * 20) + 80,
-          transparency: Math.floor(Math.random() * 35) + 65
+          contentQuality: randomInt(rng,70,100),
+          authorCredibility: randomInt(rng,65,90),
+          siteReputation: randomInt(rng,60,90),
+          userExperience: randomInt(rng,80,100),
+          transparency: randomInt(rng,65,100)
         }
       },
       trustSignals: [
         {
           signal: 'Author Bio',
-          status: Math.random() > 0.3 ? 'present' : 'missing',
+          status: pickStatus([0.3,1], ['missing','present']),
           impact: 'high',
-          score: Math.floor(Math.random() * 40) + 60,
+          score: randomInt(rng,60,100),
           recommendations: ['Add comprehensive author biography', 'Include professional credentials'],
           description: 'Clear author identification and background information'
         },
         {
           signal: 'Contact Information',
-          status: Math.random() > 0.4 ? 'present' : 'weak',
+          status: pickStatus([0.4,1], ['weak','present']),
           impact: 'medium',
-          score: Math.floor(Math.random() * 30) + 70,
+          score: randomInt(rng,70,100),
           recommendations: ['Provide multiple contact methods', 'Display physical address'],
           description: 'Easy ways for users to contact the organization'
         },
         {
           signal: 'Privacy Policy',
-          status: Math.random() > 0.2 ? 'present' : 'missing',
+          status: pickStatus([0.2,1], ['missing','present']),
           impact: 'high',
-          score: Math.floor(Math.random() * 20) + 80,
+          score: randomInt(rng,80,100),
           recommendations: ['Create comprehensive privacy policy', 'Make easily accessible'],
           description: 'Clear data handling and privacy practices'
         },
         {
           signal: 'External Citations',
-          status: Math.random() > 0.5 ? 'strong' : 'weak',
+          status: pickStatus([0.5,1], ['weak','strong']),
           impact: 'high',
-          score: Math.floor(Math.random() * 35) + 65,
+          score: randomInt(rng,65,100),
           recommendations: ['Add more authoritative sources', 'Include recent citations'],
           description: 'References to credible external sources'
         },
         {
           signal: 'Regular Updates',
-          status: Math.random() > 0.6 ? 'present' : 'weak',
+          status: pickStatus([0.6,1], ['weak','present']),
           impact: 'medium',
-          score: Math.floor(Math.random() * 30) + 60,
+          score: randomInt(rng,60,90),
           recommendations: ['Update content regularly', 'Show last modified dates'],
           description: 'Fresh and current content maintenance'
         }
       ],
       authorCredibility: {
         name: 'Dr. Sarah Johnson',
-        bio: Math.random() > 0.3,
+        bio: rng() > 0.3,
         credentials: ['PhD in Marketing', 'Digital Strategy Consultant', '15+ years experience'],
         experience: '15+ years in digital marketing and SEO strategy',
-        linkedinProfile: Math.random() > 0.4,
-        authorPhoto: Math.random() > 0.5,
-        contactInfo: Math.random() > 0.6,
+        linkedinProfile: rng() > 0.4,
+        authorPhoto: rng() > 0.5,
+        contactInfo: rng() > 0.6,
         expertiseAreas: ['SEO Strategy', 'Content Marketing', 'Digital Analytics', 'Conversion Optimization']
       },
       contentQuality: {
-        factualAccuracy: Math.floor(Math.random() * 20) + 80,
-        sourcesCited: Math.floor(Math.random() * 15) + 12,
-        dateRelevance: Math.floor(Math.random() * 25) + 75,
-        comprehensiveness: Math.floor(Math.random() * 30) + 70,
-        originalResearch: Math.floor(Math.random() * 40) + 50
+        factualAccuracy: randomInt(rng,80,100),
+        sourcesCited: randomInt(rng,12,27),
+        dateRelevance: randomInt(rng,75,100),
+        comprehensiveness: randomInt(rng,70,100),
+        originalResearch: randomInt(rng,50,90)
       },
       siteCredibility: {
-        domainAge: Math.floor(Math.random() * 10) + 5,
-        sslCertificate: Math.random() > 0.1,
-        privacyPolicy: Math.random() > 0.2,
-        contactInformation: Math.random() > 0.3,
-        aboutPage: Math.random() > 0.1,
-        termsOfService: Math.random() > 0.4
+        domainAge: randomInt(rng,5,15),
+        sslCertificate: rng() > 0.1,
+        privacyPolicy: rng() > 0.2,
+        contactInformation: rng() > 0.3,
+        aboutPage: rng() > 0.1,
+        termsOfService: rng() > 0.4
       },
       recommendations: [
         {
@@ -227,11 +236,11 @@ export default function TrustBlockPage() {
           effort: 'low'
         }
       ],
-      overallScore: Math.floor(Math.random() * 25) + 75,
+      overallScore: randomInt(rng,75,100),
       createdAt: new Date()
     };
-
-    return mockResult;
+    markLive();
+    return tagSynthetic(mockResult);
   };
 
   const handleAnalyze = async () => {
@@ -302,8 +311,6 @@ export default function TrustBlockPage() {
     score: signal.score,
     impact: signal.impact === 'high' ? 100 : signal.impact === 'medium' ? 70 : 40
   })) || [];
-
-  const provenance: any = null; // future backend source integration placeholder
 
   return (
     <main className="container mx-auto py-6 space-y-6">
@@ -446,8 +453,8 @@ export default function TrustBlockPage() {
                           <Radar
                             name="Score"
                             dataKey="A"
-                            stroke="#8884d8"
-                            fill="#8884d8"
+                            stroke="hsl(var(--chart-1))"
+                            fill="hsl(var(--chart-1))"
                             fillOpacity={0.3}
                           />
                         </RadarChart>
@@ -466,7 +473,7 @@ export default function TrustBlockPage() {
                           <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
                           <YAxis />
                           <Tooltip />
-                          <Bar dataKey="score" fill="#8884d8" />
+                          <Bar dataKey="score" fill="hsl(var(--chart-1))" />
                         </BarChart>
                       </ResponsiveContainer>
                     </CardContent>

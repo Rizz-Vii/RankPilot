@@ -8,12 +8,15 @@ import { Toaster } from "@/components/ui/toaster";
 import { UIProvider } from "@/context/UIContext";
 import { Toaster as SonnerToaster } from "sonner";
 import { DevHydrationSanitizer } from "@/components/dev/DevHydrationSanitizer";
+import EnhancedErrorBoundary from "@/components/ui/enhanced-error-boundary";
 
 export function ClientLayout({ children }: { children: React.ReactNode; }) {
   return (
     <UIProvider>
   <DevHydrationSanitizer />
-      {children}
+      <EnhancedErrorBoundary showDetails>
+        {children}
+      </EnhancedErrorBoundary>
       <Toaster />
       <SonnerToaster position="top-right" richColors />
       <SiteFooter />

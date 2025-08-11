@@ -11,13 +11,16 @@ import { useFinanceInvoiceMetrics } from '@/hooks/useFinanceInvoiceMetrics';
 import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { useProvenance } from '@/hooks/useProvenance';
 
 export default function BillingOverviewPage() {
   const [months, setMonths] = useState(6);
   const live = useFinanceInvoiceMetrics(months);
   const mock = getMockMetrics('finance');
   const data = (live.kpis.length ? live : { kpis: mock.kpis, quotas: mock.quotas, rows: [], loading:false }) as any;
+  const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(() => { trackDashboardView('finance'); }, []);
+  useEffect(()=> { if(live.kpis.length) markLive(); else markFallback(); }, [live.kpis.length, markLive, markFallback]);
   return (
     <FeatureGate feature="finance_billing_overview" requiredTier="starter" showUpgrade>
       <div className="p-6 space-y-8">
@@ -25,7 +28,8 @@ export default function BillingOverviewPage() {
           <h1 className="text-2xl font-bold tracking-tight">Billing Overview</h1>
           <p className="text-muted-foreground max-w-3xl">Plan usage, upcoming charges & cross-engine quota consumption.</p>
           <PeriodSelector value={months} onChange={setMonths} />
-        </header>
+  </header>
+  <ProvenanceLegend />
         <section className="grid gap-4 md:grid-cols-3">
           {data.kpis.map((k:any) => (
             <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />

@@ -472,7 +472,7 @@ export class InternationalizationSystem {
     private listeners: Set<(language: SupportedLanguage) => void> = new Set();
 
     private constructor() {
-        this.detectBrowserLanguage();
+        this.initializeLanguage();
         this.applyLanguageSettings();
     }
 
@@ -483,21 +483,39 @@ export class InternationalizationSystem {
         return InternationalizationSystem.instance;
     }
 
-    private detectBrowserLanguage(): void {
-        if (typeof window === 'undefined') return;
+    private initializeLanguage(): void {
+        // Order of precedence (client): explicit cookie -> localStorage -> browser -> default
+        if (typeof window === 'undefined') return; // On server we keep default 'en' until client hydration
 
-        const stored = localStorage.getItem('rankpilot-language');
-        if (stored && this.isSupportedLanguage(stored)) {
-            this.currentLanguage = stored as SupportedLanguage;
-            return;
-        }
+        // 1. Cookie (SSR parity key written by client setLanguage)
+        try {
+            const match = document.cookie.match(/(?:^|; )rp_lang=([^;]+)/);
+            if (match) {
+                const code = decodeURIComponent(match[1]);
+                if (this.isSupportedLanguage(code)) {
+                    this.currentLanguage = code as SupportedLanguage;
+                    return;
+                }
+            }
+        } catch { }
 
-        const browserLanguage = navigator.language.toLowerCase();
-        const languageCode = browserLanguage.split('-')[0];
+        // 2. LocalStorage (legacy preference)
+        try {
+            const stored = localStorage.getItem('rankpilot-language');
+            if (stored && this.isSupportedLanguage(stored)) {
+                this.currentLanguage = stored as SupportedLanguage;
+                return;
+            }
+        } catch { }
 
-        if (this.isSupportedLanguage(languageCode)) {
-            this.currentLanguage = languageCode as SupportedLanguage;
-        }
+        // 3. Browser language
+        try {
+            const browserLanguage = navigator.language.toLowerCase();
+            const languageCode = browserLanguage.split('-')[0];
+            if (this.isSupportedLanguage(languageCode)) {
+                this.currentLanguage = languageCode as SupportedLanguage;
+            }
+        } catch { }
     }
 
     private isSupportedLanguage(code: string): boolean {
@@ -514,8 +532,11 @@ export class InternationalizationSystem {
         document.documentElement.dir = config.rtl ? 'rtl' : 'ltr';
 
         // Add language-specific CSS class
-        document.body.className = document.body.className.replace(/lang-\w+/g, '');
-        document.body.classList.add(`lang-${config.code}`);
+        // Preserve existing body classes (theme, accessibility) and only adjust language specific markers
+        document.body.className = document.body.className.replace(/lang-\w+/g, '').trim();
+        if (!document.body.classList.contains(`lang-${config.code}`)) {
+            document.body.classList.add(`lang-${config.code}`);
+        }
 
         // Add RTL class if needed
         if (config.rtl) {
@@ -526,9 +547,20 @@ export class InternationalizationSystem {
     }
 
     private saveLanguagePreference(): void {
-        if (typeof localStorage !== 'undefined') {
-            localStorage.setItem('rankpilot-language', this.currentLanguage);
-        }
+        // LocalStorage (legacy / quick access)
+        try {
+            if (typeof localStorage !== 'undefined') {
+                localStorage.setItem('rankpilot-language', this.currentLanguage);
+            }
+        } catch { }
+        // Cookie for SSR parity (1 year)
+        try {
+            if (typeof document !== 'undefined') {
+                const maxAge = 60 * 60 * 24 * 365; // 1 year
+                const secure = location.protocol === 'https:' ? '; Secure' : '';
+                document.cookie = `rp_lang=${encodeURIComponent(this.currentLanguage)}; Path=/; Max-Age=${maxAge}; SameSite=Lax${secure}`;
+            }
+        } catch { }
     }
 
     private notifyListeners(): void {

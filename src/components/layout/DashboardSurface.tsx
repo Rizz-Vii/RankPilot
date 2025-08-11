@@ -1,0 +1,50 @@
+"use client";
+import React from 'react';
+import { useSuiteAccent } from '@/context/SuiteAccentContext';
+import { cn } from '@/lib/utils';
+
+type SurfaceVariant = 'default' | 'subtle' | 'elevated';
+type SuiteAccent = 'seo' | 'sales' | 'marketing' | 'finance' | 'none';
+
+export interface DashboardSurfaceProps {
+  as?: keyof JSX.IntrinsicElements;
+  fullHeight?: boolean;
+  bleed?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+  id?: string;
+  role?: string;
+  ariaLabel?: string;
+  variant?: SurfaceVariant;
+  suite?: SuiteAccent;
+  [key: string]: any; // allow passing arbitrary DOM props
+}
+
+export function DashboardSurface({ as:Tag='div', className, children, fullHeight, bleed, ariaLabel, variant='default', suite, ...rest }: DashboardSurfaceProps){
+  const ambient = useSuiteAccent?.() ?? 'none';
+  const effectiveSuite = suite || ambient || 'none';
+  const variantClasses = variant === 'subtle'
+    ? 'bg-background/50'
+    : variant === 'elevated'
+      ? 'bg-background/70 shadow [&_*]:scrollbar-thin'
+      : 'bg-background/60';
+  // Removed full-surface suite gradient; keep neutral subtle background.
+  const suiteClasses = 'relative overflow-hidden';
+  return React.createElement(
+  Tag as any,
+    {
+      className: cn(
+    'rounded-xl backdrop-blur-sm supports-[backdrop-filter]:bg-background/50 shadow-sm',
+        variantClasses,
+        suiteClasses,
+        'transition-colors',
+        fullHeight && 'min-h-[calc(100vh-8rem)]',
+        bleed && '-mx-4 md:mx-0',
+        className
+      ),
+      'aria-label': ariaLabel,
+      ...rest
+    },
+    children
+  );
+}

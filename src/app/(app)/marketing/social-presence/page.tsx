@@ -18,6 +18,7 @@ import { useMarketingCampaignMetrics } from '@/hooks/useMarketingCampaignMetrics
 import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { useProvenance } from '@/hooks/useProvenance';
 
 interface PostDialogProps { open:boolean; onClose:()=>void; onSchedule:(c:string,channel:string,when:Date)=>Promise<void>; loading:boolean; }
 function PostDialog({ open, onClose, onSchedule, loading }: PostDialogProps){
@@ -102,12 +103,15 @@ export default function SocialPresencePage() {
   const [accounts,setAccounts]=useState<any[]>([]);
   const [connecting,setConnecting]=useState(false);
   const [trends,setTrends]=useState<any|null>(null);
+  const { markLive, markFallback, ProvenanceLegend } = useProvenance();
+  useEffect(() => { if(live.loading) return; if(live.kpis.length) markLive(); else markFallback(); }, [live.loading, live.kpis, markLive, markFallback]);
   useEffect(()=> { (async ()=> { const list = await listSocialAccounts(userId, teamId); setAccounts(list); })(); }, [userId, teamId]);
 
   async function handleSchedule(content:string, channel:string, when:Date){
     try{ setBusy('schedule');
       // optimistic row (minimal fields)
-      live.addOptimistic({ id:'temp-'+Date.now(), name: content.slice(0,40), channel, impressions:0, clicks:0, leads:0, roi:0 });
+      live.addOptimistic({ id:'temp-'+Date.now(), name: content.slice(0,40), channel, impressions:0, clicks:0, leads:0, // derived metrics (ctr/roi) purposely excluded; compute client-side
+        __provenance:'optimistic' });
       await schedulePost({ content, channel, scheduledAt: when, userId, teamId }); toast({ title:'Post scheduled', description:`${channel} post queued.` }); setPostOpen(false);}catch(e:any){ toast({ title:'Schedule failed', description:e.message||'Unknown error', variant:'destructive'});} finally{ setBusy(null);} }
   function handleOptimize(){ setOptOpen(true); }
   async function handleConnect(p:string,h:string){ try{ setConnecting(true); const res= await connectSocialAccount(p as any, h, userId, teamId); toast({ title:'Account connected', description:`${res.platform}:${res.handle}`}); const list= await listSocialAccounts(userId, teamId); setAccounts(list);}catch(e:any){ toast({ title:'Connect failed', description:e.message||'Unknown error', variant:'destructive' }); } finally{ setConnecting(false); } }
@@ -120,6 +124,7 @@ export default function SocialPresencePage() {
           <p className="text-muted-foreground max-w-3xl">Multi-channel scheduling, engagement velocity & AI content optimization (pipeline forthcoming).</p>
           <PeriodSelector value={months} onChange={setMonths} />
         </header>
+  <ProvenanceLegend />
         <AccountsPanel accounts={accounts} onConnect={handleConnect} connecting={connecting} />
         <section className="grid gap-4 md:grid-cols-4">
           {data.kpis.map((k:any) => (

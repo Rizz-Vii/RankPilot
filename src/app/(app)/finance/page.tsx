@@ -7,16 +7,25 @@ import { QuotaBar } from '@/components/metrics/QuotaBar';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 import { fetchFinanceMetrics, subscribeFinanceMetrics, AggregatedFinanceMetrics } from '@/lib/services/finance-metrics.service';
+import { fetchRecentFinanceRevenueSnapshots, fetchLatestFinanceInvoiceAging } from '@/lib/services/finance-automation-snapshots';
 import { FinanceContextProvider } from './_parts/finance-context';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
+import { DashboardSurface } from '@/components/layout/DashboardSurface';
+import { dashboardContainerVariants, dashboardItemVariants } from '@/components/dashboard/animation-variants';
+import { motion } from 'framer-motion';
+import { ToolPageHeader } from '@/components/tool-page-header';
+import { SuiteAccentProvider } from '@/context/SuiteAccentContext';
 import { DownloadCloud, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { AdaptiveProgress } from '@/components/ui/adaptive-progress';
+import { useProvenance } from '@/hooks/useProvenance';
 import { InvoiceDetailModal } from './_parts/invoice-detail-modal';
 import { OnTimeBreakdownModal } from './_parts/on-time-breakdown-modal';
+import { ActionCard } from '@/components/shared/action-card';
+import { useAutomationTrigger } from '@/hooks/useAutomationTrigger';
 
 import MrrTrend from './_parts/mrr-trend';
 import InvoiceAging from './_parts/invoice-aging';
@@ -34,6 +43,9 @@ export default function FinanceDashboardRoot() {
   const [dataVersion, setDataVersion] = useState(0);
   const [showUnpaid, setShowUnpaid] = useState(false);
   const [showOnTime, setShowOnTime] = useState(false);
+  const [revSnap, setRevSnap] = useState<{ mrr: number; onTime: number; outstanding: number; period: string; ts: Date } | null>(null);
+  const [agingSnap, setAgingSnap] = useState<{ buckets: Record<string, number>; ts: Date } | null>(null);
+  const { trigger, running } = useAutomationTrigger();
 
   useEffect(()=> { trackDashboardView('finance'); }, []);
 
@@ -53,6 +65,27 @@ export default function FinanceDashboardRoot() {
     return ()=> { active=false; if(unsub) unsub(); };
   }, [userId, teamId, months, dataVersion, authLoading]);
 
+  // Load latest automation snapshots (finance)
+  useEffect(()=> {
+    if(!userId) return;
+    (async () => {
+      try {
+        const [rev, aging] = await Promise.all([
+          fetchRecentFinanceRevenueSnapshots(userId, teamId, 1),
+          fetchLatestFinanceInvoiceAging(userId, teamId)
+        ]);
+        if (rev.length) {
+          const r = rev[0];
+            setRevSnap({ mrr: r.mrr, onTime: r.onTimePct, outstanding: r.outstanding, period: r.period, ts: r.createdAt?.toDate?.() || new Date() });
+        }
+        if (aging) {
+          setAgingSnap({ buckets: aging.buckets, ts: aging.createdAt?.toDate?.() || new Date() });
+        }
+      } catch { /* silent */ }
+    })();
+  }, [userId, teamId, dataVersion]);
+
+  const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   const summary: Summary = useMemo(()=> {
     const ks = metrics?.kpis || mock.kpis;
     return {
@@ -74,29 +107,66 @@ export default function FinanceDashboardRoot() {
     const blob = new Blob([[header,...body].join('\n')], { type:'text/csv'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='finance-snapshot.csv'; a.click(); URL.revokeObjectURL(url);
   }
 
+  function runAutomation(action: 'financeRevenueSnapshot' | 'financeInvoiceAgingDigest') {
+    trigger(action, {
+      optimistic: action === 'financeRevenueSnapshot' ? () => {
+        setRevSnap(s => s ? { ...s, ts: new Date() } : s);
+      } : undefined,
+      label: action
+    });
+  }
+
+  // Classify provenance: live when metrics loaded, fallback when mock only after initial load
+  useEffect(()=> { if(initialLoading) return; if(metrics) markLive(); else markFallback(); }, [initialLoading, metrics, markLive, markFallback]);
+
   return (
     <FeatureGate feature="finance_billing_overview" requiredTier="starter" showUpgrade>
       <FinanceContextProvider data={metrics} months={months} refreshing={refreshing}>
-        <div className="p-6 space-y-10">
-          <header className="space-y-2">
-            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight">Finance Dashboard</h1>
-                <p className="text-muted-foreground max-w-3xl">Subscription economics and capital efficiency with real-time invoice intelligence.</p>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                {[3,6,9,12].map(m => (
-                  <Button key={m} size="sm" variant={months===m? 'default':'outline'} onClick={()=> setMonths(m)} aria-pressed={months===m}>{m}m</Button>
-                ))}
-                <Button size="sm" variant="outline" onClick={()=> exportSnapshot('json')} className="gap-1" aria-label="Export finance snapshot JSON"><DownloadCloud className="h-4 w-4"/>JSON</Button>
-                <Button size="sm" variant="outline" onClick={()=> exportSnapshot('csv')} className="gap-1" aria-label="Export finance snapshot CSV"><DownloadCloud className="h-4 w-4"/>CSV</Button>
-                <Button size="sm" onClick={handleRefresh} disabled={refreshing} className={cn('gap-1', refreshing && 'animate-pulse')} aria-live="polite" aria-busy={refreshing}><RefreshCw className={cn('h-4 w-4', refreshing && 'animate-spin')} />{refreshing? 'Refreshing':'Refresh'}</Button>
-              </div>
+    <SuiteAccentProvider value="finance">
+  <DashboardSurface as="section" aria-label="Finance dashboard surface" className="p-6 space-y-10">
+          <ToolPageHeader
+            title="Finance Dashboard"
+            description="Subscription economics and capital efficiency with real-time invoice intelligence."
+            badges={[{ label: 'Realtime', variant: 'secondary' }, { label: 'Financial', variant: 'outline' }]}
+            showBreadcrumb
+          >
+            <div className="flex gap-2 flex-wrap">
+              {[3,6,9,12].map(m => (
+                <Button key={m} size="sm" variant={months===m? 'default':'outline'} onClick={()=> setMonths(m)} aria-pressed={months===m}>{m}m</Button>
+              ))}
+              <Button size="sm" variant="outline" onClick={()=> exportSnapshot('json')} className="gap-1" aria-label="Export finance snapshot JSON"><DownloadCloud className="h-4 w-4"/>JSON</Button>
+              <Button size="sm" variant="outline" onClick={()=> exportSnapshot('csv')} className="gap-1" aria-label="Export finance snapshot CSV"><DownloadCloud className="h-4 w-4"/>CSV</Button>
+              <Button size="sm" onClick={handleRefresh} disabled={refreshing} className={cn('gap-1', refreshing && 'animate-pulse')} aria-live="polite" aria-busy={refreshing}><RefreshCw className={cn('h-4 w-4', refreshing && 'animate-spin')} />{refreshing? 'Refreshing':'Refresh'}</Button>
             </div>
-            <div className="sr-only" role="status" aria-live="polite">Finance summary: MRR {summary.mrr.toLocaleString()}, churn {summary.churn} percent, LTV {summary.ltv.toLocaleString()}.</div>
-          </header>
+          </ToolPageHeader>
+          <ProvenanceLegend />
+          <div className="sr-only" role="status" aria-live="polite">Finance summary: MRR {summary.mrr.toLocaleString()}, churn {summary.churn} percent, LTV {summary.ltv.toLocaleString()}.</div>
 
-          <section aria-label="Key performance indicators" className="grid gap-4 md:grid-cols-4">
+          {/* Automation Snapshot Summary Bar */}
+          {(revSnap || agingSnap) && (
+            <div className="grid gap-3 md:grid-cols-2" aria-label="Latest automation snapshots">
+              {revSnap && (
+                <div className="rounded-lg border p-3 bg-background/60 flex items-center justify-between text-xs">
+                  <div className="space-y-1">
+                    <p className="font-medium">Last Revenue Snapshot</p>
+                    <p className="text-muted-foreground">MRR {revSnap.mrr.toLocaleString()} · On-Time {revSnap.onTime.toFixed(1)}% · Outst. {revSnap.outstanding}</p>
+                  </div>
+                  <time className="text-[10px] text-muted-foreground" dateTime={revSnap.ts.toISOString()}>{revSnap.ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>
+                </div>
+              )}
+              {agingSnap && (
+                <div className="rounded-lg border p-3 bg-background/60 flex items-center justify-between text-xs">
+                  <div className="space-y-1">
+                    <p className="font-medium">Last Aging Digest</p>
+                    <p className="text-muted-foreground">0-30 {agingSnap.buckets['0-30']||0} · 31-60 {agingSnap.buckets['31-60']||0} · 61-90 {agingSnap.buckets['61-90']||0} · 90+ {agingSnap.buckets['90+']||0}</p>
+                  </div>
+                  <time className="text-[10px] text-muted-foreground" dateTime={agingSnap.ts.toISOString()}>{agingSnap.ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>
+                </div>
+              )}
+            </div>
+          )}
+
+          <motion.section aria-label="Key performance indicators" className="grid gap-4 md:grid-cols-4" variants={dashboardContainerVariants} initial="hidden" animate="visible">
             {initialLoading && Array.from({length:4}).map((_,i)=> (<Skeleton key={i} className="h-32 rounded-xl" shimmer aria-label="Loading metric" />))}
             {!initialLoading && (()=> {
               type Ext = typeof mock.kpis[number] & { target?: number; invertTarget?: boolean };
@@ -104,15 +174,17 @@ export default function FinanceDashboardRoot() {
               const targetMap: Record<string,{target?:number; invertTarget?:boolean}> = {};
               metrics?.kpis?.forEach(k=> { (targetMap as any)[k.key] = { target: (k as any).target, invertTarget: (k as any).invertTarget }; });
               const extended: Ext[] = base.map(k=> ({ ...k, ...(targetMap[k.key]||{}) }));
-              return extended.map(k=> {
+              return extended.map((k,i)=> {
                 const pctToTarget = k.target!=null? (k.invertTarget? (k.target / (k.value||1))*100 : (k.value / (k.target||1))*100): null;
                 const alertState = pctToTarget!=null? (k.invertTarget? pctToTarget <= 100 : pctToTarget >= 100): false;
                 return (
-                  <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} badge={k.target? (<Badge variant={alertState? 'default':'outline'} className="text-[10px]">{pctToTarget!.toFixed(0)}% target</Badge>): undefined} footer={k.target? <AdaptiveProgress value={Math.min(100, pctToTarget!)} invert={!!k.invertTarget} aria-label={`${k.label} target progress`} />: undefined} />
+                  <motion.div variants={dashboardItemVariants} key={k.key}>
+                  <MetricCard label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || (i===0? 'accent':'neutral')} badge={k.target? (<Badge variant={alertState? 'default':'outline'} className="text-[10px]">{pctToTarget!.toFixed(0)}% target</Badge>): undefined} footer={k.target? <AdaptiveProgress value={Math.min(100, pctToTarget!)} invert={!!k.invertTarget} aria-label={`${k.label} target progress`} />: undefined} />
+                  </motion.div>
                 );
               });
             })()}
-          </section>
+          </motion.section>
 
           {mock.quotas && (
             <section className="space-y-4">
@@ -135,13 +207,16 @@ export default function FinanceDashboardRoot() {
 
           <section className="space-y-4" aria-label="Finance workbench actions">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Finance Workbench</h2>
-            <div className="grid gap-4 md:grid-cols-3">
-              <ActionCard title="Record Invoice" desc="Draft and issue a customer invoice with tax logic." actionLabel="Create" onClick={()=> {}} />
-              <ActionCard title="Update Runway" desc="Recalculate runway assumptions based on burn inputs." actionLabel="Recalculate" onClick={()=> {}} />
-              <ActionCard title="On-Time Breakdown" desc="View on-time payment performance by tier." actionLabel="Open" onClick={()=> setShowOnTime(true)} />
+            <div className="grid gap-4 md:grid-cols-5">
+              <ActionCard title="Record Invoice" desc="Draft and issue a customer invoice with tax logic." action="Create" />
+              <ActionCard title="Update Runway" desc="Recalculate runway assumptions based on burn inputs." action="Recalc" />
+              <ActionCard title="On-Time Breakdown" desc="View on-time payment performance by tier." action="Open" onClick={()=> setShowOnTime(true)} />
+              <ActionCard title="Revenue Snapshot" desc="Force revenue snapshot" action="Run" onClick={()=> runAutomation('financeRevenueSnapshot')} loading={!!running['financeRevenueSnapshot']} loadingLabel="Running" />
+              <ActionCard title="Aging Digest" desc="Queue invoice aging digest" action="Run" onClick={()=> runAutomation('financeInvoiceAgingDigest')} loading={!!running['financeInvoiceAgingDigest']} loadingLabel="Queuing" />
             </div>
           </section>
-        </div>
+  </DashboardSurface>
+        </SuiteAccentProvider>
         <InvoiceDetailModal open={showUnpaid} onOpenChange={setShowUnpaid} filter="unpaid" />
         <OnTimeBreakdownModal open={showOnTime} onOpenChange={setShowOnTime} />
       </FinanceContextProvider>
@@ -149,13 +224,4 @@ export default function FinanceDashboardRoot() {
   );
 }
 
-interface ActionCardProps { title: string; desc: string; actionLabel: string; onClick?: ()=>void; }
-function ActionCard({ title, desc, actionLabel, onClick }: ActionCardProps){
-  return (
-    <div className="rounded-xl border p-4 bg-background/50 space-y-2 focus-within:ring-2 focus-within:ring-primary/40 transition" tabIndex={-1}>
-      <p className="text-sm font-medium">{title}</p>
-      <p className="text-xs text-muted-foreground">{desc}</p>
-      <button onClick={onClick} className="text-xs font-medium px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" aria-label={actionLabel + ' action'}>{actionLabel}</button>
-    </div>
-  );
-}
+// Replaced local ActionCard with shared component for consistency.

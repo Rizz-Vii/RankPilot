@@ -25,9 +25,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize suite (lazy import to prevent build-time side effects)
-    // We use explicit .js because NodeNext requires an extension for relative imports.
-    // noEmit=true means TS won't output .js for .ts sources, so we supply a real hand-written proxy file neuroseo.js.
-    const { NeuroSEOSuite, NeuroSEOReportSchema } = await import("../../../lib/neuroseo.js");
+    // Import directly from TS module (proxy neuroseo.js removed 2025-08-11; Bundler resolution handles .ts).
+    const { NeuroSEOSuite, NeuroSEOReportSchema } = await import("../../../lib/neuroseo");
     const neuroSEO = new NeuroSEOSuite();
 
     // Run comprehensive analysis instead of returning mocks
@@ -60,7 +59,7 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get("userId") || "anonymous";
 
     // Initialize suite (lazy import to prevent build-time side effects)
-    const { NeuroSEOSuite } = await import("../../../lib/neuroseo.js");
+    const { NeuroSEOSuite } = await import("../../../lib/neuroseo");
     const neuroSEO = new NeuroSEOSuite();
 
     // Get actual usage statistics from quota manager

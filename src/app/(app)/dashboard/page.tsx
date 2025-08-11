@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 // Dynamic import of heavy recharts-based components
 import dynamic from "next/dynamic";
+import SeoScoreTrend from "@/components/dashboard/seo-score-trend";
 import styles from "./dashboard.module.css";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -43,7 +44,7 @@ type DomainAuthorityChartProps = { data: { history: Array<{ date: string; score:
 
 // Dynamically imported chart components with lightweight skeleton placeholders referencing JS re-export stubs for NodeNext compatibility
 // Direct TSX dynamic imports (JS stubs removed)
-const SeoScoreTrend = dynamic<SeoScoreTrendProps>(() => import("@/components/dashboard/seo-score-trend").then(m => m.default as any), { ssr: false, loading: () => <Skeleton shimmer className="h-[240px] w-full" /> });
+// SeoScoreTrend is small enough; import directly to avoid dynamic promise element edge case
 const TrafficSourcesChartDyn = dynamic<TrafficSourcesChartProps>(() => import("@/components/dashboard/traffic-sources-chart").then(m => m.default as any), { ssr: false, loading: () => <Skeleton shimmer className="h-[240px] w-full" /> });
 const KeywordVisibilityChartDyn = dynamic<KeywordVisibilityChartProps>(() => import("@/components/dashboard/keyword-visibility-chart").then(m => m.default as any), { ssr: false, loading: () => <Skeleton shimmer className="h-[240px] w-full" /> });
 const BacklinksChartDyn = dynamic<BacklinksChartProps>(() => import("@/components/dashboard/backlinks-chart").then(m => m.default as any), { ssr: false, loading: () => <Skeleton shimmer className="h-[240px] w-full" /> });

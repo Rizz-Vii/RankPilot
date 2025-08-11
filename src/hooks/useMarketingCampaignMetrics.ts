@@ -4,7 +4,7 @@ import { collection, limit, onSnapshot, orderBy, query, where } from 'firebase/f
 import { db } from '@/lib/firebase';
 import { AuthContext } from '@/context/AuthContext';
 
-interface Metric { key: string; label: string; value: number; delta: number; trend: number[]; intent?: 'neutral' | 'success' | 'warning' | 'danger'; }
+interface Metric { key: string; label: string; value: number; delta: number; trend: number[]; intent?: 'neutral' | 'success' | 'warning' | 'danger' | 'accent'; }
 interface Result { loading: boolean; error?: string; kpis: Metric[]; rows: any[]; addOptimistic: (row: any) => void; }
 
 export function useMarketingCampaignMetrics(monthWindow = 6): Result {

@@ -28,12 +28,15 @@ export async function middleware(request: NextRequest) {
 export const config = {
     matcher: [
         /*
-         * Match all request paths except for the ones starting with:
-         * - _next/static (static files)
-         * - _next/image (image optimization files)  
-         * - favicon.ico (favicon file)
-         * - sw.js (service worker)
+         * Match all request paths except for the ones starting with / containing:
+         * - _next/static (static assets)
+         * - _next/image (optimized images)
+         * - _next/webpack-hmr (dev HMR websocket/events)
+         * - favicon.ico (favicon)
+         * - manifest.json (PWA manifest – keep out of edge/security path to avoid 502 during cold start)
+         * - sw.js (service worker script)
+         * - robots.txt / sitemap.xml (SEO infrastructure)
          */
-        '/((?!_next/static|_next/image|favicon.ico|sw.js).*)',
+        '/((?!_next/static|_next/image|_next/webpack-hmr|favicon.ico|manifest.json|sw.js|robots.txt|sitemap.xml).*)',
     ],
 };

@@ -4,6 +4,7 @@
 import SerpViewForm from "@/components/serp-view-form";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
+import { useProvenance } from "@/hooks/useProvenance";
 import SerpViewResults from "@/components/serp-view-results";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import LoadingScreen from "@/components/ui/loading-screen";
@@ -42,11 +43,14 @@ export default function SerpViewPage() {
     }
   }, [results, error]);
 
+  const { provenance, setProvenance, markLive, markFallback } = useProvenance();
+
   const handleSubmit = async (values: { keyword: string; }) => {
     setIsLoading(true);
     setSubmitted(true);
     setResults(null);
     setError(null);
+    setProvenance(null);
     try {
       // Transform form values to SerpViewInput
       const serpInput: SerpViewInput = {
@@ -55,8 +59,10 @@ export default function SerpViewPage() {
         device: 'desktop',
         searchEngine: 'google'
       };
-      const result = await getSerpData(serpInput);
+  const result = await getSerpData(serpInput);
       setResults(result);
+  // No caching layer yet; treat as live
+  markLive();
 
       if (user) {
         const userActivitiesRef = collection(
@@ -75,6 +81,7 @@ export default function SerpViewPage() {
       }
     } catch (e: any) {
       setError(e.message || "An unexpected error occurred.");
+      if (!results) markFallback();
     } finally {
       setIsLoading(false);
     }
@@ -87,7 +94,7 @@ export default function SerpViewPage() {
       <ToolPageHeader
         title="SERP View"
         description="Visualize live search results structure and ranking signals."
-        badges={composeToolHeaderBadges("serp-view", null)}
+  badges={composeToolHeaderBadges("serp-view", provenance)}
         showBreadcrumb
       />
     <div

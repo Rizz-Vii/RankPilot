@@ -10,8 +10,9 @@
  * which perform server-side auth (verifyIdToken) and enforce role rules.
  */
 import {
-    collection, doc, onSnapshot, query, where, getDoc, getDocs, DocumentData
+    collection, doc, query, where, getDoc, getDocs, DocumentData, getDocs as clientGetDocs, onSnapshot
 } from "firebase/firestore";
+import { managedOnSnapshot } from '@/lib/firebase/write-guard';
 import { db, auth } from "@/lib/firebase";
 
 export type TeamRole = "owner" | "admin" | "member" | "viewer";
@@ -77,21 +78,52 @@ export async function subscribeToTeamMembers({ userId, onData, onError }: Subscr
             return () => { };
         }
 
-        // Real-time on team doc itself (preferred) if members embedded
-        const teamRef = doc(db, "teams", team.id);
-        const unsub = onSnapshot(teamRef, (snapshot) => {
+        // Phase 2 Enhanced: Live subcollection snapshot (primary) with periodic refresh fallback
+        let lastEmit = Date.now();
+        const refreshIntervalMs = 60_000; // 1 minute fallback refresh
+        const membersCol = collection(db, 'teams', team.id, 'members');
+        let intervalHandle: any;
+        try {
+            const initial = await clientGetDocs(query(membersCol));
+            if (!initial.empty) {
+                const mapped = initial.docs.map(d => mapMember({ id: d.id, ...d.data() }));
+                onData(mapped);
+                lastEmit = Date.now();
+                const membersUnsub = onSnapshot(query(membersCol), (snap) => {
+                    const updated = snap.docs.map(d => mapMember({ id: d.id, ...d.data() }));
+                    onData(updated);
+                    lastEmit = Date.now();
+                }, (err) => {
+                    onError?.(err);
+                });
+                intervalHandle = setInterval(async () => {
+                    // If no updates for a while, perform a soft refresh to guard against missed events
+                    if (Date.now() - lastEmit > refreshIntervalMs * 2) {
+                        try {
+                            const refetch = await clientGetDocs(query(membersCol));
+                            const updated = refetch.docs.map(d => mapMember({ id: d.id, ...d.data() }));
+                            onData(updated);
+                            lastEmit = Date.now();
+                        } catch (e) {
+                            // swallow refresh errors
+                        }
+                    }
+                }, refreshIntervalMs);
+                return () => { membersUnsub(); if (intervalHandle) clearInterval(intervalHandle); };
+            }
+        } catch { /* fallback to embedded logic below */ }
+
+        const teamRef = doc(db, 'teams', team.id);
+        const unsub = managedOnSnapshot(teamRef, (snapshot: any) => {
             if (!snapshot.exists()) {
                 onData([]);
                 return;
             }
             const data: any = snapshot.data();
             const membersArr = Array.isArray(data.members) ? data.members : [];
-            const mapped = membersArr.map(mapMember);
-            onData(mapped);
-        }, (err) => {
-            onError?.(err);
-        });
-        return unsub;
+            onData(membersArr.map(mapMember));
+        }, (err: any) => onError?.(err), { debounceMs: 120 });
+        return () => { unsub(); if (intervalHandle) clearInterval(intervalHandle); };
     } catch (e) {
         onError?.(e);
         onData([]);

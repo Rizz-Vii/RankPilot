@@ -6,7 +6,7 @@ import { useContext } from 'react';
 import { AuthContext } from '@/context/AuthContext';
 
 interface DealMetric {
-    key: string; label: string; value: number; delta: number; trend: number[]; intent?: 'neutral' | 'success' | 'warning' | 'danger';
+    key: string; label: string; value: number; delta: number; trend: number[]; intent?: 'neutral' | 'success' | 'warning' | 'danger' | 'accent';
 }
 
 interface UseSalesDealsMetricsResult {

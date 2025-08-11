@@ -108,12 +108,18 @@ function createMockAdmin(): any {
 
 // Export Firebase Admin services for use in other parts of your application
 export const adminDb = app.firestore();
+// Apply settings only once per process to avoid noisy warnings in dev HMR
+const SETTINGS_KEY = '__RP_FIRESTORE_SETTINGS_APPLIED__';
 try {
-  // Ensure optional undefined properties in objects are ignored (avoids write errors)
-  // @ts-ignore - depends on Firestore SDK version
-  adminDb.settings?.({ ignoreUndefinedProperties: true });
+  // @ts-ignore
+  if (!(global as any)[SETTINGS_KEY]) {
+    // @ts-ignore
+    adminDb.settings?.({ ignoreUndefinedProperties: true });
+    // @ts-ignore
+    (global as any)[SETTINGS_KEY] = true;
+  }
 } catch (e) {
-  console.warn('[Firebase Admin] Could not apply ignoreUndefinedProperties:', (e as any)?.message);
+  // Silently ignore (will not impact critical functionality)
 }
 export const adminAuth = app.auth();
 export { app as adminApp };

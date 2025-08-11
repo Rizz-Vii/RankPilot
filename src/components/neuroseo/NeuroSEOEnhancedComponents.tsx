@@ -60,6 +60,58 @@ import {
   ResponsiveContainer,
   Tooltip
 } from "recharts";
+import { useNeuroSeoStream } from '@/lib/neuroseo/useNeuroSeoStream';
+import { XCircle, Play } from 'lucide-react';
+
+// Streaming wrapper component (NEU-01 UI)
+export function NeuroSEOStreamingRunner({ urls, analysisType = 'comprehensive' }: { urls: string[]; analysisType?: string }) {
+  const { status, progress, summary, error, start, cancel, queuedPosition, cached, events } = useNeuroSeoStream(urls, { analysisType });
+  const pct = progress ? Math.round((progress.completed / progress.total) * 100) : (status === 'complete' ? 100 : 0);
+  const isRunning = status === 'streaming' || status === 'connecting';
+  return (
+    <Card className="mb-6">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Brain className="h-4 w-4" /> Live NeuroSEO™ Stream
+          </CardTitle>
+          <CardDescription className="text-xs">Incremental multi-chunk analysis with SSE</CardDescription>
+        </div>
+        <div className="flex gap-2">
+          {!isRunning && status !== 'complete' && (
+            <Button size="sm" onClick={() => start()} disabled={!urls.length} variant="default" className="flex items-center gap-1">
+              <Play className="h-3 w-3" /> Start
+            </Button>
+          )}
+          {isRunning && (
+            <Button size="sm" onClick={() => cancel()} variant="destructive" className="flex items-center gap-1">
+              <XCircle className="h-3 w-3" /> Abort
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>Status: {status}{queuedPosition !== undefined && ` (queued #${queuedPosition})`}{cached && ' (cache hit)'}</span>
+          {progress && <span>{progress.completed}/{progress.total} chunks</span>}
+        </div>
+        <Progress value={pct} />
+        {error && <div className="text-xs text-red-600">Error: {error}</div>}
+        {summary && (
+          <div className="text-xs bg-muted p-2 rounded border">
+            <div>Overall Score: <span className="font-semibold">{summary.overallScore}</span></div>
+            <div>Duration: {summary.duration}ms</div>
+          </div>
+        )}
+        <div className="max-h-40 overflow-auto text-[10px] font-mono bg-slate-50 border rounded p-2">
+          {events.slice(-50).map((e, i) => (
+            <div key={i}><span className="text-slate-500">{new Date(e.ts).toLocaleTimeString()} </span>{e.type}: {JSON.stringify(e.data)}</div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 // Engine status icons and colors
 const ENGINE_CONFIGS = {
@@ -101,7 +153,15 @@ const ENGINE_CONFIGS = {
   },
 };
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82ca9d"];
+// Unified token palette (extra slot uses chart-6 fallback to chart-2 if undefined)
+const COLORS = [
+  'hsl(var(--chart-1))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+  'hsl(var(--chart-2))'
+];
 
 // Real-time analysis progress component
 export function NeuroSEOProgressIndicator({

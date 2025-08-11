@@ -53,9 +53,6 @@ const AdaptiveProgress: React.FC<{ value: number; thresholds?: { good: number; w
     </div>
   );
 };
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [latencySamples, setLatencySamples] = useState<number[]>([]);
-  const [showPercentileTable, setShowPercentileTable] = useState(false);
 import { performanceMonitor } from "@/lib/performance-monitor";
 import { aiOptimizer } from "@/lib/ai-optimizer";
 
@@ -71,6 +68,10 @@ interface PerformanceStats {
 }
 
 export function PerformanceDashboard() {
+  // Local component state (moved from invalid top-level usage)
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [latencySamples, setLatencySamples] = useState<number[]>([]);
+  const [showPercentileTable, setShowPercentileTable] = useState(false);
   const [stats, setStats] = useState<PerformanceStats | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);

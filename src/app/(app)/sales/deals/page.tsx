@@ -1,35 +1,82 @@
 "use client";
 // Sales - Deals
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
 import { useSalesDealsMetrics } from '@/hooks/useSalesDealsMetrics';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { ToolPageHeader } from '@/components/tool-page-header';
+import { Button } from '@/components/ui/button';
+import { fetchRecentSalesMetricsSnapshots } from '@/lib/services/sales-automation-snapshots';
+import { ActionCard } from '@/components/shared/action-card';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
+import { useAutomationTrigger } from '@/hooks/useAutomationTrigger';
+import { AddDealModal } from '../_parts/add-deal-modal';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useProvenance } from '@/hooks/useProvenance';
 
 export default function SalesDealsPage() {
   const fallback = getMockMetrics('sales');
   const metrics = useSalesDealsMetrics();
+  const { user } = useAuth(); const userId = user?.uid; const teamId = (user as any)?.teamId as string|undefined;
+  const [snapMetrics, setSnapMetrics] = useState<any|null>(null);
+  const [history, setHistory] = useState<any[]>([]);
+  const { toast } = useToast();
+  const { trigger, running } = useAutomationTrigger();
+  const [addOpen, setAddOpen] = useState(false);
+  const [loadingSnap, setLoadingSnap] = useState(false);
+  const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(() => { trackDashboardView('sales'); }, []);
+  useEffect(()=> { if(!userId) return; setLoadingSnap(true); let active=true; (async()=> { try { const m = await fetchRecentSalesMetricsSnapshots(userId, teamId,6); if(active){ if(m.length){ setSnapMetrics({ pipeline: m[0].pipeline, deals: m[0].totalDeals, won: m[0].closedWon, ts: m[0].createdAt?.toDate?.()||new Date() }); setHistory(m.map(s=> ({ pipeline: s.pipeline, ts: s.createdAt?.toDate?.()||new Date() }))); markLive(); } else { markFallback(); } } } finally { if(active) setLoadingSnap(false);} })(); return ()=> {active=false;}; }, [userId, teamId]);
+
+  function run(action: 'salesForecastSnapshot'|'salesRefreshMetrics') {
+    trigger(action, { optimistic: action==='salesRefreshMetrics'? ()=> setSnapMetrics((s: any) => s? { ...s, ts:new Date() }: s): undefined, label: action });
+  }
   return (
     <FeatureGate feature="sales_deals" requiredTier="agency" showUpgrade>
-      <div className="p-6 space-y-8">
-        <header className="space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight">Deals</h1>
-          <p className="text-muted-foreground max-w-3xl">Active deal pipeline, probability distribution, and momentum indicators.</p>
-        </header>
+      <div className="p-6 space-y-10">
+  <AddDealModal open={addOpen} onOpenChange={setAddOpen} onCreated={(d)=> setSnapMetrics((s: any) => s? { ...s, deals: (s.deals||0)+1, pipeline: s.pipeline + (d.amount||0) }: s)} />
+  <ToolPageHeader
+          title="Deals"
+          description="Active opportunity mix, probability distribution & cycle velocity for precision forecasting."
+          badges={[{ label: teamId? 'Team Scope':'User Scope', variant:'outline'}]}
+        >
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={()=> setAddOpen(true)}>Add Deal</Button>
+            <Button size="sm" variant="outline">Stalled List</Button>
+            <Button size="sm" variant="default" onClick={()=> run('salesForecastSnapshot')}>Reforecast</Button>
+          </div>
+        </ToolPageHeader>
+  <ProvenanceLegend />
+        {loadingSnap && <Skeleton className="h-14 rounded-lg" shimmer />}
+        {!loadingSnap && snapMetrics && (
+          <div className="rounded-lg border p-3 bg-background/60 flex items-center justify-between text-xs" aria-label="Latest metrics snapshot">
+            <div className="space-y-1"><p className="font-medium">Last Metrics Snapshot</p><p className="text-muted-foreground">Pipeline {snapMetrics.pipeline.toLocaleString()} · Deals {snapMetrics.deals} · Won {snapMetrics.won}</p>
+              {history.length>1 && (
+                <div className="flex gap-1 items-end mt-1" aria-label="Pipeline mini history">
+                  {history.slice(0,8).reverse().map((h,i)=> { const max = Math.max(...history.map(x=> x.pipeline)); const pct = max? Math.max(4, Math.round((h.pipeline / max)*32)) : 4; return <span key={i} className="inline-block w-1.5 rounded-sm bg-primary/70" style={{height: pct}} aria-hidden="true" />; })}
+                </div>
+              )}
+            </div>
+            <time className="text-[10px] text-muted-foreground" dateTime={snapMetrics.ts.toISOString()}>{snapMetrics.ts.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit'})}</time>
+          </div>
+        )}
         <section className="grid gap-4 md:grid-cols-3">
           {(metrics.kpis.length ? metrics.kpis : fallback.kpis).map(k => (
             <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
           ))}
         </section>
         <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Deal Actions</h2>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-xl border p-4 bg-background/50 space-y-2"><p className="text-sm font-medium">Add Deal</p><p className="text-xs text-muted-foreground">Register new deal with AI stage probability.</p><button className="text-xs font-medium px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition">Create</button></div>
-            <div className="rounded-xl border p-4 bg-background/50 space-y-2"><p className="text-sm font-medium">Reforecast</p><p className="text-xs text-muted-foreground">Run updated win-probability model.</p><button className="text-xs font-medium px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition">Run</button></div>
-            <div className="rounded-xl border p-4 bg-background/50 space-y-2"><p className="text-sm font-medium">Stalled Deals</p><p className="text-xs text-muted-foreground">List deals exceeding median stage duration.</p><button className="text-xs font-medium px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition">Open</button></div>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Deals Workbench</h2>
+          <div className="grid gap-4 md:grid-cols-5">
+            <ActionCard title="Add Deal" desc="Register with AI stage prediction" action="Create" onClick={()=> setAddOpen(true)} />
+            <ActionCard title="Reforecast" desc="Update win probability model" action="Run" onClick={()=> run('salesForecastSnapshot')} loading={!!running['salesForecastSnapshot']} loadingLabel="Running" />
+            <ActionCard title="Refresh Metrics" desc="Force metrics snapshot" action="Run" onClick={()=> run('salesRefreshMetrics')} loading={!!running['salesRefreshMetrics']} loadingLabel="Refreshing" />
+            <ActionCard title="Stalled Deals" desc="Surface aging risks" action="Open" />
+            <ActionCard title="Segment Mix" desc="Analyze segment distribution" action="Analyze" />
           </div>
         </section>
       </div>

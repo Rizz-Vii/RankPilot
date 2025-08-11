@@ -223,6 +223,10 @@ export const FEATURE_ACCESS: Record<string, FeatureConfig> = {
     requiredTier: "enterprise",
     description: "Cross-format marketing asset generation",
   },
+  automation_recipes: {
+    requiredTier: "agency",
+    description: "Scheduled AI automation recipes & digests",
+  },
   // Sales (progressive)
   sales_pipeline: {
     requiredTier: "starter",
@@ -248,6 +252,15 @@ export const FEATURE_ACCESS: Record<string, FeatureConfig> = {
   finance_revenue_analytics: {
     requiredTier: "agency",
     description: "Revenue, churn & LTV analytics",
+  },
+  finance_accounting: {
+    requiredTier: "agency",
+    description: "Accounting snapshots: P&L, Balance Sheet, reconciliation",
+  },
+  // Content Briefs (agency tier)
+  content_briefs: {
+    requiredTier: "agency",
+    description: "Content briefs dashboard & metrics",
   },
 } as const;
 
@@ -420,4 +433,12 @@ export function normalizeUserAccess(dbUser: any): UserAccess {
     tier: mappedTier,
     status: dbUser.subscriptionStatus || "free",
   };
+}
+
+// =============================================================================
+// TEAM-01: Effective tier (team plan overrides individual if higher)
+// =============================================================================
+export function computeEffectiveTier(userTier: SubscriptionTier, teamPlanTier?: SubscriptionTier): SubscriptionTier {
+  if (!teamPlanTier) return userTier;
+  return TIER_LEVELS[teamPlanTier] > TIER_LEVELS[userTier] ? teamPlanTier : userTier;
 }

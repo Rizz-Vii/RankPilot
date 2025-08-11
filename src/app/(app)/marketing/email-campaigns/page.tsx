@@ -18,6 +18,7 @@ import { useMarketingCampaignMetrics } from '@/hooks/useMarketingCampaignMetrics
 import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { useProvenance } from '@/hooks/useProvenance';
 
 interface CampaignDialogProps { open:boolean; onClose:()=>void; onCreate:(subject:string,audience:number,body:string,when?:Date)=>Promise<void>; loading:boolean; }
 function CampaignDialog({ open, onClose, onCreate, loading }: CampaignDialogProps){
@@ -71,9 +72,11 @@ export default function EmailCampaignsPage() {
   const [busy,setBusy]=useState<string|null>(null);
   const [lastSubject,setLastSubject]=useState('Unlock new SEO growth insights');
   const [sendTime,setSendTime]=useState<string|null>(null);
+  const { markLive, markFallback, ProvenanceLegend } = useProvenance();
+  useEffect(() => { if(live.loading) return; if(live.kpis.length) markLive(); else markFallback(); }, [live.loading, live.kpis, markLive, markFallback]);
 
   async function handleCreate(subject:string,audience:number,body:string,when?:Date){
-    try{ setBusy('create'); live.addOptimistic({ id:'temp-'+Date.now(), name: subject.slice(0,60), channel:'email', impressions:0, clicks:0, leads:0, roi:0 }); const res= await createEmailCampaign({ subject, audience, userId, teamId, sendAt: when }); toast({ title:'Campaign created', description:`Impr: ${res.impressions} Leads:${res.leads}`}); setLastSubject(subject); setCampOpen(false);}catch(e:any){ toast({ title:'Create failed', description:e.message||'Unknown error', variant:'destructive'});} finally{ setBusy(null);} }
+  try{ setBusy('create'); live.addOptimistic({ id:'temp-'+Date.now(), name: subject.slice(0,60), channel:'email', impressions:0, clicks:0, leads:0, __provenance:'optimistic' }); const res= await createEmailCampaign({ subject, audience, userId, teamId, sendAt: when }); toast({ title:'Campaign created', description:`Impr: ${res.impressions} Leads:${res.leads}`}); setLastSubject(subject); setCampOpen(false);}catch(e:any){ toast({ title:'Create failed', description:e.message||'Unknown error', variant:'destructive'});} finally{ setBusy(null);} }
   async function handleOptimize(){ try{ setBusy('opt'); const rec = await suggestSendTime(userId, teamId); setSendTime(`${rec.hour}:00`); toast({ title:'Optimal time', description:`Recommend ${rec.hour}:00`}); }catch(e:any){ toast({ title:'Optimization failed', description:e.message||'Unknown error', variant:'destructive'});} finally{ setBusy(null);} }
   function openVariants(){ setVarOpen(true); }
   return (
@@ -84,6 +87,7 @@ export default function EmailCampaignsPage() {
           <p className="text-muted-foreground max-w-3xl">Sequence generation, deliverability & engagement optimization (AI optimizer upcoming).</p>
           <PeriodSelector value={months} onChange={setMonths} />
         </header>
+  <ProvenanceLegend />
         <section className="grid gap-4 md:grid-cols-4">
           {data.kpis.map((k:any) => (
             <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />

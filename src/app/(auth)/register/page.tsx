@@ -86,13 +86,10 @@ export default function RegisterPage() {
         onSubmit={handleRegister}
         className="w-full max-w-md p-8 space-y-6 rounded-1xl shadow-xl border bg-card text-card-foreground -mt-16"
       >
-        <h2 className="text-2xl font-bold text-center mb-2">
-          Register
-        </h2>
+  <h2 className="text-2xl font-bold text-center mb-2">Create Your Account</h2>
+  <p className="text-sm text-muted-foreground text-center -mt-2">Launch your NeuroSEO™ growth workspace in under a minute.</p>
         <div>
-          <label htmlFor="email" className="block font-medium mb-1 text-foreground">
-            Email
-          </label>
+          <label htmlFor="email" className="block font-medium mb-1 text-foreground">Work Email</label>
           <input
             id="email"
             type="email"
@@ -108,9 +105,7 @@ export default function RegisterPage() {
           <p id="email-error" className="text-xs text-red-600 mt-1">{errors.email}</p>
         </div>
         <div className="relative">
-          <label htmlFor="password" className="block font-medium mb-1 text-foreground">
-            Password
-          </label>
+          <label htmlFor="password" className="block font-medium mb-1 text-foreground">Password</label>
           <input
             id="password"
             type={showPassword ? "text" : "password"}
@@ -135,9 +130,7 @@ export default function RegisterPage() {
           <p id="password-error" className="text-xs text-red-600 mt-1">{errors.password}</p>
         </div>
         <div className="relative">
-          <label htmlFor="confirmPassword" className="block font-medium mb-1 text-foreground">
-            Confirm Password
-          </label>
+          <label htmlFor="confirmPassword" className="block font-medium mb-1 text-foreground">Confirm Password</label>
           <input
             id="confirmPassword"
             type={showConfirm ? "text" : "password"}
@@ -200,10 +193,7 @@ export default function RegisterPage() {
           Register
         </button>
         <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <Link href="/login" className="text-primary hover:underline">
-            Login
-          </Link>
+          Already have an account? <Link href="/login" className="text-primary hover:underline">Log in</Link>
         </p>
       </form>
     </div>

@@ -1,1 +1,2 @@
-export { default } from '../../dashboard/domain-authority-chart';
+// Correct relative path to sibling TSX file
+export { default } from '../domain-authority-chart';

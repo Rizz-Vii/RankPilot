@@ -4,7 +4,7 @@ import { collection, getDocs, limit, orderBy, query, where } from 'firebase/fire
 import { db } from '@/lib/firebase';
 import { AuthContext } from '@/context/AuthContext';
 
-interface Metric { key: string; label: string; value: number; delta: number; trend: number[]; intent?: 'neutral' | 'success' | 'warning' | 'danger'; }
+interface Metric { key: string; label: string; value: number; delta: number; trend: number[]; intent?: 'neutral' | 'success' | 'warning' | 'danger' | 'accent'; }
 interface Result { loading: boolean; error?: string; kpis: Metric[]; rows: any[]; }
 
 export function useFinanceInvoiceMetrics(monthWindow = 6): Result {

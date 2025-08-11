@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useProvenance } from "@/hooks/useProvenance";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
@@ -28,6 +29,7 @@ import {
   Lightbulb
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { createDeterministicRng, randomInt, randomFloat, tagSynthetic } from '@/lib/synthetic/synthetic-utils';
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, query, where, orderBy, limit, getDocs } from "firebase/firestore";
@@ -91,6 +93,7 @@ export default function SemanticMapPage() {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [currentResult, setCurrentResult] = useState<SemanticMapResult | null>(null);
   const [selectedTab, setSelectedTab] = useState("overview");
+  const { provenance, setProvenance, markLive, markFallback } = useProvenance();
 
   const simulateSemanticAnalysis = async (url: string, keywords: string[]): Promise<SemanticMapResult> => {
     // Simulate progressive analysis
@@ -102,6 +105,13 @@ export default function SemanticMapPage() {
     const sampleTopics = ['SEO Strategy', 'Content Marketing', 'Digital Analytics', 'User Experience', 'Technical Optimization'];
     const sampleKeywords = ['seo', 'optimization', 'content', 'keywords', 'ranking', 'traffic', 'conversion'];
 
+    const rng = createDeterministicRng([url, keywords.sort().join(','), 'semantic-map']);
+    const pickOpportunity = () => {
+      const r = rng();
+      if (r > 0.6) return 'high';
+      if (r > 0.3) return 'medium';
+      return 'low';
+    };
     const mockResult: SemanticMapResult = {
       id: `semantic_${Date.now()}`,
       url,
@@ -109,33 +119,33 @@ export default function SemanticMapPage() {
         id: `cluster_${index}`,
         topic,
         keywords: sampleKeywords.slice(index, index + 3),
-        semanticScore: Math.floor(Math.random() * 30) + 70,
+        semanticScore: randomInt(rng, 70, 100),
         contentGaps: ['Advanced techniques', 'Case studies', 'ROI measurement'],
         relatedTopics: sampleTopics.filter(t => t !== topic).slice(0, 2),
-        searchVolume: Math.floor(Math.random() * 50000) + 5000,
-        difficulty: Math.floor(Math.random() * 40) + 30,
-        opportunity: Math.random() > 0.6 ? 'high' : Math.random() > 0.3 ? 'medium' : 'low'
+        searchVolume: randomInt(rng, 5000, 55000),
+        difficulty: randomInt(rng, 30, 70),
+        opportunity: pickOpportunity()
       })),
       keywordAnalysis: sampleKeywords.map(keyword => ({
         keyword,
-        density: Math.random() * 3 + 0.5,
-        prominence: Math.random() * 100,
-        semanticRelevance: Math.random() * 40 + 60,
-        context: ['Main content', 'Headings', 'Meta tags'].slice(0, Math.floor(Math.random() * 3) + 1)
+        density: randomFloat(rng, 0.5, 3.5),
+        prominence: randomFloat(rng, 0, 100),
+        semanticRelevance: randomFloat(rng, 60, 100),
+        context: ['Main content', 'Headings', 'Meta tags'].slice(0, randomInt(rng,1,3))
       })),
       contentAnalysis: {
-        readabilityScore: Math.floor(Math.random() * 30) + 70,
-        contentDepth: Math.floor(Math.random() * 40) + 60,
-        topicCoverage: Math.floor(Math.random() * 30) + 70,
-        semanticRichness: Math.floor(Math.random() * 40) + 60,
-        expertiseSignals: Math.floor(Math.random() * 30) + 70
+        readabilityScore: randomInt(rng,70,100),
+        contentDepth: randomInt(rng,60,100),
+        topicCoverage: randomInt(rng,70,100),
+        semanticRichness: randomInt(rng,60,100),
+        expertiseSignals: randomInt(rng,70,100)
       },
       semanticGraph: {
         nodes: sampleTopics.map((topic, index) => ({
           id: `node_${index}`,
           label: topic,
           type: 'topic',
-          score: Math.random() * 40 + 60
+          score: randomFloat(rng,60,100)
         })),
         edges: [
           { source: 'node_0', target: 'node_1', weight: 0.8 },
@@ -167,11 +177,10 @@ export default function SemanticMapPage() {
           impact: 'Enhanced understanding by search engines'
         }
       ],
-      overallScore: Math.floor(Math.random() * 30) + 70,
+      overallScore: randomInt(rng,70,100),
       createdAt: new Date()
     };
-
-    return mockResult;
+    return tagSynthetic(mockResult);
   };
 
   const handleAnalyze = async () => {
@@ -180,13 +189,14 @@ export default function SemanticMapPage() {
       return;
     }
 
-    setIsAnalyzing(true);
+  setIsAnalyzing(true);
     setAnalysisProgress(0);
     setCurrentResult(null);
+  setProvenance(null);
 
     try {
       const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k);
-      const result = await simulateSemanticAnalysis(analysisUrl, keywords);
+  const result = await simulateSemanticAnalysis(analysisUrl, keywords);
       setCurrentResult(result);
 
       // Save result to database
@@ -196,11 +206,13 @@ export default function SemanticMapPage() {
         createdAt: new Date()
       });
 
-      toast.success("Semantic analysis completed successfully!");
+  toast.success("Semantic analysis completed successfully!");
+  markLive();
 
     } catch (error) {
       console.error('Analysis error:', error);
       toast.error("Analysis failed. Please try again.");
+  markFallback();
     } finally {
       setIsAnalyzing(false);
       setAnalysisProgress(0);
@@ -229,7 +241,14 @@ export default function SemanticMapPage() {
     toast.success("Results exported successfully!");
   };
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+  // Tokenized chart palette replacing legacy hex colors
+  const COLORS = [
+    'hsl(var(--chart-1))',
+    'hsl(var(--chart-2))',
+    'hsl(var(--chart-3))',
+    'hsl(var(--chart-4))',
+    'hsl(var(--chart-5))'
+  ];
 
   const pieData = currentResult?.topicClusters.map((cluster, index) => ({
     name: cluster.topic,
@@ -244,7 +263,6 @@ export default function SemanticMapPage() {
     prominence: keyword.prominence
   })) || [];
 
-  const provenance: any = null; // future provenance integration
   return (
     <main className="container mx-auto py-6 space-y-6">
       <ToolPageHeader

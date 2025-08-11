@@ -258,13 +258,10 @@ export default function FeaturesPage() {
             <Badge className="mb-4" variant="secondary">
               NeuroSEO™ Suite
             </Badge>
-            <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              AI-First SEO Intelligence Platform
-            </h1>
+            <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">All‑in‑One NeuroSEO™ Platform</h1>
             <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              RankPilot's comprehensive suite of AI-powered SEO tools delivers
-              enterprise-grade analysis, competitive intelligence, and
-              optimization recommendations that drive measurable results.
+              Replace fragmented audit, keyword, content, link, and reporting stacks with a unified intelligence layer.
+              Six coordinated AI engines prioritize, validate, and accelerate compound organic growth.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" asChild>
@@ -295,10 +292,7 @@ export default function FeaturesPage() {
               <Brain className="h-8 w-8 text-primary" />
               NeuroSEO™ Suite
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Our flagship AI-powered SEO intelligence platform with six
-              specialized engines
-            </p>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Six specialized, interoperable engines orchestrated for precision prioritization and measurable impact.</p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

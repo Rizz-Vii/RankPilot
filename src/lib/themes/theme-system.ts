@@ -335,6 +335,19 @@ export class ThemeSystem {
         // Load preferences from localStorage on client side
         if (typeof window !== 'undefined') {
             this.loadPreferences();
+            // Immediate cookie write based on loaded preferences for next SSR pass
+            try {
+                const initialThemeClass = this.preferences.highContrast ? 'high-contrast' : this.currentTheme;
+                const cookiePayload = {
+                    theme: initialThemeClass,
+                    mode: this.preferences.mode,
+                    reducedMotion: this.preferences.reducedMotion,
+                    colorBlind: this.preferences.colorBlindnessSupport,
+                    highContrast: this.preferences.highContrast,
+                };
+                const value = encodeURIComponent(JSON.stringify(cookiePayload));
+                document.cookie = `rp_theme=${value}; Path=/; Max-Age=31536000; SameSite=Lax`;
+            } catch { }
             this.detectSystemPreferences();
             this.applyTheme();
         }
@@ -414,62 +427,94 @@ export class ThemeSystem {
         const root = document.documentElement;
         const theme = this.getThemeTokens();
 
-        // Apply theme colors as CSS custom properties
-        Object.entries(theme.colors).forEach(([key, value]) => {
-            root.style.setProperty(`--color-${key}`, value);
-        });
-
-        // Apply typography
-        Object.entries(theme.typography.fontSize).forEach(([key, value]) => {
-            root.style.setProperty(`--font-size-${key}`, value);
-        });
-
-        // Apply spacing
-        Object.entries(theme.spacing).forEach(([key, value]) => {
-            root.style.setProperty(`--spacing-${key}`, value);
-        });
-
-        // Apply shadows
-        Object.entries(theme.shadows).forEach(([key, value]) => {
-            root.style.setProperty(`--shadow-${key}`, value);
-        });
-
-        // Apply border radius
-        Object.entries(theme.borderRadius).forEach(([key, value]) => {
-            root.style.setProperty(`--radius-${key}`, value);
-        });
-
-        // Apply animation settings
-        if (this.preferences.reducedMotion) {
-            root.style.setProperty('--animation-duration-fast', '0ms');
-            root.style.setProperty('--animation-duration-medium', '0ms');
-            root.style.setProperty('--animation-duration-slow', '0ms');
-        } else {
-            Object.entries(theme.animation.duration).forEach(([key, value]) => {
-                root.style.setProperty(`--animation-duration-${key}`, value);
+        const run = () => {
+            // Apply theme colors as CSS custom properties
+            Object.entries(theme.colors).forEach(([key, value]) => {
+                root.style.setProperty(`--color-${key}`, value);
             });
-        }
 
-        // Apply font size scaling
-        const fontSizeScale = this.getFontSizeScale();
-        root.style.setProperty('--font-scale', fontSizeScale.toString());
+            // Apply typography
+            Object.entries(theme.typography.fontSize).forEach(([key, value]) => {
+                root.style.setProperty(`--font-size-${key}`, value);
+            });
 
-        // Apply theme class to body
-        const themeClass = this.preferences.highContrast ? 'high-contrast' : this.currentTheme;
-        document.body.className = document.body.className.replace(/theme-\w+/g, '');
-        document.body.classList.add(`theme-${themeClass}`);
+            // Apply spacing
+            Object.entries(theme.spacing).forEach(([key, value]) => {
+                root.style.setProperty(`--spacing-${key}`, value);
+            });
 
-        // Apply accessibility preferences
-        if (this.preferences.reducedMotion) {
-            document.body.classList.add('reduced-motion');
+            // Apply shadows
+            Object.entries(theme.shadows).forEach(([key, value]) => {
+                root.style.setProperty(`--shadow-${key}`, value);
+            });
+
+            // Apply border radius
+            Object.entries(theme.borderRadius).forEach(([key, value]) => {
+                root.style.setProperty(`--radius-${key}`, value);
+            });
+
+            // Apply animation settings
+            if (this.preferences.reducedMotion) {
+                root.style.setProperty('--animation-duration-fast', '0ms');
+                root.style.setProperty('--animation-duration-medium', '0ms');
+                root.style.setProperty('--animation-duration-slow', '0ms');
+            } else {
+                Object.entries(theme.animation.duration).forEach(([key, value]) => {
+                    root.style.setProperty(`--animation-duration-${key}`, value);
+                });
+            }
+
+            // Apply font size scaling
+            const fontSizeScale = this.getFontSizeScale();
+            root.style.setProperty('--font-scale', fontSizeScale.toString());
+
+            // Apply theme class to body without overwriting existing classes (prevents hydration mismatch)
+            const themeClass = this.preferences.highContrast ? 'high-contrast' : this.currentTheme;
+            // Remove any prior theme-* tokens
+            document.body.className = document.body.className
+                .split(' ')
+                .filter(c => !/^theme-/.test(c))
+                .join(' ')
+                .trim();
+            if (!document.body.classList.contains(`theme-${themeClass}`)) {
+                document.body.classList.add(`theme-${themeClass}`);
+            }
+
+            // Apply accessibility preferences
+            if (this.preferences.reducedMotion) {
+                document.body.classList.add('reduced-motion');
+            } else {
+                document.body.classList.remove('reduced-motion');
+            }
+
+            if (this.preferences.colorBlindnessSupport) {
+                document.body.classList.add('colorblind-support');
+            } else {
+                document.body.classList.remove('colorblind-support');
+            }
+
+            // Persist resolved theme + key prefs to cookie for SSR parity
+            try {
+                const cookiePayload = {
+                    theme: themeClass,
+                    mode: this.preferences.mode,
+                    reducedMotion: this.preferences.reducedMotion,
+                    colorBlind: this.preferences.colorBlindnessSupport,
+                    highContrast: this.preferences.highContrast,
+                };
+                const value = encodeURIComponent(JSON.stringify(cookiePayload));
+                // 1 year
+                document.cookie = `rp_theme=${value}; Path=/; Max-Age=31536000; SameSite=Lax`;
+            } catch {
+                // noop
+            }
+        };
+
+        // Defer to next frame to reduce hydration race conditions
+        if (typeof window !== 'undefined') {
+            requestAnimationFrame(run);
         } else {
-            document.body.classList.remove('reduced-motion');
-        }
-
-        if (this.preferences.colorBlindnessSupport) {
-            document.body.classList.add('colorblind-support');
-        } else {
-            document.body.classList.remove('colorblind-support');
+            run();
         }
     }
 
@@ -584,18 +629,21 @@ export const themeSystem = ThemeSystem.getInstance();
 
 // React hook for theme system
 export function useTheme() {
-    const [theme, setTheme] = React.useState<ThemeMode>(() => themeSystem.getTheme());
+    const [mounted, setMounted] = React.useState(false);
+    const [theme, setTheme] = React.useState<ThemeMode>('light');
     const [preferences, setPreferences] = React.useState<ThemePreferences>(() => themeSystem.getPreferences());
 
     React.useEffect(() => {
-        return themeSystem.subscribe((newTheme, newPreferences) => {
+        setMounted(true);
+        const unsub = themeSystem.subscribe((newTheme, newPreferences) => {
             setTheme(newTheme);
             setPreferences(newPreferences);
         });
+        return unsub;
     }, []);
 
     return {
-        theme,
+        theme: mounted ? theme : 'light',
         preferences,
         setTheme: themeSystem.setTheme.bind(themeSystem),
         setPreferences: themeSystem.setPreferences.bind(themeSystem),

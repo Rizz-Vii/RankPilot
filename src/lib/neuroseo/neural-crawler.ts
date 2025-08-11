@@ -4,6 +4,7 @@
  */
 
 import { chromium, Browser, Page } from "playwright";
+import * as urlMod from 'url';
 
 export interface CrawlResult {
   url: string;
@@ -24,6 +25,10 @@ export interface CrawlResult {
     images: Array<{ src: string; alt: string; title?: string }>;
     links: Array<{ href: string; text: string; isExternal: boolean }>;
     schema: any[];
+    wordCount: number;
+    titleLength: number;
+    metaDescriptionLength: number;
+    canonicalMismatch: boolean;
   };
   authorshipSignals: {
     hasAuthorBio: boolean;
@@ -39,6 +44,8 @@ export interface CrawlResult {
     readingLevel: number;
     contentDepth: "surface" | "moderate" | "comprehensive";
   };
+  robotsAllowed?: boolean;
+  fromCache?: boolean;
 }
 
 export interface CrawlOptions {
@@ -48,10 +55,18 @@ export interface CrawlOptions {
   userAgent?: string;
   extractSchema?: boolean;
   analyzeAuthorship?: boolean;
+  respectRobots?: boolean;
+  cacheTtlMs?: number;
 }
 
 export class NeuralCrawler {
   private browser: Browser | null = null;
+  private cache: Map<string, { timestamp: number; result: CrawlResult; ttl: number; }> = new Map();
+  private robotsCache: Map<string, { fetched: number; rules: RobotsRules; }> = new Map();
+  private static DEFAULT_CACHE_TTL = 10 * 60 * 1000; // 10 min
+  static ROBOTS_TTL = 60 * 60 * 1000; // 1 hour (public for helper access)
+  // Declaration for dynamically attached method (prototype augmentation below)
+  private isAllowedByRobots!: (url: string, ua: string) => Promise<boolean>;
 
   async initialize(): Promise<void> {
     if (!this.browser) {
@@ -64,6 +79,40 @@ export class NeuralCrawler {
 
   async crawl(url: string, options: CrawlOptions = {}): Promise<CrawlResult> {
     await this.initialize();
+
+    // Cache lookup
+    const ttl = options.cacheTtlMs ?? NeuralCrawler.DEFAULT_CACHE_TTL;
+    const cached = this.cache.get(url);
+    if (cached && (Date.now() - cached.timestamp) < cached.ttl) {
+      return { ...cached.result, fromCache: true };
+    }
+
+    // Robots.txt compliance
+    if (options.respectRobots !== false) {
+      try {
+        const allowed = await this.isAllowedByRobots(url, options.userAgent || 'RankPilot-NeuralCrawler/1.0');
+        if (!allowed) {
+          const placeholder: CrawlResult = {
+            url,
+            title: 'Robots Disallowed',
+            content: '',
+            metadata: {},
+            technicalData: {
+              loadTime: 0, pageSize: 0, headings: {}, images: [], links: [], schema: [],
+              wordCount: 0, titleLength: 0, metaDescriptionLength: 0, canonicalMismatch: false
+            },
+            authorshipSignals: this.getDefaultAuthorshipSignals(),
+            semanticClassification: { contentType: 'unknown', topicCategories: [], keyEntities: [], readingLevel: 0, contentDepth: 'surface' },
+            robotsAllowed: false,
+            fromCache: false
+          };
+          this.cache.set(url, { timestamp: Date.now(), result: placeholder, ttl });
+          return placeholder;
+        }
+      } catch (e) {
+        // Silent degradation
+      }
+    }
 
     const page = await this.browser!.newPage();
     const startTime = Date.now();
@@ -107,7 +156,7 @@ export class NeuralCrawler {
         title
       );
 
-      return {
+      const result: CrawlResult = {
         url,
         title,
         content,
@@ -115,7 +164,11 @@ export class NeuralCrawler {
         technicalData,
         authorshipSignals,
         semanticClassification,
+        robotsAllowed: true,
+        fromCache: false,
       };
+      this.cache.set(url, { timestamp: Date.now(), result, ttl });
+      return result;
     } finally {
       await page.close();
     }
@@ -207,6 +260,18 @@ export class NeuralCrawler {
       return schemaData;
     });
 
+    const wordCount = await page.evaluate(() => (document.body.innerText || '').split(/\s+/).filter(Boolean).length);
+    const titleLength = (await page.title())?.length || 0;
+    const metaDescriptionLength = (metadata => (metadata || '').length)(await page.evaluate(() => document.querySelector('meta[name="description"]')?.getAttribute('content') || ''));
+    const canonicalUrl = await page.evaluate(() => document.querySelector('link[rel="canonical"]')?.getAttribute('href') || '');
+    let canonicalMismatch = false;
+    try {
+      if (canonicalUrl) {
+        const parsedOriginal = new URL(page.url());
+        const parsedCanonical = new URL(canonicalUrl, page.url());
+        canonicalMismatch = parsedOriginal.hostname !== parsedCanonical.hostname;
+      }
+    } catch { /* ignore */ }
     return {
       loadTime,
       pageSize,
@@ -214,6 +279,10 @@ export class NeuralCrawler {
       images,
       links,
       schema,
+      wordCount,
+      titleLength,
+      metaDescriptionLength,
+      canonicalMismatch,
     };
   }
 
@@ -403,4 +472,82 @@ export class NeuralCrawler {
       this.browser = null;
     }
   }
+}
+
+// ---------------- Robots.txt Minimal Parser -----------------
+interface RobotsRules { disallow: string[]; allow: string[]; }
+
+function parseRobots(content: string, ua: string): RobotsRules {
+  const lines = content.split(/\r?\n/);
+  let active = false; const rules: RobotsRules = { disallow: [], allow: [] };
+  const uaLower = ua.toLowerCase();
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line || line.startsWith('#')) continue;
+    const [fieldRaw, valueRaw] = line.split(':', 2);
+    if (!valueRaw) continue;
+    const field = fieldRaw.toLowerCase();
+    const value = valueRaw.trim();
+    if (field === 'user-agent') {
+      const target = value.toLowerCase();
+      active = (target === '*' || uaLower.includes(target));
+    } else if (active && field === 'disallow') {
+      if (value) rules.disallow.push(value);
+    } else if (active && field === 'allow') {
+      if (value) rules.allow.push(value);
+    }
+  }
+  return rules;
+}
+
+function pathMatches(path: string, pattern: string): boolean {
+  if (pattern === '/') return true;
+  // Convert simple * wildcard
+  const regex = new RegExp('^' + pattern.split('*').map(p => p.replace(/[-/\\^$+?.()|[\]{}]/g, r => '\\' + r)).join('.*'));
+  return regex.test(path);
+}
+
+async function fetchRobots(domain: string): Promise<string | null> {
+  try {
+    const res = await fetch(domain + '/robots.txt', { method: 'GET' });
+    if (!res.ok) return null;
+    return await res.text();
+  } catch { return null; }
+}
+
+// Add method to class via prototype augmentation to keep file cohesive
+(NeuralCrawler as any).prototype.isAllowedByRobots = async function (url: string, ua: string): Promise<boolean> {
+  try {
+    const parsed = new URL(url);
+    const origin = parsed.origin;
+    const cached = this.robotsCache.get(origin);
+    if (cached && (Date.now() - cached.fetched) < NeuralCrawler.ROBOTS_TTL) {
+      return evaluateRules(cached.rules, parsed.pathname);
+    }
+    const txt = await fetchRobots(origin);
+    if (!txt) return true; // no robots => allow
+    const rules = parseRobots(txt, ua);
+    this.robotsCache.set(origin, { fetched: Date.now(), rules });
+    return evaluateRules(rules, parsed.pathname);
+  } catch { return true; }
+};
+
+function evaluateRules(rules: RobotsRules, path: string): boolean {
+  // Allow has precedence over disallow if more specific (length comparison)
+  let disallowedMatch: string | null = null;
+  for (const dis of rules.disallow) {
+    if (pathMatches(path, dis)) {
+      if (!disallowedMatch || dis.length > disallowedMatch.length) disallowedMatch = dis;
+    }
+  }
+  let allowedMatch: string | null = null;
+  for (const al of rules.allow) {
+    if (pathMatches(path, al)) {
+      if (!allowedMatch || al.length > allowedMatch.length) allowedMatch = al;
+    }
+  }
+  if (disallowedMatch && allowedMatch) {
+    return allowedMatch.length >= disallowedMatch.length; // more specific allow overrides
+  }
+  return !disallowedMatch;
 }

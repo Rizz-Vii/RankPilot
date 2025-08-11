@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { cookies } from "next/headers";
 import { ClientLayout } from "@/components/client-layout";
 import type { Metadata } from "next";
 
@@ -40,13 +41,47 @@ export function generateViewport() {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // SSR theme + language cookie extraction
+  let themeClass = '';
+  let bodyExtra = '';
+  let htmlLang = 'en';
+  let htmlDir: 'ltr' | 'rtl' = 'ltr';
+  try {
+    const cookieStore = await cookies();
+    const t = cookieStore?.get?.('rp_theme');
+    if (t?.value) {
+      const parsed = JSON.parse(decodeURIComponent(t.value));
+      if (parsed?.theme) themeClass = `theme-${parsed.theme}`;
+      if (parsed?.reducedMotion) bodyExtra += ' reduced-motion';
+      if (parsed?.colorBlind) bodyExtra += ' colorblind-support';
+      if (parsed?.highContrast && !themeClass.includes('high-contrast')) {
+        themeClass = 'theme-high-contrast';
+      }
+    }
+    const l = cookieStore?.get?.('rp_lang');
+    if (l?.value) {
+      const lang = decodeURIComponent(l.value);
+      if (/^[a-z]{2}$/i.test(lang)) {
+        htmlLang = lang.toLowerCase();
+        if (['ar','he'].includes(htmlLang)) htmlDir = 'rtl';
+      }
+    }
+  } catch {}
+  if (!themeClass) themeClass = 'theme-light';
+
+  // Build deterministic body class ordering once (base -> flags -> lang -> theme)
+  const flags: string[] = [];
+  if (bodyExtra.includes('reduced-motion')) flags.push('reduced-motion');
+  if (bodyExtra.includes('colorblind-support')) flags.push('colorblind-support');
+  const bodyClass = ['font-body','antialiased','h-full',...flags,`lang-${htmlLang}`,themeClass || 'theme-light'].join(' ');
+
   return (
-    <html lang="en" suppressHydrationWarning className="h-full">
+    <html lang={htmlLang} dir={htmlDir} suppressHydrationWarning className="h-full">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -59,9 +94,19 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-body antialiased h-full">
+  {/* Deterministic ordering: base -> flags -> lang -> theme */}
+      <body className={bodyClass}>
+        <script
+          // Inline no-flash script: reconstructs class list deterministically (same ordering) before React hydrates
+          dangerouslySetInnerHTML={{
+            __html: `(()=>{try{var DEV=location.hostname==='localhost';function log(){if(DEV){try{console.debug.apply(console,arguments);}catch{}}}var b=document.body,de=document.documentElement;function rebuild(data){if(!b||!de)return;var lang=de.lang||'en';var desired=(data&&(data.highContrast?'high-contrast':data.theme))||'light';var flags=[];if(data&&data.reducedMotion)flags.push('reduced-motion');if(data&&data.colorBlind)flags.push('colorblind-support');var cls=['font-body','antialiased','h-full'].concat(flags,'lang-'+lang,'theme-'+desired);var next=cls.join(' ');if(b.className!==next){b.className=next;log('body class sync:',next);} }function read(){var data=null;/* cookie */var cm=document.cookie.match(/(?:^|; )rp_theme=([^;]+)/);if(cm){try{data=JSON.parse(decodeURIComponent(cm[1]));}catch(e){log('cookie parse fail',e);} }if(!data){try{var ls=localStorage.getItem('rankpilot-theme-preferences');if(ls){var p=JSON.parse(ls);var autoMode=p.mode==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p.mode;data={theme:p.highContrast?'high-contrast':autoMode,reducedMotion:p.reducedMotion,colorBlind:p.colorBlindnessSupport,highContrast:p.highContrast};}}catch(e){log('ls parse fail',e);} }/* language cookie */var lcMatch=document.cookie.match(/(?:^|; )rp_lang=([^;]+)/);if(lcMatch){var lc=decodeURIComponent(lcMatch[1]).toLowerCase();if(/^[a-z]{2}$/.test(lc)){if(!de.lang||de.lang!==lc)de.lang=lc;var rtl=['ar','he'];de.dir=rtl.includes(lc)?'rtl':'ltr';}}return data;}function apply(){var d=read();rebuild(d);}apply();}catch(e){}})();`
+          }}
+        />
         <AuthProvider>
-          <ClientLayout>{children}</ClientLayout>
+          <ClientLayout>
+            {children}
+            {/* DevListenerBadge temporarily disabled in server layout (dynamic ssr:false not allowed). Reintroduce inside a client component if needed. */}
+          </ClientLayout>
         </AuthProvider>
       </body>
     </html>

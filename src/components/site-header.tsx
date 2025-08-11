@@ -9,7 +9,7 @@ import { EnhancedButton } from "@/components/ui/enhanced-button";
 import { useAuth } from "@/context/AuthContext";
 import { useHydration } from "@/components/HydrationContext";
 import { useIsMobile } from "@/lib/mobile-responsive-utils";
-import { Menu, X, User, LogOut, Sun, Moon } from "lucide-react";
+import { Menu, X, User, LogOut, Sun, Moon, Search as SearchIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { signOut } from "firebase/auth";
@@ -113,14 +113,14 @@ export default function SiteHeader() {
           </nav>
 
           {/* Desktop Utility + Auth Cluster */}
-          <div className="hidden md:flex items-center space-x-4">
-            {/* Global Search */}
-            <div className="hidden lg:block w-[210px] xl:w-[260px]">
+          <div className="hidden md:flex items-center space-x-4 flex-nowrap">
+            {/* Global Search now only appears at xl+ to guarantee horizontal space */}
+            <div className="hidden xl:block flex-1 min-w-[200px] max-w-[420px]">
               <GlobalSearch />
             </div>
-            {/* Collapse utilities into command palette for md-only screens */}
-            <div className="flex items-center gap-2">
-              <div className="hidden lg:flex items-center gap-2">
+            {/* Utility cluster: theme + language (language only from xl to prevent collision) */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="hidden xl:flex items-center gap-2">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <EnhancedButton
@@ -143,7 +143,7 @@ export default function SiteHeader() {
                   <TooltipContent>Language</TooltipContent>
                 </Tooltip>
               </div>
-              {/* md screens show condensed command palette */}
+              {/* md screens show condensed command palette (still visible when search hidden) */}
               <div className="lg:hidden">
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -156,13 +156,37 @@ export default function SiteHeader() {
                   </TooltipContent>
                 </Tooltip>
               </div>
+              {/* lg-only (>=lg <xl) minimal search/command access */}
+              <div className="hidden lg:flex xl:hidden">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <CommandPaletteButton />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>Search & Commands</TooltipContent>
+                </Tooltip>
+              </div>
+              {/* Provide theme toggle in a compact form for lg-only (between lg and xl) via icon button to avoid overlap */}
+              <div className="hidden lg:flex xl:hidden">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <EnhancedButton
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Toggle theme"
+                      onClick={toggleTheme}
+                    >
+                      {theme === 'high-contrast' ? <Sun className="h-5 w-5" /> : isDark() ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                    </EnhancedButton>
+                  </TooltipTrigger>
+                  <TooltipContent>Cycle Theme</TooltipContent>
+                </Tooltip>
+              </div>
             </div>
             {!hydrated ? (
-              // Loading skeleton
-              <div className="flex items-center space-x-2">
-                <div className="h-9 w-16 bg-muted animate-pulse rounded-md" />
-                <div className="h-9 w-20 bg-muted animate-pulse rounded-md" />
-              </div>
+              // Collapsed: render nothing pre-hydration (no spacer)
+              null
             ) : user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -206,14 +230,10 @@ export default function SiteHeader() {
                 >
                   Live Demo
                 </Link>
-                <div className="flex items-center gap-2">
-                  <EnhancedButton variant="ghost" asChild>
-                    <Link href="/login">Login</Link>
-                  </EnhancedButton>
-                  <EnhancedButton asChild>
-                    <Link href="/register">Start Free Trial</Link>
-                  </EnhancedButton>
-                </div>
+                {/* Streamlined CTA: remove muted login button per request; keep single primary trial entry */}
+                <EnhancedButton asChild>
+                  <Link href="/register">Start Free Trial</Link>
+                </EnhancedButton>
               </div>
             )}
           </div>

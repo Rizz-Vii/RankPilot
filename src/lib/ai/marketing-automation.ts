@@ -59,7 +59,8 @@ export async function schedulePost(input: ScheduledPostInput) {
     const impressions = r(500, 5000); const clicks = r(30, Math.max(40, Math.round(impressions * 0.2))); const leads = r(2, Math.max(3, Math.round(clicks * 0.15)));
     await addDoc(collection(db, 'socialPosts'), { userId, teamId, content, channel, scheduledAt: Timestamp.fromDate(scheduledAt), metrics: { impressions, clicks, leads }, createdAt: Timestamp.now() });
     // Also feed marketingCampaigns for unified metrics
-    await addDoc(collection(db, 'marketingCampaigns'), { userId, teamId, name: content.slice(0, 40) || 'Post', channel, impressions, clicks, leads, spend: 0, revenue: leads * 50, period: periodFromDate(scheduledAt) });
+    // Store only raw counters; omit derived ratios & avoid heuristic revenue to prevent data pollution
+    await addDoc(collection(db, 'marketingCampaigns'), { userId, teamId, name: content.slice(0, 40) || 'Post', channel, impressions, clicks, leads, spend: 0, revenue: 0, period: periodFromDate(scheduledAt), __provenance: 'synthetic' });
     return { impressions, clicks, leads };
 }
 
@@ -85,7 +86,7 @@ export async function generateContentAsset(type: string, topic: string, userId: 
     const paragraphs = r(2, 5);
     const body = Array.from({ length: paragraphs }).map((_, i) => `${type.toUpperCase()} ${i + 1}. ${topic} insight ${hash(topic + i).toString(36)} generated for conversion.`).join('\n\n');
     const docRef = await addDoc(collection(db, 'contentAssets'), { userId, teamId, type, topic, body, createdAt: Timestamp.now() });
-    await addDoc(collection(db, 'marketingCampaigns'), { userId, teamId, name: `${type}:${topic.slice(0, 40)}`, channel: 'content', impressions: 0, clicks: 0, leads: 0, spend: 0, revenue: 0, period: periodFromDate() });
+    await addDoc(collection(db, 'marketingCampaigns'), { userId, teamId, name: `${type}:${topic.slice(0, 40)}`, channel: 'content', impressions: 0, clicks: 0, leads: 0, spend: 0, revenue: 0, period: periodFromDate(), __provenance: 'synthetic' });
     return { id: docRef.id, body };
 }
 
@@ -102,7 +103,7 @@ export async function createEmailCampaign(input: EmailCampaignInput) {
     const sendAt = input.sendAt || new Date(); const seed = hash(input.subject + sendAt.toISOString()); const r = randFrom(seed);
     const impressions = input.audience; const clicks = r(Math.round(impressions * 0.05), Math.round(impressions * 0.25)); const leads = r(Math.round(clicks * 0.05), Math.round(clicks * 0.25));
     await addDoc(collection(db, 'emailCampaigns'), { ...input, sendAt: Timestamp.fromDate(sendAt), metrics: { impressions, clicks, leads }, createdAt: Timestamp.now() });
-    await addDoc(collection(db, 'marketingCampaigns'), { userId: input.userId, teamId: input.teamId, name: input.subject.slice(0, 60), channel: 'email', impressions, clicks, leads, spend: 0, revenue: leads * 120, period: periodFromDate(sendAt) });
+    await addDoc(collection(db, 'marketingCampaigns'), { userId: input.userId, teamId: input.teamId, name: input.subject.slice(0, 60), channel: 'email', impressions, clicks, leads, spend: 0, revenue: 0, period: periodFromDate(sendAt), __provenance: 'synthetic' });
     return { impressions, clicks, leads };
 }
 

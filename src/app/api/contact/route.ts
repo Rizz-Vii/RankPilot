@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getLogger } from '@/lib/logging/app-logger';
 import nodemailer from "nodemailer";
 import { z } from "zod";
 import { adminDb } from "@/lib/firebase-admin";
@@ -30,7 +31,7 @@ function getTransport() {
     // Development fallback: log emails to console
     return {
         sendMail: async (opts: any) => {
-            console.log("[contact email fallback] would send:", JSON.stringify(opts, null, 2));
+            getLogger('contact').warn('email.send.fallback', { to: opts.to, subject: opts.subject });
             return { messageId: `dev-fallback-${Date.now()}` };
         },
     } as unknown as nodemailer.Transporter;
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, id: info.messageId, docId: docRef.id });
     } catch (err: any) {
-        console.error("/api/contact error:", err);
+        getLogger('contact').error('contact.error', { error: err?.message });
         try {
             // Best-effort: mark latest doc as failed if available from context (not tracked here)
             // No-op: Without docRef, we can't update; in a more advanced setup, we'd correlate by timestamp

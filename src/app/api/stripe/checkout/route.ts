@@ -1,8 +1,10 @@
 import { functions } from '@/lib/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { NextRequest, NextResponse } from 'next/server';
+import Stripe from 'stripe';
 
 const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-07-30.basil' });
 
 export async function POST(request: NextRequest) {
     try {
@@ -64,13 +66,17 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Missing session ID' }, { status: 400 });
         }
 
-        // TODO: Retrieve session details from Stripe
-        // const session = await stripe.checkout.sessions.retrieve(sessionId);
+        // Retrieve session details from Stripe
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
 
         return NextResponse.json({
             sessionId,
-            status: 'success',
-            message: 'Checkout completed successfully',
+            status: session.payment_status,
+            amountTotal: session.amount_total,
+            currency: session.currency,
+            customerEmail: session.customer_email,
+            paymentIntent: session.payment_intent,
+            subscription: session.subscription,
         });
 
     } catch (error: any) {

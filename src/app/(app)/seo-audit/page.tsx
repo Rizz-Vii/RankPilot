@@ -56,6 +56,7 @@ import {
   AlertTriangle,
   ListChecks
 } from "lucide-react";
+import { useProvenance } from "@/hooks/useProvenance";
 
 // Enhanced SEO Audit with NeuroSEO™ Integration
 
@@ -400,11 +401,11 @@ export default function SeoAuditPage() {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<AuditUrlOutput | null>(null);
-  const [provenance, setProvenance] = useState<'live'|'cache'|'fallback'|null>(null);
   const [quota, setQuota] = useState<{limit:number;used:number;remaining:number}|null>(null);
   const [timing, setTiming] = useState<number| null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const { provenance, setProvenance, ProvenanceLegend } = useProvenance();
 
   const resultsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -488,14 +489,7 @@ export default function SeoAuditPage() {
         showBreadcrumb
       >
         {provenance && (
-          <div className="text-xs text-muted-foreground border rounded-md px-2 py-1 bg-muted/30 max-w-[240px]">
-            <p className="font-semibold mb-1">Provenance Legend</p>
-            <ul className="space-y-0.5">
-              <li><span className="font-medium">Live Data:</span> Fresh AI analysis.</li>
-              <li><span className="font-medium">Cache:</span> Recent cached result (faster, same accuracy).</li>
-              <li><span className="font-medium">Demo Data:</span> Fallback when live processing fails or times out.</li>
-            </ul>
-          </div>
+          <ProvenanceLegend />
         )}
       </ToolPageHeader>
       <div

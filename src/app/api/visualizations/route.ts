@@ -26,10 +26,10 @@ export async function POST(request: NextRequest) {
             decodedToken = await adminAuth.verifyIdToken(token);
         } catch (error) {
             console.warn('[Visualizations API] Firebase admin initialization error:', error);
-            return NextResponse.json({ 
-                error: 'Authentication service unavailable', 
+            return NextResponse.json({
+                error: 'Authentication service unavailable',
                 mock: true,
-                data: [] 
+                data: []
             }, { status: 503 });
         }
         const userId = decodedToken.uid;

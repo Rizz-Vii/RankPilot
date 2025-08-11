@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
+import { useProvenance } from "@/hooks/useProvenance";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, Bot, Search, TrendingUp, AlertCircle, CheckCircle2, ExternalLink, Copy, Download, Zap } from "lucide-react";
+import { DashboardSurface } from '@/components/layout/DashboardSurface';
+import { SuiteAccentProvider } from '@/context/SuiteAccentContext';
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
@@ -48,6 +51,7 @@ interface AnalysisResult {
 export default function AIVisibilityEnginePage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { provenance, setProvenance } = useProvenance();
   
   const [url, setUrl] = useState("");
   const [query, setQuery] = useState("");
@@ -68,7 +72,7 @@ export default function AIVisibilityEnginePage() {
     }
 
     setLoading(true);
-    try {
+  try {
       const response = await fetch("/api/neuroseo/ai-visibility", {
         method: "POST",
         headers: {
@@ -87,8 +91,9 @@ export default function AIVisibilityEnginePage() {
         throw new Error("Analysis failed");
       }
 
-      const data = await response.json();
-      setResults(data);
+  const data = await response.json();
+  setResults(data);
+  setProvenance(data?.cacheHit ? 'cache' : 'live');
       
       toast({
         title: "Analysis Complete",
@@ -102,6 +107,8 @@ export default function AIVisibilityEnginePage() {
         description: "Unable to complete AI visibility analysis. Please try again.",
         variant: "destructive"
       });
+      // Mark fallback only if we had no previous results
+      if (!results) setProvenance('fallback');
     } finally {
       setLoading(false);
     }
@@ -136,7 +143,6 @@ export default function AIVisibilityEnginePage() {
     URL.revokeObjectURL(url_export);
   };
 
-  const provenance: any = null; // placeholder until backend adds source
   return (
     <main className="container mx-auto py-6 px-3 sm:px-6 space-y-6">
       <ToolPageHeader
@@ -145,7 +151,8 @@ export default function AIVisibilityEnginePage() {
         badges={composeToolHeaderBadges("ai-visibility", provenance)}
         showBreadcrumb
       />
-
+  <SuiteAccentProvider value="seo">
+  <DashboardSurface as="section" className="space-y-8 p-6">
       {/* Analysis Form */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
@@ -250,7 +257,7 @@ export default function AIVisibilityEnginePage() {
           </div>
         </motion.div>
       )}
-      {results && (
+  {results && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -467,6 +474,8 @@ export default function AIVisibilityEnginePage() {
           Enter a URL & query above to run AI visibility analysis.
         </motion.div>
       )}
+  </DashboardSurface>
+  </SuiteAccentProvider>
   </main>
   );
 }

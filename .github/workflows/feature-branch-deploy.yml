@@ -109,6 +109,22 @@ jobs:
         env:
           NODE_OPTIONS: "--max-old-space-size=3072"
 
+      - name: 🔐 Firestore Security Negative Tests
+        if: startsWith(github.ref, 'refs/heads/feature/') && github.event.inputs.skip_tests != 'true'
+        run: |
+          echo "## 🔐 Running Firestore Negative Security Tests" >> $GITHUB_STEP_SUMMARY
+          export FIRESTORE_EMULATOR_HOST=localhost:8080
+          # Start emulator in background
+          npx firebase emulators:start --only firestore --project demo-rankpilot &
+          EMU_PID=$!
+          # Wait for emulator port
+          for i in {1..20}; do nc -z localhost 8080 && break || sleep 1; done
+          npm run test:security-negative || { echo "⚠️ Security negative tests failed" >> $GITHUB_STEP_SUMMARY; }
+          kill $EMU_PID || true
+          echo "✅ Security negative tests completed" >> $GITHUB_STEP_SUMMARY
+        env:
+          NODE_OPTIONS: "--max-old-space-size=512"
+
       - name: 🏗️ Build Application
         run: |
           echo "## 🏗️ Building Application" >> $GITHUB_STEP_SUMMARY

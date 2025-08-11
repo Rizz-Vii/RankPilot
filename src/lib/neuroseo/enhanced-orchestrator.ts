@@ -1,14 +1,10 @@
 /**
  * Enhanced NeuroSEO™ Orchestrator - Production-Optimized AI Processing
  * 60% cost reduction through intelligent caching and request deduplication
+ * LOG-01 Phase 1: Integrated unified structured app logger.
  */
-
-// Simple logger for production
-const logger = {
-    info: (message: string, data?: any) => console.log(`[NeuroSEO] ${message}`, data),
-    warn: (message: string, data?: any) => console.warn(`[NeuroSEO] ${message}`, data),
-    error: (message: string, data?: any) => console.error(`[NeuroSEO] ${message}`, data),
-};
+import { getLogger } from '@/lib/logging/app-logger';
+const logger = getLogger('neuroseo-orchestrator').withTrace();
 
 interface NeuroSEOAnalysisRequest {
     urls: string[];
@@ -54,6 +50,13 @@ interface NeuroSEOReport {
         implementation: string;
     }>;
     cached: boolean;
+    trustMeta: {
+        modelTag: string;              // Identifier for internal model / engine set
+        generatedAt: number;           // Epoch ms when assembled
+        dataIntegrity: 'simulated';    // Phase 0: all numeric signals are simulated/deterministic
+        deterministic: boolean;        // Indicates seeded deterministic generation
+        seedBasis: string;             // Truncated hash seed basis for audit/debug
+    };
 }
 
 interface CacheEntry {
@@ -67,7 +70,7 @@ export class EnhancedNeuroSEOOrchestrator {
     private static instance: EnhancedNeuroSEOOrchestrator;
     private processingQueue: Map<string, Promise<NeuroSEOReport>> = new Map();
     private cache: Map<string, CacheEntry> = new Map();
-    private readonly CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+    private readonly CACHE_DURATION = (() => { const env = process.env.NEUROSEO_CACHE_TTL_MS; const parsed = env ? parseInt(env, 10) : NaN; return Number.isFinite(parsed) && parsed > 0 ? parsed : 30 * 60 * 1000; })();
     private readonly MAX_CACHE_SIZE = 100; // LRU cache size
     private readonly MAX_CONCURRENT_REQUESTS = 3;
     private activeRequests = 0;
@@ -88,7 +91,7 @@ export class EnhancedNeuroSEOOrchestrator {
         const startTime = performance.now();
         const cacheKey = this.generateCacheKey(request);
 
-        logger.info('NeuroSEO™ Analysis Request', {
+        logger.info('NeuroSEO Analysis Request', {
             urls: request.urls.length,
             type: request.analysisType,
             userId: request.userId,
@@ -134,7 +137,7 @@ export class EnhancedNeuroSEOOrchestrator {
             this.setCache(cacheKey, result);
 
             const duration = performance.now() - startTime;
-            logger.info('NeuroSEO™ Analysis Complete', {
+            logger.info('NeuroSEO Analysis Complete', {
                 duration: Math.round(duration),
                 cacheKey: cacheKey.substring(0, 16) + '...',
                 overallScore: result.overallScore,
@@ -143,7 +146,7 @@ export class EnhancedNeuroSEOOrchestrator {
 
             return { ...result, cached: false };
         } catch (error) {
-            logger.error('NeuroSEO™ Analysis Failed', {
+            logger.error('NeuroSEO Analysis Failed', {
                 error: error instanceof Error ? error.message : 'Unknown error',
                 cacheKey: cacheKey.substring(0, 16) + '...',
                 duration: Math.round(performance.now() - startTime)
@@ -151,6 +154,53 @@ export class EnhancedNeuroSEOOrchestrator {
             throw error;
         } finally {
             this.processingQueue.delete(cacheKey);
+            this.activeRequests--;
+        }
+    }
+
+    // NEU-01: Streaming analysis with incremental progress events
+    async *runAnalysisStream(request: NeuroSEOAnalysisRequest): AsyncGenerator<any, NeuroSEOReport, void> {
+        const startTime = performance.now();
+        const cacheKey = this.generateCacheKey(request);
+        logger.info('NeuroSEO Stream Request', { urls: request.urls.length, type: request.analysisType });
+
+        // Cache short-circuit: emit cached immediately then complete
+        const cached = this.getFromCache(cacheKey);
+        if (cached) {
+            yield { type: 'cached', data: { overallScore: cached.overallScore, provenance: 'cache' } };
+            return { ...cached, cached: true };
+        }
+
+        // Concurrency gate
+        if (this.activeRequests >= this.MAX_CONCURRENT_REQUESTS) {
+            yield { type: 'queued', data: { position: this.activeRequests } };
+            await this.waitForSlot();
+        }
+
+        const analysisId = this.generateAnalysisId();
+        const urlChunks = this.chunkArray(request.urls, 3);
+        const analysisResults: any[] = [];
+        this.activeRequests++;
+        try {
+            yield { type: 'start', data: { analysisId, chunks: urlChunks.length } };
+            for (let i = 0; i < urlChunks.length; i++) {
+                const chunk = urlChunks[i];
+                yield { type: 'chunk.start', data: { index: i, size: chunk.length } };
+                const chunkResults = await this.processUrlChunk(chunk, request);
+                analysisResults.push(...chunkResults);
+                yield { type: 'chunk.complete', data: { index: i, processed: chunkResults.length } };
+                yield { type: 'progress', data: { completed: i + 1, total: urlChunks.length } };
+            }
+            const report = this.generateComprehensiveReport(analysisResults, request, analysisId);
+            this.setCache(cacheKey, report);
+            const duration = Math.round(performance.now() - startTime);
+            yield { type: 'complete', data: { overallScore: report.overallScore, duration, provenance: 'live' } };
+            return { ...report, cached: false };
+        } catch (error: any) {
+            logger.error('NeuroSEO Stream Failed', { error: error?.message });
+            yield { type: 'error', data: { message: error?.message || 'unknown' } };
+            throw error;
+        } finally {
             this.activeRequests--;
         }
     }
@@ -184,17 +234,23 @@ export class EnhancedNeuroSEOOrchestrator {
     private async processUrlChunk(urls: string[], request: NeuroSEOAnalysisRequest) {
         // Simulate AI analysis processing with realistic delays
         const promises = urls.map(async (url) => {
-            const mockDelay = 500 + Math.random() * 1000; // 500-1500ms realistic API delay
+            // Replace non-deterministic delay & values with seeded pseudo-random (still simulate latency)
+            const seed = this.hashSeed(`${url}|${request.analysisType}`);
+            const rng = this.seededRng(seed);
+            const mockDelay = 400 + Math.floor(rng() * 600); // 400-999ms
             await new Promise(resolve => setTimeout(resolve, mockDelay));
-
+            const val = (base: number, spread: number, min: number, max: number) => {
+                const n = base + rng() * spread;
+                return Math.max(min, Math.min(max, Math.round(n)));
+            };
             return {
                 url,
-                seoScore: 75 + Math.random() * 20, // 75-95 range
-                performance: 70 + Math.random() * 25, // 70-95 range
-                accessibility: 80 + Math.random() * 15, // 80-95 range
-                bestPractices: 85 + Math.random() * 10, // 85-95 range
-                keywords: this.generateMockKeywords(),
-                backlinks: this.generateMockBacklinks()
+                seoScore: val(82, 14, 60, 100),
+                performance: val(78, 18, 55, 100),
+                accessibility: val(84, 12, 60, 100),
+                bestPractices: val(88, 10, 65, 100),
+                keywords: this.generateMockKeywords(url, request.analysisType),
+                backlinks: this.generateMockBacklinks(url, request.analysisType)
             };
         });
 
@@ -237,23 +293,68 @@ export class EnhancedNeuroSEOOrchestrator {
                 }
             },
             recommendations: this.generateRecommendations(overallScore),
-            cached: false
+            cached: false,
+            trustMeta: {
+                modelTag: 'enhanced-orchestrator:phase0',
+                generatedAt: Date.now(),
+                dataIntegrity: 'simulated',
+                deterministic: true,
+                seedBasis: this.hashSeed(JSON.stringify({ u: request.urls.slice().sort(), t: request.analysisType })).toString(16).slice(0, 8)
+            }
         };
     }
 
-    private generateMockKeywords() {
-        const keywords = ['SEO optimization', 'web development', 'digital marketing', 'content strategy', 'user experience'];
-        return keywords.slice(0, 3 + Math.floor(Math.random() * 3)).map(keyword => ({
-            keyword,
-            position: 1 + Math.floor(Math.random() * 50),
-            volume: 1000 + Math.floor(Math.random() * 9000),
-            difficulty: 30 + Math.floor(Math.random() * 40)
-        }));
+    // ---------------- Deterministic Mock Generators (Phase 0) ----------------
+    private generateMockKeywords(url?: string, analysisType?: string) {
+        const baseKeywords = [
+            'seo optimization', 'technical seo', 'content strategy', 'user experience', 'page speed', 'semantic search',
+            'backlink profile', 'search visibility', 'crawl budget', 'structured data'
+        ];
+        const rng = this.seededRng(this.hashSeed(`${url || ''}|${analysisType || ''}`));
+        // Pick 3-5 keywords deterministically
+        const count = 3 + Math.floor(rng() * 3); // 3..5
+        const chosen: any[] = [];
+        const usedIdx = new Set<number>();
+        while (chosen.length < count && usedIdx.size < baseKeywords.length) {
+            const idx = Math.floor(rng() * baseKeywords.length);
+            if (usedIdx.has(idx)) continue;
+            usedIdx.add(idx);
+            const kw = baseKeywords[idx];
+            chosen.push({
+                keyword: kw,
+                position: 1 + Math.floor(rng() * 50),
+                volume: 1000 + Math.floor(rng() * 9000),
+                difficulty: 30 + Math.floor(rng() * 40)
+            });
+        }
+        return chosen;
     }
 
-    private generateMockBacklinks() {
-        const total = 50 + Math.floor(Math.random() * 200);
+    private generateMockBacklinks(url?: string, analysisType?: string) {
+        const rng = this.seededRng(this.hashSeed(`backlinks:${url || ''}:${analysisType || ''}`));
+        const total = 50 + Math.floor(rng() * 200); // 50..249 deterministic
         return { total };
+    }
+
+    // Simple 32-bit FNV-1a hash
+    private hashSeed(str: string): number {
+        let h = 0x811c9dc5;
+        for (let i = 0; i < str.length; i++) {
+            h ^= str.charCodeAt(i);
+            h = Math.imul(h, 0x01000193);
+        }
+        return h >>> 0; // unsigned
+    }
+
+    // Mulberry32 PRNG
+    private seededRng(seed: number) {
+        let s = seed >>> 0;
+        return () => {
+            s = (s + 0x6D2B79F5) >>> 0;
+            let t = Math.imul(s ^ (s >>> 15), 1 | s);
+            t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
     }
 
     private generateRecommendations(score: number): Array<{

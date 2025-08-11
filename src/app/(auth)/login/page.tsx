@@ -141,7 +141,8 @@ export default function LoginPage() {
   return (
     <div className="inset-0 flex items-center justify-center bg-background">
       <div className="w-full max-w-md p-8 space-y-6 rounded-1xl shadow-xl border bg-card text-card-foreground">
-        <h2 className="text-2xl font-bold text-center mb-2">Login</h2>
+  <h2 className="text-2xl font-bold text-center mb-2">Welcome Back</h2>
+  <p className="text-sm text-muted-foreground text-center -mt-2 mb-4">Access your unified NeuroSEO™ workspace.</p>
         <form onSubmit={handleLogin} className="space-y-4" noValidate>
           <div>
             <label
@@ -204,10 +205,7 @@ export default function LoginPage() {
           >
             Login
           </button>
-          <p className="text-center text-xs text-muted-foreground mt-2">
-            For your convenience, your session will remain active until you
-            choose to log out.
-          </p>
+          <p className="text-center text-xs text-muted-foreground mt-2">Secure session persists until you sign out. MFA & SSO available on higher tiers.</p>
         </form>
 
         <div className="relative my-4">
@@ -230,12 +228,7 @@ export default function LoginPage() {
           Sign in with Google
         </button>
 
-        <p className="text-center text-sm text-muted-foreground">
-          Don't have an account?{" "}
-          <Link href="/register" className="text-primary hover:underline">
-            Register
-          </Link>
-        </p>
+  <p className="text-center text-sm text-muted-foreground">New here? <Link href="/register" className="text-primary hover:underline">Create an account</Link></p>
       </div>
     </div>
   );

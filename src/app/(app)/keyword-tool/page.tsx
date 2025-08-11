@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils";
 import { fetchKeywordSuggestions, KeywordSuggestionsResponse } from "@/lib/services/ai-service";
 import { Badge } from "@/components/ui/badge";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
+import { useProvenance } from "@/hooks/useProvenance";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 import { Copy, Search, TrendingUp } from "lucide-react";
@@ -244,12 +245,15 @@ export default function KeywordToolPage() {
     }
   }, [results]);
 
+  const { provenance, setProvenance } = useProvenance();
+
   const handleSubmit = async (values: { topic: string; includeLongTailKeywords: boolean; }) => {
     setIsLoading(true);
     setSubmitted(true);
     setResults(null);
   setErrorMessage(null);
   setUsedFallback(false);
+    setProvenance(null);
 
     // Start performance monitoring
     startOperation();
@@ -267,7 +271,7 @@ export default function KeywordToolPage() {
         "Keyword analysis is taking longer than expected. Using demo data instead."
       );
 
-      // Adapter compatibility (older demo shape uses keywords[])
+  // Adapter compatibility (older demo shape uses keywords[])
       const adapted: KeywordSuggestionsResponse = {
         suggestions: (result as any)?.suggestions || (result as any)?.keywords || [],
         relatedQueries: (result as any)?.relatedQueries || [],
@@ -279,6 +283,7 @@ export default function KeywordToolPage() {
       };
   setResults(adapted);
   setUsedFallback(adapted.source === 'fallback');
+  setProvenance(adapted.source as any);
 
       // End performance monitoring with success
       endOperation(false);
@@ -322,6 +327,7 @@ export default function KeywordToolPage() {
           };
           setResults(adapted);
           setUsedFallback(true);
+          setProvenance('fallback');
           if (!isTimeout) {
             // Provide subtle notice that data is fallback
             setErrorMessage("Live service unavailable. Showing demo data – retry for fresh results.");
@@ -345,7 +351,7 @@ export default function KeywordToolPage() {
           });
         } catch {}
       } else {
-        console.error("Error fetching keyword suggestions:", error);
+  console.error("Error fetching keyword suggestions:", error);
         setErrorMessage(message || "Unexpected error fetching keywords");
         try {
           await addDoc(collection(db, "telemetry", "keywordTool", "errors"), {
@@ -362,11 +368,11 @@ export default function KeywordToolPage() {
   };
 
   return (
-    <main className="container mx-auto py-6">
+  <main className="container mx-auto py-6">
       <ToolPageHeader
         title="Keyword Research Tool"
         description="Discover high-performing keywords to boost your SEO strategy and content performance."
-        badges={composeToolHeaderBadges("keyword-tool", results?.source)}
+    badges={composeToolHeaderBadges("keyword-tool", provenance)}
       />
 
       <section

@@ -111,11 +111,17 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     private templates: Map<string, WorkflowTemplate> = new Map();
     private activeRuns: Map<string, any> = new Map();
     private rateLimits: Map<string, { count: number; resetTime: number; }> = new Map();
+    private lastTemplateSync = 0;
+    private static TEMPLATE_SYNC_TTL = 10 * 60 * 1000; // 10 minutes
 
     constructor() {
         super();
         this.initializeTemplates();
         this.setupRateLimiting();
+        void this.syncTemplatesFromFirestore();
+        void this.persistLocalTemplates();
+        // Lazy load persisted workflows (silent degrade)
+        void this.loadPersistedWorkflows();
     }
 
     /**
@@ -260,6 +266,72 @@ export class ZapierWorkflowBuilder extends EventEmitter {
         });
     }
 
+    /** Persist predefined templates to Firestore if missing */
+    private async persistLocalTemplates(): Promise<void> {
+        try {
+            const { db } = await import('../firebase');
+            const { doc, setDoc, getDoc, collection } = await import('firebase/firestore');
+            const colRef = collection(db, 'workflowTemplates');
+            for (const tpl of this.templates.values()) {
+                const docRef = doc(colRef, tpl.id);
+                const existing = await getDoc(docRef);
+                if (!existing.exists()) {
+                    await setDoc(docRef, {
+                        id: tpl.id,
+                        name: tpl.name,
+                        category: tpl.category,
+                        description: tpl.description,
+                        triggers: tpl.triggers,
+                        actions: tpl.actions,
+                        conditions: tpl.conditions,
+                        requiredApps: tpl.requiredApps,
+                        requiredTier: tpl.requiredTier,
+                        setupInstructions: tpl.setupInstructions,
+                        createdAt: Date.now(),
+                        updatedAt: Date.now(),
+                        __provenance: 'seed'
+                    });
+                }
+            }
+        } catch (err) {
+            console.warn('[ZapierWorkflowBuilder] Persist templates skipped:', (err as any)?.message);
+        }
+    }
+
+    /** Load templates from Firestore and merge new ones */
+    private async syncTemplatesFromFirestore(force = false): Promise<void> {
+        if (!force && Date.now() - this.lastTemplateSync < ZapierWorkflowBuilder.TEMPLATE_SYNC_TTL) return;
+        try {
+            const { db } = await import('../firebase');
+            const { collection, getDocs } = await import('firebase/firestore');
+            const snapshot = await getDocs(collection(db, 'workflowTemplates'));
+            snapshot.forEach(d => {
+                const data = d.data() as any;
+                if (!this.templates.has(data.id)) {
+                    this.templates.set(data.id, {
+                        id: data.id,
+                        name: data.name,
+                        category: data.category,
+                        description: data.description,
+                        triggers: data.triggers || [],
+                        actions: data.actions || [],
+                        conditions: data.conditions || [],
+                        requiredApps: data.requiredApps || [],
+                        requiredTier: data.requiredTier,
+                        setupInstructions: data.setupInstructions || []
+                    });
+                }
+            });
+            this.lastTemplateSync = Date.now();
+        } catch (err) {
+            console.warn('[ZapierWorkflowBuilder] Template sync failed:', (err as any)?.message);
+        }
+    }
+
+    async refreshTemplates(): Promise<void> {
+        await this.syncTemplatesFromFirestore(true);
+    }
+
     /**
      * Setup rate limiting based on user tier
      */
@@ -330,6 +402,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
 
         this.workflows.set(workflowId, workflow);
         this.emit('workflow-created', { workflowId, userId, templateId });
+        void this.persistWorkflow(workflow); // fire-and-forget persistence
 
         return workflow;
     }
@@ -380,6 +453,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
                 status: 'success',
                 results: actionResults
             };
+            void this.persistWorkflow(workflow);
 
             this.emit('workflow-completed', { workflowId, runId, results: actionResults });
             return { status: 'success', results: actionResults };
@@ -763,6 +837,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
         workflow.status = status;
         workflow.metadata.updated = Date.now();
         this.emit('workflow-status-changed', { workflowId, status });
+        void this.persistWorkflow(workflow);
         return true;
     }
 
@@ -775,6 +850,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
 
         this.workflows.delete(workflowId);
         this.emit('workflow-deleted', { workflowId, userId });
+        void this.deletePersistedWorkflow(workflowId);
         return true;
     }
 
@@ -795,6 +871,65 @@ export class ZapierWorkflowBuilder extends EventEmitter {
             created: workflow.metadata.created,
             updated: workflow.metadata.updated
         };
+    }
+
+    /**
+     * Firestore persistence helpers
+     * Collection: workflows (minimal fields, no derived ratios beyond successRate already maintained in-memory)
+     */
+    private async persistWorkflow(workflow: ZapierWorkflow): Promise<void> {
+        try {
+            const { db } = await import('../firebase');
+            const { doc, setDoc, collection } = await import('firebase/firestore');
+            const docRef = doc(collection(db, 'workflows'), workflow.id);
+            await setDoc(docRef, {
+                id: workflow.id,
+                userId: workflow.userId,
+                tier: workflow.tier,
+                name: workflow.name,
+                description: workflow.description,
+                status: workflow.status,
+                triggers: workflow.triggers,
+                actions: workflow.actions,
+                conditions: workflow.conditions,
+                schedule: workflow.schedule || null,
+                lastRun: workflow.lastRun || null,
+                metadata: workflow.metadata,
+                updatedAt: Date.now(),
+                createdAt: workflow.metadata.created,
+                __provenance: workflow.metadata.runCount === 0 ? 'seed|user-init' : 'user'
+            }, { merge: true });
+        } catch (err) {
+            console.warn('[ZapierWorkflowBuilder] persistWorkflow failed:', (err as any)?.message);
+        }
+    }
+
+    private async deletePersistedWorkflow(workflowId: string): Promise<void> {
+        try {
+            const { db } = await import('../firebase');
+            const { doc, deleteDoc, collection } = await import('firebase/firestore');
+            await deleteDoc(doc(collection(db, 'workflows'), workflowId));
+        } catch (err) {
+            console.warn('[ZapierWorkflowBuilder] deletePersistedWorkflow failed:', (err as any)?.message);
+        }
+    }
+
+    private async loadPersistedWorkflows(): Promise<void> {
+        try {
+            const { db } = await import('../firebase');
+            const { collection, getDocs, query, where, orderBy, limit } = await import('firebase/firestore');
+            // Load a bounded recent set (avoid huge scans)
+            const q = query(collection(db, 'workflows'), orderBy('metadata.updated', 'desc'), limit(200));
+            const snap = await getDocs(q);
+            snap.forEach(d => {
+                const data = d.data() as any;
+                if (!this.workflows.has(data.id)) {
+                    this.workflows.set(data.id, data as ZapierWorkflow);
+                }
+            });
+        } catch (err) {
+            console.warn('[ZapierWorkflowBuilder] loadPersistedWorkflows failed:', (err as any)?.message);
+        }
     }
 }
 

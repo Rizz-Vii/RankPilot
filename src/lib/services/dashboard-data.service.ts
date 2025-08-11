@@ -8,20 +8,21 @@
  * Integration: Firestore collections → Dashboard components
  */
 
-import { 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
-  getDocs, 
-  doc, 
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
+  doc,
   getDoc,
   updateDoc,
   onSnapshot,
-  Timestamp 
+  Timestamp
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { managedOnSnapshot } from '@/lib/firebase/write-guard';
 
 // Dashboard data interfaces matching existing component expectations
 export interface DashboardData {
@@ -71,13 +72,13 @@ export interface DashboardData {
 }
 
 class DashboardDataService {
-  
+
   /**
    * Get comprehensive dashboard data for a specific user
    */
   static async getUserDashboardData(userId: string): Promise<DashboardData> {
     console.log(`📊 Fetching dashboard data for user: ${userId}`);
-    
+
     try {
       // Fetch all data in parallel for better performance
       const [
@@ -106,7 +107,7 @@ class DashboardDataService {
         backlinks: backlinkData,
         trafficSources: trafficData
       };
-      
+
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
       return this.getFallbackData();
@@ -126,10 +127,10 @@ class DashboardDataService {
         orderBy("completedAt", "desc"),
         limit(10)
       );
-      
+
       const snapshot = await getDocs(q);
       const analyses = snapshot.docs.map(doc => doc.data());
-      
+
       if (analyses.length === 0) {
         return {
           current: 0,
@@ -145,8 +146,8 @@ class DashboardDataService {
 
       // Generate trend data from recent analyses
       const trend = analyses.reverse().map((analysis, index) => ({
-        date: analysis.completedAt?.toDate?.()?.toISOString().split('T')[0] || 
-              new Date(Date.now() - (analyses.length - index) * 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        date: analysis.completedAt?.toDate?.()?.toISOString().split('T')[0] ||
+          new Date(Date.now() - (analyses.length - index) * 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         score: analysis.summary?.overallScore || 0
       }));
 
@@ -155,7 +156,7 @@ class DashboardDataService {
         change: Math.round(change),
         trend
       };
-      
+
     } catch (error) {
       console.error("Error fetching SEO score trend:", error);
       return { current: 0, change: 0, trend: [] };
@@ -174,10 +175,10 @@ class DashboardDataService {
         orderBy("createdAt", "desc"),
         limit(50)
       );
-      
+
       const snapshot = await getDocs(q);
       const keywords = snapshot.docs.map(doc => doc.data());
-      
+
       if (keywords.length === 0) {
         return {
           current: 0,
@@ -216,7 +217,7 @@ class DashboardDataService {
           top100
         }
       };
-      
+
     } catch (error) {
       console.error("Error fetching keyword metrics:", error);
       return {
@@ -234,10 +235,10 @@ class DashboardDataService {
     try {
       const projectsRef = collection(db, "projects");
       const q = query(projectsRef, where("userId", "==", userId));
-      
+
       const snapshot = await getDocs(q);
       const projects = snapshot.docs.map(doc => doc.data());
-      
+
       const activeProjects = projects.filter(p => p.status === "active").length;
       const recentProjects = projects.filter(p => {
         const createdAt = p.createdAt?.toDate?.() || new Date(p.createdAt);
@@ -249,7 +250,7 @@ class DashboardDataService {
         current: activeProjects,
         change: recentProjects
       };
-      
+
     } catch (error) {
       console.error("Error fetching projects data:", error);
       return { current: 0, change: 0 };
@@ -268,20 +269,20 @@ class DashboardDataService {
         orderBy("createdAt", "desc"),
         limit(6)
       );
-      
+
       const snapshot = await getDocs(q);
       const audits = snapshot.docs.map(doc => doc.data());
-      
+
       if (audits.length === 0) {
         return { score: 0, history: [] };
       }
 
       const currentScore = audits[0]?.domainAuthority || 0;
-      
+
       // Generate history from audits
       const history = audits.reverse().map((audit, index) => ({
-        date: audit.createdAt?.toDate?.()?.toISOString().split('T')[0] || 
-              new Date(Date.now() - (audits.length - index) * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        date: audit.createdAt?.toDate?.()?.toISOString().split('T')[0] ||
+          new Date(Date.now() - (audits.length - index) * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         score: audit.domainAuthority || 0
       }));
 
@@ -289,7 +290,7 @@ class DashboardDataService {
         score: Math.round(currentScore),
         history
       };
-      
+
     } catch (error) {
       console.error("Error fetching domain authority data:", error);
       return { score: 0, history: [] };
@@ -308,10 +309,10 @@ class DashboardDataService {
         orderBy("createdAt", "desc"),
         limit(6)
       );
-      
+
       const snapshot = await getDocs(q);
       const analyses = snapshot.docs.map(doc => doc.data());
-      
+
       if (analyses.length === 0) {
         return {
           total: 0,
@@ -327,7 +328,7 @@ class DashboardDataService {
       // Generate monthly history
       const history = [];
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-      
+
       for (let i = 0; i < 6; i++) {
         const analysis = analyses[i];
         history.unshift({
@@ -342,7 +343,7 @@ class DashboardDataService {
         newLast30Days: newBacklinks,
         history
       };
-      
+
     } catch (error) {
       console.error("Error fetching backlink data:", error);
       return {
@@ -360,7 +361,7 @@ class DashboardDataService {
     try {
       // This would integrate with Google Analytics API or similar
       // For now, return calculated data based on user's analyses
-      
+
       const analysesRef = collection(db, "neuroSeoAnalyses");
       const q = query(
         analysesRef,
@@ -368,15 +369,15 @@ class DashboardDataService {
         where("status", "==", "completed"),
         limit(5)
       );
-      
+
       const snapshot = await getDocs(q);
       const analyses = snapshot.docs.map(doc => doc.data());
-      
+
       // Calculate traffic distribution based on SEO performance
-      const avgScore = analyses.length > 0 
+      const avgScore = analyses.length > 0
         ? analyses.reduce((sum, a) => sum + (a.summary?.overallScore || 0), 0) / analyses.length
         : 50;
-      
+
       // Adjust organic percentage based on SEO performance
       const organicPercent = Math.min(85, Math.max(30, avgScore));
       const directPercent = Math.max(10, 40 - organicPercent * 0.3);
@@ -389,7 +390,7 @@ class DashboardDataService {
         { name: "Referral", value: Math.round(referralPercent), fill: "var(--color-chart-3)" },
         { name: "Social", value: Math.round(socialPercent), fill: "var(--color-chart-4)" }
       ];
-      
+
     } catch (error) {
       console.error("Error fetching traffic sources:", error);
       return [
@@ -405,11 +406,11 @@ class DashboardDataService {
    * Real-time dashboard data subscription
    */
   static subscribeToUserDashboardData(
-    userId: string, 
+    userId: string,
     callback: (data: DashboardData) => void
   ): () => void {
     console.log(`📡 Setting up real-time dashboard subscription for user: ${userId}`);
-    
+
     // Subscribe to NeuroSEO analyses for real-time updates
     const analysesRef = collection(db, "neuroSeoAnalyses");
     const q = query(
@@ -418,16 +419,27 @@ class DashboardDataService {
       orderBy("completedAt", "desc"),
       limit(5)
     );
-    
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      try {
-        // Fetch fresh data when analyses update
-        const data = await this.getUserDashboardData(userId);
-        callback(data);
-      } catch (error) {
-        console.error("Error in dashboard subscription:", error);
-      }
-    });
+
+    const unsubscribe = managedOnSnapshot(
+      q,
+      async () => {
+        try {
+          const data = await this.getUserDashboardData(userId);
+          callback(data);
+        } catch (error) {
+          console.error("Error in dashboard subscription:", error);
+        }
+      },
+      (err) => {
+        if ((err as any)?.code === 'permission-denied') {
+          console.warn('[DashboardData] permission-denied for neuroSeoAnalyses subscription; providing fallback data');
+          callback(this.getFallbackData());
+        } else {
+          console.error('[DashboardData] onSnapshot error', err);
+        }
+      },
+      { debounceMs: 150 }
+    );
 
     return unsubscribe;
   }
@@ -456,7 +468,7 @@ class DashboardDataService {
   static async updateDashboardCache(userId: string): Promise<void> {
     try {
       const data = await this.getUserDashboardData(userId);
-      
+
       // Store in user document for quick access
       const userRef = doc(db, "users", userId);
       await updateDoc(userRef, {
@@ -466,7 +478,7 @@ class DashboardDataService {
           version: "1.0"
         }
       });
-      
+
       console.log(`✅ Dashboard cache updated for user: ${userId}`);
     } catch (error) {
       console.error("Error updating dashboard cache:", error);

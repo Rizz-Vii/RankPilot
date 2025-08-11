@@ -17,6 +17,7 @@ import { ActionCard } from '@/components/shared/ActionCard';
 import { SkeletonOverlay } from '@/components/shared/SkeletonOverlay';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { useProvenance } from '@/hooks/useProvenance';
 
 interface GenerateDialogProps { open:boolean; onClose:()=>void; onGenerate:(type:string, topic:string)=>Promise<void>; loading:boolean; }
 function GenerateDialog({ open, onClose, onGenerate, loading }: GenerateDialogProps){
@@ -79,10 +80,14 @@ export default function MarketingContentGenerationPage() {
   const [toneOpen,setToneOpen]=useState(false);
   const [busy,setBusy]=useState<string|null>(null);
   const [lastContent,setLastContent]=useState('Our team achieved major milestone.');
+  const { markLive, markFallback, ProvenanceLegend } = useProvenance();
+
+  // Provenance classification: if live KPIs loaded mark live else fallback
+  useEffect(() => { if(live.loading) return; if(live.kpis.length) markLive(); else markFallback(); }, [live.loading, live.kpis, markLive, markFallback]);
 
   async function handleGenerate(type:string, topic:string){
     try{ setBusy('generate');
-      live.addOptimistic({ name: `${type}:${topic.slice(0,40)}`, channel:'content', impressions:0, clicks:0, leads:0, spend:0, revenue:0, ctr:0, roi:0 });
+  live.addOptimistic({ name: `${type}:${topic.slice(0,40)}`, channel:'content', impressions:0, clicks:0, leads:0, spend:0, revenue:0, __provenance:'optimistic' });
       const res= await generateContentAsset(type, topic, userId, teamId); toast({ title:'Asset generated', description: res.id }); setLastContent(topic + ' ' + res.body.slice(0,80)+'...'); setGenOpen(false);}catch(e:any){ toast({ title:'Generation failed', description:e.message||'Unknown error', variant:'destructive'});} finally{ setBusy(null);} }
   function openVariants(){ setVarOpen(true); }
   function openTone(){ setToneOpen(true); }
@@ -94,6 +99,7 @@ export default function MarketingContentGenerationPage() {
           <p className="text-muted-foreground max-w-3xl">Multi-format asset generation with upcoming tone guardrails & compliance checks.</p>
           <PeriodSelector value={months} onChange={setMonths} />
         </header>
+  <ProvenanceLegend />
         <section className="grid gap-4 md:grid-cols-4">
           {data.kpis.map((k:any) => (
             <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />

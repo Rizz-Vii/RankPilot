@@ -4,6 +4,7 @@
 import LinkAnalysisForm from "@/components/link-analysis-form";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
+import { useProvenance } from "@/hooks/useProvenance";
 import {
   Card,
   CardContent,
@@ -178,11 +179,14 @@ export default function LinkViewPage() {
     }
   }, [results, error]);
 
+  const { provenance, setProvenance, markLive, markFallback } = useProvenance();
+
   const handleSubmit = async (values: { url: string; }) => {
     setIsLoading(true);
     setSubmitted(true);
     setResults(null);
     setError(null);
+    setProvenance(null);
     try {
       // Transform form values to LinkAnalysisInput
       const analysisInput: LinkAnalysisInput = {
@@ -190,8 +194,9 @@ export default function LinkViewPage() {
         analysisType: 'comprehensive',
         limit: 100
       };
-      const result = await analyzeLinks(analysisInput);
+  const result = await analyzeLinks(analysisInput);
       setResults(result);
+  markLive();
 
       if (user) {
         const userActivitiesRef = collection(
@@ -212,6 +217,7 @@ export default function LinkViewPage() {
       setError(
         e.message || "An unexpected error occurred during link analysis."
       );
+      if (!results) markFallback();
     } finally {
       setIsLoading(false);
     }
@@ -222,7 +228,7 @@ export default function LinkViewPage() {
       <ToolPageHeader
         title="Link View Analyzer"
         description="Evaluate backlink quality and domain authority distribution."
-        badges={composeToolHeaderBadges("link-view", null)}
+  badges={composeToolHeaderBadges("link-view", provenance)}
         showBreadcrumb
       />
     <div

@@ -31,7 +31,9 @@ import {
   FileText
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { createDeterministicRng, randomInt, randomFloat, tagSynthetic } from '@/lib/synthetic/synthetic-utils';
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
+import { useProvenance } from "@/hooks/useProvenance";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, query, where, orderBy, limit, getDocs } from "firebase/firestore";
@@ -99,6 +101,7 @@ interface RewriteGenResult {
 
 export default function RewriteGenPage() {
   const { user } = useAuth();
+  const { provenance, setProvenance, markLive, markFallback } = useProvenance();
   const [inputUrl, setInputUrl] = useState("");
   const [contentText, setContentText] = useState("");
   const [targetKeywords, setTargetKeywords] = useState("");
@@ -114,6 +117,7 @@ export default function RewriteGenPage() {
     keywords: string[], 
     type: string
   ): Promise<RewriteGenResult> => {
+    setProvenance(null);
     // Simulate progressive analysis
     for (let i = 0; i <= 100; i += 12) {
       setAnalysisProgress(i);
@@ -124,6 +128,7 @@ export default function RewriteGenPage() {
     const improvementTypes: Array<'seo' | 'readability' | 'engagement' | 'conversion' | 'clarity'> = 
       ['seo', 'readability', 'engagement', 'conversion', 'clarity'];
 
+    const rng = createDeterministicRng([inputUrl || content.slice(0,50), keywords.sort().join(','), type]);
     const mockResult: RewriteGenResult = {
       id: `rewrite_${Date.now()}`,
       url: inputUrl,
@@ -134,33 +139,33 @@ export default function RewriteGenPage() {
         originalText: `Original ${section.toLowerCase()} text that could be improved for better SEO performance and user engagement.`,
         suggestedText: `Enhanced ${section.toLowerCase()} text with optimized keywords, improved readability, and stronger call-to-action elements for better conversion rates.`,
         improvementType: improvementTypes[index % improvementTypes.length],
-        confidence: Math.random() * 0.3 + 0.7, // 70-100%
+        confidence: randomFloat(rng,0.7,1,3),
         reasoning: `Improved keyword density, enhanced readability score, and stronger user engagement signals`,
-        impact: `Expected ${Math.floor(Math.random() * 20) + 10}% improvement in search rankings`,
-        wordCountChange: Math.floor(Math.random() * 20) - 10 // -10 to +10 words
+        impact: `Expected ${randomInt(rng,10,30)}% improvement in search rankings`,
+        wordCountChange: randomInt(rng,-10,10)
       })),
       titleSuggestions: [
         {
           title: `Complete ${keywords[0] || 'SEO'} Guide for 2025 | Expert Strategies & Tips`,
-          seoScore: Math.floor(Math.random() * 20) + 80,
-          readabilityScore: Math.floor(Math.random() * 15) + 85,
-          engagementScore: Math.floor(Math.random() * 25) + 75,
+          seoScore: randomInt(rng,80,100),
+          readabilityScore: randomInt(rng,85,100),
+          engagementScore: randomInt(rng,75,100),
           reasoning: 'Includes target keyword, year relevance, and compelling modifiers',
           targetKeywords: keywords.slice(0, 2)
         },
         {
           title: `${keywords[0] || 'SEO'} Best Practices: Proven Methods That Drive Results`,
-          seoScore: Math.floor(Math.random() * 15) + 85,
-          readabilityScore: Math.floor(Math.random() * 20) + 80,
-          engagementScore: Math.floor(Math.random() * 20) + 80,
+          seoScore: randomInt(rng,85,100),
+          readabilityScore: randomInt(rng,80,100),
+          engagementScore: randomInt(rng,80,100),
           reasoning: 'Action-oriented language with benefit-focused approach',
           targetKeywords: keywords.slice(0, 1)
         },
         {
           title: `How to Master ${keywords[0] || 'SEO'}: Step-by-Step Implementation Guide`,
-          seoScore: Math.floor(Math.random() * 25) + 75,
-          readabilityScore: Math.floor(Math.random() * 10) + 90,
-          engagementScore: Math.floor(Math.random() * 15) + 85,
+          seoScore: randomInt(rng,75,100),
+          readabilityScore: randomInt(rng,90,100),
+          engagementScore: randomInt(rng,85,100),
           reasoning: 'Clear how-to format with specific promise of step-by-step guidance',
           targetKeywords: keywords.slice(0, 1)
         }
@@ -169,7 +174,7 @@ export default function RewriteGenPage() {
         {
           metaDescription: `Discover proven ${keywords[0] || 'SEO'} strategies that drive real results. Expert insights, actionable tips, and comprehensive guides for ${new Date().getFullYear()}. Start optimizing today!`,
           length: 145,
-          seoScore: Math.floor(Math.random() * 20) + 80,
+          seoScore: randomInt(rng,80,100),
           keywordUsage: keywords.slice(0, 2),
           callToAction: true,
           reasoning: 'Optimal length, includes target keywords, and compelling call-to-action'
@@ -177,25 +182,25 @@ export default function RewriteGenPage() {
         {
           metaDescription: `Learn ${keywords[0] || 'SEO'} best practices from industry experts. Comprehensive tutorials, case studies, and proven techniques for business growth.`,
           length: 134,
-          seoScore: Math.floor(Math.random() * 15) + 85,
+          seoScore: randomInt(rng,85,100),
           keywordUsage: keywords.slice(0, 1),
           callToAction: false,
           reasoning: 'Good keyword placement and clear value proposition'
         }
       ],
-      overallImprovementScore: Math.floor(Math.random() * 25) + 75,
+      overallImprovementScore: randomInt(rng,75,100),
       metrics: {
-        readabilityImprovement: Math.floor(Math.random() * 30) + 15,
-        seoOptimization: Math.floor(Math.random() * 35) + 20,
-        engagementBoost: Math.floor(Math.random() * 25) + 18,
-        conversionPotential: Math.floor(Math.random() * 20) + 12
+        readabilityImprovement: randomInt(rng,15,45),
+        seoOptimization: randomInt(rng,20,55),
+        engagementBoost: randomInt(rng,18,43),
+        conversionPotential: randomInt(rng,12,32)
       },
       keywordOptimization: {
         targetKeywords: keywords,
         keywordDensity: keywords.reduce((acc, keyword) => {
           acc[keyword] = {
-            original: Math.random() * 2 + 0.5,
-            suggested: Math.random() * 1.5 + 1.5
+            original: randomFloat(rng,0.5,2.5),
+            suggested: randomFloat(rng,1.5,3)
           };
           return acc;
         }, {} as Record<string, { original: number; suggested: number }>),
@@ -232,8 +237,8 @@ export default function RewriteGenPage() {
       ],
       createdAt: new Date()
     };
-
-    return mockResult;
+    markLive();
+    return tagSynthetic(mockResult);
   };
 
   const handleAnalyze = async () => {
@@ -306,9 +311,6 @@ export default function RewriteGenPage() {
     { name: 'Engagement', improvement: currentResult.metrics.engagementBoost },
     { name: 'Conversion', improvement: currentResult.metrics.conversionPotential }
   ] : [];
-
-  // Placeholder provenance source (future: integrate real backend source)
-  const provenance: any = null;
 
   return (
     <main className="container mx-auto py-6 space-y-6">
@@ -493,7 +495,7 @@ export default function RewriteGenPage() {
                         <XAxis dataKey="name" />
                         <YAxis />
                         <Tooltip formatter={(value) => [`+${value}%`, 'Improvement']} />
-                        <Bar dataKey="improvement" fill="#8884d8" />
+                        <Bar dataKey="improvement" fill="hsl(var(--chart-1))" />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>

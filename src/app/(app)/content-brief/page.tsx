@@ -4,6 +4,7 @@
 import ContentBriefForm from "@/components/content-brief-form";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
+import { useProvenance } from "@/hooks/useProvenance";
 import {
   Card,
   CardContent,
@@ -219,11 +220,14 @@ export default function ContentBriefPage() {
     }
   }, [briefResult, error]);
 
+  const { provenance, setProvenance, markLive, markFallback } = useProvenance();
+
   const handleSubmit = async (values: { keyword: string; }) => {
     setIsLoading(true);
     setSubmitted(true);
     setBriefResult(null);
     setError(null);
+    setProvenance(null);
     try {
       // Transform form values to ContentBriefInput
       const contentBriefInput: ContentBriefInput = {
@@ -233,8 +237,9 @@ export default function ContentBriefPage() {
         targetAudience: 'general audience',
         contentType: 'blog post'
       };
-      const result = await generateContentBrief(contentBriefInput);
+  const result = await generateContentBrief(contentBriefInput);
       setBriefResult(result);
+  markLive();
 
       if (user) {
         const userActivitiesRef = collection(
@@ -256,6 +261,7 @@ export default function ContentBriefPage() {
       }
     } catch (e: any) {
       setError(e.message || "An unexpected error occurred.");
+      if (!briefResult) markFallback();
     } finally {
       setIsLoading(false);
     }
@@ -266,7 +272,7 @@ export default function ContentBriefPage() {
       <ToolPageHeader
         title="Content Brief Generator"
         description="Generate data-driven content briefs with semantic insights."
-        badges={composeToolHeaderBadges("content-brief", null)}
+  badges={composeToolHeaderBadges("content-brief", provenance)}
         showBreadcrumb
       />
     <div

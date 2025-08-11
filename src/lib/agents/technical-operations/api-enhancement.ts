@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
     let neuroSEO;
     try {
   // Use proxy file with .js extension to satisfy NodeNext explicit extension rule
-  const { NeuroSEOSuite } = await import("../../../lib/neuroseo.js");
+  const { NeuroSEOSuite } = await import("../../../lib/neuroseo");
       neuroSEO = new NeuroSEOSuite();
     } catch (error) {
       console.warn('[NeuroSEO API] Failed to initialize NeuroSEO Suite:', error);

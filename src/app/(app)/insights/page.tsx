@@ -3,7 +3,7 @@
 
 // Prefer real AI flow; fallback to stub util if needed
 import { generateInsights as generateInsightsFlow } from "@/ai/flows/generate-insights";
-import { generateInsights as generateInsightsStub } from "@/lib/utils/content-functions";
+import { canAccessFeature } from "@/lib/access-control";
 import type { GenerateInsightsOutput } from "@/types";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -35,9 +35,8 @@ import styles from "./insights.module.css";
 export default function InsightsPage() {
   const { user, activities, loading: authLoading, profile } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [insights, setInsights] = useState<GenerateInsightsOutput["insights"]>(
-    []
-  );
+  type Insight = GenerateInsightsOutput["insights"][number];
+  const [insights, setInsights] = useState<Insight[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [lastGenerated, setLastGenerated] = useState<Date | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -117,19 +116,30 @@ export default function InsightsPage() {
     if (simplifiedActivities.length === 0) { setInsights([]); setIsLoading(false); return; }
     setIsLoading(true);
     try {
-  let result: any | null = null;
-      // Real AI flow consumes activities only
+      let result: GenerateInsightsOutput | null = null;
       try {
-  const aiResult = await generateInsightsFlow({ activities: simplifiedActivities });
-  result = { insights: aiResult.insights, summary: `Generated ${aiResult.insights.length} AI insights`, score: 0 };
+        const aiResult = await generateInsightsFlow({ activities: simplifiedActivities });
+        // Normalize to expected GenerateInsightsOutput shape (if flow returns partial)
+        const normalized = {
+          insights: (aiResult as any).insights?.map((i: any) => ({
+            ...i,
+            // Normalize priority casing if needed
+            priority: typeof i.priority === 'string' ? i.priority.toLowerCase() : i.priority,
+          })) || [],
+          summary: (aiResult as any).summary || `Generated ${(aiResult as any).insights?.length || 0} insights`,
+          score: (aiResult as any).score ?? 0,
+        } as GenerateInsightsOutput;
+        result = normalized;
       } catch (e) {
-        console.warn('AI flow failed, falling back to stub insights', e);
-        // Fallback stub uses keyword/url approach
-  const stub = await generateInsightsStub({ keywords: buildKeywords(), urls: buildUrls() });
-  result = stub; // stub already includes summary & score
+        console.warn('AI flow failed', e);
       }
-  saveCache(result as GenerateInsightsOutput);
-  setInsights((result as GenerateInsightsOutput).insights.slice(0, maxInsights));
+      if (!result) {
+        setInsights([]);
+        setLastGenerated(new Date());
+        return;
+      }
+      saveCache(result);
+      setInsights(result.insights.slice(0, maxInsights));
       setLastGenerated(new Date());
     } catch (e: any) {
       setError(e.message || 'Failed to generate insights');

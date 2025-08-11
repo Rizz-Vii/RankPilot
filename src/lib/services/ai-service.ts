@@ -159,9 +159,40 @@ export interface SEOAuditResponse {
 }
 
 export async function runSEOAudit(request: SEOAuditRequest): Promise<SEOAuditResponse> {
-    const maxAttempts = 2;
-    let lastError: any = null;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    // Prefer internal proxy (avoids callable CORS / network variability). Fallback to callable.
+    const attemptProxyFirst = async (): Promise<SEOAuditResponse | null> => {
+        try {
+            const idToken = await auth.currentUser?.getIdToken();
+            const proxyResp = await fetch('/api/seo-audit/run', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
+                },
+                body: JSON.stringify(request)
+            });
+            if (proxyResp.ok) return await proxyResp.json();
+            // If proxy returns auth/permission issue, surface that immediately rather than hiding behind generic error
+            if (proxyResp.status === 403 || proxyResp.status === 401) {
+                const payload = await proxyResp.json().catch(() => ({}));
+                throw new Error(payload.error || 'Not authorized to run audit');
+            }
+            // Non-OK but not auth: fall through to callable
+            return null;
+        } catch (e: any) {
+            // Network / CORS / fetch errors => fallback to callable path
+            if (/(network|cors|failed|fetch)/i.test(e?.message || '')) return null;
+            // Other errors propagate (e.g., auth)
+            throw e;
+        }
+    };
+
+    const proxyResult = await attemptProxyFirst();
+    if (proxyResult) return proxyResult;
+
+    // Callable fallback with minimal retry
+    let lastError: any;
+    for (let attempt = 1; attempt <= 2; attempt++) {
         try {
             const result = await runSeoAuditFunction(request);
             return result.data as SEOAuditResponse;
@@ -169,59 +200,31 @@ export async function runSEOAudit(request: SEOAuditRequest): Promise<SEOAuditRes
             lastError = error;
             const code: string | undefined = error?.code;
             const rawMessage: string | undefined = error?.message;
-            console.warn(`SEO audit attempt ${attempt} failed`, { code, rawMessage });
+            console.warn(`SEO audit callable attempt ${attempt} failed`, { code, rawMessage });
 
-            // If likely transport/internal issue, attempt proxy fallback once (no retry loop recursion)
-            const isTransportIssue = [rawMessage, code].some(v => typeof v === 'string' && /(cors|failed|network|fetch|internal)/i.test(v || '')) || code === undefined;
-            if (attempt === maxAttempts && isTransportIssue) {
-                try {
-                    const idToken = await auth.currentUser?.getIdToken();
-                    const proxyResp = await fetch('/api/seo-audit/run', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            ...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
-                        },
-                        body: JSON.stringify(request)
-                    });
-                    if (proxyResp.ok) {
-                        return await proxyResp.json() as SEOAuditResponse;
-                    }
-                } catch (proxyErr) {
-                    console.warn('Proxy fallback failed', proxyErr);
+            if (code) {
+                if (code.includes('unauthenticated')) throw new Error('Authentication required. Please sign in again.');
+                if (code.includes('resource-exhausted')) {
+                    if (/Daily SEO audit limit reached/i.test(rawMessage || '')) throw new Error('Daily SEO audit limit reached. Try again tomorrow or upgrade your plan for a higher quota.');
+                    if (/Too many requests/i.test(rawMessage || '')) throw new Error("You're sending requests too quickly. Please wait a moment and try again.");
+                    throw new Error('Quota or rate limit reached. Please slow down or upgrade your plan.');
                 }
+                if (code.includes('invalid-argument')) throw new Error(rawMessage?.replace(/^functions\/invalid-argument: /, '') || 'Invalid request. Check your input and try again.');
+                if (code.includes('permission-denied')) throw new Error('You do not have permission to audit this URL or domain.');
+                if (code.includes('not-found')) throw new Error('Audit service unavailable. Please retry shortly.');
             }
-
-            // Retry transient errors
-            if (attempt < maxAttempts && code && (code.includes("unavailable") || code.includes("internal"))) {
+            if (attempt < 2 && code && (code.includes('internal') || code.includes('unavailable'))) {
                 await new Promise(r => setTimeout(r, 400 * attempt));
                 continue;
             }
-
-            if (code) {
-                if (code.includes("unauthenticated")) {
-                    throw new Error("Authentication required. Please sign in again.");
-                }
-                if (code.includes("resource-exhausted")) {
-                    if (/Daily SEO audit limit reached/i.test(rawMessage || "")) {
-                        throw new Error("Daily SEO audit limit reached. Try again tomorrow or upgrade your plan for a higher quota.");
-                    }
-                    if (/Too many requests/i.test(rawMessage || "")) {
-                        throw new Error("You're sending requests too quickly. Please wait a moment and try again.");
-                    }
-                    throw new Error("Quota or rate limit reached. Please slow down or upgrade your plan.");
-                }
-                if (code.includes("invalid-argument")) {
-                    throw new Error(rawMessage?.replace(/^functions\/invalid-argument: /, '') || "Invalid request. Check your input and try again.");
-                }
-                if (code.includes("internal") || code.includes("unavailable")) {
-                    throw new Error("Service is temporarily unavailable. Retrying may help; fallback demo data will load on timeout.");
-                }
+            // Final fallback – surface transport style errors distinctly
+            if (!code && /(cors|network|failed|fetch|timeout)/i.test(rawMessage || '')) {
+                throw new Error('Network issue reaching audit service. Please retry.');
             }
-            throw new Error("Failed to run SEO audit. Please try again.");
+            throw new Error('Failed to run SEO audit. Please try again.');
         }
     }
-    throw new Error(lastError?.message || "Failed to run SEO audit. Please try again.");
+    throw new Error(lastError?.message || 'Failed to run SEO audit. Please try again.');
 }
 
 /**

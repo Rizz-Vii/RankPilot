@@ -11,14 +11,21 @@ import { fetchMarketingMetrics, subscribeMarketingMetrics, AggregatedMarketingMe
 import { MarketingContextProvider } from './_parts/marketing-context';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
+import { DashboardSurface } from '@/components/layout/DashboardSurface';
+import { dashboardContainerVariants, dashboardItemVariants } from '@/components/dashboard/animation-variants';
+import { motion } from 'framer-motion';
+import { ToolPageHeader } from '@/components/tool-page-header';
+import { SuiteAccentProvider } from '@/context/SuiteAccentContext';
 import { DownloadCloud, RefreshCw, BarChart3 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { ActionCard } from '@/components/shared/action-card';
 import { AdaptiveProgress } from '@/components/ui/adaptive-progress';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { CampaignDetailModal } from './_parts/campaign-detail-modal';
 import { ChannelBreakdownModal } from './_parts/channel-breakdown-modal';
+import { useProvenance } from '@/hooks/useProvenance';
 
 // NOTE: Removed explicit .js extensions so Next/TypeScript can resolve the .tsx source files correctly.
 const ImpressionsLeadsTrend = dynamic(()=> import('./_parts/impressions-leads-trend').then(m=> m.default), { ssr:false, loading: ()=> <Skeleton shimmer className="h-[260px] w-full" /> });
@@ -37,6 +44,7 @@ export default function MarketingDashboardRoot(){
   const [dataVersion, setDataVersion] = useState(0);
   const [campaignModal, setCampaignModal] = useState(false);
   const [channelModal, setChannelModal] = useState(false);
+  const { markLive, markFallback, ProvenanceLegend } = useProvenance();
 
   useEffect(()=> { trackDashboardView('marketing'); }, []);
   useEffect(()=> { if(typeof window==='undefined') return; const stored = window.localStorage.getItem('marketingMonths'); if(stored){ const n = parseInt(stored,10); if([3,6,9,12].includes(n)) setMonths(n); } }, []);
@@ -53,6 +61,12 @@ export default function MarketingDashboardRoot(){
     })();
     return ()=> { active=false; if(unsub) unsub(); };
   }, [userId, teamId, months, dataVersion, authLoading]);
+
+  // Provenance classification: live when realtime marketing metrics loaded, fallback when relying solely on mock data
+  useEffect(() => {
+    if(initialLoading) return;
+    if(metrics) markLive(); else markFallback();
+  }, [initialLoading, metrics, markLive, markFallback]);
 
   const summary: Summary = useMemo(()=> {
     const ks = metrics?.kpis || mock.kpis;
@@ -73,26 +87,26 @@ export default function MarketingDashboardRoot(){
   return (
     <FeatureGate feature="marketing_email_campaigns" requiredTier="enterprise" showUpgrade>
       <MarketingContextProvider data={metrics} months={months} refreshing={refreshing}>
-        <div className="p-6 space-y-10">
-          <header className="space-y-2">
-            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight">Marketing Dashboard</h1>
-                <p className="text-muted-foreground max-w-3xl">Full-funnel acquisition efficiency and campaign health with realtime attribution.</p>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                {[3,6,9,12].map(m=> (<Button key={m} size="sm" variant={months===m? 'default':'outline'} onClick={()=> setMonths(m)} aria-pressed={months===m}>{m}m</Button>))}
-                <Button size="sm" variant="outline" onClick={()=> exportSnapshot('json')} className="gap-1" aria-label="Export marketing snapshot JSON"><DownloadCloud className="h-4 w-4" />JSON</Button>
-                <Button size="sm" variant="outline" onClick={()=> exportSnapshot('csv')} className="gap-1" aria-label="Export marketing snapshot CSV"><DownloadCloud className="h-4 w-4" />CSV</Button>
-                <Button size="sm" onClick={handleRefresh} disabled={refreshing} className={cn('gap-1', refreshing && 'animate-pulse')} aria-live="polite" aria-busy={refreshing}><RefreshCw className={cn('h-4 w-4', refreshing && 'animate-spin')} />{refreshing? 'Refreshing':'Refresh'}</Button>
-                <Button size="sm" variant="outline" onClick={()=> setCampaignModal(true)} className="gap-1" aria-label="Open campaign detail"><BarChart3 className="h-4 w-4"/>Campaigns</Button>
-                <Button size="sm" variant="outline" onClick={()=> setChannelModal(true)} className="gap-1" aria-label="Open channel breakdown"><BarChart3 className="h-4 w-4"/>Channels</Button>
-              </div>
+    <SuiteAccentProvider value="marketing">
+  <DashboardSurface as="section" aria-label="Marketing dashboard surface" className="space-y-10 p-6">
+          <ToolPageHeader
+            title="Marketing Dashboard"
+            description="Full-funnel acquisition efficiency and campaign health with realtime attribution."
+            badges={[{ label: 'Realtime', variant: 'secondary' }, { label: 'Growth', variant: 'outline' }]}
+            showBreadcrumb
+          >
+            <div className="flex gap-2 flex-wrap">
+              {[3,6,9,12].map(m=> (<Button key={m} size="sm" variant={months===m? 'default':'outline'} onClick={()=> setMonths(m)} aria-pressed={months===m}>{m}m</Button>))}
+              <Button size="sm" variant="outline" onClick={()=> exportSnapshot('json')} className="gap-1" aria-label="Export marketing snapshot JSON"><DownloadCloud className="h-4 w-4" />JSON</Button>
+              <Button size="sm" variant="outline" onClick={()=> exportSnapshot('csv')} className="gap-1" aria-label="Export marketing snapshot CSV"><DownloadCloud className="h-4 w-4" />CSV</Button>
+              <Button size="sm" onClick={handleRefresh} disabled={refreshing} className={cn('gap-1', refreshing && 'animate-pulse')} aria-live="polite" aria-busy={refreshing}><RefreshCw className={cn('h-4 w-4', refreshing && 'animate-spin')} />{refreshing? 'Refreshing':'Refresh'}</Button>
+              <Button size="sm" variant="outline" onClick={()=> setCampaignModal(true)} className="gap-1" aria-label="Open campaign detail"><BarChart3 className="h-4 w-4"/>Campaigns</Button>
+              <Button size="sm" variant="outline" onClick={()=> setChannelModal(true)} className="gap-1" aria-label="Open channel breakdown"><BarChart3 className="h-4 w-4"/>Channels</Button>
             </div>
-            <div className="sr-only" role="status" aria-live="polite">Marketing summary: impressions {summary.impr.toLocaleString()}, leads {summary.leads.toLocaleString()}, CTR {summary.ctr} percent, ROI {summary.roi} percent.</div>
-          </header>
-
-          <section aria-label="Key performance indicators" className="grid gap-4 md:grid-cols-4">
+          </ToolPageHeader>
+          <ProvenanceLegend />
+          <div className="sr-only" role="status" aria-live="polite">Marketing summary: impressions {summary.impr.toLocaleString()}, leads {summary.leads.toLocaleString()}, CTR {summary.ctr} percent, ROI {summary.roi} percent.</div>
+          <motion.section aria-label="Key performance indicators" className="grid gap-4 md:grid-cols-4" variants={dashboardContainerVariants} initial="hidden" animate="visible">
             {initialLoading && Array.from({length:4}).map((_,i)=> (<Skeleton key={i} className="h-32 rounded-xl" shimmer aria-label="Loading metric" />))}
             {!initialLoading && (()=> {
               type Ext = typeof mock.kpis[number] & { target?: number; invertTarget?: boolean };
@@ -100,10 +114,13 @@ export default function MarketingDashboardRoot(){
               const targetMap: Record<string,{target?:number; invertTarget?:boolean}> = {};
               metrics?.kpis?.forEach(k=> { (targetMap as any)[k.key] = { target: (k as any).target, invertTarget: (k as any).invertTarget }; });
               const extended: Ext[] = base.map(k=> ({ ...k, ...(targetMap[k.key]||{}) }));
-              return extended.map(k=> { const pct = k.target? (k.invertTarget? (k.target/(k.value||1))*100 : (k.value/(k.target||1))*100): null; const good = pct!=null? (k.invertTarget? pct<=100 : pct>=100): false; return (
-                <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} badge={k.target? (<Badge variant={good? 'default':'outline'} className="text-[10px]">{pct!.toFixed(0)}% target</Badge>): undefined} footer={k.target? <AdaptiveProgress value={Math.min(100,pct!)} invert={!!k.invertTarget} aria-label={`${k.label} target progress`} />: undefined} /> ); });
+              return extended.map((k,i)=> { const pct = k.target? (k.invertTarget? (k.target/(k.value||1))*100 : (k.value/(k.target||1))*100): null; const good = pct!=null? (k.invertTarget? pct<=100 : pct>=100): false; return (
+                <motion.div variants={dashboardItemVariants} key={k.key}>
+                <MetricCard label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || (i===0? 'accent':'neutral')} badge={k.target? (<Badge variant={good? 'default':'outline'} className="text-[10px]">{pct!.toFixed(0)}% target</Badge>): undefined} footer={k.target? <AdaptiveProgress value={Math.min(100,pct!)} invert={!!k.invertTarget} aria-label={`${k.label} target progress`} />: undefined} />
+                </motion.div>
+              ); });
             })()}
-          </section>
+          </motion.section>
 
           <section className="grid gap-6 md:grid-cols-2" aria-label="Marketing analytics modules">
             <div className="space-y-3"><h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Impressions & Leads</h2><ImpressionsLeadsTrend key={dataVersion} /></div>
@@ -129,15 +146,16 @@ export default function MarketingDashboardRoot(){
             </section>
           )}
 
-          <section className="space-y-4" aria-label="Growth actions">
+      <section className="space-y-4" aria-label="Growth actions">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Growth Actions</h2>
             <div className="grid gap-4 md:grid-cols-3">
-              <ActionCard title="Launch Campaign" desc="Create multi-channel campaign with AI asset generation." actionLabel="Start" />
-              <ActionCard title="Optimize Funnel" desc="Analyze step drop-offs and get AI recommendations." actionLabel="Run Audit" />
-              <ActionCard title="Generate Content" desc="Produce variant copy & creatives aligned to ICP & intent." actionLabel="Generate" />
+        <ActionCard title="Launch Campaign" desc="Create multi-channel campaign with AI asset generation." action="Start" />
+        <ActionCard title="Optimize Funnel" desc="Analyze step drop-offs and get AI recommendations." action="Run Audit" />
+        <ActionCard title="Generate Content" desc="Produce variant copy & creatives aligned to ICP & intent." action="Generate" />
             </div>
           </section>
-        </div>
+    </DashboardSurface>
+    </SuiteAccentProvider>
         <CampaignDetailModal open={campaignModal} onOpenChange={setCampaignModal} />
         <ChannelBreakdownModal open={channelModal} onOpenChange={setChannelModal} />
       </MarketingContextProvider>
@@ -145,13 +163,4 @@ export default function MarketingDashboardRoot(){
   );
 }
 
-interface ActionCardProps { title:string; desc:string; actionLabel:string; }
-function ActionCard({ title, desc, actionLabel }: ActionCardProps){
-  return (
-    <div className="rounded-xl border p-4 bg-background/50 space-y-2 focus-within:ring-2 focus-within:ring-primary/40 transition" tabIndex={-1}>
-      <p className="text-sm font-medium">{title}</p>
-      <p className="text-xs text-muted-foreground">{desc}</p>
-      <button className="text-xs font-medium px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" aria-label={actionLabel + ' action'}>{actionLabel}</button>
-    </div>
-  );
-}
+// Local ActionCard removed in favor of shared component.

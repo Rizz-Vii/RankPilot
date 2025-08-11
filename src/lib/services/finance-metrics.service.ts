@@ -1,12 +1,13 @@
 // Finance Metrics Service - aggregates invoice data with mock fallback
-import { collection, getDocs, onSnapshot, orderBy, query, where, Unsubscribe, limit } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, where, Unsubscribe, limit } from 'firebase/firestore';
+import { managedOnSnapshot } from '@/lib/firebase/write-guard';
 import { db } from '@/lib/firebase/connection-manager';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
 
 export interface FinanceInvoiceDoc { id?: string; userId?: string; teamId?: string; period: string; amount: number; status: string; issuedAt?: any; paidAt?: any; dueAt?: any; planTier?: string; }
 
 export interface AggregatedFinanceMetrics {
-    kpis: { key: string; label: string; value: number; delta: number; trend: number[]; intent?: 'neutral' | 'success' | 'warning' | 'danger'; target?: number; invertTarget?: boolean }[];
+    kpis: { key: string; label: string; value: number; delta: number; trend: number[]; intent?: 'neutral' | 'success' | 'warning' | 'danger' | 'accent'; target?: number; invertTarget?: boolean }[];
     mrrSeries: { period: string; mrr: number }[];
     aging: { bucket: string; count: number; amount: number }[];
     invoices: FinanceInvoiceDoc[];
@@ -59,8 +60,24 @@ export async function fetchFinanceMetrics(userId: string, months: number, teamId
 
 export function subscribeFinanceMetrics(userId: string, months: number, cb: (m: AggregatedFinanceMetrics) => void, teamId?: string): Unsubscribe {
     const conds = teamId ? [where('teamId', '==', teamId)] : [where('userId', '==', userId)];
-    const q = query(collection(db, 'financeInvoices'), ...conds, orderBy('period', 'desc'));
+    const qRef = query(collection(db, 'financeInvoices'), ...conds, orderBy('period', 'desc'));
     let invoices: FinanceInvoiceDoc[] = [];
-    const unsub = onSnapshot(q, snap => { invoices = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })); cb(aggregateInvoices(invoices, months)); });
+    const unsub = managedOnSnapshot(
+        qRef,
+        snap => {
+            invoices = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
+            cb(aggregateInvoices(invoices, months));
+        },
+        err => {
+            if ((err as any)?.code === 'permission-denied') {
+                console.warn('[FinanceMetrics] permission-denied accessing financeInvoices; falling back to mock metrics');
+                const mock = getMockMetrics('finance');
+                cb({ kpis: mock.kpis, mrrSeries: [], aging: [], invoices: [] });
+            } else {
+                console.error('[FinanceMetrics] snapshot error', err);
+            }
+        },
+        { debounceMs: 120 }
+    );
     return () => { unsub(); };
 }

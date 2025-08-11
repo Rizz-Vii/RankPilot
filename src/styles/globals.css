@@ -72,6 +72,16 @@ h1, h2, h3, h4, h5, h6 {
     --success-foreground: 142 76% 96%;
     --warning: 48 96% 53%;
     --warning-foreground: 48 96% 13%;
+
+  /* Suite gradient accent tokens */
+  --gradient-seo-from: hsl(var(--primary) / 0.25);
+  --gradient-seo-to: hsl(var(--primary) / 0.05);
+  --gradient-sales-from: hsl(var(--warning) / 0.30);
+  --gradient-sales-to: hsl(var(--warning) / 0.05);
+  --gradient-marketing-from: hsl(var(--accent) / 0.30);
+  --gradient-marketing-to: hsl(var(--accent) / 0.05);
+  --gradient-finance-from: hsl(var(--success) / 0.30);
+  --gradient-finance-to: hsl(var(--success) / 0.05);
   }
 
   .dark {
@@ -122,6 +132,15 @@ h1, h2, h3, h4, h5, h6 {
     --success-foreground: 142 76% 6%;
     --warning: 48 96% 63%;
     --warning-foreground: 48 96% 13%;
+
+  --gradient-seo-from: hsl(var(--primary) / 0.35);
+  --gradient-seo-to: hsl(var(--primary) / 0.10);
+  --gradient-sales-from: hsl(var(--warning) / 0.40);
+  --gradient-sales-to: hsl(var(--warning) / 0.12);
+  --gradient-marketing-from: hsl(var(--accent) / 0.40);
+  --gradient-marketing-to: hsl(var(--accent) / 0.12);
+  --gradient-finance-from: hsl(var(--success) / 0.40);
+  --gradient-finance-to: hsl(var(--success) / 0.12);
   }
 }
 
@@ -155,6 +174,27 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @layer components {
+  /* Section spacing tokens */
+  :root {
+    --space-section: 6rem; /* baseline vertical rhythm ≈ mt-24 */
+    --space-section-lg: 8rem; /* larger feature break ≈ mt-32 */
+    --space-section-sm: 4rem; /* compact variant */
+  }
+
+  .section-gap { margin-top: var(--space-section); }
+  .section-gap-lg { margin-top: var(--space-section-lg); }
+  .section-gap-sm { margin-top: var(--space-section-sm); }
+
+  /* Micro interaction helpers */
+  .micro-hover-lift { @apply transition-transform duration-300 will-change-transform; }
+  .micro-hover-lift:hover { transform: translateY(-4px); }
+  .micro-fade-in { @apply opacity-0 animate-[fadeIn_0.6s_ease_forwards]; }
+  @keyframes fadeIn { to { opacity: 1; } }
+
+  .badge-glow { @apply relative; }
+  .badge-glow::after { content:""; position:absolute; inset:0; border-radius:9999px; box-shadow:0 0 0 0 rgba(0,0,0,0.05); opacity:0; transition:box-shadow .6s ease, opacity .6s ease; }
+  .badge-glow:hover::after { box-shadow:0 0 0 6px rgba(255,255,255,0.06); opacity:1; }
+
   /* Mobile Touch Target Improvements */
   .mobile-touch-target {
     @apply min-h-[44px] min-w-[44px];

@@ -1,3 +1,52 @@
+<!-- markdownlint-disable MD046 -->
+# Unreleased (GOV-01 Documentation Baseline)
+
+- NEU-01: Added streaming NeuroSEO analysis endpoint (SSE) at /api/neuroseo/stream with incremental chunk + progress + completion events; introduced runAnalysisStream generator in enhanced orchestrator.
+- NEU-01: Streaming acceptance completion – added provenance on cached/complete events, synthetic fallback (timeout & error) with 'fallback' event, timeoutMs parameter, streaming test script (test:neuro-stream), counters parity with live exec.
+- NEU-02: Streaming path compact persistence added (hashKey deterministic doc id, <5KB guard, validation via CompactAnalysisSchema) + size/hash test (test:neuro-persist-size). Rollback: remove persistCompact() from /api/neuroseo/stream route and delete related test & script entry.
+- NEU-01: Added client hook (useNeuroSeoStream) and UI runner component (NeuroSEOStreamingRunner) with progress bar, live event log, and abort support.
+- FEATURE_KEYS.md: Feature key registry with lifecycle states.
+- MKT-01: Added marketing guard unit test script (test:marketing-guard) verifying derived fields stripped & numeric normalization.
+  - MKT-02: Added normalizePeriod utility (strict YYYY-MM) integrated into sanitizeMarketingCampaignDoc with error on invalid; extended tests.
+- TEAM-01: Added computeEffectiveTier util and unit test (test:team-access) ensuring team plan tier overrides individual when higher.
+  - TEAM-01: Added Firestore rule test harness (test:team-rules) – skips automatically if FIRESTORE_EMULATOR_HOST not set.
+  - LOG-01: Replaced console logging in stripe webhook, support reply, contact API routes with structured logger (component ids: stripe-webhook, support-reply, contact).
+  - TEAM-01: Enhanced subscribeToTeamMembers to use live subcollection snapshots with periodic refresh fallback; retains embedded fallback.
+    - NEU-01: Added live NeuroSEO execution scaffold (`src/lib/neuroseo/live-exec.ts`) with timeout + cache-first + synthetic fallback and new API route `/api/neuroseo/live` gated by `neuro_live_backend` feature key (rolling_out). Added minimal test script `test:neuro-live`.
+    - NEU-02: Added compact persistence of live/synthetic analyses to `neuroSeoAnalyses` (fields: userId, overallScore, createdAt, urls, hashKey, topKeywords[<=10], provenance `__provenance`). Deterministic doc id based on hashKey for idempotent upsert. Feature key `neuro_live_persistence` (rolling_out). Non-blocking writes with structured logging on degradation.
+    - PROV-01: Added provenance preservation in marketing sanitizer + smoke tests (`test:provenance`) asserting `__provenance` retained and persisted analyses contain provenance.
+    - NEU-03: Introduced cache abstraction (`src/lib/cache/simple-cache.ts`), SWR background refresh in live exec, zod validation for compact persistence, negative provenance test, and cleanup script (`neuro:cleanup`) for TTL pruning.
+    - FIN-01: Added idempotency to Stripe webhook via `stripeProcessedEvents/{eventId}` guard; duplicate events short-circuit with logged event. (Rollback: delete collection + remove processedRef logic.)
+      - LOG-01 (finalized): Added audit() and degraded() structured logger helpers (flags: audit, degraded) + test script `test:logger` ensuring ISO timestamp, level, and flags; replaced remaining webhook console.error usages with structured logger + degraded notices on persistence failure.
+      - SEC-01: Expanded negative Firestore rule tests (`test:security-negative`) adding: usage subcollection cross-write denial, audits cross-read denial, project outsider read/update restrictions, supportMessages admin-only + replies isolation, team reports membership enforcement, mismatched ownerId team creation denial, member invite deletion denial, role self-escalation prevention; CI integration via emulator.
+  - FIN-02 (partial): Introduced live billing data fetch utility `src/lib/billing/fetch-billing-data.ts` and rewired `/app/(app)/billing/page.tsx` to remove mock data in favor of Firestore `subscriptions` + `financeInvoices` reads gated by `billing_portal_access` feature. Added test script `scripts/test-billing-ui.ts` seeding subscription + invoices in emulator verifying `effectiveMonthly` computation and `nextInvoice` selection. Added client-side invoice pagination + Playwright smoke test `billing-live.spec.ts`. Added payment method helper `payment-method.ts` + API route `/api/billing/payment-method` and integrated client fetch (non-blocking). Added dynamic usage metrics integration (`fetch-usage-metrics.ts`) pulling top-level `/usage` doc for current period and displaying limits (∞ for unlimited). Implemented invoices pagination API route `/api/billing/invoices` initially with period cursor then refined to composite cursor (period|createdAt) + secondary orderBy to prevent multi-invoice period skips (requires composite index `(userId, period desc, createdAt desc)`). Wired lazy load in billing UI consuming composite cursor if present. Enhanced accessibility & regression test coverage (a11y landmarks, keyboard nav, pagination, failure resilience). Added negative security test asserting cross-user subscription read denial. (Remaining: none for FIN-02 core; future: team billing scope.)
+  - PERF-01 (partial): Implemented NeuroSEO live execution rate limiting via new `neuroseoRateLimits` collection + transaction-based counter with 1h window and 429 responses (`Retry-After`) in `/api/neuroseo/live`; added test script `test:neuroseo-rate-limit`. (Remaining: team-scoped limits, integration with central metrics registry.)
+  - OBS-01 (partial): Added lightweight internal metrics endpoint `/api/internal/metrics` exposing NeuroSEO counters (analysisRuns, analysisCacheHits) pending unified registry expansion.
+  - LOG-01 (expansion): Replaced ad-hoc `console.*` statements in `src/lib/neuroseo/index.ts` NeuroSEO suite orchestrator with structured logger (`getLogger('neuroseo-suite').withTrace()`) emitting JSON envelopes (events: phase.* start, item failures, degraded trend/persistence states, completion). Backwards-compatible; no functional changes. Rollback: revert file to previous revision restoring console statements.
+- NEU-03: Unified NeuroSEO metrics registry (live + stream) with env-configurable TTL (NEUROSEO_CACHE_TTL_MS) applied; SSE end provenance fix; streaming test asserts cached speed.
+- TEST-01: Added feature key audit (test-feature-keys.ts) + metrics registry increment test (test-metrics-registry.ts) and extended test:critical aggregation to include provenance + feature + metrics checks. Rollback: delete scripts and revert package.json test:critical line.
+  - Added missing feature keys (api_access, white_label, team_management, custom_integrations) to FEATURE_KEYS.md after audit failure.
+
+## Rollback (FIN-02 cursor refinement)
+
+1. Revert `/src/app/api/billing/invoices/route.ts` to period-only ordering (remove second `orderBy('createdAt','desc')` and composite cursor parsing logic).
+2. Update `/src/app/(app)/billing/page.tsx` to stop referencing `periodAndCreatedAtCursor` and request using `cursor=period` only.
+3. Delete composite Firestore index `(userId, period desc, createdAt desc)` from `firestore.indexes.json` if added; keep `(userId, period desc)` if previously present. Remove financeInvoices createdAt required note in `FIRESTORE_SCHEMAS.md` (mark it optional again) and adjust docs.
+4. Validate pagination still functional (may skip multi-invoice same-period edge); run `billing-live.spec.ts` and a manual multi-invoice same-period test.
+5. Remove this rollback section in CHANGE_LOG after completion.
+
+## Rollback (FIN-02 partial)
+
+      1. Revert `src/app/(app)/billing/page.tsx` to prior mock-based version (use git history).
+      2. Delete `src/lib/billing/fetch-billing-data.ts`.
+      3. Remove billing test script `scripts/test-billing-ui.ts` and related npm script (if added later).
+      4. Optionally demote `billing_portal_access` feature key status in `FEATURE_KEYS.md` back to previous state (e.g., planned) if exposure caused regression.
+      5. Validate by running `npm run test:security-negative` (should be unaffected) and manual smoke of billing page (should show mock data again).
+
+## Rollback
+
+- Remove both docs and any CI validation referencing them; revert related CHANGE_LOG segment.
+
 # 2025-08-10: Removed self-reexport JS stubs for dashboard charts
 
 Refactor: Eliminated `*.js` stub re-export files in `src/components/dashboard/` (seo-score-trend, traffic-sources-chart, keyword-visibility-chart, backlinks-chart, domain-authority-chart) in favor of direct dynamic imports of `.tsx` modules.
@@ -200,7 +249,95 @@ trialEnd: (subscription as any).trial_end ? (subscription as any).trial_end * 10
 
 ## 🔍 **Technical Analysis Summary**
 
+\n## Unreleased (2025-08-11)
+
+### Data Integrity & Cleanup
+
+- Stripped derived fields (ctr, roi) from all marketing optimistic inserts; added provenance flag `__provenance`.
+- Added `sanitizeMarketingCampaignDoc` write guard to enforce raw-only marketingCampaigns storage.
+- Removed heuristic revenue multipliers in marketing automation (replaced with 0) and tagged synthetic records.
+- Deleted unused `empty-module.js` and redundant empty `subscription.tsx`.
+- Annotated deprecated legacy pages (`dashboard/page-backup.tsx`, `team/page-fixed.tsx`, `mobile-nav-test/page.tsx`) pending removal after parity verification.
+- Added comments clarifying exclusion of derived ratios from persistence.
+
+### NeuroSEO Module Simplification (2025-08-11)
+
+- Removed hand-written proxy file `src/lib/neuroseo.js`; all dynamic imports now target extensionless specifier `lib/neuroseo` relying on Bundler module resolution for `.ts`.
+- Rationale: eliminated duplicate re-export (JS + TS) after confirming `moduleResolution: Bundler` resolves `.ts` without explicit extension and `allowJs` is false (no emission concerns).
+- Ensures single authoritative export surface (`neuroseo.ts`) and reduces maintenance overhead.
+
+#### Rollback Plan
+
+1. Recreate `src/lib/neuroseo.js` with `export * from './neuroseo/index';` if any runtime or test environment fails to resolve the TS module.
+2. Change dynamic imports in `src/app/api/neuroseo/route.ts` and any agents (grep `lib/neuroseo"`) back to `lib/neuroseo.js`.
+3. Document reversal here and investigate build pipeline incompatibility with extensionless specifiers.
+
+### Template Persistence (2025-08-11)
+
+### Template/Workflow Indexing (2025-08-11)
+
+- Persisted workflows to Firestore (`workflows` collection) with minimal schema and provenance marker.
+- Added Firestore composite index for `workflows` on (`userId` ASC, `metadata.updated` DESC) to support recent-first per-user queries.
+- Initial implementation auto-loaded recent workflows globally; superseded by security hardening (user-scoped explicit loading) while retaining debounced persistence (create/update/status/delete) with silent degradation.
+
+#### Rollback Plan
+
+1. Remove persistence helper methods (`persistWorkflow`, `loadPersistedWorkflows`, `deletePersistedWorkflow`).
+2. Delete the `workflows` collection (after confirming no dependent features) and remove the composite index from `firestore.indexes.json`.
+3. Remove this changelog section; workflows revert to in-memory volatile state.
+
+- Added Firestore persistence for dashboard and workflow (Zapier) templates.
+- New collections: `dashboardTemplates`, `workflowTemplates` storing minimal template documents (no derived metrics; includes widgets/layout and trigger/action definitions only).
+- Builders (`CustomDashboardBuilder`, `ZapierWorkflowBuilder`) now:
+  - Seed in-memory templates then fire-and-forget sync from Firestore.
+  - Upsert missing local templates to Firestore (idempotent) with `__provenance: 'seed'`.
+  - Provide cached (10‑min TTL) fetch + `refreshTemplates()` for admin/manual refresh.
+- Silent degrade on Firestore errors (logs warn prefix, no user disruption) per degradation policy.
+
+#### Rollback Plan
+
+1. Remove persistence methods (`persistLocalTemplates`, `syncTemplatesFromFirestore`, `refreshTemplates`) from both builders.
+2. Optionally delete new collections (`dashboardTemplates`, `workflowTemplates`) after confirming no other readers.
+3. Remove changelog section and provenance markers; retain in-memory initialization only.
+
+#### Rollback Plan
+
+1. Reintroduce revenue heuristic by reverting changes in `marketing-automation.ts` if required for interim forecasting.
+2. Restore deleted empty files from git history if any build integration unexpectedly referenced them.
+3. Remove provenance flags by search (`__provenance:`) if telemetry dashboards mis-handle the marker.
+
 ### **Git History Investigation:**
+
+### Security & Theming Hardening (2025-08-11)
+
+- Replaced global eager workflow loading with explicit user-scoped `loadUserWorkflows(userId)` to prevent cross-tenant exposure.
+- Added debounced workflow persistence queue (500ms) lowering Firestore write amplification.
+- Began theming refactor: tokenized chart palette in `EnterpriseDashboard.tsx` using CSS variables `--chart-1..5` instead of hex literals.
+- Extended theming refactor: replaced remaining NeuroSEO chart hex colors (semantic-map, trust-block, rewrite-gen, NeuroSEOEnhancedComponents) with token palette `--chart-1..5`.
+- Added rollback guidance; further theming refactor pending for other chart components.
+
+### Team Schema & Logging Unification (2025-08-11)
+
+- TEAM-01 Phase 1: Tightened Firestore `teams` rules – reads now restricted to members (via `memberIds`) or admin; creation allowed for authenticated owner (must appear in `memberIds`); updates/deletes remain admin-only pending granular RBAC.
+- Added documentation `docs/teams/TEAM_SCHEMA_PLAN.md` outlining Phase 2 & 3 evolution (subcollection membership, invites, event sourcing) and rollback plan.
+- LOG-01 Phase 1: Introduced unified isomorphic structured logger `src/lib/logging/app-logger.ts` producing JSON envelopes with trace IDs; replaced ad-hoc console logger in `enhanced-orchestrator.ts` (NeuroSEO) with `getLogger('neuroseo-orchestrator').withTrace()`.
+  - LOG-01 (expansion): Added streaming generator `runAnalysisStream` leveraging structured events (chunk.start, progress, complete) for SSE endpoint.
+- Rationale: Establish consistent logging contract ahead of cross-service trace propagation & future ingestion pipeline (BigQuery / OTLP exporter).
+- Rollback: Revert Firestore rule block & restore inline console logger if unexpected UI authorization regressions surface.
+
+### Team Schema Phase 2 Scaffolding (2025-08-11)
+
+- Added membership subcollection `teams/{teamId}/members/{memberId}` and invites subcollection `teams/{teamId}/invites/{inviteId}` rules (read for members/admin, create restricted to owner/admin, update/delete admin for invites).
+- Updated `team.service.ts` to prefer subcollection members if present (fallback to embedded array).
+- Added backfill script `scripts/backfill-team-members-subcollection.ts` plus npm script `teams:backfill:members`.
+- Extended Firestore rules for granular future RBAC without yet migrating writes to subcollection (read-first strategy reduces risk).
+- Added safeguards: creation/update guarded by ownership; invites limited to owner/admin (delete limited to admin pending moderation model).
+
+#### Rollback Plan
+
+1. If debounced persistence causes stale state after rapid multi-updates, shrink debounce window or revert to immediate writes.
+2. If tokens missing in production theme, reintroduce hex palette temporarily and open issue to align `globals.css` variables.
+3. For admin aggregate views, introduce a separate admin-only loader rather than reverting to global preload.
 
 ```bash
 # Analysis revealed intentional file deletions, not corruption

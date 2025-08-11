@@ -29,64 +29,23 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import LoadingScreen from "@/components/ui/loading-screen";
 import { toast } from "sonner";
+import { fetchBillingData } from "@/lib/billing/fetch-billing-data";
+import { fetchUsageMetrics, NormalizedUsageMetrics } from '@/lib/billing/fetch-usage-metrics';
+import { db } from "@/lib/firebase";
+import { getLogger } from "@/lib/logging/app-logger";
+import { useSubscription } from "@/hooks/useSubscription";
 
-// Mock data - replace with actual API calls
-const mockBillingData = {
-  currentPlan: {
-    name: "Agency",
-    price: 49,
-    billingCycle: "monthly",
-    nextBillingDate: "2024-02-15",
-    status: "active",
-  },
-  paymentMethod: {
-    type: "card",
-    last4: "4242",
-    brand: "Visa",
-    expiryMonth: 12,
-    expiryYear: 2026,
-  },
-  invoices: [
-    {
-      id: "inv_001",
-      date: "2024-01-15",
-  amount: 49,
-      status: "paid",
-  description: "Agency Plan - Monthly",
-      downloadUrl: "/invoices/inv_001.pdf",
-    },
-    {
-      id: "inv_002",
-      date: "2023-12-15",
-  amount: 49,
-      status: "paid",
-  description: "Agency Plan - Monthly",
-      downloadUrl: "/invoices/inv_002.pdf",
-    },
-    {
-      id: "inv_003",
-      date: "2023-11-15",
-  amount: 49,
-      status: "paid",
-  description: "Agency Plan - Monthly",
-      downloadUrl: "/invoices/inv_003.pdf",
-    },
-  ],
-  usage: {
-    keywordsTracked: 342,
-    keywordsLimit: 500,
-    competitorAnalysis: 18,
-    competitorLimit: 25,
-    reportsGenerated: 45,
-    currentPeriodStart: "2024-01-15",
-    currentPeriodEnd: "2024-02-15",
-  },
-};
+// TODO FIN-02: Replace placeholder usage + payment method with live usage metrics & payment method source when available.
 
 export default function BillingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const { user, loading } = useAuth();
+  const [billing, setBilling] = useState<any>();
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const { canUseFeature } = useSubscription();
+  const billingPortalEnabled = canUseFeature('billing_portal_access');
+  const [paymentMethodState, setPaymentMethodState] = useState<any>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -176,11 +135,99 @@ export default function BillingPage() {
     );
   }
 
-  const { currentPlan, paymentMethod, invoices, usage } = mockBillingData;
+  // Firestore fetch side-effect
+  useEffect(() => {
+    if(!user?.uid) return;
+    let cancelled = false;
+    (async () => {
+      const logger = getLogger('billing-ui');
+      try {
+        const data = await fetchBillingData(db, user.uid, { invoiceLimit: 24 });
+        if(cancelled) return;
+        setBilling(data);
+      } catch (e:any) {
+        if(cancelled) return;
+        setFetchError(e.message || 'Failed to load billing data');
+        getLogger('billing-ui').error('billing-ui.client.fetch.error', { error: e?.message });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.uid]);
+
+  // Payment method fetch (server API)
+  useEffect(() => {
+    if(!user?.uid) return; let cancelled=false;
+    (async () => {
+      try {
+        const res = await fetch('/api/billing/payment-method', { headers: { 'authorization': `Bearer ${await user.getIdToken?.()}` }});
+        if(!res.ok) return; const json = await res.json(); if(cancelled) return; setPaymentMethodState(json.paymentMethod || null);
+      } catch { /* silent */ }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.uid]);
+
+  if(!billingPortalEnabled) {
+    return <div className="min-h-screen flex items-center justify-center"><Card className="w-full max-w-md"><CardHeader className="text-center"><AlertTriangle className="h-12 w-12 text-orange-500 mx-auto mb-4" /><CardTitle>Billing Portal Disabled</CardTitle><CardDescription>The billing portal is not enabled for your account yet.</CardDescription></CardHeader></Card></div>;
+  }
+
+  const subscription = billing?.subscription;
+  const PAGE_SIZE = 10;
+  const [invoices, setInvoices] = useState<any[]>(billing?.invoices || []);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  useEffect(() => { if (billing?.invoices) { setInvoices(billing.invoices); setHasMore((billing.invoices || []).length === 24); } }, [billing?.invoices]);
+  const pageCount = Math.max(1, Math.ceil(invoices.length / PAGE_SIZE));
+  const paginated = invoices.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  async function maybeLoadMore(nextPage: number) {
+    if (nextPage * PAGE_SIZE < invoices.length) return;
+    if (!hasMore || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const last = invoices[invoices.length - 1];
+  // Use composite cursor if API returned one previously (stored on last invoice as _cursor maybe later) else fallback
+  const cursor = last?.periodAndCreatedAtCursor || last?.period;
+      const token = await user?.getIdToken?.();
+      const res = await fetch(`/api/billing/invoices?limit=${PAGE_SIZE}&cursor=${encodeURIComponent(cursor)}`, { headers: { authorization: `Bearer ${token}` } });
+      if (res.ok) {
+        const json = await res.json();
+        const newOnes = (json.invoices || []).filter((inv: any) => !invoices.some(i => i.id === inv.id));
+        // Attach composite cursor to each invoice for subsequent pagination
+        if(json.nextCursor && newOnes.length) {
+          // store on the last currently loaded invoice for retrieval
+          newOnes[newOnes.length - 1].periodAndCreatedAtCursor = json.nextCursor;
+        }
+        if (newOnes.length) setInvoices(prev => [...prev, ...newOnes]);
+        setHasMore(json.hasMore);
+      }
+    } catch { /* silent */ } finally { setLoadingMore(false); }
+  }
+  function changePage(delta: number) { const next = Math.min(Math.max(0, page + delta), pageCount - 1); if (next !== page) { setPage(next); if (delta > 0) void maybeLoadMore(next); } }
+  const currentPlan = subscription ? {
+    name: subscription.tier || 'unknown',
+    price: billing?.effectiveMonthly || 0,
+    billingCycle: 'monthly',
+    nextBillingDate: subscription.currentPeriodEnd ? subscription.currentPeriodEnd.toISOString() : '',
+    status: subscription.status || 'active'
+  } : {
+    name: 'Free', price: 0, billingCycle: 'monthly', nextBillingDate: new Date().toISOString(), status: 'free'
+  };
+  const paymentMethod = paymentMethodState || { brand: '••••', last4: '----', expiryMonth: 0, expiryYear: 0 } as any;
+  const [usageMetrics, setUsageMetrics] = useState<NormalizedUsageMetrics | null>(null);
+  useEffect(() => { if(!user?.uid) return; let cancelled=false; (async () => { const m = await fetchUsageMetrics(db, user.uid); if(!cancelled) setUsageMetrics(m); })(); return () => { cancelled = true; }; }, [user?.uid]);
+  const usage = usageMetrics ? { keywordsTracked: usageMetrics.keywordsTracked, keywordsLimit: usageMetrics.keywordsLimit, competitorAnalysis: usageMetrics.competitorAnalysis, competitorLimit: usageMetrics.competitorLimit, reportsGenerated: usageMetrics.reportsGenerated, currentPeriodStart: usageMetrics.periodStart.toISOString(), currentPeriodEnd: usageMetrics.periodEnd.toISOString() } : { keywordsTracked: 0, keywordsLimit: 0, competitorAnalysis: 0, competitorLimit: 0, reportsGenerated: 0, currentPeriodStart: currentPlan.nextBillingDate, currentPeriodEnd: currentPlan.nextBillingDate };
+
+  if(fetchError) {
+    return <div className="min-h-screen flex items-center justify-center"><Card className="w-full max-w-md"><CardHeader className="text-center"><AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" /><CardTitle>Billing Load Error</CardTitle><CardDescription>{fetchError}</CardDescription></CardHeader><CardContent className="flex justify-center"><Button variant="outline" onClick={()=>{setFetchError(null); setBilling(undefined);}}><RefreshCw className="h-4 w-4 mr-2" />Retry</Button></CardContent></Card></div>;
+  }
+
+  if(!billing && user) {
+    return <LoadingScreen fullScreen text="Loading billing information..." />;
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+    <main role="main" className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20" aria-label="Billing portal main content">
+      <div className="max-w-7xl mx-auto px-4 py-8" data-testid="billing-root">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -206,7 +253,7 @@ export default function BillingPage() {
             transition={{ delay: 0.1 }}
             className="lg:col-span-2 space-y-6"
           >
-            <Card>
+            <Card data-testid="usage-section">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
@@ -255,7 +302,7 @@ export default function BillingPage() {
             </Card>
 
             {/* Usage Statistics */}
-            <Card>
+            <Card data-testid="billing-history">
               <CardHeader>
                 <CardTitle>Usage This Month</CardTitle>
                 <CardDescription>
@@ -271,14 +318,14 @@ export default function BillingPage() {
                         Keywords Tracked
                       </span>
                       <span className="text-sm text-muted-foreground">
-                        {usage.keywordsTracked} / {usage.keywordsLimit}
+                        {usage.keywordsTracked} / {usage.keywordsLimit === -1 ? '∞' : usage.keywordsLimit}
                       </span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className="bg-primary h-2 rounded-full transition-all duration-300"
                         style={{
-                          width: `${(usage.keywordsTracked / usage.keywordsLimit) * 100}%`,
+                          width: `${(usage.keywordsLimit && usage.keywordsLimit > 0) ? Math.min(100, (usage.keywordsTracked / usage.keywordsLimit) * 100) : 0}%`,
                         }}
                       />
                     </div>
@@ -290,14 +337,14 @@ export default function BillingPage() {
                         Competitor Analysis
                       </span>
                       <span className="text-sm text-muted-foreground">
-                        {usage.competitorAnalysis} / {usage.competitorLimit}
+                        {usage.competitorAnalysis} / {usage.competitorLimit === -1 ? '∞' : usage.competitorLimit}
                       </span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className="bg-primary h-2 rounded-full transition-all duration-300"
                         style={{
-                          width: `${(usage.competitorAnalysis / usage.competitorLimit) * 100}%`,
+                          width: `${(usage.competitorLimit && usage.competitorLimit > 0) ? Math.min(100, (usage.competitorAnalysis / usage.competitorLimit) * 100) : 0}%`,
                         }}
                       />
                     </div>
@@ -327,10 +374,12 @@ export default function BillingPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {invoices.map((invoice) => (
+                  {paginated.map((invoice) => (
                     <div
                       key={invoice.id}
+                      data-testid="invoice-row"
                       className="flex items-center justify-between p-4 border rounded-lg"
+                      aria-label={`Invoice ${invoice.id}`}
                     >
                       <div className="flex items-center gap-4">
                         <div className="p-2 bg-muted rounded-lg">
@@ -358,6 +407,21 @@ export default function BillingPage() {
                       </div>
                     </div>
                   ))}
+                  {invoices.length === 0 && (
+                    <div className="text-sm text-muted-foreground text-center py-6">No invoices yet.</div>
+                  )}
+                  {invoices.length > PAGE_SIZE && (
+                    <div className="flex items-center justify-between pt-4" aria-label="Invoice pagination controls">
+                      <Button size="sm" variant="outline" disabled={page===0} onClick={()=>changePage(-1)}>Previous</Button>
+                      <p className="text-xs text-muted-foreground">Page {page+1} / {pageCount}{hasMore ? '+' : ''}</p>
+                      <div className="flex gap-2">
+                        {hasMore && page+1>=pageCount && (
+                          <Button size="sm" disabled={loadingMore} onClick={()=>changePage(1)}>{loadingMore ? 'Loading…' : 'Load More'}</Button>
+                        )}
+                        <Button size="sm" variant="outline" disabled={page+1>=pageCount} onClick={()=>changePage(1)}>Next</Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -489,7 +553,7 @@ export default function BillingPage() {
           </motion.div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 

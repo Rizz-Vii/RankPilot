@@ -1,0 +1,70 @@
+import { collection, doc, getDoc, getDocs, limit, orderBy, query, where, Firestore } from 'firebase/firestore';
+import { getLogger } from '@/lib/logging/app-logger';
+
+export interface BillingSubscription {
+    userId: string;
+    status: string;
+    tier: string;
+    currentPeriodEnd?: Date;
+    trialEnd?: Date | null;
+    cancelAt?: Date | null;
+}
+
+export interface BillingInvoice {
+    id: string;
+    period: string; // YYYY-MM
+    amount: number; // stored raw integer or float (no derived ratios)
+    currency?: string;
+    status: string; // paid | open | failed
+    issuedAt?: any;
+    paidAt?: any;
+    userId: string;
+    teamId?: string;
+}
+
+export interface BillingDataResult {
+    subscription: BillingSubscription | null;
+    invoices: BillingInvoice[];
+    nextInvoice?: BillingInvoice | null;
+    effectiveMonthly: number; // computed, not persisted
+    loading: boolean;
+    error?: string;
+}
+
+/**
+ * Fetch billing subscription and recent invoices (scoped by userId or team membership not yet implemented client-side).
+ * No derived ratios are written; only computed in-memory (effectiveMonthly).
+ */
+export async function fetchBillingData(firestore: Firestore, userId: string, opts: { invoiceLimit?: number } = {}): Promise<BillingDataResult> {
+    const logger = getLogger('billing-ui');
+    const invoiceLimit = opts.invoiceLimit ?? 24;
+    logger.debug('billing-ui.load.start', { userId, invoiceLimit });
+    try {
+        const subSnap = await getDoc(doc(firestore, 'subscriptions', userId));
+        let subscription: BillingSubscription | null = null;
+        if (subSnap.exists()) {
+            const d: any = subSnap.data();
+            subscription = {
+                userId,
+                status: d.status || 'free',
+                tier: d.tier || 'free',
+                currentPeriodEnd: d.currentPeriodEnd?.toDate?.() || undefined,
+                trialEnd: d.trialEnd?.toDate?.() || null,
+                cancelAt: d.cancelAt?.toDate?.() || null,
+            };
+        }
+        // invoices scoped by userId only (team support later)
+        const invQ = query(collection(firestore, 'financeInvoices'), where('userId', '==', userId), orderBy('period', 'desc'), limit(invoiceLimit));
+        const invSnap = await getDocs(invQ);
+        const invoices: BillingInvoice[] = invSnap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+        // compute effective monthly = sum of last paid invoice(s) in most recent period (not persisted)
+        const latestPeriod = invoices.length ? invoices[0].period : undefined;
+        const effectiveMonthly = latestPeriod ? invoices.filter(i => i.period === latestPeriod && i.status === 'paid').reduce((s, i) => s + (i.amount || 0), 0) : 0;
+        const nextInvoice = invoices.find(i => i.status !== 'paid') || null;
+        logger.info('billing-ui.load.success', { userId, invoiceCount: invoices.length, tier: subscription?.tier || 'free' });
+        return { subscription, invoices, nextInvoice, effectiveMonthly, loading: false };
+    } catch (e: any) {
+        logger.error('billing-ui.load.error', { userId, error: e.message });
+        return { subscription: null, invoices: [], nextInvoice: null, effectiveMonthly: 0, loading: false, error: e.message };
+    }
+}

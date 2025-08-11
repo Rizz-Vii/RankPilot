@@ -156,9 +156,10 @@ export async function POST(req: NextRequest) {
                         retrievalBlock = '\nRelevant Prior Exchanges (use insights, avoid repetition):\n' + similar.map(s => `Q: ${s.question}\nA: ${s.response.slice(0, 400)}`).join('\n---\n');
                     }
                     try {
-                        const siteChunks = await retrieveSiteChunks({ uid, queryEmbedding: qEmb, topK: 4 });
+                        const siteChunksResult = await retrieveSiteChunks({ uid, queryEmbedding: qEmb, topK: 4 });
+                        const siteChunks = siteChunksResult.chunks || [];
                         if (siteChunks.length) {
-                            siteBlock = '\nSite Knowledge Snippets (cite if used, prefer higher score):\n' + siteChunks.map(c => `• (${c.score.toFixed(2)}) ${c.meta?.title ? c.meta.title + ' - ' : ''}${c.content.slice(0, 260)}`).join('\n');
+                            siteBlock = '\nSite Knowledge Snippets (cite if used, prefer higher score):\n' + siteChunks.map((c: any) => `• (${c.score.toFixed(2)}) ${c.meta?.title ? c.meta.title + ' - ' : ''}${c.content.slice(0, 260)}`).join('\n');
                         }
                     } catch { /* ignore site retrieval errors */ }
                 }

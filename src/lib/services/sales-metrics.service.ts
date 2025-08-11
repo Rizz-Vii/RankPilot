@@ -1,6 +1,7 @@
 // Sales Metrics Service - Firestore aggregation with graceful mock fallback
 // NOTE: Collections assumed: salesDeals, salesForecastSnapshots. Adjust to real schema.
-import { collection, getDocs, query, where, Timestamp, onSnapshot, Unsubscribe } from 'firebase/firestore';
+import { collection, getDocs, query, where, Timestamp, Unsubscribe } from 'firebase/firestore';
+import { managedOnSnapshot } from '@/lib/firebase/write-guard';
 import { db } from '@/lib/firebase/connection-manager';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
 
@@ -8,7 +9,7 @@ export interface SalesDealDoc { stage: string; amount: number; probability?: num
 export interface ForecastSnapshotDoc { period: string; forecast: number; actual?: number; createdAt?: any; userId?: string; teamId?: string; }
 
 export interface AggregatedSalesMetrics {
-    kpis: { key: string; label: string; value: number; delta: number; trend: number[]; intent?: 'neutral' | 'success' | 'warning' | 'danger'; target?: number; invertTarget?: boolean }[];
+    kpis: { key: string; label: string; value: number; delta: number; trend: number[]; intent?: 'neutral' | 'success' | 'warning' | 'danger' | 'accent'; target?: number; invertTarget?: boolean }[];
     funnel: { stage: string; count: number; value: number; conversion: number }[];
     forecastSeries: { label: string; forecast: number; actual: number }[];
     coverage: { pipeline: number; target: number; coverageRatio: number };
@@ -114,7 +115,7 @@ export function subscribeSalesMetrics(userId: string, range: '30d' | '90d' | 'yt
         }
     };
     const unsubs: Unsubscribe[] = [];
-    unsubs.push(onSnapshot(dealsQ, snap => { deals = snap.docs.map(d => ({ ...(d.data() as any) })); emit(); }));
-    unsubs.push(onSnapshot(fcQ, snap => { forecast = snap.docs.map(d => ({ ...(d.data() as any) })); emit(); }));
+    unsubs.push(managedOnSnapshot(dealsQ, snap => { deals = snap.docs.map((d: any) => ({ ...(d.data() as any) })); emit(); }, err => console.error('[SalesMetrics] deals snapshot error', err), { debounceMs: 120 }));
+    unsubs.push(managedOnSnapshot(fcQ, snap => { forecast = snap.docs.map((d: any) => ({ ...(d.data() as any) })); emit(); }, err => console.error('[SalesMetrics] forecast snapshot error', err), { debounceMs: 120 }));
     return () => { unsubs.forEach(u => u()); };
 }

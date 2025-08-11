@@ -14,16 +14,19 @@ interface MetricCardProps {
   trend?: React.ReactNode; // sparkline element
   footer?: React.ReactNode;
   className?: string;
-  intent?: 'neutral' | 'success' | 'warning' | 'danger';
+  intent?: 'neutral' | 'success' | 'warning' | 'danger' | 'accent';
   size?: 'sm' | 'md' | 'lg';
   badge?: React.ReactNode; // small badge (target progress, etc.)
+  targetValue?: number; // numeric target for inline progress bar
+  invertTarget?: boolean; // when lower is better
 }
 
 const intentStyles: Record<string, string> = {
-  neutral: 'bg-gradient-to-br from-background to-muted/30 border-border',
-  success: 'bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border-emerald-500/30',
-  warning: 'bg-gradient-to-br from-amber-500/10 to-amber-500/5 border-amber-500/30',
-  danger: 'bg-gradient-to-br from-rose-500/10 to-rose-500/5 border-rose-500/30'
+  neutral: 'bg-background/60 border-border',
+  success: 'bg-emerald-500/5 border-emerald-500/30',
+  warning: 'bg-amber-500/5 border-amber-500/30',
+  danger: 'bg-rose-500/5 border-rose-500/30',
+  accent: 'bg-primary/5 border-primary/30'
 };
 
 export function MetricCard({
@@ -39,16 +42,23 @@ export function MetricCard({
   className,
   intent = 'neutral',
   size = 'md',
-  badge
+  badge,
+  targetValue,
+  invertTarget
 }: MetricCardProps) {
   const formattedDelta = delta != null ? (typeof delta === 'number' ? delta.toFixed(precision) : delta) : null;
   const positive = delta != null && typeof delta === 'number' ? delta >= 0 : undefined;
+  const numericVal = typeof value === 'number' ? value : parseFloat(String(value).replace(/[^0-9.-]/g,''));
+  const progressPct = targetValue!=null && !isNaN(numericVal) ? (
+    invertTarget ? (numericVal<=targetValue? 100 : Math.min(100, (targetValue/Math.max(1,numericVal))*100)) : Math.min(100, (numericVal/Math.max(1,targetValue))*100)
+  ): null;
+  const progressState = progressPct!=null ? (progressPct>=100? 'on': progressPct>=75? 'near': 'far') : null;
 
   return (
-    <motion.div
+  <motion.div
       layout
       className={cn(
-        'relative overflow-hidden rounded-xl border p-4 flex flex-col gap-2 shadow-sm backdrop-blur-sm',
+    'relative overflow-hidden rounded-xl border p-4 flex flex-col gap-2 shadow-sm backdrop-blur-sm transition-shadow hover:shadow-md focus-within:shadow-md',
         intentStyles[intent],
         size === 'sm' && 'p-3',
         size === 'lg' && 'p-6',
@@ -76,6 +86,14 @@ export function MetricCard({
             </div>
             {deltaLabel && (
               <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70">{deltaLabel}</p>
+            )}
+            {progressPct!=null && (
+              <div className="mt-1 flex items-center gap-2 w-full" aria-label="Target progress">
+                <div className="flex-1 h-1.5 rounded bg-muted overflow-hidden">
+                  <div className={cn('h-full transition-all', progressState==='on' && 'bg-emerald-500', progressState==='near' && 'bg-amber-500', progressState==='far' && 'bg-rose-500')} style={{width:`${progressPct}%`}} />
+                </div>
+                <span className="text-[10px] font-medium text-muted-foreground tabular-nums min-w-[40px] text-right">{Math.round(progressPct)}%</span>
+              </div>
             )}
         </div>
         {icon && (

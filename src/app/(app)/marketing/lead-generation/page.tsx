@@ -15,6 +15,7 @@ import { useMarketingCampaignMetrics } from '@/hooks/useMarketingCampaignMetrics
 import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { useProvenance } from '@/hooks/useProvenance';
 
 interface ImportDialogProps { open: boolean; onClose: ()=>void; onImport:(raw:string)=>Promise<void>; loading:boolean; }
 function ImportDialog({ open, onClose, onImport, loading }: ImportDialogProps){
@@ -47,6 +48,8 @@ export default function LeadGenerationPage() {
   const teamId = undefined;
   const [importOpen, setImportOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+  const { markLive, markFallback, ProvenanceLegend } = useProvenance();
+  useEffect(() => { if(live.loading) return; if(live.kpis.length) markLive(); else markFallback(); }, [live.loading, live.kpis, markLive, markFallback]);
 
   async function handleImport(raw: string){
     try{
@@ -55,7 +58,7 @@ export default function LeadGenerationPage() {
       // optimistic synthetic row (approx leads count estimated by lines)
       const est = raw.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).length;
       if(est){
-        live.addOptimistic({ name: `Lead Import (${est})`, channel:'lead-gen', impressions:0, clicks:0, leads: est, spend:0, revenue:0, ctr:0, roi:0 });
+  live.addOptimistic({ name: `Lead Import (${est})`, channel:'lead-gen', impressions:0, clicks:0, leads: est, spend:0, revenue:0, __provenance:'optimistic' });
       }
       await countPromise;
       toast({ title:'Leads imported', description:'Your leads were added and will appear in metrics shortly.' });
@@ -65,14 +68,14 @@ export default function LeadGenerationPage() {
   }
   async function handleScore(){
     try{ setBusy('score');
-      live.addOptimistic({ name: 'Lead Score', channel:'lead-gen', impressions:0, clicks:0, leads:0, spend:0, revenue:0, ctr:0, roi:0 });
+  live.addOptimistic({ name: 'Lead Score', channel:'lead-gen', impressions:0, clicks:0, leads:0, spend:0, revenue:0, __provenance:'optimistic' });
       const res = await scoreLeads(userId, teamId); toast({ title:'Scoring complete', description:`Updated ${res.updated} leads.` }); }
     catch(e:any){ toast({ title:'Scoring failed', description:e.message || 'Unknown error', variant:'destructive' }); }
     finally{ setBusy(null); }
   }
   async function handleRoute(){
     try{ setBusy('route');
-      live.addOptimistic({ name: 'Lead Route', channel:'lead-gen', impressions:0, clicks:0, leads:0, spend:0, revenue:0, ctr:0, roi:0 });
+  live.addOptimistic({ name: 'Lead Route', channel:'lead-gen', impressions:0, clicks:0, leads:0, spend:0, revenue:0, __provenance:'optimistic' });
       const res = await routeLeads(userId, teamId); toast({ title:'Routing complete', description:`Routed ${res.routed} leads.` }); }
     catch(e:any){ toast({ title:'Routing failed', description:e.message || 'Unknown error', variant:'destructive' }); }
     finally{ setBusy(null); }
@@ -85,6 +88,7 @@ export default function LeadGenerationPage() {
           <p className="text-muted-foreground max-w-3xl">Capture, enrichment & qualification flows with AI automation.</p>
           <PeriodSelector value={months} onChange={setMonths} />
         </header>
+  <ProvenanceLegend />
         <section className="grid gap-4 md:grid-cols-4">
           {data.kpis.map((k:any) => (
             <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />

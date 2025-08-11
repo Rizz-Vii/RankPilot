@@ -1,23 +1,115 @@
 "use client";
 // Sales - Pipeline
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { QuotaBar } from '@/components/metrics/QuotaBar';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { ToolPageHeader } from '@/components/tool-page-header';
+import { Button } from '@/components/ui/button';
+import { fetchRecentSalesMetricsSnapshots, fetchRecentSalesForecastSnapshots } from '@/lib/services/sales-automation-snapshots';
+import { ActionCard } from '@/components/shared/action-card';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
+import { useAutomationTrigger } from '@/hooks/useAutomationTrigger';
+import { AddDealModal } from '../_parts/add-deal-modal';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useProvenance } from '@/hooks/useProvenance';
 
 export default function SalesPipelinePage() {
   const data = getMockMetrics('sales');
+  const { user } = useAuth();
+  const userId = user?.uid; const teamId = (user as any)?.teamId as string | undefined;
+  const [snapMetrics, setSnapMetrics] = useState<any | null>(null);
+  const [snapForecast, setSnapForecast] = useState<any | null>(null);
+  const [metricsHistory, setMetricsHistory] = useState<any[]>([]);
+  const { toast } = useToast();
+  const { trigger, running } = useAutomationTrigger();
+  const [addOpen, setAddOpen] = useState(false);
+  const [loadingSnaps, setLoadingSnaps] = useState(false);
+  const { provenance, markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(() => { trackDashboardView('sales'); }, []);
+  useEffect(()=> {
+    if(!userId) return; let active = true; setLoadingSnaps(true);
+  (async ()=> {
+      try {
+        const [m,f] = await Promise.all([
+          fetchRecentSalesMetricsSnapshots(userId, teamId, 6),
+          fetchRecentSalesForecastSnapshots(userId, teamId, 3)
+        ]);
+        if(!active) return;
+        if(m.length) {
+          setSnapMetrics({ pipeline: m[0].pipeline, closedWon: m[0].closedWon, totalDeals: m[0].totalDeals, ts: m[0].createdAt?.toDate?.() || new Date() });
+          setMetricsHistory(m.map(s => ({ ts: s.createdAt?.toDate?.() || new Date(), pipeline: s.pipeline })));
+        }
+        if(f.length) setSnapForecast({ forecast: f[0].forecast, period: f[0].period, ts: f[0].createdAt?.toDate?.() || new Date() });
+    if(m.length || f.length) { markLive(); } else { markFallback(); }
+      } finally { if(active) setLoadingSnaps(false); }
+    })();
+    return ()=> { active=false; };
+  }, [userId, teamId]);
+
+  function handleAutomation(action: 'salesForecastSnapshot'|'salesRefreshMetrics') {
+    trigger(action, {
+      optimistic: action === 'salesRefreshMetrics' ? () => {
+        // optimistic: inject a pseudo snapshot bar timestamp to visually indicate refresh
+  setSnapMetrics((s: any) => s ? { ...s, ts: new Date() } : s);
+  setMetricsHistory((h: any[]) => h.length ? [{ ...h[0], ts: new Date() }, ...h] : h);
+      } : undefined,
+      label: action
+    });
+  }
   return (
     <FeatureGate feature="sales_pipeline" requiredTier="starter" showUpgrade>
-      <div className="p-6 space-y-8">
-        <header className="space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight">Sales Pipeline</h1>
-          <p className="text-muted-foreground max-w-3xl">Stage health, velocity, and conversion yield. Kanban + AI stage prediction coming soon.</p>
-        </header>
+      <div className="p-6 space-y-10">
+  <AddDealModal open={addOpen} onOpenChange={setAddOpen} onCreated={(d)=> { /* lightweight optimistic pipeline adjustment */ setSnapMetrics((s: any) => s ? { ...s, totalDeals: (s.totalDeals||0)+1, pipeline: s.pipeline + (d.amount||0) } : s); }} />
+  <ToolPageHeader
+          title="Sales Pipeline"
+          description="Stage health, velocity, conversion yield & coverage readiness for forecast confidence."
+          badges={[{ label: teamId ? 'Team Scope':'User Scope', variant: 'outline' }, { label: 'Automation Enabled', variant: 'secondary' }]}
+        >
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={()=> setAddOpen(true)}>Add Opportunity</Button>
+            <Button size="sm" variant="outline">Stage Audit</Button>
+            <Button size="sm" variant="default">AI Forecast</Button>
+          </div>
+        </ToolPageHeader>
+  <ProvenanceLegend />
+
+        {(loadingSnaps) && <Skeleton className="h-16 rounded-lg" shimmer />}
+        {!loadingSnaps && (snapMetrics || snapForecast) && (
+          <div className="grid gap-3 md:grid-cols-2" aria-label="Latest automation snapshots">
+            {snapMetrics && (
+              <div className="rounded-lg border p-3 bg-background/60 flex items-center justify-between text-xs">
+                <div className="space-y-1">
+                  <p className="font-medium">Last Metrics Snapshot</p>
+                  <p className="text-muted-foreground">Pipeline {snapMetrics.pipeline.toLocaleString()} · Deals {snapMetrics.totalDeals} · Won {snapMetrics.closedWon}</p>
+                  {metricsHistory.length > 1 && (
+                    <div className="flex gap-1 items-end mt-1" aria-label="Pipeline mini history">
+                      {metricsHistory.slice(0,8).reverse().map((h,i,a)=> {
+                        const max = Math.max(...metricsHistory.map(x=> x.pipeline));
+                        const pct = max? Math.max(4, Math.round((h.pipeline / max)*32)) : 4;
+                        return <span key={i} className="inline-block w-1.5 rounded-sm bg-primary/70" style={{height: pct}} aria-hidden="true" />;
+                      })}
+                    </div>
+                  )}
+                </div>
+                <time className="text-[10px] text-muted-foreground" dateTime={snapMetrics.ts.toISOString()}>{snapMetrics.ts.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit'})}</time>
+              </div>
+            )}
+            {snapForecast && (
+              <div className="rounded-lg border p-3 bg-background/60 flex items-center justify-between text-xs">
+                <div className="space-y-1">
+                  <p className="font-medium">Last Forecast Snapshot</p>
+                  <p className="text-muted-foreground">Forecast {snapForecast.forecast.toLocaleString()} · Period {snapForecast.period}</p>
+                </div>
+                <time className="text-[10px] text-muted-foreground" dateTime={snapForecast.ts.toISOString()}>{snapForecast.ts.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit'})}</time>
+              </div>
+            )}
+          </div>
+        )}
         <section className="grid gap-4 md:grid-cols-3">
           {data.kpis.map(k => (
             <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
@@ -40,23 +132,13 @@ export default function SalesPipelinePage() {
           </section>
         )}
         <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Pipeline Actions</h2>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-xl border p-4 bg-background/50 space-y-2">
-              <p className="text-sm font-medium">Add Opportunity</p>
-              <p className="text-xs text-muted-foreground">Create new opportunity with AI-enriched firmographics.</p>
-              <button className="text-xs font-medium px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition">Create</button>
-            </div>
-            <div className="rounded-xl border p-4 bg-background/50 space-y-2">
-              <p className="text-sm font-medium">Stage Audit</p>
-              <p className="text-xs text-muted-foreground">Run velocity + bottleneck analysis for current quarter.</p>
-              <button className="text-xs font-medium px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition">Analyze</button>
-            </div>
-            <div className="rounded-xl border p-4 bg-background/50 space-y-2">
-              <p className="text-sm font-medium">AI Forecast</p>
-              <p className="text-xs text-muted-foreground">Generate probability-weighted forecast snapshot.</p>
-              <button className="text-xs font-medium px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition">Run</button>
-            </div>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Pipeline Workbench</h2>
+          <div className="grid gap-4 md:grid-cols-5">
+            <ActionCard title="Add Opportunity" desc="Capture new opportunity with enrichment" action="Create" />
+            <ActionCard title="Stage Audit" desc="Velocity & stall detection" action="Analyze" />
+            <ActionCard title="AI Forecast" desc="Generate forecast snapshot" action="Run" onClick={()=> handleAutomation('salesForecastSnapshot')} loading={!!running['salesForecastSnapshot']} loadingLabel="Running" />
+            <ActionCard title="Refresh Metrics" desc="Force metrics snapshot" action="Run" onClick={()=> handleAutomation('salesRefreshMetrics')} loading={!!running['salesRefreshMetrics']} loadingLabel="Refreshing" />
+            <ActionCard title="Coverage Check" desc="Pipeline vs target multiplier" action="Check" />
           </div>
         </section>
       </div>

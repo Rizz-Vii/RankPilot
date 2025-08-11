@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import LoadingScreen from "@/components/ui/loading-screen";
+// DEPRECATED FIXED TEAM PAGE (2025-08-11): superseded by /team/page.tsx; kept temporarily for rollback.
 import { FeatureGate } from "@/components/subscription/FeatureGate";
 import {
   Card,

@@ -1,1 +1,1 @@
-export { default } from './forecast-variance';
+export { default } from './forecast-variance.tsx';

@@ -9,7 +9,7 @@ export interface DomainMetricSet {
         value: number;
         delta: number;
         trend: number[];
-        intent?: 'neutral' | 'success' | 'warning' | 'danger';
+        intent?: 'neutral' | 'success' | 'warning' | 'danger' | 'accent';
     }>;
     quotas?: Array<{ key: string; label: string; used: number; limit: number }>;
 }

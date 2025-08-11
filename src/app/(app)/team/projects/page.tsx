@@ -13,6 +13,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { DashboardSurface } from '@/components/layout/DashboardSurface';
+import { SuiteAccentProvider } from '@/context/SuiteAccentContext';
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -244,7 +246,7 @@ export default function TeamProjectsPage() {
   }
 
   return (
-    <main className="container mx-auto py-6 space-y-8">
+  <main className="container mx-auto py-6 space-y-8">
       <ToolPageHeader
         title="Team Projects"
         description="Manage and track your team's SEO projects and campaigns"
@@ -385,7 +387,9 @@ export default function TeamProjectsPage() {
             </div>
           </DialogContent>
         </Dialog>
-      </ToolPageHeader>
+  </ToolPageHeader>
+  <SuiteAccentProvider value="marketing">
+  <DashboardSurface as="section" className="space-y-8 p-6">
 
   {/* Filters */}
   <div className="flex flex-col md:flex-row gap-4">
@@ -567,6 +571,8 @@ export default function TeamProjectsPage() {
           </Button>
         </div>
       )}
-  </main>
+      </DashboardSurface>
+      </SuiteAccentProvider>
+    </main>
   );
 }

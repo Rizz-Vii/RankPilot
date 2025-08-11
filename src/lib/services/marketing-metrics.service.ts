@@ -1,12 +1,13 @@
 // Marketing Metrics Service - aggregates campaign data with realtime subscription
-import { collection, getDocs, onSnapshot, orderBy, query, where, Unsubscribe, limit } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, where, Unsubscribe, limit } from 'firebase/firestore';
+import { managedOnSnapshot } from '@/lib/firebase/write-guard';
 import { db } from '@/lib/firebase/connection-manager';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
 
 export interface MarketingCampaignDoc { id?: string; userId?: string; teamId?: string; period: string; name?: string; channel?: string; impressions?: number; clicks?: number; leads?: number; spend?: number; revenue?: number; status?: string; createdAt?: any; }
 
 export interface AggregatedMarketingMetrics {
-    kpis: { key: string; label: string; value: number; delta: number; trend: number[]; intent?: 'neutral' | 'success' | 'warning' | 'danger'; target?: number; invertTarget?: boolean }[];
+    kpis: { key: string; label: string; value: number; delta: number; trend: number[]; intent?: 'neutral' | 'success' | 'warning' | 'danger' | 'accent'; target?: number; invertTarget?: boolean }[];
     campaigns: MarketingCampaignDoc[];
     channelPerformance: { channel: string; impressions: number; leads: number; roi: number }[];
     trendSeries: { period: string; impressions: number; leads: number; ctr: number; roi: number }[];
@@ -60,6 +61,6 @@ export function subscribeMarketingMetrics(userId: string, months: number, cb: (m
     const conds = teamId ? [where('teamId', '==', teamId)] : [where('userId', '==', userId)];
     const q = query(collection(db, 'marketingCampaigns'), ...conds, orderBy('period', 'desc'));
     let campaigns: MarketingCampaignDoc[] = [];
-    const unsub = onSnapshot(q, snap => { campaigns = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })); cb(aggregateCampaigns(campaigns, months)); });
+    const unsub = managedOnSnapshot(q, snap => { campaigns = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) })); cb(aggregateCampaigns(campaigns, months)); }, err => { console.error('[MarketingMetrics] snapshot error', err); }, { debounceMs: 120 });
     return () => { unsub(); };
 }

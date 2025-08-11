@@ -12,8 +12,11 @@ import { z } from "zod";
 const geminiApiKey = process.env.GEMINI_API_KEY;
 const googleApiKey = process.env.GOOGLE_API_KEY;
 
-console.log("GEMINI_API_KEY:", process.env.GEMINI_API_KEY);
-console.log("GOOGLE_API_KEY:", googleApiKey);
+// Mask sensitive keys if accidentally logged (avoid leaking full values in build output)
+if (process.env.NODE_ENV !== 'production') {
+  console.log("GEMINI_API_KEY present:", !!process.env.GEMINI_API_KEY);
+  console.log("GOOGLE_API_KEY present:", !!googleApiKey);
+}
 
 const ActivitySchema = z.object({
   type: z.string(),

@@ -376,6 +376,7 @@ const TrafficSourcesChart = ({ data }: { data: any[]; }) => (
   </Card>
 );
 
+// DEPRECATED BACKUP PAGE (2025-08-11): retained only for reference; slated for removal.
 // ----- DUMMY DATA -----
 
 const dummyDashboardData = {

@@ -1,1 +1,2 @@
-export { default } from '../../dashboard/backlinks-chart';
+// Correct relative path to sibling TSX file
+export { default } from '../backlinks-chart';

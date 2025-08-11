@@ -12,12 +12,19 @@ import { Button } from '@/components/ui/button';
 import { DownloadCloud, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { fetchSalesMetrics, AggregatedSalesMetrics, subscribeSalesMetrics, SalesDealDoc, ForecastSnapshotDoc } from '@/lib/services/sales-metrics.service';
+import { fetchRecentSalesMetricsSnapshots, fetchRecentSalesForecastSnapshots } from '@/lib/services/sales-automation-snapshots';
 import { SalesContextProvider } from './_parts/sales-context';
 import { Badge } from '@/components/ui/badge';
 import { AdaptiveProgress } from '@/components/ui/adaptive-progress';
+import { ActionCard } from '@/components/shared/action-card';
 import { StageDrilldownModal } from './_parts/stage-drilldown-modal';
 import { ForecastVarianceModal } from './_parts/forecast-variance-modal';
 import { useAuth } from '@/context/AuthContext';
+import { DashboardSurface } from '@/components/layout/DashboardSurface';
+import { dashboardContainerVariants, dashboardItemVariants } from '@/components/dashboard/animation-variants';
+import { motion } from 'framer-motion';
+import { useProvenance } from '@/hooks/useProvenance';
+import { SuiteAccentProvider } from '@/context/SuiteAccentContext';
 
 const FunnelChart = dynamic(() => import('./_parts/funnel-stage-conversion.js').then(m => m.default), { ssr: false, loading: () => <Skeleton shimmer className="h-[260px] w-full" /> });
 const ForecastVariance = dynamic(() => import('./_parts/forecast-variance.js').then(m => m.default), { ssr: false, loading: () => <Skeleton shimmer className="h-[260px] w-full" /> });
@@ -40,6 +47,8 @@ export default function SalesDashboardRoot() {
   const teamId = (user as any)?.teamId as string | undefined;
   const [selectedStage, setSelectedStage] = useState<string | null>(null);
   const [varianceOpen, setVarianceOpen] = useState(false);
+  const [snapMetrics, setSnapMetrics] = useState<{ pipeline: number; closedWon: number; ts: Date } | null>(null);
+  const [snapForecast, setSnapForecast] = useState<{ forecast: number; period: string; ts: Date } | null>(null);
 
   useEffect(() => { trackDashboardView('sales'); }, []);
 
@@ -69,6 +78,26 @@ export default function SalesDashboardRoot() {
     return () => { active = false; if (unsub) unsub(); };
   }, [userId, teamId, range, dataVersion, authLoading]);
 
+  // Load latest automation snapshots (lightweight, not realtime)
+  useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      try {
+        const [metricsSnaps, forecastSnaps] = await Promise.all([
+          fetchRecentSalesMetricsSnapshots(userId, teamId, 1),
+          fetchRecentSalesForecastSnapshots(userId, teamId, 1)
+        ]);
+        if (metricsSnaps.length) {
+          setSnapMetrics({ pipeline: metricsSnaps[0].pipeline, closedWon: metricsSnaps[0].closedWon, ts: metricsSnaps[0].createdAt?.toDate?.() || new Date() });
+        }
+        if (forecastSnaps.length) {
+          setSnapForecast({ forecast: forecastSnaps[0].forecast, period: forecastSnaps[0].period, ts: forecastSnaps[0].createdAt?.toDate?.() || new Date() });
+        }
+      } catch { /* silent */ }
+    })();
+  }, [userId, teamId, dataVersion]);
+
+  const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   const summary: SalesKpiSummary = useMemo(() => {
     const ksource = metrics?.kpis || mock.kpis;
     const totalPipeline = ksource.find(k => /pipeline/i.test(k.key))?.value || 0;
@@ -79,6 +108,12 @@ export default function SalesDashboardRoot() {
   }, [metrics, mock.kpis, dataVersion]);
 
   function handleRefresh() { setDataVersion(v => v + 1); }
+
+  // Provenance classification: live when realtime metrics loaded, fallback when relying solely on mock
+  useEffect(() => {
+    if (initialLoading) return;
+    if (metrics) markLive(); else markFallback();
+  }, [initialLoading, metrics, markLive, markFallback]);
 
   function exportSnapshot(format: 'json' | 'csv') {
     const rows = (metrics?.kpis || mock.kpis).map(k => ({ key: k.key, label: k.label, value: k.value, delta: k.delta }));
@@ -95,7 +130,8 @@ export default function SalesDashboardRoot() {
   return (
     <FeatureGate feature="sales_pipeline" requiredTier="starter" showUpgrade>
       <SalesContextProvider data={metrics} range={range} refreshing={refreshing} deals={deals} forecast={forecast}>
-        <div className="p-6 space-y-10">
+    <SuiteAccentProvider value="sales">
+  <DashboardSurface as="section" aria-label="Sales dashboard surface" className="p-6 space-y-10">
           <ToolPageHeader
             title="Sales Dashboard"
             description="Pipeline momentum, stage conversion efficiency, forecast variance, and revenue predictability intelligence."
@@ -118,14 +154,39 @@ export default function SalesDashboardRoot() {
               </Button>
             </div>
           </ToolPageHeader>
+          <ProvenanceLegend />
 
           <div className="sr-only" role="status" aria-live="polite">
             Sales summary: total pipeline {summary.totalPipeline.toLocaleString()}, weighted forecast {summary.weightedForecast.toLocaleString()}, win rate {summary.winRate} percent, average cycle {summary.velocityDays} days.
           </div>
 
-          <section aria-label="Key performance indicators" className="grid gap-4 md:grid-cols-4">
+          {/* Automation Snapshot Summary Bar */}
+          {(snapMetrics || snapForecast) && (
+            <div className="grid gap-3 md:grid-cols-2" aria-label="Latest automation snapshots">
+              {snapMetrics && (
+                <div className="rounded-lg border p-3 bg-background/60 flex items-center justify-between text-xs">
+                  <div className="space-y-1">
+                    <p className="font-medium">Last Metrics Snapshot</p>
+                    <p className="text-muted-foreground">Pipeline {snapMetrics.pipeline.toLocaleString()} · Closed Won {snapMetrics.closedWon}</p>
+                  </div>
+                  <time className="text-[10px] text-muted-foreground" dateTime={snapMetrics.ts.toISOString()}> {snapMetrics.ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>
+                </div>
+              )}
+              {snapForecast && (
+                <div className="rounded-lg border p-3 bg-background/60 flex items-center justify-between text-xs">
+                  <div className="space-y-1">
+                    <p className="font-medium">Last Forecast Snapshot</p>
+                    <p className="text-muted-foreground">Forecast {snapForecast.forecast.toLocaleString()} · Period {snapForecast.period}</p>
+                  </div>
+                  <time className="text-[10px] text-muted-foreground" dateTime={snapForecast.ts.toISOString()}>{snapForecast.ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>
+                </div>
+              )}
+            </div>
+          )}
+
+      <motion.section aria-label="Key performance indicators" className="grid gap-4 md:grid-cols-4" variants={dashboardContainerVariants} initial="hidden" animate="visible">
             {initialLoading && Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-32 rounded-xl" shimmer aria-label="Loading metric" />
+        <Skeleton key={i} className="h-32 rounded-xl" shimmer aria-label="Loading metric" />
             ))}
             {!initialLoading && (() => {
               type Ext = typeof mock.kpis[number] & { target?: number; invertTarget?: boolean };
@@ -133,10 +194,11 @@ export default function SalesDashboardRoot() {
               const targetMap: Record<string, { target?: number; invertTarget?: boolean }> = {};
               metrics?.kpis?.forEach(k => { (targetMap as any)[k.key] = { target: (k as any).target, invertTarget: (k as any).invertTarget }; });
               const extended: Ext[] = base.map(k => ({ ...k, ...(targetMap[k.key] || {}) }));
-              return extended.map(k => {
+              return extended.map((k, i) => {
                 const pctToTarget = k.target ? (k.invertTarget ? (k.target / (k.value || 1)) * 100 : (k.value / k.target) * 100) : null;
                 const alertState = pctToTarget != null ? (k.invertTarget ? pctToTarget <= 100 : pctToTarget >= 100) : false;
                 return (
+                  <motion.div variants={dashboardItemVariants} key={k.key}>
                   <MetricCard
                     key={k.key}
                     label={k.label}
@@ -144,14 +206,15 @@ export default function SalesDashboardRoot() {
                     delta={k.delta}
                     deltaLabel="vs last period"
                     trend={<TrendSparkline data={k.trend} />}
-                    intent={k.intent || 'neutral'}
+                    intent={k.intent || (i === 0 ? 'accent' : 'neutral')}
                     badge={k.target ? (<Badge variant={alertState ? 'default' : 'outline'} className="text-[10px]">{pctToTarget!.toFixed(0)}% target</Badge>) : undefined}
                     footer={k.target ? <AdaptiveProgress value={Math.min(100, pctToTarget!)} invert={false} aria-label={`${k.label} target progress`} /> : undefined}
                   />
+                  </motion.div>
                 );
               });
             })()}
-          </section>
+          </motion.section>
 
           <section className="grid gap-6 md:grid-cols-2" aria-label="Pipeline analytics modules">
             <div className="space-y-3">
@@ -175,15 +238,16 @@ export default function SalesDashboardRoot() {
             </div>
           </section>
 
-          <section className="space-y-4" aria-label="Recommended next actions">
+      <section className="space-y-4" aria-label="Recommended next actions">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Next Actions</h2>
             <div className="grid gap-4 md:grid-cols-3">
-              <ActionCard title="Add Deal" desc="Capture a new qualified opportunity with AI stage prediction." actionLabel="Create" />
-              <ActionCard title="Review Stalled" desc="List deals exceeding median stage duration threshold." actionLabel="Open List" />
-              <ActionCard title="Forecast Snapshot" desc="Generate updated probability-weighted forecast model." actionLabel="Run" />
+        <ActionCard title="Add Deal" desc="Capture a new qualified opportunity with AI stage prediction." action="Create" />
+        <ActionCard title="Review Stalled" desc="List deals exceeding median stage duration threshold." action="Open List" />
+        <ActionCard title="Forecast Snapshot" desc="Generate updated probability-weighted forecast model." action="Run" />
             </div>
           </section>
-        </div>
+  </DashboardSurface>
+        </SuiteAccentProvider>
         <StageDrilldownModal stage={selectedStage} onOpenChange={(o) => !o && setSelectedStage(null)} />
         <ForecastVarianceModal open={varianceOpen} onOpenChange={setVarianceOpen} />
       </SalesContextProvider>
@@ -191,13 +255,4 @@ export default function SalesDashboardRoot() {
   );
 }
 
-interface ActionCardProps { title: string; desc: string; actionLabel: string; }
-function ActionCard({ title, desc, actionLabel }: ActionCardProps) {
-  return (
-    <div className="rounded-xl border p-4 bg-background/50 space-y-2 focus-within:ring-2 focus-within:ring-primary/40 transition" tabIndex={-1}>
-      <p className="text-sm font-medium">{title}</p>
-      <p className="text-xs text-muted-foreground">{desc}</p>
-      <button className="text-xs font-medium px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" aria-label={actionLabel + ' action'}>{actionLabel}</button>
-    </div>
-  );
-}
+// Local ActionCard removed in favor of shared component.

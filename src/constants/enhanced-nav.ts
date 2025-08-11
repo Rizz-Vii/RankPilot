@@ -109,6 +109,15 @@ export const neuroSEOItems: NavItem[] = [
     description: "AI-powered content rewriting and optimization",
     requiredTier: "agency",
   },
+  // Automation Recipes (agency tier, feature gated)
+  {
+    title: "Automation Recipes",
+    href: "/automation/recipes",
+    icon: Layers,
+    description: "Schedule recurring AI operations",
+    requiredTier: "agency",
+    feature: "automation_recipes",
+  },
 ];
 
 // SEO Tools Navigation - Sales Optimized
@@ -265,6 +274,13 @@ export const financeItems: NavItem[] = [
     href: "/finance/revenue",
     icon: BarChart3,
     description: "MRR / churn / LTV metrics",
+    requiredTier: "agency",
+  },
+  {
+    title: "Accounting",
+    href: "/finance/accounting",
+    icon: FileText,
+    description: "P&L, Balance Sheet & reconciliation",
     requiredTier: "agency",
   },
 ];

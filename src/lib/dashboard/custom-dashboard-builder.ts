@@ -109,6 +109,9 @@ export class CustomDashboardBuilder {
     private templates: Map<string, DashboardTemplate> = new Map();
     private dataProviders: Map<string, any> = new Map();
     private realTimeSubscriptions: Map<string, NodeJS.Timeout> = new Map();
+    // Simple in-memory cache TTL (ms) for Firestore template reloads
+    private lastTemplateSync = 0;
+    private static TEMPLATE_SYNC_TTL = 10 * 60 * 1000; // 10 minutes
 
     // Pre-built widget templates for quick setup
     private widgetTemplates: Record<string, Partial<DashboardWidget>> = {
@@ -146,6 +149,10 @@ export class CustomDashboardBuilder {
     constructor() {
         this.initializeTemplates();
         this.setupDataProviders();
+        // Fire-and-forget async template sync with Firestore (silent degrade)
+        void this.syncTemplatesFromFirestore();
+        // Also attempt persisting any missing templates upstream (do not await)
+        void this.persistLocalTemplates();
     }
 
     /**
@@ -579,6 +586,80 @@ export class CustomDashboardBuilder {
         });
 
         console.log('[DashboardBuilder] Templates initialized');
+    }
+
+    /**
+     * Persist currently loaded templates to Firestore (idempotent upsert)
+     * Stores only minimal required fields (no derived ratios) per data integrity policy.
+     */
+    private async persistLocalTemplates(): Promise<void> {
+        try {
+            // Dynamic import to avoid bundling Firestore in non-browser contexts unnecessarily
+            const { db } = await import('../firebase');
+            const { doc, setDoc, getDoc, collection } = await import('firebase/firestore');
+            const colRef = collection(db, 'dashboardTemplates');
+            for (const tpl of this.templates.values()) {
+                const docRef = doc(colRef, tpl.id);
+                const existing = await getDoc(docRef);
+                if (!existing.exists()) {
+                    // Store minimal template; layout.widgets preserved (core to template)
+                    await setDoc(docRef, {
+                        id: tpl.id,
+                        name: tpl.name,
+                        description: tpl.description,
+                        category: tpl.category,
+                        requiredTier: tpl.requiredTier,
+                        estimatedSetupTime: tpl.estimatedSetupTime,
+                        preview: tpl.preview,
+                        layout: tpl.layout, // Contains widgets + layout meta
+                        createdAt: Date.now(),
+                        updatedAt: Date.now(),
+                        __provenance: 'seed'
+                    });
+                }
+            }
+        } catch (err) {
+            // Silent degrade per policy
+            console.warn('[DashboardBuilder] Persist templates skipped:', (err as any)?.message);
+        }
+    }
+
+    /**
+     * Load templates from Firestore and merge (does not override in-memory definitions unless new id)
+     * Cached for TEMPLATE_SYNC_TTL.
+     */
+    private async syncTemplatesFromFirestore(force = false): Promise<void> {
+        if (!force && Date.now() - this.lastTemplateSync < CustomDashboardBuilder.TEMPLATE_SYNC_TTL) return;
+        try {
+            const { db } = await import('../firebase');
+            const { collection, getDocs } = await import('firebase/firestore');
+            const snapshot = await getDocs(collection(db, 'dashboardTemplates'));
+            snapshot.forEach(d => {
+                const data = d.data() as any;
+                if (!this.templates.has(data.id)) {
+                    this.templates.set(data.id, {
+                        id: data.id,
+                        name: data.name,
+                        description: data.description,
+                        category: data.category,
+                        preview: data.preview,
+                        requiredTier: data.requiredTier,
+                        estimatedSetupTime: data.estimatedSetupTime,
+                        layout: data.layout
+                    });
+                }
+            });
+            this.lastTemplateSync = Date.now();
+        } catch (err) {
+            console.warn('[DashboardBuilder] Template sync failed:', (err as any)?.message);
+        }
+    }
+
+    /**
+     * Public method to force refresh templates (e.g., admin action)
+     */
+    async refreshTemplates(): Promise<void> {
+        await this.syncTemplatesFromFirestore(true);
     }
 
     private setupDataProviders(): void {
