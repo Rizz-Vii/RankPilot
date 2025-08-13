@@ -348,6 +348,16 @@ export const managementItems: NavItem[] = [
     adminOnly: true,
 
   },
+  {
+    title: "Integration Hub",
+    href: "/integration-hub",
+    icon: Layers,
+    description: "Enterprise Integration Hub (demo)",
+    adminOnly: true,
+    requiredTier: "enterprise",
+    feature: "integration_hub",
+    badge: "Demo",
+  },
 ];
 
 // User Navigation - Profile only (no Settings duplication)

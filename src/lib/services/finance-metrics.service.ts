@@ -3,6 +3,7 @@ import { collection, getDocs, orderBy, query, where, Unsubscribe, limit } from '
 import { managedOnSnapshot } from '@/lib/firebase/write-guard';
 import { db } from '@/lib/firebase/connection-manager';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
+import { allowFinanceMocks } from '@/lib/flags/finance';
 
 export interface FinanceInvoiceDoc { id?: string; userId?: string; teamId?: string; period: string; amount: number; status: string; issuedAt?: any; paidAt?: any; dueAt?: any; planTier?: string; }
 
@@ -15,8 +16,11 @@ export interface AggregatedFinanceMetrics {
 
 function aggregateInvoices(invoices: FinanceInvoiceDoc[], months: number): AggregatedFinanceMetrics {
     if (!invoices.length) {
-        const mock = getMockMetrics('finance');
-        return { kpis: mock.kpis, mrrSeries: [], aging: [], invoices: [] };
+        if (allowFinanceMocks()) {
+            const mock = getMockMetrics('finance');
+            return { kpis: mock.kpis, mrrSeries: [], aging: [], invoices: [] };
+        }
+        return { kpis: [], mrrSeries: [], aging: [], invoices: [] };
     }
     const periods = Array.from(new Set(invoices.map(i => i.period))).sort();
     const recent = periods.slice(-months);
@@ -53,8 +57,11 @@ export async function fetchFinanceMetrics(userId: string, months: number, teamId
         if (!invoices.length) throw new Error('empty');
         return aggregateInvoices(invoices, months);
     } catch {
-        const mock = getMockMetrics('finance');
-        return { kpis: mock.kpis, mrrSeries: [], aging: [], invoices: [] };
+        if (allowFinanceMocks()) {
+            const mock = getMockMetrics('finance');
+            return { kpis: mock.kpis, mrrSeries: [], aging: [], invoices: [] };
+        }
+        return { kpis: [], mrrSeries: [], aging: [], invoices: [] };
     }
 }
 
@@ -70,9 +77,13 @@ export function subscribeFinanceMetrics(userId: string, months: number, cb: (m: 
         },
         err => {
             if ((err as any)?.code === 'permission-denied') {
-                console.warn('[FinanceMetrics] permission-denied accessing financeInvoices; falling back to mock metrics');
-                const mock = getMockMetrics('finance');
-                cb({ kpis: mock.kpis, mrrSeries: [], aging: [], invoices: [] });
+                console.warn('[FinanceMetrics] permission-denied accessing financeInvoices');
+                if (allowFinanceMocks()) {
+                    const mock = getMockMetrics('finance');
+                    cb({ kpis: mock.kpis, mrrSeries: [], aging: [], invoices: [] });
+                } else {
+                    cb({ kpis: [], mrrSeries: [], aging: [], invoices: [] });
+                }
             } else {
                 console.error('[FinanceMetrics] snapshot error', err);
             }

@@ -1,0 +1,37 @@
+import { NextRequest, NextResponse } from 'next/server';
+import Stripe from 'stripe';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { withProvenance, enforceProvenance } from '@/lib/middleware/provenance';
+import { getLogger } from '@/lib/logging/app-logger';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {} as any);
+
+export const POST = withProvenance(async function POST(req: NextRequest) {
+    const logger = getLogger('api.billing.portal');
+    try {
+        const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
+        if (!authHeader) {
+            return NextResponse.json(enforceProvenance({ error: 'auth_required' }, { path: 'billing/portal', note: 'auth' }), { status: 401 });
+        }
+        const idToken = authHeader.replace('Bearer ', '');
+        const decoded = await adminAuth.verifyIdToken(idToken);
+        const uid = decoded.uid;
+
+        const userSnap = await adminDb.collection('users').doc(uid).get();
+        const user = userSnap.data() as any | undefined;
+        const customerId = user?.stripeCustomerId;
+        if (!customerId) {
+            return NextResponse.json(enforceProvenance({ error: 'no_customer' }, { path: 'billing/portal', note: 'no_customer' }), { status: 404 });
+        }
+
+        const returnUrl = process.env.NEXT_PUBLIC_APP_URL ? `${process.env.NEXT_PUBLIC_APP_URL}/settings?tab=billing` : undefined;
+        const session = await stripe.billingPortal.sessions.create({ customer: customerId, return_url: returnUrl });
+
+        logger.info('billing.portal.created', { uid });
+        return NextResponse.json(enforceProvenance({ url: session.url }, { path: 'billing/portal', note: 'ok' }));
+    } catch (e: any) {
+        const msg = e?.message || 'internal_error';
+        logger.error('billing.portal.error', { error: msg });
+        return NextResponse.json(enforceProvenance({ error: 'internal_error' }, { path: 'billing/portal', note: 'exception' }), { status: 500 });
+    }
+}, { path: 'billing/portal' });

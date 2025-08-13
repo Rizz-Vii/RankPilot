@@ -7,6 +7,9 @@ import { maybeEmbedMessage } from '@/lib/chat/embedding';
 import { buildQueryEmbedding, retrieveSimilarMessages, maybeClusterKeywords } from '@/lib/chat/retrievalAndClustering';
 import { retrieveSiteChunks } from '@/lib/site-ingestion/retrieval';
 import { fallbackOneShot } from '@/lib/ai/aiClient';
+import { enforceProvenanceOnChunk } from '@/lib/middleware/provenance';
+import { recordRouteLatency, recordError, recordFallback, recordRateLimitRejection } from '@/lib/metrics/unified-metrics';
+import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
 
 // Quota limits by tier (daily)
 const QUOTA_LIMITS: Record<string, { messages: number; tokens: number }> = {
@@ -99,9 +102,12 @@ function recordOpenAIFailure() {
 const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 export async function POST(req: NextRequest) {
+    const start = Date.now();
     try {
         const authHeader = req.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
+            recordError('chat/customer/stream', '4xx_user');
+            recordRouteLatency('chat/customer/stream', Date.now() - start);
             return new Response('Unauthorized', { status: 401 });
         }
         const idToken = authHeader.split(' ')[1];
@@ -109,8 +115,20 @@ export async function POST(req: NextRequest) {
         const uid = decoded.uid;
 
         const body = await req.json().catch(() => ({}));
-        const { message, sessionId, url } = body as { message?: string; sessionId?: string; url?: string };
+        const { message, sessionId, url, teamId } = body as { message?: string; sessionId?: string; url?: string; teamId?: string };
+        if (teamId) {
+            try { await enforceTeamRateLimit(adminDb as any, teamId, { routeKey: 'chat/customer/stream' }); } catch (e: any) {
+                if (e instanceof TeamRateLimitError) {
+                    recordRateLimitRejection('chat/customer/stream');
+                    recordRateLimitRejection(`team:${teamId}`);
+                    recordRouteLatency('chat/customer/stream', Date.now() - start);
+                    return new Response(JSON.stringify({ error: 'rate_limited', retryAfter: e.retryAfterSeconds }), { status: 429, headers: { 'Retry-After': String(e.retryAfterSeconds) } });
+                }
+            }
+        }
         if (!message?.trim()) {
+            recordError('chat/customer/stream', '4xx_user');
+            recordRouteLatency('chat/customer/stream', Date.now() - start);
             return NextResponse.json({ error: 'Message required' }, { status: 400 });
         }
 
@@ -142,7 +160,11 @@ export async function POST(req: NextRequest) {
         } catch { /* ignore */ }
 
         // Enforce daily message quota prior to token spend
-        try { await checkAndIncrementMessageQuota(uid, tier); } catch (qErr: any) { return NextResponse.json({ error: qErr.message || 'Quota exceeded' }, { status: 429 }); }
+        try { await checkAndIncrementMessageQuota(uid, tier); } catch (qErr: any) {
+            recordError('chat/customer/stream', '4xx_user');
+            recordRouteLatency('chat/customer/stream', Date.now() - start);
+            return NextResponse.json({ error: qErr.message || 'Quota exceeded' }, { status: 429 });
+        }
 
         // Retrieval augmentation (if embeddings enabled)
         let retrievalBlock = '';
@@ -233,6 +255,12 @@ export async function POST(req: NextRequest) {
             provider = 'gemini';
         }
 
+        // Record fallback if provider not OpenAI (either key missing, circuit open, or failures)
+        if (provider !== 'openai') {
+            const reason = openAICircuitOpen() ? 'circuit_open' : (openaiKey ? 'openai_failure' : 'no_openai_key');
+            recordFallback(reason);
+        }
+
         const encoder = new TextEncoder();
         const readable = new ReadableStream({
             async start(controller) {
@@ -241,19 +269,19 @@ export async function POST(req: NextRequest) {
                 let tokensUsed = 0;
                 try {
                     // Emit provider info early
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ info: 'provider_selected', provider, openaiCircuitOpen: openAICircuitOpen() })}\n\n`));
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ info: 'provider_selected', provider, openaiCircuitOpen: openAICircuitOpen(), provenance: provider === 'openai' ? 'live' : 'synthetic' }, { path: 'chat/customer/stream' }))}\n\n`));
                     if (openAIStream) {
                         for await (const part of openAIStream) {
                             const content = (part as any)?.choices?.[0]?.delta?.content;
                             if (content) {
                                 fullResponse += content;
-                                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: content })}\n\n`));
+                                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: content, provenance: provider === 'openai' ? 'live' : 'synthetic' })}\n\n`));
                             }
                         }
                     } else {
                         // One-shot fallback (non-streaming)
                         fullResponse = await fallbackOneShot(finalSystemPrompt, message, 800);
-                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: fullResponse, fallback: true })}\n\n`));
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: fullResponse, fallback: true, provenance: 'synthetic' })}\n\n`));
                     }
                     // Persist conversation to Firestore
                     try {
@@ -301,18 +329,19 @@ export async function POST(req: NextRequest) {
                             .then(() => openaiKey ? maybeClusterKeywords({ uid, sessionId: currentSessionId, apiKey: openaiKey }).catch(() => { }) : null)
                             .catch(() => { });
                     } catch { /* ignore persistence errors */ }
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ final: true, sessionId: currentSessionId, timestamp: new Date().toISOString(), tokensUsed, provider, fallback: provider !== 'openai', openaiCircuitOpen: openAICircuitOpen() })}\n\n`));
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ final: true, sessionId: currentSessionId, timestamp: new Date().toISOString(), tokensUsed, provider, fallback: provider !== 'openai', openaiCircuitOpen: openAICircuitOpen(), provenance: provider === 'openai' ? 'live' : 'synthetic' }, { path: 'chat/customer/stream' }))}\n\n`));
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
                 } catch (e: any) {
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: e?.message || 'stream_error', providerTried: provider, openaiCircuitOpen: openAICircuitOpen() })}\n\n`));
+                    recordError('chat/customer/stream', '5xx_server');
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ error: e?.message || 'stream_error', providerTried: provider, openaiCircuitOpen: openAICircuitOpen(), provenance: 'synthetic' }, { path: 'chat/customer/stream' }))}\n\n`));
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
                 }
             }
         });
 
-        return new Response(readable, {
+        const response = new Response(readable, {
             headers: {
                 'Content-Type': 'text/event-stream',
                 'Cache-Control': 'no-cache, no-transform',
@@ -320,7 +349,11 @@ export async function POST(req: NextRequest) {
                 'Transfer-Encoding': 'chunked'
             }
         });
+        recordRouteLatency('chat/customer/stream', Date.now() - start);
+        return response;
     } catch (e: any) {
+        recordError('chat/customer/stream', '5xx_server');
+        recordRouteLatency('chat/customer/stream', Date.now() - start);
         return NextResponse.json({ error: e?.message || 'Stream init failed' }, { status: 500 });
     }
 }

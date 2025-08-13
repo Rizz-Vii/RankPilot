@@ -23,6 +23,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ACTIVITY_TYPES, TOOL_NAMES } from "@/lib/activity-types";
 import { db } from "@/lib/firebase";
 import type { NeuroSEOAnalysisRequest, NeuroSEOReport } from "@/lib/neuroseo";
+import { submitOrQueue, queueAnalysisRequest } from "@/lib/offline-queue";
 import { TimeoutError } from "@/lib/timeout";
 import { cn } from "@/lib/utils";
 import type {
@@ -40,6 +41,7 @@ import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEffect, useRef, useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import {
   Bar,
   BarChart,
@@ -237,6 +239,7 @@ export default function CompetitorsPage() {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [currentEngine, setCurrentEngine] = useState<string>("");
   const [completedEngines, setCompletedEngines] = useState<string[]>([]);
+  const { toast } = useToast();
 
   // Form state
   const [yourUrl, setYourUrl] = useState("");
@@ -328,21 +331,33 @@ export default function CompetitorsPage() {
         userId: user.uid,
       };
 
-      // Call NeuroSEO™ API
-      const response = await fetch('/api/neuroseo', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(analysisRequest),
+      const submit = async () => {
+        const response = await fetch('/api/neuroseo', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(analysisRequest),
+        });
+        if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+        return response.json();
+      };
+
+      const { mode, result } = await submitOrQueue({
+        isOnline: () => typeof navigator !== 'undefined' ? navigator.onLine : true,
+        submit,
+        fallbackQueue: () => queueAnalysisRequest(analysisRequest)
       });
 
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
+      if (mode === 'queued') {
+        setIsAnalyzing(false);
+        setError("You're offline. Request queued and will run automatically when you're back online.");
+        toast({ title: 'Request queued', description: 'Your competitive analysis will run when you\'re back online.' });
+        return;
       }
 
-      const result = await response.json();
-      setReport(result);
+      setReport(result as any);
+      toast({ title: 'Analysis complete', description: 'Competitive analysis results are ready.' });
 
       if (user) {
         const userActivitiesRef = collection(
@@ -374,6 +389,7 @@ export default function CompetitorsPage() {
       }
     } finally {
       setIsLoading(false);
+      setIsAnalyzing(false);
     }
   };
 

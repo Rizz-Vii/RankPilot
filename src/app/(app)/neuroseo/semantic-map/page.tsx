@@ -456,8 +456,8 @@ export default function SemanticMapPage() {
                         <XAxis dataKey="keyword" />
                         <YAxis />
                         <Tooltip />
-                        <Line type="monotone" dataKey="density" stroke="#8884d8" name="Density" />
-                        <Line type="monotone" dataKey="relevance" stroke="#82ca9d" name="Relevance" />
+                        <Line type="monotone" dataKey="density" stroke="hsl(var(--chart-2))" name="Density" />
+                        <Line type="monotone" dataKey="relevance" stroke="hsl(var(--chart-3))" name="Relevance" />
                       </LineChart>
                     </ResponsiveContainer>
                   </CardContent>

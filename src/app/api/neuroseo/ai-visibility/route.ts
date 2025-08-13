@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { AIVisibilityEngine } from '@/lib/neuroseo/ai-visibility-engine';
+import { withProvenance, enforceProvenance } from '@/lib/middleware/provenance';
 
 // Lightweight in-memory cache to reduce repeated analyses during a short window
 const cache = new Map<string, { ts: number; data: any }>();
 const TTL_MS = 1000 * 60 * 5; // 5 minutes
 
-export async function POST(req: Request) {
+export const POST = withProvenance(async function POST(req: Request) {
     try {
         const body = await req.json().catch(() => ({}));
         const { url, query, targetAudience, analysisType = 'quick', userId } = body || {};
@@ -52,19 +53,19 @@ export async function POST(req: Request) {
             trend: 'stable' as const
         }));
 
-        const responsePayload = {
+        const responsePayload = enforceProvenance({
             score,
             citationRate,
             visibility,
             recommendations,
             platforms,
             meta: { targetAudience: targetAudience || null, analysisType, userId: userId || null, generatedAt: new Date().toISOString() }
-        };
+        }, { path: 'neuroseo/ai-visibility' });
 
         cache.set(cacheKey, { ts: Date.now(), data: responsePayload });
         return NextResponse.json(responsePayload);
     } catch (error: any) {
         console.error('[AI Visibility API] Failure', error?.message || error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        return NextResponse.json(enforceProvenance({ error: 'Internal server error' }, { path: 'neuroseo/ai-visibility', note: 'error' }), { status: 500 });
     }
-}
+}, { path: 'neuroseo/ai-visibility' });

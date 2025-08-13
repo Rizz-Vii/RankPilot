@@ -63,10 +63,14 @@ import {
   RefreshCw,
   Search
 } from "lucide-react";
+import { submitOrQueue, queueAnalysisRequest } from "@/lib/offline-queue";
+import { useToast } from "@/hooks/use-toast";
+import { allowContentAnalyzerMocks } from "@/lib/flags/demo";
 
 // Enhanced SEO Audit with NeuroSEO™ Integration
 export default function ContentAnalyzerPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [report, setReport] = useState<NeuroSEOReport | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -152,20 +156,39 @@ export default function ContentAnalyzerPage() {
         userId: user.uid,
       };
 
-      // Call NeuroSEO™ API
-      const response = await fetch('/api/neuroseo', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(analysisRequest),
+      const submit = async () => {
+        const response = await fetch('/api/neuroseo', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(analysisRequest),
+        });
+        if (!response.ok) throw new Error(`Analysis failed: ${response.statusText}`);
+        return response.json();
+      };
+
+      const { mode, result } = await submitOrQueue({
+        isOnline: () => typeof navigator !== 'undefined' ? navigator.onLine : true,
+        submit,
+        fallbackQueue: () => queueAnalysisRequest(analysisRequest)
       });
 
-      if (!response.ok) {
-        throw new Error(`Analysis failed: ${response.statusText}`);
+      if (mode === 'queued') {
+        setIsAnalyzing(false);
+        setError("You're offline. Request queued and will run automatically when you're back online.");
+        toast({ title: 'Request queued', description: 'Your analysis will run when you\'re back online.' });
+        return;
       }
 
-      const data = await response.json();
+      const data = result as any;
+
+      // Only allow mock report when demo content is enabled
+      if (!allowContentAnalyzerMocks()) {
+        setError("Live NeuroSEO analysis is not yet available in this environment. Enable demo content to preview with mock data.");
+        setIsAnalyzing(false);
+        return;
+      }
 
       // For now, create a mock report structure for demonstration
       const mockReport: NeuroSEOReport = {
@@ -239,7 +262,8 @@ export default function ContentAnalyzerPage() {
         },
       };
 
-      setReport(mockReport);
+  setReport(mockReport);
+  toast({ title: 'Analysis complete', description: 'NeuroSEO report is ready.' });
 
       // Save to Firestore (sanitize undefined nested fields)
       if (user) {

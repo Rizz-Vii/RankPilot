@@ -58,6 +58,13 @@ jobs:
           npm ci --prefer-offline --no-audit --production=false
           echo "✅ Dependencies installed" >> $GITHUB_STEP_SUMMARY
 
+      - name: 🧬 Provenance Strict Audit (Blocking)
+        if: github.event.inputs.emergency_deployment != 'true'
+        run: |
+          echo "## 🧬 Enforcing Provenance Policy (Strict Mode)" >> $GITHUB_STEP_SUMMARY
+          PROV_STRICT=1 npm run test:provenance-audit
+          echo "✅ Provenance strict audit passed (policy enforced)" >> $GITHUB_STEP_SUMMARY
+
       - name: 🔍 Production Validation
         if: github.event.inputs.emergency_deployment != 'true'
         run: |

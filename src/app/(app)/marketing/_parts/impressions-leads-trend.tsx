@@ -1,7 +1,8 @@
 "use client";
 import React from 'react';
 import { useMarketingContext } from './marketing-context';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
+import { ChartContainer } from '@/components/ui/chart';
 
 export default function ImpressionsLeadsTrend(){
   const { data } = useMarketingContext();
@@ -12,7 +13,7 @@ export default function ImpressionsLeadsTrend(){
     <div className="rounded-xl border p-4 bg-gradient-to-br from-background to-muted/30 h-[260px] flex flex-col">
       <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Impressions & Leads Trend</h3>
       <div className="flex-1">
-        <ResponsiveContainer width="100%" height="100%">
+        <ChartContainer config={{}} className="h-full w-full">
           <LineChart data={series} margin={{ top:4,right:8,left:0,bottom:4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="period" tick={{ fontSize:10 }} />
@@ -23,7 +24,7 @@ export default function ImpressionsLeadsTrend(){
             <Line type="monotone" yAxisId="imp" dataKey="impressions" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
             <Line type="monotone" yAxisId="leads" dataKey="leads" stroke="hsl(var(--primary)/0.6)" strokeWidth={2} dot={false} />
           </LineChart>
-        </ResponsiveContainer>
+        </ChartContainer>
       </div>
       <p className="mt-1 text-[11px] text-muted-foreground">Acquisition volume and conversions over selected range.</p>
     </div>

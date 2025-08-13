@@ -5,7 +5,7 @@ registerModuleLoad(undefined, { label: 'seo-score-trend' });
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart";
 import { Activity } from "lucide-react";
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 const lineChartConfig = {
   score: { label: "Score", color: "hsl(var(--chart-1))" },
@@ -23,15 +23,13 @@ export function SeoScoreTrend({ data, rangeLabel }: SeoScoreTrendProps) {
       <CardContent>
         {data && data.length > 0 ? (
           <ChartContainer config={lineChartConfig} className="h-[200px] w-full">
-            <ResponsiveContainer>
-              <LineChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid vertical={false} />
-                <XAxis dataKey="date" tickFormatter={(val) => new Date(val).toLocaleDateString("en-US", { month: "short", day: "numeric" })} tickLine={false} axisLine={false} />
-                <YAxis domain={[0, 100]} tickLine={false} axisLine={false} />
-                <ChartTooltip cursor={false} content={(props) => <ChartTooltipContent {...props} indicator="line" />} />
-                <Line type="monotone" dataKey="score" stroke="var(--color-score)" strokeWidth={2} dot />
-              </LineChart>
-            </ResponsiveContainer>
+            <LineChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+              <CartesianGrid vertical={false} />
+              <XAxis dataKey="date" tickFormatter={(val) => new Date(val).toLocaleDateString("en-US", { month: "short", day: "numeric" })} tickLine={false} axisLine={false} />
+              <YAxis domain={[0, 100]} tickLine={false} axisLine={false} />
+              <ChartTooltip cursor={false} content={(props) => <ChartTooltipContent {...props} indicator="line" />} />
+              <Line type="monotone" dataKey="score" stroke="var(--color-score)" strokeWidth={2} dot />
+            </LineChart>
           </ChartContainer>
         ) : (
           <div className="h-[200px] flex items-center justify-center text-muted-foreground">

@@ -636,5 +636,105 @@ export class ChartExportManager {
     }
 }
 
+/**
+ * Server-side artifact generation helpers for API usage.
+ * Produces raw buffers instead of object URLs for Node.js environments.
+ */
+export async function generateServerArtifact(
+    format: 'pdf' | 'excel' | 'json' | 'png' | 'svg',
+    chartData: any,
+    config: Partial<ChartExportConfig> = {}
+): Promise<{ buffer: Buffer; contentType: string; ext: string }> {
+    if (format === 'pdf') {
+        const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        if (config.title) {
+            pdf.setFontSize(16);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(config.title, pageWidth / 2, 20, { align: 'center' });
+        }
+        if (chartData?.image) {
+            const imgWidth = (config as any).width || pageWidth - 40;
+            const imgHeight = (config as any).height || imgWidth * 0.6;
+            const x = (pageWidth - imgWidth) / 2;
+            const y = config.title ? 35 : 20;
+            try { pdf.addImage(chartData.image, 'PNG', x, y, imgWidth, imgHeight); } catch { /* ignore addImage failures */ }
+        }
+        if ((config as any)?.watermark) {
+            pdf.setFontSize(8);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(128, 128, 128);
+            pdf.text(`Generated on ${new Date().toISOString()}`, 10, pageHeight - 10);
+        }
+        const ab = pdf.output('arraybuffer') as ArrayBuffer;
+        const buffer = Buffer.from(new Uint8Array(ab));
+        return { buffer, contentType: 'application/pdf', ext: 'pdf' };
+    }
+
+    if (format === 'excel') {
+        // Minimal single-sheet workbook with chart data table
+        const wb = XLSX.utils.book_new();
+        const table = Array.isArray(chartData?.table)
+            ? chartData.table
+            : Array.isArray(chartData?.data)
+                ? chartData.data
+                : [["Chart Export"], [new Date().toISOString()]];
+        const ws = XLSX.utils.aoa_to_sheet(table);
+        XLSX.utils.book_append_sheet(wb, ws, 'Chart Data');
+        // Node: write as Buffer
+        const buffer: Buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' }) as unknown as Buffer;
+        return { buffer, contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', ext: 'xlsx' };
+    }
+
+    if (format === 'json') {
+        const payload = {
+            chart: chartData,
+            config,
+            exported: new Date().toISOString(),
+            version: '1.0'
+        };
+        const buffer = Buffer.from(JSON.stringify(payload, null, 2), 'utf-8');
+        return { buffer, contentType: 'application/json', ext: 'json' };
+    }
+
+    if (format === 'png') {
+        // Prefer provided PNG data URL when available
+        const dataUrl: string | undefined = chartData?.image;
+        const match = dataUrl?.match(/^data:([^;]+);base64,(.*)$/i);
+        if (match) {
+            const [, mime, b64] = match;
+            const buffer = Buffer.from(b64, 'base64');
+            return { buffer, contentType: mime || 'image/png', ext: 'png' };
+        }
+        // Otherwise, rasterize from SVG markup if provided
+        const svg: string | undefined = chartData?.svg;
+        if (typeof svg === 'string' && svg.trim().length) {
+            // Lazy import to avoid bundling in browsers
+            const sharpMod = await import('sharp');
+            const sharp = (sharpMod as any).default || sharpMod;
+            const img = sharp(Buffer.from(svg, 'utf-8'), { density: 300 });
+            const w = (config.width && Number(config.width)) || undefined;
+            const h = (config.height && Number(config.height)) || undefined;
+            const pipeline = (w || h) ? img.resize(w, h, { fit: 'inside' }) : img;
+            const buffer: Buffer = await pipeline.png().toBuffer();
+            return { buffer, contentType: 'image/png', ext: 'png' };
+        }
+        throw new Error('PNG server export requires data URL in chartData.image or svg markup in chartData.svg');
+    }
+
+    if (format === 'svg') {
+        // Expect raw SVG markup in chartData.svg
+        const svg: string | undefined = chartData?.svg;
+        if (typeof svg === 'string' && svg.trim().length) {
+            const buffer = Buffer.from(svg, 'utf-8');
+            return { buffer, contentType: 'image/svg+xml', ext: 'svg' };
+        }
+        throw new Error('SVG server export requires svg markup in chartData.svg');
+    }
+
+    throw new Error(`Unsupported server export format: ${format}`);
+}
+
 // Export singleton instance
 export const chartExportManager = new ChartExportManager();

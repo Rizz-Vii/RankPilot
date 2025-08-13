@@ -33,7 +33,9 @@ export function FeatureGate({
 
   // Avoid showing an upgrade prompt while subscription state is loading
   if (loading) {
-    return null;
+    return (
+      <div data-testid="feature-gate-loading" className="min-h-[24px]" />
+    );
   }
 
   // Check if user has access to the feature

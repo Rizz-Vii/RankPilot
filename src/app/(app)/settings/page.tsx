@@ -26,6 +26,7 @@ import AccountSettingsForm from '@/components/settings/account-settings-form';
 import NotificationSettingsForm from '@/components/settings/notification-settings-form';
 import PrivacySettingsCard from '@/components/settings/privacy-settings-card';
 import SecuritySettingsForm from '@/components/settings/security-settings-form';
+import { submitOrQueue, queuePreferenceUpdate } from '@/lib/offline-queue';
 
 export default function SettingsPage() {
     const { user, profile, loading: authLoading } = useAuth();
@@ -73,40 +74,76 @@ export default function SettingsPage() {
             if (typeof prefs.voiceCommands === 'boolean') setIsVoiceEnabled(prefs.voiceCommands);
         }, [hydrated, profile, setPreferences, setIsVoiceEnabled, setTheme]);
 
-        // Persist accessibility/theme preferences & voice commands (debounced)
+        // Persist accessibility/theme preferences & voice commands (debounced) via API with offline queue fallback
         React.useEffect(() => {
             if (!user || !hydrated) return;
             const timeout = setTimeout(async () => {
                 try {
-                    const userRef = doc(db, 'users', user.uid);
-                    await updateDoc(userRef, {
-                        'preferences.highContrast': preferences.highContrast ?? false,
-                        'preferences.reducedMotion': preferences.reducedMotion ?? false,
-                        'preferences.fontSize': preferences.fontSize,
-                        'preferences.colorBlindnessSupport': preferences.colorBlindnessSupport ?? false,
-                        'preferences.customColors': preferences.customColors ?? null,
-                        'preferences.mode': theme,
-                        'preferences.voiceCommands': isVoiceEnabled ?? false,
-                        updatedAt: new Date()
-                    });
+                    const token = await user.getIdToken?.();
+                    const prefPayload = {
+                        preferences: {
+                            highContrast: preferences.highContrast ?? false,
+                            reducedMotion: preferences.reducedMotion ?? false,
+                            fontSize: preferences.fontSize,
+                            colorBlindnessSupport: preferences.colorBlindnessSupport ?? false,
+                            mode: theme,
+                            voiceCommands: isVoiceEnabled ?? false,
+                        }
+                    };
+
+                    const submit = async () => {
+                        const res = await fetch('/api/user/preferences', {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                            },
+                            body: JSON.stringify(prefPayload),
+                        });
+                        if (!res.ok) throw new Error(`Pref save failed: ${res.status}`);
+                        return await res.json();
+                    };
+
+                    const fallbackQueue = () => {
+                        if (!token) return Promise.resolve({ id: -1 });
+                        return queuePreferenceUpdate({ ...prefPayload, authToken: token });
+                    };
+
+                    await submitOrQueue({ submit, fallbackQueue });
                 } catch (e) {
-                    // silent failure – persistence is best-effort
                     console.warn('Failed to persist accessibility/theme preferences', e);
                 }
             }, 500); // debounce 500ms
             return () => clearTimeout(timeout);
-        }, [preferences.highContrast, preferences.reducedMotion, preferences.fontSize, preferences.colorBlindnessSupport, preferences.customColors, theme, isVoiceEnabled, user, hydrated]);
+    }, [preferences.highContrast, preferences.reducedMotion, preferences.fontSize, preferences.colorBlindnessSupport, theme, isVoiceEnabled, user, hydrated]);
 
-            // Persist language preference
+            // Persist language preference via API with offline queue fallback
             React.useEffect(() => {
                 if (!user || !hydrated) return;
                 const timeout = setTimeout(async () => {
                     try {
-                        const userRef = doc(db, 'users', user.uid);
-                        await updateDoc(userRef, {
-                            'preferences.language': language,
-                            updatedAt: new Date()
-                        });
+                        const token = await user.getIdToken?.();
+                        const prefPayload = { preferences: { language } };
+
+                        const submit = async () => {
+                            const res = await fetch('/api/user/preferences', {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                                },
+                                body: JSON.stringify(prefPayload),
+                            });
+                            if (!res.ok) throw new Error(`Language save failed: ${res.status}`);
+                            return await res.json();
+                        };
+
+                        const fallbackQueue = () => {
+                            if (!token) return Promise.resolve({ id: -1 });
+                            return queuePreferenceUpdate({ ...prefPayload, authToken: token });
+                        };
+
+                        await submitOrQueue({ submit, fallbackQueue });
                     } catch (e) {
                         console.warn('Failed to persist language preference', e);
                     }

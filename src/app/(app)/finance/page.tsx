@@ -5,6 +5,7 @@ import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { QuotaBar } from '@/components/metrics/QuotaBar';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
+import { allowFinanceMocks } from '@/lib/flags/finance';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 import { fetchFinanceMetrics, subscribeFinanceMetrics, AggregatedFinanceMetrics } from '@/lib/services/finance-metrics.service';
 import { fetchRecentFinanceRevenueSnapshots, fetchLatestFinanceInvoiceAging } from '@/lib/services/finance-automation-snapshots';
@@ -59,7 +60,32 @@ export default function FinanceDashboardRoot() {
     setRefreshing(true);
     let unsub: (()=>void)|undefined; let active = true;
     (async ()=> {
-      try { const res = await fetchFinanceMetrics(userId, months, teamId); if(active) { setMetrics(res); setInitialLoading(false);} } catch{} finally { if(active) setRefreshing(false);} 
+      try {
+        // Prefer server API when available for consistent aggregation
+        const token = await user!.getIdToken?.();
+        const qs = new URLSearchParams({ months: String(months) });
+        if (teamId) qs.set('teamId', teamId);
+        const resp = await fetch(`/api/finance/metrics?${qs.toString()}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+        if (resp.ok) {
+          const json = await resp.json();
+          // Optional: capture server diagnostics for triage in dev tools
+          const diag = resp.headers.get('x-finance-diagnostics');
+          if (process.env.NODE_ENV !== 'production' && diag) console.debug('[finance] server diag:', diag);
+          if (active) { setMetrics(json as AggregatedFinanceMetrics); setInitialLoading(false); }
+        } else {
+          const diag = resp.headers.get('x-finance-diagnostics');
+          if (process.env.NODE_ENV !== 'production' && diag) console.warn('[finance] server diag (non-200):', diag);
+          // Fallback to Firestore client aggregation
+          const res = await fetchFinanceMetrics(userId, months, teamId);
+          if (active) { setMetrics(res); setInitialLoading(false); }
+        }
+      } catch {
+        try {
+          const res = await fetchFinanceMetrics(userId, months, teamId);
+          if (active) { setMetrics(res); setInitialLoading(false); }
+        } catch { /* swallow */ }
+      } finally { if(active) setRefreshing(false);} 
+      // Realtime updates via Firestore subscription as a secondary path
       unsub = subscribeFinanceMetrics(userId, months, (m)=> { setMetrics(m); setInitialLoading(false); }, teamId);
     })();
     return ()=> { active=false; if(unsub) unsub(); };
@@ -87,7 +113,8 @@ export default function FinanceDashboardRoot() {
 
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   const summary: Summary = useMemo(()=> {
-    const ks = metrics?.kpis || mock.kpis;
+    const live = metrics?.kpis;
+    const ks = (live && live.length > 0) ? live : (allowFinanceMocks() ? mock.kpis : []);
     return {
       mrr: ks.find(k=> k.key==='mrr')?.value || 0,
       churn: ks.find(k=> /churn/i.test(k.key))?.value || 0,
@@ -98,7 +125,9 @@ export default function FinanceDashboardRoot() {
 
   function handleRefresh(){ setDataVersion(v=> v+1); }
   function exportSnapshot(format: 'json'|'csv'){
-    const rows = (metrics?.kpis || mock.kpis).map(k=> ({ key:k.key, label:k.label, value:k.value, delta:k.delta }));
+    const live = metrics?.kpis;
+    const source = (live && live.length > 0) ? live : mock.kpis;
+    const rows = source.map(k=> ({ key:k.key, label:k.label, value:k.value, delta:k.delta }));
     if(format==='json'){
       const blob = new Blob([JSON.stringify({ generatedAt: new Date().toISOString(), rows }, null,2)], { type:'application/json'});
       const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='finance-snapshot.json'; a.click(); URL.revokeObjectURL(url); return;
@@ -170,7 +199,8 @@ export default function FinanceDashboardRoot() {
             {initialLoading && Array.from({length:4}).map((_,i)=> (<Skeleton key={i} className="h-32 rounded-xl" shimmer aria-label="Loading metric" />))}
             {!initialLoading && (()=> {
               type Ext = typeof mock.kpis[number] & { target?: number; invertTarget?: boolean };
-              const base = (metrics?.kpis || mock.kpis) as typeof mock.kpis;
+              const live = metrics?.kpis as typeof mock.kpis | undefined;
+              const base = (live && live.length > 0 ? live : (allowFinanceMocks() ? mock.kpis : [])) as typeof mock.kpis;
               const targetMap: Record<string,{target?:number; invertTarget?:boolean}> = {};
               metrics?.kpis?.forEach(k=> { (targetMap as any)[k.key] = { target: (k as any).target, invertTarget: (k as any).invertTarget }; });
               const extended: Ext[] = base.map(k=> ({ ...k, ...(targetMap[k.key]||{}) }));

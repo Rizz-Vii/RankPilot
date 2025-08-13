@@ -2,14 +2,26 @@
 // Usage: node scripts/seed-team-samples.js
 
 const path = require('path');
+const fs = require('fs');
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 
-const serviceAccount = require(path.resolve(__dirname, '../serviceAccount.json'));
+// Initialize Firebase Admin using env variables or serviceAccount.json if present (local only)
+const saPath = path.resolve(__dirname, '../serviceAccount.json');
+let creds;
+if (fs.existsSync(saPath)) {
+  creds = require(saPath);
+} else {
+  creds = {
+    project_id: process.env.FIREBASE_ADMIN_PROJECT_ID,
+    client_email: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+    private_key: (process.env.FIREBASE_ADMIN_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+  };
+}
 
 initializeApp({
-  credential: cert(serviceAccount),
-  projectId: serviceAccount.project_id,
+  credential: cert(creds),
+  projectId: creds.project_id,
 });
 
 const db = getFirestore();

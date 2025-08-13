@@ -98,7 +98,11 @@ const EnhancedButton = forwardRef<HTMLButtonElement, EnhancedButtonProps>(
     },
     ref
   ) => {
-    const Comp = asChild ? Slot : motion.button;
+  // Only use Slot when a single, non-Fragment React element is provided
+  const childCount = React.Children.count(children);
+  const isValidChildEl = React.isValidElement(children) && (children as any)?.type !== React.Fragment;
+  const useSlot = !!asChild && childCount === 1 && isValidChildEl;
+  const Comp = useSlot ? Slot : motion.button;
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       // Haptic feedback for mobile devices
@@ -126,7 +130,7 @@ const EnhancedButton = forwardRef<HTMLButtonElement, EnhancedButtonProps>(
       </>
     );
 
-    const motionProps = {
+  const motionProps = {
       whileHover: loading ? {} : { scale: 1.02 },
       whileTap: loading ? {} : { scale: 0.98 },
       transition: { type: "spring" as const, stiffness: 400, damping: 10 },
@@ -142,13 +146,39 @@ const EnhancedButton = forwardRef<HTMLButtonElement, EnhancedButtonProps>(
       ...htmlProps
     } = props;
 
+    // Build className correctly (do not pass className into CVA variant map)
+    const composedClassName = cn(
+      enhancedButtonVariants({ variant, size, loading }),
+      fullWidth && "w-full",
+      pulse && "animate-pulse",
+      className
+    );
+
+    if (asChild && !useSlot) {
+      // In dev, surface a hint if asChild is misused (e.g., Fragment or multiple children)
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('[EnhancedButton] asChild requires a single, non-Fragment React element child. Falling back to button.');
+      }
+    }
+
+    if (useSlot) {
+      // In asChild mode, render the provided child element directly via Slot.
+      // Do not inject our own buttonContent (icons/spinner) and avoid passing invalid props like disabled.
+      return (
+        <Comp
+          className={composedClassName}
+          onClick={handleClick}
+          {...htmlProps}
+        >
+          {children}
+        </Comp>
+      );
+    }
+
+    // Default: render a native motion.button with full features
     return (
       <Comp
-        className={cn(
-          enhancedButtonVariants({ variant, size, loading, className }),
-          fullWidth && "w-full",
-          pulse && "animate-pulse"
-        )}
+        className={composedClassName}
         ref={ref}
         onClick={handleClick}
         disabled={disabled || loading}

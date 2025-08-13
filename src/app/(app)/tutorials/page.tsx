@@ -45,7 +45,9 @@ import {
   Zap
 } from "lucide-react";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { isDemoContentEnabled } from "@/lib/flags/demo";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface Tutorial {
   id: string;
@@ -108,6 +110,7 @@ export default function TutorialsPage() {
   const { user, loading: authLoading } = useAuth();
   const { subscription, canUseFeature } = useSubscription();
   const tier = subscription?.tier || "free";
+  const demoEnabled = isDemoContentEnabled();
   const [tutorials, setTutorials] = useState<Tutorial[]>([]);
   const [filteredTutorials, setFilteredTutorials] = useState<Tutorial[]>([]);
   const [loading, setLoading] = useState(true);
@@ -136,7 +139,12 @@ export default function TutorialsPage() {
 
   const fetchTutorials = async () => {
     try {
-      // Mock tutorials data - replace with actual API call
+      // If demo content is disabled, avoid loading mock tutorials and show empty state
+      if (!demoEnabled) {
+        setTutorials([]);
+        return;
+      }
+      // Mock tutorials data - replace with actual API call when backend is ready
       const mockTutorials: Tutorial[] = [
         // Getting Started
         {
@@ -397,7 +405,7 @@ export default function TutorialsPage() {
       setTutorials(mockTutorials);
     } catch (error) {
       console.error("Error fetching tutorials:", error);
-    } finally {
+  } finally {
       setLoading(false);
     }
   };
@@ -490,13 +498,13 @@ export default function TutorialsPage() {
   const getDifficultyColor = (difficulty: Tutorial["difficulty"]) => {
     switch (difficulty) {
       case "beginner":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+        return "bg-success-background text-success-foreground";
       case "intermediate":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+        return "bg-warning-background text-warning-foreground";
       case "advanced":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+        return "bg-error-background text-error-foreground";
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+        return "bg-muted-background text-muted-foreground";
     }
   };
 
@@ -523,17 +531,26 @@ export default function TutorialsPage() {
     {} as Record<string, Tutorial[]>
   );
 
-  if (authLoading || loading) {
+  if (loading) {
     return <LoadingScreen fullScreen text="Loading tutorials..." />;
   }
 
   return (
-    <main className="max-w-7xl mx-auto space-y-8">
+    <main className="max-w-7xl mx-auto space-y-8" data-testid="tutorials-page">
+      {/* Demo mode banner */}
+      <Alert data-testid="tutorials-banner">
+        <AlertTitle>Tutorials</AlertTitle>
+        <AlertDescription>
+          {demoEnabled
+            ? "Showing curated demo tutorials. Enable full content once the tutorials API is connected."
+            : "Tutorials are not available in this environment. Enable demo content (NEXT_PUBLIC_DEMO_CONTENT=true) to preview mock tutorials."}
+        </AlertDescription>
+      </Alert>
       {/* Header */}
       <header className="flex items-center gap-3">
         <BookOpen className="h-8 w-8 text-primary" />
         <div>
-          <h1 className="text-3xl font-bold font-headline">
+          <h1 className="text-3xl font-bold font-headline" data-testid="tutorials-header">
             Tutorials & Guides
           </h1>
           <p className="text-muted-foreground font-body">
@@ -646,7 +663,7 @@ export default function TutorialsPage() {
         </CardContent>
       </Card>
 
-      {/* Tutorials by Category */}
+  {/* Tutorials by Category */}
       <Tabs defaultValue="all" className="space-y-6">
         <TabsList className="grid grid-cols-4 lg:grid-cols-6 xl:grid-cols-10">
           <TabsTrigger value="all">All</TabsTrigger>
@@ -681,10 +698,12 @@ export default function TutorialsPage() {
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">
-                  No tutorials found
+                  {demoEnabled ? 'No tutorials match your filters' : 'Tutorials unavailable'}
                 </h3>
                 <p className="text-muted-foreground text-center">
-                  Try adjusting your filters or search terms.
+                  {demoEnabled
+                    ? 'Try adjusting your filters or search terms.'
+                    : 'Set NEXT_PUBLIC_DEMO_CONTENT=true to preview mock tutorials, or check back once live tutorials are enabled.'}
                 </p>
               </CardContent>
             </Card>

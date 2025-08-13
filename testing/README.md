@@ -6,7 +6,7 @@ Comprehensive testing suite with **161 test files** ensuring complete platform c
 
 ## 🎯 DevReady Compliance Status
 
-- ✅ **161 test files** (exceeds 100+ requirement) 
+- ✅ **161 test files** (exceeds 100+ requirement)
 - ✅ **100% DevReady compliance** (12/12 checks passed)
 - ✅ **Organized structure** with comprehensive coverage
 - ✅ **MCP server integration** testing (82 references)
@@ -22,10 +22,10 @@ Comprehensive testing suite with **161 test files** ensuring complete platform c
 - Dedicated utilities and configuration
 - Complete documentation
 
-### `/specs/` - **Comprehensive Test Suites** (8 files)  
+### `/specs/` - **Comprehensive Test Suites** (8 files)
 
 - `ai-integration-comprehensive.spec.ts` - AI features integration
-- `api-integration-comprehensive.spec.ts` - API testing  
+- `api-integration-comprehensive.spec.ts` - API testing
 - `database-backend-comprehensive.spec.ts` - Database functionality
 - `performance-comprehensive.spec.ts` - Performance testing
 - `seo-platform-comprehensive.spec.ts` - SEO platform features
@@ -36,7 +36,7 @@ Comprehensive testing suite with **161 test files** ensuring complete platform c
 ### `/specs/main/` - **Legacy Tests** (18 files)
 
 - Authentication and feature tests
-- Mobile navigation tests  
+- Mobile navigation tests
 - Performance and visual regression tests
 - API contract tests
 
@@ -50,7 +50,7 @@ Comprehensive testing suite with **161 test files** ensuring complete platform c
 ### `/production/` - **Production Validation** (3 files)
 
 - Security validation
-- Mobile performance  
+- Mobile performance
 - Load testing
 
 ## 🚀 Quick Start
@@ -69,7 +69,7 @@ npm run devready-validation
 # Primary organized tests
 npx playwright test testing/specs/organized/
 
-# Comprehensive test suites  
+# Comprehensive test suites
 npx playwright test testing/specs/*-comprehensive.spec.ts
 
 # Performance testing
@@ -97,14 +97,28 @@ npx playwright test testing/specs/organized/mobile-*.spec.ts
 
 ## 📊 Test Coverage Matrix
 
-| Category | Files | Coverage |
-|----------|--------|----------|
-| **Organized Tests** | **126** | **Complete platform coverage** |
-| Comprehensive Suites | 8 | End-to-end integration |
-| Legacy Tests | 18 | Compatibility maintenance |
-| Load Testing | 7 | Performance validation |
-| Production | 3 | Live environment |
-| **Total** | **161** | **100% DevReady compliant** |
+## 🧪 Demo/Mock Toggles For Tests
+
+- Tutorials/Team demo content:
+  - Env: `NEXT_PUBLIC_DEMO_CONTENT=true|false`
+  - Runtime override in tests: `await page.evaluate(() => localStorage.setItem('demoContent','true'))`
+- Finance mocks:
+  - Env: `NEXT_PUBLIC_ALLOW_FINANCE_MOCKS=false` to force live-only
+  - Runtime override: `await page.evaluate(() => localStorage.setItem('allowFinanceMocks','false'))`
+
+Notes:
+
+- LocalStorage overrides take precedence in browser contexts and avoid rebuilds.
+- Server-side code respects env values only; client UIs prefer live data with mock fallback when permitted.
+
+| Category             | Files   | Coverage                       |
+| -------------------- | ------- | ------------------------------ |
+| **Organized Tests**  | **126** | **Complete platform coverage** |
+| Comprehensive Suites | 8       | End-to-end integration         |
+| Legacy Tests         | 18      | Compatibility maintenance      |
+| Load Testing         | 7       | Performance validation         |
+| Production           | 3       | Live environment               |
+| **Total**            | **161** | **100% DevReady compliant**    |
 
 ## ✅ DevReady Compliance Achieved
 
@@ -133,7 +147,7 @@ For detailed information about the organized test structure, see `/specs/organiz
 - Test environment configuration
 - Authentication settings
 
-### `/utils/` - Testing Utilities  
+### `/utils/` - Testing Utilities
 
 - `enhanced-auth.ts` - Enhanced authentication with graceful fallbacks
 - `test-orchestrator.ts` - Centralized test orchestration

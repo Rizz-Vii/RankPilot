@@ -2,6 +2,7 @@
 // Re-export from recharts for consistent usage
 
 import React from 'react';
+import { Tooltip as RechartsTooltip } from 'recharts';
 
 export {
     Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis,
@@ -21,14 +22,9 @@ export function ChartContainer({
     return <div className={`chart-container ${className}`}>{children}</div>;
 }
 
-export function ChartTooltip({
-    content,
-    className = ""
-}: {
-    content: (props: any) => React.ReactNode;
-    className?: string;
-}) {
-    return null; // Placeholder implementation
+export function ChartTooltip({ content, className = "" }: { content: (props: any) => React.ReactNode; className?: string; }) {
+    // Wrap Recharts Tooltip with minimal typing to avoid generic friction
+    return <RechartsTooltip content={content as any} wrapperClassName={className} />;
 }
 
 export function ChartTooltipContent(props: any) {

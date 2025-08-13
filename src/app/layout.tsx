@@ -49,6 +49,8 @@ export default async function RootLayout({
   // SSR theme + language cookie extraction
   let themeClass = '';
   let bodyExtra = '';
+  let ssrHighContrast = false;
+  let ssrThemeMode: 'light' | 'dark' | 'high-contrast' | 'auto' | '' = '';
   let htmlLang = 'en';
   let htmlDir: 'ltr' | 'rtl' = 'ltr';
   try {
@@ -56,10 +58,14 @@ export default async function RootLayout({
     const t = cookieStore?.get?.('rp_theme');
     if (t?.value) {
       const parsed = JSON.parse(decodeURIComponent(t.value));
-      if (parsed?.theme) themeClass = `theme-${parsed.theme}`;
+      if (parsed?.theme) {
+        ssrThemeMode = parsed.theme;
+        themeClass = `theme-${parsed.theme}`;
+      }
       if (parsed?.reducedMotion) bodyExtra += ' reduced-motion';
       if (parsed?.colorBlind) bodyExtra += ' colorblind-support';
       if (parsed?.highContrast && !themeClass.includes('high-contrast')) {
+        ssrHighContrast = true;
         themeClass = 'theme-high-contrast';
       }
     }
@@ -72,13 +78,16 @@ export default async function RootLayout({
       }
     }
   } catch {}
-  if (!themeClass) themeClass = 'theme-light';
+  // Default to primary/dark theme when no preference is set
+  if (!themeClass) themeClass = 'theme-dark';
+  if (!ssrThemeMode) ssrThemeMode = 'dark';
 
   // Build deterministic body class ordering once (base -> flags -> lang -> theme)
   const flags: string[] = [];
   if (bodyExtra.includes('reduced-motion')) flags.push('reduced-motion');
   if (bodyExtra.includes('colorblind-support')) flags.push('colorblind-support');
-  const bodyClass = ['font-body','antialiased','h-full',...flags,`lang-${htmlLang}`,themeClass || 'theme-light'].join(' ');
+  const addDarkClass = (ssrThemeMode === 'dark' && !ssrHighContrast) || themeClass === 'theme-dark';
+  const bodyClass = ['font-body','antialiased','h-full',...flags,`lang-${htmlLang}`,themeClass || 'theme-dark', addDarkClass ? 'dark' : ''].filter(Boolean).join(' ');
 
   return (
     <html lang={htmlLang} dir={htmlDir} suppressHydrationWarning className="h-full">
@@ -95,11 +104,11 @@ export default async function RootLayout({
         />
       </head>
   {/* Deterministic ordering: base -> flags -> lang -> theme */}
-      <body className={bodyClass}>
+  <body suppressHydrationWarning className={bodyClass}>
         <script
           // Inline no-flash script: reconstructs class list deterministically (same ordering) before React hydrates
           dangerouslySetInnerHTML={{
-            __html: `(()=>{try{var DEV=location.hostname==='localhost';function log(){if(DEV){try{console.debug.apply(console,arguments);}catch{}}}var b=document.body,de=document.documentElement;function rebuild(data){if(!b||!de)return;var lang=de.lang||'en';var desired=(data&&(data.highContrast?'high-contrast':data.theme))||'light';var flags=[];if(data&&data.reducedMotion)flags.push('reduced-motion');if(data&&data.colorBlind)flags.push('colorblind-support');var cls=['font-body','antialiased','h-full'].concat(flags,'lang-'+lang,'theme-'+desired);var next=cls.join(' ');if(b.className!==next){b.className=next;log('body class sync:',next);} }function read(){var data=null;/* cookie */var cm=document.cookie.match(/(?:^|; )rp_theme=([^;]+)/);if(cm){try{data=JSON.parse(decodeURIComponent(cm[1]));}catch(e){log('cookie parse fail',e);} }if(!data){try{var ls=localStorage.getItem('rankpilot-theme-preferences');if(ls){var p=JSON.parse(ls);var autoMode=p.mode==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p.mode;data={theme:p.highContrast?'high-contrast':autoMode,reducedMotion:p.reducedMotion,colorBlind:p.colorBlindnessSupport,highContrast:p.highContrast};}}catch(e){log('ls parse fail',e);} }/* language cookie */var lcMatch=document.cookie.match(/(?:^|; )rp_lang=([^;]+)/);if(lcMatch){var lc=decodeURIComponent(lcMatch[1]).toLowerCase();if(/^[a-z]{2}$/.test(lc)){if(!de.lang||de.lang!==lc)de.lang=lc;var rtl=['ar','he'];de.dir=rtl.includes(lc)?'rtl':'ltr';}}return data;}function apply(){var d=read();rebuild(d);}apply();}catch(e){}})();`
+    __html: `(()=>{try{var DEV=location.hostname==='localhost';function log(){if(DEV){try{console.debug.apply(console,arguments);}catch{}}}var b=document.body,de=document.documentElement;function rebuild(data){if(!b||!de)return;var lang=de.lang||'en';var desired=(data&&(data.highContrast?'high-contrast':data.theme))||'dark';var flags=[];if(data&&data.reducedMotion)flags.push('reduced-motion');if(data&&data.colorBlind)flags.push('colorblind-support');var darkOn=(desired==='dark'&&!((data&&data.highContrast)));var cls=['font-body','antialiased','h-full'].concat(flags,'lang-'+lang,'theme-'+desired,(darkOn?'dark':''));var next=cls.filter(Boolean).join(' ');if(b.className!==next){b.className=next;log('body class sync:',next);} }function read(){var data=null;/* cookie */var cm=document.cookie.match(/(?:^|; )rp_theme=([^;]+)/);if(cm){try{data=JSON.parse(decodeURIComponent(cm[1]));}catch(e){log('cookie parse fail',e);} }if(!data){try{var ls=localStorage.getItem('rankpilot-theme-preferences');if(ls){var p=JSON.parse(ls);var autoMode=p.mode==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p.mode;data={theme:p.highContrast?'high-contrast':autoMode,reducedMotion:p.reducedMotion,colorBlind:p.colorBlindnessSupport,highContrast:p.highContrast};}else{data={theme:'dark'};}}catch(e){log('ls parse fail',e);data={theme:'dark'};} }/* language cookie */var lcMatch=document.cookie.match(/(?:^|; )rp_lang=([^;]+)/);if(lcMatch){var lc=decodeURIComponent(lcMatch[1]).toLowerCase();if(/^[a-z]{2}$/.test(lc)){if(!de.lang||de.lang!==lc)de.lang=lc;var rtl=['ar','he'];de.dir=rtl.includes(lc)?'rtl':'ltr';}}return data;}function apply(){var d=read();rebuild(d);}apply();}catch(e){}})();`
           }}
         />
         <AuthProvider>

@@ -1,28 +1,41 @@
-// Stub functions for NeuroSEO operations
-export async function generateContentBrief(input: any) {
+// Thin adapters for NeuroSEO operations (prefer concrete services where available)
+import { runSEOAudit, type SEOAuditRequest, type SEOAuditResponse, fetchKeywordSuggestions } from "@/lib/services/ai-service";
+
+export async function generateContentBrief(_input: any) {
+    // Keep minimal non-throwing default until full service is wired
     return { topic: '', targetKeywords: [], competitorInsights: [], llmGeneratedOutline: [], seoRecommendations: [] };
 }
 
-export async function generateInsights(input: any) {
+export async function generateInsights(_input: any) {
     return { insights: [] };
 }
 
-export async function getKeywordSuggestions(input: any) {
-    return { keywords: [] };
+export async function getKeywordSuggestions(input: { seed: string; locale?: string; limit?: number; includeMetrics?: boolean }) {
+    try {
+        const res = await fetchKeywordSuggestions({
+            query: input.seed,
+            language: input.locale,
+            count: input.limit,
+            includeMetrics: input.includeMetrics,
+        });
+        return { keywords: res.suggestions || [] };
+    } catch {
+        return { keywords: [] };
+    }
 }
 
-export async function analyzeLinks(input: any) {
+export async function analyzeLinks(_input: any) {
     return { backlinks: [], domainMetrics: { totalBacklinks: 0, uniqueDomains: 0, averageAuthority: 0 } };
 }
 
-export async function getSerpData(input: any) {
+export async function getSerpData(_input: any) {
     return { keyword: '', results: [], totalResults: 0 };
 }
 
 /**
- * DEPRECATED: Use runSEOAudit (Cloud Function) via ai-service instead.
- * This stub is kept to avoid breaking legacy imports but will throw to surface incorrect usage.
+ * Legacy compatibility: route auditUrl() to the real Cloud Function via ai-service.
  */
-export async function auditUrl(_input: any) {
-    throw new Error('auditUrl stub deprecated. Use runSEOAudit from ai-service.');
+export async function auditUrl(input: { url: string; checkMobile?: boolean }): Promise<SEOAuditResponse> {
+    const req: SEOAuditRequest = { url: input.url, checkMobile: input.checkMobile ?? true } as any;
+    return await runSEOAudit(req);
 }

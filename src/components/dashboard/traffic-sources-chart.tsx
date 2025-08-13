@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart";
 import { Activity } from "lucide-react";
-import { Pie, PieChart, ResponsiveContainer, Cell, Legend } from "recharts";
+import { Pie, PieChart, Cell, Legend } from "recharts";
 import styles from "@/app/(app)/dashboard/dashboard.module.css";
 
 const pieChartConfig = {
@@ -36,26 +36,24 @@ export function TrafficSourcesChart({ data }: TrafficSourcesChartProps) {
       <CardContent className="flex items-center justify-center">
         {data && data.length > 0 ? (
           <ChartContainer config={pieChartConfig} className="h-[200px] w-full">
-            <ResponsiveContainer>
-              <PieChart>
-                <ChartTooltip cursor={false} content={(props) => <ChartTooltipContent {...props} indicator="line" />} />
-                <Pie data={data} dataKey="value" nameKey="name" innerRadius={50} strokeWidth={5}>
-                  {data.map((entry) => (
-                    <Cell key={entry.name} fill={entry.fill} />
+            <PieChart>
+              <ChartTooltip cursor={false} content={(props) => <ChartTooltipContent {...props} indicator="line" />} />
+              <Pie data={data} dataKey="value" nameKey="name" innerRadius={50} strokeWidth={5}>
+                {data.map((entry) => (
+                  <Cell key={entry.name} fill={entry.fill} />
+                ))}
+              </Pie>
+              <Legend content={({ payload }) => (
+                <div className={styles.legendContainer}>
+                  {payload?.map((entry) => (
+                    <div key={entry.value} className={styles.legendItem}>
+                      <div className={`${styles.legendDot} ${getChartColorClass(entry.color || "")}`} />
+                      <span>{entry.value}</span>
+                    </div>
                   ))}
-                </Pie>
-                <Legend content={({ payload }) => (
-                  <div className={styles.legendContainer}>
-                    {payload?.map((entry) => (
-                      <div key={entry.value} className={styles.legendItem}>
-                        <div className={`${styles.legendDot} ${getChartColorClass(entry.color || "")}`} />
-                        <span>{entry.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                )} />
-              </PieChart>
-            </ResponsiveContainer>
+                </div>
+              )} />
+            </PieChart>
           </ChartContainer>
         ) : (
           <div className="h-[200px] flex items-center justify-center text-muted-foreground">

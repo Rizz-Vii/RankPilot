@@ -234,10 +234,14 @@ async function syncNeuroSEOAnalysis() {
 
         for (const request of pendingRequests) {
             try {
-                const response = await fetch('/api/neuroseo', {
+                // Support optional endpoint override in queued payloads
+                const data = request?.data || {};
+                const endpoint = typeof data.endpoint === 'string' ? data.endpoint : '/api/neuroseo';
+                const body = data && data.endpoint ? JSON.stringify(data.payload) : JSON.stringify(data);
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(request.data)
+                    body
                 });
 
                 if (response.ok) {
@@ -357,27 +361,109 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // IndexedDB helpers for offline data management
+// Minimal IndexedDB implementation for pending offline items
+const IDB_NAME = 'rankpilot-offline';
+const IDB_VERSION = 1;
+const STORE_ANALYSIS = 'pendingAnalysisRequests';
+const STORE_PREFS = 'pendingPreferences';
+
+/** Cached DB promise to avoid reopening on every call */
+let __dbPromise = null;
+
+function openDB() {
+    if (__dbPromise) return __dbPromise;
+
+    __dbPromise = new Promise((resolve, reject) => {
+        try {
+            const req = self.indexedDB.open(IDB_NAME, IDB_VERSION);
+
+            req.onupgradeneeded = (event) => {
+                const db = req.result;
+                // Create object stores if they don't exist
+                if (!db.objectStoreNames.contains(STORE_ANALYSIS)) {
+                    db.createObjectStore(STORE_ANALYSIS, { keyPath: 'id', autoIncrement: true });
+                }
+                if (!db.objectStoreNames.contains(STORE_PREFS)) {
+                    db.createObjectStore(STORE_PREFS, { keyPath: 'id', autoIncrement: true });
+                }
+            };
+
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        } catch (err) {
+            reject(err);
+        }
+    });
+
+    return __dbPromise;
+}
+
+async function withStore(storeName, mode, fn) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        try {
+            const tx = db.transaction(storeName, mode);
+            const store = tx.objectStore(storeName);
+            const result = fn(store);
+            tx.oncomplete = () => resolve(result);
+            tx.onerror = () => reject(tx.error);
+            tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
+
+async function idbGetAll(storeName) {
+    try {
+        return await withStore(storeName, 'readonly', (store) => {
+            return new Promise((resolve, reject) => {
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => reject(req.error);
+            });
+        });
+    } catch (err) {
+        console.warn('[SW][IDB] getAll failed for', storeName, err);
+        return [];
+    }
+}
+
+async function idbDelete(storeName, id) {
+    try {
+        await withStore(storeName, 'readwrite', (store) => {
+            store.delete(id);
+        });
+        return true;
+    } catch (err) {
+        console.warn('[SW][IDB] delete failed for', storeName, id, err);
+        return false;
+    }
+}
+
+// Public helpers used by background sync flows
 async function getPendingAnalysisRequests() {
-    // Implementation would use IndexedDB to store/retrieve pending requests
-    return [];
+    if (!self.indexedDB) return [];
+    return idbGetAll(STORE_ANALYSIS);
 }
 
 async function removePendingRequest(id) {
-    // Implementation would remove request from IndexedDB
+    if (!self.indexedDB) return false;
+    return idbDelete(STORE_ANALYSIS, id);
 }
 
 async function getPendingPreferences() {
-    // Implementation would use IndexedDB to store/retrieve pending preferences
-    return [];
+    if (!self.indexedDB) return [];
+    return idbGetAll(STORE_PREFS);
 }
 
 async function removePendingPreference(id) {
-    // Implementation would remove preference from IndexedDB
+    if (!self.indexedDB) return false;
+    return idbDelete(STORE_PREFS, id);
 }
 
 async function showNotification(title, options) {
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
-        const registration = await navigator.serviceWorker.ready;
-        return registration.showNotification(title, options);
+    if (self?.registration?.showNotification) {
+        return self.registration.showNotification(title, options);
     }
 }

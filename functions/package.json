@@ -2,8 +2,8 @@
   "name": "functions",
   "scripts": {
     "lint": "eslint --ext .js,.ts . --fix",
-  "clean": "rm -f lib/api/performance-functions.js lib/api/performance-functions.js.map",
-  "build": "npm run clean && tsc",
+    "clean": "rm -f lib/api/performance-functions.js lib/api/performance-functions.js.map",
+    "build": "npm run clean && tsc",
     "build:watch": "tsc --watch",
     "serve": "npm run build && firebase emulators:start --only functions",
     "serve:performance": "npm run build && firebase emulators:start --only functions --inspect-functions",
@@ -14,7 +14,7 @@
     "logs": "firebase functions:log",
     "logs:performance": "firebase functions:log --only performanceDashboard,realtimeMetrics,healthCheck",
     "test:emulator": "firebase emulators:exec --only functions 'npm run test'",
-    "test": "echo 'Performance dashboard functions ready for testing'"
+    "test": "mocha -r ts-node/register 'test/**/*.test.ts' --timeout 20000"
   },
   "engines": {
     "node": "20"
@@ -54,6 +54,7 @@
     "eslint-plugin-import": "^2.32.0",
     "mocha": "^10.6.0",
     "sinon": "^18.0.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.5.4"
   },
   "overrides": {

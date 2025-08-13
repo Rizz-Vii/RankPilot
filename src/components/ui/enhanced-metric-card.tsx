@@ -54,12 +54,12 @@ export function EnhancedMetricCard({
                 className
             )}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <div className="h-4 bg-gray-300 rounded w-24"></div>
-                    <div className="h-4 w-4 bg-gray-300 rounded"></div>
+                    <div className={"h-4 rounded w-24 " + colors.background.muted}></div>
+                    <div className={"h-4 w-4 rounded " + colors.background.muted}></div>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-8 bg-gray-300 rounded w-16 mb-2"></div>
-                    <div className="h-3 bg-gray-300 rounded w-32"></div>
+                    <div className={"h-8 rounded w-16 mb-2 " + colors.background.muted}></div>
+                    <div className={"h-3 rounded w-32 " + colors.background.muted}></div>
                 </CardContent>
             </Card>
         );
@@ -75,7 +75,7 @@ export function EnhancedMetricCard({
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className={cn(
                     typography.ui.label,
-                    "group-hover:text-gray-900 transition-colors"
+                    "group-hover:" + colors.text.primary + " transition-colors"
                 )}>
                     {title}
                 </CardTitle>
@@ -83,8 +83,8 @@ export function EnhancedMetricCard({
                     {Icon && (
                         <Icon className={cn(
                             "h-4 w-4 text-muted-foreground transition-colors",
-                            determinedTrend === "up" && "text-green-600",
-                            determinedTrend === "down" && "text-red-600"
+                            determinedTrend === "up" && colors.status.success.text,
+                            determinedTrend === "down" && colors.status.error.text
                         )} />
                     )}
                     {tier && (
@@ -100,7 +100,7 @@ export function EnhancedMetricCard({
             <CardContent>
                 <div className={cn(
                     typography.heading.h3,
-                    "font-bold text-gray-900 mb-1"
+                    "font-bold "+colors.text.primary+" mb-1"
                 )}>
                     {typeof value === "number" ? value.toLocaleString() : value}
                 </div>
@@ -110,7 +110,7 @@ export function EnhancedMetricCard({
                         "flex items-center gap-1",
                         determinedTrend === "up" && colors.status.success.text,
                         determinedTrend === "down" && colors.status.error.text,
-                        determinedTrend === "neutral" && "text-gray-500"
+                        determinedTrend === "neutral" && colors.text.muted
                     )}>
                         {determinedTrend === "up" && "↗"}
                         {determinedTrend === "down" && "↘"}

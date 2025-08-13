@@ -17,12 +17,17 @@ const TARGET_EMAILS = [
 function init() {
     if (!getApps().length) {
         const keyPath = path.resolve(__dirname, '../serviceAccount.json');
-        if (!fs.existsSync(keyPath)) {
-            console.error('Missing serviceAccount.json – abort.');
-            process.exit(1);
+        let creds: any;
+        if (fs.existsSync(keyPath)) {
+            creds = require(keyPath);
+        } else {
+            creds = {
+                project_id: process.env.FIREBASE_ADMIN_PROJECT_ID,
+                client_email: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+                private_key: (process.env.FIREBASE_ADMIN_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+            };
         }
-        const serviceAccount = require(keyPath);
-        initializeApp({ credential: cert(serviceAccount), projectId: serviceAccount.project_id });
+        initializeApp({ credential: cert(creds), projectId: creds.project_id });
     }
     return getFirestore();
 }

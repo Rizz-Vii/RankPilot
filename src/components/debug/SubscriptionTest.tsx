@@ -26,7 +26,7 @@ export function SubscriptionTest() {
               <span>Tier:</span>
               <Badge variant="outline">{subscription.tier}</Badge>
             </div>
-            <div className="text-sm text-green-600">
+            <div className="text-sm text-success-foreground">
               ✅ Subscription hook working correctly!
             </div>
           </div>

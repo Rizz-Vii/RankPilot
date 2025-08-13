@@ -4,6 +4,7 @@
  */
 
 import { firecrawlCompetitiveIntelligence } from '@/lib/intelligence/firecrawl-competitive-intelligence';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { NextRequest, NextResponse } from 'next/server';
@@ -35,14 +36,11 @@ interface CompetitorRequestBody {
     };
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withProvenance(async function POST(request: NextRequest) {
     try {
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json(
-                { error: 'Missing or invalid authorization header' },
-                { status: 401 }
-            );
+            return NextResponse.json(enforceProvenance({ success: false, error: 'Missing or invalid authorization header', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'auth' }), { status: 401 });
         }
 
         const token = authHeader.split('Bearer ')[1];
@@ -53,10 +51,7 @@ export async function POST(request: NextRequest) {
             decodedToken = await auth.verifyIdToken(token);
         } catch (error) {
             console.error('[CompetitiveIntelligenceAPI] Token verification error:', error);
-            return NextResponse.json(
-                { error: 'Invalid authentication token' },
-                { status: 401 }
-            );
+            return NextResponse.json(enforceProvenance({ success: false, error: 'Invalid authentication token', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'auth' }), { status: 401 });
         }
 
         const userId = decodedToken.uid;
@@ -64,10 +59,7 @@ export async function POST(request: NextRequest) {
 
         // Check tier access for competitive intelligence
         if (!['agency', 'enterprise', 'admin'].includes(userTier)) {
-            return NextResponse.json(
-                { error: 'Competitive intelligence requires Agency tier or higher' },
-                { status: 403 }
-            );
+            return NextResponse.json(enforceProvenance({ success: false, error: 'Competitive intelligence requires Agency tier or higher', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'tier' }), { status: 403 });
         }
 
         const body: CompetitorRequestBody = await request.json();
@@ -75,10 +67,7 @@ export async function POST(request: NextRequest) {
         switch (body.action) {
             case 'add':
                 if (!body.domain) {
-                    return NextResponse.json(
-                        { error: 'Domain is required for adding competitor' },
-                        { status: 400 }
-                    );
+                    return NextResponse.json(enforceProvenance({ success: false, error: 'Domain is required for adding competitor', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'validation' }), { status: 400 });
                 }
 
                 const competitor = await firecrawlCompetitiveIntelligence.addCompetitor(
@@ -92,59 +81,25 @@ export async function POST(request: NextRequest) {
                     }
                 );
 
-                return NextResponse.json({
-                    success: true,
-                    competitor: {
-                        id: competitor.id,
-                        domain: competitor.domain,
-                        name: competitor.name,
-                        industry: competitor.industry,
-                        created: competitor.metadata.created
-                    }
-                });
+                return NextResponse.json(enforceProvenance({ success: true, competitor: { id: competitor.id, domain: competitor.domain, name: competitor.name, industry: competitor.industry, created: competitor.metadata.created }, provenance: 'live' }, { path: 'intelligence/competitive', note: 'add' }));
 
             case 'analyze':
                 if (!body.competitorId) {
-                    return NextResponse.json(
-                        { error: 'Competitor ID is required for analysis' },
-                        { status: 400 }
-                    );
+                    return NextResponse.json(enforceProvenance({ success: false, error: 'Competitor ID is required for analysis', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'validation' }), { status: 400 });
                 }
 
                 await firecrawlCompetitiveIntelligence.analyzeCompetitor(body.competitorId);
 
-                return NextResponse.json({
-                    success: true,
-                    message: 'Analysis completed successfully'
-                });
+                return NextResponse.json(enforceProvenance({ success: true, message: 'Analysis completed successfully', provenance: 'live' }, { path: 'intelligence/competitive', note: 'analyze' }));
 
             case 'list':
                 const userCompetitors = firecrawlCompetitiveIntelligence.getUserCompetitors(userId);
 
-                return NextResponse.json({
-                    success: true,
-                    competitors: userCompetitors.map(c => ({
-                        id: c.id,
-                        domain: c.domain,
-                        name: c.name,
-                        industry: c.industry,
-                        trackingFrequency: c.trackingConfig.crawlFrequency,
-                        lastAnalysis: c.lastAnalysis ? {
-                            timestamp: c.lastAnalysis.timestamp,
-                            status: c.lastAnalysis.status,
-                            changesCount: c.lastAnalysis.changes.length
-                        } : null,
-                        analysisCount: c.metadata.analysisCount,
-                        created: c.metadata.created
-                    }))
-                });
+                return NextResponse.json(enforceProvenance({ success: true, competitors: userCompetitors.map(c => ({ id: c.id, domain: c.domain, name: c.name, industry: c.industry, trackingFrequency: c.trackingConfig.crawlFrequency, lastAnalysis: c.lastAnalysis ? { timestamp: c.lastAnalysis.timestamp, status: c.lastAnalysis.status, changesCount: c.lastAnalysis.changes.length } : null, analysisCount: c.metadata.analysisCount, created: c.metadata.created })), provenance: 'live' }, { path: 'intelligence/competitive', note: 'list' }));
 
             case 'update':
                 if (!body.competitorId) {
-                    return NextResponse.json(
-                        { error: 'Competitor ID is required for update' },
-                        { status: 400 }
-                    );
+                    return NextResponse.json(enforceProvenance({ success: false, error: 'Competitor ID is required for update', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'validation' }), { status: 400 });
                 }
 
                 const updated = firecrawlCompetitiveIntelligence.updateCompetitor(
@@ -158,45 +113,27 @@ export async function POST(request: NextRequest) {
                 );
 
                 if (!updated) {
-                    return NextResponse.json(
-                        { error: 'Competitor not found or update failed' },
-                        { status: 404 }
-                    );
+                    return NextResponse.json(enforceProvenance({ success: false, error: 'Competitor not found or update failed', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'not_found' }), { status: 404 });
                 }
 
-                return NextResponse.json({
-                    success: true,
-                    message: 'Competitor updated successfully'
-                });
+                return NextResponse.json(enforceProvenance({ success: true, message: 'Competitor updated successfully', provenance: 'live' }, { path: 'intelligence/competitive', note: 'update' }));
 
             case 'delete':
                 if (!body.competitorId) {
-                    return NextResponse.json(
-                        { error: 'Competitor ID is required for deletion' },
-                        { status: 400 }
-                    );
+                    return NextResponse.json(enforceProvenance({ success: false, error: 'Competitor ID is required for deletion', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'validation' }), { status: 400 });
                 }
 
                 const deleted = firecrawlCompetitiveIntelligence.deleteCompetitor(body.competitorId, userId);
 
                 if (!deleted) {
-                    return NextResponse.json(
-                        { error: 'Competitor not found or deletion failed' },
-                        { status: 404 }
-                    );
+                    return NextResponse.json(enforceProvenance({ success: false, error: 'Competitor not found or deletion failed', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'not_found' }), { status: 404 });
                 }
 
-                return NextResponse.json({
-                    success: true,
-                    message: 'Competitor deleted successfully'
-                });
+                return NextResponse.json(enforceProvenance({ success: true, message: 'Competitor deleted successfully', provenance: 'live' }, { path: 'intelligence/competitive', note: 'delete' }));
 
             case 'report':
                 if (!body.reportConfig?.competitorIds || body.reportConfig.competitorIds.length === 0) {
-                    return NextResponse.json(
-                        { error: 'Competitor IDs are required for report generation' },
-                        { status: 400 }
-                    );
+                    return NextResponse.json(enforceProvenance({ success: false, error: 'Competitor IDs are required for report generation', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'validation' }), { status: 400 });
                 }
 
                 const report = await firecrawlCompetitiveIntelligence.generateCompetitiveReport(
@@ -205,83 +142,36 @@ export async function POST(request: NextRequest) {
                     body.reportConfig.analysisType || 'comprehensive'
                 );
 
-                return NextResponse.json({
-                    success: true,
-                    report: {
-                        id: report.id,
-                        competitors: report.competitors,
-                        analysisType: report.analysisType,
-                        timeframe: report.timeframe,
-                        findings: {
-                            opportunitiesCount: report.findings.opportunities.length,
-                            threatsCount: report.findings.threats.length,
-                            insightsCount: report.findings.insights.length,
-                            recommendationsCount: report.findings.recommendations.length
-                        },
-                        metadata: report.metadata
-                    },
-                    downloadUrl: `/api/intelligence/competitive/download/${report.id}`
-                });
+                return NextResponse.json(enforceProvenance({ success: true, report: { id: report.id, competitors: report.competitors, analysisType: report.analysisType, timeframe: report.timeframe, findings: { opportunitiesCount: report.findings.opportunities.length, threatsCount: report.findings.threats.length, insightsCount: report.findings.insights.length, recommendationsCount: report.findings.recommendations.length }, metadata: report.metadata }, downloadUrl: `/api/intelligence/competitive/download/${report.id}`, provenance: 'live' }, { path: 'intelligence/competitive', note: 'report' }));
 
             case 'get':
                 if (!body.competitorId) {
-                    return NextResponse.json(
-                        { error: 'Competitor ID is required' },
-                        { status: 400 }
-                    );
+                    return NextResponse.json(enforceProvenance({ success: false, error: 'Competitor ID is required', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'validation' }), { status: 400 });
                 }
 
                 const competitorData = firecrawlCompetitiveIntelligence.getCompetitor(body.competitorId);
 
                 if (!competitorData || competitorData.metadata.userId !== userId) {
-                    return NextResponse.json(
-                        { error: 'Competitor not found' },
-                        { status: 404 }
-                    );
+                    return NextResponse.json(enforceProvenance({ success: false, error: 'Competitor not found', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'not_found' }), { status: 404 });
                 }
 
-                return NextResponse.json({
-                    success: true,
-                    competitor: {
-                        id: competitorData.id,
-                        domain: competitorData.domain,
-                        name: competitorData.name,
-                        description: competitorData.description,
-                        industry: competitorData.industry,
-                        targetKeywords: competitorData.targetKeywords,
-                        trackingConfig: competitorData.trackingConfig,
-                        lastAnalysis: competitorData.lastAnalysis,
-                        metadata: competitorData.metadata
-                    }
-                });
+                return NextResponse.json(enforceProvenance({ success: true, competitor: { id: competitorData.id, domain: competitorData.domain, name: competitorData.name, description: competitorData.description, industry: competitorData.industry, targetKeywords: competitorData.targetKeywords, trackingConfig: competitorData.trackingConfig, lastAnalysis: competitorData.lastAnalysis, metadata: competitorData.metadata }, provenance: 'live' }, { path: 'intelligence/competitive', note: 'get' }));
 
             default:
-                return NextResponse.json(
-                    { error: 'Invalid action specified' },
-                    { status: 400 }
-                );
+                return NextResponse.json(enforceProvenance({ success: false, error: 'Invalid action specified', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'invalid_action' }), { status: 400 });
         }
 
     } catch (error) {
         console.error('[CompetitiveIntelligenceAPI] Error:', error);
-        return NextResponse.json(
-            {
-                error: 'Internal server error',
-                details: error instanceof Error ? error.message : 'Unknown error'
-            },
-            { status: 500 }
-        );
+        return NextResponse.json(enforceProvenance({ success: false, error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'exception' }), { status: 500 });
     }
-}
+}, { path: 'intelligence/competitive' });
 
-export async function GET(request: NextRequest) {
+export const GET = withProvenance(async function GET(request: NextRequest) {
     try {
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json(
-                { error: 'Missing or invalid authorization header' },
-                { status: 401 }
-            );
+            return NextResponse.json(enforceProvenance({ success: false, error: 'Missing or invalid authorization header', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'auth' }), { status: 401 });
         }
 
         const token = authHeader.split('Bearer ')[1];
@@ -292,10 +182,7 @@ export async function GET(request: NextRequest) {
             decodedToken = await auth.verifyIdToken(token);
         } catch (error) {
             console.error('[CompetitiveIntelligenceAPI] Token verification error:', error);
-            return NextResponse.json(
-                { error: 'Invalid authentication token' },
-                { status: 401 }
-            );
+            return NextResponse.json(enforceProvenance({ success: false, error: 'Invalid authentication token', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'auth' }), { status: 401 });
         }
 
         const userId = decodedToken.uid;
@@ -303,10 +190,7 @@ export async function GET(request: NextRequest) {
 
         // Check tier access
         if (!['agency', 'enterprise', 'admin'].includes(userTier)) {
-            return NextResponse.json(
-                { error: 'Competitive intelligence requires Agency tier or higher' },
-                { status: 403 }
-            );
+            return NextResponse.json(enforceProvenance({ success: false, error: 'Competitive intelligence requires Agency tier or higher', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'tier' }), { status: 403 });
         }
 
         // Get user's competitive intelligence overview
@@ -329,33 +213,10 @@ export async function GET(request: NextRequest) {
             }
         };
 
-        return NextResponse.json({
-            success: true,
-            overview,
-            competitors: userCompetitors.map(c => ({
-                id: c.id,
-                domain: c.domain,
-                name: c.name,
-                industry: c.industry,
-                trackingFrequency: c.trackingConfig.crawlFrequency,
-                lastAnalysis: c.lastAnalysis ? {
-                    timestamp: c.lastAnalysis.timestamp,
-                    status: c.lastAnalysis.status,
-                    changesCount: c.lastAnalysis.changes.length
-                } : null,
-                analysisCount: c.metadata.analysisCount,
-                created: c.metadata.created
-            }))
-        });
+        return NextResponse.json(enforceProvenance({ success: true, overview, competitors: userCompetitors.map(c => ({ id: c.id, domain: c.domain, name: c.name, industry: c.industry, trackingFrequency: c.trackingConfig.crawlFrequency, lastAnalysis: c.lastAnalysis ? { timestamp: c.lastAnalysis.timestamp, status: c.lastAnalysis.status, changesCount: c.lastAnalysis.changes.length } : null, analysisCount: c.metadata.analysisCount, created: c.metadata.created })), provenance: 'live' }, { path: 'intelligence/competitive', note: 'overview' }));
 
     } catch (error) {
         console.error('[CompetitiveIntelligenceAPI] Error:', error);
-        return NextResponse.json(
-            {
-                error: 'Internal server error',
-                details: error instanceof Error ? error.message : 'Unknown error'
-            },
-            { status: 500 }
-        );
+        return NextResponse.json(enforceProvenance({ success: false, error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'exception' }), { status: 500 });
     }
-}
+}, { path: 'intelligence/competitive' });

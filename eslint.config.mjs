@@ -12,7 +12,7 @@ export default [
     },
     rules: {
       'custom-rules/no-self-reexport': 'error',
-      'custom-rules/no-raw-hex-colors': 'warn',
+  'custom-rules/no-raw-hex-colors': 'error',
       // Temporary guard: prevent committing raw service account credentials
       // This leverages ESLint's built-in no-restricted-files pattern via overrides when file matches.
     }

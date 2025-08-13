@@ -1,8 +1,168 @@
 # COMPREHENSIVE PILOTBUDDY INTELLIGENCE
 
+> Update (2025-08-12):
+>
+> - Universal provenance middleware enforced across dashboards, visualizations, and billing APIs; audit tooling available.
+> - `/api/table-data` now Firestore-backed (`dashboardTables/{widgetId}/rows`) with deterministic fallback and CSV export.
+> - Scheduled runner added for due automations; manual `/api/automation/run-due` endpoint deprecated (410). Emulator tests pending.
+> - AI adapter remains a mock at `functions/src/lib/ai-memory-manager.ts`; implement env-driven provider selection; retain mock fallback.
+> - Finance pages use mock metrics; gate or wire to real data. Team-aware rate limiting partial; `/api/health` exposes KPIs and alerts.
+> - See `archey/ADDENDUM_2025-08-12.md` for details and next steps. Canonical chatmode: `.github/chatmodes/pilotBuddy.chatmode.md`.
+
 **Generated:** 7/26/2025
 **Consolidation Status:** Comprehensive merger of 4 related documents
 **Source Files:** pilotbuddy/PILOTBUDDY_LEGENDARY_WISDOM.md, pilotbuddy/PILOTBUDDY_ENHANCED_AUTOMATION_SUMMARY.md, pilotbuddy/MCP_INSTRUCTION_MAP.md, comprehensive/PILOTBUDDY_COMPREHENSIVE.md
+
+---
+
+## Canonical quick links (AI + engineering)
+
+- DevAgents – in‑app AI agents root guide: [docs/exMD/DevAgents.md](./exMD/DevAgents.md)
+- Copilot Chatmode (deterministic profile): [.github/chatmodes/pilotBuddy.chatmode.md](../.github/chatmodes/pilotBuddy.chatmode.md)
+- Copilot Instructions (deterministic execution): [.github/chatmodes/copilot-instructions.md](../.github/chatmodes/copilot-instructions.md)
+- Production Addendum (2025‑08‑12): [archey/ADDENDUM_2025-08-12.md](../archey/ADDENDUM_2025-08-12.md)
+
+More references:
+
+- PilotBuddy Intelligence: [COMPREHENSIVE_PILOTBUDDY_INTELLIGENCE.md](./COMPREHENSIVE_PILOTBUDDY_INTELLIGENCE.md)
+- System Architecture: [COMPREHENSIVE_SYSTEM_ARCHITECTURE.md](./COMPREHENSIVE_SYSTEM_ARCHITECTURE.md)
+- Security Protocols: [COMPREHENSIVE_SECURITY_PROTOCOLS.md](./COMPREHENSIVE_SECURITY_PROTOCOLS.md)
+- Development Workflow: [COMPREHENSIVE_DEVELOPMENT_WORKFLOW.md](./COMPREHENSIVE_DEVELOPMENT_WORKFLOW.md)
+- Testing Infrastructure: [COMPREHENSIVE_TESTING_INFRASTRUCTURE.md](./COMPREHENSIVE_TESTING_INFRASTRUCTURE.md)
+- Mobile Performance: [COMPREHENSIVE_MOBILE_PERFORMANCE.md](./COMPREHENSIVE_MOBILE_PERFORMANCE.md)
+- Firestore Schemas: [FIRESTORE_SCHEMAS.md](./FIRESTORE_SCHEMAS.md)
+- Incomplete Code Audit: [INCOMPLETE_CODE_AUDIT.md](./INCOMPLETE_CODE_AUDIT.md)
+- Change Log: [CHANGE_LOG.md](./CHANGE_LOG.md)
+
+---
+
+## Current status (2025-08-12)
+
+- Provenance: universal middleware on dashboards, visualizations, and billing APIs.
+- Table Data API: Firestore-backed at `dashboardTables/{widgetId}/rows` with deterministic fallback and CSV export.
+- Automations: scheduled runner live; manual `/api/automation/run-due` deprecated (410); emulator tests pending.
+- Finance: metrics still mocked; gate or wire to real source.
+- AI adapter: `functions/src/lib/ai-memory-manager.ts` is a mock; implement real provider selection via env; keep mock fallback.
+- Rate limiting & KPIs: team-aware limiter partial; `/api/health` exposes KPIs and alert thresholds.
+
+---
+
+## Custom model integration (Copilot Chat) — risks and mitigations
+
+This repo may use a custom LLM with Copilot Chat. The table below maps common drawbacks to concrete policies in Studio so custom models remain safe, reliable, and useful.
+
+- Feature gaps (slash-commands, code actions, repo graph, PR review, tool-call parity)
+  - Policy: Capability routing. When a request needs first‑party skills (e.g., PR review, slash commands, repo graph), route to Copilot’s default model/feature instead of the custom model.
+  - Implementation hooks: PilotBuddy chatmode prefers built-in workspace/tools for repo search/usages and keeps edits local; non‑supported actions must degrade to first‑party or no‑op with a clear notice.
+
+- Context limits (smaller window, weaker IDE grounding, no semantic index)
+  - Policy: Deterministic context broker. Always supply: current file, diff (if any), targeted search hits, and minimal symbol usages. Enforce a hard token budget with truncation rules (current file > related files > tests > logs).
+  - Implementation hooks: Use tool-assisted reads (codebase/usages/search) to build inputs; dedupe and chunk large files; prefer snippet packs over whole files.
+
+- Latency and reliability (extra hops, throttling)
+  - Policy: Latency budgets, retries with jitter, and circuit breakers. If SLO is exceeded or on 429/5xx, automatically fall back to default Copilot model or the local mock adapter.
+  - Implementation hooks: Prewarm via small health pings; cache deterministic results where safe; expose model latency in `/api/health` KPIs.
+
+- Quality variance (less code-specific tuning)
+  - Policy: Structured prompts + self-checklists. Require JSON/tool-output formats and a brief “diff-safety checklist” before proposing edits; prefer minimal diffs.
+  - Implementation hooks: Keep few-shot examples local; run proposed changes through existing lint/tests where applicable.
+
+- Cost and quotas (per‑token + egress + vendor limits)
+  - Policy: Budget caps per team/environment and adaptive downscaling (shorter answers, fewer contexts) near limits; respect vendor rate limits.
+  - Implementation hooks: Track spend/quotas in `/api/health`; trip a read‑only mode when budgets are exceeded; prefer on‑prem/cheaper tiers for bulk tasks.
+
+- Security/compliance (data residency/retention, code egress)
+  - Policy: Redaction proxy + allowlists. Strip secrets/PII, avoid sending large blobs by default, and prefer providers that keep data in approved regions.
+  - Implementation hooks: Honor provenance middleware and secret-scrubbing rules for all AI calls; default to local/mock when policy is uncertain.
+
+- Governance/observability (auditability, guardrails, rollbacks)
+  - Policy: Append‑only prompt/response logs with reversible redaction; model version pinning; gated rollouts with quick rollback.
+  - Implementation hooks: Include model/version and request IDs in logs; surface health/alerts via `/api/health`; link entries to CHANGE_LOG.
+
+- Maintenance overhead (provider selection, drift, templates, fallback)
+  - Policy: Env‑driven provider selection, compatibility matrix, and canary releases; always keep a deterministic mock fallback.
+  - Implementation hooks: Centralized adapter in `functions/src/lib/ai-memory-manager.ts`; fail‑closed to mock on errors.
+
+- Limited modality/features (no multimodal/JSON/tool guarantees)
+  - Policy: Text‑first operation with strict schema validation; tool-call shim that converts structured requests to plain text if needed.
+  - Implementation hooks: Require valid JSON where promised; if missing, auto‑repair or reject and fall back.
+
+- Support surface area (GitHub + vendor)
+  - Policy: Clear runbooks and escalation paths; “flight recorder” IDs for incidents; vendor status monitoring.
+  - Implementation hooks: Add concise incident procedures to docs; collect minimal repro bundles without code egress when possible.
+
+Status summary:
+
+- Enforced today: provenance middleware, rate‑limit KPIs, env‑driven adapter design with mock fallback, minimal‑diff policy.
+- In progress: provider selection implementation + latency budgets + structured output validation.
+- Next steps: capability router, redaction proxy hardening, budget caps per team, audit log hygiene.
+
+## Operational contracts (inputs/outputs + tests)
+
+1) Table Data API contract
+
+- Endpoint: `GET /api/table-data?widgetId=...&teamId?=&userId?=`
+- Response (happy path):
+
+```json
+{
+   "rows": [
+      { "id": "row-1", "cells": { "name": "Acme", "impressions": 1200, "clicks": 87 } },
+      { "id": "row-2", "cells": { "name": "Bravo", "impressions": 980, "clicks": 66 } }
+   ],
+   "source": "firestore|fallback",
+   "exportCsvUrl": "/api/table-data/export?widgetId=..."
+}
+```
+
+- Tests: `npm run test:table-contract` (contract) and `npm run test:table-edge` (edge cases)
+
+2) AI provider adapter (mock → real with env selection + capability routing)
+
+- Location: `functions/src/lib/ai-memory-manager.ts`
+- Policies:
+  - Provider selection via environment; when unset/failing, degrade to mock without throwing.
+  - Capability routing: if a request requires first‑party Copilot skills (repo graph, PR review, slash‑commands), route away from the custom model.
+  - Budgets and reliability: enforce latency/error budgets with retries and circuit breaker to default/mocked providers.
+  - Security: pass inputs through redaction/allowlist and provenance checks before egress.
+  - Structured outputs: prefer JSON with schema validation; auto‑repair or reject malformed outputs.
+- Tests: unit tests for provider selection, fallback, capability gating, and basic schema validation; smoke tests for latency/error budget behavior (non‑flaky thresholds).
+
+3) Finance metrics gating
+
+- Current: finance pages use mock metrics.
+- Policy: gate behind environment switch; prefer real source when available; ensure deterministic fallbacks for tests.
+
+4) Provenance and rate limiting
+
+- Provenance: enforced via middleware; validate coverage with scripts below.
+- Rate limit: team-aware limiter partial; extend tests to cover burst/slow-path scenarios.
+
+---
+
+## Verification playbook (fast path)
+
+- Critical gate (auth + a11y + perf + governance):
+  - `npm run test:critical`
+- Provenance health:
+  - `npm run test:provenance`
+  - `npm run test:provenance-coverage`
+  - `npm run test:provenance-negative`
+- Scheduler/automation checks:
+  - `npm run test:scheduler-unit`
+  - `npm run test:cron`
+- Table Data API:
+  - `npm run test:table-contract`
+  - `npm run test:table-edge`
+- Docs hygiene:
+  - `npm run pilot:auto-lint`
+  - `npm run pilot:auto-lint:watch`
+
+Custom model health (no new commands implied):
+
+- Trigger an AI call with and without required capabilities to verify routing/fallback behavior is correct and logged.
+- Confirm `/api/health` exposes model latency/error budget KPIs when the adapter is enabled.
+- Validate that prompts/outputs are recorded with redaction and version pinning.
 
 ---
 
@@ -154,7 +314,7 @@ newScriptCreated() → updatePackageJsonCommands()
 ```javascript
 // Auto-fix patterns:
 - MD022: Headings surrounded by blank lines
-- MD032: Lists surrounded by blank lines  
+- MD032: Lists surrounded by blank lines
 - MD031: Fenced code blocks surrounded by blank lines
 - Graceful fallback for complex issues
 - PilotBuddy metrics integration
@@ -461,7 +621,7 @@ This instruction map should be updated when:
 ## Table of Contents
 
 - [Overview](#overview)
-- [System Architecture](#system-architecture) 
+- [System Architecture](#system-architecture)
 - [Core Components](#core-components)
 - [Chat Mode Quick References](#chat-mode-quick-references)
 - [Critical File References](#critical-file-references)
@@ -495,7 +655,6 @@ The Autonomous Learning System enables PilotBuddy to continuously improve throug
 
 #### Pattern Recognition Engine
 
-
 - **Project Analysis**: Analyzed 93+ documentation files for recurring patterns
 
 - **Issue Categorization**: Automatically categorizes new issues by type
@@ -512,7 +671,7 @@ The Autonomous Learning System enables PilotBuddy to continuously improve throug
    - **Template Created**: Always implement fallback mechanisms for critical build tooling
    - **Prevention Strategy**: Monitor dependency compatibility matrices before updates
 
-2. **Testing Framework Evolution**  
+2. **Testing Framework Evolution**
    - **Problem**: Fragmented test utilities and inconsistent authentication
    - **Solution Applied**: Enhanced testing framework with TestOrchestrator
    - **Template Created**: Centralized test orchestration with retry mechanisms
@@ -546,7 +705,6 @@ The Autonomous Learning System enables PilotBuddy to continuously improve throug
 
 **Documentation Management Automation**
 
-
 - **Pattern**: When 3+ related files exist → trigger consolidation workflow
 
 - **Tools**: PowerShell scripts with dry-run, backup, and rollback capabilities
@@ -556,7 +714,6 @@ The Autonomous Learning System enables PilotBuddy to continuously improve throug
 - **Template**: `*_COMPREHENSIVE.md` format with TOC and structured content
 
 **Script Development Framework**
-
 
 - **Location**: `pilotScripts/` directory with categorized subdirectories
 
@@ -571,7 +728,6 @@ The Autonomous Learning System enables PilotBuddy to continuously improve throug
 PilotBuddy's automation capabilities streamline development workflows:
 
 #### Automatic Markdown Quality Enforcement
-
 
 - **Feature**: Auto-lint all markdown files on changes
 
@@ -588,7 +744,6 @@ PilotBuddy's automation capabilities streamline development workflows:
 ```
 
 #### Package.json Scripts Reference Integration
-
 
 - **Feature**: Complete package.json scripts inventory in PilotBuddy
 
@@ -607,10 +762,9 @@ PilotBuddy's automation capabilities streamline development workflows:
 
 #### Automated Script Generation
 
+- **Feature**: Autonomous creation of automation scripts
 
-- **Feature**: Autonomous creation of PowerShell automation scripts
-
-- **Command**: `npm run pilot:generate-script`
+- **Command**: `npm run pilot:generate-solution`
 
 - **Types**: Test automation, build optimization, and development workflows
 
@@ -622,7 +776,7 @@ function Invoke-RankPilotTest {
         [switch]$SkipBuild,
         [int]$RetryCount = 3
     )
-    
+
     # Auto-generated test orchestration
     # Handles common failure patterns with automatic recovery
 }
@@ -631,7 +785,6 @@ function Invoke-RankPilotTest {
 ### 3. Dynamic Content System
 
 The Dynamic Content System provides real-time project insights:
-
 
 - **Auto-Generated Insights**: Updates every development session with live metrics
 
@@ -700,22 +853,22 @@ PilotBuddy makes intelligent decisions based on project patterns:
 
 ### Quick Start Commands
 
-```powershell
-# Start PilotBuddy with development server
-npm run dev:with-pilot
+```bash
+# Start the dev server (stable)
+npm run dev-no-turbopack
 
-# Run PilotBuddy analysis
-npm run pilot:analyze
+# Update aggregated PilotBuddy content
+npm run pilotbuddy:update
 
-# Generate PilotBuddy automation script
-npm run pilot:generate-script
+# Generate an automation solution script from a solved problem
+npm run pilot:generate-solution
 
-# Update PilotBuddy metrics
-npm run pilot:update-metrics
+# Auto-lint documentation (one-off or watch mode)
+npm run pilot:auto-lint
+npm run pilot:auto-lint:watch
 ```
 
 ### Interactive Features
-
 
 - **Response Style**: Ultra-concise (3 bullets or less)
 
@@ -740,21 +893,21 @@ npm run pilot:update-metrics
 
 #### Documentation Access Commands
 
-- `@docs workflow` → `docs/DEVELOPER_WORKFLOW_COMPREHENSIVE.md`
-- `@docs mobile` → `docs/MOBILE_PERFORMANCE_COMPREHENSIVE.md`
-- `@docs security` → `docs/SECURITY_AND_GITIGNORE_COMPREHENSIVE.md`
-- `@docs subscription` → `docs/SUBSCRIPTION_TIER_COMPREHENSIVE.md`
-- `@docs pilotbuddy` → `docs/PILOTBUDDY_COMPREHENSIVE.md`
-- `@docs project` → `docs/PROJECT_COMPREHENSIVE.md`
+- `@docs workflow` → `docs/COMPREHENSIVE_DEVELOPMENT_WORKFLOW.md`
+- `@docs mobile` → `docs/COMPREHENSIVE_MOBILE_PERFORMANCE.md`
+- `@docs security` → `docs/COMPREHENSIVE_SECURITY_PROTOCOLS.md`
+- `@docs architecture` → `docs/COMPREHENSIVE_SYSTEM_ARCHITECTURE.md`
+- `@docs pilotbuddy` → `docs/COMPREHENSIVE_PILOTBUDDY_INTELLIGENCE.md`
+- `@docs project` → `docs/COMPREHENSIVE_PROJECT_STATUS.md`
 
 #### Script Access Commands
 
-- `@scripts docs` → `pilotScripts/documentation/` (2 automation scripts)
+- `@scripts docs` → `pilotScripts/documentation/`
 - `@scripts consolidate` → `pilotScripts/documentation/consolidate-documentation.ps1`
 - `@scripts cleanup` → `pilotScripts/documentation/cleanup-consolidated-docs.ps1`
-- `@scripts test` → `pilotScripts/testing/` (planned automation)
-- `@scripts deploy` → `pilotScripts/deployment/` (planned automation)
-- `@scripts optimize` → `pilotScripts/optimization/` (planned automation)
+- `@scripts testing` → `pilotScripts/testing/`
+- `@scripts optimization` → `pilotScripts/optimization/`
+- `@scripts utilities` → `pilotScripts/utilities/`
 
 ## Critical File References
 
@@ -788,7 +941,7 @@ npm run pilot:update-metrics
 #### Comprehensive Documentation (6 Files)
 
 - `docs/DEVELOPER_WORKFLOW_COMPREHENSIVE.md` - Complete development workflows and processes
-- `docs/MOBILE_PERFORMANCE_COMPREHENSIVE.md` - Mobile optimization and performance strategies  
+- `docs/MOBILE_PERFORMANCE_COMPREHENSIVE.md` - Mobile optimization and performance strategies
 - `docs/SECURITY_AND_GITIGNORE_COMPREHENSIVE.md` - Security protocols and file management
 - `docs/SUBSCRIPTION_TIER_COMPREHENSIVE.md` - 5-tier access system documentation
 - `docs/PILOTBUDDY_COMPREHENSIVE.md` - AI assistant capabilities and patterns
@@ -813,7 +966,6 @@ npm run pilot:update-metrics
 
 PilotBuddy actively tracks key project metrics:
 
-
 - **Build Success Rate**: 99.7% (7-day average)
 
 - **Test Pass Rate**: 98.2% (153 tests)
@@ -829,7 +981,6 @@ PilotBuddy actively tracks key project metrics:
 - **Consolidation Success**: 17 source files → 6 comprehensive documents (65% reduction)
 
 ### Automation Infrastructure Metrics (July 2025)
-
 
 - **pilotScripts Coverage**: 5 planned categories (documentation, testing, deployment, optimization, utilities)
 
@@ -850,4 +1001,3 @@ PilotBuddy actively tracks key project metrics:
 5. **Custom Pattern Creation** - User-defined solution templates
 
 ---
-

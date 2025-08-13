@@ -12,6 +12,7 @@
  */
 
 import * as d3 from 'd3';
+import jsPDF from 'jspdf';
 
 export interface ChartDataPoint {
     x: any;
@@ -75,6 +76,24 @@ export interface ChartExportConfig {
     background?: string;
     title?: string;
     watermark?: boolean;
+    /**
+     * When true, computed CSS styles are inlined into the exported SVG so it renders
+     * identically when opened standalone (outside the original DOM/CSS context).
+     */
+    includeStyles?: boolean;
+    /** Optional raw @font-face CSS (string or list) to embed into the SVG */
+    fontFacesCSS?: string | string[];
+    /** Optional structured font embedding definitions for common cases */
+    embedFonts?: Array<{
+        family: string;
+        /** A URL or data URL (recommended data:font/woff2;base64,...) */
+        src: string;
+        format?: 'woff2' | 'woff' | 'truetype' | 'opentype' | 'embedded-opentype' | 'svg';
+        weight?: string | number;
+        style?: string;
+        unicodeRange?: string;
+        display?: 'auto' | 'block' | 'swap' | 'fallback' | 'optional';
+    }>;
 }
 
 export class D3VisualizationEngine {
@@ -731,14 +750,166 @@ export class D3VisualizationEngine {
     }
 
     private exportAsSVG(svg: SVGElement, config: ChartExportConfig): string {
-        const serializer = new XMLSerializer();
-        let svgString = serializer.serializeToString(svg.parentElement!);
+        const serializer: XMLSerializer | { serializeToString: (n: Node) => string } =
+            (typeof (globalThis as any).XMLSerializer !== 'undefined')
+                ? new (globalThis as any).XMLSerializer()
+                : ((typeof window !== 'undefined' && (window as any).XMLSerializer)
+                    ? new (window as any).XMLSerializer()
+                    : { serializeToString: (n: Node) => (n as any).outerHTML || String(n) });
+        const originalRoot = (svg.parentElement as unknown as SVGElement) || svg;
 
+        // Work on a deep clone to avoid mutating the on-screen chart
+        const root = originalRoot.cloneNode(true) as SVGElement;
+
+        // Ensure width/height attributes present
+        const w = (originalRoot.getAttribute('width') || String((originalRoot as any).width?.baseVal?.value) || String(svg.clientWidth) || '800');
+        const h = (originalRoot.getAttribute('height') || String((originalRoot as any).height?.baseVal?.value) || String(svg.clientHeight) || '600');
+        if (!root.getAttribute('width')) root.setAttribute('width', w);
+        if (!root.getAttribute('height')) root.setAttribute('height', h);
+
+        // Background color if requested
         if (config.background) {
-            svgString = svgString.replace('<svg', `<svg style="background-color: ${config.background}"`);
+            const style = root.getAttribute('style') || '';
+            const next = /background-color:/i.test(style) ? style : `${style};background-color:${config.background}`;
+            root.setAttribute('style', next);
         }
 
-        return `data:image/svg+xml;base64,${btoa(svgString)}`;
+        // Inline computed styles for standalone fidelity
+        if (config.includeStyles) {
+            try {
+                this.inlineComputedStyles(originalRoot, root);
+            } catch {
+                // Best-effort: ignore styling inline errors in restrictive environments
+            }
+        }
+
+        // Embed font-face rules if provided
+        if ((config.fontFacesCSS && (Array.isArray(config.fontFacesCSS) ? config.fontFacesCSS.length : true)) || (config.embedFonts && config.embedFonts.length)) {
+            try {
+                this.embedFontFaces(root, config);
+            } catch { /* non-fatal */ }
+        }
+
+        const svgString = serializer.serializeToString(root);
+        return `data:image/svg+xml;base64,${this.toBase64(svgString)}`;
+    }
+
+    // Robust base64 for Node/jsdom and browsers, preserving unicode
+    private toBase64(input: string): string {
+        try {
+            if (typeof window !== 'undefined' && (window as any).btoa) {
+                try { return (window as any).btoa(input); } catch { /* fallthrough */ }
+                return (window as any).btoa(unescape(encodeURIComponent(input)));
+            }
+        } catch { /* not in browser */ }
+        try {
+            // Node path
+            return Buffer.from(input, 'utf-8').toString('base64');
+        } catch {
+            // Last resort: may still throw if Buffer unavailable
+            return (typeof btoa !== 'undefined') ? btoa(input) : input;
+        }
+    }
+
+    // Copy a safe subset of computed styles from original elements to the clone
+    private inlineComputedStyles(originalRoot: SVGElement, cloneRoot: SVGElement): void {
+        const origAll = [originalRoot, ...Array.from(originalRoot.querySelectorAll<SVGElement>('*'))];
+        const cloneAll = [cloneRoot, ...Array.from(cloneRoot.querySelectorAll<SVGElement>('*'))];
+
+        const PROPS = [
+            'font-family', 'font-size', 'font-weight', 'font-style', 'color',
+            'fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-opacity',
+            'stroke-linecap', 'stroke-linejoin', 'opacity', 'text-anchor',
+            'dominant-baseline', 'visibility', 'mix-blend-mode', 'shape-rendering',
+            'letter-spacing', 'word-spacing', 'paint-order', 'stop-color', 'stop-opacity'
+        ];
+
+        for (let i = 0; i < origAll.length && i < cloneAll.length; i++) {
+            const o = origAll[i] as Element;
+            const c = cloneAll[i] as Element;
+            let cs: CSSStyleDeclaration | undefined;
+            try { cs = window.getComputedStyle(o); } catch { cs = undefined as any; }
+            if (!cs) continue;
+            const styleParts: string[] = [];
+            for (const prop of PROPS) {
+                const val = cs.getPropertyValue(prop);
+                if (val && val.trim() && val !== 'initial' && val !== 'inherit') {
+                    styleParts.push(`${prop}:${val}`);
+                }
+            }
+            // If computed style is sparse (jsdom), derive from attributes for common properties
+            const ATTR_TO_STYLE: Record<string, string> = {
+                'fill': 'fill',
+                'stroke': 'stroke',
+                'stroke-width': 'stroke-width',
+                'stroke-opacity': 'stroke-opacity',
+                'fill-opacity': 'fill-opacity',
+                'font-family': 'font-family',
+                'font-size': 'font-size',
+                'font-weight': 'font-weight',
+                'opacity': 'opacity',
+                'text-anchor': 'text-anchor'
+            };
+            for (const attr in ATTR_TO_STYLE) {
+                const cssProp = ATTR_TO_STYLE[attr];
+                const existing = styleParts.find(s => s.startsWith(cssProp + ':'));
+                if (!existing) {
+                    const attrVal = o.getAttribute(attr);
+                    if (attrVal && attrVal.trim()) {
+                        styleParts.push(`${cssProp}:${attrVal}`);
+                    }
+                }
+            }
+            if (styleParts.length) {
+                const prior = c.getAttribute('style') || '';
+                const merged = prior ? `${prior};${styleParts.join(';')}` : styleParts.join(';');
+                c.setAttribute('style', merged);
+            }
+        }
+    }
+
+    // Insert a <style> element with @font-face rules so custom fonts render in external viewers
+    private embedFontFaces(root: SVGElement, config: ChartExportConfig): void {
+        const doc = root.ownerDocument || document;
+        const defs = ((): SVGDefsElement => {
+            let d = root.querySelector('defs');
+            if (!d) {
+                d = doc.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                root.insertBefore(d, root.firstChild);
+            }
+            return d as SVGDefsElement;
+        })();
+
+        const styleEl = doc.createElementNS('http://www.w3.org/2000/svg', 'style');
+        styleEl.setAttribute('type', 'text/css');
+
+        const cssParts: string[] = [];
+        // Raw CSS provided
+        if (config.fontFacesCSS) {
+            if (Array.isArray(config.fontFacesCSS)) cssParts.push(...config.fontFacesCSS);
+            else cssParts.push(config.fontFacesCSS);
+        }
+        // Structured font entries
+        if (config.embedFonts && config.embedFonts.length) {
+            for (const f of config.embedFonts) {
+                const fmt = f.format || (f.src.includes('woff2') ? 'woff2' : f.src.includes('woff') ? 'woff' : undefined);
+                const srcDecl = fmt ? `url('${f.src}') format('${fmt}')` : `url('${f.src}')`;
+                const rules: string[] = [
+                    `font-family: '${f.family}';`,
+                    `src: ${srcDecl};`
+                ];
+                if (f.weight) rules.push(`font-weight: ${f.weight};`);
+                if (f.style) rules.push(`font-style: ${f.style};`);
+                if (f.unicodeRange) rules.push(`unicode-range: ${f.unicodeRange};`);
+                if (f.display) rules.push(`font-display: ${f.display};`);
+                cssParts.push(`@font-face { ${rules.join(' ')} }`);
+            }
+        }
+
+        if (cssParts.length) {
+            styleEl.textContent = cssParts.join('\n');
+            defs.appendChild(styleEl);
+        }
     }
 
     private async exportAsPNG(svg: SVGElement, config: ChartExportConfig): Promise<string> {
@@ -770,12 +941,51 @@ export class D3VisualizationEngine {
     }
 
     private async exportAsPDF(svg: SVGElement, config: ChartExportConfig): Promise<string> {
-        // For PDF export, we'll return a placeholder URL
-        // In production, integrate with jsPDF or similar library
+        // Convert current SVG to PNG
         const pngData = await this.exportAsPNG(svg, config);
 
-        // Mock PDF generation
-        return `data:application/pdf;base64,${btoa('PDF content would be here')}`;
+        // Create a PDF and embed the PNG
+        const pdf = new jsPDF({ orientation: (config.width || 842) >= (config.height || 595) ? 'landscape' : 'portrait', unit: 'pt', format: 'a4' });
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        // Calculate placement while preserving aspect ratio
+        const img = new Image();
+        const dims = await new Promise<{ w: number; h: number }>((resolve, reject) => {
+            img.onload = () => resolve({ w: img.width, h: img.height });
+            img.onerror = reject;
+            img.src = pngData;
+        });
+
+        const maxW = pageWidth - 72; // 1-inch margins
+        const maxH = pageHeight - 72;
+        const scale = Math.min(maxW / dims.w, maxH / dims.h, 1);
+        const drawW = dims.w * scale;
+        const drawH = dims.h * scale;
+        const x = (pageWidth - drawW) / 2;
+        const y = (pageHeight - drawH) / 2;
+
+        if (config.background) {
+            pdf.setFillColor(config.background);
+            pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+        }
+
+        if (config.title) {
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(16);
+            pdf.text(config.title, pageWidth / 2, 36, { align: 'center' });
+        }
+
+        pdf.addImage(pngData, 'PNG', x, y, drawW, drawH, undefined, 'FAST');
+
+        if (config.watermark) {
+            pdf.setTextColor(200);
+            pdf.setFontSize(36);
+            pdf.text('RankPilot', pageWidth / 2, pageHeight - 24, { align: 'center' });
+        }
+
+        const blob = pdf.output('blob');
+        return URL.createObjectURL(blob);
     }
 
     private exportAsJSON(chart: any, config: ChartExportConfig): string {

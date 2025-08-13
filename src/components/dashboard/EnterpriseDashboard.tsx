@@ -24,6 +24,7 @@ import {
     Zap
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { allowEnterpriseMocks } from '@/lib/flags/demo';
 import {
     Area,
     AreaChart,
@@ -89,6 +90,16 @@ export function EnterpriseDashboard() {
         try {
             setIsLoading(true);
             // Mock data for demonstration
+            if (!allowEnterpriseMocks()) {
+                setMetrics({
+                    global_performance: { edge_locations: { total: 0, active: 0, avg_latency: 0, avg_cache_hit_rate: 0 }, cache_performance: { global_hit_rate: 0, bandwidth_savings: 0 }, database: { avg_query_improvement: 0, throughput_increase: 0 } },
+                    automation_metrics: { code_quality: { average_quality_score: 0, issues_auto_fixed: 0 }, testing: { average_pass_rate: 0, performance_regressions_detected: 0 }, deployment: { success_rate: 0, average_deployment_time: 0 } },
+                    business_intelligence: { revenue_growth: 0, user_engagement_improvement: 0, conversion_rate_improvement: 0, performance_impact_score: 0 },
+                    anomalies: [],
+                    real_time_metrics: { active_users: 0, response_time: 0, error_rate: 0, cpu_usage: 0, memory_usage: 0 }
+                });
+                return;
+            }
             const mockMetrics: DashboardMetrics = {
                 global_performance: {
                     edge_locations: { total: 12, active: 11, avg_latency: 145, avg_cache_hit_rate: 0.94 },
@@ -166,7 +177,7 @@ export function EnterpriseDashboard() {
         );
     }
 
-    if (!metrics) {
+        if (!metrics) {
         return (
             <div className="p-8 text-center">
                 <AlertTriangle className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
@@ -186,9 +197,15 @@ export function EnterpriseDashboard() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900">Enterprise Command Center</h1>
-                        <p className="text-gray-600">Phase 5: Global Optimization + AI Automation Excellence</p>
+                                                <p className="text-gray-600">Phase 5: Global Optimization + AI Automation Excellence</p>
+                                                {!allowEnterpriseMocks() && (
+                                                    <p className="text-xs text-muted-foreground mt-1" aria-live="polite">No live enterprise metrics connected. Enable demo content to preview UI.</p>
+                                                )}
                     </div>
                     <div className="flex items-center space-x-4">
+                                                {allowEnterpriseMocks() && (
+                                                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200" aria-label="Demo data badge">Demo</Badge>
+                                                )}
                         <select
                             value={selectedTimeRange}
                             onChange={(e) => setSelectedTimeRange(e.target.value)}

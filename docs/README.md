@@ -7,6 +7,27 @@
 
 ---
 
+## Canonical quick links (AI + engineering)
+
+- DevAgents – in‑app AI agents root guide: [docs/exMD/DevAgents.md](./exMD/DevAgents.md)
+- Copilot Chatmode (deterministic profile): [.github/chatmodes/pilotBuddy.chatmode.md](../.github/chatmodes/pilotBuddy.chatmode.md)
+- Copilot Instructions (deterministic execution): [.github/chatmodes/copilot-instructions.md](../.github/chatmodes/copilot-instructions.md)
+- Production Addendum (2025‑08‑12): [archey/ADDENDUM_2025-08-12.md](../archey/ADDENDUM_2025-08-12.md)
+
+More references:
+
+- PilotBuddy Intelligence: [COMPREHENSIVE_PILOTBUDDY_INTELLIGENCE.md](./COMPREHENSIVE_PILOTBUDDY_INTELLIGENCE.md)
+- System Architecture: [COMPREHENSIVE_SYSTEM_ARCHITECTURE.md](./COMPREHENSIVE_SYSTEM_ARCHITECTURE.md)
+- Security Protocols: [COMPREHENSIVE_SECURITY_PROTOCOLS.md](./COMPREHENSIVE_SECURITY_PROTOCOLS.md)
+- Development Workflow: [COMPREHENSIVE_DEVELOPMENT_WORKFLOW.md](./COMPREHENSIVE_DEVELOPMENT_WORKFLOW.md)
+- Testing Infrastructure: [COMPREHENSIVE_TESTING_INFRASTRUCTURE.md](./COMPREHENSIVE_TESTING_INFRASTRUCTURE.md)
+- Mobile Performance: [COMPREHENSIVE_MOBILE_PERFORMANCE.md](./COMPREHENSIVE_MOBILE_PERFORMANCE.md)
+- Firestore Schemas: [FIRESTORE_SCHEMAS.md](./FIRESTORE_SCHEMAS.md)
+- Incomplete Code Audit: [INCOMPLETE_CODE_AUDIT.md](./INCOMPLETE_CODE_AUDIT.md)
+- Change Log: [CHANGE_LOG.md](./CHANGE_LOG.md)
+
+---
+
 ## 🚀 **Quick Navigation**
 
 
@@ -26,6 +47,16 @@
 - [**Stripe Payments**](./integrations/stripe/) - Payment system integration
 - [**Stripe Full Setup**](./integrations/stripe-full/) - Complete 5-tier subscription system
 - [**External Services**](./integrations/external/) - Third-party integrations
+
+### 🧪 Demo/Mock Content Flags
+
+- Demo tutorials and certain UI scaffolding are controlled by a public flag and local overrides:
+  - Environment: `NEXT_PUBLIC_DEMO_CONTENT` (true|false)
+  - Local override (no rebuild): `localStorage.setItem('demoContent','true'|'false')`
+- Finance mock data can be allowed/blocked similarly:
+  - Environment: `NEXT_PUBLIC_ALLOW_FINANCE_MOCKS` (default true; set to 'false' to block)
+  - Local override: `localStorage.setItem('allowFinanceMocks','true'|'false')`
+- Pages using these flags show clear banners and fall back to live data when available.
 
 
 ### **📊 Status & Completion Reports**

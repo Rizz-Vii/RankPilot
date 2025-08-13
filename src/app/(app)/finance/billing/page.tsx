@@ -6,6 +6,7 @@ import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { QuotaBar } from '@/components/metrics/QuotaBar';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
+import { allowFinanceMocks } from '@/lib/flags/finance';
 import { useState } from 'react';
 import { useFinanceInvoiceMetrics } from '@/hooks/useFinanceInvoiceMetrics';
 import { PeriodSelector } from '@/components/metrics/PeriodSelector';
@@ -17,7 +18,7 @@ export default function BillingOverviewPage() {
   const [months, setMonths] = useState(6);
   const live = useFinanceInvoiceMetrics(months);
   const mock = getMockMetrics('finance');
-  const data = (live.kpis.length ? live : { kpis: mock.kpis, quotas: mock.quotas, rows: [], loading:false }) as any;
+  const data = (live.kpis.length ? live : { kpis: allowFinanceMocks()? mock.kpis : [], quotas: allowFinanceMocks()? mock.quotas : [], rows: [], loading:false }) as any;
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(() => { trackDashboardView('finance'); }, []);
   useEffect(()=> { if(live.kpis.length) markLive(); else markFallback(); }, [live.kpis.length, markLive, markFallback]);

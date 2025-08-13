@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+// IMPORTANT: use the single Firestore instance from connection-manager to avoid SDK instance mismatch
+import { db as connectionDb } from "@/lib/firebase/connection-manager";
 import { getStorage } from "firebase/storage";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 import { getAnalytics, isSupported } from "firebase/analytics";
@@ -41,8 +42,8 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
 
-// Initialize Cloud Firestore and get a reference to the service
-export const db = getFirestore(app);
+// Initialize Cloud Firestore and get a reference to the service (via connection manager singleton)
+export const db = connectionDb;
 
 // Initialize Cloud Functions and get a reference to the service
 // Use explicit region (project standard: australia-southeast2) to avoid default us-central1 CORS issues

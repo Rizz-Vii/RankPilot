@@ -26,10 +26,10 @@ import { motion } from 'framer-motion';
 import { useProvenance } from '@/hooks/useProvenance';
 import { SuiteAccentProvider } from '@/context/SuiteAccentContext';
 
-const FunnelChart = dynamic(() => import('./_parts/funnel-stage-conversion.js').then(m => m.default), { ssr: false, loading: () => <Skeleton shimmer className="h-[260px] w-full" /> });
-const ForecastVariance = dynamic(() => import('./_parts/forecast-variance.js').then(m => m.default), { ssr: false, loading: () => <Skeleton shimmer className="h-[260px] w-full" /> });
-const PipelineCoverage = dynamic(() => import('./_parts/pipeline-coverage.js').then(m => m.default), { ssr: false, loading: () => <Skeleton shimmer className="h-[260px] w-full" /> });
-const StageVelocity = dynamic(() => import('./_parts/stage-velocity.js').then(m => m.default), { ssr: false, loading: () => <Skeleton shimmer className="h-[260px] w-full" /> });
+const FunnelChart = dynamic(() => import('./_parts/funnel-stage-conversion').then(m => m.default), { ssr: false, loading: () => <Skeleton shimmer className="h-[260px] w-full" /> });
+const ForecastVariance = dynamic(() => import('./_parts/forecast-variance').then(m => m.default), { ssr: false, loading: () => <Skeleton shimmer className="h-[260px] w-full" /> });
+const PipelineCoverage = dynamic(() => import('./_parts/pipeline-coverage').then(m => m.default), { ssr: false, loading: () => <Skeleton shimmer className="h-[260px] w-full" /> });
+const StageVelocity = dynamic(() => import('./_parts/stage-velocity').then(m => m.default), { ssr: false, loading: () => <Skeleton shimmer className="h-[260px] w-full" /> });
 
 interface SalesKpiSummary { totalPipeline: number; weightedForecast: number; winRate: number; velocityDays: number; }
 

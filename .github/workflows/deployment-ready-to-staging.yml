@@ -51,7 +51,13 @@ jobs:
           npm run build
           echo "✅ Production-ready build successful"
 
-      - name: 🧪 Full Integration Test Suite
+      - name: � Provenance Strict Audit (Blocking)
+        run: |
+          echo "## 🧬 Provenance Strict Audit (Staging Gate)" >> $GITHUB_STEP_SUMMARY
+          PROV_STRICT=1 npm run test:provenance-audit
+          echo "✅ Provenance strict audit passed (staging gate)" >> $GITHUB_STEP_SUMMARY
+
+      - name: �🧪 Full Integration Test Suite
         run: |
           npm run test:role-based
           npm run test:critical

@@ -33,7 +33,7 @@ export function EnhancedFormField({
                 <Label className={cn(
                     typography.ui.label,
                     "block",
-                    required && "after:content-['*'] after:ml-0.5 after:text-red-500"
+                    required && `after:content-['*'] after:ml-0.5 ${colors.status.error.text}`
                 )}>
                     {label}
                 </Label>
@@ -55,7 +55,7 @@ export function EnhancedFormField({
                     colors.status.error.text,
                     "flex items-center gap-1"
                 )}>
-                    <span className="text-red-500">⚠</span>
+                    <span className={colors.status.error.text}>⚠</span>
                     {error}
                 </p>
             )}

@@ -15,6 +15,10 @@ export { runSeoAudit } from "./api/audit";
 
 // Export performance dashboard suite (choose single canonical implementation)
 export { performanceDashboard, realtimeMetrics, functionMetrics, abTestManagement, healthCheck } from "./api/performance-dashboard-functions";
+// Scheduled maintenance
+export { cleanupInvites } from "./scheduled/cleanup-invites.js";
+// Automation scheduler
+export { runDueAutomationScheduler } from "./scheduled/run-due-automation.js";
 
 setGlobalOptions({ region: "australia-southeast2" });
 

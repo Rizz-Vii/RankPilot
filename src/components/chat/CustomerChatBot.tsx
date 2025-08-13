@@ -587,7 +587,7 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
         setAnnouncements(a => [...a.slice(-3), 'Chat history cleared']);
     };
 
-    // Image attach handler (upload not implemented; placeholder injection)
+    // Image attach handler (uploads to Firebase Storage and persists attachment metadata)
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;

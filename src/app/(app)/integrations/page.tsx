@@ -50,6 +50,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { allowDemoContent } from "@/lib/flags/demo";
 import { toast } from "sonner";
 
 interface Webhook {
@@ -158,7 +159,12 @@ export default function IntegrationsPage() {
 
   const fetchIntegrations = async () => {
     try {
-      // Mock data - replace with actual API calls
+      // Demo mocks are gated by environment; replace with real API calls when available
+      if (!allowDemoContent()) {
+        setWebhooks([]);
+        setIntegrations([]);
+        return;
+      }
       const mockWebhooks: Webhook[] = [
         {
           id: "wh_1",

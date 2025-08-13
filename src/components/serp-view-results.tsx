@@ -132,11 +132,11 @@ export default function SerpViewResults({ results }: SerpViewResultsProps) {
                     href={result.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline text-lg"
+                    className="text-info-foreground hover:underline text-lg"
                   >
                     <h3 className="font-headline">{result.title}</h3>
                   </a>
-                  <div className="flex items-center gap-2 text-green-700 text-sm font-body">
+                  <div className="flex items-center gap-2 text-success-foreground text-sm font-body">
                     <LinkIcon className="h-3 w-3" />
                     <span className="truncate">{result.url}</span>
                   </div>

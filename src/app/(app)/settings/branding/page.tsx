@@ -58,9 +58,10 @@ export default function WhiteLabelPage() {
     companyName: "",
     logo: "",
     favicon: "",
-    primaryColor: "#3b82f6",
-    secondaryColor: "#64748b",
-    accentColor: "#10b981",
+    // Token defaults (Tailwind / design system vars) instead of raw hex literals
+    primaryColor: "hsl(var(--primary))",
+    secondaryColor: "hsl(var(--secondary))",
+    accentColor: "hsl(var(--accent))",
     fontFamily: "Inter",
     customCSS: "",
   });
@@ -91,9 +92,9 @@ export default function WhiteLabelPage() {
         companyName: "Acme SEO Solutions",
         logo: "/images/sample-logo.png",
         favicon: "/images/sample-favicon.ico",
-        primaryColor: "#3b82f6",
-        secondaryColor: "#64748b",
-        accentColor: "#10b981",
+        primaryColor: "hsl(var(--primary))",
+        secondaryColor: "hsl(var(--secondary))",
+        accentColor: "hsl(var(--accent))",
         fontFamily: "Inter",
         customCSS: "/* Custom styles */\n.header { border-radius: 8px; }",
       };
@@ -308,7 +309,7 @@ export default function WhiteLabelPage() {
                               primaryColor: e.target.value,
                             }))
                           }
-                          placeholder="#3b82f6"
+                          placeholder="hsl(var(--primary))"
                           className="flex-1"
                         />
                       </div>
@@ -337,7 +338,7 @@ export default function WhiteLabelPage() {
                               secondaryColor: e.target.value,
                             }))
                           }
-                          placeholder="#64748b"
+                          placeholder="hsl(var(--secondary))"
                           className="flex-1"
                         />
                       </div>
@@ -366,7 +367,7 @@ export default function WhiteLabelPage() {
                               accentColor: e.target.value,
                             }))
                           }
-                          placeholder="#10b981"
+                          placeholder="hsl(var(--accent))"
                           className="flex-1"
                         />
                       </div>

@@ -29,23 +29,25 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import LoadingScreen from "@/components/ui/loading-screen";
 import { toast } from "sonner";
-import { fetchBillingData } from "@/lib/billing/fetch-billing-data";
+import { fetchBillingData, type BillingDataResult } from "@/lib/billing/fetch-billing-data";
 import { fetchUsageMetrics, NormalizedUsageMetrics } from '@/lib/billing/fetch-usage-metrics';
-import { db } from "@/lib/firebase";
+import { db, functions } from "@/lib/firebase";
+import { httpsCallable } from "firebase/functions";
 import { getLogger } from "@/lib/logging/app-logger";
 import { useSubscription } from "@/hooks/useSubscription";
 
-// TODO FIN-02: Replace placeholder usage + payment method with live usage metrics & payment method source when available.
+// FIN-02: Wiring live usage metrics and payment method is implemented via fetchUsageMetrics and /api/billing/payment-method
 
 export default function BillingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const { user, loading } = useAuth();
-  const [billing, setBilling] = useState<any>();
+  const [billing, setBilling] = useState<BillingDataResult | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const { canUseFeature } = useSubscription();
   const billingPortalEnabled = canUseFeature('billing_portal_access');
   const [paymentMethodState, setPaymentMethodState] = useState<any>(null);
+  const [isManagingPortal, setIsManagingPortal] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -71,6 +73,24 @@ export default function BillingPage() {
       setIsLoading(false);
       toast.success("Payment method updated successfully!");
     }, 1500);
+  };
+
+  const handleManageBilling = async () => {
+    try {
+      setIsManagingPortal(true);
+      const createPortalSession = httpsCallable(functions, "createPortalSession");
+      const result: any = await createPortalSession({ userId: user?.uid });
+      const url = result?.data?.url;
+      if (url) {
+        if (typeof window !== 'undefined') window.open(url, '_blank');
+      } else {
+        toast.error('Failed to open billing portal');
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to open billing portal');
+    } finally {
+      setIsManagingPortal(false);
+    }
   };
 
   const handleCancelSubscription = () => {
@@ -142,7 +162,7 @@ export default function BillingPage() {
     (async () => {
       const logger = getLogger('billing-ui');
       try {
-        const data = await fetchBillingData(db, user.uid, { invoiceLimit: 24 });
+  const data = await fetchBillingData(db, user.uid, { invoiceLimit: 10 });
         if(cancelled) return;
         setBilling(data);
       } catch (e:any) {
@@ -170,13 +190,28 @@ export default function BillingPage() {
     return <div className="min-h-screen flex items-center justify-center"><Card className="w-full max-w-md"><CardHeader className="text-center"><AlertTriangle className="h-12 w-12 text-orange-500 mx-auto mb-4" /><CardTitle>Billing Portal Disabled</CardTitle><CardDescription>The billing portal is not enabled for your account yet.</CardDescription></CardHeader></Card></div>;
   }
 
-  const subscription = billing?.subscription;
+  const subscription = billing?.subscription || null;
   const PAGE_SIZE = 10;
   const [invoices, setInvoices] = useState<any[]>(billing?.invoices || []);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  useEffect(() => { if (billing?.invoices) { setInvoices(billing.invoices); setHasMore((billing.invoices || []).length === 24); } }, [billing?.invoices]);
+  // Normalize initial invoices to include description/date for display parity with API pagination
+  useEffect(() => {
+    if (billing?.invoices) {
+      const normalized = (billing.invoices || []).map((inv: any) => {
+        const createdAt: Date = inv.createdAt?.toDate?.() || inv.issuedAt?.toDate?.() || (inv.date ? new Date(inv.date) : new Date(`${inv.period}-01T00:00:00Z`));
+        return {
+          ...inv,
+          description: inv.description || `Invoice ${inv.period}`,
+          date: inv.date || createdAt.toISOString(),
+          createdAt,
+        };
+      });
+      setInvoices(normalized);
+      setHasMore((billing.invoices || []).length === PAGE_SIZE);
+    }
+  }, [billing?.invoices]);
   const pageCount = Math.max(1, Math.ceil(invoices.length / PAGE_SIZE));
   const paginated = invoices.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   async function maybeLoadMore(nextPage: number) {
@@ -212,13 +247,14 @@ export default function BillingPage() {
   } : {
     name: 'Free', price: 0, billingCycle: 'monthly', nextBillingDate: new Date().toISOString(), status: 'free'
   };
-  const paymentMethod = paymentMethodState || { brand: '••••', last4: '----', expiryMonth: 0, expiryYear: 0 } as any;
+  // Align with server contract (expMonth/expYear)
+  const paymentMethod = paymentMethodState || { brand: '••••', last4: '----', expMonth: 0, expYear: 0 } as any;
   const [usageMetrics, setUsageMetrics] = useState<NormalizedUsageMetrics | null>(null);
   useEffect(() => { if(!user?.uid) return; let cancelled=false; (async () => { const m = await fetchUsageMetrics(db, user.uid); if(!cancelled) setUsageMetrics(m); })(); return () => { cancelled = true; }; }, [user?.uid]);
   const usage = usageMetrics ? { keywordsTracked: usageMetrics.keywordsTracked, keywordsLimit: usageMetrics.keywordsLimit, competitorAnalysis: usageMetrics.competitorAnalysis, competitorLimit: usageMetrics.competitorLimit, reportsGenerated: usageMetrics.reportsGenerated, currentPeriodStart: usageMetrics.periodStart.toISOString(), currentPeriodEnd: usageMetrics.periodEnd.toISOString() } : { keywordsTracked: 0, keywordsLimit: 0, competitorAnalysis: 0, competitorLimit: 0, reportsGenerated: 0, currentPeriodStart: currentPlan.nextBillingDate, currentPeriodEnd: currentPlan.nextBillingDate };
 
   if(fetchError) {
-    return <div className="min-h-screen flex items-center justify-center"><Card className="w-full max-w-md"><CardHeader className="text-center"><AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" /><CardTitle>Billing Load Error</CardTitle><CardDescription>{fetchError}</CardDescription></CardHeader><CardContent className="flex justify-center"><Button variant="outline" onClick={()=>{setFetchError(null); setBilling(undefined);}}><RefreshCw className="h-4 w-4 mr-2" />Retry</Button></CardContent></Card></div>;
+    return <div className="min-h-screen flex items-center justify-center"><Card className="w-full max-w-md"><CardHeader className="text-center"><AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" /><CardTitle>Billing Load Error</CardTitle><CardDescription>{fetchError}</CardDescription></CardHeader><CardContent className="flex justify-center"><Button variant="outline" onClick={()=>{setFetchError(null); setBilling(null);}}><RefreshCw className="h-4 w-4 mr-2" />Retry</Button></CardContent></Card></div>;
   }
 
   if(!billing && user) {
@@ -422,6 +458,19 @@ export default function BillingPage() {
                       </div>
                     </div>
                   )}
+                  {hasMore && page+1>=pageCount && (
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        data-testid="view-all-invoices"
+                        className="text-xs text-muted-foreground underline hover:text-foreground"
+                        aria-label="View all invoices in billing portal"
+                        onClick={handleManageBilling}
+                      >
+                        View all invoices
+                      </button>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -452,8 +501,8 @@ export default function BillingPage() {
                       {paymentMethod.brand} ending in {paymentMethod.last4}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Expires {paymentMethod.expiryMonth}/
-                      {paymentMethod.expiryYear}
+                      Expires {paymentMethod.expMonth}/
+                      {paymentMethod.expYear}
                     </p>
                   </div>
                 </div>
@@ -472,6 +521,19 @@ export default function BillingPage() {
                     <>
                       <Settings className="h-4 w-4 mr-2" />
                       Update Payment Method
+                    </>
+                  )}
+                </Button>
+                <Button className="w-full" onClick={handleManageBilling} disabled={isManagingPortal}>
+                  {isManagingPortal ? (
+                    <div className="flex items-center gap-2">
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      Opening Portal...
+                    </div>
+                  ) : (
+                    <>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Manage Subscription
                     </>
                   )}
                 </Button>

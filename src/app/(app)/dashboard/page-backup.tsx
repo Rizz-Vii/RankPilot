@@ -40,7 +40,6 @@ import {
   PolarGrid,
   RadialBar,
   RadialBarChart,
-  ResponsiveContainer,
   XAxis,
   YAxis,
 } from "recharts";
@@ -115,7 +114,7 @@ const SeoScoreTrendChart = ({ data }: { data: any[]; }) => (
     <CardContent>
       {data && data.length > 0 ? (
         <ChartContainer config={lineChartConfig} className="h-[200px] w-full">
-          <ResponsiveContainer>
+          
             <LineChart
               data={data}
               margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
@@ -147,7 +146,7 @@ const SeoScoreTrendChart = ({ data }: { data: any[]; }) => (
                 dot={true}
               />
             </LineChart>
-          </ResponsiveContainer>
+          
         </ChartContainer>
       ) : (
         <div className="h-[200px] flex items-center justify-center text-muted-foreground">
@@ -281,7 +280,7 @@ const BacklinksChart = ({ data }: { data: any; }) => (
     <CardContent>
       {data && data.history && data.history.length > 0 ? (
         <ChartContainer config={barChartConfig} className="h-[200px] w-full">
-          <ResponsiveContainer>
+          
             <BarChart
               data={data.history}
               margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
@@ -298,7 +297,7 @@ const BacklinksChart = ({ data }: { data: any; }) => (
               <Bar dataKey="new" fill="var(--color-new)" radius={4} />
               <Bar dataKey="lost" fill="var(--color-lost)" radius={4} />
             </BarChart>
-          </ResponsiveContainer>
+          
         </ChartContainer>
       ) : (
         <div className="h-[200px] flex items-center justify-center text-muted-foreground">
@@ -324,7 +323,7 @@ const TrafficSourcesChart = ({ data }: { data: any[]; }) => (
     <CardContent className="flex items-center justify-center">
       {data && data.length > 0 ? (
         <ChartContainer config={pieChartConfig} className="h-[200px] w-full">
-          <ResponsiveContainer>
+          
             <PieChart>
               <ChartTooltip
                 cursor={false}
@@ -361,7 +360,7 @@ const TrafficSourcesChart = ({ data }: { data: any[]; }) => (
                 )}
               />
             </PieChart>
-          </ResponsiveContainer>
+          
         </ChartContainer>
       ) : (
         <div className="h-[200px] flex items-center justify-center text-muted-foreground">

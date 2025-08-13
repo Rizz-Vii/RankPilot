@@ -9,6 +9,7 @@
  */
 
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -16,6 +17,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { LANGUAGE_CONFIGS, SupportedLanguage, useI18n } from '@/lib/i18n/internationalization-system';
+import { useToast } from '@/hooks/use-toast';
 import { Check, Globe } from 'lucide-react';
 
 interface LanguageSelectorProps {
@@ -30,9 +32,14 @@ export function LanguageSelector({
     className = ''
 }: LanguageSelectorProps) {
     const { language, setLanguage, availableLanguages, translate } = useI18n();
+    const [a11yMessage, setA11yMessage] = useState('');
+    const { toast } = useToast();
 
     const handleLanguageChange = (newLanguage: SupportedLanguage) => {
         setLanguage(newLanguage);
+        const msg = translate('feedback.language.changed');
+        setA11yMessage(msg);
+        toast({ title: msg });
     };
 
     const currentLanguageConfig = LANGUAGE_CONFIGS[language];
@@ -62,7 +69,7 @@ export function LanguageSelector({
     }
 
     if (variant === 'compact') {
-        return (
+    return (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button
@@ -94,7 +101,8 @@ export function LanguageSelector({
     }
 
     return (
-        <DropdownMenu>
+    <>
+    <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button
                     variant="outline"
@@ -140,7 +148,9 @@ export function LanguageSelector({
                     </DropdownMenuItem>
                 ))}
             </DropdownMenuContent>
-        </DropdownMenu>
+    </DropdownMenu>
+    <div role="status" aria-live="polite" className="sr-only">{a11yMessage}</div>
+    </>
     );
 }
 

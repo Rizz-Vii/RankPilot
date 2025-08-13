@@ -179,6 +179,13 @@ export const FEATURE_ACCESS: Record<string, FeatureConfig> = {
     description: "System analytics and monitoring",
   },
 
+  // Integration Hub (admin-only demo)
+  integration_hub: {
+    requiresAdmin: true,
+    requiredTier: "enterprise",
+    description: "Enterprise Integration Hub (demo)",
+  },
+
   // CRITICAL MISSING FEATURES - Fix for "Unknown feature" errors
   neuroseo: {
     requiredTier: "starter",

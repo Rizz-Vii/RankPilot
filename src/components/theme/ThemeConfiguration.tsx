@@ -48,9 +48,9 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
     } = useTheme();
 
     const [customColors, setCustomColors] = useState({
-        primary: preferences.customColors?.primary || '#3B82F6',
-        secondary: preferences.customColors?.secondary || '#6B7280',
-        accent: preferences.customColors?.accent || '#10B981',
+        primary: '#3B82F6',
+        secondary: '#6B7280',
+        accent: '#10B981',
     });
 
     const handleThemeChange = (newTheme: ThemeMode) => {
@@ -64,7 +64,9 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
     const handleCustomColorChange = (colorType: string, color: string) => {
         const newCustomColors = { ...customColors, [colorType]: color };
         setCustomColors(newCustomColors);
-        setPreferences({ customColors: newCustomColors });
+        // Note: custom colors are local-only for now; ThemePreferences doesn't include customColors.
+        // Persist locally if needed:
+        try { localStorage.setItem('rankpilot-theme-customColors', JSON.stringify(newCustomColors)); } catch {}
     };
 
     const resetToDefaults = () => {
@@ -76,11 +78,7 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
             colorBlindnessSupport: false,
             highContrast: false,
         });
-        setCustomColors({
-            primary: '#3B82F6',
-            secondary: '#6B7280',
-            accent: '#10B981',
-        });
+    setCustomColors({ primary: '#3B82F6', secondary: '#6B7280', accent: '#10B981' });
     };
 
     return (

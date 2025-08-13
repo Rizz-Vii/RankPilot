@@ -5,6 +5,7 @@ import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
+import { allowFinanceMocks } from '@/lib/flags/finance';
 import { fetchRecentFinanceRevenueSnapshots } from '@/lib/services/finance-automation-snapshots';
 import { useAuth } from '@/context/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,7 +27,7 @@ export default function RevenueAnalyticsPage() {
   const { trigger, running } = useAutomationTrigger();
   useEffect(()=> { if(!userId) return; setLoadingSnap(true); (async()=> { try { const r = await fetchRecentFinanceRevenueSnapshots(userId, teamId,1); if(r.length) setRevSnap({ mrr:r[0].mrr, onTime:r[0].onTimePct, outstanding:r[0].outstanding, ts:r[0].createdAt?.toDate?.()||new Date(), period:r[0].period }); } finally { setLoadingSnap(false);} })(); }, [userId, teamId]);
   const mock = getMockMetrics('finance');
-  const data = (live.kpis.length ? live : { kpis: mock.kpis, rows: [], loading:false }) as any;
+  const data = (live.kpis.length ? live : { kpis: allowFinanceMocks()? mock.kpis : [], rows: [], loading:false }) as any;
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(() => { trackDashboardView('finance'); }, []);
   useEffect(()=> { if(live.kpis.length) markLive(); else markFallback(); }, [live.kpis.length, markLive, markFallback]);

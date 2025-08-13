@@ -78,6 +78,13 @@ jobs:
           npm ci --prefer-offline --no-audit
           echo "✅ Dependencies installed" >> $GITHUB_STEP_SUMMARY
 
+      - name: 🧬 Provenance Strict Audit
+        if: startsWith(github.ref, 'refs/heads/feature/') && github.event.inputs.skip_tests != 'true'
+        run: |
+          echo "## 🧬 Provenance Strict Audit" >> $GITHUB_STEP_SUMMARY
+          PROV_STRICT=1 npm run test:provenance-audit
+          echo "✅ Provenance strict audit passed (100% coverage enforced)" >> $GITHUB_STEP_SUMMARY
+
       - name: 🔍 TypeScript Check (Feature Branches Only)
         if: startsWith(github.ref, 'refs/heads/feature/') && github.event.inputs.skip_tests != 'true'
         run: |

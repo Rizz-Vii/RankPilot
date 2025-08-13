@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import crypto from 'crypto';
+// NOTE: Global collection 'invites_index' provides O(1) inviteId -> teamId mapping.
+// Cleanup: scripts/cleanup-invites.ts prunes accepted/expired invites and orphan index docs.
 
 // Simple invariant helpers
 async function getTeamForUser(uid: string) {
@@ -47,6 +49,8 @@ export async function POST(req: NextRequest) {
             tokenHash, expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7) // 7d
         };
         await invitesCol.doc(inviteId).set(inviteDoc);
+        // Create global index doc for O(1) acceptance lookup
+        adminDb.collection('invites_index').doc(inviteId).set({ teamId: team.id, emailLower: email.toLowerCase(), status: 'pending', createdAt: new Date() }).catch(() => { });
         try { await adminDb.collection('emailQueue').add({ to: email, template: 'team_invite_v2', createdAt: new Date(), payload: { inviter: decoded.uid, teamId: team.id, role: inviteDoc.role, token: tokenPlain } }); } catch { }
         return NextResponse.json({ success: true, inviteId, token: tokenPlain });
     } catch (e: any) {
@@ -66,14 +70,31 @@ export async function PUT(req: NextRequest) {
         const team = await getTeamForUser(uid); // If already on a team block (single-team assumption)
         if (team) return NextResponse.json({ error: 'Already on a team' }, { status: 400 });
 
-        // Find invite across teams (scan minimal) - optimization: index by emailLower global if needed
-        const teamsSnap = await adminDb.collection('teams').where('memberIds', 'array-contains', '__stub__').limit(1).get(); // placeholder to satisfy query shape if required
-        // Instead simpler: list teams (bounded usage); TODO optimize for production scale
-        const allTeams = await adminDb.collection('teams').get();
+        // Optimized lookup: global mapping doc (invites_index/{inviteId}) -> { teamId }
+        // Write path populated lazily (if absent we still fall back to scan for backward compatibility)
         let found: { teamId: string; inviteDoc: FirebaseFirestore.QueryDocumentSnapshot } | null = null;
-        for (const t of allTeams.docs) {
-            const inv = await adminDb.collection('teams').doc(t.id).collection('invites').doc(inviteId).get();
-            if (inv.exists) { found = { teamId: t.id, inviteDoc: inv as any }; break; }
+        const indexDoc = await adminDb.collection('invites_index').doc(inviteId).get();
+        if (indexDoc.exists) {
+            const teamId = (indexDoc.data() as any).teamId;
+            if (teamId) {
+                const inv = await adminDb.collection('teams').doc(teamId).collection('invites').doc(inviteId).get();
+                if (inv.exists) {
+                    found = { teamId, inviteDoc: inv as any };
+                }
+            }
+        }
+        if (!found) {
+            // Backfill index via scan (one-time cost) then proceed
+            const allTeams = await adminDb.collection('teams').get();
+            for (const t of allTeams.docs) {
+                const inv = await adminDb.collection('teams').doc(t.id).collection('invites').doc(inviteId).get();
+                if (inv.exists) {
+                    found = { teamId: t.id, inviteDoc: inv as any };
+                    // Fire and forget index creation
+                    adminDb.collection('invites_index').doc(inviteId).set({ teamId: t.id, createdAt: new Date() }).catch(() => { });
+                    break;
+                }
+            }
         }
         if (!found) return NextResponse.json({ error: 'Invite not found' }, { status: 404 });
         const invData: any = found.inviteDoc.data();
@@ -103,10 +124,27 @@ export async function PUT(req: NextRequest) {
                 lastActive: new Date(),
                 source: 'invite_accept'
             });
+            // Mark index doc accepted (helps future cleanup jobs)
+            tx.set(adminDb.collection('invites_index').doc(inviteId), { teamId: found!.teamId, status: 'accepted', updatedAt: new Date() }, { merge: true });
         });
         return NextResponse.json({ success: true, teamId: found.teamId });
     } catch (e: any) {
         console.error('Accept invite error', e); return NextResponse.json({ error: e.message || 'Internal error' }, { status: 500 });
+    }
+}
+
+// Test-only helper: expire an invite early (development / test env). Not exposed in production.
+export async function PATCH(req: NextRequest) {
+    if (process.env.NODE_ENV === 'production') return NextResponse.json({ error: 'Disabled' }, { status: 403 });
+    try {
+        const { inviteId, teamId, minutesAgo } = await req.json();
+        if (!inviteId || !teamId) return NextResponse.json({ error: 'Missing inviteId/teamId' }, { status: 400 });
+        const delta = minutesAgo ? Number(minutesAgo) : 60;
+        const expiresAt = new Date(Date.now() - delta * 60 * 1000);
+        await adminDb.collection('teams').doc(teamId).collection('invites').doc(inviteId).update({ expiresAt });
+        return NextResponse.json({ success: true, expiredAt: expiresAt.toISOString() });
+    } catch (e: any) {
+        return NextResponse.json({ error: e.message || 'Internal error' }, { status: 500 });
     }
 }
 

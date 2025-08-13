@@ -4,6 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 // Note: defer importing NeuroSEOSuite until runtime to avoid build-time
 // evaluation of modules that may touch Firebase client SDK.
 
@@ -11,17 +12,14 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-export async function POST(request: NextRequest) {
+export const POST = withProvenance(async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { urls, targetKeywords, analysisType, userPlan, userId, competitorUrls } = body;
 
     // Validate required fields
     if (!urls || !Array.isArray(urls) || urls.length === 0) {
-      return NextResponse.json(
-        { error: "URLs array is required and cannot be empty" },
-        { status: 400 }
-      );
+      return NextResponse.json(enforceProvenance({ success: false, error: "URLs array is required and cannot be empty", provenance: 'synthetic' }, { path: 'neuroseo', note: 'validation' }), { status: 400 });
     }
 
     // Initialize suite (lazy import to prevent build-time side effects)
@@ -42,18 +40,15 @@ export async function POST(request: NextRequest) {
     if (!validated.success) {
       return NextResponse.json({ error: 'Report schema validation failed', issues: validated.error.issues }, { status: 422 });
     }
-    return NextResponse.json(validated.data);
+    return NextResponse.json(enforceProvenance({ success: true, data: validated.data, provenance: 'live' }, { path: 'neuroseo', note: 'analysis' }));
   } catch (error: any) {
     // Surface error details for debugging (mask stack in production)
     console.error('[NeuroSEO API] POST error', error);
-    return NextResponse.json(
-      { error: error?.message || "Failed to process analysis request", details: process.env.NODE_ENV !== 'production' ? (error?.stack || String(error)) : undefined },
-      { status: 500 }
-    );
+    return NextResponse.json(enforceProvenance({ success: false, error: error?.message || "Failed to process analysis request", details: process.env.NODE_ENV !== 'production' ? (error?.stack || String(error)) : undefined, provenance: 'synthetic' }, { path: 'neuroseo', note: 'exception' }), { status: 500 });
   }
-}
+}, { path: 'neuroseo' });
 
-export async function GET(request: NextRequest) {
+export const GET = withProvenance(async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId") || "anonymous";
@@ -84,11 +79,8 @@ export async function GET(request: NextRequest) {
       }
     };
 
-    return NextResponse.json(usageStats);
+    return NextResponse.json(enforceProvenance({ success: true, data: usageStats, provenance: 'live' }, { path: 'neuroseo', note: 'usage' }));
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to load usage statistics" },
-      { status: 500 }
-    );
+    return NextResponse.json(enforceProvenance({ success: false, error: "Failed to load usage statistics", provenance: 'synthetic' }, { path: 'neuroseo', note: 'usage_error' }), { status: 500 });
   }
-}
+}, { path: 'neuroseo' });

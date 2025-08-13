@@ -1,0 +1,65 @@
+name: Table Data Contract
+
+on:
+  push:
+    branches: [ master, main, workshop/** ]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: table-data-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start dev server
+        run: |
+          nohup npm run dev-no-turbopack > dev-server.log 2>&1 &
+          echo $! > dev-server.pid
+
+      - name: Wait for http://localhost:3000
+        run: npx --yes wait-on@7 http://localhost:3000 --timeout 120000 --httpTimeout 60000
+
+      - name: Optional seed demo table (non-blocking)
+        run: |
+          npm run seed:table || echo "Default seed failed or skipped; continuing."
+          npm run seed:table:scoped || echo "Scoped seed failed or skipped; continuing."
+          npm run seed:table:string-only || echo "String-only seed failed or skipped; continuing."
+        env:
+          # In CI we don't require real Firestore; route falls back to deterministic data if seeding fails.
+          FIREBASE_EMULATOR_HOST: 127.0.0.1:9999
+        continue-on-error: true
+
+      - name: Run table-data contract test
+        env:
+          BASE_URL: http://localhost:3000
+        run: npm run -s test:table-contract
+
+      - name: Run table-data edge-case tests
+        env:
+          BASE_URL: http://localhost:3000
+        run: npm run -s test:table-edge
+
+      - name: Upload dev server log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-server-log
+          path: dev-server.log

@@ -76,6 +76,7 @@ export function EnhancedForm({
   const [touched, setTouched] = React.useState<Record<string, boolean>>({});
   const [values, setValues] = React.useState(initialValues);
   const [submitAttempted, setSubmitAttempted] = React.useState(false);
+  const fieldRegistryRef = React.useRef<Map<string, FieldConfig>>(new Map());
   const formRef = useRef<HTMLFormElement>(null);
   const hydrated = useHydration();
 
@@ -103,6 +104,24 @@ export function EnhancedForm({
     });
   };
 
+  const runValidation = (): Record<string, string> => {
+    const errs: Record<string, string> = {};
+    // Validate based on registered fields
+    fieldRegistryRef.current.forEach((cfg, name) => {
+      const val = values[name];
+      const transformed = cfg?.transform ? cfg.transform(val) : val;
+      if (cfg?.transform) {
+        // keep transformed value synced
+        if (transformed !== val) {
+          setValues(prev => ({ ...prev, [name]: transformed }));
+        }
+      }
+      const err = cfg?.validate?.(transformed);
+      if (err) errs[name] = err;
+    });
+    return errs;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitAttempted(true);
@@ -118,11 +137,18 @@ export function EnhancedForm({
     );
     setTouched(touchedFields);
 
+    // Run validations first
+    const validationErrors = runValidation();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+    }
+
     // Check if there are any errors
-    if (Object.keys(errors).length > 0) {
+    const currentErrors = Object.keys(validationErrors).length > 0 ? validationErrors : errors;
+    if (Object.keys(currentErrors).length > 0) {
       // Focus on first error field
       const firstErrorField = formRef.current?.querySelector(
-        `[name="${Object.keys(errors)[0]}"]`
+        `[name="${Object.keys(currentErrors)[0]}"]`
       ) as HTMLElement;
       firstErrorField?.focus();
       return;
@@ -151,6 +177,40 @@ export function EnhancedForm({
     }
   };
 
+  const submitWithErrorBoundary: EnhancedFormContextType['submitWithErrorBoundary'] = async (handler) => {
+    try {
+      setIsSubmitting(true);
+      const validationErrors = runValidation();
+      if (Object.keys(validationErrors).length > 0) {
+        setErrors(validationErrors);
+        // focus first error
+        const first = Object.keys(validationErrors)[0];
+        const firstEl = formRef.current?.querySelector(`[name="${first}"]`) as HTMLElement | null;
+        firstEl?.focus();
+        return;
+      }
+      await handler();
+    } catch (err) {
+      console.error('submitWithErrorBoundary error', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const registerField: EnhancedFormContextType['registerField'] = (name, config) => {
+    fieldRegistryRef.current.set(name, config || {});
+    // initialize defaultValue
+    if (config?.defaultValue !== undefined && values[name] === undefined) {
+      setValues(prev => ({ ...prev, [name]: config.defaultValue }));
+    }
+  };
+
+  const unregisterField: EnhancedFormContextType['unregisterField'] = (name) => {
+    fieldRegistryRef.current.delete(name);
+    // do not delete value by default; only clear errors
+    clearFieldError(name);
+  };
+
   const contextValue: EnhancedFormContextType = {
     isSubmitting,
     errors,
@@ -160,9 +220,9 @@ export function EnhancedForm({
     setFieldTouched,
     setFieldError,
     clearFieldError,
-    registerField: () => { }, // Placeholder implementation
-    unregisterField: () => { }, // Placeholder implementation
-    submitWithErrorBoundary: async () => { }, // Placeholder implementation
+    registerField,
+    unregisterField,
+    submitWithErrorBoundary,
   };
 
   return (

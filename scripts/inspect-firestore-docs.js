@@ -4,16 +4,10 @@
 // Defaults:
 //   teamId = "debug-team-001"
 
-/* eslint-disable no-console */
+// Console output is expected in this CLI script; no linter suppression needed.
 
 const path = require("path");
 const fs = require("fs");
-
-let serviceAccountPath = path.resolve(__dirname, "../serviceAccount.json");
-if (!fs.existsSync(serviceAccountPath)) {
-  console.error("serviceAccount.json not found at:", serviceAccountPath);
-  process.exit(1);
-}
 
 const { initializeApp, cert } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
@@ -25,15 +19,30 @@ if (!uidArg) {
 }
 const TEAM_ID = teamIdArg || "debug-team-001";
 
-const serviceAccount = require(serviceAccountPath);
+const saPath = path.resolve(__dirname, "../serviceAccount.json");
+let creds;
+if (fs.existsSync(saPath)) {
+  creds = require(saPath);
+} else {
+  creds = {
+    project_id: process.env.FIREBASE_ADMIN_PROJECT_ID,
+    client_email: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+    private_key: (process.env.FIREBASE_ADMIN_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+  };
+}
+
+if (!creds || !creds.project_id || !creds.client_email || !creds.private_key) {
+  console.error("[ERROR] Missing Firebase Admin credentials. Provide serviceAccount.json (not committed) or set FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL, FIREBASE_ADMIN_PRIVATE_KEY.");
+  process.exit(2);
+}
 initializeApp({
-  credential: cert(serviceAccount),
-  projectId: serviceAccount.project_id,
+  credential: cert(creds),
+  projectId: creds.project_id,
 });
 
 const db = getFirestore();
 
-typeof (async () => {
+(async () => {
   try {
     console.log("\n=== Firestore Inspection ===");
     console.log("User UID:", uidArg);

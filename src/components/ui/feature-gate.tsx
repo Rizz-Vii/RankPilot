@@ -1,10 +1,13 @@
+
 /**
  * Feature Gate Component - Robust Tier-Based Access Control
  * Fixes feature gating bugs by providing consistent frontend restrictions
  */
 
-import { Badge } from '@/components/ui/badge';
+import { colors } from '@/lib/design-system/colors';
 import { Button } from '@/components/ui/button';
+
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -93,10 +96,10 @@ function UpgradePrompt({
     };
 
     const tierColors = {
-        free: 'bg-gray-100',
-        starter: 'bg-blue-100 text-blue-800',
-        agency: 'bg-purple-100 text-purple-800',
-        enterprise: 'bg-gold-100 text-gold-800'
+        free: colors.projectStatus.completed.bg + ' ' + colors.projectStatus.completed.text,
+        starter: colors.projectStatus.planning.bg + ' ' + colors.projectStatus.planning.text,
+        agency: 'bg-purple-100 text-purple-800', // No direct mapping, keep as is or add to design system
+        enterprise: 'bg-gold-100 text-gold-800' // No direct mapping, keep as is or add to design system
     };
 
     return (

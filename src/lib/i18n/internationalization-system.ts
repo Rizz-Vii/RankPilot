@@ -198,6 +198,18 @@ export const LANGUAGE_CONFIGS: Record<SupportedLanguage, LanguageConfig> = {
 // Default translations
 const DEFAULT_TRANSLATIONS: Record<string, Record<SupportedLanguage, string | PluralOptions>> = {
     // Navigation
+    'nav.features': {
+        en: 'Features', es: 'Funciones', fr: 'Fonctionnalités', de: 'Funktionen', pt: 'Recursos', it: 'Funzionalità', nl: 'Functies', ru: 'Функции', zh: '功能', ja: '機能', ko: '기능', ar: 'الميزات', he: 'פיצ׳רים'
+    },
+    'nav.pricing': {
+        en: 'Pricing', es: 'Precios', fr: 'Tarifs', de: 'Tarife', pt: 'Preços', it: 'Prezzi', nl: 'Prijzen', ru: 'Цены', zh: '定价', ja: '価格', ko: '가격', ar: 'التسعير', he: 'תמחור'
+    },
+    'nav.faq': {
+        en: 'FAQ', es: 'Preguntas', fr: 'FAQ', de: 'FAQ', pt: 'FAQ', it: 'FAQ', nl: 'FAQ', ru: 'FAQ', zh: '常见问题', ja: 'よくある質問', ko: 'FAQ', ar: 'الأسئلة المتكررة', he: 'שאלות'
+    },
+    'nav.docs': {
+        en: 'Documentation', es: 'Documentación', fr: 'Documentation', de: 'Dokumentation', pt: 'Documentação', it: 'Documentazione', nl: 'Documentatie', ru: 'Документация', zh: '文档', ja: 'ドキュメント', ko: '문서', ar: 'التوثيق', he: 'תיעוד'
+    },
     'nav.dashboard': {
         en: 'Dashboard',
         es: 'Panel de Control',
@@ -259,6 +271,21 @@ const DEFAULT_TRANSLATIONS: Record<string, Record<SupportedLanguage, string | Pl
         ko: '저장',
         ar: 'حفظ',
         he: 'שמור',
+    },
+    'cta.startFreeTrial': {
+        en: 'Start Free Trial',
+        es: 'Comenzar Prueba Gratis',
+        fr: 'Commencer l\u2019essai gratuit',
+        de: 'Kostenlose Testphase starten',
+        pt: 'Iniciar Teste Grátis',
+        it: 'Inizia la prova gratuita',
+        nl: 'Start gratis proef',
+        ru: 'Начать бесплатный пробный период',
+        zh: '开始免费试用',
+        ja: '無料トライアルを開始',
+        ko: '무료 체험 시작',
+        ar: 'ابدأ النسخة التجريبية المجانية',
+        he: 'התחל ניסיון חינם',
     },
     'action.cancel': {
         en: 'Cancel',
@@ -416,6 +443,8 @@ const DEFAULT_TRANSLATIONS: Record<string, Record<SupportedLanguage, string | Pl
     'commandPalette.section.search': { en: 'Search', es: 'Buscar', fr: 'Recherche', de: 'Suche', pt: 'Pesquisar', it: 'Cerca', nl: 'Zoeken', ru: 'Поиск', zh: '搜索', ja: '検索', ko: '검색', ar: 'بحث', he: 'חיפוש' },
     'commandPalette.section.interface': { en: 'Interface', es: 'Interfaz', fr: 'Interface', de: 'Interface', pt: 'Interface', it: 'Interfaccia', nl: 'Interface', ru: 'Интерфейс', zh: '界面', ja: 'インターフェース', ko: '인터페이스', ar: 'الواجهة', he: 'ממשק' },
     'commandPalette.theme.label': { en: 'Theme', es: 'Tema', fr: 'Thème', de: 'Thema', pt: 'Tema', it: 'Tema', nl: 'Thema', ru: 'Тема', zh: '主题', ja: 'テーマ', ko: '테마', ar: 'السمة', he: 'ערכת נושא' },
+    'feedback.theme.cycled': { en: 'Theme changed', es: 'Tema cambiado', fr: 'Thème modifié', de: 'Thema geändert', pt: 'Tema alterado', it: 'Tema cambiato', nl: 'Thema gewijzigd', ru: 'Тема изменена', zh: '主题已更改', ja: 'テーマを変更しました', ko: '테마가 변경되었습니다', ar: 'تم تغيير السمة', he: 'ערכת נושא השתנתה' },
+    'feedback.language.changed': { en: 'Language changed', es: 'Idioma cambiado', fr: 'Langue modifiée', de: 'Sprache geändert', pt: 'Idioma alterado', it: 'Lingua cambiata', nl: 'Taal gewijzigd', ru: 'Язык изменён', zh: '语言已更改', ja: '言語を変更しました', ko: '언어가 변경되었습니다', ar: 'تم تغيير اللغة', he: 'שפה הוחלפה' },
     'commandPalette.section.account': { en: 'Account', es: 'Cuenta', fr: 'Compte', de: 'Konto', pt: 'Conta', it: 'Account', nl: 'Account', ru: 'Аккаунт', zh: '账户', ja: 'アカウント', ko: '계정', ar: 'الحساب', he: 'חשבון' },
     'commandPalette.login': { en: 'Log in', es: 'Iniciar sesión', fr: 'Se connecter', de: 'Anmelden', pt: 'Entrar', it: 'Accedi', nl: 'Inloggen', ru: 'Войти', zh: '登录', ja: 'ログイン', ko: '로그인', ar: 'تسجيل الدخول', he: 'התחבר' },
 
@@ -531,18 +560,15 @@ export class InternationalizationSystem {
         document.documentElement.lang = config.code;
         document.documentElement.dir = config.rtl ? 'rtl' : 'ltr';
 
-        // Add language-specific CSS class
-        // Preserve existing body classes (theme, accessibility) and only adjust language specific markers
-        document.body.className = document.body.className.replace(/lang-\w+/g, '').trim();
-        if (!document.body.classList.contains(`lang-${config.code}`)) {
+        // Centralized language class & dir attribute via classListManager
+        try {
+            const { setLanguageClass } = require('@/lib/dom/classListManager');
+            setLanguageClass(config.code, config.rtl ? 'rtl' : 'ltr');
+        } catch {
+            // Fallback: minimal direct manipulation if module not available
+            document.body.className = document.body.className.replace(/lang-\w+/g, '').trim();
             document.body.classList.add(`lang-${config.code}`);
-        }
-
-        // Add RTL class if needed
-        if (config.rtl) {
-            document.body.classList.add('rtl');
-        } else {
-            document.body.classList.remove('rtl');
+            if (config.rtl) document.body.classList.add('rtl'); else document.body.classList.remove('rtl');
         }
     }
 

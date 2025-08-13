@@ -1,4 +1,2 @@
-// Stub component for Keyword Tool Form
-export default function KeywordToolForm({ onSubmit, isLoading }: any) {
-    return <div>Keyword Tool Form Placeholder</div>;
-}
+// Wrapper to reuse the shared KeywordToolForm to avoid duplication and stubs
+export { KeywordToolForm as default } from './seo-forms';

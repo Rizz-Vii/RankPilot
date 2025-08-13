@@ -538,11 +538,11 @@ export function StateAnimation({ state, children, className = '' }: StateAnimati
     const getStateColor = () => {
         switch (state) {
             case 'loading':
-                return 'text-blue-500';
+                return 'text-info-foreground';
             case 'success':
-                return 'text-green-500';
+                return 'text-success-foreground';
             case 'error':
-                return 'text-red-500';
+                return 'text-error-foreground';
             default:
                 return '';
         }

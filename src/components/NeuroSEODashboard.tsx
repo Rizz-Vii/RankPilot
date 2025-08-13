@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
 import { useIsMobile, useNetworkStatus } from "@/lib/mobile-responsive-utils";
 import type { NeuroSEOAnalysisRequest, NeuroSEOReport } from "@/lib/neuroseo";
+import { submitOrQueue, queueAnalysisRequest } from "@/lib/offline-queue";
 import {
   AlertTriangle,
   Brain,
@@ -45,6 +46,7 @@ import {
 } from "lucide-react";
 import { Sparkline } from "./charts/Sparkline";
 import { useEffect, useRef, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface NeuroSEODashboardProps {
   className?: string;
@@ -66,6 +68,7 @@ export default function NeuroSEODashboard({
   const hydrated = useHydration();
   const isMobile = useIsMobile();
   const networkStatus = useNetworkStatus();
+  const { toast } = useToast();
 
   // Form state
   const [urls, setUrls] = useState<string>("");
@@ -139,13 +142,6 @@ export default function NeuroSEODashboard({
       return;
     }
 
-    if (!networkStatus.online) {
-      setError(
-        "You appear to be offline. Please check your internet connection and try again."
-      );
-      return;
-    }
-
     // Form validation
     const urlList = urls.split("\n").filter((url) => url.trim());
     const keywordList = targetKeywords
@@ -163,7 +159,7 @@ export default function NeuroSEODashboard({
       return;
     }
 
-    setIsAnalyzing(true);
+  setIsAnalyzing(true);
     setError(null);
     setLoadingProgress(5); // Start progress indicator
 
@@ -175,61 +171,75 @@ export default function NeuroSEODashboard({
       const token = await user.getIdToken();
       setLoadingProgress(10); // Token retrieved
 
-      const analysisRequest: Omit<
-        NeuroSEOAnalysisRequest,
-        "userId" | "userPlan"
-      > = {
+      const analysisRequest: NeuroSEOAnalysisRequest = {
         urls: urlList,
         targetKeywords: keywordList,
         competitorUrls: competitorUrls
           ? competitorUrls.split("\n").filter((url) => url.trim())
           : undefined,
         analysisType,
+        userPlan: (user as any)?.subscriptionTier || 'free',
+        userId: user.uid,
       };
 
-      // Adjust request parameters for slow networks
-      const requestOptions: RequestInit = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(analysisRequest),
-        signal: controller.signal,
-        // Use compression for slow connections
-        keepalive: true,
-      };
+      const submit = async () => {
+        // Adjust request parameters for slow networks
+        const requestOptions: RequestInit = {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(analysisRequest),
+          signal: controller.signal,
+          keepalive: true,
+        };
 
-      setLoadingProgress(15); // Starting request
+        setLoadingProgress(15); // Starting request
 
-      // Create progress indicator for long-running task
-      const progressIndicator = setInterval(() => {
-        setLoadingProgress((prev) =>
-          Math.min(95, prev + Math.random() * 2 + 0.5)
-        );
-      }, 1000);
+        const progressIndicator = setInterval(() => {
+          setLoadingProgress((prev) =>
+            Math.min(95, prev + Math.random() * 2 + 0.5)
+          );
+        }, 1000);
 
-      const response = await fetch("/api/neuroseo", requestOptions);
+        const response = await fetch("/api/neuroseo", requestOptions);
 
-      clearInterval(progressIndicator);
-      clearTimeout(timeoutId);
+        clearInterval(progressIndicator);
+        clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        let errorMessage = "Analysis failed";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          errorMessage = `HTTP Error ${response.status}: ${response.statusText}`;
+        if (!response.ok) {
+          let errorMessage = "Analysis failed";
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch (e) {
+            errorMessage = `HTTP Error ${response.status}: ${response.statusText}`;
+          }
+          throw new Error(errorMessage);
         }
-        throw new Error(errorMessage);
+
+        setLoadingProgress(98); // Almost done
+        const analysisReport = await response.json();
+        setLoadingProgress(100); // Complete
+        return analysisReport;
+      };
+
+      const { mode, result } = await submitOrQueue({
+        isOnline: () => typeof navigator !== 'undefined' ? navigator.onLine : true,
+        submit,
+        fallbackQueue: () => queueAnalysisRequest(analysisRequest),
+      });
+
+      if (mode === 'queued') {
+        setError("You're offline. Request queued and will run automatically when you're back online.");
+        toast({ title: 'Request queued', description: 'Your NeuroSEO analysis will run when you\'re back online.' });
+        setIsAnalyzing(false);
+        return;
       }
 
-      setLoadingProgress(98); // Almost done
-      const analysisReport = await response.json();
-      setLoadingProgress(100); // Complete
-
-      setReport(analysisReport);
+      setReport(result as any);
+      toast({ title: 'Analysis complete', description: 'NeuroSEO report is ready.' });
       loadUsageStats(); // Refresh usage stats
 
       // Announce completion for screen readers

@@ -4,6 +4,7 @@
  */
 
 import { cn } from "@/lib/utils";
+import { colors } from "@/lib/design-system/colors";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
@@ -21,9 +22,9 @@ const buttonVariants = cva(
                 ghost: "hover:bg-accent hover:text-accent-foreground",
                 link: "text-primary underline-offset-4 hover:underline",
                 // Custom variants for RankPilot
-                success: "bg-green-600 text-white hover:bg-green-700",
-                warning: "bg-yellow-600 text-white hover:bg-yellow-700",
-                info: "bg-blue-600 text-white hover:bg-blue-700",
+                success: `${colors.status.success.bg} ${colors.status.success.text} hover:bg-green-200`,
+                warning: `${colors.status.warning.bg} ${colors.status.warning.text} hover:bg-amber-200`,
+                info: `${colors.status.info.bg} ${colors.status.info.text} hover:bg-blue-200`,
             },
             size: {
                 default: "h-10 px-4 py-2",

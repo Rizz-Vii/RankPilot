@@ -4,18 +4,15 @@
  */
 
 import { neuroSEOMCPOrchestrator } from '@/lib/neuroseo/mcp-enhanced';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
+export const POST = withProvenance(async function POST(request: NextRequest) {
     try {
         const { url, content, keywords, competitorUrls } = await request.json();
 
         if (!url || !content || !keywords?.length) {
-            return NextResponse.json({
-                success: false,
-                error: 'URL, content, and keywords are required',
-                message: 'Please provide all required parameters',
-            }, { status: 400 });
+            return NextResponse.json(enforceProvenance({ success: false, error: 'URL, content, and keywords are required', message: 'Please provide all required parameters', provenance: 'synthetic' }, { path: 'mcp/neuroseo/enhanced', note: 'validation' }), { status: 400 });
         }
 
         const result = await neuroSEOMCPOrchestrator.runMCPEnhancedAnalysis({
@@ -25,21 +22,8 @@ export async function POST(request: NextRequest) {
             competitorUrls,
         });
 
-        return NextResponse.json({
-            success: true,
-            data: result,
-            message: 'MCP-enhanced NeuroSEO™ analysis completed successfully',
-            metadata: {
-                enhancementFlags: result.enhancementFlags,
-                combinedScore: result.combinedScore,
-                timestamp: new Date().toISOString(),
-            },
-        });
+        return NextResponse.json(enforceProvenance({ success: true, data: result, message: 'MCP-enhanced NeuroSEO™ analysis completed successfully', metadata: { enhancementFlags: result.enhancementFlags, combinedScore: result.combinedScore, timestamp: new Date().toISOString() }, provenance: 'live' }, { path: 'mcp/neuroseo/enhanced', note: 'analysis' }));
     } catch (error) {
-        return NextResponse.json({
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error',
-            message: 'Enhanced NeuroSEO™ analysis failed',
-        }, { status: 500 });
+        return NextResponse.json(enforceProvenance({ success: false, error: error instanceof Error ? error.message : 'Unknown error', message: 'Enhanced NeuroSEO™ analysis failed', provenance: 'synthetic' }, { path: 'mcp/neuroseo/enhanced', note: 'exception' }), { status: 500 });
     }
-}
+}, { path: 'mcp/neuroseo/enhanced' });

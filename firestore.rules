@@ -236,18 +236,36 @@ service cloud.firestore {
         );
       }
 
-      // Phase 2: Invites subcollection (email‑based pending invites)
+      // Phase 2: Invites subcollection (email‐based pending invites)
       match /invites/{inviteId} {
+        // States: pending | accepted | expired
         allow read: if isTeamMember(teamId) || isAdmin() || (
           isAuthenticated() && resource.data.email != null &&
-          // Compare invite email to authenticated user's email stored in users doc
           lower(resource.data.email) == lower(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email)
         );
         allow create: if isTeamMember(teamId) && (
           get(/databases/$(database)/documents/teams/$(teamId)).data.ownerId == request.auth.uid || isAdmin()
         );
-        allow update, delete: if isAdmin();
+        // Only allow status transitions server-side except accept by invited user
+        allow update: if (
+          // Admins can modify
+          isAdmin() ||
+          // Invited user can mark their invite accepted (write acceptedAt)
+          (
+            isAuthenticated() && resource.data.email != null && lower(resource.data.email) == lower(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email) &&
+            request.resource.data.status == 'accepted' && resource.data.status == 'pending'
+          )
+        );
+        // Deletion only by admin or team owner
+        allow delete: if isAdmin() || get(/databases/$(database)/documents/teams/$(teamId)).data.ownerId == request.auth.uid;
       }
+    }
+
+    // Invites Index - mirrors status for queries and cleanup
+    match /invites_index/{inviteId} {
+      allow read: if isAuthenticated();
+      // Writes only by server (via Admin SDK / Functions). Deny client writes.
+      allow create, update, delete: if false;
     }
 
     // Integrations collection (if used in UI)

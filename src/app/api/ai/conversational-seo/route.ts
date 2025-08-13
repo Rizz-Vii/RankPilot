@@ -4,65 +4,72 @@
  */
 
 import { conversationalSEOEngine } from '@/lib/ai/conversational-seo-engine';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
+import { recordRouteLatency, recordError, recordFallback, recordRateLimitRejection } from '@/lib/metrics/unified-metrics';
+import { adminDb } from '@/lib/firebase-admin';
+import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
+export const POST = withProvenance(async function POST(request: NextRequest) {
+    const start = Date.now();
     try {
         const body = await request.json();
-        const { action, sessionId, message, userId, userTier } = body;
+        const { action, sessionId, message, userId, userTier, teamId } = body;
+        if (teamId) {
+            try { await enforceTeamRateLimit(adminDb as any, teamId, { routeKey: 'ai/conversational-seo' }); } catch (e: any) {
+                if (e instanceof TeamRateLimitError) {
+                    recordRateLimitRejection('ai/conversational-seo');
+                    recordRateLimitRejection(`team:${teamId}`);
+                    recordRouteLatency('ai/conversational-seo', Date.now() - start);
+                    return NextResponse.json(enforceProvenance({ success: false, error: 'rate_limited', retryAfter: e.retryAfterSeconds, provenance: 'synthetic' }, { path: 'ai/conversational-seo' }), { status: 429, headers: { 'Retry-After': String(e.retryAfterSeconds) } });
+                }
+            }
+        }
 
         switch (action) {
             case 'start':
                 if (!userId || !userTier) {
-                    return NextResponse.json({
-                        success: false,
-                        error: 'Missing required fields: userId, userTier'
-                    }, { status: 400 });
+                    recordError('ai/conversational-seo', '4xx_user');
+                    return NextResponse.json(enforceProvenance({ success: false, error: 'Missing required fields: userId, userTier', provenance: 'synthetic' }, { path: 'ai/conversational-seo', note: 'validation' }), { status: 400 });
                 }
 
                 const newSessionId = await conversationalSEOEngine.startConversation(userId, userTier);
 
-                return NextResponse.json({
-                    success: true,
-                    data: {
-                        sessionId: newSessionId,
-                        message: 'Conversation started successfully'
-                    }
-                });
+                return NextResponse.json(enforceProvenance({ success: true, data: { sessionId: newSessionId, message: 'Conversation started successfully' }, provenance: 'live' }, { path: 'ai/conversational-seo', note: 'start' }));
 
             case 'message':
                 if (!sessionId || !message) {
-                    return NextResponse.json({
-                        success: false,
-                        error: 'Missing required fields: sessionId, message'
-                    }, { status: 400 });
+                    recordError('ai/conversational-seo', '4xx_user');
+                    return NextResponse.json(enforceProvenance({ success: false, error: 'Missing required fields: sessionId, message', provenance: 'synthetic' }, { path: 'ai/conversational-seo', note: 'validation' }), { status: 400 });
                 }
 
                 const response = await conversationalSEOEngine.processMessage(sessionId, message);
 
-                return NextResponse.json({
+                const resp = NextResponse.json(enforceProvenance({
                     success: true,
-                    data: response
-                });
+                    data: response,
+                    provenance: 'live'
+                }, { path: 'ai/conversational-seo' }));
+                recordRouteLatency('ai/conversational-seo', Date.now() - start);
+                return resp;
 
             default:
-                return NextResponse.json({
-                    success: false,
-                    error: 'Invalid action. Supported actions: start, message'
-                }, { status: 400 });
+                recordError('ai/conversational-seo', '4xx_user');
+                return NextResponse.json(enforceProvenance({ success: false, error: 'Invalid action. Supported actions: start, message', provenance: 'synthetic' }, { path: 'ai/conversational-seo', note: 'invalid_action' }), { status: 400 });
         }
 
     } catch (error) {
         console.error('[Conversational SEO API] Error:', error);
-        return NextResponse.json({
-            success: false,
-            error: error instanceof Error ? error.message : 'Internal server error'
-        }, { status: 500 });
+        recordError('ai/conversational-seo', '5xx_server');
+        recordFallback('backend_error');
+        recordRouteLatency('ai/conversational-seo', Date.now() - start);
+        return NextResponse.json(enforceProvenance({ success: false, error: error instanceof Error ? error.message : 'Internal server error', provenance: 'synthetic' }, { path: 'ai/conversational-seo', note: 'exception' }), { status: 500 });
     }
-}
+}, { path: 'ai/conversational-seo' });
 
 export async function GET(request: NextRequest) {
-    return NextResponse.json({
+    const start = Date.now();
+    const resp = NextResponse.json(enforceProvenance({
         success: true,
         data: {
             status: 'operational',
@@ -74,6 +81,9 @@ export async function GET(request: NextRequest) {
                 'Context-aware conversations'
             ],
             supportedTiers: ['free', 'starter', 'agency', 'enterprise', 'admin']
-        }
-    });
+        },
+        provenance: 'live'
+    }, { path: 'ai/conversational-seo' }));
+    recordRouteLatency('ai/conversational-seo', Date.now() - start);
+    return resp;
 }

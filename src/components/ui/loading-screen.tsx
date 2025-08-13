@@ -79,7 +79,10 @@ export default function LoadingScreen({
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/90 backdrop-blur-sm text-foreground font-body">
+      <div
+        className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/90 backdrop-blur-sm text-foreground font-body"
+        data-testid="loading-screen"
+      >
         {fullScreenLoaderContent}
       </div>
     );

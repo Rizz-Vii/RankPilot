@@ -28,12 +28,14 @@ import { LanguageSelector } from "@/components/i18n/LanguageSelector";
 import { CommandPaletteButton } from "@/components/command-palette";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { useTheme } from "@/lib/themes/theme-system";
+import { useI18n } from "@/lib/i18n/internationalization-system";
+import { useToast } from "@/hooks/use-toast";
 
 const navigationItems = [
-  { href: "/features", label: "Features", external: false },
-  { href: "/#pricing", label: "Pricing", external: false },
-  { href: "/#faq", label: "FAQ", external: false },
-  { href: "/docs", label: "Documentation", external: false },
+  { href: "/features", label: "nav.features", external: false },
+  { href: "/#pricing", label: "nav.pricing", external: false },
+  { href: "/#faq", label: "nav.faq", external: false },
+  { href: "/docs", label: "nav.docs", external: false },
 ];
 
 export default function SiteHeader() {
@@ -41,7 +43,10 @@ export default function SiteHeader() {
   const hydrated = useHydration();
   const isMobile = useIsMobile();
   const [scrolled, setScrolled] = useState(false);
-  const { theme, setTheme, isDark } = useTheme();
+  const { theme, setTheme, isDark, isHighContrast } = useTheme() as any; // cast for added method usage
+  const { translate } = useI18n();
+  const [a11yMessage, setA11yMessage] = useState("");
+  const { toast } = useToast();
 
   const toggleTheme = () => {
     // cycle light -> dark -> high-contrast -> auto -> light
@@ -49,6 +54,9 @@ export default function SiteHeader() {
     const idx = order.indexOf(theme);
     const next = order[(idx + 1) % order.length];
     setTheme(next);
+  const msg = translate('feedback.theme.cycled');
+  setA11yMessage(msg);
+  toast({ title: msg });
   };
 
   const handleLogout = async () => {
@@ -107,7 +115,7 @@ export default function SiteHeader() {
                 href={item.href}
                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md px-2 py-1"
               >
-                {item.label}
+                {translate(item.label)}
               </Link>
             ))}
           </nav>
@@ -120,7 +128,7 @@ export default function SiteHeader() {
             </div>
             {/* Utility cluster: theme + language (language only from xl to prevent collision) */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="hidden xl:flex items-center gap-2">
+              <div className="hidden lg:flex items-center gap-2">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <EnhancedButton
@@ -129,7 +137,16 @@ export default function SiteHeader() {
                       aria-label="Toggle theme"
                       onClick={toggleTheme}
                     >
-                      {theme === 'high-contrast' ? <Sun className="h-5 w-5" /> : isDark() ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                      {hydrated ? (
+                        theme === 'high-contrast' ? (
+                          <span className="relative inline-flex">
+                            <Sun className="h-5 w-5" />
+                            <span className="absolute -top-1 -right-1 text-[8px] px-1 py-[1px] leading-none rounded bg-warning text-warning-foreground font-bold">HC</span>
+                          </span>
+                        ) : isDark() ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />
+                      ) : (
+                        <span className="h-5 w-5" aria-hidden />
+                      )}
                     </EnhancedButton>
                   </TooltipTrigger>
                   <TooltipContent>Cycle Theme</TooltipContent>
@@ -177,7 +194,16 @@ export default function SiteHeader() {
                       aria-label="Toggle theme"
                       onClick={toggleTheme}
                     >
-                      {theme === 'high-contrast' ? <Sun className="h-5 w-5" /> : isDark() ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                      {hydrated ? (
+                        theme === 'high-contrast' ? (
+                          <span className="relative inline-flex">
+                            <Sun className="h-5 w-5" />
+                            <span className="absolute -top-1 -right-1 text-[8px] px-1 py-[1px] leading-none rounded bg-warning text-warning-foreground font-bold">HC</span>
+                          </span>
+                        ) : isDark() ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />
+                      ) : (
+                        <span className="h-5 w-5" aria-hidden />
+                      )}
                     </EnhancedButton>
                   </TooltipTrigger>
                   <TooltipContent>Cycle Theme</TooltipContent>
@@ -203,13 +229,13 @@ export default function SiteHeader() {
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard" className="flex items-center">
                       <User className="mr-2 h-4 w-4" />
-                      Dashboard
+                      {translate('nav.dashboard')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/profile" className="flex items-center">
                       <User className="mr-2 h-4 w-4" />
-                      Profile
+                      {translate('settings.tabs.account')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -228,11 +254,11 @@ export default function SiteHeader() {
                   href="/demo"
                   className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Live Demo
+                  {translate('nav.features')}
                 </Link>
                 {/* Streamlined CTA: remove muted login button per request; keep single primary trial entry */}
                 <EnhancedButton asChild>
-                  <Link href="/register">Start Free Trial</Link>
+                  <Link href="/register">{translate('cta.startFreeTrial')}</Link>
                 </EnhancedButton>
               </div>
             )}
@@ -240,7 +266,9 @@ export default function SiteHeader() {
 
           {/* Unified Mobile Sidebar */}
           <PublicMobileSidebar className="md:hidden" />
-        </div>
+  </div>
+  {/* aria-live region for feedback */}
+  <div aria-live="polite" className="sr-only" role="status">{a11yMessage}</div>
   </motion.header>
   </TooltipProvider>
     </>

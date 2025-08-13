@@ -2,6 +2,7 @@
 "use client";
 
 import type { AnalyzeContentInput } from "@/ai/flows/content-optimization";
+import { colors } from "@/lib/design-system/colors";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -114,10 +115,10 @@ export default function ContentAnalyzerForm({
                         <span
                           className={`text-xs ${
                             contentLength > 9000
-                              ? "text-red-500"
+                              ? colors.status.error.text
                               : contentLength > 7000
-                                ? "text-yellow-500"
-                                : "text-muted-foreground"
+                                ? colors.status.warning.text
+                                : colors.text.muted
                           }`}
                         >
                           {contentLength}/10,000 characters
@@ -160,10 +161,10 @@ export default function ContentAnalyzerForm({
                         <span
                           className={`text-xs ${
                             keywordsLength > 180
-                              ? "text-red-500"
+                              ? colors.status.error.text
                               : keywordsLength > 150
-                                ? "text-yellow-500"
-                                : "text-muted-foreground"
+                                ? colors.status.warning.text
+                                : colors.text.muted
                           }`}
                         >
                           {keywordsLength}/200 characters

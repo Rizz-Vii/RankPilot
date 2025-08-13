@@ -115,9 +115,9 @@ export function PWAInstallPrompt({ className, showInAppHeader = false }: PWAInst
                 {/* Connection Status */}
                 <div className="flex items-center gap-1">
                     {connectionStatus === 'online' ? (
-                        <Wifi className="h-4 w-4 text-green-500" />
+                        <Wifi className="h-4 w-4 text-success-foreground" />
                     ) : (
-                        <WifiOff className="h-4 w-4 text-red-500" />
+                        <WifiOff className="h-4 w-4 text-error-foreground" />
                     )}
                     <span className="text-xs text-muted-foreground hidden sm:inline">
                         {connectionStatus}
@@ -185,19 +185,19 @@ export function PWAInstallPrompt({ className, showInAppHeader = false }: PWAInst
                             {/* Features */}
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2 text-sm">
-                                    <CheckCircle className="h-4 w-4 text-green-500" />
+                                    <CheckCircle className="h-4 w-4 text-success-foreground" />
                                     <span>Work offline and sync when online</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm">
-                                    <CheckCircle className="h-4 w-4 text-green-500" />
+                                    <CheckCircle className="h-4 w-4 text-success-foreground" />
                                     <span>Faster loading and better performance</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm">
-                                    <CheckCircle className="h-4 w-4 text-green-500" />
+                                    <CheckCircle className="h-4 w-4 text-success-foreground" />
                                     <span>Push notifications for SEO insights</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm">
-                                    <CheckCircle className="h-4 w-4 text-green-500" />
+                                    <CheckCircle className="h-4 w-4 text-success-foreground" />
                                     <span>Native app experience</span>
                                 </div>
                             </div>
@@ -206,9 +206,9 @@ export function PWAInstallPrompt({ className, showInAppHeader = false }: PWAInst
                             <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
                                 <div className="flex items-center gap-2">
                                     {connectionStatus === 'online' ? (
-                                        <Wifi className="h-4 w-4 text-green-500" />
+                                        <Wifi className="h-4 w-4 text-success-foreground" />
                                     ) : (
-                                        <WifiOff className="h-4 w-4 text-red-500" />
+                                        <WifiOff className="h-4 w-4 text-error-foreground" />
                                     )}
                                     <span className="text-sm font-medium">
                                         {connectionStatus === 'online' ? 'Online' : 'Offline'}
@@ -223,7 +223,7 @@ export function PWAInstallPrompt({ className, showInAppHeader = false }: PWAInst
                             <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
                                 <div className="flex items-center gap-2">
                                     {notificationsEnabled ? (
-                                        <Bell className="h-4 w-4 text-blue-500" />
+                                        <Bell className="h-4 w-4 text-info-foreground" />
                                     ) : (
                                         <BellOff className="h-4 w-4 text-muted-foreground" />
                                     )}
@@ -318,12 +318,12 @@ export function PWAStatus({ className }: { className?: string; }) {
             >
                 <div className="flex items-center gap-1">
                     {connectionStatus === 'online' ? (
-                        <Wifi className="h-4 w-4 text-green-500" />
+                        <Wifi className="h-4 w-4 text-success-foreground" />
                     ) : (
-                        <WifiOff className="h-4 w-4 text-red-500" />
+                        <WifiOff className="h-4 w-4 text-error-foreground" />
                     )}
-                    {isInstalled && <Smartphone className="h-4 w-4 text-blue-500" />}
-                    {notificationsEnabled && <Bell className="h-4 w-4 text-blue-500" />}
+                    {isInstalled && <Smartphone className="h-4 w-4 text-info-foreground" />}
+                    {notificationsEnabled && <Bell className="h-4 w-4 text-info-foreground" />}
                 </div>
             </Button>
 

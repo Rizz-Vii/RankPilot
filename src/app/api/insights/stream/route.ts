@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { generateInsights as aiGenerateInsights } from '@/ai/flows/generate-insights';
+import { enforceProvenanceOnChunk } from '@/lib/middleware/provenance';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -32,12 +33,12 @@ export async function GET(req: NextRequest) {
         const encoder = new TextEncoder();
         const stream = new ReadableStream({
             async start(controller) {
-                function send(obj: any) { controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`)); }
-                send({ type: 'init', activityCount: activities.length });
+                function send(obj: any, note?: string) { controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk(obj, { path: 'insights/stream', note }))}\n\n`)); }
+                send({ type: 'init', activityCount: activities.length, provenance: 'live' });
 
                 // If no activities, end early
                 if (!activities.length) {
-                    send({ type: 'final', insights: [] });
+                    send({ type: 'final', insights: [], provenance: 'live' });
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
                     return;
@@ -60,7 +61,7 @@ export async function GET(req: NextRequest) {
                     }
                     send({ type: 'final', total: aiResult.insights.length });
                 } catch (e: any) {
-                    send({ type: 'error', message: e?.message || 'insight_generation_failed' });
+                    send({ type: 'error', message: e?.message || 'insight_generation_failed', provenance: 'synthetic' });
                 } finally {
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
@@ -70,6 +71,6 @@ export async function GET(req: NextRequest) {
 
         return new Response(stream, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', 'Connection': 'keep-alive' } });
     } catch (e: any) {
-        return new Response(JSON.stringify({ error: e?.message || 'stream_init_failed' }), { status: 500 });
+        return new Response(JSON.stringify(enforceProvenanceOnChunk({ error: e?.message || 'stream_init_failed', provenance: 'synthetic' }, { path: 'insights/stream', note: 'init-failure' })), { status: 500 });
     }
 }

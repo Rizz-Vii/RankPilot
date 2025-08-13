@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart";
 import { Link as LinkIcon } from "lucide-react";
-import { BarChart, ResponsiveContainer, CartesianGrid, XAxis, YAxis, Bar } from "recharts";
+import { BarChart, CartesianGrid, XAxis, YAxis, Bar } from "recharts";
 
 const barChartConfig = {
   new: { label: "New", color: "hsl(var(--chart-1))" },
@@ -21,16 +21,14 @@ export function BacklinksChart({ data }: BacklinksChartProps) {
       <CardContent>
         {data && data.history && data.history.length > 0 ? (
           <ChartContainer config={barChartConfig} className="h-[200px] w-full">
-            <ResponsiveContainer>
-              <BarChart data={data.history} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid vertical={false} />
-                <XAxis dataKey="month" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} />
-                <ChartTooltip cursor={false} content={(props) => <ChartTooltipContent {...props} indicator="line" />} />
-                <Bar dataKey="new" fill="var(--color-new)" radius={4} />
-                <Bar dataKey="lost" fill="var(--color-lost)" radius={4} />
-              </BarChart>
-            </ResponsiveContainer>
+            <BarChart data={data.history} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+              <CartesianGrid vertical={false} />
+              <XAxis dataKey="month" tickLine={false} axisLine={false} />
+              <YAxis tickLine={false} axisLine={false} />
+              <ChartTooltip cursor={false} content={(props) => <ChartTooltipContent {...props} indicator="line" />} />
+              <Bar dataKey="new" fill="var(--color-new)" radius={4} />
+              <Bar dataKey="lost" fill="var(--color-lost)" radius={4} />
+            </BarChart>
           </ChartContainer>
         ) : (
           <div className="h-[200px] flex items-center justify-center text-muted-foreground">

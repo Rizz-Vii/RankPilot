@@ -1,5 +1,6 @@
 // src/app/(public)/layout.tsx
 import SiteHeader from "@/components/site-header";
+import { HydrationProvider } from "@/components/HydrationContext";
 
 export default function PublicLayout({
   children,
@@ -7,9 +8,11 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col min-h-screen">
-      <SiteHeader />
-      <main className="flex-grow">{children}</main>
-    </div>
+    <HydrationProvider>
+      <div className="flex flex-col min-h-screen">
+        <SiteHeader />
+        <main className="flex-grow">{children}</main>
+      </div>
+    </HydrationProvider>
   );
 }

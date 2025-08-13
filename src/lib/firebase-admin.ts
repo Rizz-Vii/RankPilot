@@ -123,3 +123,5 @@ try {
 }
 export const adminAuth = app.auth();
 export { app as adminApp };
+// Storage for server-side artifact uploads (exports, reports, etc.)
+export const adminStorage = app.storage();

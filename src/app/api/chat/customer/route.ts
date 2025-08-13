@@ -9,6 +9,9 @@ import { buildQueryEmbedding, retrieveSimilarMessages } from '@/lib/chat/retriev
 import { maybeEmbedMessage } from '@/lib/chat/embedding';
 import { maybeSummarizeSession } from '@/lib/chat/sessionSummarizer';
 import { NextRequest, NextResponse } from 'next/server';
+import { enforceProvenance } from '@/lib/middleware/provenance';
+import { recordRouteLatency, recordError, recordRateLimitRejection } from '@/lib/metrics/unified-metrics';
+import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
 
 // Force dynamic to avoid any accidental caching of auth state in edge/runtime
 export const dynamic = 'force-dynamic';
@@ -84,6 +87,7 @@ function estimateTokens(text: string): number {
 }
 
 export async function POST(request: NextRequest) {
+    const start = Date.now();
     try {
         // Parse request body (defensive)
         let body: ChatRequest;
@@ -120,6 +124,24 @@ export async function POST(request: NextRequest) {
             uid = decoded.uid;
         } catch (e: any) {
             return NextResponse.json({ error: 'Invalid or expired token. Try reloading to refresh your session.', details: process.env.NODE_ENV !== 'production' ? e?.message : undefined }, { status: 401 });
+        }
+
+        // Load user doc (for teamId before any limiting)
+        let userDoc: FirebaseFirestore.DocumentSnapshot | null = null; let teamId: string | undefined;
+        try { userDoc = await adminDb.collection('users').doc(uid).get(); teamId = userDoc.exists ? (userDoc.data() as any)?.teamId : undefined; } catch { /* ignore */ }
+
+        // Team-aware rate limiting (Phase 1 PERF-01)
+        if (teamId) {
+            try {
+                await enforceTeamRateLimit(adminDb as any, teamId, { routeKey: 'chat/customer' });
+            } catch (e: any) {
+                if (e instanceof TeamRateLimitError) {
+                    recordRateLimitRejection('chat/customer');
+                    recordRateLimitRejection(`team:${teamId}`);
+                    recordRouteLatency('chat/customer', Date.now() - start);
+                    return NextResponse.json(enforceProvenance({ error: 'rate_limited', retryAfter: e.retryAfterSeconds, provenance: 'synthetic' }, { path: 'chat/customer' }), { status: 429, headers: { 'Retry-After': String(e.retryAfterSeconds) } });
+                }
+            }
         }
 
         // Attachment-only persistence flow (no AI call)
@@ -172,7 +194,9 @@ export async function POST(request: NextRequest) {
                 chatType: 'customer',
             }, { merge: true });
             await batch.commit();
-            return NextResponse.json({ success: true, sessionId: currentSessionId });
+            const resp = NextResponse.json(enforceProvenance({ success: true, sessionId: currentSessionId, provenance: 'live' }, { path: 'chat/customer' }));
+            recordRouteLatency('chat/customer', Date.now() - start);
+            return resp;
         }
 
         // Call the callable HTTPS endpoint so request.auth is populated server-side
@@ -218,12 +242,17 @@ export async function POST(request: NextRequest) {
                 : code === 403
                     ? ' (forbidden: check Function auth and App Check settings)'
                     : '';
-            return NextResponse.json({ error: `${errMsg}${hint}`, upstreamStatus: res.status }, { status: code });
+            const resp = NextResponse.json(enforceProvenance({ error: `${errMsg}${hint}`, upstreamStatus: res.status, provenance: 'synthetic' }, { path: 'chat/customer' }), { status: code });
+            if (code >= 500) recordError('chat/customer', '5xx_server'); else if (code >= 400) recordError('chat/customer', '4xx_user');
+            recordRouteLatency('chat/customer', Date.now() - start);
+            return resp;
         }
 
         let data: ChatResponse = payload?.result || payload?.data || payload;
         if (!data) {
-            return NextResponse.json({ error: 'Invalid response from chat service' }, { status: 502 });
+            recordError('chat/customer', '5xx_server');
+            recordRouteLatency('chat/customer', Date.now() - start);
+            return NextResponse.json(enforceProvenance({ error: 'Invalid response from chat service', provenance: 'synthetic' }, { path: 'chat/customer' }), { status: 502 });
         }
 
         // Attempt meta extraction (same pattern as streaming if model returned hidden tags)
@@ -280,9 +309,13 @@ export async function POST(request: NextRequest) {
         }
 
         if (quotaWarning) {
-            return NextResponse.json({ ...data, quotaWarning }, { status: 200, headers: { 'X-Quota-Warning': quotaWarning } });
+            const resp = NextResponse.json(enforceProvenance({ ...data, quotaWarning, provenance: 'live' }, { path: 'chat/customer' }), { status: 200, headers: { 'X-Quota-Warning': quotaWarning } });
+            recordRouteLatency('chat/customer', Date.now() - start);
+            return resp;
         }
-        return NextResponse.json(data);
+        const resp = NextResponse.json(enforceProvenance({ ...data, provenance: 'live' }, { path: 'chat/customer' }));
+        recordRouteLatency('chat/customer', Date.now() - start);
+        return resp;
 
     } catch (error: any) {
         console.error('Customer chat API error:', error);
@@ -293,37 +326,29 @@ export async function POST(request: NextRequest) {
 
             switch (firebaseError.code) {
                 case 'unauthenticated':
-                    return NextResponse.json(
-                        { error: 'Authentication required' },
-                        { status: 401 }
-                    );
+                    recordError('chat/customer', '4xx_user');
+                    return NextResponse.json(enforceProvenance({ error: 'Authentication required', provenance: 'synthetic' }, { path: 'chat/customer' }), { status: 401 });
                 case 'permission-denied':
-                    return NextResponse.json(
-                        { error: 'Permission denied' },
-                        { status: 403 }
-                    );
+                    recordError('chat/customer', '4xx_user');
+                    return NextResponse.json(enforceProvenance({ error: 'Permission denied', provenance: 'synthetic' }, { path: 'chat/customer' }), { status: 403 });
                 case 'invalid-argument':
-                    return NextResponse.json(
-                        { error: 'Invalid request data' },
-                        { status: 400 }
-                    );
+                    recordError('chat/customer', '4xx_user');
+                    return NextResponse.json(enforceProvenance({ error: 'Invalid request data', provenance: 'synthetic' }, { path: 'chat/customer' }), { status: 400 });
                 default:
-                    return NextResponse.json(
-                        { error: 'Chat service unavailable' },
-                        { status: 503 }
-                    );
+                    recordError('chat/customer', '5xx_server');
+                    return NextResponse.json(enforceProvenance({ error: 'Chat service unavailable', provenance: 'synthetic' }, { path: 'chat/customer' }), { status: 503 });
             }
         }
 
-        return NextResponse.json(
-            { error: 'Internal server error', details: process.env.NODE_ENV !== 'production' ? (error?.message || String(error)) : undefined },
-            { status: 500 }
-        );
+        recordError('chat/customer', '5xx_server');
+        recordRouteLatency('chat/customer', Date.now() - start);
+        return NextResponse.json(enforceProvenance({ error: 'Internal server error', details: process.env.NODE_ENV !== 'production' ? (error?.message || String(error)) : undefined, provenance: 'synthetic' }, { path: 'chat/customer' }), { status: 500 });
     }
 }
 
 // GET endpoint for chat history (customer)
 export async function GET(request: NextRequest) {
+    const start = Date.now();
     try {
         const { searchParams } = new URL(request.url);
         const sessionId = searchParams.get('sessionId');
@@ -333,10 +358,8 @@ export async function GET(request: NextRequest) {
         // Get user from authentication
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json(
-                { error: 'Authentication required' },
-                { status: 401 }
-            );
+            recordError('chat/customer', '4xx_user');
+            return NextResponse.json(enforceProvenance({ error: 'Authentication required', provenance: 'synthetic' }, { path: 'chat/customer' }), { status: 401 });
         }
 
         const idToken = authHeader.split(' ')[1];
@@ -439,21 +462,23 @@ export async function GET(request: NextRequest) {
             }
         } catch { /* ignore */ }
 
-        return NextResponse.json({
+        const resp = NextResponse.json(enforceProvenance({
             messages,
             sessionId: currentSessionId,
             hasMore,
             sessionSummary,
             pendingActions,
             keywords,
-            summaryUpdatedAt
-        });
+            summaryUpdatedAt,
+            provenance: 'live'
+        }, { path: 'chat/customer' }));
+        recordRouteLatency('chat/customer', Date.now() - start);
+        return resp;
 
     } catch (error) {
         console.error('Chat history API error:', error);
-        return NextResponse.json(
-            { error: 'Failed to retrieve chat history' },
-            { status: 500 }
-        );
+        recordError('chat/customer', '5xx_server');
+        recordRouteLatency('chat/customer', Date.now() - start);
+        return NextResponse.json(enforceProvenance({ error: 'Failed to retrieve chat history', provenance: 'synthetic' }, { path: 'chat/customer' }), { status: 500 });
     }
 }

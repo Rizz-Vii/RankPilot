@@ -1,5 +1,7 @@
 # COMPREHENSIVE SECURITY PROTOCOLS
 
+> Alignment note (2025-08-12): For latest provenance enforcement coverage, KPI alerts, and rotation cadence, see `archey/ADDENDUM_2025-08-12.md` and `/api/health` docs. Use `.github/chatmodes/pilotBuddy.chatmode.md` for agent guardrails.
+
 **Generated:** 7/26/2025
 **Consolidation Status:** Comprehensive merger of 3 related documents
 **Source Files:** comprehensive/SECURITY_AND_GITIGNORE_COMPREHENSIVE.md, security/SECURITY_ROTATION.md, security/GITIGNORE_STRATEGY.md

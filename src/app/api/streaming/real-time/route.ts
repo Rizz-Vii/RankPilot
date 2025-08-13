@@ -4,6 +4,7 @@
  */
 
 import { realTimeDataStreamer } from '@/lib/streaming/real-time-data-streamer';
+import { allowStreamingMockUser } from '@/lib/flags/demo';
 import { NextRequest, NextResponse } from 'next/server';
 
 interface StreamingRequest {
@@ -27,12 +28,15 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // For demo purposes, we'll use a mock user
+        // For demo purposes, we can use a mock user only if explicitly allowed
         // In production, verify the JWT token here
-        const mockUser = {
-            uid: 'demo-user',
-            tier: 'enterprise' // For testing enterprise features
-        };
+        const mockUser = allowStreamingMockUser() ? { uid: 'demo-user', tier: 'enterprise' as const } : null as any;
+        if (!mockUser) {
+            return NextResponse.json(
+                { error: 'Unauthorized - Mock user disabled' },
+                { status: 401 }
+            );
+        }
 
         switch (body.action) {
             case 'register':

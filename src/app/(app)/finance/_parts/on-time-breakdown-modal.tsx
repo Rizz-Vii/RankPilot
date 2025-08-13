@@ -23,7 +23,20 @@ export function OnTimeBreakdownModal({ open, onOpenChange }: Props){
           <DialogDescription>{pct.toFixed(1)}% of {paid.length} paid invoices were on time.</DialogDescription>
         </DialogHeader>
         <ul className="space-y-1 max-h-[340px] overflow-auto pr-1 text-xs">
-          {groups.map(g=> (<li key={g.id} className="flex items-center justify-between border-b last:border-none py-1"><span className="font-medium">{g.tier}</span><span className={g.onTime? 'text-emerald-600':'text-amber-600'}>{g.onTime? 'On-Time':'Late'}</span></li>))}
+          {groups.map(g=> (
+            <li key={g.id} className="flex items-center justify-between border-b last:border-none py-1">
+              <span className="font-medium">{g.tier}</span>
+              <span
+                className={g.onTime
+                  ? 'text-success-foreground' // semantic class for success
+                  : 'text-warning-foreground' // semantic class for warning
+                }
+                style={{ color: g.onTime ? 'var(--success-foreground, var(--primary))' : 'var(--warning-foreground, var(--secondary))' }}
+              >
+                {g.onTime ? 'On-Time' : 'Late'}
+              </span>
+            </li>
+          ))}
           {!groups.length && <li className="text-muted-foreground text-center py-4">No paid invoices</li>}
         </ul>
       </DialogContent>

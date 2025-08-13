@@ -18,6 +18,7 @@ import { DashboardSurface } from '@/components/layout/DashboardSurface';
 import { SuiteAccentProvider } from '@/context/SuiteAccentContext';
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { submitOrQueue, queueAnalysisRequest } from "@/lib/offline-queue";
 import { motion } from "framer-motion";
 
 interface AIVisibilityResult {
@@ -73,32 +74,36 @@ export default function AIVisibilityEnginePage() {
 
     setLoading(true);
   try {
-      const response = await fetch("/api/neuroseo/ai-visibility", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          url,
-          query,
-          targetAudience,
-          analysisType,
-          userId: user?.uid
-        })
+      const payload = { url, query, targetAudience, analysisType, userId: user?.uid };
+      const submit = async () => {
+        const response = await fetch("/api/neuroseo/ai-visibility", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error("Analysis failed");
+        return response.json();
+      };
+
+      const { mode, result } = await submitOrQueue({
+        isOnline: () => (typeof navigator !== 'undefined' ? navigator.onLine : true),
+        submit,
+        // Reuse analysis queue with endpoint override so SW posts to the same endpoint
+        fallbackQueue: () => queueAnalysisRequest({ endpoint: "/api/neuroseo/ai-visibility", payload })
       });
 
-      if (!response.ok) {
-        throw new Error("Analysis failed");
+      if (mode === 'queued') {
+        toast({
+          title: 'Request queued',
+          description: 'You\'re offline. The AI visibility analysis will run automatically when you\'re back online.',
+        });
+        return;
       }
 
-  const data = await response.json();
-  setResults(data);
-  setProvenance(data?.cacheHit ? 'cache' : 'live');
-      
-      toast({
-        title: "Analysis Complete",
-        description: "AI visibility analysis has been completed successfully",
-      });
+      const data = result as AnalysisResult;
+      setResults(data);
+      setProvenance('live');
+      toast({ title: "Analysis Complete", description: "AI visibility analysis has been completed successfully" });
 
     } catch (error) {
       console.error("AI visibility analysis failed:", error);

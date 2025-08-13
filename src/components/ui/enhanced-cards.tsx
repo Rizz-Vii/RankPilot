@@ -31,9 +31,9 @@ export const EnhancedMetricCard: React.FC<MetricCardProps> = ({
 }) => {
     const getTrendColor = (trend: 'up' | 'down' | 'neutral') => {
         switch (trend) {
-            case 'up': return 'text-green-600';
-            case 'down': return 'text-red-600';
-            default: return 'text-gray-500';
+            case 'up': return colors.status.success.text;
+            case 'down': return colors.status.error.text;
+            default: return colors.text.muted;
         }
     };
 
@@ -66,11 +66,11 @@ export const EnhancedMetricCard: React.FC<MetricCardProps> = ({
                     <div className="flex-shrink-0 ml-4">
                         <div className={cn(
                             'w-10 h-10 rounded-lg flex items-center justify-center',
-                            status ? getStatusColor(status, 'bg') : 'bg-gray-100'
+                            status ? getStatusColor(status, 'bg') : colors.background.muted
                         )}>
                             <span className={cn(
                                 'w-5 h-5',
-                                status ? getStatusColor(status, 'text') : 'text-gray-600'
+                                status ? getStatusColor(status, 'text') : colors.text.secondary
                             )}>
                                 {icon}
                             </span>
@@ -94,7 +94,7 @@ export const EnhancedMetricCard: React.FC<MetricCardProps> = ({
                             <span className="font-medium">
                                 {change.value}
                             </span>
-                            <span className="ml-1 text-xs text-gray-500">
+                            <span className={"ml-1 text-xs " + colors.text.muted}>
                                 from last month
                             </span>
                         </div>
@@ -239,7 +239,7 @@ export const EnhancedProjectCard: React.FC<ProjectCardProps> = ({
                     </span>
                     <span className={
                         (priority === 'low' 
-                            ? 'bg-gray-100 text-gray-800' // Default styling for 'low' priority
+                            ? colors.projectStatus.completed.bg + ' ' + colors.projectStatus.completed.text // Use completed as default for 'low'
                             : colors.projectStatus[priority].bg + ' ' + colors.projectStatus[priority].text) + 
                         ' px-2 py-1 rounded-md text-xs font-medium'
                     }>
@@ -254,7 +254,7 @@ export const EnhancedProjectCard: React.FC<ProjectCardProps> = ({
                     <span className={typography.ui.label}>Progress</span>
                     <span className={typography.card.metric}>{progress}%</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className={"w-full bg-gray-200 rounded-full h-2"}>
                     <div
                         className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${progress}%` }}
@@ -274,7 +274,7 @@ export const EnhancedProjectCard: React.FC<ProjectCardProps> = ({
                     <div className={typography.card.metric}>Traffic</div>
                     <div className={cn(
                         typography.card.value + ' text-lg',
-                        metrics.traffic.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                        metrics.traffic.trend === 'up' ? colors.status.success.text : colors.status.error.text
                     )}>
                         {metrics.traffic.value}
                     </div>
@@ -287,16 +287,16 @@ export const EnhancedProjectCard: React.FC<ProjectCardProps> = ({
                     {team.slice(0, 3).map((member, index) => (
                         <div
                             key={index}
-                            className="w-8 h-8 rounded-full bg-gray-300 border-2 border-white flex items-center justify-center"
+                            className={"w-8 h-8 rounded-full bg-gray-300 border-2 border-white flex items-center justify-center"}
                         >
-                            <span className="text-xs font-medium">
+                            <span className={"text-xs font-medium " + colors.text.primary}>
                                 {member.name.charAt(0)}
                             </span>
                         </div>
                     ))}
                     {team.length > 3 && (
-                        <div className="w-8 h-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center">
-                            <span className="text-xs text-gray-600">
+                        <div className={"w-8 h-8 rounded-full " + colors.background.muted + " border-2 border-white flex items-center justify-center"}>
+                            <span className={"text-xs " + colors.text.secondary}>
                                 +{team.length - 3}
                             </span>
                         </div>

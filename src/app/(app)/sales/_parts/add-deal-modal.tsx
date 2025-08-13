@@ -55,7 +55,7 @@ export function AddDealModal({ open, onOpenChange, onCreated }: Props) {
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium">Stage</label>
-            <select value={stage} onChange={e=> setStage(e.target.value)} className="w-full rounded-md border bg-background px-2 py-1 text-sm">
+            <select value={stage} onChange={e=> setStage(e.target.value)} className="w-full rounded-md border bg-surface-background px-2 py-1 text-sm">
               <option value="qualification">Qualification</option>
               <option value="discovery">Discovery</option>
               <option value="proposal">Proposal</option>

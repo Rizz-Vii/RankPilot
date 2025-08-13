@@ -4,29 +4,46 @@
  */
 
 import { multiModelOrchestrator, MultiModelRequest } from '@/lib/ai/multi-model-orchestrator';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
+import { recordRouteLatency, recordError, recordFallback, recordRateLimitRejection } from '@/lib/metrics/unified-metrics';
+import { adminDb } from '@/lib/firebase-admin';
+import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
+export const POST = withProvenance(async function POST(request: NextRequest) {
+    const start = Date.now();
     try {
         // Parse request body
         const body = await request.json();
-        const { task, input, options, userTier, userId } = body;
+        const { task, input, options, userTier, userId, teamId } = body;
+        if (teamId) {
+            try { await enforceTeamRateLimit(adminDb as any, teamId, { routeKey: 'ai/multi-model' }); } catch (e: any) {
+                if (e instanceof TeamRateLimitError) {
+                    recordRateLimitRejection('ai/multi-model');
+                    recordRateLimitRejection(`team:${teamId}`);
+                    recordRouteLatency('ai/multi-model', Date.now() - start);
+                    return NextResponse.json(enforceProvenance({ success: false, error: 'rate_limited', retryAfter: e.retryAfterSeconds, provenance: 'synthetic' }, { path: 'ai/multi-model' }), { status: 429, headers: { 'Retry-After': String(e.retryAfterSeconds) } });
+                }
+            }
+        }
 
         // Validate required fields
         if (!task || !input || !userTier || !userId) {
-            return NextResponse.json({
+            recordError('ai/multi-model', '4xx_user');
+            return NextResponse.json(enforceProvenance({
                 success: false,
                 error: 'Missing required fields: task, input, userTier, userId'
-            }, { status: 400 });
+            }, { path: 'ai/multi-model', note: 'validation' }), { status: 400 });
         }
 
         // Validate task type
         const validTasks = ['text-generation', 'text-classification', 'summarization', 'question-answering', 'sentiment-analysis'];
         if (!validTasks.includes(task)) {
-            return NextResponse.json({
+            recordError('ai/multi-model', '4xx_user');
+            return NextResponse.json(enforceProvenance({
                 success: false,
                 error: `Invalid task type. Must be one of: ${validTasks.join(', ')}`
-            }, { status: 400 });
+            }, { path: 'ai/multi-model', note: 'validation' }), { status: 400 });
         }
 
         // Create multi-model request
@@ -42,36 +59,48 @@ export async function POST(request: NextRequest) {
         const result = await multiModelOrchestrator.processRequest(multiModelRequest);
 
         // Return response
-        return NextResponse.json(result);
+        const resp = NextResponse.json(enforceProvenance({ ...result, provenance: 'live' }, { path: 'ai/multi-model' }));
+        recordRouteLatency('ai/multi-model', Date.now() - start);
+        return resp;
 
     } catch (error) {
         console.error('[Multi-Model API] Error:', error);
-        return NextResponse.json({
+        recordError('ai/multi-model', '5xx_server');
+        recordFallback('backend_error');
+        recordRouteLatency('ai/multi-model', Date.now() - start);
+        return NextResponse.json(enforceProvenance({
             success: false,
-            error: 'Internal server error during multi-model processing'
-        }, { status: 500 });
+            error: 'Internal server error during multi-model processing',
+            provenance: 'synthetic'
+        }, { path: 'ai/multi-model' }), { status: 500 });
     }
-}
+}, { path: 'ai/multi-model' });
 
-export async function GET(request: NextRequest) {
+export const GET = withProvenance(async function GET(request: NextRequest) {
+    const start = Date.now();
     try {
         // Get performance analytics
         const analytics = multiModelOrchestrator.getPerformanceAnalytics();
 
-        return NextResponse.json({
+        const resp = NextResponse.json(enforceProvenance({
             success: true,
             data: {
                 analytics,
                 timestamp: new Date().toISOString(),
                 status: 'operational'
-            }
-        });
+            },
+            provenance: 'live'
+        }, { path: 'ai/multi-model' }));
+        recordRouteLatency('ai/multi-model', Date.now() - start);
+        return resp;
 
     } catch (error) {
         console.error('[Multi-Model API] Analytics error:', error);
-        return NextResponse.json({
+        recordRouteLatency('ai/multi-model', Date.now() - start);
+        return NextResponse.json(enforceProvenance({
             success: false,
-            error: 'Failed to retrieve performance analytics'
-        }, { status: 500 });
+            error: 'Failed to retrieve performance analytics',
+            provenance: 'synthetic'
+        }, { path: 'ai/multi-model' }), { status: 500 });
     }
-}
+}, { path: 'ai/multi-model' });

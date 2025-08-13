@@ -55,6 +55,8 @@ import {
   Users
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { isDemoContentEnabled } from "@/lib/flags/demo";
 import { useCallback, useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
@@ -86,6 +88,7 @@ export default function TeamManagementPage() {
   const { user, loading: authLoading } = useAuth();
   const { subscription, canUseFeature } = useSubscription();
   const router = useRouter();
+  const demoEnabled = isDemoContentEnabled();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
@@ -216,6 +219,14 @@ export default function TeamManagementPage() {
   return (
     <FeatureGate requiredTier="enterprise">
   <main className="container mx-auto py-6 space-y-8" data-testid="team-management-page">
+  {/* Demo mode banner (informational only) */}
+  <Alert className="mb-2" data-testid="team-banner">
+          <AlertDescription>
+            {demoEnabled
+              ? 'Some collaboration features may use demo scaffolding until all APIs are wired.'
+              : 'Demo content is disabled. Only live-backed features are shown.'}
+          </AlertDescription>
+        </Alert>
         <ToolPageHeader
           title="Team Management"
           description="Manage team members, roles, permissions, and collaboration."

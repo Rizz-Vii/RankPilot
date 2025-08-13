@@ -110,11 +110,11 @@ export const EnhancedUserSwitchItem: React.FC<UserSwitchItemProps> = ({
             className={cn(
                 sidebarStyles.userSwitch.userItem,
                 mobileSidebarOptimizations.touchTarget,
-                isActive && 'bg-blue-600'
+                isActive && colors.status.info.bg
             )}
         >
-            <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
-                <span className="text-xs font-medium">
+            <div className={"w-8 h-8 rounded-full " + colors.background.dark + " flex items-center justify-center"}>
+                <span className={"text-xs font-medium " + colors.text.inverse}>
                     {name.charAt(0).toUpperCase()}
                 </span>
             </div>

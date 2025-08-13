@@ -22,12 +22,17 @@ import {
     Zap
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { allowIntegrationsMocks } from '@/lib/flags/demo';
 
 // Enterprise system imports
 import { AIDevAutomation } from '@/lib/automation/ai-dev-automation';
 import { AIAnomalyDetector } from '@/lib/monitoring/ai-anomaly-detector';
 import { EnterpriseAPM } from '@/lib/monitoring/enterprise-apm';
 import { GlobalInfrastructureOptimizer } from '@/lib/optimization/global-infrastructure';
+
+// Design system colors
+import { colors } from '@/lib/design-system/colors';
 
 interface SystemStatus {
     name: string;
@@ -46,6 +51,9 @@ interface IntegrationMetrics {
 }
 
 export function Phase5IntegrationHub() {
+    const { role } = useAuth();
+    const isAdmin = role === 'admin' || role === 'owner';
+    const demoAllowed = allowIntegrationsMocks();
     const [systems, setSystems] = useState<Record<string, SystemStatus>>({});
     const [integrationMetrics, setIntegrationMetrics] = useState<IntegrationMetrics | null>(null);
     const [isInitializing, setIsInitializing] = useState(true);
@@ -371,47 +379,77 @@ export function Phase5IntegrationHub() {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'operational': return 'text-green-600';
-            case 'warning': return 'text-yellow-600';
-            case 'error': return 'text-red-600';
-            case 'initializing': return 'text-blue-600';
-            default: return 'text-gray-600';
+            case 'operational': return colors.status.success.text;
+            case 'warning': return colors.status.warning.text;
+            case 'error': return colors.status.error.text;
+            case 'initializing': return colors.status.info.text;
+            default: return colors.text.muted;
         }
     };
 
     const getStatusIcon = (status: string) => {
         switch (status) {
-            case 'operational': return <CheckCircle className="h-5 w-5 text-green-600" />;
-            case 'warning': return <AlertTriangle className="h-5 w-5 text-yellow-600" />;
-            case 'error': return <AlertTriangle className="h-5 w-5 text-red-600" />;
-            case 'initializing': return <Activity className="h-5 w-5 text-blue-600 animate-spin" />;
-            default: return <Monitor className="h-5 w-5 text-gray-600" />;
+            case 'operational': return <CheckCircle className={"h-5 w-5 " + colors.status.success.text} />;
+            case 'warning': return <AlertTriangle className={"h-5 w-5 " + colors.status.warning.text} />;
+            case 'error': return <AlertTriangle className={"h-5 w-5 " + colors.status.error.text} />;
+            case 'initializing': return <Activity className={"h-5 w-5 " + colors.status.info.text + " animate-spin"} />;
+            default: return <Monitor className={"h-5 w-5 " + colors.text.muted} />;
         }
     };
 
+    if (!isAdmin) {
+        return (
+            <div className={"min-h-screen " + colors.background.secondary + " flex items-center justify-center"}>
+                <div className="text-center">
+                    <AlertTriangle className={"h-16 w-16 " + colors.status.warning.text + " mx-auto mb-4"} />
+                    <h2 className={"text-2xl font-bold mb-2 " + colors.text.primary}>Restricted Area</h2>
+                    <p className={colors.text.secondary}>The Enterprise Integration Hub is available to admins only.</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!demoAllowed) {
+        return (
+            <div className={"min-h-screen " + colors.background.secondary + " flex items-center justify-center"}>
+                <div className="text-center">
+                    <AlertTriangle className={"h-16 w-16 " + colors.status.info.text + " mx-auto mb-4"} />
+                    <h2 className={"text-2xl font-bold mb-2 " + colors.text.primary}>Demo Disabled</h2>
+                    <p className={colors.text.secondary}>This hub uses demo integrations. Enable demo content to preview.</p>
+                </div>
+            </div>
+        );
+    }
+
     if (isInitializing) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className={"min-h-screen " + colors.background.secondary + " flex items-center justify-center"}>
                 <div className="text-center">
-                    <Activity className="h-16 w-16 text-blue-600 animate-spin mx-auto mb-4" />
-                    <h2 className="text-2xl font-bold mb-2">Initializing Enterprise Systems</h2>
-                    <p className="text-gray-600">Setting up monitoring, optimization, and automation...</p>
+                    <Activity className={"h-16 w-16 " + colors.status.info.text + " animate-spin mx-auto mb-4"} />
+                    <h2 className={"text-2xl font-bold mb-2 " + colors.text.primary}>Initializing Enterprise Systems</h2>
+                    <p className={colors.text.secondary}>Setting up monitoring, optimization, and automation...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
+        <div className={"min-h-screen " + colors.background.secondary + " p-6"}>
             <div className="max-w-7xl mx-auto space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Phase 5: Enterprise Integration Hub</h1>
-                        <p className="text-gray-600">Complete enterprise infrastructure orchestration and monitoring</p>
+                        <h1 className={"text-3xl font-bold " + colors.text.primary}>Phase 5: Enterprise Integration Hub</h1>
+                        <p className={colors.text.secondary}>Complete enterprise infrastructure orchestration and monitoring</p>
                     </div>
-                    <div className="flex items-center space-x-4">
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                    <div className="flex items-center space-x-2">
+                        <Badge variant="outline" className="border-amber-300 text-amber-700">
+                            Admin Only
+                        </Badge>
+                        <Badge variant="outline" className="border-purple-300 text-purple-700">
+                            Demo
+                        </Badge>
+                        <Badge variant="outline" className={colors.status.info.bg + " " + colors.status.info.text}>
                             Last Sync: {new Date(lastSync).toLocaleTimeString()}
                         </Badge>
                         <Button onClick={initializeEnterpriseSystems} size="sm">
@@ -425,32 +463,32 @@ export function Phase5IntegrationHub() {
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                         <Card>
                             <CardContent className="p-4 text-center">
-                                <div className="text-2xl font-bold text-green-600">{integrationMetrics.overall_health}%</div>
-                                <div className="text-sm text-gray-600">Overall Health</div>
+                                <div className={"text-2xl font-bold " + colors.status.success.text}>{integrationMetrics.overall_health}%</div>
+                                <div className={"text-sm " + colors.text.secondary}>Overall Health</div>
                             </CardContent>
                         </Card>
                         <Card>
                             <CardContent className="p-4 text-center">
-                                <div className="text-2xl font-bold text-blue-600">{integrationMetrics.performance_score}%</div>
-                                <div className="text-sm text-gray-600">Performance</div>
+                                <div className={"text-2xl font-bold " + colors.status.info.text}>{integrationMetrics.performance_score}%</div>
+                                <div className={"text-sm " + colors.text.secondary}>Performance</div>
                             </CardContent>
                         </Card>
                         <Card>
                             <CardContent className="p-4 text-center">
-                                <div className="text-2xl font-bold text-purple-600">{integrationMetrics.automation_efficiency}%</div>
-                                <div className="text-sm text-gray-600">Automation</div>
+                                <div className={"text-2xl font-bold text-purple-700"}>{integrationMetrics.automation_efficiency}%</div>
+                                <div className={"text-sm " + colors.text.secondary}>Automation</div>
                             </CardContent>
                         </Card>
                         <Card>
                             <CardContent className="p-4 text-center">
-                                <div className="text-2xl font-bold text-orange-600">{integrationMetrics.cost_optimization}%</div>
-                                <div className="text-sm text-gray-600">Cost Optimization</div>
+                                <div className={"text-2xl font-bold text-orange-700"}>{integrationMetrics.cost_optimization}%</div>
+                                <div className={"text-sm " + colors.text.secondary}>Cost Optimization</div>
                             </CardContent>
                         </Card>
                         <Card>
                             <CardContent className="p-4 text-center">
-                                <div className="text-2xl font-bold text-green-600">{integrationMetrics.business_impact}%</div>
-                                <div className="text-sm text-gray-600">Business Impact</div>
+                                <div className={"text-2xl font-bold " + colors.status.success.text}>{integrationMetrics.business_impact}%</div>
+                                <div className={"text-sm " + colors.text.secondary}>Business Impact</div>
                             </CardContent>
                         </Card>
                     </div>
@@ -479,8 +517,8 @@ export function Phase5IntegrationHub() {
                                     <div className="grid grid-cols-2 gap-4 mb-4">
                                         {Object.entries(system.metrics).map(([key, value]) => (
                                             <div key={key} className="text-center">
-                                                <div className="text-lg font-semibold">{value}</div>
-                                                <div className="text-sm text-gray-600 capitalize">
+                                                <div className={"text-lg font-semibold " + colors.text.primary}>{value}</div>
+                                                <div className={"text-sm capitalize " + colors.text.secondary}>
                                                     {key.replace(/_/g, ' ')}
                                                 </div>
                                             </div>
@@ -546,7 +584,7 @@ export function Phase5IntegrationHub() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center">
-                            <Rocket className="h-6 w-6 mr-2 text-green-600" />
+                            <Rocket className={"h-6 w-6 mr-2 " + colors.status.success.text} />
                             Phase 5: Enterprise Infrastructure & Global Deployment - COMPLETE
                         </CardTitle>
                         <CardDescription>
@@ -555,23 +593,23 @@ export function Phase5IntegrationHub() {
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="text-center p-4 bg-green-50 rounded-lg">
-                                <Brain className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                                <div className="font-semibold text-green-900">AI Monitoring</div>
-                                <div className="text-sm text-green-700">Advanced APM + Anomaly Detection</div>
+                            <div className={"text-center p-4 " + colors.status.success.bg + " rounded-lg"}>
+                                <Brain className={"h-8 w-8 " + colors.status.success.text + " mx-auto mb-2"} />
+                                <div className={"font-semibold " + colors.status.success.text.replace('text-', '') + "-900"}>AI Monitoring</div>
+                                <div className={"text-sm " + colors.status.success.text}>Advanced APM + Anomaly Detection</div>
                             </div>
-                            <div className="text-center p-4 bg-blue-50 rounded-lg">
-                                <Globe className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                                <div className="font-semibold text-blue-900">Global Infrastructure</div>
-                                <div className="text-sm text-blue-700">Multi-region optimization</div>
+                            <div className={"text-center p-4 " + colors.status.info.bg + " rounded-lg"}>
+                                <Globe className={"h-8 w-8 " + colors.status.info.text + " mx-auto mb-2"} />
+                                <div className={"font-semibold " + colors.status.info.text.replace('text-', '') + "-900"}>Global Infrastructure</div>
+                                <div className={"text-sm " + colors.status.info.text}>Multi-region optimization</div>
                             </div>
-                            <div className="text-center p-4 bg-purple-50 rounded-lg">
-                                <Zap className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+                            <div className={"text-center p-4 bg-purple-50 rounded-lg"}>
+                                <Zap className="h-8 w-8 text-purple-700 mx-auto mb-2" />
                                 <div className="font-semibold text-purple-900">AI Automation</div>
                                 <div className="text-sm text-purple-700">Intelligent development workflows</div>
                             </div>
-                            <div className="text-center p-4 bg-orange-50 rounded-lg">
-                                <TrendingUp className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+                            <div className={"text-center p-4 bg-orange-50 rounded-lg"}>
+                                <TrendingUp className="h-8 w-8 text-orange-700 mx-auto mb-2" />
                                 <div className="font-semibold text-orange-900">Business Intelligence</div>
                                 <div className="text-sm text-orange-700">Performance-driven insights</div>
                             </div>

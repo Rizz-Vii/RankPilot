@@ -4,7 +4,7 @@
  */
 
 import { FirebaseApp, getApp, getApps, initializeApp } from 'firebase/app';
-import { connectFirestoreEmulator, Firestore, getFirestore, terminate } from 'firebase/firestore';
+import { connectFirestoreEmulator, Firestore, initializeFirestore, terminate } from 'firebase/firestore';
 
 // Firebase configuration - matches the one in firebase/index.ts
 const firebaseConfig = {
@@ -58,16 +58,30 @@ class FirestoreConnectionManager {
                 console.log('🔥 Using existing Firebase app');
             }
 
-            // Initialize Firestore with error handling
-            this.db = getFirestore(this.app);
+            // Initialize Firestore with robust browser settings (before any Firestore use)
+            const settings: Record<string, any> = { ignoreUndefinedProperties: true };
+            if (typeof window !== 'undefined') {
+                // Auto-detect long polling by default for proxy/firewall environments
+                if (process.env.NEXT_PUBLIC_FIRESTORE_AUTODETECT_LONG_POLLING !== 'false') {
+                    settings.experimentalAutoDetectLongPolling = true;
+                }
+                // Optionally force long polling via env
+                if (process.env.NEXT_PUBLIC_FIRESTORE_FORCE_LONG_POLLING === 'true') {
+                    settings.experimentalForceLongPolling = true;
+                    settings.useFetchStreams = false;
+                }
+            }
 
-            // Connect to emulator in development
-            if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+            this.db = initializeFirestore(this.app, settings);
+
+            // Optional: connect to emulator when explicitly requested
+            if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_USE_FIRESTORE_EMULATOR === 'true') {
+                const host = process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST || '127.0.0.1';
+                const port = Number(process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_PORT || 8080);
                 try {
-                    connectFirestoreEmulator(this.db, 'localhost', 8080);
-                    console.log('🔧 Connected to Firestore emulator');
+                    connectFirestoreEmulator(this.db, host, port);
+                    console.log(`🔧 Connected to Firestore emulator at ${host}:${port}`);
                 } catch (error) {
-                    // Emulator connection already exists - ignore error
                     console.log('🔧 Firestore emulator already connected');
                 }
             }

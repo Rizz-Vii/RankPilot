@@ -1,18 +1,19 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 // Dynamic imports used to minimize cold route bundle size
 // (Ensure these modules are only loaded when needed)
 import { fetchRewriteSourceContents } from '@/lib/automation/content-fetch';
 
 // Execute specific automation recipe immediately (subset of actions) honoring actionConfigs
-export async function POST(req: Request) {
+export const POST = withProvenance(async function POST(req: Request) {
     try {
         const body = await req.json().catch(() => ({}));
         const { recipeId } = body;
-        if (!recipeId) return NextResponse.json({ error: 'recipeId required' }, { status: 400 });
+        if (!recipeId) return NextResponse.json(enforceProvenance({ success: false, error: 'recipeId required', provenance: 'synthetic' }, { path: 'automation/run-now', note: 'validation' }), { status: 400 });
         const ref = adminDb.collection('automationRecipes').doc(recipeId);
         const snap = await ref.get();
-        if (!snap.exists) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+        if (!snap.exists) return NextResponse.json(enforceProvenance({ success: false, error: 'Not found', provenance: 'synthetic' }, { path: 'automation/run-now', note: 'not_found' }), { status: 404 });
         const data = snap.data()!;
         const { NeuroSEOSuite } = await import('@/lib/neuroseo');
         const suite = new NeuroSEOSuite();
@@ -210,8 +211,8 @@ export async function POST(req: Request) {
         const finished = new Date();
         await ref.update({ lastRun: started, nextRun: data.nextRun || null, updatedAt: new Date() });
         try { await adminDb.collection('automationRuns').add({ recipeId, userId: data.userId, teamId: data.teamId || null, startedAt: started, finishedAt: finished, actions: actionResults, status: actionResults.some(a => a.status === 'error') ? 'partial' : 'ok', createdAt: new Date() }); } catch { }
-        return NextResponse.json({ recipeId, actions: actionResults });
+        return NextResponse.json(enforceProvenance({ success: true, recipeId, actions: actionResults, provenance: 'live' }, { path: 'automation/run-now' }));
     } catch (e: any) {
-        return NextResponse.json({ error: e.message || 'Run now failed' }, { status: 500 });
+        return NextResponse.json(enforceProvenance({ success: false, error: e.message || 'Run now failed', provenance: 'synthetic' }, { path: 'automation/run-now', note: 'exception' }), { status: 500 });
     }
-}
+}, { path: 'automation/run-now' });

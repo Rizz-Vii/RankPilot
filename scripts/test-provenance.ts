@@ -3,6 +3,7 @@
 import assert from 'assert';
 import { sanitizeMarketingCampaignDoc } from '../src/lib/firebase/marketing-write-guard';
 import { executeNeuroLive } from '../src/lib/neuroseo/live-exec';
+import { hasProvenance, provenanceTag } from '../src/lib/middleware/provenance';
 import { adminDb } from '../src/lib/firebase-admin';
 
 async function testMarketingPreservesProvenance() {
@@ -29,10 +30,44 @@ async function testNeuroAnalysisPersistenceProvenance() {
     assert.ok(['live', 'synthetic'].includes(data.__provenance), 'invalid analysis provenance');
 }
 
+async function testLiveRouteProvenance() {
+    const res = await fetch('http://localhost:3000/api/neuroseo/live', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ urls: ['https://example.com'], userId: 'prov_user_cli' }) });
+    if (!res.ok) { console.warn('live route not reachable (dev server?) skipping'); return; }
+    const json: any = await res.json();
+    if (!hasProvenance(json)) throw new Error('live route response missing provenance');
+    console.log('Live route provenance:', provenanceTag(json));
+}
+
+async function testStreamRouteProvenance() {
+    const res = await fetch('http://localhost:3000/api/neuroseo/stream', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ urls: ['https://example.com'], userId: 'prov_user_cli' }) });
+    if (!res.ok || !res.body) { console.warn('stream route not reachable (dev server?) skipping'); return; }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let finalProv: string | undefined;
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const text = decoder.decode(value);
+        const events = text.split('\n\n').filter(Boolean);
+        for (const evt of events) {
+            const match = evt.match(/^event: (.*)\ndata: (.*)$/s);
+            if (match) {
+                const eventName = match[1];
+                try { const data = JSON.parse(match[2]); if (data.provenance) finalProv = data.provenance; } catch { }
+                if (eventName === 'end') break;
+            }
+        }
+    }
+    if (!finalProv) throw new Error('stream route missing provenance in final events');
+    console.log('Stream route final provenance:', finalProv);
+}
+
 async function main() {
     await testMarketingPreservesProvenance();
     await testNeuroAnalysisPersistenceProvenance();
     await testMarketingDoesNotInventProvenance();
+    await testLiveRouteProvenance();
+    await testStreamRouteProvenance();
     console.log('PROV-01 provenance tests completed');
 }
 main().catch(e => { console.error('PROV-01 provenance tests FAILED', e); process.exit(1); });

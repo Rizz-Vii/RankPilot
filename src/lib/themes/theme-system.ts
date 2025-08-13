@@ -1,141 +1,33 @@
 /**
  * Advanced Theme System for RankPilot
- * Priority 3 Feature Implementation - DevReady Phase 3
- * 
- * Features:
- * - Light/Dark/High-Contrast/Auto themes
- * - User-configurable interface preferences
- * - System-wide theme consistency
- * - Accessibility-focused color schemes
- * - Performance-optimized theme switching
+ * (Rebuilt after corruption) – Provides deterministic, accessible theming.
  */
 
 import React from 'react';
+import { setThemeClass, setFlag } from '@/lib/dom/classListManager';
 
 export type ThemeMode = 'light' | 'dark' | 'high-contrast' | 'auto';
 
 export interface ThemePreferences {
-    mode: ThemeMode;
+    mode: ThemeMode; // user-selected mode (auto resolves to system preference)
     reducedMotion: boolean;
     fontSize: 'small' | 'medium' | 'large' | 'extra-large';
     colorBlindnessSupport: boolean;
-    highContrast: boolean;
-    customColors?: {
-        primary?: string;
-        secondary?: string;
-        accent?: string;
-    };
+    highContrast: boolean; // explicit high contrast override (can be system derived)
 }
 
 export interface ThemeTokens {
-    colors: {
-        // Base colors
-        background: string;
-        foreground: string;
-
-        // Content colors
-        primary: string;
-        primaryForeground: string;
-        secondary: string;
-        secondaryForeground: string;
-
-        // Interactive colors
-        accent: string;
-        accentForeground: string;
-        muted: string;
-        mutedForeground: string;
-
-        // Semantic colors
-        destructive: string;
-        destructiveForeground: string;
-        success: string;
-        successForeground: string;
-        warning: string;
-        warningForeground: string;
-        info: string;
-        infoForeground: string;
-
-        // UI colors
-        border: string;
-        input: string;
-        ring: string;
-
-        // Card colors
-        card: string;
-        cardForeground: string;
-
-        // Popover colors
-        popover: string;
-        popoverForeground: string;
-    };
-
-    spacing: {
-        xs: string;
-        sm: string;
-        md: string;
-        lg: string;
-        xl: string;
-        '2xl': string;
-        '3xl': string;
-        '4xl': string;
-    };
-
+    colors: Record<string, string>;
+    spacing: Record<string, string>;
     typography: {
-        fontFamily: {
-            sans: string;
-            mono: string;
-            heading: string;
-        };
-        fontSize: {
-            xs: string;
-            sm: string;
-            base: string;
-            lg: string;
-            xl: string;
-            '2xl': string;
-            '3xl': string;
-            '4xl': string;
-            '5xl': string;
-        };
-        fontWeight: {
-            normal: string;
-            medium: string;
-            semibold: string;
-            bold: string;
-        };
-        lineHeight: {
-            tight: string;
-            normal: string;
-            relaxed: string;
-        };
+        fontFamily: { sans: string; mono: string; heading: string; };
+        fontSize: Record<string, string>;
+        fontWeight: { normal: string; medium: string; semibold: string; bold: string; };
+        lineHeight: { tight: string; normal: string; relaxed: string; };
     };
-
-    shadows: {
-        sm: string;
-        md: string;
-        lg: string;
-        xl: string;
-    };
-
-    borderRadius: {
-        sm: string;
-        md: string;
-        lg: string;
-        xl: string;
-    };
-
-    animation: {
-        duration: {
-            fast: string;
-            medium: string;
-            slow: string;
-        };
-        easing: {
-            easeIn: string;
-            easeOut: string;
-            easeInOut: string;
-        };
-    };
+    shadows: { sm: string; md: string; lg: string; xl: string; };
+    borderRadius: { sm: string; md: string; lg: string; xl: string; };
+    animation: { duration: { fast: string; medium: string; slow: string; }; easing: { easeIn: string; easeOut: string; easeInOut: string; }; };
 }
 
 // Light theme tokens
@@ -423,182 +315,102 @@ export class ThemeSystem {
 
     private applyTheme(): void {
         if (typeof document === 'undefined') return;
-
         const root = document.documentElement;
-        const theme = this.getThemeTokens();
+        const tokens = this.getThemeTokens();
 
-        const run = () => {
-            // Apply theme colors as CSS custom properties
-            Object.entries(theme.colors).forEach(([key, value]) => {
-                root.style.setProperty(`--color-${key}`, value);
-            });
-
-            // Apply typography
-            Object.entries(theme.typography.fontSize).forEach(([key, value]) => {
-                root.style.setProperty(`--font-size-${key}`, value);
-            });
-
-            // Apply spacing
-            Object.entries(theme.spacing).forEach(([key, value]) => {
-                root.style.setProperty(`--spacing-${key}`, value);
-            });
-
-            // Apply shadows
-            Object.entries(theme.shadows).forEach(([key, value]) => {
-                root.style.setProperty(`--shadow-${key}`, value);
-            });
-
-            // Apply border radius
-            Object.entries(theme.borderRadius).forEach(([key, value]) => {
-                root.style.setProperty(`--radius-${key}`, value);
-            });
-
-            // Apply animation settings
-            if (this.preferences.reducedMotion) {
-                root.style.setProperty('--animation-duration-fast', '0ms');
-                root.style.setProperty('--animation-duration-medium', '0ms');
-                root.style.setProperty('--animation-duration-slow', '0ms');
-            } else {
-                Object.entries(theme.animation.duration).forEach(([key, value]) => {
-                    root.style.setProperty(`--animation-duration-${key}`, value);
-                });
-            }
-
-            // Apply font size scaling
-            const fontSizeScale = this.getFontSizeScale();
-            root.style.setProperty('--font-scale', fontSizeScale.toString());
-
-            // Apply theme class to body without overwriting existing classes (prevents hydration mismatch)
-            const themeClass = this.preferences.highContrast ? 'high-contrast' : this.currentTheme;
-            // Remove any prior theme-* tokens
-            document.body.className = document.body.className
-                .split(' ')
-                .filter(c => !/^theme-/.test(c))
-                .join(' ')
-                .trim();
-            if (!document.body.classList.contains(`theme-${themeClass}`)) {
-                document.body.classList.add(`theme-${themeClass}`);
-            }
-
-            // Apply accessibility preferences
-            if (this.preferences.reducedMotion) {
-                document.body.classList.add('reduced-motion');
-            } else {
-                document.body.classList.remove('reduced-motion');
-            }
-
-            if (this.preferences.colorBlindnessSupport) {
-                document.body.classList.add('colorblind-support');
-            } else {
-                document.body.classList.remove('colorblind-support');
-            }
-
-            // Persist resolved theme + key prefs to cookie for SSR parity
-            try {
-                const cookiePayload = {
-                    theme: themeClass,
-                    mode: this.preferences.mode,
-                    reducedMotion: this.preferences.reducedMotion,
-                    colorBlind: this.preferences.colorBlindnessSupport,
-                    highContrast: this.preferences.highContrast,
-                };
-                const value = encodeURIComponent(JSON.stringify(cookiePayload));
-                // 1 year
-                document.cookie = `rp_theme=${value}; Path=/; Max-Age=31536000; SameSite=Lax`;
-            } catch {
-                // noop
-            }
-        };
-
-        // Defer to next frame to reduce hydration race conditions
-        if (typeof window !== 'undefined') {
-            requestAnimationFrame(run);
-        } else {
-            run();
-        }
-    }
-
-    private getThemeTokensInternal(): ThemeTokens {
-        const baseTheme = this.preferences.highContrast
-            ? highContrastTheme
-            : this.currentTheme === 'dark'
-                ? darkTheme
-                : lightTheme;
-
-        // Apply custom colors if specified
-        if (this.preferences.customColors) {
-            const customTheme = { ...baseTheme };
-            if (this.preferences.customColors.primary) {
-                customTheme.colors.primary = this.preferences.customColors.primary;
-            }
-            if (this.preferences.customColors.secondary) {
-                customTheme.colors.secondary = this.preferences.customColors.secondary;
-            }
-            if (this.preferences.customColors.accent) {
-                customTheme.colors.accent = this.preferences.customColors.accent;
-            }
-            return customTheme;
-        }
-
-        return baseTheme;
-    }
-
-    private getFontSizeScale(): number {
-        switch (this.preferences.fontSize) {
-            case 'small': return 0.875;
-            case 'medium': return 1;
-            case 'large': return 1.125;
-            case 'extra-large': return 1.25;
-            default: return 1;
-        }
-    }
-
-    private notifyListeners(): void {
-        this.listeners.forEach(listener => {
-            listener(this.currentTheme, this.preferences);
+        // Colors (dual naming: legacy --color-* and Tailwind expected --background / --primary-foreground)
+        Object.entries(tokens.colors).forEach(([k, v]) => {
+            root.style.setProperty(`--color-${k}`, v);
+            const kebab = k.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+            root.style.setProperty(`--${kebab}`, v);
         });
+
+        // Typography sizes
+        Object.entries(tokens.typography.fontSize).forEach(([k, v]) => root.style.setProperty(`--font-size-${k}`, v));
+        // Spacing
+        Object.entries(tokens.spacing).forEach(([k, v]) => root.style.setProperty(`--spacing-${k}`, v));
+        // Shadows
+        Object.entries(tokens.shadows).forEach(([k, v]) => root.style.setProperty(`--shadow-${k}`, v));
+        // Radius
+        Object.entries(tokens.borderRadius).forEach(([k, v]) => root.style.setProperty(`--radius-${k}`, v));
+        // Animation durations
+        if (this.preferences.reducedMotion) {
+            root.style.setProperty('--animation-duration-fast', '0ms');
+            root.style.setProperty('--animation-duration-medium', '0ms');
+            root.style.setProperty('--animation-duration-slow', '0ms');
+        } else {
+            Object.entries(tokens.animation.duration).forEach(([k, v]) => root.style.setProperty(`--animation-duration-${k}`, v));
+        }
+        // Font scale variable (consumed in CSS where needed)
+        root.style.setProperty('--font-scale', this.getFontSizeScale().toString());
+
+        // Centralized body class updates
+        setThemeClass(this.currentTheme, this.preferences.highContrast);
+        setFlag('reduced-motion', this.preferences.reducedMotion);
+        setFlag('colorblind-support', this.preferences.colorBlindnessSupport);
+
+        // Tailwind dark class sync (EXCLUDES high-contrast deliberately)
+        if (this.currentTheme === 'dark' && !this.preferences.highContrast) {
+            document.body.classList.add('dark');
+        } else {
+            document.body.classList.remove('dark');
+        }
+
+        // Persist cookie for SSR parity
+        try {
+            const resolvedTheme = this.preferences.highContrast ? 'high-contrast' : this.currentTheme;
+            const payload = {
+                theme: resolvedTheme,
+                mode: this.preferences.mode,
+                reducedMotion: this.preferences.reducedMotion,
+                colorBlind: this.preferences.colorBlindnessSupport,
+                highContrast: this.preferences.highContrast,
+            };
+            document.cookie = `rp_theme=${encodeURIComponent(JSON.stringify(payload))}; Path=/; Max-Age=31536000; SameSite=Lax`;
+        } catch { /* ignore */ }
     }
 
-    // Public API methods
+    private notifyListeners(): void { this.listeners.forEach(l => l(this.currentTheme, { ...this.preferences })); }
+    private getFontSizeScale(): number { switch (this.preferences.fontSize) { case 'small': return 0.875; case 'medium': return 1; case 'large': return 1.125; case 'extra-large': return 1.25; default: return 1; } }
+
+    private getThemeTokens(): ThemeTokens {
+        if (this.preferences.highContrast || this.currentTheme === 'high-contrast') return highContrastTheme;
+        return this.currentTheme === 'dark' ? darkTheme : lightTheme;
+    }
+
+    getPreferences(): ThemePreferences { return { ...this.preferences }; }
+    getTheme(): ThemeMode { return this.currentTheme; }
+
     setTheme(mode: ThemeMode): void {
         this.preferences.mode = mode;
-
         if (mode === 'auto') {
-            const prefersDark = typeof window !== 'undefined'
-                ? window.matchMedia('(prefers-color-scheme: dark)').matches
-                : false;
+            const prefersDark = typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)').matches : false;
             this.currentTheme = prefersDark ? 'dark' : 'light';
         } else {
             this.currentTheme = mode;
         }
-
+        // Reset explicit high contrast flag if leaving high-contrast mode directly
+        if (mode !== 'high-contrast' && this.preferences.highContrast) this.preferences.highContrast = false;
+        if (mode === 'high-contrast') this.preferences.highContrast = true;
         this.applyTheme();
         this.savePreferences();
         this.notifyListeners();
     }
 
     setPreferences(preferences: Partial<ThemePreferences>): void {
+        const modeChange = preferences.mode && preferences.mode !== this.preferences.mode;
         this.preferences = { ...this.preferences, ...preferences };
-
-        if (preferences.mode) {
-            this.setTheme(preferences.mode);
-        } else {
-            this.applyTheme();
-            this.savePreferences();
-            this.notifyListeners();
+        if (modeChange) {
+            this.setTheme(this.preferences.mode);
+            return;
         }
-    }
-
-    getTheme(): ThemeMode {
-        return this.currentTheme;
-    }
-
-    getPreferences(): ThemePreferences {
-        return { ...this.preferences };
-    }
-
-    getThemeTokens(): ThemeTokens {
-        return this.getThemeTokensInternal();
+        // Maintain currentTheme vs highContrast interplay
+        if (this.preferences.highContrast) {
+            // keep currentTheme as underlying base but highContrast overrides tokens
+        }
+        this.applyTheme();
+        this.savePreferences();
+        this.notifyListeners();
     }
 
     subscribe(listener: (theme: ThemeMode, preferences: ThemePreferences) => void): () => void {
@@ -606,40 +418,23 @@ export class ThemeSystem {
         return () => this.listeners.delete(listener);
     }
 
-    // Utility methods for components
-    isDark(): boolean {
-        return this.currentTheme === 'dark' || this.preferences.highContrast;
-    }
-
-    isHighContrast(): boolean {
-        return this.preferences.highContrast;
-    }
-
-    shouldReduceMotion(): boolean {
-        return this.preferences.reducedMotion;
-    }
-
-    hasColorBlindnessSupport(): boolean {
-        return this.preferences.colorBlindnessSupport;
-    }
+    isDark(): boolean { return this.currentTheme === 'dark' && !this.preferences.highContrast; }
+    isHighContrast(): boolean { return this.preferences.highContrast || this.currentTheme === 'high-contrast'; }
+    shouldReduceMotion(): boolean { return !!this.preferences.reducedMotion; }
+    hasColorBlindnessSupport(): boolean { return !!this.preferences.colorBlindnessSupport; }
 }
 
-// Export singleton instance
+// React hook for theme system
 export const themeSystem = ThemeSystem.getInstance();
 
-// React hook for theme system
 export function useTheme() {
     const [mounted, setMounted] = React.useState(false);
-    const [theme, setTheme] = React.useState<ThemeMode>('light');
-    const [preferences, setPreferences] = React.useState<ThemePreferences>(() => themeSystem.getPreferences());
+    const [theme, setThemeState] = React.useState<ThemeMode>(() => themeSystem.getTheme());
+    const [preferences, setPrefsState] = React.useState<ThemePreferences>(() => themeSystem.getPreferences());
 
     React.useEffect(() => {
         setMounted(true);
-        const unsub = themeSystem.subscribe((newTheme, newPreferences) => {
-            setTheme(newTheme);
-            setPreferences(newPreferences);
-        });
-        return unsub;
+        return themeSystem.subscribe((t, p) => { setThemeState(t); setPrefsState(p); });
     }, []);
 
     return {
@@ -653,3 +448,4 @@ export function useTheme() {
         hasColorBlindnessSupport: themeSystem.hasColorBlindnessSupport.bind(themeSystem),
     };
 }
+

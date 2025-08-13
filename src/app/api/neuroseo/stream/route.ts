@@ -5,13 +5,17 @@ import { createDeterministicRng, tagSynthetic } from '@/lib/synthetic/synthetic-
 import { adminDb } from '@/lib/firebase-admin';
 import { CompactAnalysisSchema } from '@/lib/neuroseo/live-exec';
 import { recordAnalysisRun, recordCacheHit, recordWorkflowRun, recordWorkflowFailure, recordGuardStrip } from '@/lib/neuroseo/metrics-registry';
+import { enforceProvenanceOnChunk } from '@/lib/middleware/provenance';
+import { recordRouteLatency, recordFallback, recordCompactDocSize } from '@/lib/metrics/unified-metrics';
+import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
+import { enforceNeuroSeoRateLimit, NeuroSeoRateLimitError } from '@/lib/neuroseo/rate-limit';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 const logger = getLogger('api.neuroseo.stream').withTrace();
 
-interface StreamPayload { urls?: string[]; analysisType?: string; userId?: string; timeoutMs?: number; }
+interface StreamPayload { urls?: string[]; analysisType?: string; userId?: string; timeoutMs?: number; teamId?: string; }
 
 function sseEncoder() {
     const encoder = new TextEncoder();
@@ -30,6 +34,7 @@ async function persistCompact(urls: string[], analysisType: string, userId: stri
         const parsed = CompactAnalysisSchema.safeParse(payload as any);
         if (!parsed.success) { logger.warn('persist.validation_failed', { issues: parsed.error.issues.length }); return; }
         const size = Buffer.byteLength(JSON.stringify(parsed.data), 'utf8');
+        recordCompactDocSize(size);
         if (size > 5000) { logger.warn('persist.size_exceeded', { size }); return; }
         await adminDb.collection('neuroSeoAnalyses').doc(hashKey).set(parsed.data, { merge: true });
         logger.info('persist.stream.success', { hashKey: hashKey.slice(0, 16), provenance, size });
@@ -39,7 +44,7 @@ async function persistCompact(urls: string[], analysisType: string, userId: stri
 export async function POST(request: NextRequest) {
     let payload: StreamPayload;
     try { payload = await request.json(); } catch { return new Response(JSON.stringify({ error: 'Invalid JSON body' }), { status: 400 }); }
-    const { urls = [], analysisType = 'comprehensive', userId = 'anonymous', timeoutMs = 12000 } = payload;
+    const { urls = [], analysisType = 'comprehensive', userId = 'anonymous', timeoutMs = 12000, teamId } = payload;
     if (!Array.isArray(urls) || urls.length === 0) { recordGuardStrip(); return new Response(JSON.stringify({ error: 'urls array required' }), { status: 400 }); }
     if (urls.length > 50) { recordGuardStrip(); return new Response(JSON.stringify({ error: 'too_many_urls' }), { status: 400 }); }
 
@@ -54,33 +59,47 @@ export async function POST(request: NextRequest) {
             const finalize = (provenance: string, ok = true) => {
                 if (finished) return; finished = true;
                 const durationMs = Number(process.hrtime.bigint() - startHr) / 1_000_000;
+                recordRouteLatency('neuroseo/stream', durationMs);
                 write(controller, 'end', { ok, durationMs, provenance: finalProvenance || provenance });
                 try { controller.close(); } catch { }
             };
             request.signal.addEventListener('abort', () => { logger.warn('client.disconnected'); finalize(finalProvenance || 'aborted', false); });
             write(controller, 'ack', { received: urls.length, analysisType });
             try {
+                // TEAM-01: Apply team limiter if teamId provided else legacy per-user limiter for transition period.
+                if (teamId) {
+                    const { adminDb: _adminDb } = (global as any).adminDb ? { adminDb: (global as any).adminDb } : await import('@/lib/firebase-admin');
+                    await enforceTeamRateLimit(_adminDb as any, teamId, { routeKey: 'neuroseo/stream' });
+                } else {
+                    await enforceNeuroSeoRateLimit((global as any).adminDb || (await import('@/lib/firebase-admin')).adminDb, userId, {});
+                }
                 const orchestration = neuroSEOOrchestrator.runAnalysisStream({ urls, analysisType, userId } as any);
                 for await (const evt of orchestration) {
                     if (evt.type === 'cached') { recordCacheHit(); evt.data.provenance = 'cache'; finalProvenance = 'cache'; }
                     if (evt.type === 'complete') { recordAnalysisRun(); evt.data.provenance = evt.data.provenance || (evt.data.cached ? 'cache' : 'live'); finalProvenance = evt.data.provenance; await persistCompact(urls, analysisType, userId, evt.data.overallScore, evt.data.provenance); }
-                    write(controller, evt.type, evt.data);
+                    write(controller, evt.type, enforceProvenanceOnChunk(evt.data, { path: 'neuroseo/stream' }));
                     if (Date.now() > deadline && !finished && evt.type !== 'complete') {
-                        logger.warn('stream.timeout', { partial: true });
+                        logger.warn('stream.timeout', { partial: true }); recordFallback('timeout');
                         const rng = createDeterministicRng([urls.join('|'), analysisType, 'synthetic-stream']);
                         const synthetic = tagSynthetic({ analysisId: 'synthetic_' + Date.now().toString(36), urls, overallScore: Math.round(rng() * 30 + 60), cached: false });
-                        write(controller, 'fallback', { provenance: 'synthetic', overallScore: synthetic.overallScore });
+                        write(controller, 'fallback', enforceProvenanceOnChunk({ provenance: 'synthetic', overallScore: synthetic.overallScore }, { path: 'neuroseo/stream' }));
                         await persistCompact(urls, analysisType, userId, synthetic.overallScore, 'synthetic');
                         finalProvenance = 'synthetic'; finalize('synthetic'); return;
                     }
                 }
                 finalize(finalProvenance || 'live');
             } catch (error: any) {
-                logger.error('stream.failed', { error: error?.message }); recordWorkflowFailure();
-                write(controller, 'error', { message: error?.message || 'analysis failed', provenance: 'error' });
+                if (error instanceof TeamRateLimitError || error instanceof NeuroSeoRateLimitError) {
+                    write(controller, 'rate_limited', enforceProvenanceOnChunk({ error: 'rate_limited', retryAfter: (error as any).retryAfterSeconds || 60, provenance: 'synthetic' }, { path: 'neuroseo/stream' }));
+                    recordFallback('rate_limited');
+                    finalize('synthetic', false);
+                    return;
+                }
+                logger.error('stream.failed', { error: error?.message }); recordWorkflowFailure(); recordFallback('backend_error');
+                write(controller, 'error', enforceProvenanceOnChunk({ message: error?.message || 'analysis failed', provenance: 'synthetic' }, { path: 'neuroseo/stream' }));
                 const rng = createDeterministicRng([urls.join('|'), analysisType, 'synthetic-error']);
                 const synthetic = tagSynthetic({ analysisId: 'synthetic_' + Date.now().toString(36), urls, overallScore: Math.round(rng() * 30 + 60), cached: false });
-                write(controller, 'fallback', { provenance: 'synthetic', overallScore: synthetic.overallScore });
+                write(controller, 'fallback', enforceProvenanceOnChunk({ provenance: 'synthetic', overallScore: synthetic.overallScore }, { path: 'neuroseo/stream' }));
                 await persistCompact(urls, analysisType, userId, synthetic.overallScore, 'synthetic');
                 finalProvenance = 'synthetic'; finalize('synthetic', false);
             }

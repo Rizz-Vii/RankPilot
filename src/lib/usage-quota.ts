@@ -3,14 +3,8 @@
  * Part of RankPilot's monetization and access control system
  */
 
-import {
-  doc,
-  getDoc,
-  getFirestore,
-  increment,
-  setDoc,
-  updateDoc,
-} from "firebase/firestore";
+import { doc, getDoc, increment, setDoc, updateDoc } from "firebase/firestore";
+import { db as sharedDb } from "@/lib/firebase";
 import { FREE_PLAN, PlanType, STRIPE_PLANS } from "./stripe";
 
 export interface UsageQuota {
@@ -45,7 +39,7 @@ export interface UsageCheck {
 export type UsageType = "audit" | "keyword" | "report" | "competitor";
 
 export class UsageQuotaManager {
-  private db = getFirestore();
+  private db = sharedDb;
 
   async getUserQuota(userId: string): Promise<UsageQuota | null> {
     try {

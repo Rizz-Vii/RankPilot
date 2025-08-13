@@ -91,8 +91,16 @@ const PolymorphicCard = React.forwardRef<PolymorphicCardElement, PolymorphicCard
     ) => {
         const Comp = asChild ? Slot : useMotion ? motion.div : "div";
 
+        // Use static mappings instead of dynamic template classes to satisfy Tailwind JIT
+        const spacingToStack: Record<NonNullable<PolymorphicCardProps["spacing"]>, string> = {
+            none: "",
+            tight: "space-y-2",
+            default: "space-y-4",
+            loose: "space-y-6",
+        } as const;
+
         const cardContent = slots ? (
-            <div className={cn("flex flex-col", spacing === "none" ? "" : `space-y-${spacing}`)}>
+            <div className={cn("flex flex-col", spacingToStack[spacing ?? "default"])}>
                 {slots.header && (
                     <div className="card-header" data-slot="header">
                         {slots.header}

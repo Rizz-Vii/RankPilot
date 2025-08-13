@@ -42,9 +42,22 @@ import {
     Settings,
     Share2,
     Trash2,
-    TrendingUp
+    TrendingUp,
+    ArrowUpDown,
+    ChevronLeft,
+    ChevronRight,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ExportButton } from '@/components/ui/ExportButton';
+import { toast as sonnerToast } from 'sonner';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 
 export interface DashboardWidget {
     id: string;
@@ -102,6 +115,11 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
     const [isExporting, setIsExporting] = useState(false);
     const chartRefs = useRef<Map<string, HTMLDivElement>>(new Map());
     const [sampleData, setSampleData] = useState<Map<string, ChartDataPoint[]>>(new Map());
+    type TableSortBy = 'metric' | 'value' | 'change';
+    type TableDirection = 'asc' | 'desc';
+    type TableRowType = { metric: string; value: string; change: string };
+    const [tableState, setTableState] = useState<Map<string, { sortBy: TableSortBy; direction: TableDirection; page: number; pageSize: number }>>(new Map());
+    const [tableData, setTableData] = useState<Map<string, { rows: TableRowType[]; total: number; loading: boolean; error?: string }>>(new Map());
 
     // Initialize sample data
     useEffect(() => {
@@ -204,7 +222,8 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
             }
         } catch (error) {
             console.error('Failed to render chart:', error);
-            chartElement.innerHTML = `<div class="p-4 text-red-500">Error rendering chart: ${error}</div>`;
+            try { sonnerToast.error('Render failed', { description: (error as any)?.message || String(error) }); } catch {}
+            chartElement.innerHTML = `<div class=\"p-4 text-red-500\">Error rendering chart: ${String(error)}</div>`;
         }
     }, [sampleData]);
 
@@ -259,6 +278,111 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
 
         setSelectedWidget(newWidget.id);
     };
+
+    // Table helpers
+    const getDefaultTableState = (): { sortBy: TableSortBy; direction: TableDirection; page: number; pageSize: number } => ({ sortBy: 'metric', direction: 'asc', page: 0, pageSize: 5 });
+
+    const getTableRows = (widgetId: string) => {
+        // Sample rows; in a real app, rows would come from widget.data
+        return [
+            { metric: 'Revenue', value: '$200,000', change: '+12%' },
+            { metric: 'Costs', value: '$160,000', change: '+5%' },
+            { metric: 'Profit', value: '$40,000', change: '+22%' },
+            { metric: 'Visitors', value: '120,450', change: '+8%' },
+            { metric: 'Conversion', value: '3.2%', change: '+0.4%' },
+            { metric: 'Bounce Rate', value: '42%', change: '-3%' },
+            { metric: 'LTV', value: '$1,240', change: '+2%' },
+            { metric: 'AOV', value: '$89', change: '+1%' },
+        ];
+    };
+
+    const parseNumeric = (val: string) => {
+        if (val.endsWith('%')) return parseFloat(val.replace(/%/g, ''));
+        return parseFloat(val.replace(/[$,]/g, ''));
+    };
+
+    const handleSort = (widgetId: string, column: 'metric' | 'value' | 'change') => {
+        setTableState(prev => {
+            const next = new Map(prev);
+            const current = next.get(widgetId) || getDefaultTableState();
+            const direction: 'asc' | 'desc' = current.sortBy === column && current.direction === 'asc' ? 'desc' : 'asc';
+            next.set(widgetId, { ...current, sortBy: column, direction, page: 0 });
+            return next;
+        });
+    };
+
+    const handlePageChange = (widgetId: string, delta: number, totalPages: number) => {
+        setTableState(prev => {
+            const next = new Map(prev);
+            const current = next.get(widgetId) || getDefaultTableState();
+            const newPage = Math.max(0, Math.min(current.page + delta, Math.max(0, totalPages - 1)));
+            next.set(widgetId, { ...current, page: newPage });
+            return next;
+        });
+    };
+
+    const handlePageSizeChange = (widgetId: string, pageSize: number) => {
+        setTableState(prev => {
+            const next = new Map(prev);
+            const current = next.get(widgetId) || getDefaultTableState();
+            next.set(widgetId, { ...current, pageSize, page: 0 });
+            return next;
+        });
+    };
+
+    // Build query string for server API
+    const buildTableQuery = (widgetId: string, state: { sortBy: TableSortBy; direction: TableDirection; page: number; pageSize: number }, opts?: { all?: boolean; format?: 'json' | 'csv' }) => {
+        const params = new URLSearchParams();
+        params.set('widgetId', widgetId);
+        params.set('sortBy', state.sortBy);
+        params.set('direction', state.direction);
+        params.set('page', String(state.page));
+        params.set('pageSize', String(state.pageSize));
+        if (opts?.all) params.set('all', '1');
+        if (opts?.format) params.set('format', opts.format);
+        return params.toString();
+    };
+
+    // Fetch server-side table data for all table widgets when relevant state changes
+    useEffect(() => {
+        const controllers: AbortController[] = [];
+        const widgets = layout.widgets.filter(w => w.type === 'table');
+        widgets.forEach(w => {
+            const state = tableState.get(w.id) || getDefaultTableState();
+            const controller = new AbortController();
+            controllers.push(controller);
+            // set loading
+            setTableData(prev => {
+                const next = new Map(prev);
+                const curr = next.get(w.id);
+                next.set(w.id, { rows: curr?.rows || [], total: curr?.total || 0, loading: true, error: undefined });
+                return next;
+            });
+            fetch(`/api/table-data?${buildTableQuery(w.id, state)}`, { signal: controller.signal })
+                .then(async (res) => {
+                    if (!res.ok) throw new Error(`Failed to load table data (${res.status})`);
+                    const json = await res.json();
+                    setTableData(prev => {
+                        const next = new Map(prev);
+                        next.set(w.id, { rows: json.rows as TableRowType[], total: json.total as number, loading: false, error: undefined });
+                        return next;
+                    });
+                })
+                .catch(err => {
+                    if (controller.signal.aborted) return;
+                    console.error('Table data fetch error', err);
+                    try { sonnerToast.error('Failed to load table data', { description: (err as any)?.message || 'Unknown error' }); } catch {}
+                    setTableData(prev => {
+                        const next = new Map(prev);
+                        const curr = next.get(w.id);
+                        next.set(w.id, { rows: curr?.rows || [], total: curr?.total || 0, loading: false, error: (err as any)?.message || 'error' });
+                        return next;
+                    });
+                });
+        });
+        return () => controllers.forEach(c => c.abort());
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [layout.widgets, tableState]);
 
     const updateWidget = (widgetId: string, updates: Partial<DashboardWidget>) => {
         setLayout(prev => ({
@@ -344,6 +468,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
 
         } catch (error) {
             console.error('Export failed:', error);
+            try { sonnerToast.error('Dashboard export failed', { description: (error as any)?.message || 'Unknown error' }); } catch {}
         } finally {
             setIsExporting(false);
         }
@@ -637,7 +762,31 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                                 onClick={() => !isPreviewMode && setSelectedWidget(widget.id)}
                             >
                                 <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm font-medium">{widget.title}</CardTitle>
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle className="text-sm font-medium">{widget.title}</CardTitle>
+                                        {widget.type === 'chart' && (
+                                            <div className="flex items-center gap-2">
+                                                <ExportButton
+                                                    chartId={widget.id}
+                                                    format="png"
+                                                    label="PNG"
+                                                    onDone={(url) => {
+                                                        try { sonnerToast.success('Chart export ready', { description: 'PNG generated' }); } catch {}
+                                                        window.open(url, '_blank', 'noopener,noreferrer');
+                                                    }}
+                                                />
+                                                <ExportButton
+                                                    chartId={widget.id}
+                                                    format="pdf"
+                                                    label="PDF"
+                                                    onDone={(url) => {
+                                                        try { sonnerToast.success('Chart export ready', { description: 'PDF generated' }); } catch {}
+                                                        window.open(url, '_blank', 'noopener,noreferrer');
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </CardHeader>
                                 <CardContent>
                                     {widget.type === 'chart' ? (
@@ -661,8 +810,82 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                                             This is a sample text widget. You can add any content here.
                                         </div>
                                     ) : (
-                                        <div className="text-sm text-gray-500">
-                                            Table widget placeholder
+                                        <div className="text-sm">
+                                            {(() => {
+                                                const state = tableState.get(widget.id) || getDefaultTableState();
+                                                const data = tableData.get(widget.id) || { rows: [], total: 0, loading: false };
+                                                const totalPages = Math.max(1, Math.ceil((data.total || 0) / state.pageSize));
+                                                return (
+                                                    <div className="space-y-2">
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="text-xs text-muted-foreground">
+                                                                    {data.loading ? 'Loading…' : `${data.total} items • Page ${state.page + 1} of ${totalPages}`}
+                                                                </div>
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => {
+                                                                        const qs = buildTableQuery(widget.id, state, { all: true, format: 'csv' });
+                                                                        const url = `/api/table-data?${qs}`;
+                                                                        window.open(url, '_blank', 'noopener,noreferrer');
+                                                                    }}
+                                                                    className="h-8"
+                                                                    title="Download CSV"
+                                                                >
+                                                                    <Download className="h-4 w-4 mr-1" /> CSV
+                                                                </Button>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <Select value={String(state.pageSize)} onValueChange={(v) => handlePageSizeChange(widget.id, parseInt(v))}>
+                                                                    <SelectTrigger className="h-8 w-[110px]">
+                                                                        <SelectValue placeholder="Rows" />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        <SelectItem value="5">5 / page</SelectItem>
+                                                                        <SelectItem value="10">10 / page</SelectItem>
+                                                                        <SelectItem value="20">20 / page</SelectItem>
+                                                                    </SelectContent>
+                                                                </Select>
+                                                                <div className="flex items-center">
+                                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePageChange(widget.id, -1, totalPages)} disabled={state.page === 0 || data.loading}>
+                                                                        <ChevronLeft className="h-4 w-4" />
+                                                                    </Button>
+                                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePageChange(widget.id, 1, totalPages)} disabled={state.page >= totalPages - 1 || data.loading}>
+                                                                        <ChevronRight className="h-4 w-4" />
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <Table>
+                                                            <TableHeader>
+                                                                <TableRow>
+                                                                    <TableHead className="cursor-pointer select-none" onClick={() => handleSort(widget.id, 'metric')}>
+                                                                        <div className="flex items-center gap-1">Metric <ArrowUpDown className="h-3.5 w-3.5" /></div>
+                                                                    </TableHead>
+                                                                    <TableHead className="cursor-pointer select-none" onClick={() => handleSort(widget.id, 'value')}>
+                                                                        <div className="flex items-center gap-1">Value <ArrowUpDown className="h-3.5 w-3.5" /></div>
+                                                                    </TableHead>
+                                                                    <TableHead className="cursor-pointer select-none" onClick={() => handleSort(widget.id, 'change')}>
+                                                                        <div className="flex items-center gap-1">Change <ArrowUpDown className="h-3.5 w-3.5" /></div>
+                                                                    </TableHead>
+                                                                </TableRow>
+                                                            </TableHeader>
+                                                            <TableBody>
+                                                                {(data.rows || []).map((row, idx) => (
+                                                                    <TableRow key={idx}>
+                                                                        <TableCell>{row.metric}</TableCell>
+                                                                        <TableCell>{row.value}</TableCell>
+                                                                        <TableCell className={(row.change.startsWith('-') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400')}>
+                                                                            {row.change}
+                                                                        </TableCell>
+                                                                    </TableRow>
+                                                                ))}
+                                                            </TableBody>
+                                                        </Table>
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
                                     )}
                                 </CardContent>
