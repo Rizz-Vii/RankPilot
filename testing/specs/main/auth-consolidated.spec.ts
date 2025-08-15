@@ -145,19 +145,16 @@ test.describe("Authentication - Comprehensive Suite", () => {
 
       await page.goto("/login", { waitUntil: "networkidle" });
 
-      // Look for register link
-      const registerLink = page
-        .getByRole("link", { name: /register|sign up/i })
-        .or(page.locator('a[href*="register"]'))
-        .or(
-          page
-            .locator("text=/don.*have.*account/i")
-            .locator("..")
-            .getByRole("link")
-        );
+      // Look for a unique register anchor (avoid strict mode multiple matches by narrowing to the plain link)
+      let registerLink = page.locator('a[href="/register"]').first();
 
-      if ((await registerLink.count()) > 0) {
-        await registerLink.click();
+      if ((await registerLink.count()) === 0) {
+        // Fallback: pick the first matching link text (exclude button styled anchor by role filtering to link only)
+        registerLink = page.getByRole("link", { name: /create an account|register|sign up/i }).first();
+      }
+
+      if ((await registerLink.count()) === 1) {
+        await registerLink.first().click();
         await page.waitForLoadState("networkidle");
         await expect(page).toHaveURL(/register/);
 

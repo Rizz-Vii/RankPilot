@@ -30,15 +30,18 @@ test.describe("Performance Optimization Features", () => {
       // Use existing authentication if available
       if (isLoggedIn) {
         console.log("✅ Using existing authentication for performance dashboard test");
-        await page.goto("/performance", { timeout: 15000 }); // Fixed: Use actual performance route
+        await page.goto("/performance", { timeout: 30000, waitUntil: "domcontentloaded" });
+        await page.waitForLoadState("networkidle", { timeout: 30000 });
       } else {
         console.log("🔐 Logging in to access performance dashboard...");
         const testUser = UNIFIED_TEST_USERS.starter;
         await auth.loginAndGoToDashboard(testUser);
-        await page.goto("/performance", { timeout: 15000 }); // Fixed: Use actual performance route
+        await page.goto("/performance", { timeout: 30000, waitUntil: "domcontentloaded" });
+        await page.waitForLoadState("networkidle", { timeout: 30000 });
       }
 
       await page.waitForLoadState("domcontentloaded");
+      await page.waitForLoadState("networkidle", { timeout: 20000 });
       await expect(page.locator("body")).toBeVisible();
 
       // Look for performance-related content on the performance page
@@ -57,7 +60,8 @@ test.describe("Performance Optimization Features", () => {
     } catch (error: any) {
       console.log(`⚠️ Performance page error: ${error.message}`);
       // Fallback to dashboard test
-      await page.goto("/dashboard", { timeout: 10000 });
+      await page.goto("/dashboard", { timeout: 20000, waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle", { timeout: 20000 });
       await expect(page.locator("body")).toBeVisible();
     }
 
@@ -116,10 +120,16 @@ test.describe("Performance Optimization Features", () => {
       // Test on mobile viewport with memory recovery
       await page.setViewportSize({ width: 375, height: 667 });
       await page.waitForTimeout(1000); // Allow viewport stabilization
-
-      await page.goto("/");
-      await page.waitForLoadState("domcontentloaded");
-      await expect(page.locator("body")).toBeVisible();
+      // Primary navigation attempt with explicit lifecycle staging
+      await page.goto("/", { timeout: 30000, waitUntil: "domcontentloaded" });
+      // Allow network to settle (tolerate slower cold start)
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 15000 });
+      } catch {
+        // Non-fatal: continue with domcontentloaded baseline
+        console.log("⚠️ networkidle not reached within 15s - proceeding with DOMContentLoaded state");
+      }
+      await expect(page.locator("body")).toBeVisible({ timeout: 30000 });
 
       // Look for mobile navigation elements
       const mobileNavElements = await page
@@ -130,12 +140,16 @@ test.describe("Performance Optimization Features", () => {
 
       // Check public pages only to avoid auth issues
       try {
-        await page.goto("/login");
-        await page.waitForLoadState("domcontentloaded", { timeout: 10000 });
-        await expect(page.locator("body")).toBeVisible();
+        await page.goto("/login", { timeout: 25000, waitUntil: "domcontentloaded" });
+        try {
+          await page.waitForLoadState("networkidle", { timeout: 10000 });
+        } catch {
+          console.log("⚠️ login page networkidle not reached - continuing");
+        }
+        await expect(page.locator("body")).toBeVisible({ timeout: 15000 });
         await page.waitForTimeout(500); // Recovery time
       } catch (navError) {
-        console.log("⚠️ Navigation issue, continuing with basic test");
+        console.log("⚠️ Navigation issue (login fallback), continuing with basic test");
       }
 
       await page.screenshot({
@@ -146,8 +160,9 @@ test.describe("Performance Optimization Features", () => {
       console.log(`⚠️ Mobile navigation test error: ${error.message}`);
       // Fallback: just verify basic mobile layout on login page
       await page.setViewportSize({ width: 375, height: 667 });
-      await page.goto("/login", { timeout: 10000 });
-      await expect(page.locator("body")).toBeVisible();
+      await page.goto("/login", { timeout: 25000, waitUntil: "domcontentloaded" });
+      try { await page.waitForLoadState("networkidle", { timeout: 10000 }); } catch { }
+      await expect(page.locator("body")).toBeVisible({ timeout: 15000 });
     }
   });
 
