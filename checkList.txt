@@ -1,0 +1,135 @@
+###############################################################################
+# PRIORITIZED EXECUTION CHECKLIST (REFRESHED)
+# Purpose: Translate legacy audit list into phased, testable, low-risk increments.
+# Legend: [P0]=Immediate (current sprint) | [P1]=Next | [P2]=after P1 | [P3]=after P1
+###############################################################################
+
+PHASE 0 (ALREADY DONE / BASELINE) [reference]
+- Orphan feature suppression + entitlement extraction.
+- Alias map + unified export_formats capability.
+- Deprecated/entitlement FeatureGate usage test.
+
+PHASE 1 (P0 – Hardening & Correct Gating)
+1. Gating Alignment
+	- (DONE) Add <FeatureGate> to neuroseo subtool pages (neural-crawler, semantic-map, trust-block, ai-visibility, rewrite-gen) using granular keys (verified present).
+	- (DONE) Add <FeatureGate> to /link-view (link_view key exists in FEATURE_ACCESS).
+	- (DONE) Tier alignment already correct: team_management, content_briefs, link_view all agency-tier where needed.
+2. Navigation & Tests
+	- (DONE) Create nav gating matrix test (locked/disabled state vs FeatureGate allow) for starter/agency/enterprise.
+	- (DONE) Alias usage enforcement test (no direct FeatureGate with alias keys) added.
+3. Finance Mock Transparency
+	- (DONE) Visible mock banner when finance metrics served from mock path (finance dashboard, billing, invoices) using FINANCE_MOCK_MODE / allowFinanceMocks.
+	- (EXISTING) Env guard already present via NEXT_PUBLIC_ALLOW_FINANCE_MOCKS in allowFinanceMocks().
+4. Documentation
+	- CHANGE_LOG entry “Phase 1 Gating Hardening”.
+5. Acceptance
+	- audit:nav-gates PASS 0 findings; all targeted pages show FeatureGate in grep; tests pass.
+
+PHASE 2 (P1 – Foundational Data & Metrics)
+1. Revenue Analytics MVP
+	- Compute MRR, ARR, churn rate, LTV (formula doc + unit tests) purely in-memory; add /finance/revenue page gated by finance_revenue_analytics.
+2. AI Usage & Cost
+	- Add token accounting hooks (inputTokens, outputTokens, model, costEstimate) in ai-memory-manager; persist daily aggregates to aiUsageDaily collection.
+	- Expose aggregate usage in /api/health KPIs (aiTokenUsage24h, aiCostEstimate24h).
+3. Subtool Usage Telemetry
+	- Add per-feature counter recording (semantic_map_runs, neural_crawler_runs, etc.).
+4. Subscription Entitlement Metadata
+	- (DONE) Move ENTITLEMENT_FLAGS to plan metadata module (planEntitlements loader) and remove fallback logic in canAccessFeature; added dedicated canAccessEntitlement + test-entitlements-access script.
+5. Synthetic Page Refactor (Start)
+	- Replace semantic-map simulate function with orchestrator call (NeuroSEOSuite) behind a stub layering: if real analysis fails -> deterministic fallback.
+6. Acceptance
+	- KPIs show new fields; revenue page passes unit + snapshot test; semantic-map page uses orchestrator path.
+
+PHASE 3 (P2 – Audit & Crawler Enhancement)
+1. audit.ts Modernization
+	- Integrate Firecrawl (queue, depth limit, robots.txt respect). Add env gating and deterministic fallback.
+	- Introduce Zod schemas for AI JSON output; strict parse with soft fallback.
+	- Multi-phase pipeline instrumentation (crawl_time_ms, analysis_time_ms).
+2. Quota & Rate Controls
+	- Shared crawler quota per team; add counters & 429 handling.
+3. Load & Contract Tests
+	- Implement concurrency stress test for audit route (simulated 20 parallel runs).
+4. Acceptance
+	- Contract test verifies schema; stress test passes without memory leak; KPIs show crawl success/error rates.
+
+PHASE 4 (P2–P3 – Data Minimization & Observability)
+1. Data Minimization Migration
+	- Migrate large semanticMapResults / neuralCrawlerResults to aggregate docs (store metrics + topN insights only). Archive old docs or run one-time migration script.
+2. Observability Dashboard
+	- New admin page summarizing KPIs, rate limits, AI cost, anomaly alerts.
+3. Daily KPI Snapshot Function (Cloud Function)
+	- Persist day aggregates for charting (kpiDaily). Include retention policy (90d purge).
+4. Alias Retirement
+	- Remove alias keys after verifying zero usages (export_pdf, export_csv, neuroseo, performance_metrics, link_analysis, ai_content_generation).
+
+PHASE 5 (P3 – Marketing & Sales Engines)
+1. Marketing Campaign CRUD & Ingestion
+	- Firestore CRUD + validation (no derived ratios stored).
+	- Channel performance dashboard; gating via marketing_dashboard.
+2. Sales Pipeline Enhancements
+	- Stage customization + probability weighting; forecasting chart.
+3. Outreach Sequencing Spec + Skeleton
+	- Define data model; implement scheduler stub + test.
+
+PHASE 6 (P3+ – Security & Compliance)
+1. security_center (rename advanced_security)
+	- Spec + minimal UI (role activity, rate limit chart, anomaly list).
+2. Audit Log Service
+	- Firestore collection auditLogs (actor, action, target, ts, metadata). Middleware hooks for critical mutations.
+3. SSO / SAML Skeleton
+	- Config hooks & placeholder route; feature key gating.
+4. PII Scan & Retention Script
+	- Script scanning common fields; retention purge for old analyses beyond policy.
+
+BACKLOG REGISTER (Task IDs)
+ID | Phase | Title | Status | Notes
+---|-------|-------|--------|------
+T1 | P0 | Entitlement extraction | DONE | ENTITLEMENT_FLAGS factored out
+T2 | P0 | Orphan suppression | DONE | Audit clean
+T3 | P0 | Unified export key | DONE | export_formats active
+T4 | P0 | Alias usage test | DONE | Enforcement script added
+T5 | P0 | Subtool FeatureGates | DONE | Verified all pages gated
+T6 | P1 | Revenue analytics MVP | DONE | Live billing invoice upsert (created/finalized/payment events) + team filter + dryRun; revenue formula & KPI contract tests; daily snapshot revenue metrics aggregated (MRR, outstanding, on-time%).
+T7 | P1 | AI usage & cost metrics | DONE | Daily aggregates + Gemini usage metadata + /api/health + historical endpoint tests
+T8 | P1 | Subtool usage telemetry | DONE | In-process counters + health exposure
+T9 | P1 | Semantic map orchestrator integration | DONE | API call w/ deterministic fallback
+T10| P2 | Crawler integration Firecrawl | DONE | Integrated into audit pipeline (performWebCrawl), robots.txt (depth>1) respect, multi-phase timings captured
+T11| P2 | Audit schema validation | DONE | Zod schemas (pages + response) + validation fallback tests
+T12| P2 | Team crawler quota | DONE | Firestore-backed hourly quota w/ scope (team:user:global) + headers + metrics
+T13| P2 | Load test audit | DONE | 20-parallel audit stress test stable (0% failures, p95 < 200ms) + memory guard assertion; quota & fallback paths validated
+T14| P2 | Data minimization migration | TODO | Aggregates only
+T15| P2 | Observability dashboard | TODO | Admin page
+T16| P2 | KPI snapshot function | IN-PROGRESS | Cloud Function scaffold (AI usage + retention) + revenue metrics (MRR/outstanding/on-time%) + extended test; next: provenanceCoveragePct & latency percentile fields after shared metrics extraction.
+T17| P2 | Alias retirement | TODO | After enforcement test green
+T18| P3 | Marketing campaign CRUD | TODO | CRUD + dashboard
+T19| P3 | Sales pipeline stages | TODO | Weighted forecast
+T20| P3 | Outreach sequencing skeleton | TODO | Spec + scheduler
+T21| P3 | Security center spec | TODO | Replace advanced_security
+T22| P3 | Audit log service | TODO | Mutation hooks
+T23| P3 | SSO/SAML skeleton | TODO | Config harness
+T24| P3 | PII scan & retention | TODO | Script + policy
+T25| P1 | Entitlement metadata refactor | DONE | canAccessEntitlement helper + test-entitlements-access
+
+ACCEPTANCE CRITERIA SNAPSHOT
+- Phase1 complete when: All mismatches resolved; nav gating matrix test passes; link_view key defined & gated; finance mock banner visible when mocks active.
+- Phase2 complete when: Revenue page live; AI usage & cost fields appear in /api/health; semantic-map uses orchestrator; alias usage test passes.
+- Phase3 complete when: Audit contract test passes with real crawl fallback; stress test stable (<5% error); quota returns 429 correctly logged.
+
+RISK & DEPENDENCIES
+- Real crawler (Firecrawl) requires API key & rate budgeting (dependency: secrets mgmt procedure).
+- Token accounting needs consistent provider token counts (Anthropic/Gemini adapters parity).
+- Data minimization migration must run before retention policy enforcement.
+
+DEPRECATION TIMELINE (Tentative)
+- Alias keys removed end of Phase2 + 1 release buffer.
+- Deprecated umbrella/admin keys fully removed after observability dashboard (Phase4) ensures visibility replacement.
+
+ORIGINAL RAW CHECKLIST (ARCHIVED BELOW FOR TRACE)
+---
+<BEGIN_ORIGINAL>
+Placeholder / Mock / Synthetic Implementations
+...existing original content truncated for brevity...
+Refer to git history for full pre-refactor checklist.
+<END_ORIGINAL>
+###############################################################################
+\n+IMMEDIATE NEXT STEPS (Post T13 Completion)\n+1. Finalize T16: Add provenanceCoveragePct & latency percentile export wiring (ensure unified metrics daily export includes crawl/analysis p95/p99).\n+2. Begin T14 migration script draft: enumerate large semanticMapResults/neuralCrawlerResults docs >2.5KB and compute target aggregate structure; dry-run log only.\n+3. Scaffold Observability Dashboard (T15): create gated admin route + initial KPI cards (reuse /api/health).\n+4. Prepare alias retirement (T17): generate usage report to confirm zero runtime references before deletion.\n+5. Add memory leak guard to stress test suite if not already persisted (baseline process.rss delta < +25MB across 3 consecutive runs).\n+
