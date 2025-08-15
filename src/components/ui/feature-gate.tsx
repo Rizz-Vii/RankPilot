@@ -98,8 +98,8 @@ function UpgradePrompt({
     const tierColors = {
         free: colors.projectStatus.completed.bg + ' ' + colors.projectStatus.completed.text,
         starter: colors.projectStatus.planning.bg + ' ' + colors.projectStatus.planning.text,
-        agency: 'bg-purple-100 text-purple-800', // No direct mapping, keep as is or add to design system
-        enterprise: 'bg-gold-100 text-gold-800' // No direct mapping, keep as is or add to design system
+        agency: 'bg-accent/10 text-accent', // semantic accent token usage
+        enterprise: 'bg-accent/10 text-accent' // align enterprise badge with semantic accent to avoid raw status palette
     };
 
     return (

@@ -20,6 +20,7 @@ import {
 } from "./rewrite-gen";
 import { SemanticMap, type SemanticAnalysisResult } from "./semantic-map";
 import { TrustBlockEngine, type TrustReport } from "./trust-block";
+import { recordSubtoolRun } from "@/lib/metrics/ai-usage";
 
 export interface NeuroSEOAnalysisRequest {
   urls: string[];
@@ -234,6 +235,7 @@ export class NeuroSEOSuite {
       // Phase 1: Neural Crawling
       logger.info('phase.crawl.start', { urlCount: request.urls.length });
       report.crawlResults = await this.runCrawlPhase(request.urls);
+      recordSubtoolRun('neural_crawler');
 
       // Phase 2: Semantic Analysis (activated)
       logger.info('phase.semantic.start', { crawlResults: report.crawlResults.length, keywords: request.targetKeywords.length });
@@ -242,6 +244,7 @@ export class NeuroSEOSuite {
         request.targetKeywords,
         request.competitorUrls
       );
+      recordSubtoolRun('semantic_map');
 
       // Phase 3: AI Visibility Analysis (may use corpusStats to adjust scoring later)
       logger.info('phase.visibility.start', { urlCount: request.urls.length });
@@ -250,6 +253,7 @@ export class NeuroSEOSuite {
         request.targetKeywords,
         request.competitorUrls
       );
+      recordSubtoolRun('ai_visibility');
 
       // Phase 4: Trust Analysis
       logger.info('phase.trust.start', { crawlResults: report.crawlResults.length });
@@ -257,6 +261,7 @@ export class NeuroSEOSuite {
         report.crawlResults,
         request.competitorUrls
       );
+      recordSubtoolRun('trust_block');
 
       // Phase 5: Content Rewrite Recommendations (if content-focused)
       if (
@@ -269,6 +274,7 @@ export class NeuroSEOSuite {
             report.crawlResults,
             request.targetKeywords
           );
+        recordSubtoolRun('rewrite_gen');
       }
 
       // Phase 3: Engagement & Lead Potential (applies to all types in Phase 3 rollout)

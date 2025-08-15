@@ -498,26 +498,26 @@ export default function TutorialsPage() {
   const getDifficultyColor = (difficulty: Tutorial["difficulty"]) => {
     switch (difficulty) {
       case "beginner":
-        return "bg-success-background text-success-foreground";
+  return "bg-success/10 text-success-foreground";
       case "intermediate":
-        return "bg-warning-background text-warning-foreground";
+  return "bg-warning/10 text-warning-foreground";
       case "advanced":
-        return "bg-error-background text-error-foreground";
+  return "bg-destructive/10 text-destructive-foreground";
       default:
-        return "bg-muted-background text-muted-foreground";
+  return "bg-muted text-muted-foreground";
     }
   };
 
   const getTierColor = (requiredTier: Tutorial["requiredTier"]) => {
     switch (requiredTier) {
       case "free":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-  case "agency":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
+        return "bg-muted text-muted-foreground";
+      case "agency":
+        return "bg-accent text-accent-foreground";
       case "enterprise":
-        return "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200";
+        return "bg-primary text-primary-foreground";
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+        return "bg-muted text-foreground";
     }
   };
 
@@ -790,14 +790,14 @@ export default function TutorialsPage() {
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`h-3 w-3 ${i < selectedTutorial.popularity ? "text-yellow-400 fill-current" : "text-gray-300"}`}
+                        className={`h-3 w-3 ${i < selectedTutorial.popularity ? "text-warning-foreground fill-current" : "text-muted-foreground/40"}`}
                       />
                     ))}
                   </div>
                 </div>
 
                 {selectedTutorial.prerequisites && (
-                  <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                  <div className="p-4 bg-primary/10 rounded-lg">
                     <h4 className="font-semibold mb-2">Prerequisites:</h4>
                     <ul className="list-disc list-inside text-sm">
                       {selectedTutorial.prerequisites.map((prereq, index) => (
@@ -906,7 +906,7 @@ function TutorialCard({
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`h-3 w-3 ${i < tutorial.popularity ? "text-yellow-400 fill-current" : "text-gray-300"}`}
+                  className={`h-3 w-3 ${i < tutorial.popularity ? "text-warning-foreground fill-current" : "text-muted-foreground/40"}`}
                 />
               ))}
             </div>

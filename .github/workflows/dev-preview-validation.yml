@@ -77,6 +77,20 @@ jobs:
           echo "ENV_TYPE=$ENV_TYPE" >> $GITHUB_OUTPUT
           echo "📋 Environment: $ENV_TYPE"
           echo "🔗 Test URL: $TEST_URL"
+
+      - name: 🌐 Runtime Provenance Audit (Preview URL)
+        if: ${{ always() }}
+        env:
+          PROV_ORIGIN: ${{ steps.test-env.outputs.TEST_URL }}
+          PROV_REQUIRE_SERVER: "1"
+          PROV_TIMEOUT_MS: "20000"
+        run: |
+          echo "## 🌐 Runtime Provenance Audit (Preview URL)" >> $GITHUB_STEP_SUMMARY
+          if npm run -s test:provenance-audit; then
+            echo "✅ Runtime provenance audit passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Runtime provenance audit failed (non-blocking)" >> $GITHUB_STEP_SUMMARY
+          fi
       
       - name: 🌐 Basic Smoke Tests
         run: |

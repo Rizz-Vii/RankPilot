@@ -47,7 +47,7 @@ export default function EnterpriseSEOAuditBlogPage() {
           </p>
         </header>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+  <div className="bg-primary/10 border border-primary/30 rounded-lg p-6 mb-8">
           <h2 className="text-xl font-semibold mb-3">What You'll Learn</h2>
           <ul className="list-disc pl-6 space-y-1">
             <li>Enterprise-specific SEO audit methodology</li>
@@ -273,7 +273,7 @@ export default function EnterpriseSEOAuditBlogPage() {
           </ul>
         </section>
 
-        <div className="bg-gradient-to-r from-primary/10 to-blue-50 border border-primary/20 rounded-lg p-6 mt-8">
+  <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-6 mt-8">
           <h2 className="text-xl font-semibold mb-3">
             Start Your Enterprise SEO Audit
           </h2>

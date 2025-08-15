@@ -68,7 +68,7 @@ function AccountsPanel({ accounts, onConnect, connecting }: AccountsPanelProps){
   return <div className="rounded-xl border p-4 space-y-3">
     <div className="flex items-center justify-between"><h3 className="text-sm font-medium">Connected Accounts</h3><span className="text-xs text-muted-foreground">{accounts.length}</span></div>
     <ul className="space-y-1 max-h-32 overflow-auto text-xs">
-      {accounts.map(a=> <li key={a.id} className="flex items-center justify-between rounded bg-background/60 px-2 py-1 border text-[11px]"><span>{a.platform}:{a.handle}</span><span className="text-green-600">●</span></li>)}
+  {accounts.map(a=> <li key={a.id} className="flex items-center justify-between rounded bg-background/60 px-2 py-1 border text-[11px]"><span>{a.platform}:{a.handle}</span><span className="text-success-foreground">●</span></li>)}
       {!accounts.length && <li className="text-muted-foreground text-[11px]">No accounts connected</li>}
     </ul>
     <div className="flex gap-2 items-end">

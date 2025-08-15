@@ -36,13 +36,13 @@ export type UserJourneyStage = z.infer<typeof UserJourneyStageSchema>;
 
 export const emotionalTriggers = {
   curiosity: {
-    colors: ["bg-blue-50", "text-blue-600"],
+    colors: ["bg-primary/10", "text-primary"],
     animations: ["animate-pulse-subtle", "animate-fade-in"],
     messaging: ["Discover", "Explore", "See what's possible"],
     microCopy: ["Click to reveal", "Uncover insights", "What will you find?"],
   },
   confusion: {
-    colors: ["bg-yellow-50", "text-yellow-600"],
+    colors: ["bg-warning/10", "text-warning-foreground"],
     animations: ["animate-help-bounce", "animate-guide-pulse"],
     messaging: ["Let us guide you", "Here's how it works", "Step by step"],
     microCopy: [
@@ -52,43 +52,43 @@ export const emotionalTriggers = {
     ],
   },
   frustration: {
-    colors: ["bg-red-50", "text-red-600"],
+    colors: ["bg-destructive/10", "text-destructive-foreground"],
     animations: ["animate-shake", "animate-warning"],
     messaging: ["Let us help", "We'll fix this", "Sorry about that"],
     microCopy: ["Need help?", "Try this instead", "We're here for you"],
   },
   confidence: {
-    colors: ["bg-green-50", "text-green-600"],
+    colors: ["bg-success/10", "text-success-foreground"],
     animations: ["animate-slide-up", "animate-success-pulse"],
     messaging: ["You're in control", "Perfect choice", "Excellent progress"],
     microCopy: ["Well done!", "You've got this", "Looking great"],
   },
   delight: {
-    colors: ["bg-purple-50", "text-purple-600"],
+    colors: ["bg-accent/10", "text-accent-foreground"],
     animations: ["animate-bounce-subtle", "animate-celebration"],
     messaging: ["Wow!", "Amazing results", "This is incredible"],
     microCopy: ["🎉", "✨ Magic!", "Better than expected"],
   },
   trust: {
-    colors: ["bg-emerald-50", "text-emerald-600"],
+    colors: ["bg-success/10", "text-success-foreground"],
     animations: ["animate-steady", "animate-secure"],
     messaging: ["Secure", "Protected", "Reliable"],
     microCopy: ["Your data is safe", "Verified", "Trusted by experts"],
   },
   mastery: {
-    colors: ["bg-indigo-50", "text-indigo-600"],
+    colors: ["bg-accent/10", "text-accent-foreground"],
     animations: ["animate-mastery-glow", "animate-expert-pulse"],
     messaging: ["Expert level", "You've mastered this", "Advanced user"],
     microCopy: ["Pro tip", "Expert insight", "You're an expert now"],
   },
   advocacy: {
-    colors: ["bg-pink-50", "text-pink-600"],
+    colors: ["bg-primary/10", "text-primary"],
     animations: ["animate-share-pulse", "animate-social-glow"],
     messaging: ["Share your success", "Tell others", "Spread the word"],
     microCopy: ["Share this", "Tell a friend", "Love to share?"],
   },
   abandonment: {
-    colors: ["bg-orange-50", "text-orange-600"],
+    colors: ["bg-warning/10", "text-warning-foreground"],
     animations: ["animate-retention-pulse", "animate-comeback"],
     messaging: ["Wait!", "Before you go", "One more thing"],
     microCopy: ["Stay with us", "Don't miss out", "Quick question?"],

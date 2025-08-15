@@ -1,3 +1,4 @@
+"use client";
 /**
  * Enhanced Dashboard Builder with D3.js Visualizations
  * Integrates Priority 2 Enterprise Features from DevReady Phase 3
@@ -223,7 +224,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
         } catch (error) {
             console.error('Failed to render chart:', error);
             try { sonnerToast.error('Render failed', { description: (error as any)?.message || String(error) }); } catch {}
-            chartElement.innerHTML = `<div class=\"p-4 text-red-500\">Error rendering chart: ${String(error)}</div>`;
+            chartElement.innerHTML = `<div class=\"p-4 text-destructive-foreground\">Error rendering chart: ${String(error)}</div>`;
         }
     }, [sampleData]);
 
@@ -491,13 +492,13 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
     };
 
     return (
-        <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
             {/* Sidebar */}
             {!isPreviewMode && !readOnly && (
-                <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
-                    <div className="p-4 border-b border-gray-200">
-                        <h2 className="text-lg font-semibold text-gray-900">Dashboard Builder</h2>
-                        <p className="text-sm text-gray-500">Drag and drop to create visualizations</p>
+                <div className="w-80 bg-background border-r border-border overflow-y-auto">
+                    <div className="p-4 border-b border-border">
+                        <h2 className="text-lg font-semibold text-foreground">Dashboard Builder</h2>
+                        <p className="text-sm text-muted-foreground">Drag and drop to create visualizations</p>
                     </div>
 
                     <Tabs defaultValue="widgets" className="w-full">
@@ -558,8 +559,8 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                                         <div
                                             key={widget.id}
                                             className={`p-2 border rounded-lg cursor-pointer ${selectedWidget === widget.id
-                                                ? 'border-blue-500 bg-blue-50'
-                                                : 'border-gray-200 hover:border-gray-300'
+                                                ? 'border-primary/50 bg-primary/10'
+                                                : 'border-border hover:border-border'
                                                 }`}
                                             onClick={() => setSelectedWidget(widget.id)}
                                         >
@@ -679,12 +680,12 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
             {/* Main Content */}
             <div className="flex-1 flex flex-col">
                 {/* Header */}
-                <div className="bg-white border-b border-gray-200 p-4">
+                <div className="bg-background border-b border-border p-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-xl font-semibold text-gray-900">{layout.name}</h1>
+                            <h1 className="text-xl font-semibold text-foreground">{layout.name}</h1>
                             {layout.description && (
-                                <p className="text-sm text-gray-500">{layout.description}</p>
+                                <p className="text-sm text-muted-foreground">{layout.description}</p>
                             )}
                         </div>
 
@@ -756,7 +757,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                             <Card
                                 key={widget.id}
                                 className={`${selectedWidget === widget.id && !isPreviewMode
-                                    ? 'ring-2 ring-blue-500'
+                                    ? 'ring-2 ring-primary'
                                     : ''
                                     }`}
                                 onClick={() => !isPreviewMode && setSelectedWidget(widget.id)}
@@ -802,11 +803,11 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                                         />
                                     ) : widget.type === 'metric' ? (
                                         <div className="text-center">
-                                            <div className="text-2xl font-bold text-blue-600">1,234</div>
-                                            <div className="text-sm text-gray-500">Sample Metric</div>
+                                            <div className="text-2xl font-bold text-primary">1,234</div>
+                                            <div className="text-sm text-muted-foreground">Sample Metric</div>
                                         </div>
                                     ) : widget.type === 'text' ? (
-                                        <div className="text-sm text-gray-600">
+                                        <div className="text-sm text-muted-foreground">
                                             This is a sample text widget. You can add any content here.
                                         </div>
                                     ) : (
@@ -876,7 +877,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                                                                     <TableRow key={idx}>
                                                                         <TableCell>{row.metric}</TableCell>
                                                                         <TableCell>{row.value}</TableCell>
-                                                                        <TableCell className={(row.change.startsWith('-') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400')}>
+                                                                        <TableCell className={(row.change.startsWith('-') ? 'text-destructive-foreground' : 'text-success-foreground')}>
                                                                             {row.change}
                                                                         </TableCell>
                                                                     </TableRow>
@@ -894,9 +895,9 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
 
                         {layout.widgets.length === 0 && (
                             <div className="col-span-full text-center py-12">
-                                <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">No widgets yet</h3>
-                                <p className="text-gray-500 mb-4">Add your first widget to get started</p>
+                                <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                                <h3 className="text-lg font-medium text-foreground mb-2">No widgets yet</h3>
+                                <p className="text-muted-foreground mb-4">Add your first widget to get started</p>
                                 {!readOnly && (
                                     <Button onClick={() => addWidget('chart')}>
                                         <Plus className="w-4 h-4 mr-2" />
@@ -922,7 +923,7 @@ const WidgetPropertiesPanel: React.FC<WidgetPropertiesPanelProps> = ({ widget, o
     return (
         <div className="space-y-3 mt-2">
             <div>
-                <Label className="text-xs text-gray-500">Title</Label>
+                <Label className="text-xs text-muted-foreground">Title</Label>
                 <Input
                     value={widget.title}
                     onChange={(e) => onUpdate({ title: e.target.value })}
@@ -933,7 +934,7 @@ const WidgetPropertiesPanel: React.FC<WidgetPropertiesPanelProps> = ({ widget, o
             {widget.type === 'chart' && widget.chartConfig && (
                 <>
                     <div>
-                        <Label className="text-xs text-gray-500">Chart Type</Label>
+                        <Label className="text-xs text-muted-foreground">Chart Type</Label>
                         <Select
                             value={widget.chartConfig.type}
                             onValueChange={(value: any) =>
@@ -956,7 +957,7 @@ const WidgetPropertiesPanel: React.FC<WidgetPropertiesPanelProps> = ({ widget, o
                     </div>
 
                     <div>
-                        <Label className="text-xs text-gray-500">Color Scheme</Label>
+                        <Label className="text-xs text-muted-foreground">Color Scheme</Label>
                         <Select
                             value={widget.chartConfig.styling.colorScheme || 'default'}
                             onValueChange={(value: any) =>
@@ -981,7 +982,7 @@ const WidgetPropertiesPanel: React.FC<WidgetPropertiesPanelProps> = ({ widget, o
                     </div>
 
                     <div className="flex items-center justify-between">
-                        <Label className="text-xs text-gray-500">Animations</Label>
+                        <Label className="text-xs text-muted-foreground">Animations</Label>
                         <Switch
                             checked={widget.chartConfig.options.animations || false}
                             onCheckedChange={(checked) =>
@@ -996,7 +997,7 @@ const WidgetPropertiesPanel: React.FC<WidgetPropertiesPanelProps> = ({ widget, o
                     </div>
 
                     <div className="flex items-center justify-between">
-                        <Label className="text-xs text-gray-500">Interactive</Label>
+                        <Label className="text-xs text-muted-foreground">Interactive</Label>
                         <Switch
                             checked={widget.chartConfig.options.interactive || false}
                             onCheckedChange={(checked) =>
@@ -1011,7 +1012,7 @@ const WidgetPropertiesPanel: React.FC<WidgetPropertiesPanelProps> = ({ widget, o
                     </div>
 
                     <div className="flex items-center justify-between">
-                        <Label className="text-xs text-gray-500">Grid</Label>
+                        <Label className="text-xs text-muted-foreground">Grid</Label>
                         <Switch
                             checked={widget.chartConfig.options.grid || false}
                             onCheckedChange={(checked) =>
@@ -1028,7 +1029,7 @@ const WidgetPropertiesPanel: React.FC<WidgetPropertiesPanelProps> = ({ widget, o
             )}
 
             <div className="flex items-center justify-between">
-                <Label className="text-xs text-gray-500">Auto Update</Label>
+                <Label className="text-xs text-muted-foreground">Auto Update</Label>
                 <Switch
                     checked={widget.config.autoUpdate || false}
                     onCheckedChange={(checked) =>

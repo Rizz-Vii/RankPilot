@@ -56,7 +56,7 @@ export default function SEOMetricsBlogPage() {
             crucial to focus on metrics that directly impact your bottom line.
           </p>
 
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 my-4">
+          <div className="bg-destructive/10 border border-destructive/40 rounded-lg p-4 my-4">
             <h3 className="font-semibold mb-2">
               Metrics to Avoid Over-Emphasizing:
             </h3>
@@ -242,7 +242,7 @@ export default function SEOMetricsBlogPage() {
 
           <div className="grid md:grid-cols-2 gap-6 my-6">
             <div>
-              <h3 className="font-semibold mb-2 text-red-600">
+              <h3 className="font-semibold mb-2 text-destructive-foreground">
                 ❌ Avoid These
               </h3>
               <ul className="list-disc pl-6 text-sm">
@@ -254,7 +254,7 @@ export default function SEOMetricsBlogPage() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-2 text-green-600">
+              <h3 className="font-semibold mb-2 text-success-foreground">
                 ✅ Best Practices
               </h3>
               <ul className="list-disc pl-6 text-sm">
@@ -268,7 +268,7 @@ export default function SEOMetricsBlogPage() {
           </div>
         </section>
 
-        <div className="bg-gradient-to-r from-primary/10 to-blue-50 border border-primary/20 rounded-lg p-6 mt-8">
+  <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-6 mt-8">
           <h2 className="text-xl font-semibold mb-3">Track What Matters</h2>
           <p className="mb-4">
             Start measuring the SEO metrics that drive real business results.

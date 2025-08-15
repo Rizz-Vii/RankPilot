@@ -1,0 +1,90 @@
+name: Preview Deploy + Provenance Audit (Runtime)
+
+on:
+  pull_request:
+    branches: [ master, main, workshop/* ]
+
+jobs:
+  deploy-and-audit:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Ensure Firebase CLI
+        run: npm i -g firebase-tools@13
+
+      - name: Guard secrets present
+        id: guard
+        run: |
+          if [ -z "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" ]; then
+            echo "missing_sa=true" >> $GITHUB_OUTPUT
+          else
+            echo "missing_sa=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Write Service Account
+        if: steps.guard.outputs.missing_sa == 'false'
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > $HOME/firebase_sa.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase_sa.json" >> $GITHUB_ENV
+
+      - name: Compute channel and project
+        id: meta
+        run: |
+          CHANNEL="pr-${{ github.event.pull_request.number || github.run_id }}"
+          echo "channel=$CHANNEL" >> $GITHUB_OUTPUT
+          # Project ID can be overridden via secret; else infer from firebase.json if present
+          if [ -n "${{ secrets.FIREBASE_PROJECT_ID }}" ]; then
+            echo "project=${{ secrets.FIREBASE_PROJECT_ID }}" >> $GITHUB_OUTPUT
+          else
+            PROJECT=$(jq -r '.hosting?.project || .projects?.default // empty' firebase.json 2>/dev/null || echo "")
+            echo "project=$PROJECT" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to preview channel (Firebase Hosting)
+        if: steps.guard.outputs.missing_sa == 'false'
+        run: |
+          set -e
+          if [ -z "${{ steps.meta.outputs.project }}" ] || [ "${{ steps.meta.outputs.project }}" = "null" ]; then
+            echo "No Firebase project configured; skipping deploy and runtime audit."
+            echo '{}' > deploy.json
+            exit 0
+          fi
+          firebase --project "${{ steps.meta.outputs.project }}" hosting:channel:deploy "${{ steps.meta.outputs.channel }}" --json > deploy.json
+          cat deploy.json | jq '.'
+
+      - name: Extract preview origin
+        id: origin
+        if: steps.guard.outputs.missing_sa == 'false'
+        run: |
+          ORIGIN=$(jq -r '.result[0].url // empty' deploy.json)
+          if [ -z "$ORIGIN" ]; then
+            echo "::warning ::Failed to parse preview origin from deploy.json; skipping runtime audit."
+          fi
+          echo "origin=$ORIGIN" >> $GITHUB_OUTPUT
+
+      - name: Runtime provenance audit (preview)
+        if: steps.guard.outputs.missing_sa == 'false' && steps.origin.outputs.origin != ''
+        env:
+          PROV_ORIGIN: ${{ steps.origin.outputs.origin }}
+          PROV_REQUIRE_SERVER: '1'
+          PROV_STRICT: '1'
+        run: npm run test:provenance-audit:runtime:env
+
+      - name: Note skipped audit
+        if: steps.guard.outputs.missing_sa == 'true' || steps.origin.outputs.origin == ''
+        run: |
+          echo "Skipping runtime audit (missing FIREBASE_SERVICE_ACCOUNT or preview origin). Static audit still runs on PR via a separate workflow."

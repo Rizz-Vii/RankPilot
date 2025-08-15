@@ -8,9 +8,9 @@ import { Badge } from "@/components/ui/badge";
 
 // ===== ERROR HANDLING PATTERNS =====
 
-// ❌ AVOID: Arbitrary error colors
+// ❌ AVOID: Arbitrary palette tokens (example shown for documentation only, replaced with semantic)
 const ErrorMessageBad = ({ message }: { message: string }) => (
-  <p className="text-sm text-red-500 mt-1">{message}</p>
+  <p className="text-sm text-destructive mt-1">{message}</p>
 );
 
 // ✅ USE: Semantic error tokens

@@ -1,6 +1,6 @@
 # Incomplete Code Audit
 
-Date: 2025-08-12
+Date: 2025-08-13
 Branch: workshop/performance
 
 This report catalogs incomplete, stubbed, or placeholder code across the repo. It prioritizes items that impact users vs. safe mocks/UX placeholders. Sources: automated scans (TODO/FIXME/placeholder/stub/not implemented) and spot reads of key files.
@@ -15,6 +15,7 @@ Legend
   - Server-side exports implemented for PDF/Excel/JSON/PNG/SVG via `generateServerArtifact` and wired through `src/app/api/visualizations/route.ts` with Firebase Storage persistence and signed URLs.
   - Client-side SVG export now supports `includeStyles` to inline computed styles for standalone fidelity.
   - Tests added: unit and integration coverage for artifact-present and server-rendered flows.
+  - Stale "placeholder" comments in the visualizations route and export manager were removed/clarified; no functional gaps remained.
 
 - [P2 → Partial] Automation scheduling
   - Implemented a scheduled Cloud Function to run due automation recipes; manual `/api/automation/run-due` deprecated (410).
@@ -54,6 +55,9 @@ Legend
 - [New] Streaming mock user gated
   - File: `src/app/api/streaming/real-time/route.ts` uses a mock user only when `allowStreamingMockUser()` permits it; otherwise returns 401. Aligns with provenance and safety guidance.
 
+- [Docs update] Status documents synchronized
+  - Files: `.github/copilot-instructions.md` and `archey/ADDENDUM_2025-08-12.md` updated to reflect that the AI memory adapter is now implemented with env-driven providers and retains a mock fallback. Minor finance/visualization notes aligned with current gating and provenance.
+
 - [Resolved] Deprecated mobile nav test page
   - File: `src/app/mobile-nav-test/page.tsx` now redirects to `/`, removing experimental content.
 
@@ -69,7 +73,7 @@ Legend
 - [Resolved] `src/lib/visualizations/chart-export-manager.ts`: Implements PDF/Excel/JSON/PNG/SVG buffer generation, including SVG→PNG via sharp.
 - [Resolved] Client engine `d3-visualization-engine.ts`: exportAsSVG ensures width/height/background and now supports `includeStyles` to inline styles; avoids DOM mutation and uses robust base64/XMLSerializer fallback.
 - [P3] `src/components/ui/chart-components.tsx`: `Progress` still a simple stub; acceptable for now.
-- [P3] `src/app/api/visualizations/route.ts`: comment mentions "PDF placeholder" near server export section; reconcile comments with implemented artifact generation to avoid confusion.
+- [Resolved] Comments in `src/app/api/visualizations/route.ts` and export manager that referenced "placeholder" were reconciled with the implemented artifact generation to avoid confusion.
 
 ### Automation
 
@@ -80,8 +84,7 @@ Legend
 
 ### Chat and media
 
-- [Resolved] `src/components/chat/CustomerChatBot.tsx`: Image/audio uploads are implemented with Storage, quota checks, and persistence to `/api/chat/customer`.
-- [P3] `src/components/chat/CustomerChatBot.tsx`: One block notes a basic placeholder voice note recorder; verify all paths hit backend upload and remove outdated placeholder comments.
+- [Resolved] `src/components/chat/CustomerChatBot.tsx`: Image/audio uploads are implemented with Storage, quota checks, and persistence to `/api/chat/customer`. Outdated placeholder comment in the voice recorder block was removed; restore/pagination now preserve attachment type/mediaUrl.
 
 ### AI and functions
 
@@ -112,7 +115,7 @@ Legend
 - [Resolved] `src/app/mobile-nav-test/page.tsx`: Deprecated page replaced with server redirect to `/`.
 - [P3 → Secured] `src/app/api/streaming/real-time/route.ts`: Mock user gated by `allowStreamingMockUser()`; returns 401 when disabled.
 - [P3] `src/context/AuthContext.tsx`: Development mock auth event bridge; ensure disabled in production builds and documented.
-- [P3] `src/app/api/table-data/route.ts`: Deterministic generator used as fallback; ensure comments clearly state when it triggers and that provenance marks mock vs live.
+- [Resolved] `src/app/api/table-data/route.ts`: Deterministic generator retained as fallback; JSON responses are wrapped with provenance and CSV responses include `x-provenance`. Comments clarify when fallback triggers and how provenance marks live vs synthetic.
 - [P3] `src/app/(app)/insights/page.tsx`: Fallback to stub util allowed; add provenance and visibility gating if exposed to non-admin.
 - [P3] `src/components/neuroseo/NeuroSEOEnhancedComponents.tsx`: Mock scores for demo; keep behind feature flag or replace with signals.
 

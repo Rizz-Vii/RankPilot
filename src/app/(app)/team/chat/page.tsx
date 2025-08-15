@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -435,6 +436,7 @@ export default function TeamChatPage() {
   };
 
   return (
+    <FeatureGate feature="team_management" requiredTier="agency" showUpgrade>
     <main className="container mx-auto py-4 sm:py-6 flex flex-col h-[calc(100vh-6rem)] overscroll-contain">
       <ToolPageHeader
         title="Team Chat"
@@ -513,9 +515,9 @@ export default function TeamChatPage() {
                       </AvatarFallback>
                     </Avatar>
                     <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${
-                      user.status === 'online' ? 'bg-green-500' :
-                      user.status === 'away' ? 'bg-yellow-500' :
-                      user.status === 'busy' ? 'bg-red-500' : 'bg-gray-400'
+                      user.status === 'online' ? 'bg-success' :
+                      user.status === 'away' ? 'bg-warning' :
+                      user.status === 'busy' ? 'bg-destructive' : 'bg-muted'
                     }`} />
                   </div>
                   <span className="text-sm truncate">{user.userName}</span>
@@ -795,5 +797,6 @@ export default function TeamChatPage() {
         </DialogContent>
       </Dialog>
   </main>
+  </FeatureGate>
   );
 }

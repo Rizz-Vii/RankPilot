@@ -5,6 +5,9 @@
 
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { NextRequest, NextResponse } from 'next/server';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
+import { recordRouteLatency, recordError, recordRateLimitRejection } from '@/lib/metrics/unified-metrics';
+import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
 
 // Types
 interface AdminChatRequest {
@@ -23,7 +26,8 @@ interface ChatResponse {
     };
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withProvenance(async function POST(request: NextRequest) {
+    const start = Date.now();
     try {
         // Parse request body
         const body: AdminChatRequest = await request.json();
@@ -52,8 +56,27 @@ export async function POST(request: NextRequest) {
             const decoded = await adminAuth.verifyIdToken(idToken);
             uid = decoded.uid;
         } catch (e) {
-            return NextResponse.json({ error: 'Invalid or expired token. Try reloading to refresh your session.' }, { status: 401 });
+            recordError('chat/admin', '4xx_user');
+            recordRouteLatency('chat/admin', Date.now() - start);
+            return NextResponse.json(enforceProvenance({ error: 'Invalid or expired token. Try reloading to refresh your session.', provenance: 'synthetic' }, { path: 'chat/admin' }), { status: 401 });
         }
+
+        // Optional team-aware rate limiting (when user has teamId)
+        try {
+            const userDoc = await adminDb.collection('users').doc(uid).get();
+            const teamId = userDoc.exists ? (userDoc.data() as any)?.teamId : undefined;
+            if (teamId) {
+                try { await enforceTeamRateLimit(adminDb as any, teamId, { routeKey: 'chat/admin' }); }
+                catch (e: any) {
+                    if (e instanceof TeamRateLimitError) {
+                        recordRateLimitRejection('chat/admin');
+                        recordRateLimitRejection(`team:${teamId}`);
+                        recordRouteLatency('chat/admin', Date.now() - start);
+                        return NextResponse.json(enforceProvenance({ error: 'rate_limited', retryAfter: e.retryAfterSeconds, provenance: 'synthetic' }, { path: 'chat/admin' }), { status: 429, headers: { 'Retry-After': String(e.retryAfterSeconds) } });
+                    }
+                }
+            }
+        } catch { /* ignore */ }
 
         const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'rankpilot-h3jpc';
         const region = 'australia-southeast2';
@@ -77,7 +100,9 @@ export async function POST(request: NextRequest) {
                 }),
             });
         } catch (e) {
-            return NextResponse.json({ error: 'Admin chat service unreachable' }, { status: 503 });
+            recordError('chat/admin', '5xx_server');
+            recordRouteLatency('chat/admin', Date.now() - start);
+            return NextResponse.json(enforceProvenance({ error: 'Admin chat service unreachable', provenance: 'synthetic' }, { path: 'chat/admin' }), { status: 503 });
         }
 
         const rawText = await res.text();
@@ -93,15 +118,21 @@ export async function POST(request: NextRequest) {
                 : code === 403
                     ? ' (forbidden: check Function auth and App Check settings)'
                     : '';
-            return NextResponse.json({ error: `${errMsg}${hint}` }, { status: code });
+            if (code >= 500) recordError('chat/admin', '5xx_server'); else if (code >= 400) recordError('chat/admin', '4xx_user');
+            recordRouteLatency('chat/admin', Date.now() - start);
+            return NextResponse.json(enforceProvenance({ error: `${errMsg}${hint}`, upstreamStatus: res.status, provenance: 'synthetic' }, { path: 'chat/admin' }), { status: code });
         }
 
         const data: ChatResponse = payload?.result || payload?.data || payload;
         if (!data) {
-            return NextResponse.json({ error: 'Invalid response from admin chat service' }, { status: 502 });
+            recordError('chat/admin', '5xx_server');
+            recordRouteLatency('chat/admin', Date.now() - start);
+            return NextResponse.json(enforceProvenance({ error: 'Invalid response from admin chat service', provenance: 'synthetic' }, { path: 'chat/admin' }), { status: 502 });
         }
 
-        return NextResponse.json(data);
+        const resp = NextResponse.json(enforceProvenance({ ...data, provenance: 'live' }, { path: 'chat/admin' }));
+        recordRouteLatency('chat/admin', Date.now() - start);
+        return resp;
 
     } catch (error) {
         console.error('Admin chat API error:', error);
@@ -112,37 +143,33 @@ export async function POST(request: NextRequest) {
 
             switch (firebaseError.code) {
                 case 'unauthenticated':
-                    return NextResponse.json(
-                        { error: 'Authentication required' },
-                        { status: 401 }
-                    );
+                    recordError('chat/admin', '4xx_user');
+                    recordRouteLatency('chat/admin', Date.now() - start);
+                    return NextResponse.json(enforceProvenance({ error: 'Authentication required', provenance: 'synthetic' }, { path: 'chat/admin' }), { status: 401 });
                 case 'permission-denied':
-                    return NextResponse.json(
-                        { error: 'Admin access required' },
-                        { status: 403 }
-                    );
+                    recordError('chat/admin', '4xx_user');
+                    recordRouteLatency('chat/admin', Date.now() - start);
+                    return NextResponse.json(enforceProvenance({ error: 'Admin access required', provenance: 'synthetic' }, { path: 'chat/admin' }), { status: 403 });
                 case 'invalid-argument':
-                    return NextResponse.json(
-                        { error: 'Invalid request data' },
-                        { status: 400 }
-                    );
+                    recordError('chat/admin', '4xx_user');
+                    recordRouteLatency('chat/admin', Date.now() - start);
+                    return NextResponse.json(enforceProvenance({ error: 'Invalid request data', provenance: 'synthetic' }, { path: 'chat/admin' }), { status: 400 });
                 default:
-                    return NextResponse.json(
-                        { error: 'Admin chat service unavailable' },
-                        { status: 503 }
-                    );
+                    recordError('chat/admin', '5xx_server');
+                    recordRouteLatency('chat/admin', Date.now() - start);
+                    return NextResponse.json(enforceProvenance({ error: 'Admin chat service unavailable', provenance: 'synthetic' }, { path: 'chat/admin' }), { status: 503 });
             }
         }
 
-        return NextResponse.json(
-            { error: 'Internal server error' },
-            { status: 500 }
-        );
+        recordError('chat/admin', '5xx_server');
+        recordRouteLatency('chat/admin', Date.now() - start);
+        return NextResponse.json(enforceProvenance({ error: 'Internal server error', provenance: 'synthetic' }, { path: 'chat/admin' }), { status: 500 });
     }
-}
+}, { path: 'chat/admin' });
 
 // GET endpoint for admin chat history
-export async function GET(request: NextRequest) {
+export const GET = withProvenance(async function GET(request: NextRequest) {
+    const start = Date.now();
     try {
         const { searchParams } = new URL(request.url);
         const sessionId = searchParams.get('sessionId');
@@ -151,10 +178,9 @@ export async function GET(request: NextRequest) {
         // Get user from authentication
         const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json(
-                { error: 'Authentication required' },
-                { status: 401 }
-            );
+            recordError('chat/admin', '4xx_user');
+            recordRouteLatency('chat/admin', Date.now() - start);
+            return NextResponse.json(enforceProvenance({ error: 'Authentication required', provenance: 'synthetic' }, { path: 'chat/admin' }), { status: 401 });
         }
 
         const idToken = authHeader.split(' ')[1];
@@ -214,17 +240,19 @@ export async function GET(request: NextRequest) {
             });
         });
 
-        return NextResponse.json({
+        const resp = NextResponse.json(enforceProvenance({
             messages,
             sessionId: currentSessionId,
             hasMore: false,
-        });
+            provenance: 'live'
+        }, { path: 'chat/admin' }));
+        recordRouteLatency('chat/admin', Date.now() - start);
+        return resp;
 
     } catch (error) {
         console.error('Admin chat history API error:', error);
-        return NextResponse.json(
-            { error: 'Failed to retrieve admin chat history' },
-            { status: 500 }
-        );
+        recordError('chat/admin', '5xx_server');
+        recordRouteLatency('chat/admin', Date.now() - start);
+        return NextResponse.json(enforceProvenance({ error: 'Failed to retrieve admin chat history', provenance: 'synthetic' }, { path: 'chat/admin' }), { status: 500 });
     }
-}
+}, { path: 'chat/admin' });

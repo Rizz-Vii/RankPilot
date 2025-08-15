@@ -20,9 +20,9 @@ const sizeClasses = {
 
 const colorClasses = {
     primary: 'text-blue-600',
-    secondary: 'text-gray-600',
+    secondary: 'text-muted-foreground',
     white: 'text-white',
-    gray: 'text-gray-400',
+    gray: 'text-muted-foreground',
 };
 
 export function LoadingSpinner({

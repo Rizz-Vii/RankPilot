@@ -57,6 +57,19 @@ jobs:
           PROV_STRICT=1 npm run test:provenance-audit
           echo "✅ Provenance strict audit passed (staging gate)" >> $GITHUB_STEP_SUMMARY
 
+      - name: 🌐 Runtime Provenance Audit (Non-blocking)
+        env:
+          PROV_ORIGIN: ${{ env.PERFORMANCE_URL }}
+          PROV_REQUIRE_SERVER: "1"
+          PROV_TIMEOUT_MS: "20000"
+        run: |
+          echo "## 🌐 Runtime Provenance Audit (Staging URL)" >> $GITHUB_STEP_SUMMARY
+          if npm run -s test:provenance-audit; then
+            echo "✅ Runtime provenance audit passed (staging)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Runtime provenance audit failed (non-blocking, staging)" >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: �🧪 Full Integration Test Suite
         run: |
           npm run test:role-based

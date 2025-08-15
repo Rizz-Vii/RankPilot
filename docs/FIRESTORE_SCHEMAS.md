@@ -124,3 +124,13 @@ Sorting: API prefers numeric shadows when present; falls back to parsing strings
 Scoping: API supports optional scoping via `teamId` and `userId` query params; when these are provided, synthetic fallback is disabled (returns empty if no scoped rows).
 Indexes: baseline queries sort by `metric`, `valueNum`, or `changeNum`. If scoping is used frequently, consider composite indexes `(teamId, valueNum)`, `(teamId, changeNum)`, `(teamId, metric)` and/or userId variants.
 Rollback: remove scoping filters and revert API route to deterministic mock (see CHANGE_LOG.md Data Source Swap section) if Firestore becomes unavailable.
+
+## neuralCrawlerResultsAgg (T14 Data Minimization)
+
+Purpose: Compact aggregate for neural crawler outputs replacing heavy `neuralCrawlerResults` (temporary dual-write).
+Required: `userId`, `url`, `wordCount`, `readingTime`, `version`, `createdAt`
+Optional: `historyId`, `imagesCount`, `linksInternal`, `linksExternal`, `titleLength`, `metaDescriptionLength`, `issuesCount`, `entitiesCount`, `headings{h1..h6 numeric}`
+Forbidden: full `content`, large arrays (`images[]`, `links[]`, `issues[]`, `entities[]`, `headings` strings) – counts only; derived ratios.
+Indexes: (userId, createdAt desc)
+Notes: Dual-write gated by `NEXT_PUBLIC_DATA_MIN_NEURAL_CRAWLER_DUAL_WRITE=1`. Read cutover flag `NEXT_PUBLIC_DATA_MIN_NEURAL_CRAWLER_READ_AGG=1` makes UI prefer this collection with legacy fallback for misses (during transition). After sustained zero-fallback verification, legacy writes will be pruned / disabled.
+Rollback: Delete collection; remove dual-write helper `src/lib/neural-crawler/aggregate.ts` and invocation in `neural-crawler/page.tsx`.

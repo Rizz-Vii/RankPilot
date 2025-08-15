@@ -32,14 +32,14 @@ export default function SiteIngestionAdminPage() {
       <div className="space-y-2">
         <input className="w-full border rounded px-2 py-1 text-sm" placeholder="https://example.com" value={baseUrl} onChange={e=>setBaseUrl(e.target.value)} />
         <div className="flex items-center gap-2">
-          <label className="text-xs text-gray-600">Max Pages</label>
+          <label className="text-xs text-muted-foreground">Max Pages</label>
           <input type="number" className="w-24 border rounded px-2 py-1 text-sm" value={maxPages} onChange={e=>setMaxPages(parseInt(e.target.value)||1)} />
         </div>
-        <button onClick={runIngestion} disabled={!baseUrl || status==='Running'} className="px-3 py-1 rounded bg-blue-600 text-white text-sm disabled:opacity-50">Ingest</button>
-        <div className="text-xs text-gray-600">Status: {status}</div>
+  <button onClick={runIngestion} disabled={!baseUrl || status==='Running'} className="px-3 py-1 rounded bg-primary text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50">Ingest</button>
+  <div className="text-xs text-muted-foreground">Status: {status}</div>
       </div>
       {result && (
-        <pre className="text-xs bg-gray-900 text-gray-100 p-3 rounded overflow-auto">{JSON.stringify(result, null, 2)}</pre>
+  <pre className="text-xs bg-secondary text-secondary-foreground p-3 rounded overflow-auto">{JSON.stringify(result, null, 2)}</pre>
       )}
     </div>
   );

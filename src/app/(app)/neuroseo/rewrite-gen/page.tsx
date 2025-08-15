@@ -39,6 +39,7 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { toast } from "sonner";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 
 interface ContentSuggestion {
   section: string;
@@ -313,6 +314,7 @@ export default function RewriteGenPage() {
   ] : [];
 
   return (
+    <FeatureGate feature="rewrite_gen" requiredTier="agency" showUpgrade>
     <main className="container mx-auto py-6 space-y-6">
       <ToolPageHeader
         title="RewriteGen™"
@@ -440,31 +442,31 @@ export default function RewriteGenPage() {
             <Card>
               <CardContent className="p-6">
                 <div className="text-center">
-                  <div className="text-5xl font-bold mb-2 text-orange-600">
+                  <div className="text-5xl font-bold mb-2 text-warning-foreground">
                     {currentResult.overallImprovementScore}/100
                   </div>
                   <p className="text-lg text-muted-foreground mb-4">Overall Improvement Score</p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
                     <div className="text-center">
-                      <div className="text-xl font-bold text-blue-600">
+                      <div className="text-xl font-bold text-primary">
                         +{currentResult.metrics.readabilityImprovement}%
                       </div>
                       <p className="text-sm text-muted-foreground">Readability</p>
                     </div>
                     <div className="text-center">
-                      <div className="text-xl font-bold text-green-600">
+                      <div className="text-xl font-bold text-success-foreground">
                         +{currentResult.metrics.seoOptimization}%
                       </div>
                       <p className="text-sm text-muted-foreground">SEO Score</p>
                     </div>
                     <div className="text-center">
-                      <div className="text-xl font-bold text-purple-600">
+                      <div className="text-xl font-bold text-accent-foreground">
                         +{currentResult.metrics.engagementBoost}%
                       </div>
                       <p className="text-sm text-muted-foreground">Engagement</p>
                     </div>
                     <div className="text-center">
-                      <div className="text-xl font-bold text-orange-600">
+                      <div className="text-xl font-bold text-warning-foreground">
                         +{currentResult.metrics.conversionPotential}%
                       </div>
                       <p className="text-sm text-muted-foreground">Conversion</p>
@@ -523,14 +525,14 @@ export default function RewriteGenPage() {
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                              <Label className="text-sm font-medium text-red-600">Original</Label>
-                              <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded text-sm mt-1">
+                              <Label className="text-sm font-medium text-destructive-foreground">Original</Label>
+                              <div className="p-3 bg-destructive/10 border border-destructive/40 rounded text-sm mt-1">
                                 {suggestion.originalText}
                               </div>
                             </div>
                             <div>
                               <div className="flex items-center justify-between">
-                                <Label className="text-sm font-medium text-green-600">Suggested</Label>
+                                <Label className="text-sm font-medium text-success-foreground">Suggested</Label>
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -544,7 +546,7 @@ export default function RewriteGenPage() {
                                   )}
                                 </Button>
                               </div>
-                              <div className="p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded text-sm mt-1">
+                              <div className="p-3 bg-success/10 border border-success/40 rounded text-sm mt-1 text-success-foreground/90">
                                 {suggestion.suggestedText}
                               </div>
                             </div>
@@ -552,20 +554,20 @@ export default function RewriteGenPage() {
 
                           <div className="space-y-2">
                             <div className="flex items-center gap-2 text-sm">
-                              <Lightbulb className="h-4 w-4 text-yellow-600" />
+                              <Lightbulb className="h-4 w-4 text-warning-foreground" />
                               <span className="font-medium">Reasoning:</span>
                               <span>{suggestion.reasoning}</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm">
-                              <TrendingUp className="h-4 w-4 text-green-600" />
+                              <TrendingUp className="h-4 w-4 text-success-foreground" />
                               <span className="font-medium">Expected Impact:</span>
                               <span>{suggestion.impact}</span>
                             </div>
                             {suggestion.wordCountChange !== 0 && (
                               <div className="flex items-center gap-2 text-sm">
-                                <BarChart3 className="h-4 w-4 text-blue-600" />
+                                <BarChart3 className="h-4 w-4 text-primary" />
                                 <span className="font-medium">Word Count Change:</span>
-                                <span className={suggestion.wordCountChange > 0 ? 'text-green-600' : 'text-red-600'}>
+                                <span className={suggestion.wordCountChange > 0 ? 'text-success-foreground' : 'text-destructive-foreground'}>
                                   {suggestion.wordCountChange > 0 ? '+' : ''}{suggestion.wordCountChange} words
                                 </span>
                               </div>
@@ -633,7 +635,7 @@ export default function RewriteGenPage() {
                               </div>
                             </div>
                             <div className="flex items-center gap-2 text-sm">
-                              <Lightbulb className="h-4 w-4 text-yellow-600" />
+                              <Lightbulb className="h-4 w-4 text-warning-foreground" />
                               <span className="font-medium">Why this works:</span>
                               <span>{title.reasoning}</span>
                             </div>
@@ -710,7 +712,7 @@ export default function RewriteGenPage() {
                               </div>
                             </div>
                             <div className="flex items-center gap-2 text-sm">
-                              <Lightbulb className="h-4 w-4 text-yellow-600" />
+                              <Lightbulb className="h-4 w-4 text-warning-foreground" />
                               <span className="font-medium">Analysis:</span>
                               <span>{meta.reasoning}</span>
                             </div>
@@ -733,11 +735,11 @@ export default function RewriteGenPage() {
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{keyword}</span>
                           <div className="flex items-center gap-4">
-                            <span className="text-sm text-red-600">
+                            <span className="text-sm text-destructive-foreground">
                               Original: {data.original.toFixed(1)}%
                             </span>
                             <ArrowRight className="h-4 w-4" />
-                            <span className="text-sm text-green-600">
+                            <span className="text-sm text-success-foreground">
                               Suggested: {data.suggested.toFixed(1)}%
                             </span>
                           </div>
@@ -762,7 +764,7 @@ export default function RewriteGenPage() {
                       ))}
                     </div>
                     <Alert className="mt-4">
-                      <Lightbulb className="h-4 w-4" />
+                      <Lightbulb className="h-4 w-4 text-warning-foreground" />
                       <AlertDescription>
                         Include these semantic keywords naturally throughout your content to improve topical relevance and search visibility.
                       </AlertDescription>
@@ -797,7 +799,7 @@ export default function RewriteGenPage() {
                             <ul className="text-sm mt-2 space-y-1">
                               {rec.examples.map((example, exIndex) => (
                                 <li key={exIndex} className="flex items-center gap-2">
-                                  <CheckCircle2 className="h-3 w-3 text-green-600" />
+                                  <CheckCircle2 className="h-3 w-3 text-success-foreground" />
                                   {example}
                                 </li>
                               ))}
@@ -814,5 +816,6 @@ export default function RewriteGenPage() {
         )}
       </AnimatePresence>
     </main>
+  </FeatureGate>
   );
 }

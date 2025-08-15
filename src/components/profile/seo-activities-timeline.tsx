@@ -70,17 +70,18 @@ export default function SEOActivitiesTimeline({
   };
 
   const getActivityBadgeColor = (type: string) => {
+    // Map activity types to semantic surfaces
     switch (type) {
       case "audit":
-        return "bg-blue-100 text-blue-800";
+        return "bg-primary/10 text-primary";
       case "keyword-research":
-        return "bg-green-100 text-green-800";
+        return "bg-success/15 text-success";
       case "serp-analysis":
-        return "bg-purple-100 text-purple-800";
+        return "bg-accent/10 text-accent";
       case "competitor-analysis":
-        return "bg-orange-100 text-orange-800";
+        return "bg-warning/15 text-warning";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-foreground";
     }
   };
 

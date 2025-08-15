@@ -55,7 +55,7 @@ export function LanguageSelector({
                 <select
                     value={language}
                     onChange={(e) => handleLanguageChange(e.target.value as SupportedLanguage)}
-                    className="text-sm bg-transparent border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="text-sm bg-transparent border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary font-body mobile-touch-target"
                     aria-label={translate('settings.selectLanguage')}
                 >
                     {availableLanguages.map((lang) => (
@@ -83,10 +83,10 @@ export function LanguageSelector({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                     {availableLanguages.map((lang) => (
-                        <DropdownMenuItem
-                            key={lang.code}
-                            onClick={() => handleLanguageChange(lang.code)}
-                            className="flex items-center justify-between cursor-pointer"
+                            <DropdownMenuItem
+                                key={lang.code}
+                                onClick={() => handleLanguageChange(lang.code)}
+                                className="flex items-center justify-between cursor-pointer font-body"
                         >
                             <div className="flex items-center gap-2">
                                 <span className="text-sm">{lang.nativeName}</span>
@@ -133,7 +133,7 @@ export function LanguageSelector({
                     <DropdownMenuItem
                         key={lang.code}
                         onClick={() => handleLanguageChange(lang.code)}
-                        className="flex items-center justify-between cursor-pointer p-3"
+                                className="flex items-center justify-between cursor-pointer p-3 font-body"
                     >
                         <div className="flex flex-col">
                             <span className="text-sm font-medium">{lang.nativeName}</span>

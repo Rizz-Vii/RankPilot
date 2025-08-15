@@ -1,0 +1,25 @@
+name: Provenance Audit (Runtime)
+
+on:
+  workflow_dispatch:
+    inputs:
+      origin:
+        description: 'Preview origin URL'
+        required: true
+        default: 'https://example-preview.web.app'
+
+jobs:
+  provenance-audit-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - name: Runtime provenance audit
+        env:
+          PROV_ORIGIN: ${{ github.event.inputs.origin }}
+          PROV_REQUIRE_SERVER: '1'
+          PROV_STRICT: '1'
+        run: npm run test:provenance-audit:runtime

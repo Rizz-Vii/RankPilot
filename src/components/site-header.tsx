@@ -113,7 +113,7 @@ export default function SiteHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md px-2 py-1"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md px-2 py-1 font-body mobile-touch-target"
               >
                 {translate(item.label)}
               </Link>
@@ -257,9 +257,9 @@ export default function SiteHeader() {
                   {translate('nav.features')}
                 </Link>
                 {/* Streamlined CTA: remove muted login button per request; keep single primary trial entry */}
-                <EnhancedButton asChild>
-                  <Link href="/register">{translate('cta.startFreeTrial')}</Link>
-                </EnhancedButton>
+                  <EnhancedButton asChild className="mobile-touch-target" aria-label="Start Free Trial" role="button">
+                    <Link href="/register">{translate('cta.startFreeTrial')}</Link>
+                  </EnhancedButton>
               </div>
             )}
           </div>

@@ -177,7 +177,7 @@ export const EnhancedStatusCard: React.FC<StatusCardProps> = ({
             {lastUpdated && (
                 <p className={cn(
                     typography.ui.caption,
-                    'border-t border-gray-100 pt-3'
+                    'border-t border-border pt-3'
                 )}>
                     Last updated: {lastUpdated}
                 </p>
@@ -254,7 +254,7 @@ export const EnhancedProjectCard: React.FC<ProjectCardProps> = ({
                     <span className={typography.ui.label}>Progress</span>
                     <span className={typography.card.metric}>{progress}%</span>
                 </div>
-                <div className={"w-full bg-gray-200 rounded-full h-2"}>
+                <div className={"w-full bg-muted rounded-full h-2"}>
                     <div
                         className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${progress}%` }}
@@ -282,12 +282,12 @@ export const EnhancedProjectCard: React.FC<ProjectCardProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+            <div className="flex items-center justify-between pt-4 border-t border-border">
                 <div className="flex -space-x-2">
                     {team.slice(0, 3).map((member, index) => (
                         <div
                             key={index}
-                            className={"w-8 h-8 rounded-full bg-gray-300 border-2 border-white flex items-center justify-center"}
+                            className={"w-8 h-8 rounded-full bg-muted border-2 border-background flex items-center justify-center"}
                         >
                             <span className={"text-xs font-medium " + colors.text.primary}>
                                 {member.name.charAt(0)}

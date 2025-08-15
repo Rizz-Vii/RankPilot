@@ -156,13 +156,13 @@ export default function DocumentationPage() {
         custom={5}
       >
         <div className="max-w-4xl mx-auto">
-          <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+          <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground">
             <CardContent className="p-8">
               <div className="text-center">
                 <h2 className="text-2xl font-bold mb-4">
                   Need Help Getting Started?
                 </h2>
-                <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
+                <p className="text-primary/25 mb-6 max-w-2xl mx-auto">
                   Our AI-powered support system can help you find exactly what
                   you need in seconds.
                 </p>

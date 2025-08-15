@@ -6,6 +6,8 @@ import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { QuotaBar } from '@/components/metrics/QuotaBar';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
 import { allowFinanceMocks } from '@/lib/flags/finance';
+import { Alert } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 import { fetchFinanceMetrics, subscribeFinanceMetrics, AggregatedFinanceMetrics } from '@/lib/services/finance-metrics.service';
 import { fetchRecentFinanceRevenueSnapshots, fetchLatestFinanceInvoiceAging } from '@/lib/services/finance-automation-snapshots';
@@ -149,7 +151,7 @@ export default function FinanceDashboardRoot() {
   useEffect(()=> { if(initialLoading) return; if(metrics) markLive(); else markFallback(); }, [initialLoading, metrics, markLive, markFallback]);
 
   return (
-    <FeatureGate feature="finance_billing_overview" requiredTier="starter" showUpgrade>
+  <FeatureGate feature="finance_dashboard" requiredTier="starter" showUpgrade>
       <FinanceContextProvider data={metrics} months={months} refreshing={refreshing}>
     <SuiteAccentProvider value="finance">
   <DashboardSurface as="section" aria-label="Finance dashboard surface" className="p-6 space-y-10">
@@ -168,6 +170,16 @@ export default function FinanceDashboardRoot() {
               <Button size="sm" onClick={handleRefresh} disabled={refreshing} className={cn('gap-1', refreshing && 'animate-pulse')} aria-live="polite" aria-busy={refreshing}><RefreshCw className={cn('h-4 w-4', refreshing && 'animate-spin')} />{refreshing? 'Refreshing':'Refresh'}</Button>
             </div>
           </ToolPageHeader>
+          {allowFinanceMocks() && (!metrics || !metrics.kpis?.length) && (
+            <Alert className="border-warning/30 bg-warning/15 text-warning-foreground dark:bg-warning/20 dark:text-warning-foreground" aria-live="polite" aria-label="Finance mock data banner">
+              <div className="flex items-start gap-3 text-sm">
+                <AlertTriangle className="h-4 w-4 mt-0.5" />
+                <p>
+                  Finance metrics are currently served from mock data (FINANCE_MOCK_MODE). This banner disappears once live metrics load or mocks are disabled.
+                </p>
+              </div>
+            </Alert>
+          )}
           <ProvenanceLegend />
           <div className="sr-only" role="status" aria-live="polite">Finance summary: MRR {summary.mrr.toLocaleString()}, churn {summary.churn} percent, LTV {summary.ltv.toLocaleString()}.</div>
 

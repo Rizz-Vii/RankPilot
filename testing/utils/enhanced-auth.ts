@@ -146,11 +146,27 @@ export class EnhancedAuth {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(`❌ Login failed for ${targetUser.displayName}:`, errorMessage);
 
-      // Capture debug screenshot
-      await this.page.screenshot({
-        path: `test-results/login-failure-${targetUser.tier}-${Date.now()}.png`,
-        fullPage: true
-      });
+      // Capture debug screenshot (best-effort) — guard against renderer crashes
+      try {
+        if (!this.page.isClosed()) {
+          await this.page.screenshot({
+            path: `test-results/login-failure-${targetUser.tier}-${Date.now()}.png`,
+            fullPage: true
+          });
+        } else {
+          // Try a minimal fallback using any open page in the context
+          const pages = this.page.context()?.pages?.() || [];
+          const fallback = pages.find(p => !p.isClosed());
+          if (fallback) {
+            await fallback.screenshot({
+              path: `test-results/login-failure-fallback-${targetUser.tier}-${Date.now()}.png`,
+              fullPage: true
+            }).catch(() => { });
+          }
+        }
+      } catch (screenshotErr) {
+        console.warn('⚠️ Failed to capture failure screenshot (page may have crashed).');
+      }
 
       throw new Error(`Authentication failed for ${targetUser.tier} user: ${errorMessage}`);
     }

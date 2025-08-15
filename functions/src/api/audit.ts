@@ -1,6 +1,15 @@
 import { HttpsOptions, onCall, HttpsError } from "firebase-functions/v2/https";
 import { createHash } from 'crypto';
-import { getAI } from "../ai/genkit";
+// Indirect AI import so unit tests can stub via global.__genkit or env GENKIT_TEST_STUB
+let __aiMod: any = null;
+function getAIWrapper() {
+  if (process.env.GENKIT_TEST_STUB === '1') {
+    return { generate: async () => ({ text: () => null }) };
+  }
+  if (__aiMod) return __aiMod;
+  try { __aiMod = require('../ai/genkit').getAI(); } catch { __aiMod = { generate: async () => ({ text: () => null }) }; }
+  return __aiMod;
+}
 import { getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import * as cheerio from 'cheerio';
@@ -283,7 +292,7 @@ type CrawlResult = z.infer<typeof CrawlResultSchema>;
  * @param {Object} request - The Cloud Function request object
  * @return {Promise<AuditResponse>} The SEO audit results
  */
-export const runSeoAudit = onCall(httpsOptions, async (request) => {
+async function coreSeoAudit(request: any) {
   const start = Date.now();
   const { url, depth = 1, checkMobile = true, plan, forceFresh, teamId, debugTeamLimit } = request.data as AuditRequest & { plan?: string; forceFresh?: boolean; teamId?: string; debugTeamLimit?: number };
   if (!url || typeof url !== 'string') {
@@ -420,7 +429,7 @@ REQUIREMENTS:
 ONLY JSON, no prose outside JSON.`;
 
     // AI call with strict schema validation
-    const ai = getAI();
+    const ai = getAIWrapper();
     let aiRaw: any = undefined;
     try { const gen = await ai.generate(prompt); aiRaw = gen?.text(); } catch (aiErr) { console.warn('ai_generate_failed', (aiErr as any)?.message); }
     logPhase('ai_complete', { url: normalizedUrl, usedAI: !!aiRaw });
@@ -609,10 +618,12 @@ ONLY JSON, no prose outside JSON.`;
     logPhase('fallback', { url: normalizedUrl });
     return { ...fallback, ephemeralMetrics: { cacheHitRate: metrics.cacheHitRate, avgProcessingTime: metrics.avgProcessingTime } };
   }
-});
+}
+export const runSeoAudit = onCall(httpsOptions, async (request) => coreSeoAudit(request));
 
 // Test helper for invoking callable without Firebase function harness
 export async function __testRunSeoAudit(data: any, auth?: any) {
+  if (process.env.GENKIT_TEST_STUB === '1') return coreSeoAudit({ data, auth });
   return (runSeoAudit as any)({ data, auth });
 }
 

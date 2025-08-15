@@ -67,15 +67,15 @@ export default function BlogPage() {
   const getCategoryColor = (category: string) => {
     switch (category) {
       case "Technical SEO":
-        return "bg-blue-100 text-blue-800";
+        return "bg-primary/10 text-primary";
       case "AI & Technology":
-        return "bg-purple-100 text-purple-800";
+        return "bg-accent/10 text-accent-foreground";
       case "Analytics":
-        return "bg-green-100 text-green-800";
+        return "bg-success/10 text-success-foreground";
       case "Strategy":
-        return "bg-orange-100 text-orange-800";
+        return "bg-warning/10 text-warning-foreground";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-foreground";
     }
   };
 

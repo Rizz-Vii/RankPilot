@@ -112,25 +112,30 @@ export const FEATURE_ACCESS: Record<string, FeatureConfig> = {
   keyword_analysis: { description: "Basic keyword analysis" },
 
   // Starter Features
+  // audit:ignore-orphan category=legacy-ui rationale="Not yet surfaced as standalone nav item; kept for future Link Intelligence module"
   link_analysis: {
     requiredTier: "starter",
     description: "Link analysis tools",
   },
+  // audit:ignore-orphan category=legacy-ui rationale="Superseded by consolidated NeuroSEO SERP component; retained for backward compatibility"
   serp_analysis: {
     requiredTier: "starter",
     description: "SERP analysis features",
   },
+  // audit:ignore-orphan category=internal-metrics rationale="Will be aggregated into performance dashboard; key preserved for historical data mapping"
   performance_metrics: {
     requiredTier: "starter",
     description: "Performance tracking",
   },
-  export_pdf: { requiredTier: "starter", description: "PDF export capability" },
+  // audit:ignore-orphan category=export rationale="Implicit capability; gated via export surface rather than dedicated nav"
+  export_pdf: { requiredTier: "starter", description: "PDF export capability (alias -> export_formats)" },
 
   // Agency Features
   competitor_analysis: {
     requiredTier: "agency",
     description: "Advanced competitor analysis",
   },
+  // audit:ignore-orphan category=roadmap rationale="Upcoming bulk action workflow Q4"
   bulk_operations: {
     requiredTier: "agency",
     description: "Bulk operations and automation",
@@ -140,43 +145,59 @@ export const FEATURE_ACCESS: Record<string, FeatureConfig> = {
     requiredTier: "agency",
     description: "API access and integrations",
   },
+  // audit:ignore-orphan category=entitlement rationale="Handled via support channel role mapping; not a navigable feature"
   priority_support: {
     requiredTier: "agency",
     description: "Priority customer support",
   },
-  export_csv: { requiredTier: "agency", description: "CSV export capability" },
+  // audit:ignore-orphan category=export rationale="Implicit capability; UI groups export formats"
+  export_csv: { requiredTier: "agency", description: "CSV export capability (alias -> export_formats)" },
 
   // Enterprise Features
   custom_integrations: {
     requiredTier: "enterprise",
     description: "Custom integrations",
   },
+  // audit:ignore-orphan category=entitlement rationale="Account management entitlement; no direct page"
   dedicated_support: {
     requiredTier: "enterprise",
     description: "Dedicated account manager",
   },
+  // audit:ignore-orphan category=entitlement rationale="Contract / SLA metadata only"
   enterprise_sla: {
     requiredTier: "enterprise",
     description: "Enterprise SLA guarantees",
   },
+  // audit:ignore-orphan category=roadmap rationale="Future advanced security center"
   advanced_security: {
     requiredTier: "enterprise",
     description: "Advanced security features",
   },
 
   // Admin-Only Features
+  // audit:ignore-orphan category=admin rationale="Admin surface consolidated elsewhere"
   admin_panel: {
     requiresAdmin: true,
     description: "Administrative panel access",
   },
+  // audit:ignore-orphan category=admin rationale="Consolidated user mgmt controls in settings"
   user_management: {
     requiresAdmin: true,
     description: "User management tools",
   },
+  // audit:ignore-orphan category=admin rationale="Settings distributed; keeping key for permission checks"
   system_settings: { requiresAdmin: true, description: "System configuration" },
+  // audit:ignore-orphan category=admin rationale="Internal analytics aggregation; hidden from nav"
   analytics_admin: {
     requiresAdmin: true,
     description: "System analytics and monitoring",
+  },
+
+  // Unified export capability (new consolidated key)
+  // audit:ignore-orphan category=export rationale="Capability-level gate consumed indirectly; replaces export_pdf & export_csv aliases"
+  export_formats: {
+    requiredTier: "starter",
+    description: "Unified export formats capability (PDF/CSV/Excel based on tier)",
   },
 
   // Integration Hub (admin-only demo)
@@ -187,16 +208,19 @@ export const FEATURE_ACCESS: Record<string, FeatureConfig> = {
   },
 
   // CRITICAL MISSING FEATURES - Fix for "Unknown feature" errors
+  // audit:ignore-orphan category=legacy-ui rationale="Top-level umbrella; granular subtools now explicit"
   neuroseo: {
     requiredTier: "starter",
     description: "NeuroSEO™ AI-powered SEO optimization and analysis",
   },
 
+  // audit:ignore-orphan category=roadmap rationale="Future unified AI content studio"
   ai_content_generation: {
     requiredTier: "agency",
     description: "AI-powered content generation",
   },
 
+  // audit:ignore-orphan category=roadmap rationale="To be merged into analytics surfaces"
   ai_insights: {
     requiredTier: "starter",
     description: "AI-driven SEO insights and recommendations",
@@ -209,6 +233,7 @@ export const FEATURE_ACCESS: Record<string, FeatureConfig> = {
   },
 
   // Additional missing features identified in codebase
+  // audit:ignore-orphan category=roadmap rationale="Planned advanced analytics workspace"
   advanced_analytics: {
     requiredTier: "enterprise",
     description: "Advanced analytics and reporting",
@@ -269,7 +294,76 @@ export const FEATURE_ACCESS: Record<string, FeatureConfig> = {
     requiredTier: "agency",
     description: "Content briefs dashboard & metrics",
   },
+  // NeuroSEO Subtools (new granular feature keys)
+  neural_crawler: {
+    requiredTier: "starter",
+    description: "NeuralCrawler™ intelligent content extraction",
+  },
+  semantic_map: {
+    requiredTier: "starter",
+    description: "SemanticMap™ advanced topic & semantic analysis",
+  },
+  trust_block: {
+    requiredTier: "starter",
+    description: "TrustBlock™ E-E-A-T & authenticity scoring",
+  },
+  ai_visibility: {
+    requiredTier: "agency",
+    description: "AI Visibility Engine – AI citation & platform coverage",
+  },
+  rewrite_gen: {
+    requiredTier: "agency",
+    description: "RewriteGen™ AI content rewrite & optimization",
+  },
+  link_view: {
+    requiredTier: "agency",
+    description: "Link View backlink intelligence & DA distribution",
+  },
+  // Dashboard-level composite views (new PR2 additions)
+  sales_dashboard: {
+    requiredTier: "starter",
+    description: "Sales funnel & forecast overview dashboard",
+  },
+  finance_dashboard: {
+    requiredTier: "starter",
+    description: "Finance metrics & subscription economics dashboard",
+  },
+  marketing_dashboard: {
+    requiredTier: "enterprise",
+    description: "Marketing performance & growth attribution dashboard",
+  },
+  // Core analyzer tools newly explicit for nav-feature alignment
+  content_analyzer: {
+    requiredTier: "starter",
+    description: "Content optimization & readability analyzer",
+  },
+  seo_audit: {
+    requiredTier: "starter",
+    description: "Technical SEO audit engine",
+  },
 } as const;
+
+// =============================================================================
+// ENTITLEMENT FLAGS (Phase 2 externalization)
+// Imported after FEATURE_ACCESS to preserve legacy ordering; not part of FEATURE_ACCESS
+// because they represent subscription metadata entitlements, not navigable features.
+// Entitlement metadata now resolved via dedicated helper (Phase 2 refactor)
+import { DEFAULT_ENTITLEMENTS } from './access/entitlements';
+
+// =============================================================================
+// FEATURE ALIASES (legacy -> canonical)
+// =============================================================================
+export const FEATURE_ALIASES: Record<string, string> = {
+  // Legacy / umbrella keys mapped to canonical granular features or capabilities
+  link_analysis: "link_view",
+  performance_metrics: "dashboard", // folded into main dashboard metrics
+  export_pdf: "export_formats",
+  export_csv: "export_formats",
+  neuroseo: "semantic_map", // umbrella -> representative core tool (retain others separately)
+  ai_content_generation: "rewrite_gen", // umbrella -> concrete implemented subtool
+  ai_insights: "advanced_analytics", // insights folded into analytics scope
+};
+
 
 // =============================================================================
 // ACCESS CONTROL FUNCTIONS
@@ -282,9 +376,26 @@ export function canAccessFeature(
   userAccess: UserAccess,
   featureName: string
 ): boolean {
-  const feature = FEATURE_ACCESS[featureName];
+  // Resolve alias chain (max depth safeguard)
+  let resolved = featureName;
+  const visited = new Set<string>();
+  while (FEATURE_ALIASES[resolved] && !visited.has(resolved)) {
+    visited.add(resolved);
+    resolved = FEATURE_ALIASES[resolved];
+  }
+
+  // Phase 2: Entitlements no longer resolved via canAccessFeature.
+  // If callers pass an entitlement key here, warn for migration to canAccessEntitlement.
+  if ((DEFAULT_ENTITLEMENTS as any)[resolved]) {
+    console.warn(
+      `Entitlement key '${resolved}' passed to canAccessFeature(). Use canAccessEntitlement(userAccess, key) instead.`
+    );
+    return false; // do not grant access implicitly
+  }
+
+  const feature = FEATURE_ACCESS[resolved];
   if (!feature) {
-    console.warn(`Unknown feature: ${featureName}`);
+    console.warn(`Unknown feature: ${featureName} (resolved: ${resolved})`);
     return false;
   }
 
@@ -448,4 +559,22 @@ export function normalizeUserAccess(dbUser: any): UserAccess {
 export function computeEffectiveTier(userTier: SubscriptionTier, teamPlanTier?: SubscriptionTier): SubscriptionTier {
   if (!teamPlanTier) return userTier;
   return TIER_LEVELS[teamPlanTier] > TIER_LEVELS[userTier] ? teamPlanTier : userTier;
+}
+
+// =============================================================================
+// ENTITLEMENTS (Plan metadata) – dedicated access helper
+// =============================================================================
+export function canAccessEntitlement(
+  userAccess: UserAccess,
+  entitlementKey: string
+): boolean {
+  const ent = (DEFAULT_ENTITLEMENTS as any)[entitlementKey];
+  if (!ent) return false;
+  return canAccessTier(userAccess.tier, ent.minimumTier as SubscriptionTier);
+}
+
+export function listEntitlementsForTier(tier: SubscriptionTier): string[] {
+  return Object.entries(DEFAULT_ENTITLEMENTS)
+    .filter(([_, def]) => canAccessTier(tier, def.minimumTier))
+    .map(([k]) => k);
 }

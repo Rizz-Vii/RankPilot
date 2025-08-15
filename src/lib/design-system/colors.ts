@@ -7,104 +7,104 @@ export const colors = {
     // Status colors (semantic)
     status: {
         success: {
-            bg: 'bg-green-50',
-            text: 'text-green-700',
-            border: 'border-green-200',
-            badge: 'bg-green-100 text-green-800',
+            bg: 'bg-success/10',
+            text: 'text-success-foreground',
+            border: 'border-success/40',
+            badge: 'bg-success/15 text-success-foreground',
         },
         warning: {
-            bg: 'bg-amber-50',
-            text: 'text-amber-700',
-            border: 'border-amber-200',
-            badge: 'bg-amber-100 text-amber-800',
+            bg: 'bg-warning/10',
+            text: 'text-warning-foreground',
+            border: 'border-warning/40',
+            badge: 'bg-warning/15 text-warning-foreground',
         },
         error: {
-            bg: 'bg-red-50',
-            text: 'text-red-700',
-            border: 'border-red-200',
-            badge: 'bg-red-100 text-red-800',
+            bg: 'bg-destructive/10',
+            text: 'text-destructive-foreground',
+            border: 'border-destructive/40',
+            badge: 'bg-destructive/15 text-destructive-foreground',
         },
         info: {
-            bg: 'bg-blue-50',
-            text: 'text-blue-700',
-            border: 'border-blue-200',
-            badge: 'bg-blue-100 text-blue-800',
+            bg: 'bg-primary/10',
+            text: 'text-primary',
+            border: 'border-primary/40',
+            badge: 'bg-primary/15 text-primary',
         }
     },
 
     // Project status colors (from screenshots)
     projectStatus: {
         active: {
-            bg: 'bg-green-100',
-            text: 'text-green-800',
-            dot: 'bg-green-500',
+            bg: 'bg-success/10',
+            text: 'text-success-foreground',
+            dot: 'bg-success',
         },
         planning: {
-            bg: 'bg-blue-100',
-            text: 'text-blue-800',
-            dot: 'bg-blue-500',
+            bg: 'bg-primary/10',
+            text: 'text-primary',
+            dot: 'bg-primary',
         },
         completed: {
-            bg: 'bg-gray-100',
-            text: 'text-gray-800',
-            dot: 'bg-gray-500',
+            bg: 'bg-muted',
+            text: 'text-foreground',
+            dot: 'bg-muted-foreground',
         },
         high: {
-            bg: 'bg-orange-100',
-            text: 'text-orange-800',
-            dot: 'bg-orange-500',
+            bg: 'bg-warning/10',
+            text: 'text-warning-foreground',
+            dot: 'bg-warning',
         },
         medium: {
-            bg: 'bg-yellow-100',
-            text: 'text-yellow-800',
-            dot: 'bg-yellow-500',
+            bg: 'bg-accent/10',
+            text: 'text-accent-foreground',
+            dot: 'bg-accent',
         }
     },
 
     // System health colors
     health: {
         healthy: {
-            bg: 'bg-green-50',
-            text: 'text-green-700',
-            badge: 'bg-green-100 text-green-800 font-medium',
+            bg: 'bg-success/10',
+            text: 'text-success-foreground',
+            badge: 'bg-success/15 text-success-foreground font-medium',
         },
         warning: {
-            bg: 'bg-amber-50',
-            text: 'text-amber-700',
-            badge: 'bg-amber-100 text-amber-800 font-medium',
+            bg: 'bg-warning/10',
+            text: 'text-warning-foreground',
+            badge: 'bg-warning/15 text-warning-foreground font-medium',
         },
         critical: {
-            bg: 'bg-red-50',
-            text: 'text-red-700',
-            badge: 'bg-red-100 text-red-800 font-medium',
+            bg: 'bg-destructive/10',
+            text: 'text-destructive-foreground',
+            badge: 'bg-destructive/15 text-destructive-foreground font-medium',
         }
     },
 
     // Tier badges (from sidebar)
     tierBadges: {
-        ai: 'bg-purple-500 text-white px-2 py-1 rounded-md text-xs font-semibold',
-        enterprise: 'bg-blue-500 text-white px-2 py-1 rounded-md text-xs font-semibold',
-        agency: 'bg-green-500 text-white px-2 py-1 rounded-md text-xs font-semibold',
-        starter: 'bg-amber-500 text-white px-2 py-1 rounded-md text-xs font-semibold',
-        free: 'bg-gray-500 text-white px-2 py-1 rounded-md text-xs font-semibold',
+        ai: 'bg-accent text-accent-foreground px-2 py-1 rounded-md text-xs font-semibold',
+        enterprise: 'bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-semibold',
+        agency: 'bg-success text-success-foreground px-2 py-1 rounded-md text-xs font-semibold',
+        starter: 'bg-warning text-warning-foreground px-2 py-1 rounded-md text-xs font-semibold',
+        free: 'bg-muted text-foreground px-2 py-1 rounded-md text-xs font-semibold',
     },
 
     // Text colors with proper contrast
     text: {
-        primary: 'text-gray-900',
-        secondary: 'text-gray-600',
-        muted: 'text-gray-500',
-        inverse: 'text-white',
-        link: 'text-blue-600 hover:text-blue-700',
+        primary: 'text-foreground',
+        secondary: 'text-muted-foreground',
+        muted: 'text-muted-foreground',
+        inverse: 'text-primary-foreground',
+        link: 'text-primary hover:text-primary/80',
     },
 
     // Background colors
     background: {
-        primary: 'bg-white',
-        secondary: 'bg-gray-50',
-        muted: 'bg-gray-100',
-        dark: 'bg-gray-900',
-        card: 'bg-white border border-gray-200',
+        primary: 'bg-background',
+        secondary: 'bg-muted',
+        muted: 'bg-muted/60',
+        dark: 'bg-foreground/5',
+        card: 'bg-card border border-border',
     }
 } as const;
 

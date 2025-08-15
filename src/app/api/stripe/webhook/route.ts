@@ -1,5 +1,29 @@
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, addDoc, collection, getDocs, query, where, getDoc, setDoc } from 'firebase/firestore';
+// NOTE: Functions env centralizes invoice persistence. For ISR / local dev parity we duplicate minimal upsert using client Firestore.
+async function upsertFinanceInvoiceClient(invoice: any) {
+    try {
+        const customerId = invoice.customer as string | undefined;
+        if (!customerId) return;
+        const usersQ = query(collection(db, 'users'), where('stripeCustomerId', '==', customerId));
+        const snap = await getDocs(usersQ);
+        if (snap.empty) return;
+        const userId = snap.docs[0].id;
+        const period = new Date(((invoice.period_end || invoice.created) * 1000)).toISOString().slice(0, 7);
+        const status = invoice.status || 'open';
+        const amount = (invoice.amount_paid || invoice.amount_due || 0) / 100;
+        const issuedAt = new Date(invoice.created * 1000);
+        const dueAt = invoice.due_date ? new Date(invoice.due_date * 1000) : null;
+        const paidAt = invoice.status === 'paid' && invoice.status_transitions?.paid_at ? new Date(invoice.status_transitions.paid_at * 1000) : null;
+        const firstLine: any = invoice.lines?.data?.[0];
+        const planTier = firstLine?.price?.metadata?.planTier || invoice.metadata?.planTier || null;
+        const ref = doc(db, 'financeInvoices', invoice.id);
+        // merge keeps createdAt if exists
+        await setDoc(ref, { userId, period, amount, status, issuedAt, dueAt, paidAt, planTier, currency: invoice.currency, updatedAt: new Date(), createdAt: new Date() }, { merge: true });
+    } catch (e) {
+        getLogger('stripe-webhook').degraded('invoice.upsert.client_failed', { invoiceId: invoice.id, error: (e as Error).message });
+    }
+}
 import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { getLogger } from '@/lib/logging/app-logger';
@@ -35,6 +59,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ received: true, duplicate: true });
         }
         switch (event.type) {
+            // TODO(T6): unify financeInvoices upsert with functions webhook implementation (invoice events)
             case 'checkout.session.completed': {
                 const session = event.data.object as Stripe.Checkout.Session;
                 logger.info('checkout.session.completed', { sessionId: session.id });
@@ -66,6 +91,7 @@ export async function POST(request: NextRequest) {
             case 'invoice.payment_succeeded': {
                 const invoice = event.data.object as Stripe.Invoice;
                 logger.info('invoice.payment_succeeded', { invoiceId: invoice.id });
+                await upsertFinanceInvoiceClient(invoice);
                 await handlePaymentSucceeded(invoice);
                 break;
             }
@@ -73,7 +99,20 @@ export async function POST(request: NextRequest) {
             case 'invoice.payment_failed': {
                 const invoice = event.data.object as Stripe.Invoice;
                 logger.warn('invoice.payment_failed', { invoiceId: invoice.id });
+                await upsertFinanceInvoiceClient(invoice);
                 await handleFailedPayment(invoice);
+                break;
+            }
+            case 'invoice.created': {
+                const invoice = event.data.object as Stripe.Invoice;
+                logger.info('invoice.created', { invoiceId: invoice.id });
+                await upsertFinanceInvoiceClient(invoice);
+                break;
+            }
+            case 'invoice.finalized': {
+                const invoice = event.data.object as Stripe.Invoice;
+                logger.info('invoice.finalized', { invoiceId: invoice.id });
+                await upsertFinanceInvoiceClient(invoice);
                 break;
             }
 

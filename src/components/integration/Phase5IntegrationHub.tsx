@@ -51,8 +51,9 @@ interface IntegrationMetrics {
 }
 
 export function Phase5IntegrationHub() {
-    const { role } = useAuth();
+    const { role, userTier } = useAuth() as any;
     const isAdmin = role === 'admin' || role === 'owner';
+    const allowedTiers = ['enterprise', 'admin'];
     const demoAllowed = allowIntegrationsMocks();
     const [systems, setSystems] = useState<Record<string, SystemStatus>>({});
     const [integrationMetrics, setIntegrationMetrics] = useState<IntegrationMetrics | null>(null);
@@ -397,13 +398,13 @@ export function Phase5IntegrationHub() {
         }
     };
 
-    if (!isAdmin) {
+    if (!isAdmin && !(userTier && allowedTiers.includes(userTier))) {
         return (
-            <div className={"min-h-screen " + colors.background.secondary + " flex items-center justify-center"}>
+            <div className="min-h-screen bg-[hsl(var(--background))] flex items-center justify-center font-body">
                 <div className="text-center">
-                    <AlertTriangle className={"h-16 w-16 " + colors.status.warning.text + " mx-auto mb-4"} />
-                    <h2 className={"text-2xl font-bold mb-2 " + colors.text.primary}>Restricted Area</h2>
-                    <p className={colors.text.secondary}>The Enterprise Integration Hub is available to admins only.</p>
+                    <AlertTriangle className="h-16 w-16 text-[hsl(var(--chart-4))] mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold mb-2 text-primary">Restricted Area</h2>
+                    <p className="text-muted-foreground">The Enterprise Integration Hub is available to enterprise/admin users only.</p>
                 </div>
             </div>
         );
@@ -443,10 +444,10 @@ export function Phase5IntegrationHub() {
                         <p className={colors.text.secondary}>Complete enterprise infrastructure orchestration and monitoring</p>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <Badge variant="outline" className="border-amber-300 text-amber-700">
+                        <Badge variant="outline" className="border-warning text-warning-foreground">
                             Admin Only
                         </Badge>
-                        <Badge variant="outline" className="border-purple-300 text-purple-700">
+                        <Badge variant="outline" className="border-accent text-accent-foreground">
                             Demo
                         </Badge>
                         <Badge variant="outline" className={colors.status.info.bg + " " + colors.status.info.text}>
@@ -475,13 +476,13 @@ export function Phase5IntegrationHub() {
                         </Card>
                         <Card>
                             <CardContent className="p-4 text-center">
-                                <div className={"text-2xl font-bold text-purple-700"}>{integrationMetrics.automation_efficiency}%</div>
+                                <div className="text-2xl font-bold text-accent-foreground">{integrationMetrics.automation_efficiency}%</div>
                                 <div className={"text-sm " + colors.text.secondary}>Automation</div>
                             </CardContent>
                         </Card>
                         <Card>
                             <CardContent className="p-4 text-center">
-                                <div className={"text-2xl font-bold text-orange-700"}>{integrationMetrics.cost_optimization}%</div>
+                                <div className="text-2xl font-bold text-warning-foreground">{integrationMetrics.cost_optimization}%</div>
                                 <div className={"text-sm " + colors.text.secondary}>Cost Optimization</div>
                             </CardContent>
                         </Card>
@@ -603,15 +604,15 @@ export function Phase5IntegrationHub() {
                                 <div className={"font-semibold " + colors.status.info.text.replace('text-', '') + "-900"}>Global Infrastructure</div>
                                 <div className={"text-sm " + colors.status.info.text}>Multi-region optimization</div>
                             </div>
-                            <div className={"text-center p-4 bg-purple-50 rounded-lg"}>
-                                <Zap className="h-8 w-8 text-purple-700 mx-auto mb-2" />
-                                <div className="font-semibold text-purple-900">AI Automation</div>
-                                <div className="text-sm text-purple-700">Intelligent development workflows</div>
+                            <div className="text-center p-4 bg-accent/10 rounded-lg">
+                                <Zap className="h-8 w-8 text-accent-foreground mx-auto mb-2" />
+                                <div className="font-semibold text-accent-foreground">AI Automation</div>
+                                <div className="text-sm text-accent-foreground/80">Intelligent development workflows</div>
                             </div>
-                            <div className={"text-center p-4 bg-orange-50 rounded-lg"}>
-                                <TrendingUp className="h-8 w-8 text-orange-700 mx-auto mb-2" />
-                                <div className="font-semibold text-orange-900">Business Intelligence</div>
-                                <div className="text-sm text-orange-700">Performance-driven insights</div>
+                            <div className="text-center p-4 bg-warning/10 rounded-lg">
+                                <TrendingUp className="h-8 w-8 text-warning-foreground mx-auto mb-2" />
+                                <div className="font-semibold text-warning-foreground">Business Intelligence</div>
+                                <div className="text-sm text-warning-foreground/80">Performance-driven insights</div>
                             </div>
                         </div>
                     </CardContent>

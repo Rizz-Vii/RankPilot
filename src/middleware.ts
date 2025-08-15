@@ -1,8 +1,21 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { rateLimit } from "./middleware/rate-limit";
 
-export function middleware(request: NextRequest) {
-  // Get response
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname || "";
+  const isApi = pathname.startsWith("/api/");
+  // For API routes, run rate limiter first and short-circuit on 429
+  if (isApi) {
+    const rl = await rateLimit(request);
+    if (rl.status === 429) {
+      return rl;
+    }
+    // For API success path, propagate any rate-limit headers and return early without CSP
+    return rl;
+  }
+
+  // Non-API: proceed with security headers response
   const response = NextResponse.next();
 
   const isLocal = process.env.NODE_ENV !== "production" || request.nextUrl.hostname === "localhost";
@@ -111,7 +124,8 @@ export function middleware(request: NextRequest) {
 // Configure paths that need security headers
 export const config = {
   matcher: [
-    // Apply to all paths except API routes and static files
-    "/((?!api/|_next/|static/|public/|favicon.ico).*)",
+    // Include API routes (rate limit only) and non-API app paths (security headers)
+    "/api/:path*",
+    "/((?!_next/|static/|public/|favicon.ico).*)",
   ],
 };

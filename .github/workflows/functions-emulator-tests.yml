@@ -1,0 +1,31 @@
+name: Functions Emulator Tests
+
+on:
+  push:
+    branches: [ master, main, workshop/** ]
+  pull_request:
+
+jobs:
+  functions-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install root deps
+        run: npm ci
+
+      - name: Install functions deps
+        run: npm ci
+        working-directory: functions
+
+      - name: Run Functions unit tests (with emulator)
+        run: npm run -s test:emulator
+        working-directory: functions

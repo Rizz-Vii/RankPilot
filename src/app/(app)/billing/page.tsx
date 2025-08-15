@@ -117,7 +117,7 @@ export default function BillingPage() {
     switch (status) {
       case "active":
         return (
-          <Badge className="bg-green-100 text-green-800 border-green-200">
+          <Badge className="bg-success/15 text-success-foreground border border-success/40">
             Active
           </Badge>
         );
@@ -139,7 +139,7 @@ export default function BillingPage() {
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <AlertTriangle className="h-12 w-12 text-orange-500 mx-auto mb-4" />
+            <AlertTriangle className="h-12 w-12 text-warning-foreground mx-auto mb-4" />
             <CardTitle>Access Required</CardTitle>
             <CardDescription>
               Please log in to view your billing information
@@ -187,7 +187,7 @@ export default function BillingPage() {
   }, [user?.uid]);
 
   if(!billingPortalEnabled) {
-    return <div className="min-h-screen flex items-center justify-center"><Card className="w-full max-w-md"><CardHeader className="text-center"><AlertTriangle className="h-12 w-12 text-orange-500 mx-auto mb-4" /><CardTitle>Billing Portal Disabled</CardTitle><CardDescription>The billing portal is not enabled for your account yet.</CardDescription></CardHeader></Card></div>;
+  return <div className="min-h-screen flex items-center justify-center"><Card className="w-full max-w-md"><CardHeader className="text-center"><AlertTriangle className="h-12 w-12 text-warning-foreground mx-auto mb-4" /><CardTitle>Billing Portal Disabled</CardTitle><CardDescription>The billing portal is not enabled for your account yet.</CardDescription></CardHeader></Card></div>;
   }
 
   const subscription = billing?.subscription || null;
@@ -254,7 +254,7 @@ export default function BillingPage() {
   const usage = usageMetrics ? { keywordsTracked: usageMetrics.keywordsTracked, keywordsLimit: usageMetrics.keywordsLimit, competitorAnalysis: usageMetrics.competitorAnalysis, competitorLimit: usageMetrics.competitorLimit, reportsGenerated: usageMetrics.reportsGenerated, currentPeriodStart: usageMetrics.periodStart.toISOString(), currentPeriodEnd: usageMetrics.periodEnd.toISOString() } : { keywordsTracked: 0, keywordsLimit: 0, competitorAnalysis: 0, competitorLimit: 0, reportsGenerated: 0, currentPeriodStart: currentPlan.nextBillingDate, currentPeriodEnd: currentPlan.nextBillingDate };
 
   if(fetchError) {
-    return <div className="min-h-screen flex items-center justify-center"><Card className="w-full max-w-md"><CardHeader className="text-center"><AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" /><CardTitle>Billing Load Error</CardTitle><CardDescription>{fetchError}</CardDescription></CardHeader><CardContent className="flex justify-center"><Button variant="outline" onClick={()=>{setFetchError(null); setBilling(null);}}><RefreshCw className="h-4 w-4 mr-2" />Retry</Button></CardContent></Card></div>;
+  return <div className="min-h-screen flex items-center justify-center"><Card className="w-full max-w-md"><CardHeader className="text-center"><AlertTriangle className="h-12 w-12 text-destructive-foreground mx-auto mb-4" /><CardTitle>Billing Load Error</CardTitle><CardDescription>{fetchError}</CardDescription></CardHeader><CardContent className="flex justify-center"><Button variant="outline" onClick={()=>{setFetchError(null); setBilling(null);}}><RefreshCw className="h-4 w-4 mr-2" />Retry</Button></CardContent></Card></div>;
   }
 
   if(!billing && user) {
@@ -433,7 +433,7 @@ export default function BillingPage() {
                           <p className="font-semibold">${invoice.amount}</p>
                           <div className="flex items-center gap-1">
                             <CheckCircle className="h-3 w-3 text-success-foreground" />
-                            <span className="text-xs text-green-600">Paid</span>
+                            <span className="text-xs text-success-foreground/90">Paid</span>
                           </div>
                         </div>
                         <Button size="sm" variant="outline">
@@ -596,7 +596,10 @@ export default function BillingPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Auto-renewal:</span>
-                    <span className="text-green-600">Enabled</span>
+                    <span className="text-success-foreground">Enabled</span>
+                    {/* semantic success */}
+                    {/* replaced raw tailwind green with success token */}
+                    {/* above line kept for minimal diff readability */}
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Tax ID:</span>

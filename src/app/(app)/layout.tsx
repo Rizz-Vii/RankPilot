@@ -109,7 +109,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         </p>
                         <div className="flex items-center gap-1">
                           {(subscription?.tier === "agency" || subscription?.tier === "enterprise") && (
-                            <Crown className="h-3 w-3 text-purple-500" />
+                            <Crown className="h-3 w-3 text-accent" />
                           )}
                           {subscription?.tier === "starter" && (
                             <Zap className="h-3 w-3 text-primary" />
@@ -132,7 +132,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       asChild
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-start h-10 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:px-2"
+                      className="w-full justify-start h-10 text-primary hover:text-primary/80 hover:bg-primary/10 dark:hover:bg-primary/20 group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:px-2"
                     >
                       <Link
                         href="/settings/billing"
@@ -165,7 +165,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     asChild
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-start h-10 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:px-2"
+                    className="w-full justify-start h-10 text-destructive-foreground hover:text-destructive-foreground/80 hover:bg-destructive/10 dark:hover:bg-destructive/20 group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:px-2"
                   >
                     <Link href="/logout" className="flex items-center gap-3">
                       <LogOut className="h-4 w-4 shrink-0" />

@@ -19,6 +19,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useIsMobile } from '@/lib/mobile-responsive-utils';
 import DOMPurify from 'isomorphic-dompurify';
 import { storage } from '@/lib/firebase';
+import { extractRpMeta } from '@/lib/chat/rpMeta';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import remarkGfm from 'remark-gfm';
 import { unified } from 'unified';
@@ -53,9 +54,15 @@ interface ChatResponse {
 interface CustomerChatBotProps {
     currentUrl?: string;
     className?: string;
+    /**
+     * Optional initial suggestions for deterministic testing or bootstrapping.
+     * When provided, these will seed the suggestion chips on open (first render),
+     * and can later be updated by streamed/meta-derived suggestions.
+     */
+    initialSuggestions?: string[];
 }
 
-export default function CustomerChatBot({ currentUrl, className }: CustomerChatBotProps) {
+export default function CustomerChatBot({ currentUrl, className, initialSuggestions }: CustomerChatBotProps) {
     // State management
     const [isOpen, setIsOpen] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
@@ -207,6 +214,14 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
         }
     }, [isOpen, isMinimized]);
 
+    // Seed suggestions if provided (e.g., in unit tests) when chat opens
+    useEffect(() => {
+        if (isOpen && Array.isArray(initialSuggestions) && initialSuggestions.length && suggestions.length === 0) {
+            setSuggestions(initialSuggestions.slice(0, 4));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, Array.isArray(initialSuggestions) ? initialSuggestions.join('|') : initialSuggestions]);
+
     // Initialize with welcome message
     useEffect(() => {
         if (isOpen && messages.length === 0 && !restoring) {
@@ -233,16 +248,18 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
         const res = await fetch('/api/chat/customer?limit=30', { headers: { Authorization: `Bearer ${token}` } });
                 if (res.ok) {
                     const data = await res.json();
-                    if (Array.isArray(data.messages) && data.messages.length) {
+            if (Array.isArray(data.messages) && data.messages.length) {
                         setSessionId(data.sessionId || sessionId);
-            const mapped = data.messages.map((m: any) => ({
-                            id: m.id,
-                            message: m.isUser ? m.message : '',
-                            response: !m.isUser ? m.response : '',
-                            timestamp: m.timestamp,
-                            isUser: m.isUser,
-                            tokensUsed: m.tokensUsed,
-            }));
+        const mapped = data.messages.map((m: any) => ({
+                id: m.id,
+                message: m.isUser ? m.message : '',
+                response: !m.isUser ? m.response : '',
+                timestamp: m.timestamp,
+                isUser: m.isUser,
+                tokensUsed: m.tokensUsed,
+                type: m.type,
+                mediaUrl: m.mediaUrl,
+        }));
             setMessages(mapped);
             oldestMessageTsRef.current = mapped[0]?.timestamp || null;
                         setHasMore(data.hasMore ?? false);
@@ -351,7 +368,7 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.setAttribute('aria-label', 'Copy code');
-            btn.className = 'absolute top-1 right-1 rounded-md bg-black/50 text-white text-[10px] px-2 py-1 hover:bg-black/70 transition focus:outline-none focus:ring-2 focus:ring-blue-500';
+            btn.className = 'absolute top-1 right-1 rounded-md bg-black/50 text-white text-[10px] px-2 py-1 hover:bg-black/70 transition focus:outline-none focus:ring-2 focus:ring-primary';
             btn.textContent = 'Copy';
             btn.onclick = () => {
                 const code = wrapper.querySelector('code');
@@ -468,6 +485,13 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                                         if (json.tokensUsed) {
                                             setMessages(prev => prev.map(m => m.id === aiId ? { ...m, tokensUsed: json.tokensUsed } : m));
                                         }
+                                        // Derive suggestions from rp_meta if present
+                                        try {
+                                            const { meta } = extractRpMeta(accumulated);
+                                            const nextSugg: string[] = [];
+                                            if (meta?.actions?.length) nextSugg.push(...meta.actions);
+                                            if (nextSugg.length) setSuggestions(nextSugg.slice(0,4));
+                                        } catch { /* ignore */ }
                                     } else if (json.error) {
                                         setError(json.error);
                                     } else if (json.error) {
@@ -479,34 +503,39 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                     }
                     // Final markdown render
                     try {
-                        let html = await renderMarkdown(accumulated);
+                        // Clean rp_meta before rendering
+                        const { cleaned, meta } = extractRpMeta(accumulated);
+                        let html = await renderMarkdown(cleaned);
                         html = DOMPurify.sanitize(html);
                         // Generate suggestions based on accumulated + user intent
                         const nextSugg: string[] = [];
-                        if (intent === 'performance') {
-                            nextSugg.push('Audit my Core Web Vitals by page type');
-                            nextSugg.push('Suggest improvements for LCP under 2.5s');
-                        } else if (intent === 'keyword_strategy') {
-                            nextSugg.push('Cluster related keywords');
-                            nextSugg.push('Find long-tail opportunities');
-                        } else if (intent === 'technical_seo') {
-                            nextSugg.push('Check indexing coverage issues');
-                            nextSugg.push('List crawl budget optimizations');
-                        } else if (intent === 'competitor') {
-                            nextSugg.push('Compare top 3 competitors SERP presence');
-                            nextSugg.push('Identify content gaps vs competitor');
-                        } else if (intent === 'structured_data') {
-                            nextSugg.push('Generate JSON-LD for product variant');
-                            nextSugg.push('Validate schema types I should add');
-                        } else if (intent === 'content_optimization') {
-                            nextSugg.push('Rewrite for featured snippet potential');
-                            nextSugg.push('Suggest internal linking targets');
-                        } else {
-                            nextSugg.push('Analyze my Core Web Vitals');
-                            nextSugg.push('Suggest schema markup for a product page');
+                        if (meta?.actions?.length) nextSugg.push(...meta.actions);
+                        if (!nextSugg.length) {
+                            if (intent === 'performance') {
+                                nextSugg.push('Audit my Core Web Vitals by page type');
+                                nextSugg.push('Suggest improvements for LCP under 2.5s');
+                            } else if (intent === 'keyword_strategy') {
+                                nextSugg.push('Cluster related keywords');
+                                nextSugg.push('Find long-tail opportunities');
+                            } else if (intent === 'technical_seo') {
+                                nextSugg.push('Check indexing coverage issues');
+                                nextSugg.push('List crawl budget optimizations');
+                            } else if (intent === 'competitor') {
+                                nextSugg.push('Compare top 3 competitors SERP presence');
+                                nextSugg.push('Identify content gaps vs competitor');
+                            } else if (intent === 'structured_data') {
+                                nextSugg.push('Generate JSON-LD for product variant');
+                                nextSugg.push('Validate schema types I should add');
+                            } else if (intent === 'content_optimization') {
+                                nextSugg.push('Rewrite for featured snippet potential');
+                                nextSugg.push('Suggest internal linking targets');
+                            } else {
+                                nextSugg.push('Analyze my Core Web Vitals');
+                                nextSugg.push('Suggest schema markup for a product page');
+                            }
                         }
                         setSuggestions(nextSugg.slice(0, 4));
-                        setMessages(prev => prev.map(m => m.id === aiId ? { ...m, response: html, intent } : m));
+                        setMessages(prev => prev.map(m => m.id === aiId ? { ...m, response: html, intent: meta?.intent || intent } : m));
                     } catch { /* ignore */ }
                 }
             } catch { /* streaming failed, fallback to legacy */ } finally {
@@ -521,11 +550,12 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                 return;
             }
 
-            const response = await fetch('/api/chat/customer', {
+            // One retry on 401 with forced token refresh
+            const doRequest = async (forced = false) => fetch('/api/chat/customer', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
+                    'Authorization': `Bearer ${forced ? await (auth.currentUser || (user as any))?.getIdToken?.(true) : token}`,
                 },
                 body: JSON.stringify({
                     message: messageToSend,
@@ -533,6 +563,10 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                     sessionId: sessionId || undefined,
                 }),
             });
+            let response = await doRequest(false);
+            if (response.status === 401) {
+                response = await doRequest(true);
+            }
 
             if (!response.ok) {
                 let errMsg = 'Failed to send message';
@@ -556,7 +590,9 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
             }
 
             // Add AI response
-            let html = await renderMarkdown(data.response);
+            // Extract rp_meta for suggestions
+            const { cleaned, meta } = extractRpMeta(data.response);
+            let html = await renderMarkdown(cleaned);
             html = DOMPurify.sanitize(html);
             const aiMessage: ChatMessage = {
                 id: `ai_${Date.now()}`,
@@ -565,8 +601,10 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                 timestamp: data.timestamp,
                 isUser: false,
                 tokensUsed: data.tokensUsed,
-                intent,
+                intent: meta?.intent || intent,
             };
+
+            if (meta?.actions?.length) setSuggestions(meta.actions.slice(0,4));
 
             setMessages(prev => [...prev, aiMessage]);
             // Accessibility announcement
@@ -638,7 +676,7 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
         }
     };
 
-    // Voice note recorder (basic placeholder without backend upload)
+    // Voice note recorder: records audio, uploads to Firebase Storage, then persists attachment via backend API
     const [micBlocked, setMicBlocked] = useState(false);
     const startRecording = async () => {
         if (!navigator.mediaDevices?.getUserMedia) { setError('Microphone not supported in this browser'); return; }
@@ -678,6 +716,10 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
             const maxAudioMB = 10;
             if (blob.size > maxAudioMB * 1024 * 1024) {
                 throw new Error('Audio exceeds 10MB');
+            }
+            // Enforce attachment quota similar to images
+            if (attachmentsUsed >= getAttachmentLimit(profile?.subscriptionTier)) {
+                throw new Error('Attachment quota reached');
             }
             const path = `chatUploads/${user?.uid}/audio_${Date.now()}.webm`;
             const sRef = storageRef(storage, path);
@@ -739,6 +781,8 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                             timestamp: m.timestamp,
                             isUser: m.isUser,
                             tokensUsed: m.tokensUsed,
+                            type: m.type,
+                            mediaUrl: m.mediaUrl,
                         }));
                         oldestMessageTsRef.current = mapped[0]?.timestamp || oldestMessageTsRef.current;
                         setHasMore(data.hasMore ?? false);
@@ -792,7 +836,7 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                 onClick={() => setIsOpen(true)}
                 size="lg"
                 className={cn(
-                    'rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200',
+                    'rounded-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg hover:shadow-xl transition-all duration-200',
                     isMobile ? 'w-12 h-12' : 'w-14 h-14'
                 )}
                 aria-label="Open RankPilot AI Chat"
@@ -816,14 +860,14 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
             exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: 20 }}
             transition={reducedMotion ? { duration: 0.05 } : { duration: 0.2 }}
             className={cn(
-                'fixed z-50 bg-white rounded-2xl shadow-2xl border border-gray-200',
+                'fixed z-50 bg-white rounded-2xl shadow-2xl border border-border',
                 isMobile ? 'bottom-0 right-0 left-0 mx-auto w-full max-w-[520px] mb-0' : 'bottom-6 right-6 w-96',
                 isMinimized && 'h-auto'
             )}
         >
             <Card className={cn('h-full border-none shadow-none', isMobile && 'rounded-2xl overflow-hidden')}>
                 {/* Header */}
-                <CardHeader className="flex flex-row items-center justify-between p-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-2xl">
+                <CardHeader className="flex flex-row items-center justify-between p-4 bg-gradient-to-r from-primary to-accent text-primary-foreground rounded-t-2xl">
                     <div className="flex items-center gap-2">
                         <Bot className="w-5 h-5" />
                         <div>
@@ -855,11 +899,11 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                 {!isMinimized && (
                     <CardContent className={cn('relative flex flex-col p-0', isMobile ? 'h-[calc(min(75vh,85dvh)-80px)]' : 'h-[calc(600px-80px)]')} style={isMobile ? { paddingBottom: 'env(safe-area-inset-bottom)' } : undefined}>
                         {sessionSummary && (
-                            <div className="mb-2 rounded-xl border border-blue-100 bg-blue-50/70 p-3 text-[11px] leading-relaxed text-blue-900 shadow-sm">
+                            <div className="mb-2 rounded-xl border border-primary/20 bg-primary/10 p-3 text-[11px] leading-relaxed text-primary shadow-sm">
                                 <div className="font-semibold text-xs mb-1 flex items-center gap-2">
                                     <span>Conversation Memory</span>
                                     {focusKeywords.length > 0 && (
-                                        <span className="font-normal text-[10px] text-blue-700 truncate max-w-[160px]">KW: {focusKeywords.slice(0,5).join(', ')}</span>
+                                        <span className="font-normal text-[10px] text-primary truncate max-w-[160px]">KW: {focusKeywords.slice(0,5).join(', ')}</span>
                                     )}
                                 </div>
                                 <div className="line-clamp-5" dangerouslySetInnerHTML={{ __html: sessionSummary.replace(/\n/g,'<br/>') }} />
@@ -869,7 +913,7 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                                             <label key={a} className="flex items-start gap-2 text-[10px] cursor-pointer select-none">
                                                 <input
                                                     type="checkbox"
-                                                    className="mt-[2px] h-3 w-3 rounded border-blue-400 text-blue-600 focus:ring-blue-500"
+                                                    className="mt-[2px] h-3 w-3 rounded border-primary text-primary focus:ring-primary"
                                                     checked={!!completedActions[a]}
                                                     onChange={() => {
                                                         setCompletedActions(prev => ({ ...prev, [a]: !prev[a] }));
@@ -900,18 +944,18 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                                                 <span className={cn(
                                                     'transition-colors',
                                                     completedActions[a] && 'line-through opacity-60',
-                                                    newActionHighlights.has(a) && !completedActions[a] && 'bg-green-100 text-green-800 px-1 rounded'
+                                                    newActionHighlights.has(a) && !completedActions[a] && 'bg-success/15 text-success px-1 rounded'
                                                 )}>{a}</span>
                                             </label>
                                         ))}
                                         {actionStats && (
-                                            <div className="pt-1 text-[10px] text-blue-700 flex items-center gap-2">
+                                            <div className="pt-1 text-[10px] text-primary flex items-center gap-2">
                                                 <span>
                                                     Actions: {actionStats.totalCompleted}/{actionStats.totalCompleted + actionStats.totalPending}
                                                 </span>
-                                                <span className="inline-block h-1.5 w-16 rounded bg-blue-100 overflow-hidden">
+                                                <span className="inline-block h-1.5 w-16 rounded bg-primary/15 overflow-hidden">
                                                     <span
-                                                        className="block h-full bg-blue-500 transition-all"
+                                                        className="block h-full bg-primary transition-all"
                                                         style={{ width: `${Math.round(actionStats.completionRate * 100)}%` }}
                                                     />
                                                 </span>
@@ -925,7 +969,7 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                         <ScrollArea className={cn('flex-1 p-4', isMobile && 'pt-3 pb-3')} onScrollCapture={(e) => { onScrollAreaScroll(e); handleManualScroll(e); }}>
                             <div ref={messagesViewportRef} role="log" aria-live={streaming ? 'polite' : 'off'} aria-label="Chat messages" className="space-y-4">
                                 {loadingMore && (
-                                    <div className="text-center text-xs text-gray-500">Loading…</div>
+                                    <div className="text-center text-xs text-muted-foreground">Loading…</div>
                                 )}
                                 {messages.map((msg, index) => (
                                     <div
@@ -945,10 +989,10 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                                             className={cn(
                                                 'relative max-w-[78%] rounded-2xl px-3 py-2 text-sm leading-relaxed ring-1 ring-inset',
                                                 msg.isUser
-                                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-sm'
+                                                    ? 'bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-sm'
                                                     : msg.type === 'system'
-                                                        ? 'bg-amber-50 text-amber-900 ring-amber-200'
-                                                        : 'bg-gray-50 text-gray-900 ring-gray-200'
+                                                        ? 'bg-warning/15 text-warning ring-warning/30'
+                                                        : 'bg-muted text-foreground ring-border'
                                             )}
                                         >
                                             {msg.type === 'image' && msg.mediaUrl && (
@@ -965,14 +1009,14 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                                                 </div>
                                             ) : (
                                                 <div
-                                                    className="prose prose-sm max-w-none dark:prose-invert [&_table]:w-full [&_table]:text-left [&_table]:border [&_table]:border-collapse [&_th]:bg-gray-100 [&_td]:align-top [&_code]:bg-gray-200 [&_code]:px-1 [&_code]:py-0.5 [&_pre]:bg-gray-900 [&_pre]:text-gray-100 [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:shadow-inner overflow-x-auto"
+                                                    className="prose prose-sm max-w-none dark:prose-invert [&_table]:w-full [&_table]:text-left [&_table]:border [&_table]:border-collapse [&_th]:bg-muted [&_td]:align-top [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_pre]:bg-secondary [&_pre]:text-secondary-foreground [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:shadow-inner overflow-x-auto"
                                                     dangerouslySetInnerHTML={{
                                                         __html: msg.response || ''
                                                     }}
                                                 />
                                             )}
                                             {!msg.isUser && streaming && streamingMessageIdRef.current === msg.id && (
-                                                <div className="flex items-center gap-2 mt-2 text-[11px] text-blue-600 select-none">
+                                                <div className="flex items-center gap-2 mt-2 text-[11px] text-primary select-none">
                                                     <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
                                                     <span aria-live="polite">Streaming…</span>
                                                     <button
@@ -984,7 +1028,7 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                                                                 setAnnouncements(a => [...a.slice(-3), 'Generation canceled']);
                                                             }
                                                         }}
-                                                        className="ml-1 underline hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-sm"
+                                                        className="ml-1 underline hover:text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary rounded-sm"
                                                         aria-label="Cancel streaming response"
                                                     >Cancel</button>
                                                 </div>
@@ -1000,8 +1044,8 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                                         </div>
 
                                         {msg.isUser && (
-                                            <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0">
-                                                <User className="w-4 h-4 text-gray-600" />
+                                            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                                                <User className="w-4 h-4 text-muted-foreground" />
                                             </div>
                                         )}
                                     </div>
@@ -1012,7 +1056,7 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                                         <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
                                             <Bot className="w-4 h-4 text-white" />
                                         </div>
-                                        <div className="bg-gray-100 rounded-lg p-3 text-sm">
+                                        <div className="bg-muted rounded-lg p-3 text-sm">
                                             <div className="flex items-center gap-2">
                                                 <Loader2 className="w-4 h-4 animate-spin" />
                                                 <span>Thinking...</span>
@@ -1022,21 +1066,21 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                                 )}
 
                                 {error && (
-                                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600">
+                                    <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 text-sm text-destructive">
                                         {error}
                                     </div>
                                 )}
                                 {(failedImage || failedAudio) && (
-                                    <div className="bg-yellow-50 border border-yellow-200 rounded p-2 text-xs flex flex-col gap-1">
+                                    <div className="bg-warning/15 border border-warning/30 rounded p-2 text-xs flex flex-col gap-1">
                                         {failedImage && <div>Image failed: {failedImage.name} <button className="underline" onClick={() => { setPendingImage(failedImage); setFailedImage(null); }}>retry</button></div>}
                                         {failedAudio && <div>Audio failed <button className="underline" onClick={() => { setPendingAudio(failedAudio); setFailedAudio(null); }}>retry</button></div>}
                                     </div>
                                 )}
                                 {/* Pending attachments preview */}
                 {(pendingImage || pendingAudio || uploading) && (
-                                    <div className="flex flex-col gap-2 text-xs text-gray-600 bg-gray-50 p-2 rounded">
-                                        {pendingImage && <div>Image ready: {pendingImage.name} <button onClick={attachImage} className="underline text-blue-600">attach</button></div>}
-                                        {pendingAudio && <div>Voice note ready <button onClick={attachAudio} className="underline text-blue-600">attach</button></div>}
+                                    <div className="flex flex-col gap-2 text-xs text-muted-foreground bg-muted p-2 rounded">
+                                        {pendingImage && <div>Image ready: {pendingImage.name} <button onClick={attachImage} className="underline text-primary">attach</button></div>}
+                                        {pendingAudio && <div>Voice note ready <button onClick={attachAudio} className="underline text-primary">attach</button></div>}
                     {uploading && <div>Uploading…</div>}
                                     </div>
                                 )}
@@ -1049,7 +1093,7 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                             <div className="pointer-events-none absolute inset-x-0 bottom-[76px] flex justify-center">
                                 <button
                                     onClick={() => { scrollToBottom(); setScrolledAway(false); userScrolledUpRef.current = false; }}
-                                    className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs font-medium px-3 py-1.5 shadow-lg shadow-black/10 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 active:scale-[.97] transition"
+                                    className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-medium px-3 py-1.5 shadow-lg shadow-black/10 hover:from-primary/90 hover:to-accent/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary active:scale-[.97] transition"
                                     aria-label="Scroll to newest messages"
                                 >
                                     <span>New messages</span>
@@ -1060,25 +1104,25 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
 
                         {/* Input */}
                         {suggestions.length > 0 && (
-                            <div className="px-4 pb-2 pt-1 border-t border-gray-100 bg-gradient-to-r from-slate-50 via-white to-slate-50 overflow-x-auto scrollbar-none">
+                            <div className="px-4 pb-2 pt-1 border-t border-border bg-gradient-to-r from-muted/50 via-background to-muted/50 overflow-x-auto scrollbar-none">
                                 <div className="flex gap-2 min-h-[40px] items-center">
                                     {suggestions.map(s => (
                                         <button
                                             key={s}
                                             onClick={() => { setInputValue(s); scrollToBottom(); }}
-                                            className="shrink-0 rounded-full bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-xs px-3 py-1.5 transition focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="shrink-0 rounded-full bg-muted hover:bg-muted/80 active:bg-muted/70 text-xs px-3 py-1.5 transition focus:outline-none focus:ring-2 focus:ring-primary"
                                             aria-label={`Suggestion: ${s}`}
                                         >{s}</button>
                                     ))}
                                     <button
                                         onClick={() => setSuggestions([])}
-                                        className="text-[10px] text-gray-500 hover:text-gray-700 ml-1"
+                                        className="text-[10px] text-muted-foreground hover:text-foreground ml-1"
                                         aria-label="Hide suggestions"
                                     >✕</button>
                                 </div>
                             </div>
                         )}
-                        <div className={cn('border-t border-gray-200 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60', isMobile ? 'p-3' : 'p-4')}>
+                        <div className={cn('border-t border-border bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60', isMobile ? 'p-3' : 'p-4')}>
                             <div className={cn('flex gap-2 items-center', isMobile && 'gap-1')}>   
                                 {/* Attachment buttons */}
                                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
@@ -1086,7 +1130,7 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                                 </Button>
                                 {audioRecorderRef.current ? (
-                                    <Button variant="ghost" size="icon" className={cn('h-10 w-10 text-red-600', isMobile && 'h-9 w-9')} onClick={stopRecording} aria-label="Stop recording">
+                                    <Button variant="ghost" size="icon" className={cn('h-10 w-10 text-destructive', isMobile && 'h-9 w-9')} onClick={stopRecording} aria-label="Stop recording">
                                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="6" width="12" height="12"/></svg>
                                     </Button>
                                 ) : (
@@ -1109,7 +1153,7 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                                     onClick={sendMessage}
                                     disabled={!inputValue.trim() || isLoading || streaming || !user || !canSend}
                                     size="sm"
-                                    className={cn('relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-60 disabled:cursor-not-allowed', isMobile && 'px-3')}
+                                    className={cn('relative bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 disabled:opacity-60 disabled:cursor-not-allowed', isMobile && 'px-3')}
                                     aria-label="Send message"
                                 >
                                     {streaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -1120,7 +1164,7 @@ export default function CustomerChatBot({ currentUrl, className }: CustomerChatB
                             </div>
 
                             {!user && (
-                                <p className="text-xs text-gray-500 mt-2">
+                                <p className="text-xs text-muted-foreground mt-2">
                                     Please sign in to use the AI assistant
                                 </p>
                             )}

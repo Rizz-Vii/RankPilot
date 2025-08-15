@@ -22,9 +22,9 @@ const buttonVariants = cva(
                 ghost: "hover:bg-accent hover:text-accent-foreground",
                 link: "text-primary underline-offset-4 hover:underline",
                 // Custom variants for RankPilot
-                success: `${colors.status.success.bg} ${colors.status.success.text} hover:bg-green-200`,
-                warning: `${colors.status.warning.bg} ${colors.status.warning.text} hover:bg-amber-200`,
-                info: `${colors.status.info.bg} ${colors.status.info.text} hover:bg-blue-200`,
+                success: `${colors.status.success.bg} ${colors.status.success.text} hover:bg-success/20`,
+                warning: `${colors.status.warning.bg} ${colors.status.warning.text} hover:bg-warning/20`,
+                info: `${colors.status.info.bg} ${colors.status.info.text} hover:bg-primary/20`,
             },
             size: {
                 default: "h-10 px-4 py-2",

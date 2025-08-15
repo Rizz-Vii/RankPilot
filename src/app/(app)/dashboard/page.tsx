@@ -121,7 +121,7 @@ const DashboardMetricCard: React.FC<{
             <p id={titleId} className="text-sm font-medium" title={title}>{title}</p>
             {kpiStatus && kpiStatus !== "on-track" && (
               <span
-                className={`mt-1 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset ${kpiStatus === "behind" ? "bg-rose-500/10 text-rose-600 ring-rose-500/20" : "bg-amber-500/10 text-amber-600 ring-amber-500/20"}`}
+                className={`mt-1 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset ${kpiStatus === "behind" ? "bg-destructive/10 text-destructive-foreground ring-destructive/20" : "bg-warning/10 text-warning-foreground ring-warning/20"}`}
                 aria-label={`KPI ${kpiStatus === "behind" ? "behind target" : "below optimal"}`}
                 data-testid={`${testId}-alert`}
               >
@@ -135,7 +135,7 @@ const DashboardMetricCard: React.FC<{
           <p className="text-2xl font-bold tracking-tight" data-testid={`${testId}-value`}>{value}</p>
           {change !== undefined && (
             <span
-              className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium ring-1 ring-inset ${changeDir === "up" ? "bg-emerald-500/10 text-emerald-600 ring-emerald-500/20" : changeDir === "down" ? "bg-rose-500/10 text-rose-600 ring-rose-500/20" : "bg-muted text-muted-foreground ring-border"}`}
+              className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium ring-1 ring-inset ${changeDir === "up" ? "bg-success/10 text-success-foreground ring-success/20" : changeDir === "down" ? "bg-destructive/10 text-destructive-foreground ring-destructive/20" : "bg-muted text-muted-foreground ring-border"}`}
               aria-label={`${Math.abs(change)} ${changeDir === "up" ? "increase" : changeDir === "down" ? "decrease" : "no change"} ${changeLabel}`}
               data-testid={`${testId}-change`}
             >
@@ -149,7 +149,7 @@ const DashboardMetricCard: React.FC<{
             <div className="flex items-center gap-2" data-testid={`${testId}-kpi`}>
               <div className="relative h-1.5 flex-1 rounded bg-muted overflow-hidden" role="progressbar" id={progressBarId} aria-label={`${title} progress toward target`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={kpiProgress} aria-describedby={helper ? `${testId}-helper` : undefined}>
                 <div
-                  className={`h-full transition-all motion-safe:duration-500 ${kpiStatus === "on-track" ? "bg-emerald-500" : kpiStatus === "monitor" ? "bg-amber-500" : "bg-rose-500"}`}
+                  className={`h-full transition-all motion-safe:duration-500 ${kpiStatus === "on-track" ? "bg-success" : kpiStatus === "monitor" ? "bg-warning" : "bg-destructive"}`}
                   style={{ width: `${kpiProgress}%` }}
                   aria-hidden="true"
                 />

@@ -31,8 +31,8 @@ export function EnhancedMetricCard({
     suffix = "",
 }: EnhancedMetricCardProps) {
     const getTrendColor = () => {
-        if (trend === "up" || (change !== undefined && change > 0)) return "text-green-600 dark:text-green-400";
-        if (trend === "down" || (change !== undefined && change < 0)) return "text-red-600 dark:text-red-400";
+        if (trend === "up" || (change !== undefined && change > 0)) return "text-success-foreground";
+        if (trend === "down" || (change !== undefined && change < 0)) return "text-destructive-foreground";
         return "text-muted-foreground";
     };
 

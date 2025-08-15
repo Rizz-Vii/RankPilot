@@ -6,6 +6,11 @@ let _ai: any = null;
 
 export function getAI() {
   if (!_ai) {
+    // Lightweight test stub path (avoids heavy Genkit init in unit tests)
+    if (process.env.GENKIT_TEST_STUB === '1') {
+      _ai = { generate: async () => ({ text: () => null }) };
+      return _ai;
+    }
     // Initialize Google AI with API key from environment
     _ai = genkit({
       plugins: [

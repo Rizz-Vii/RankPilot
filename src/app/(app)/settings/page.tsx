@@ -255,7 +255,7 @@ export default function SettingsPage() {
                                         ) : (
                                             announcements.map(a => (
                                                 <div key={a.id} className="mb-2 last:mb-0">
-                                                    <span className={`inline-block w-2 h-2 rounded-full mr-2 ${a.priority === 'assertive' ? 'bg-red-500' : 'bg-blue-500'}`} />
+                                                    <span className={`inline-block w-2 h-2 rounded-full mr-2 ${a.priority === 'assertive' ? 'bg-destructive' : 'bg-primary'}`} />
                                                     {a.message}
                                                 </div>
                                             ))

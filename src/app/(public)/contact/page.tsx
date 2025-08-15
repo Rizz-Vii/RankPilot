@@ -259,7 +259,7 @@ export default function ContactPage() {
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Response:</span>
-                            <span className="text-green-600">{channel.responseTime}</span>
+                            <span className="text-success-foreground">{channel.responseTime}</span>
                           </div>
                         </div>
                       </div>
@@ -281,24 +281,24 @@ export default function ContactPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-success rounded-full"></div>
                       <span className="text-sm">API Services</span>
                     </div>
-                    <span className="text-xs text-green-600">Operational</span>
+                    <span className="text-xs text-success-foreground">Operational</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-success rounded-full"></div>
                       <span className="text-sm">Dashboard</span>
                     </div>
-                    <span className="text-xs text-green-600">Operational</span>
+                    <span className="text-xs text-success-foreground">Operational</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-success rounded-full"></div>
                       <span className="text-sm">Billing System</span>
                     </div>
-                    <span className="text-xs text-green-600">Operational</span>
+                    <span className="text-xs text-success-foreground">Operational</span>
                   </div>
                 </div>
               </CardContent>

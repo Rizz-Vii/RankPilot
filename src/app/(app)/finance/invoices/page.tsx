@@ -6,6 +6,8 @@ import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
 import { allowFinanceMocks } from '@/lib/flags/finance';
+import { Alert } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 import { useFinanceInvoiceMetrics } from '@/hooks/useFinanceInvoiceMetrics';
 import { fetchRecentFinanceRevenueSnapshots } from '@/lib/services/finance-automation-snapshots';
 import { useAuth } from '@/context/AuthContext';
@@ -40,6 +42,16 @@ export default function InvoicesPage() {
           <PeriodSelector value={months} onChange={setMonths} />
   </header>
   <ProvenanceLegend />
+        {allowFinanceMocks() && !live.kpis.length && (
+          <Alert className="border-warning/30 bg-warning/15 text-warning-foreground dark:bg-warning/20 dark:text-warning-foreground" aria-live="polite" aria-label="Finance mock data banner">
+            <div className="flex items-start gap-3 text-sm">
+              <AlertTriangle className="h-4 w-4 mt-0.5" />
+              <p>
+                Finance metrics are currently served from mock data (FINANCE_MOCK_MODE). This banner disappears once live metrics load or mocks are disabled.
+              </p>
+            </div>
+          </Alert>
+        )}
         {loadingSnap && <Skeleton className="h-14 rounded-lg" shimmer />}
         {!loadingSnap && revSnap && (
           <div className="rounded-lg border p-3 bg-background/60 flex items-center justify-between text-xs mb-2" aria-label="Latest revenue snapshot">

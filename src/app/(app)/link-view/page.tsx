@@ -31,6 +31,7 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import { analyzeLinks } from "@/lib/utils/content-functions";
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import type {
   LinkAnalysisInput,
   LinkAnalysisOutput
@@ -224,6 +225,7 @@ export default function LinkViewPage() {
   };
 
   return (
+    <FeatureGate feature="link_view" requiredTier="agency" showUpgrade>
     <main className="container mx-auto py-6 space-y-6">
       <ToolPageHeader
         title="Link View Analyzer"
@@ -285,6 +287,7 @@ export default function LinkViewPage() {
         </div>
       </div>
     </div>
-    </main>
+  </main>
+  </FeatureGate>
   );
 }

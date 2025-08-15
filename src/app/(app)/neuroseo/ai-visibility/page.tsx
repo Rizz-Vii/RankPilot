@@ -20,6 +20,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { submitOrQueue, queueAnalysisRequest } from "@/lib/offline-queue";
 import { motion } from "framer-motion";
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 
 interface AIVisibilityResult {
   citation: {
@@ -149,6 +150,7 @@ export default function AIVisibilityEnginePage() {
   };
 
   return (
+    <FeatureGate feature="ai_visibility" requiredTier="agency" showUpgrade>
     <main className="container mx-auto py-6 px-3 sm:px-6 space-y-6">
       <ToolPageHeader
         title="AI Visibility Engine"
@@ -290,7 +292,7 @@ export default function AIVisibilityEnginePage() {
               <CardContent>
                 <div className="flex items-center gap-3">
                   <div className="text-3xl font-bold">{results.citationRate}%</div>
-                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  <TrendingUp className="h-5 w-5 text-success-foreground" />
                 </div>
               </CardContent>
             </Card>
@@ -331,7 +333,7 @@ export default function AIVisibilityEnginePage() {
                   <div className="space-y-3">
                     {results.recommendations.map((rec, index) => (
                       <div key={index} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                        <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                        <CheckCircle2 className="h-5 w-5 text-success-foreground mt-0.5 flex-shrink-0" />
                         <p className="text-sm">{rec}</p>
                       </div>
                     ))}
@@ -371,7 +373,7 @@ export default function AIVisibilityEnginePage() {
                             href={item.citation.url} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                            className="text-sm text-primary hover:underline flex items-center gap-1"
                           >
                             View Source <ExternalLink className="h-3 w-3" />
                           </a>
@@ -401,8 +403,8 @@ export default function AIVisibilityEnginePage() {
                     {results.platforms.map((platform, index) => (
                       <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <Bot className="h-5 w-5 text-blue-600" />
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-primary/10">
+                            <Bot className="h-5 w-5 text-primary" />
                           </div>
                           <div>
                             <p className="font-medium">{platform.name}</p>
@@ -439,8 +441,8 @@ export default function AIVisibilityEnginePage() {
                     <CardHeader>
                       <CardTitle className="text-base flex items-center gap-2">
                         <AlertCircle className={`h-4 w-4 ${
-                          item.optimization.priority === "high" ? "text-red-600" :
-                          item.optimization.priority === "medium" ? "text-yellow-600" : "text-green-600"
+                          item.optimization.priority === "high" ? "text-destructive-foreground" :
+                          item.optimization.priority === "medium" ? "text-warning-foreground" : "text-success-foreground"
                         }`} />
                         {item.citation.platform} Optimization
                         <Badge variant={
@@ -461,7 +463,7 @@ export default function AIVisibilityEnginePage() {
                         
                         {item.optimization.recommendations.map((rec, recIndex) => (
                           <div key={recIndex} className="flex items-start gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                            <CheckCircle2 className="h-4 w-4 text-success-foreground mt-0.5 flex-shrink-0" />
                             <p className="text-sm">{rec}</p>
                           </div>
                         ))}
@@ -482,5 +484,6 @@ export default function AIVisibilityEnginePage() {
   </DashboardSurface>
   </SuiteAccentProvider>
   </main>
+  </FeatureGate>
   );
 }

@@ -102,7 +102,7 @@ export default function RegisterPage() {
             onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground ring-1 ring-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition"
           />
-          <p id="email-error" className="text-xs text-red-600 mt-1">{errors.email}</p>
+          <p id="email-error" className="text-xs text-destructive-foreground mt-1">{errors.email}</p>
         </div>
         <div className="relative">
           <label htmlFor="password" className="block font-medium mb-1 text-foreground">Password</label>
@@ -127,7 +127,7 @@ export default function RegisterPage() {
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
-          <p id="password-error" className="text-xs text-red-600 mt-1">{errors.password}</p>
+          <p id="password-error" className="text-xs text-destructive-foreground mt-1">{errors.password}</p>
         </div>
         <div className="relative">
           <label htmlFor="confirmPassword" className="block font-medium mb-1 text-foreground">Confirm Password</label>
@@ -152,7 +152,7 @@ export default function RegisterPage() {
           >
             {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
-          <p id="confirmPassword-error" className="text-xs text-red-600 mt-1">{errors.confirmPassword}</p>
+          <p id="confirmPassword-error" className="text-xs text-destructive-foreground mt-1">{errors.confirmPassword}</p>
         </div>
         {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
           <div>
@@ -160,7 +160,7 @@ export default function RegisterPage() {
               sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
               onChange={(token) => setCaptchaToken(token || "")}
             />
-            <p className="text-xs text-red-600 mt-1">{errors.captcha}</p>
+            <p className="text-xs text-destructive-foreground mt-1">{errors.captcha}</p>
           </div>
         )}
         <div className="flex flex-col items-center justify-center">
@@ -180,11 +180,11 @@ export default function RegisterPage() {
             </label>
           </div>
           {errors.terms && (
-            <p className="text-xs text-red-600 mt-1">{errors.terms}</p>
+            <p className="text-xs text-destructive-foreground mt-1">{errors.terms}</p>
           )}
         </div>
         {errors.form && (
-          <p className="text-xs text-red-600 mt-1">{errors.form}</p>
+          <p className="text-xs text-destructive-foreground mt-1">{errors.form}</p>
         )}
         <button
           type="submit"

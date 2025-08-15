@@ -43,7 +43,7 @@ const AdaptiveProgress: React.FC<{ value: number; thresholds?: { good: number; w
     if (pct >= thresholds.warn) return 'warn';
     return 'bad';
   })();
-  const color = state === 'good' ? 'bg-emerald-500' : state === 'warn' ? 'bg-amber-500' : 'bg-rose-500';
+  const color = state === 'good' ? 'bg-success' : state === 'warn' ? 'bg-warning' : 'bg-destructive';
   return (
     <div className="mt-2" role="group" aria-label={label}>
       <Progress value={pct} className="h-2 bg-muted" aria-label={label} />
@@ -170,13 +170,13 @@ export function PerformanceDashboard() {
   const getHealthStatusColor = (status: string) => {
     switch (status) {
       case "healthy":
-        return "text-green-600 bg-green-50";
+        return "text-success-foreground bg-success/10";
       case "degraded":
-        return "text-yellow-600 bg-yellow-50";
+        return "text-warning-foreground bg-warning/10";
       case "unhealthy":
-        return "text-red-600 bg-red-50";
+        return "text-destructive-foreground bg-destructive/10";
       default:
-        return "text-gray-600 bg-gray-50";
+        return "text-muted-foreground bg-muted";
     }
   };
 
@@ -295,7 +295,7 @@ export function PerformanceDashboard() {
               {stats.recentErrors.map((error, index) => (
                 <div
                   key={index}
-                  className="text-sm text-red-600 bg-red-50 p-2 rounded"
+                  className="text-sm text-destructive-foreground bg-destructive/10 p-2 rounded"
                 >
                   {error}
                 </div>
@@ -517,7 +517,7 @@ export function PerformanceDashboard() {
             <CardContent>
               {stats.recentErrors.length === 0 ? (
                 <div className="text-center py-8">
-                  <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                  <CheckCircle className="h-12 w-12 text-success-foreground mx-auto mb-4" />
                   <p className="text-lg font-medium">No errors detected</p>
                   <p className="text-muted-foreground">
                     System is running smoothly
@@ -528,11 +528,11 @@ export function PerformanceDashboard() {
                   {stats.recentErrors.map((error, index) => (
                     <div
                       key={index}
-                      className="p-3 bg-red-50 border border-red-200 rounded-lg"
+                      className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg"
                     >
                       <div className="flex items-start gap-2">
-                        <XCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                        <div className="text-sm text-red-700">{error}</div>
+                        <XCircle className="h-4 w-4 text-destructive-foreground mt-0.5 flex-shrink-0" />
+                        <div className="text-sm text-destructive-foreground">{error}</div>
                       </div>
                     </div>
                   ))}

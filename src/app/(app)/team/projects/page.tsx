@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -85,17 +86,17 @@ interface Project {
 }
 
 const statusConfig = {
-  active: { color: "bg-green-500", label: "Active", icon: CheckCircle },
-  completed: { color: "bg-blue-500", label: "Completed", icon: CheckCircle },
-  paused: { color: "bg-yellow-500", label: "Paused", icon: Clock },
-  planning: { color: "bg-gray-500", label: "Planning", icon: AlertCircle },
+  active: { color: "bg-success", label: "Active", icon: CheckCircle },
+  completed: { color: "bg-primary", label: "Completed", icon: CheckCircle },
+  paused: { color: "bg-warning", label: "Paused", icon: Clock },
+  planning: { color: "bg-muted", label: "Planning", icon: AlertCircle },
 };
 
 const priorityConfig = {
-  low: { color: "bg-gray-400", label: "Low" },
-  medium: { color: "bg-yellow-500", label: "Medium" },
-  high: { color: "bg-orange-500", label: "High" },
-  critical: { color: "bg-red-500", label: "Critical" },
+  low: { color: "bg-muted", label: "Low" },
+  medium: { color: "bg-warning", label: "Medium" },
+  high: { color: "bg-accent", label: "High" },
+  critical: { color: "bg-destructive", label: "Critical" },
 };
 
 export default function TeamProjectsPage() {
@@ -246,7 +247,8 @@ export default function TeamProjectsPage() {
   }
 
   return (
-  <main className="container mx-auto py-6 space-y-8">
+  <FeatureGate feature="team_management" requiredTier="enterprise" showUpgrade>
+  <main className="container mx-auto py-6 space-y-6">
       <ToolPageHeader
         title="Team Projects"
         description="Manage and track your team's SEO projects and campaigns"
@@ -459,7 +461,7 @@ export default function TeamProjectsPage() {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleDeleteProject(project.id)}
-                          className="text-red-600"
+                          className="text-destructive-foreground"
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
                           Delete
@@ -490,7 +492,7 @@ export default function TeamProjectsPage() {
                       <span>Progress</span>
                       <span className="font-medium">{project.progress}%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className="bg-primary h-2 rounded-full transition-all"
                         style={{ width: `${project.progress}%` }}
@@ -514,7 +516,7 @@ export default function TeamProjectsPage() {
                         <TrendingUp className="h-3 w-3 text-muted-foreground" />
                         <span className="text-muted-foreground">Traffic</span>
                       </div>
-                      <div className="font-medium text-green-600">
+                      <div className="font-medium text-success-foreground">
                         +{project.metrics.trafficIncrease}%
                       </div>
                     </div>
@@ -574,5 +576,6 @@ export default function TeamProjectsPage() {
       </DashboardSurface>
       </SuiteAccentProvider>
     </main>
+  </FeatureGate>
   );
 }

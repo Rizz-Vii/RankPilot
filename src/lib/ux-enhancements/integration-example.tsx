@@ -129,18 +129,18 @@ export const UXEnhancedComponent: React.FC<UXEnhancedComponentProps> = ({
       <div className="mb-4 space-y-2">
         {/* Onboarding progress */}
         {!onboarding.isComplete && (
-          <div className="bg-blue-50 p-3 rounded-lg">
+          <div className="bg-primary/10 p-3 rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-blue-900">
+              <span className="text-sm font-medium text-primary">
                 Getting Started Progress
               </span>
-              <span className="text-xs text-blue-600">
+              <span className="text-xs text-primary/90">
                 {onboarding.completionPercentage}% complete
               </span>
             </div>
-            <div className="w-full bg-blue-200 rounded-full h-2">
+            <div className="w-full bg-primary/25 rounded-full h-2">
               <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300 progress-bar"
+                className="bg-primary h-2 rounded-full transition-all duration-300 progress-bar"
                 data-progress={onboarding.completionPercentage}
               />
             </div>
@@ -148,12 +148,12 @@ export const UXEnhancedComponent: React.FC<UXEnhancedComponentProps> = ({
         )}
 
         {/* Gamification status */}
-        <div className="bg-green-50 p-3 rounded-lg flex items-center justify-between">
+  <div className="bg-success/10 p-3 rounded-lg flex items-center justify-between">
           <div>
-            <span className="text-sm font-medium text-green-900">
+            <span className="text-sm font-medium text-success">
               Level {gamification.stats.level} • {streakInfo.message}
             </span>
-            <div className="text-xs text-green-600">
+            <div className="text-xs text-success/90">
               {gamification.stats.totalPoints} points •{" "}
               {streakInfo.encouragement}
             </div>
@@ -163,11 +163,11 @@ export const UXEnhancedComponent: React.FC<UXEnhancedComponentProps> = ({
 
         {/* Mobile compliance status */}
         {touchTargetStatus.percentage < 100 && (
-          <div className="bg-orange-50 p-3 rounded-lg">
-            <span className="text-sm text-orange-900">
+          <div className="bg-warning/10 p-3 rounded-lg">
+            <span className="text-sm text-warning">
               Mobile Optimization: {touchTargetStatus.percentage}% compliant
             </span>
-            <div className="text-xs text-orange-600">
+            <div className="text-xs text-warning/90">
               {touchTargetStatus.nonCompliantTargets.length} elements need 48px
               touch targets
             </div>
@@ -180,13 +180,13 @@ export const UXEnhancedComponent: React.FC<UXEnhancedComponentProps> = ({
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-foreground">
                 {onboarding.nextStep.title}
               </h3>
-              <p className="text-gray-600 mt-2">
+              <p className="text-muted-foreground mt-2">
                 {onboarding.nextStep.description}
               </p>
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="text-xs text-muted-foreground mt-1">
                 Estimated time:{" "}
                 {Math.round(onboarding.nextStep.estimatedTime / 60)} minutes
               </div>
@@ -197,13 +197,13 @@ export const UXEnhancedComponent: React.FC<UXEnhancedComponentProps> = ({
                 onClick={() =>
                   handleOnboardingStepComplete(onboarding.nextStep!.id)
                 }
-                className="tool-link bg-blue-600 text-white px-4 py-2 rounded-lg flex-1"
+                className="tool-link bg-primary text-primary-foreground px-4 py-2 rounded-lg flex-1"
               >
                 Continue
               </button>
               <button
                 onClick={() => setIsOnboardingVisible(false)}
-                className="tool-link bg-gray-200 text-gray-800 px-4 py-2 rounded-lg"
+                className="tool-link bg-muted text-foreground px-4 py-2 rounded-lg"
               >
                 Skip
               </button>
@@ -216,8 +216,8 @@ export const UXEnhancedComponent: React.FC<UXEnhancedComponentProps> = ({
       <div
         className={`transition-all duration-300 ${
           currentEmotion === "confidence"
-            ? "bg-green-50 border-green-200"
-            : "bg-blue-50 border-blue-200"
+            ? "bg-success/10 border-success/30"
+            : "bg-primary/10 border-primary/30"
         } border rounded-lg p-4`}
       >
         {children}
@@ -279,7 +279,7 @@ export const UXEnhancedComponent: React.FC<UXEnhancedComponentProps> = ({
 
       {/* Debug information (development only) */}
       {process.env.NODE_ENV === "development" && (
-        <details className="mt-4 p-3 bg-gray-50 rounded text-xs">
+  <details className="mt-4 p-3 bg-muted rounded text-xs">
           <summary className="cursor-pointer font-medium">
             UX Enhancement Debug Info
           </summary>
@@ -328,21 +328,21 @@ export const EnhancedNeuroSEODashboard: React.FC<{
       currentStage="analysis"
     >
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold text-gray-900">
+  <h2 className="text-2xl font-bold text-foreground">
           NeuroSEO™ Analysis Dashboard
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="tool-card bg-white p-4 rounded-lg border">
             <h3 className="font-semibold mb-2">AI Visibility Engine</h3>
-            <p className="text-gray-600 text-sm">
+            <p className="text-muted-foreground text-sm">
               Track how AI models cite and reference your content
             </p>
           </div>
 
           <div className="tool-card bg-white p-4 rounded-lg border">
             <h3 className="font-semibold mb-2">TrustBlock™</h3>
-            <p className="text-gray-600 text-sm">
+            <p className="text-muted-foreground text-sm">
               Optimize E-A-T signals for better search rankings
             </p>
           </div>
@@ -350,7 +350,7 @@ export const EnhancedNeuroSEODashboard: React.FC<{
 
         <div className="tool-card bg-white p-4 rounded-lg border">
           <h3 className="font-semibold mb-2">Competitive Analysis</h3>
-          <p className="text-gray-600 text-sm">
+          <p className="text-muted-foreground text-sm">
             Compare your SEO performance against competitors
           </p>
         </div>

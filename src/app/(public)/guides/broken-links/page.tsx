@@ -33,7 +33,7 @@ export default function BrokenLinksGuidePage() {
       <div className="prose prose-lg max-w-none">
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4 flex items-center">
-            <AlertTriangle className="w-6 h-6 mr-2 text-orange-500" />
+            <AlertTriangle className="w-6 h-6 mr-2 text-warning-foreground" />
             Why Broken Links Matter
           </h2>
           <p>
@@ -72,9 +72,9 @@ export default function BrokenLinksGuidePage() {
           <h2 className="text-2xl font-semibold mb-4">
             Using RankPilot for Broken Link Analysis
           </h2>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+          <div className="bg-primary/10 border border-primary/30 rounded-lg p-6 mb-6">
             <h3 className="font-semibold mb-2 flex items-center">
-              <CheckCircle className="w-5 h-5 mr-2 text-blue-600" />
+              <CheckCircle className="w-5 h-5 mr-2 text-primary" />
               Step-by-Step Process
             </h3>
             <ol className="list-decimal pl-6 space-y-2">
@@ -138,7 +138,7 @@ export default function BrokenLinksGuidePage() {
           <h2 className="text-2xl font-semibold mb-4">Best Practices</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-semibold mb-2 text-green-600">✅ Do</h3>
+              <h3 className="font-semibold mb-2 text-success-foreground">✅ Do</h3>
               <ul className="list-disc pl-6 text-sm">
                 <li>Monitor links regularly</li>
                 <li>Set up automated monitoring</li>
@@ -147,7 +147,7 @@ export default function BrokenLinksGuidePage() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-2 text-red-600">❌ Don't</h3>
+              <h3 className="font-semibold mb-2 text-destructive-foreground">❌ Don't</h3>
               <ul className="list-disc pl-6 text-sm">
                 <li>Ignore broken links for months</li>
                 <li>Remove all external links</li>
@@ -160,7 +160,7 @@ export default function BrokenLinksGuidePage() {
 
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Get Started</h2>
-          <div className="bg-gradient-to-r from-primary/10 to-blue-50 border border-primary/20 rounded-lg p-6">
+          <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-6">
             <p className="mb-4">
               Ready to find and fix broken links on your website? Use
               RankPilot's powerful link analysis tool to get started.

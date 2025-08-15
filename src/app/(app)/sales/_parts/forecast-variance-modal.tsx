@@ -34,7 +34,7 @@ export function ForecastVarianceModal({ open, onOpenChange }: Props) {
                     <td className="py-1 pr-2 font-medium">{r.label}</td>
                     <td className="py-1 text-right tabular-nums">{r.forecast.toLocaleString()}</td>
                     <td className="py-1 text-right tabular-nums">{r.actual.toLocaleString()}</td>
-                    <td className={`py-1 text-right tabular-nums ${good? 'text-emerald-600':'text-amber-600'}`}>{variance.toFixed(1)}</td>
+                    <td className={`py-1 text-right tabular-nums ${good? 'text-success-foreground':'text-warning-foreground'}`}>{variance.toFixed(1)}</td>
                   </tr>
                 );
               })}

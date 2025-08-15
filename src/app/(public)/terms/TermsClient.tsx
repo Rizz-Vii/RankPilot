@@ -50,7 +50,7 @@ export default function TermsClient() {
               </Link>
             </Button>
           </div>
-          <p className="text-sm text-gray-500 mt-4">Last updated: {new Date().toLocaleDateString()}</p>
+          <p className="text-sm text-muted-foreground mt-4">Last updated: {new Date().toLocaleDateString()}</p>
         </div>
       </motion.section>
 

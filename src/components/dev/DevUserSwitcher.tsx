@@ -136,12 +136,12 @@ export function DevUserSwitcher() {
           <div className="p-3 border-b border-border flex items-start justify-between">
             <div className="flex flex-col gap-1 min-w-0">
               <div className="font-semibold text-primary flex items-center gap-2">
-                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" aria-hidden="true"></div>
+                <div className="w-2 h-2 bg-warning rounded-full animate-pulse" aria-hidden="true"></div>
                 <span className="truncate">Dev Mode</span>
               </div>
               {user && (
                 <div className="text-[11px] text-muted-foreground flex items-center gap-1 truncate">
-                  <span className="text-green-600 font-medium">●</span>
+                  <span className="text-success-foreground font-medium">●</span>
                   <span className="truncate max-w-[170px]">{user.email}</span>
                   {currentTier && (
                     <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-medium">
@@ -227,13 +227,13 @@ export function DevUserSwitcher() {
                     <span>Debug Info</span>
                   </div>
                   <div className="space-y-1 text-[11px] leading-tight">
-                    <div><span className="font-medium text-blue-600">User:</span> {user?.email || "Not logged in"}</div>
-                    <div><span className="font-medium text-blue-600">Role:</span> {role || "None"}</div>
-                    <div><span className="font-medium text-blue-600">Subscription:</span> {subscription?.tier || "Unknown"}</div>
-                    <div><span className="font-medium text-blue-600">Plan Name:</span> {subscription?.planName || "None"}</div>
-                    <div><span className="font-medium text-blue-600">Status:</span> {subscription?.status || "Unknown"}</div>
-                    <div><span className="font-medium text-blue-600">Access Tier:</span> {subscription?.userAccess?.tier || "Unknown"}</div>
-                    <div className="pt-1 border-t border-border/40"><span className="font-medium text-green-600">Current Tier Match:</span> {currentTier || "Unknown"}</div>
+                    <div><span className="font-medium text-primary">User:</span> {user?.email || "Not logged in"}</div>
+                    <div><span className="font-medium text-primary">Role:</span> {role || "None"}</div>
+                    <div><span className="font-medium text-primary">Subscription:</span> {subscription?.tier || "Unknown"}</div>
+                    <div><span className="font-medium text-primary">Plan Name:</span> {subscription?.planName || "None"}</div>
+                    <div><span className="font-medium text-primary">Status:</span> {subscription?.status || "Unknown"}</div>
+                    <div><span className="font-medium text-primary">Access Tier:</span> {subscription?.userAccess?.tier || "Unknown"}</div>
+                    <div className="pt-1 border-t border-border/40"><span className="font-medium text-success-foreground">Current Tier Match:</span> {currentTier || "Unknown"}</div>
                   </div>
                 </div>
               )}

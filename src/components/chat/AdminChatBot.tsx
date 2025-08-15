@@ -252,7 +252,7 @@ What would you like to analyze today?`,
             <Button
                 onClick={() => setIsOpen(true)}
                 size="lg"
-                className="w-14 h-14 rounded-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 shadow-lg hover:shadow-xl transition-all duration-200"
+                className="w-14 h-14 rounded-full bg-gradient-to-r from-destructive to-warning hover:from-destructive/90 hover:to-warning/90 shadow-lg hover:shadow-xl transition-all duration-200"
                 aria-label="Open Admin AI Chat"
             >
                 <Settings className="w-6 h-6" />
@@ -273,13 +273,13 @@ What would you like to analyze today?`,
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2 }}
             className={cn(
-                "fixed bottom-6 left-6 z-50 w-[500px] bg-white rounded-2xl shadow-2xl border border-gray-200",
+                "fixed bottom-6 left-6 z-50 w-[500px] bg-white rounded-2xl shadow-2xl border border-border",
                 isMinimized && "h-auto"
             )}
         >
             <Card className="h-full border-none shadow-none">
                 {/* Header */}
-                <CardHeader className="flex flex-row items-center justify-between p-4 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-t-2xl">
+                <CardHeader className="flex flex-row items-center justify-between p-4 bg-gradient-to-r from-destructive to-warning text-white rounded-t-2xl">
                     <div className="flex items-center gap-2">
                         <Shield className="w-5 h-5" />
                         <div>
@@ -329,7 +329,7 @@ What would you like to analyze today?`,
                                                 )}
                                             >
                                                 {!msg.isUser && (
-                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-red-500 to-orange-500 flex items-center justify-center flex-shrink-0">
+                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-destructive to-warning flex items-center justify-center flex-shrink-0">
                                                         <Bot className="w-4 h-4 text-white" />
                                                     </div>
                                                 )}
@@ -338,8 +338,8 @@ What would you like to analyze today?`,
                                                     className={cn(
                                                         "max-w-[75%] rounded-lg p-3 text-sm",
                                                         msg.isUser
-                                                            ? "bg-gradient-to-r from-red-600 to-orange-600 text-white"
-                                                            : "bg-gray-100 text-gray-900"
+                                                            ? "bg-gradient-to-r from-destructive to-warning text-white"
+                                                            : "bg-muted text-foreground"
                                                     )}
                                                 >
                                                     {msg.isUser ? (
@@ -377,8 +377,8 @@ What would you like to analyze today?`,
                                                 </div>
 
                                                 {msg.isUser && (
-                                                    <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0">
-                                                        <User className="w-4 h-4 text-gray-600" />
+                                                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                                                        <User className="w-4 h-4 text-muted-foreground" />
                                                     </div>
                                                 )}
                                             </div>
@@ -386,10 +386,10 @@ What would you like to analyze today?`,
 
                                         {isLoading && (
                                             <div className="flex gap-3 justify-start">
-                                                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-red-500 to-orange-500 flex items-center justify-center">
+                                                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-destructive to-warning flex items-center justify-center">
                                                     <Bot className="w-4 h-4 text-white" />
                                                 </div>
-                                                <div className="bg-gray-100 rounded-lg p-3 text-sm">
+                                                <div className="bg-muted rounded-lg p-3 text-sm">
                                                     <div className="flex items-center gap-2">
                                                         <Loader2 className="w-4 h-4 animate-spin" />
                                                         <span>Analyzing system data...</span>
@@ -399,7 +399,7 @@ What would you like to analyze today?`,
                                         )}
 
                                         {error && (
-                                            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600">
+                                            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 text-sm text-destructive">
                                                 {error}
                                             </div>
                                         )}
@@ -408,7 +408,7 @@ What would you like to analyze today?`,
                                 </ScrollArea>
 
                                 {/* Input */}
-                                <div className="p-4 border-t border-gray-200">
+                                <div className="p-4 border-t border-border">
                                     <div className="flex gap-2">
                                         <Input
                                             ref={inputRef}
@@ -425,14 +425,14 @@ What would you like to analyze today?`,
                                             onClick={sendMessage}
                                             disabled={!inputValue.trim() || isLoading || !isAdmin}
                                             size="sm"
-                                            className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
+                                            className="bg-gradient-to-r from-destructive to-warning hover:from-destructive/90 hover:to-warning/90"
                                         >
                                             <Send className="w-4 h-4" />
                                         </Button>
                                     </div>
 
                                     {!isAdmin && (
-                                        <p className="text-xs text-red-500 mt-2">
+                                        <p className="text-xs text-destructive mt-2">
                                             Admin access required
                                         </p>
                                     )}
@@ -441,27 +441,28 @@ What would you like to analyze today?`,
 
                             <TabsContent value="commands" className="flex-1 mt-0">
                                 <div className="p-4 space-y-3">
-                                    <h4 className="text-sm font-medium text-gray-700 mb-3">Quick Commands</h4>
-                                    {quickCommands.map((cmd, index) => (
-                                        <Button
-                                            key={index}
-                                            variant="outline"
-                                            className="w-full justify-start gap-2 h-auto p-3"
-                                            onClick={async () => {
-                                                setInputValue(cmd.command);
-                                                setActiveTab('chat');
-                                                // Wait a tick to ensure state update is applied, then send
-                                                setTimeout(() => { void sendMessage(); }, 0);
-                                            }}
-                                            disabled={isLoading || !isAdmin}
-                                        >
-                                            <cmd.icon className="w-4 h-4" />
-                                            <div className="text-left">
-                                                <div className="font-medium text-sm">{cmd.label}</div>
-                                                <div className="text-xs text-gray-500">{cmd.command}</div>
-                                            </div>
-                                        </Button>
-                                    ))}
+                                    <h4 className="text-sm font-medium text-muted-foreground mb-3">Quick Commands</h4>
+                                    <div className="space-y-2">
+                                        {quickCommands.map((cmd, index) => (
+                                            <Button
+                                                key={index}
+                                                variant="outline"
+                                                className="w-full justify-start gap-2 h-auto p-3"
+                                                onClick={async () => {
+                                                    setInputValue(cmd.command);
+                                                    setActiveTab('chat');
+                                                    setTimeout(() => { void sendMessage(); }, 0);
+                                                }}
+                                                disabled={isLoading || !isAdmin}
+                                            >
+                                                <cmd.icon className="w-4 h-4" />
+                                                <div className="text-left">
+                                                    <div className="font-medium text-sm">{cmd.label}</div>
+                                                    <div className="text-xs text-muted-foreground">{cmd.command}</div>
+                                                </div>
+                                            </Button>
+                                        ))}
+                                    </div>
                                 </div>
                             </TabsContent>
                         </Tabs>

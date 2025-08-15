@@ -8,6 +8,7 @@ import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import OpenAI from "openai";
+import { getAI as getManagedAI } from "./lib/ai-memory-manager";
 import {
   getAdminContext,
   getAuditContext,
@@ -53,6 +54,26 @@ interface ChatResponse {
     type: string;
     dataUsed: string[];
   };
+}
+
+/**
+ * Compose a single prompt string from system + history + user message so it can be sent
+ * through the centralized AI manager (provider-agnostic).
+ */
+function composePrompt(system: string, history: Array<{ role: "user" | "assistant"; content: string }>, userMessage: string): string {
+  const parts: string[] = [];
+  if (system) parts.push(`<system>\n${system.trim()}\n</system>`);
+  if (history && history.length) {
+    parts.push(`<history>`);
+    history.forEach((m) => {
+      const role = m.role === "assistant" ? "assistant" : "user";
+      parts.push(`[${role}] ${m.content}`);
+    });
+    parts.push(`</history>`);
+  }
+  parts.push(`<user>\n${userMessage}\n</user>`);
+  parts.push("Provide a helpful answer. If you include any JSON, ensure it is valid.");
+  return parts.join("\n\n");
 }
 
 /**
@@ -127,18 +148,31 @@ export const customerChatHandler = onCall(
         throw new HttpsError("failed-precondition", "AI service is currently unavailable");
       }
 
-      // Call OpenAI
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages,
-        max_tokens: 1000,
-        temperature: 0.1,
-        presence_penalty: 0.1,
-        frequency_penalty: 0.1,
-      });
-
-      const aiResponse = completion.choices[0]?.message?.content || "I apologize, but I couldn't generate a response. Please try again.";
-      const tokensUsed = completion.usage?.total_tokens || 0;
+      // Prefer centralized AI manager (env-driven provider with mock fallback), then fall back to OpenAI SDK
+      let aiResponse = "";
+      let tokensUsed = 0;
+      try {
+        const history = messages
+          .filter((m) => m.role === "user" || m.role === "assistant")
+          .map((m) => ({ role: m.role as ("user" | "assistant"), content: String((m as any).content || "") }));
+        const sys = String((messages.find((m) => m.role === "system") as any)?.content || "");
+        const prompt = composePrompt(sys, history, message);
+        aiResponse = await getManagedAI(prompt, "gpt-4o", { latencyBudgetMs: Number(process.env.AI_LATENCY_BUDGET_MS || 8000) });
+        tokensUsed = aiResponse ? Math.min(1500, Math.ceil(aiResponse.split(/\s+/).length * 1.3)) : 0;
+      } catch (e) {
+        // Fallback to OpenAI SDK if configured
+        if (!openai) throw e;
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages,
+          max_tokens: 1000,
+          temperature: 0.1,
+          presence_penalty: 0.1,
+          frequency_penalty: 0.1,
+        });
+        aiResponse = completion.choices[0]?.message?.content || "I apologize, but I couldn't generate a response. Please try again.";
+        tokensUsed = completion.usage?.total_tokens || 0;
+      }
 
       // Save conversation to Firestore
       await saveConversation(uid, currentSessionId, message, aiResponse, "customer", {
@@ -256,18 +290,30 @@ export const adminChatHandler = onCall(
         throw new HttpsError("failed-precondition", "AI service is currently unavailable");
       }
 
-      // Call OpenAI with admin-specific configuration
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages,
-        max_tokens: 1500,
-        temperature: 0.05, // More focused responses for admin queries
-        presence_penalty: 0.1,
-        frequency_penalty: 0.1,
-      });
-
-      const aiResponse = completion.choices[0]?.message?.content || "I couldn't process your admin request. Please try again.";
-      const tokensUsed = completion.usage?.total_tokens || 0;
+      // Prefer centralized AI manager; fall back to OpenAI SDK if needed
+      let aiResponse = "";
+      let tokensUsed = 0;
+      try {
+        const history = messages
+          .filter((m) => m.role === "user" || m.role === "assistant")
+          .map((m) => ({ role: m.role as ("user" | "assistant"), content: String((m as any).content || "") }));
+        const sys = String((messages.find((m) => m.role === "system") as any)?.content || "");
+        const prompt = composePrompt(sys, history, message);
+        aiResponse = await getManagedAI(prompt, "gpt-4o", { latencyBudgetMs: Number(process.env.AI_LATENCY_BUDGET_MS || 8000) });
+        tokensUsed = aiResponse ? Math.min(1800, Math.ceil(aiResponse.split(/\s+/).length * 1.3)) : 0;
+      } catch (e) {
+        if (!openai) throw e;
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages,
+          max_tokens: 1500,
+          temperature: 0.05, // More focused responses for admin queries
+          presence_penalty: 0.1,
+          frequency_penalty: 0.1,
+        });
+        aiResponse = completion.choices[0]?.message?.content || "I couldn't process your admin request. Please try again.";
+        tokensUsed = completion.usage?.total_tokens || 0;
+      }
 
       // Save admin conversation
       await saveConversation(uid, currentSessionId, message, aiResponse, "admin", {

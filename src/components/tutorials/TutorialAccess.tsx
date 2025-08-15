@@ -284,15 +284,16 @@ function TutorialCard({ tutorial, compact = false }: TutorialCardProps) {
     (tutorial.tier === "enterprise" && tier === "enterprise");
 
   const getTierColor = (requiredTier: string) => {
+    // Map tiers to semantic token surfaces (primary, accent, warning) avoiding raw palette classes
     switch (requiredTier) {
       case "free":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
+        return "bg-primary/10 text-primary";
       case "agency":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
+        return "bg-accent/10 text-accent";
       case "enterprise":
-        return "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200";
+        return "bg-warning/15 text-warning";
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+        return "bg-muted text-foreground";
     }
   };
 

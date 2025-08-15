@@ -27,7 +27,7 @@ export default function LearnSEOGuidePage() {
       <div className="prose prose-lg max-w-none">
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4 flex items-center">
-            <BookOpen className="w-6 h-6 mr-2 text-purple-500" />
+            <BookOpen className="w-6 h-6 mr-2 text-accent" />
             SEO Fundamentals
           </h2>
           <p>
@@ -65,7 +65,7 @@ export default function LearnSEOGuidePage() {
           <h2 className="text-2xl font-semibold mb-4">Learning Path</h2>
 
           <div className="space-y-6">
-            <div className="border-l-4 border-green-500 pl-6">
+            <div className="border-l-4 border-success pl-6">
               <h3 className="text-xl font-semibold mb-2">
                 Beginner (0-3 months)
               </h3>
@@ -78,7 +78,7 @@ export default function LearnSEOGuidePage() {
               </ul>
             </div>
 
-            <div className="border-l-4 border-yellow-500 pl-6">
+            <div className="border-l-4 border-warning pl-6">
               <h3 className="text-xl font-semibold mb-2">
                 Intermediate (3-6 months)
               </h3>
@@ -91,7 +91,7 @@ export default function LearnSEOGuidePage() {
               </ul>
             </div>
 
-            <div className="border-l-4 border-red-500 pl-6">
+            <div className="border-l-4 border-destructive pl-6">
               <h3 className="text-xl font-semibold mb-2">
                 Advanced (6+ months)
               </h3>
@@ -177,7 +177,7 @@ export default function LearnSEOGuidePage() {
           <h2 className="text-2xl font-semibold mb-4">Common SEO Mistakes</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-semibold mb-2 text-red-600">
+              <h3 className="font-semibold mb-2 text-destructive-foreground">
                 ❌ Avoid These
               </h3>
               <ul className="list-disc pl-6 text-sm">
@@ -190,7 +190,7 @@ export default function LearnSEOGuidePage() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-2 text-green-600">✅ Focus On</h3>
+              <h3 className="font-semibold mb-2 text-success-foreground">✅ Focus On</h3>
               <ul className="list-disc pl-6 text-sm">
                 <li>User experience and intent</li>
                 <li>High-quality, helpful content</li>
@@ -247,7 +247,7 @@ export default function LearnSEOGuidePage() {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="border rounded-lg p-4">
               <h3 className="font-semibold mb-2 flex items-center">
-                <TrendingUp className="w-5 h-5 mr-2 text-blue-500" />
+                <TrendingUp className="w-5 h-5 mr-2 text-primary" />
                 Key Metrics
               </h3>
               <ul className="text-sm list-disc pl-4">
@@ -277,7 +277,7 @@ export default function LearnSEOGuidePage() {
           <h2 className="text-2xl font-semibold mb-4">
             Start Your SEO Journey
           </h2>
-          <div className="bg-gradient-to-r from-primary/10 to-purple-50 border border-primary/20 rounded-lg p-6">
+          <div className="bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-lg p-6">
             <p className="mb-4">
               Ready to put your SEO knowledge into practice? Use RankPilot's
               comprehensive analysis tools to audit your website and identify

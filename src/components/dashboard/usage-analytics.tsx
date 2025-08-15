@@ -108,8 +108,8 @@ export function UsageAnalytics() {
       icon: <FileText className="w-4 h-4" />,
       color:
         (usage.projects || 0) >= limits.auditsPerMonth * 0.8
-          ? "text-red-500"
-          : "text-blue-500",
+          ? "text-destructive-foreground"
+          : "text-primary",
     },
     {
       name: "Keywords",
@@ -118,8 +118,8 @@ export function UsageAnalytics() {
       icon: <Zap className="w-4 h-4" />,
       color:
         (usage.keywords || 0) >= limits.keywords * 0.8
-          ? "text-red-500"
-          : "text-green-500",
+          ? "text-destructive-foreground"
+          : "text-success-foreground",
     },
     {
       name: "Reports",
@@ -128,8 +128,8 @@ export function UsageAnalytics() {
       icon: <BarChart3 className="w-4 h-4" />,
       color:
         (usage.reports || 0) >= limits.auditsPerMonth * 0.8
-          ? "text-red-500"
-          : "text-purple-500",
+          ? "text-destructive-foreground"
+          : "text-accent-foreground",
     },
     {
       name: "Team Members",
@@ -138,8 +138,8 @@ export function UsageAnalytics() {
       icon: <Users className="w-4 h-4" />,
       color:
         (usage.users || 0) >= limits.competitors * 0.8
-          ? "text-red-500"
-          : "text-orange-500",
+          ? "text-destructive-foreground"
+          : "text-warning-foreground",
     },
   ];
 
@@ -159,13 +159,13 @@ export function UsageAnalytics() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "exceeded":
-        return "text-red-500";
+  return "text-destructive-foreground";
       case "warning":
-        return "text-yellow-500";
+  return "text-warning-foreground";
       case "unlimited":
-        return "text-green-500";
+  return "text-success-foreground";
       default:
-        return "text-gray-500";
+  return "text-muted-foreground";
     }
   };
 
@@ -176,8 +176,8 @@ export function UsageAnalytics() {
           {[...Array(4)].map((_, i) => (
             <Card key={i}>
               <CardHeader className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 bg-muted rounded w-3/4"></div>
+                <div className="h-8 bg-muted rounded w-1/2"></div>
               </CardHeader>
             </Card>
           ))}
@@ -195,7 +195,7 @@ export function UsageAnalytics() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 {isPremium ? (
-                  <Crown className="w-5 h-5 text-yellow-500" />
+                  <Crown className="w-5 h-5 text-warning-foreground" />
                 ) : (
                   <Zap className="w-5 h-5" />
                 )}
@@ -251,7 +251,7 @@ export function UsageAnalytics() {
                 )}
 
                 {item.limit === -1 && (
-                  <p className="text-xs text-green-500 mt-2">Unlimited</p>
+                  <p className="text-xs text-success-foreground mt-2">Unlimited</p>
                 )}
               </CardContent>
             </Card>
@@ -265,9 +265,9 @@ export function UsageAnalytics() {
           getUsageStatus(item.current, item.limit) === "warning" ||
           getUsageStatus(item.current, item.limit) === "exceeded"
       ) && (
-        <Card className="border-yellow-200 bg-yellow-50 dark:border-yellow-900 dark:bg-yellow-950">
+  <Card className="border-warning/30 bg-warning/10 dark:border-warning/40 dark:bg-warning/15">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
+            <CardTitle className="flex items-center gap-2 text-warning-foreground">
               <AlertTriangle className="w-5 h-5" />
               Usage Warnings
             </CardTitle>
@@ -301,14 +301,14 @@ export function UsageAnalytics() {
                 </div>
               ))}
 
-            <div className="pt-2 border-t border-yellow-200 dark:border-yellow-800">
-              <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-2">
+            <div className="pt-2 border-t border-warning/30 dark:border-warning/40">
+              <p className="text-sm text-warning-foreground mb-2">
                 Consider upgrading your plan to continue using all features.
               </p>
               <Button
                 asChild
                 size="sm"
-                className="bg-yellow-600 hover:bg-yellow-700"
+                className="bg-warning text-warning-foreground hover:bg-warning/80"
               >
                 <Link href="/pricing" className="flex items-center gap-1">
                   Upgrade Plan

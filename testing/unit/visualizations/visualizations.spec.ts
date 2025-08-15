@@ -1,8 +1,9 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { __test_only__ as vizApiTest } from '@/app/api/visualizations/route';
+import * as vizApiTest from '@/lib/visualizations/server-exports';
 import { adminStorage } from '@/lib/firebase-admin';
-import { generateServerArtifact } from '@/lib/visualizations/chart-export-manager';
+// Use server-only artifact generator to avoid importing client module in Node tests
+import { generateServerArtifact } from '@/lib/visualizations/server-artifacts';
 import { d3VisualizationEngine } from '@/lib/visualizations/d3-visualization-engine';
 
 // Minimal typings for NextResponse wrappers aren't needed; we call the internal helpers

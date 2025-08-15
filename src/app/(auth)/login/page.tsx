@@ -162,7 +162,7 @@ export default function LoginPage() {
               disabled={loading}
             />
             {errors.email && (
-              <p className="text-red-600 text-xs mt-1">{errors.email}</p>
+              <p className="text-destructive-foreground text-xs mt-1">{errors.email}</p>
             )}
           </div>
           <div className="relative">
@@ -191,11 +191,11 @@ export default function LoginPage() {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
             {errors.password && (
-              <p className="text-red-600 text-xs mt-1">{errors.password}</p>
+              <p className="text-destructive-foreground text-xs mt-1">{errors.password}</p>
             )}
           </div>
           {errors.form && (
-            <p className="text-red-600 text-xs mt-1">{errors.form}</p>
+            <p className="text-destructive-foreground text-xs mt-1">{errors.form}</p>
           )}
           <button
             type="submit"

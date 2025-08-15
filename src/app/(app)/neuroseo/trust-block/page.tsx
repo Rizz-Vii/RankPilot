@@ -32,6 +32,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { createDeterministicRng, randomInt, randomFloat, tagSynthetic } from '@/lib/synthetic/synthetic-utils';
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import { useAuth } from "@/context/AuthContext";
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { db } from "@/lib/firebase";
 import { collection, addDoc, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { toast } from "sonner";
@@ -313,6 +314,7 @@ export default function TrustBlockPage() {
   })) || [];
 
   return (
+    <FeatureGate feature="trust_block" requiredTier="starter" showUpgrade>
     <main className="container mx-auto py-6 space-y-6">
       <ToolPageHeader
         title="TrustBlock™"
@@ -401,25 +403,25 @@ export default function TrustBlockPage() {
             <Card>
               <CardContent className="p-6">
                 <div className="text-center">
-                  <div className="text-5xl font-bold mb-2 text-green-600">
+                  <div className="text-5xl font-bold mb-2 text-success-foreground">
                     {currentResult.eatScore.overall}/100
                   </div>
                   <p className="text-lg text-muted-foreground mb-4">Overall E-A-T Score</p>
                   <div className="grid grid-cols-3 gap-4 mt-6">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">
+                      <div className="text-2xl font-bold text-primary">
                         {currentResult.eatScore.expertise}
                       </div>
                       <p className="text-sm text-muted-foreground">Expertise</p>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-purple-600">
+                      <div className="text-2xl font-bold text-accent-foreground">
                         {currentResult.eatScore.authoritativeness}
                       </div>
                       <p className="text-sm text-muted-foreground">Authoritativeness</p>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">
+                      <div className="text-2xl font-bold text-success-foreground">
                         {currentResult.eatScore.trustworthiness}
                       </div>
                       <p className="text-sm text-muted-foreground">Trustworthiness</p>
@@ -508,11 +510,11 @@ export default function TrustBlockPage() {
                         <div className="flex items-start gap-4">
                           <div className="flex-shrink-0">
                             {signal.status === 'present' || signal.status === 'strong' ? (
-                              <CheckCircle2 className="h-6 w-6 text-green-600" />
+                              <CheckCircle2 className="h-6 w-6 text-success-foreground" />
                             ) : signal.status === 'weak' ? (
-                              <AlertTriangle className="h-6 w-6 text-yellow-600" />
+                              <AlertTriangle className="h-6 w-6 text-warning-foreground" />
                             ) : (
-                              <XCircle className="h-6 w-6 text-red-600" />
+                              <XCircle className="h-6 w-6 text-destructive-foreground" />
                             )}
                           </div>
                           <div className="flex-1">
@@ -543,7 +545,7 @@ export default function TrustBlockPage() {
                               <ul className="text-sm mt-1 space-y-1">
                                 {signal.recommendations.map((rec, recIndex) => (
                                   <li key={recIndex} className="flex items-center gap-2">
-                                    <TrendingUp className="h-3 w-3 text-green-600" />
+                                    <TrendingUp className="h-3 w-3 text-success-foreground" />
                                     {rec}
                                   </li>
                                 ))}
@@ -567,7 +569,7 @@ export default function TrustBlockPage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
-                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                      <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-primary-foreground font-bold text-xl">
                         {currentResult.authorCredibility.name.split(' ').map(n => n[0]).join('')}
                       </div>
                       <div>
@@ -582,7 +584,7 @@ export default function TrustBlockPage() {
                         <div className="space-y-2 mt-2">
                           {currentResult.authorCredibility.credentials.map((credential, index) => (
                             <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded text-sm">
-                              <Award className="h-4 w-4 text-yellow-600" />
+                              <Award className="h-4 w-4 text-warning-foreground" />
                               {credential}
                             </div>
                           ))}
@@ -603,25 +605,25 @@ export default function TrustBlockPage() {
                       <div className="flex items-center justify-between p-3 bg-muted rounded">
                         <span className="text-sm">Author Bio</span>
                         {currentResult.authorCredibility.bio ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-600" />
+                          <CheckCircle2 className="h-5 w-5 text-success-foreground" />
                         ) : (
-                          <XCircle className="h-5 w-5 text-red-600" />
+                          <XCircle className="h-5 w-5 text-destructive-foreground" />
                         )}
                       </div>
                       <div className="flex items-center justify-between p-3 bg-muted rounded">
                         <span className="text-sm">LinkedIn Profile</span>
                         {currentResult.authorCredibility.linkedinProfile ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-600" />
+                          <CheckCircle2 className="h-5 w-5 text-success-foreground" />
                         ) : (
-                          <XCircle className="h-5 w-5 text-red-600" />
+                          <XCircle className="h-5 w-5 text-destructive-foreground" />
                         )}
                       </div>
                       <div className="flex items-center justify-between p-3 bg-muted rounded">
                         <span className="text-sm">Author Photo</span>
                         {currentResult.authorCredibility.authorPhoto ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-600" />
+                          <CheckCircle2 className="h-5 w-5 text-success-foreground" />
                         ) : (
-                          <XCircle className="h-5 w-5 text-red-600" />
+                          <XCircle className="h-5 w-5 text-destructive-foreground" />
                         )}
                       </div>
                     </div>
@@ -664,9 +666,9 @@ export default function TrustBlockPage() {
                           <span className="text-sm capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
                           {typeof value === 'boolean' ? (
                             value ? (
-                              <CheckCircle2 className="h-5 w-5 text-green-600" />
+                              <CheckCircle2 className="h-5 w-5 text-success-foreground" />
                             ) : (
-                              <XCircle className="h-5 w-5 text-red-600" />
+                              <XCircle className="h-5 w-5 text-destructive-foreground" />
                             )
                           ) : (
                             <Badge variant="outline">{value} years</Badge>
@@ -685,9 +687,9 @@ export default function TrustBlockPage() {
                       <CardContent className="p-6">
                         <div className="flex items-start gap-4">
                           <div className="flex-shrink-0">
-                            {rec.category === 'expertise' && <Brain className="h-6 w-6 text-blue-600" />}
-                            {rec.category === 'authoritativeness' && <Award className="h-6 w-6 text-purple-600" />}
-                            {rec.category === 'trustworthiness' && <Shield className="h-6 w-6 text-green-600" />}
+                            {rec.category === 'expertise' && <Brain className="h-6 w-6 text-primary" />}
+                            {rec.category === 'authoritativeness' && <Award className="h-6 w-6 text-accent-foreground" />}
+                            {rec.category === 'trustworthiness' && <Shield className="h-6 w-6 text-success-foreground" />}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
@@ -705,8 +707,8 @@ export default function TrustBlockPage() {
                             <p className="text-sm text-muted-foreground mb-3">{rec.description}</p>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2 text-sm">
-                                <TrendingUp className="h-4 w-4 text-green-600" />
-                                <span className="text-green-600">{rec.impact}</span>
+                                <TrendingUp className="h-4 w-4 text-success-foreground" />
+                                <span className="text-success-foreground">{rec.impact}</span>
                               </div>
                               <Badge variant={
                                 rec.effort === 'low' ? 'default' : 
@@ -727,5 +729,6 @@ export default function TrustBlockPage() {
         )}
       </AnimatePresence>
     </main>
+  </FeatureGate>
   );
 }

@@ -75,7 +75,7 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             Revolutionizing SEO with
-            <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               {" "}
               AI Intelligence
             </span>
@@ -103,17 +103,17 @@ export default function AboutPage() {
         custom={1}
       >
         <div className="max-w-6xl mx-auto">
-          <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+          <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground">
             <CardContent className="p-12">
               <div className="grid md:grid-cols-2 gap-12 items-center">
                 <div>
                   <h2 className="text-3xl font-bold mb-6">Our Mission</h2>
-                  <p className="text-blue-100 text-lg mb-6">
+                  <p className="text-primary-foreground/80 text-lg mb-6">
                     To democratize enterprise-level SEO intelligence through AI,
                     making it accessible to businesses of all sizes while
                     maintaining the sophistication that drives real results.
                   </p>
-                  <p className="text-blue-100">
+                  <p className="text-primary-foreground/80">
                     We're not just building another SEO tool—we're creating the
                     future of search optimization, where AI does the heavy
                     lifting so you can focus on strategy and growth.
@@ -204,8 +204,8 @@ export default function AboutPage() {
               >
                 <Card className="text-center h-full">
                   <CardHeader>
-                    <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center">
-                      <Users className="h-8 w-8 text-white" />
+                    <div className="w-16 h-16 bg-gradient-to-r from-primary to-accent rounded-full mx-auto mb-4 flex items-center justify-center">
+                      <Users className="h-8 w-8 text-primary-foreground" />
                     </div>
                     <CardTitle className="text-lg">{member.name}</CardTitle>
                     <p className="text-primary font-medium">{member.role}</p>
@@ -229,12 +229,12 @@ export default function AboutPage() {
         custom={11}
       >
         <div className="max-w-4xl mx-auto text-center">
-          <Card className="bg-gradient-to-r from-primary to-purple-600 text-white">
+          <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground">
             <CardContent className="p-12">
               <h2 className="text-3xl font-bold mb-6">
                 Ready to Transform Your SEO?
               </h2>
-              <p className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
+              <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
                 Join thousands of businesses already using RankPilot's
                 NeuroSEO™ Suite to dominate search results with AI-powered
                 intelligence.

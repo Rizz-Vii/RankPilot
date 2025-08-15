@@ -72,7 +72,14 @@ interface DashboardMetrics {
     };
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+// Use design token driven chart colors instead of hardcoded hex values
+const CHART_COLORS = [
+    'hsl(var(--chart-1))',
+    'hsl(var(--chart-2))',
+    'hsl(var(--chart-3))',
+    'hsl(var(--chart-4))',
+    'hsl(var(--chart-5))'
+];
 
 export function EnterpriseDashboard() {
     const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -167,10 +174,10 @@ export function EnterpriseDashboard() {
     if (isLoading) {
         return (
             <div className="p-8 space-y-4">
-                <div className="h-8 bg-gray-200 rounded animate-pulse" />
+                <div className="h-8 bg-muted rounded animate-pulse" />
                 <div className="grid grid-cols-4 gap-4">
                     {[...Array(4)].map((_, i) => (
-                        <div key={i} className="h-32 bg-gray-200 rounded animate-pulse" />
+                        <div key={i} className="h-32 bg-muted rounded animate-pulse" />
                     ))}
                 </div>
             </div>
@@ -180,9 +187,9 @@ export function EnterpriseDashboard() {
         if (!metrics) {
         return (
             <div className="p-8 text-center">
-                <AlertTriangle className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
+                <AlertTriangle className="h-16 w-16 text-warning-foreground mx-auto mb-4" />
                 <h2 className="text-xl font-semibold mb-2">Failed to Load Dashboard</h2>
-                <p className="text-gray-600">Unable to retrieve enterprise metrics.</p>
+                <p className="text-muted-foreground">Unable to retrieve enterprise metrics.</p>
                 <Button onClick={loadDashboardMetrics} className="mt-4">
                     Retry
                 </Button>
@@ -191,20 +198,20 @@ export function EnterpriseDashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-background p-6 font-body">
             <div className="max-w-7xl mx-auto space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Enterprise Command Center</h1>
-                                                <p className="text-gray-600">Phase 5: Global Optimization + AI Automation Excellence</p>
+                        <h1 className="text-3xl font-bold text-foreground">Enterprise Command Center</h1>
+                                                <p className="text-muted-foreground">Phase 5: Global Optimization + AI Automation Excellence</p>
                                                 {!allowEnterpriseMocks() && (
                                                     <p className="text-xs text-muted-foreground mt-1" aria-live="polite">No live enterprise metrics connected. Enable demo content to preview UI.</p>
                                                 )}
                     </div>
                     <div className="flex items-center space-x-4">
                                                 {allowEnterpriseMocks() && (
-                                                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200" aria-label="Demo data badge">Demo</Badge>
+                                                    <Badge variant="outline" className="bg-warning/10 text-warning-foreground border-warning/30" aria-label="Demo data badge">Demo</Badge>
                                                 )}
                         <select
                             value={selectedTimeRange}
@@ -216,7 +223,7 @@ export function EnterpriseDashboard() {
                             <option value="7d">Last 7 Days</option>
                             <option value="30d">Last 30 Days</option>
                         </select>
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        <Badge variant="outline" className="bg-success/10 text-success-foreground border-success/30">
                             <CheckCircle className="h-3 w-3 mr-1" />
                             All Systems Operational
                         </Badge>
@@ -229,13 +236,13 @@ export function EnterpriseDashboard() {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">Global Performance</p>
-                                    <p className="text-2xl font-bold text-green-600">
+                                    <p className="text-sm font-medium text-muted-foreground">Global Performance</p>
+                                    <p className="text-2xl font-bold text-success-foreground">
                                         {metrics.global_performance.edge_locations.avg_latency}ms
                                     </p>
-                                    <p className="text-xs text-green-600">↓ 32% improvement</p>
+                                    <p className="text-xs text-success-foreground/80">↓ 32% improvement</p>
                                 </div>
-                                <Globe className="h-8 w-8 text-green-600" />
+                                <Globe className="h-8 w-8 text-success-foreground" />
                             </div>
                         </CardContent>
                     </Card>
@@ -244,13 +251,13 @@ export function EnterpriseDashboard() {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">Automation Score</p>
-                                    <p className="text-2xl font-bold text-blue-600">
+                                    <p className="text-sm font-medium text-muted-foreground">Automation Score</p>
+                                    <p className="text-2xl font-bold text-primary">
                                         {metrics.automation_metrics.code_quality.average_quality_score}%
                                     </p>
-                                    <p className="text-xs text-blue-600">↑ 15% this month</p>
+                                    <p className="text-xs text-primary/80">↑ 15% this month</p>
                                 </div>
-                                <Brain className="h-8 w-8 text-blue-600" />
+                                <Brain className="h-8 w-8 text-primary" />
                             </div>
                         </CardContent>
                     </Card>
@@ -259,13 +266,13 @@ export function EnterpriseDashboard() {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">Revenue Growth</p>
-                                    <p className="text-2xl font-bold text-purple-600">
+                                    <p className="text-sm font-medium text-muted-foreground">Revenue Growth</p>
+                                    <p className="text-2xl font-bold text-accent-foreground">
                                         +{metrics.business_intelligence.revenue_growth}%
                                     </p>
-                                    <p className="text-xs text-purple-600">MRR: $175K</p>
+                                    <p className="text-xs text-accent-foreground/80">MRR: $175K</p>
                                 </div>
-                                <TrendingUp className="h-8 w-8 text-purple-600" />
+                                <TrendingUp className="h-8 w-8 text-accent-foreground" />
                             </div>
                         </CardContent>
                     </Card>
@@ -274,13 +281,13 @@ export function EnterpriseDashboard() {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">Active Users</p>
-                                    <p className="text-2xl font-bold text-orange-600">
+                                    <p className="text-sm font-medium text-muted-foreground">Active Users</p>
+                                    <p className="text-2xl font-bold text-warning-foreground">
                                         {metrics.real_time_metrics.active_users.toLocaleString()}
                                     </p>
-                                    <p className="text-xs text-orange-600">↑ 12% vs yesterday</p>
+                                    <p className="text-xs text-warning-foreground/80">↑ 12% vs yesterday</p>
                                 </div>
-                                <Users className="h-8 w-8 text-orange-600" />
+                                <Users className="h-8 w-8 text-warning-foreground" />
                             </div>
                         </CardContent>
                     </Card>
@@ -315,8 +322,8 @@ export function EnterpriseDashboard() {
                                             <YAxis />
                                             <Tooltip />
                                             <Legend />
-                                            <Line type="monotone" dataKey="latency" stroke="#8884d8" name="Latency (ms)" />
-                                            <Line type="monotone" dataKey="throughput" stroke="#82ca9d" name="Throughput" />
+                                            <Line type="monotone" dataKey="latency" stroke="hsl(var(--chart-1))" name="Latency (ms)" />
+                                            <Line type="monotone" dataKey="throughput" stroke="hsl(var(--chart-2))" name="Throughput" />
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </CardContent>
@@ -335,13 +342,13 @@ export function EnterpriseDashboard() {
                                         {edgeLocationData.map((location, index) => (
                                             <div key={index} className="flex items-center justify-between">
                                                 <div className="flex items-center space-x-3">
-                                                    <div className="w-3 h-3 bg-green-500 rounded-full" />
+                                                    <div className="w-3 h-3 bg-success rounded-full" />
                                                     <span className="font-medium">{location.region}</span>
                                                 </div>
                                                 <div className="flex items-center space-x-4">
                                                     <div className="text-right">
                                                         <p className="text-sm font-medium">{location.performance}%</p>
-                                                        <p className="text-xs text-gray-500">{location.traffic}% traffic</p>
+                                                        <p className="text-xs text-muted-foreground">{location.traffic}% traffic</p>
                                                     </div>
                                                     <Progress value={location.performance} className="w-20" />
                                                 </div>
@@ -363,24 +370,24 @@ export function EnterpriseDashboard() {
                             <CardContent>
                                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                                     <div className="text-center">
-                                        <div className="text-2xl font-bold text-green-600">99.99%</div>
-                                        <div className="text-sm text-gray-600">Uptime</div>
+                                        <div className="text-2xl font-bold text-success-foreground">99.99%</div>
+                                        <div className="text-sm text-muted-foreground">Uptime</div>
                                     </div>
                                     <div className="text-center">
-                                        <div className="text-2xl font-bold text-blue-600">{metrics.real_time_metrics.response_time}ms</div>
-                                        <div className="text-sm text-gray-600">Avg Response</div>
+                                        <div className="text-2xl font-bold text-primary">{metrics.real_time_metrics.response_time}ms</div>
+                                        <div className="text-sm text-muted-foreground">Avg Response</div>
                                     </div>
                                     <div className="text-center">
-                                        <div className="text-2xl font-bold text-yellow-600">{(metrics.real_time_metrics.error_rate * 100).toFixed(3)}%</div>
-                                        <div className="text-sm text-gray-600">Error Rate</div>
+                                        <div className="text-2xl font-bold text-warning-foreground">{(metrics.real_time_metrics.error_rate * 100).toFixed(3)}%</div>
+                                        <div className="text-sm text-muted-foreground">Error Rate</div>
                                     </div>
                                     <div className="text-center">
-                                        <div className="text-2xl font-bold text-purple-600">{metrics.real_time_metrics.cpu_usage}%</div>
-                                        <div className="text-sm text-gray-600">CPU Usage</div>
+                                        <div className="text-2xl font-bold text-accent-foreground">{metrics.real_time_metrics.cpu_usage}%</div>
+                                        <div className="text-sm text-muted-foreground">CPU Usage</div>
                                     </div>
                                     <div className="text-center">
-                                        <div className="text-2xl font-bold text-red-600">{metrics.real_time_metrics.memory_usage}%</div>
-                                        <div className="text-sm text-gray-600">Memory Usage</div>
+                                        <div className="text-2xl font-bold text-destructive-foreground">{metrics.real_time_metrics.memory_usage}%</div>
+                                        <div className="text-sm text-muted-foreground">Memory Usage</div>
                                     </div>
                                 </div>
                             </CardContent>
@@ -401,7 +408,7 @@ export function EnterpriseDashboard() {
                                             <YAxis />
                                             <Tooltip />
                                             <Legend />
-                                            <Area type="monotone" dataKey="latency" stackId="1" stroke="#8884d8" fill="#8884d8" />
+                                            <Area type="monotone" dataKey="latency" stackId="1" stroke="hsl(var(--chart-1))" fill="hsl(var(--chart-1))" />
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 </CardContent>
@@ -415,13 +422,13 @@ export function EnterpriseDashboard() {
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center">
                                             <span>Query Time Improvement</span>
-                                            <span className="font-bold text-green-600">+{metrics.global_performance.database.avg_query_improvement}%</span>
+                                            <span className="font-bold text-success-foreground">+{metrics.global_performance.database.avg_query_improvement}%</span>
                                         </div>
                                         <Progress value={metrics.global_performance.database.avg_query_improvement} />
 
                                         <div className="flex justify-between items-center">
                                             <span>Throughput Increase</span>
-                                            <span className="font-bold text-blue-600">+{metrics.global_performance.database.throughput_increase}%</span>
+                                            <span className="font-bold text-primary">+{metrics.global_performance.database.throughput_increase}%</span>
                                         </div>
                                         <Progress value={metrics.global_performance.database.throughput_increase} />
                                     </div>
@@ -442,16 +449,16 @@ export function EnterpriseDashboard() {
                                 <CardContent>
                                     <div className="space-y-4">
                                         <div className="text-center">
-                                            <div className="text-3xl font-bold text-blue-600">
+                                            <div className="text-3xl font-bold text-primary">
                                                 {metrics.automation_metrics.code_quality.average_quality_score}%
                                             </div>
-                                            <div className="text-sm text-gray-600">Quality Score</div>
+                                            <div className="text-sm text-muted-foreground">Quality Score</div>
                                         </div>
                                         <div className="text-center">
-                                            <div className="text-2xl font-bold text-green-600">
+                                            <div className="text-2xl font-bold text-success-foreground">
                                                 {metrics.automation_metrics.code_quality.issues_auto_fixed}
                                             </div>
-                                            <div className="text-sm text-gray-600">Issues Auto-Fixed</div>
+                                            <div className="text-sm text-muted-foreground">Issues Auto-Fixed</div>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -467,16 +474,16 @@ export function EnterpriseDashboard() {
                                 <CardContent>
                                     <div className="space-y-4">
                                         <div className="text-center">
-                                            <div className="text-3xl font-bold text-green-600">
+                                            <div className="text-3xl font-bold text-success-foreground">
                                                 {metrics.automation_metrics.testing.average_pass_rate}%
                                             </div>
-                                            <div className="text-sm text-gray-600">Pass Rate</div>
+                                            <div className="text-sm text-muted-foreground">Pass Rate</div>
                                         </div>
                                         <div className="text-center">
-                                            <div className="text-2xl font-bold text-yellow-600">
+                                            <div className="text-2xl font-bold text-warning-foreground">
                                                 {metrics.automation_metrics.testing.performance_regressions_detected}
                                             </div>
-                                            <div className="text-sm text-gray-600">Regressions Detected</div>
+                                            <div className="text-sm text-muted-foreground">Regressions Detected</div>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -492,16 +499,16 @@ export function EnterpriseDashboard() {
                                 <CardContent>
                                     <div className="space-y-4">
                                         <div className="text-center">
-                                            <div className="text-3xl font-bold text-purple-600">
+                                            <div className="text-3xl font-bold text-accent-foreground">
                                                 {metrics.automation_metrics.deployment.success_rate}%
                                             </div>
-                                            <div className="text-sm text-gray-600">Success Rate</div>
+                                            <div className="text-sm text-muted-foreground">Success Rate</div>
                                         </div>
                                         <div className="text-center">
-                                            <div className="text-2xl font-bold text-blue-600">
+                                            <div className="text-2xl font-bold text-primary">
                                                 {metrics.automation_metrics.deployment.average_deployment_time}min
                                             </div>
-                                            <div className="text-sm text-gray-600">Avg Deploy Time</div>
+                                            <div className="text-sm text-muted-foreground">Avg Deploy Time</div>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -523,8 +530,8 @@ export function EnterpriseDashboard() {
                                             <YAxis />
                                             <Tooltip />
                                             <Legend />
-                                            <Bar dataKey="revenue" fill="#8884d8" name="Revenue ($)" />
-                                            <Bar dataKey="users" fill="#82ca9d" name="Users" />
+                                            <Bar dataKey="revenue" fill="hsl(var(--chart-1))" name="Revenue ($)" />
+                                            <Bar dataKey="users" fill="hsl(var(--chart-2))" name="Users" />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </CardContent>
@@ -536,21 +543,21 @@ export function EnterpriseDashboard() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-4">
-                                        <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                                        <div className="flex justify-between items-center p-3 bg-success/10 rounded-lg">
                                             <span className="font-medium">Revenue Growth</span>
-                                            <span className="font-bold text-green-600">+{metrics.business_intelligence.revenue_growth}%</span>
+                                            <span className="font-bold text-success-foreground">+{metrics.business_intelligence.revenue_growth}%</span>
                                         </div>
-                                        <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                                        <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
                                             <span className="font-medium">User Engagement</span>
-                                            <span className="font-bold text-blue-600">+{metrics.business_intelligence.user_engagement_improvement}%</span>
+                                            <span className="font-bold text-primary">+{metrics.business_intelligence.user_engagement_improvement}%</span>
                                         </div>
-                                        <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                                        <div className="flex justify-between items-center p-3 bg-accent/10 rounded-lg">
                                             <span className="font-medium">Conversion Rate</span>
-                                            <span className="font-bold text-purple-600">+{metrics.business_intelligence.conversion_rate_improvement}%</span>
+                                            <span className="font-bold text-accent-foreground">+{metrics.business_intelligence.conversion_rate_improvement}%</span>
                                         </div>
-                                        <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+                                        <div className="flex justify-between items-center p-3 bg-warning/10 rounded-lg">
                                             <span className="font-medium">Performance Impact</span>
-                                            <span className="font-bold text-orange-600">{metrics.business_intelligence.performance_impact_score}/100</span>
+                                            <span className="font-bold text-warning-foreground">{metrics.business_intelligence.performance_impact_score}/100</span>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -583,19 +590,19 @@ export function EnterpriseDashboard() {
                                                 </Badge>
                                                 <div>
                                                     <p className="font-medium">{anomaly.description}</p>
-                                                    <p className="text-sm text-gray-500">
+                                                    <p className="text-sm text-muted-foreground">
                                                         {new Date(anomaly.timestamp).toLocaleString()}
                                                     </p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center space-x-2">
                                                 {anomaly.resolved ? (
-                                                    <Badge variant="outline" className="bg-green-50 text-green-700">
+                                                    <Badge variant="outline" className="bg-success/10 text-success-foreground">
                                                         <CheckCircle className="h-3 w-3 mr-1" />
                                                         Resolved
                                                     </Badge>
                                                 ) : (
-                                                    <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
+                                                    <Badge variant="outline" className="bg-warning/10 text-warning-foreground">
                                                         <Clock className="h-3 w-3 mr-1" />
                                                         Active
                                                     </Badge>
@@ -619,7 +626,7 @@ export function EnterpriseDashboard() {
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center">
                                             <span>Global Hit Rate</span>
-                                            <span className="font-bold text-green-600">
+                                            <span className="font-bold text-success-foreground">
                                                 {(metrics.global_performance.cache_performance.global_hit_rate * 100).toFixed(1)}%
                                             </span>
                                         </div>
@@ -627,7 +634,7 @@ export function EnterpriseDashboard() {
 
                                         <div className="flex justify-between items-center">
                                             <span>Bandwidth Savings</span>
-                                            <span className="font-bold text-blue-600">
+                                            <span className="font-bold text-primary">
                                                 {(metrics.global_performance.cache_performance.bandwidth_savings / 1000000).toFixed(1)}MB
                                             </span>
                                         </div>
@@ -641,17 +648,17 @@ export function EnterpriseDashboard() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-3">
-                                        <div className="p-3 bg-blue-50 rounded-lg">
-                                            <p className="font-medium text-blue-900">Database Index Optimization</p>
-                                            <p className="text-sm text-blue-700">Expected 25% query improvement</p>
+                                        <div className="p-3 bg-primary/10 rounded-lg">
+                                            <p className="font-medium text-primary">Database Index Optimization</p>
+                                            <p className="text-sm text-primary/80">Expected 25% query improvement</p>
                                         </div>
-                                        <div className="p-3 bg-green-50 rounded-lg">
-                                            <p className="font-medium text-green-900">CDN Cache Rules Update</p>
-                                            <p className="text-sm text-green-700">Increase hit rate by 5%</p>
+                                        <div className="p-3 bg-success/10 rounded-lg">
+                                            <p className="font-medium text-success-foreground">CDN Cache Rules Update</p>
+                                            <p className="text-sm text-success-foreground/80">Increase hit rate by 5%</p>
                                         </div>
-                                        <div className="p-3 bg-purple-50 rounded-lg">
-                                            <p className="font-medium text-purple-900">API Response Compression</p>
-                                            <p className="text-sm text-purple-700">Reduce bandwidth by 30%</p>
+                                        <div className="p-3 bg-accent/10 rounded-lg">
+                                            <p className="font-medium text-accent-foreground">API Response Compression</p>
+                                            <p className="text-sm text-accent-foreground/80">Reduce bandwidth by 30%</p>
                                         </div>
                                     </div>
                                 </CardContent>

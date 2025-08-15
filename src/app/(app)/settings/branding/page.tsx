@@ -640,7 +640,7 @@ export default function WhiteLabelPage() {
                     )}
 
                     {reportSettings.showPoweredBy && (
-                      <div className="text-xs text-gray-400 text-center">
+                      <div className="text-xs text-muted-foreground text-center">
                         Powered by RankPilot
                       </div>
                     )}

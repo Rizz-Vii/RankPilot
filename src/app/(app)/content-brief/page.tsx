@@ -4,6 +4,7 @@
 import ContentBriefForm from "@/components/content-brief-form";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { useProvenance } from "@/hooks/useProvenance";
 import {
   Card,
@@ -268,6 +269,7 @@ export default function ContentBriefPage() {
   };
 
   return (
+    <FeatureGate feature="content_briefs" requiredTier="agency" showUpgrade>
     <main className="container mx-auto py-6 space-y-6">
       <ToolPageHeader
         title="Content Brief Generator"
@@ -323,6 +325,7 @@ export default function ContentBriefPage() {
         </div>
       </div>
     </div>
-    </main>
+  </main>
+  </FeatureGate>
   );
 }

@@ -209,16 +209,16 @@ export default function CheckoutPage() {
               </div>
 
               {billingInterval === "yearly" && yearlyDiscount > 0 && (
-                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="p-3 rounded-lg border bg-success/10 border-success/30">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-green-800">
+                    <span className="text-sm font-medium text-success-foreground">
                       Annual Discount
                     </span>
-                    <span className="text-sm font-bold text-green-800">
+                    <span className="text-sm font-bold text-success-foreground">
                       -${yearlyDiscount}
                     </span>
                   </div>
-                  <p className="text-xs text-green-600 mt-1">
+                  <p className="text-xs text-success-foreground/80 mt-1">
                     Save 20% with annual billing
                   </p>
                 </div>

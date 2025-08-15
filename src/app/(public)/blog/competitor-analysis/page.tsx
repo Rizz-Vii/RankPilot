@@ -335,7 +335,7 @@ export default function CompetitorAnalysisBlogPage() {
 
           <div className="grid md:grid-cols-2 gap-6 my-6">
             <div>
-              <h3 className="font-semibold mb-2 text-green-600">✅ Do This</h3>
+              <h3 className="font-semibold mb-2 text-success-foreground">✅ Do This</h3>
               <ul className="list-disc pl-6 text-sm">
                 <li>Focus on 3-5 main competitors</li>
                 <li>Document findings and track changes</li>
@@ -345,7 +345,7 @@ export default function CompetitorAnalysisBlogPage() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-2 text-red-600">❌ Avoid This</h3>
+              <h3 className="font-semibold mb-2 text-destructive-foreground">❌ Avoid This</h3>
               <ul className="list-disc pl-6 text-sm">
                 <li>Copying competitors exactly</li>
                 <li>Analyzing too many competitors at once</li>
@@ -357,7 +357,7 @@ export default function CompetitorAnalysisBlogPage() {
           </div>
         </section>
 
-        <div className="bg-gradient-to-r from-primary/10 to-purple-50 border border-primary/20 rounded-lg p-6 mt-8">
+  <div className="bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-lg p-6 mt-8">
           <h2 className="text-xl font-semibold mb-3">
             Start Your Competitive Analysis
           </h2>

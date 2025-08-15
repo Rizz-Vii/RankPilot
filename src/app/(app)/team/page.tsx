@@ -193,7 +193,7 @@ export default function TeamManagementPage() {
       case "active":
         return <CheckCircle className="h-4 w-4 text-success-foreground" />;
       case "pending":
-        return <Clock className="h-4 w-4 text-yellow-500" />;
+        return <Clock className="h-4 w-4 text-warning-foreground" />;
       case "inactive":
         return <AlertCircle className="h-4 w-4 text-destructive-foreground" />;
     }
@@ -202,13 +202,13 @@ export default function TeamManagementPage() {
   const getRoleColor = (role: TeamMember["role"]) => {
     switch (role) {
       case "owner":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
+        return "bg-accent/10 text-accent-foreground";
       case "admin":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
+        return "bg-primary/10 text-primary";
       case "member":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+        return "bg-success/10 text-success-foreground";
       case "viewer":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+        return "bg-muted text-foreground";
     }
   };
 
@@ -217,7 +217,7 @@ export default function TeamManagementPage() {
   const isLoading = authLoading || loading;
 
   return (
-    <FeatureGate requiredTier="enterprise">
+  <FeatureGate feature="team_management" requiredTier="agency" showUpgrade>
   <main className="container mx-auto py-6 space-y-8" data-testid="team-management-page">
   {/* Demo mode banner (informational only) */}
   <Alert className="mb-2" data-testid="team-banner">
@@ -336,8 +336,8 @@ export default function TeamManagementPage() {
             onClick={() => router.push("/team/chat")}
           >
             <CardContent className="flex items-center gap-4 p-6">
-              <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900">
-                <MessageCircle className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <div className="rounded-full bg-primary/10 p-3">
+                <MessageCircle className="h-6 w-6 text-primary" />
               </div>
               <div>
                 <h3 className="font-semibold">Team Chat</h3>
@@ -353,8 +353,8 @@ export default function TeamManagementPage() {
             onClick={() => router.push("/team/projects")}
           >
             <CardContent className="flex items-center gap-4 p-6">
-              <div className="rounded-full bg-green-100 p-3 dark:bg-green-900">
-                <FolderOpen className="h-6 w-6 text-green-600 dark:text-green-400" />
+              <div className="rounded-full bg-success/10 p-3">
+                <FolderOpen className="h-6 w-6 text-success-foreground" />
               </div>
               <div>
                 <h3 className="font-semibold">Team Projects</h3>
@@ -370,8 +370,8 @@ export default function TeamManagementPage() {
             onClick={() => router.push("/team/reports")}
           >
             <CardContent className="flex items-center gap-4 p-6">
-              <div className="rounded-full bg-purple-100 p-3 dark:bg-purple-900">
-                <BarChart3 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              <div className="rounded-full bg-accent/10 p-3">
+                <BarChart3 className="h-6 w-6 text-accent-foreground" />
               </div>
               <div>
                 <h3 className="font-semibold">Team Reports</h3>
@@ -571,7 +571,7 @@ export default function TeamManagementPage() {
                                 setTransferLoadingId(null);
                               }
                             }}
-                            className="text-purple-600 hover:text-purple-700"
+                            className="text-accent-foreground hover:text-accent-foreground/80"
                             data-testid={`transfer-ownership-${member.id}`}
                           >
                             {transferLoadingId === member.id ? 'Transferring...' : 'Make Owner'}
@@ -583,7 +583,7 @@ export default function TeamManagementPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => removeMember(member.id)}
-                            className="text-red-600 hover:text-red-700"
+                            className="text-destructive-foreground hover:text-destructive-foreground/80"
                             aria-label={`Remove ${member.name}`}
                             data-testid={`remove-member-${member.id}`}
                           >

@@ -42,7 +42,7 @@ const paymentMethods = [
     id: "paypal",
     name: "PayPal",
     description: "Pay with PayPal account",
-    icon: <span className="text-blue-600 font-bold text-sm">PayPal</span>,
+  icon: <span className="text-primary font-bold text-sm">PayPal</span>,
     supported: ["paypal", "pay_later"],
     popular: true,
   },
@@ -211,7 +211,7 @@ export default function MultiPaymentCheckout() {
                     <div className="text-right">
                       <p className="font-semibold">${price}</p>
                       {billingInterval === "yearly" && savings > 0 && (
-                        <p className="text-sm text-green-600">
+                        <p className="text-sm text-success">
                           Save ${savings}
                         </p>
                       )}
@@ -219,10 +219,10 @@ export default function MultiPaymentCheckout() {
                   </div>
 
                   {billingInterval === "yearly" && savings > 0 && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="bg-success/10 border border-success/30 rounded-lg p-3">
                       <div className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-green-600" />
-                        <span className="text-sm font-medium text-green-800">
+                        <Check className="h-4 w-4 text-success" />
+                        <span className="text-sm font-medium text-success">
                           Annual billing saves you ${savings}
                         </span>
                       </div>
@@ -248,12 +248,12 @@ export default function MultiPaymentCheckout() {
                   </div>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="bg-primary/10 border border-primary/30 rounded-lg p-3">
                   <div className="flex items-start gap-2">
-                    <Shield className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-blue-800">
+                    <Shield className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-primary">
                       <p className="font-medium">Secure & Protected</p>
-                      <p className="text-blue-600">
+                      <p className="text-primary">
                         256-bit SSL encryption • Cancel anytime
                       </p>
                     </div>

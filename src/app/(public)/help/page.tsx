@@ -236,8 +236,8 @@ export default function HelpPage() {
                 <Card>
                   <CardHeader>
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <category.icon className="h-6 w-6 text-blue-600" />
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <category.icon className="h-6 w-6 text-primary" />
                       </div>
                       <CardTitle className="text-2xl">
                         {category.title}
@@ -275,10 +275,10 @@ export default function HelpPage() {
         custom={9}
       >
         <div className="max-w-4xl mx-auto">
-          <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+          <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground">
             <CardContent className="p-12 text-center">
               <h2 className="text-3xl font-bold mb-6">Still Need Help?</h2>
-              <p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto">
+              <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
                 Our team of SEO and AI experts is here to help you succeed. Get
                 personalized assistance with strategy, implementation, or
                 technical questions.

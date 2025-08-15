@@ -24,7 +24,10 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         if (body.teamId) {
             try {
                 const { adminDb } = (global as any).adminDb ? { adminDb: (global as any).adminDb } : await import('@/lib/firebase-admin');
-                await enforceTeamRateLimit(adminDb as any, body.teamId, { routeKey: 'seo-audit/run' });
+                // Allow test override via header for deterministic integration test
+                const testLimitHeader = req.headers.get('x-test-team-limit');
+                const overrideLimit = testLimitHeader ? Number(testLimitHeader) : undefined;
+                await enforceTeamRateLimit(adminDb as any, body.teamId, { routeKey: 'seo-audit/run', ...(Number.isFinite(overrideLimit as number) ? { limit: overrideLimit as number } : {}) });
             } catch (e: any) {
                 if (e instanceof TeamRateLimitError) {
                     return NextResponse.json(enforceProvenance({ success: false, error: 'rate_limited', retryAfter: e.retryAfterSeconds, provenance: 'synthetic' }, { path: 'seo-audit/run', note: 'rate_limit' }), { status: 429, headers: { 'Retry-After': String(e.retryAfterSeconds) } });

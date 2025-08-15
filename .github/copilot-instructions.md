@@ -19,7 +19,7 @@ Current status (2025-08-12)
 - Table Data API reads Firestore `dashboardTables/{widgetId}/rows` with deterministic fallback and CSV export.
 - Automation scheduling added (scheduled function); manual `/api/automation/run-due` deprecated (410); emulator tests pending.
 - Finance pages still use mock metrics; should be gated or wired to real data.
-- AI memory/adapter is a mock in `functions/src/lib/ai-memory-manager.ts`; implement real provider(s) with env selection; keep mock fallback.
+- AI memory/adapter implemented with env-driven provider selection in `functions/src/lib/ai-memory-manager.ts` (OpenAI/Gemini/Anthropic) and retains a deterministic mock fallback via `AI_MOCK_FALLBACK` and latency budget.
 - Team-aware rate limit partial; `/api/health` exposes KPIs and alerts.
 
 ### 1. Core Architecture & Domains

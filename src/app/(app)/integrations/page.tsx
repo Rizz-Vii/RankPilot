@@ -555,7 +555,7 @@ export default function IntegrationsPage() {
 
                     <div className="grid gap-4 md:grid-cols-3 pt-2 border-t">
                       <div className="text-center">
-                        <p className="text-2xl font-bold text-green-600">
+                        <p className="text-2xl font-bold text-success-foreground">
                           {webhook.deliveryCount}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -563,7 +563,7 @@ export default function IntegrationsPage() {
                         </p>
                       </div>
                       <div className="text-center">
-                        <p className="text-2xl font-bold text-red-600">
+                        <p className="text-2xl font-bold text-destructive-foreground">
                           {webhook.failureCount}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -790,7 +790,7 @@ export default function IntegrationsPage() {
                             }));
                           }
                         }}
-                        className="rounded border-gray-300"
+                        className="rounded border-border"
                       />
                       <Label htmlFor={event.value} className="text-sm">
                         {event.label}

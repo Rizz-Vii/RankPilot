@@ -59,19 +59,19 @@ function BillingPage() {
                   <h3 className="text-2xl font-bold flex items-center gap-2">
                     {subscription?.planName}
                     {subscription?.tier === "starter" && (
-                      <Badge variant="default" className="bg-blue-500">
+                      <Badge variant="default" className="bg-primary">
                         <Zap className="w-3 h-3 mr-1" />
                         Starter
                       </Badge>
                     )}
                     {subscription?.tier === "agency" && (
-                      <Badge variant="default" className="bg-yellow-500">
+                      <Badge variant="default" className="bg-warning">
                         <Crown className="w-3 h-3 mr-1" />
                         Agency
                       </Badge>
                     )}
                     {subscription?.tier === "enterprise" && (
-                      <Badge variant="default" className="bg-purple-600">
+                      <Badge variant="default" className="bg-accent">
                         <Crown className="w-3 h-3 mr-1" />
                         Enterprise
                       </Badge>
@@ -126,9 +126,9 @@ function BillingPage() {
                 </ul>
               </div>
 
-        {subscription?.tier === "free" && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-800 mb-3">
+  {subscription?.tier === "free" && (
+    <div className="rounded-lg p-4 border bg-primary/10 border-primary/30">
+      <p className="text-sm text-primary mb-3">
                     <strong>Upgrade to unlock more features:</strong> Get more
                     audits, advanced reports, competitor tracking, and priority
                     support.
@@ -136,7 +136,7 @@ function BillingPage() {
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      className="bg-blue-600 hover:bg-blue-700"
+          className="bg-primary hover:bg-primary/80"
                       onClick={() => handleUpgrade("starter")}
                     >
           Upgrade to Starter ($19/mo)
@@ -153,15 +153,15 @@ function BillingPage() {
               )}
 
       {subscription?.tier === "starter" && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-sm text-yellow-800 mb-3">
+                <div className="rounded-lg p-4 border bg-warning/10 border-warning/30">
+                  <p className="text-sm text-warning-foreground mb-3">
                     <strong>Ready for unlimited access?</strong> Upgrade to
                     Agency plan for unlimited audits, white-label reports, and
                     dedicated support.
                   </p>
                   <Button
                     size="sm"
-                    className="bg-yellow-600 hover:bg-yellow-700"
+                    className="bg-warning hover:bg-warning/80"
                     onClick={() => handleUpgrade("agency")}
                   >
         Upgrade to Agency ($49/mo)
@@ -194,7 +194,7 @@ function BillingPage() {
                       : subscription?.planLimits.auditsPerMonth}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-muted rounded-full h-2">
                   <div
                     className="bg-primary h-2 rounded-full"
                     style={{
@@ -225,9 +225,9 @@ function BillingPage() {
                       : subscription?.planLimits.keywords}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-muted rounded-full h-2">
                   <div
-                    className="bg-green-500 h-2 rounded-full"
+                    className="bg-success h-2 rounded-full"
                     style={{
                       width: subscription?.isUnlimited
                         ? "30%"
@@ -256,9 +256,9 @@ function BillingPage() {
                       : subscription?.planLimits.reports}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-muted rounded-full h-2">
                   <div
-                    className="bg-orange-500 h-2 rounded-full"
+                    className="bg-warning h-2 rounded-full"
                     style={{
                       width: subscription?.isUnlimited
                         ? "15%"
@@ -287,7 +287,7 @@ function BillingPage() {
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-blue-500">
+                  <Badge className="bg-primary">
                     <Star className="w-3 h-3 mr-1" />
                     Most Popular
                   </Badge>
@@ -297,10 +297,10 @@ function BillingPage() {
               <CardHeader className="text-center">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   {plan.tier === "agency" && (
-                    <Crown className="w-5 h-5 text-yellow-500" />
+                    <Crown className="w-5 h-5 text-warning-foreground" />
                   )}
                   {plan.tier === "enterprise" && (
-                    <Crown className="w-5 h-5 text-purple-500" />
+                    <Crown className="w-5 h-5 text-accent" />
                   )}
                   {plan.tier === "starter" && (
                     <Zap className="w-5 h-5 text-primary" />
@@ -371,7 +371,7 @@ function BillingPage() {
                   <p className="font-medium">$19.00</p>
                   <Badge
                     variant="outline"
-                    className="text-green-600 border-green-600"
+                    className="text-success-foreground border-success/60"
                   >
                     Paid
                   </Badge>
@@ -391,7 +391,7 @@ function BillingPage() {
                   <p className="font-medium">$19.00</p>
                   <Badge
                     variant="outline"
-                    className="text-green-600 border-green-600"
+                    className="text-success-foreground border-success/60"
                   >
                     Paid
                   </Badge>
@@ -411,7 +411,7 @@ function BillingPage() {
                   <p className="font-medium">$19.00</p>
                   <Badge
                     variant="outline"
-                    className="text-green-600 border-green-600"
+                    className="text-success-foreground border-success/60"
                   >
                     Paid
                   </Badge>

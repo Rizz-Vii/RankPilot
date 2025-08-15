@@ -27,9 +27,9 @@ export function ToolAccessWrapper({
   }
 
   return (
-    <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
-      <div className="text-gray-500 mb-2">🔒 Tool Restricted</div>
-      <p className="text-sm text-gray-600">{getRestrictedMessage(toolId)}</p>
+    <div className="p-4 border-2 border-dashed border-border rounded-lg text-center">
+      <div className="text-muted-foreground mb-2">🔒 Tool Restricted</div>
+      <p className="text-sm text-muted-foreground">{getRestrictedMessage(toolId)}</p>
     </div>
   );
 }
@@ -57,8 +57,8 @@ export function ToolCategoryView({
                 key={tool.id}
                 className={`p-3 border rounded-lg ${
                   tool.available
-                    ? "border-green-200 bg-green-50"
-                    : "border-gray-200 bg-gray-50"
+                    ? "border-success/30 bg-success/10"
+                    : "border-border bg-muted"
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -66,8 +66,8 @@ export function ToolCategoryView({
                   <span
                     className={`text-sm px-2 py-1 rounded ${
                       tool.available
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-500"
+                        ? "bg-success/15 text-success"
+                        : "bg-muted text-muted-foreground"
                     }`}
                   >
                     {tool.available ? "Available" : "Restricted"}
@@ -76,7 +76,7 @@ export function ToolCategoryView({
                 {!tool.available &&
                   showRestricted &&
                   tool.restrictedMessage && (
-                    <p className="text-sm text-gray-600 mt-2">
+                    <p className="text-sm text-muted-foreground mt-2">
                       {tool.restrictedMessage}
                     </p>
                   )}

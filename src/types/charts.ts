@@ -40,9 +40,9 @@ export const statusIcons = {
 };
 
 export const statusColors = {
-    pass: 'text-green-600',
-    fail: 'text-red-600',
-    warning: 'text-yellow-600',
+    pass: 'text-success-foreground',
+    fail: 'text-destructive-foreground',
+    warning: 'text-warning-foreground',
 };
 
 // ============================================================================

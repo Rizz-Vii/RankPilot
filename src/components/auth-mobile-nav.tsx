@@ -125,10 +125,10 @@ export default function AuthMobileNav() {
                         key={item.href}
                         href={item.href}
                         onClick={closeMenu}
-                        className="flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors min-h-[48px]"
+                        className="flex items-center px-4 py-3 rounded-lg hover:bg-muted transition-colors min-h-[48px]"
                         data-testid={`auth-nav-${item.title.toLowerCase()}`}
                       >
-                        <span className="font-medium text-gray-700">
+                        <span className="font-medium text-foreground">
                           {item.title}
                         </span>
                       </Link>
@@ -151,7 +151,7 @@ export default function AuthMobileNav() {
                       <Link
                         href="/login"
                         onClick={closeMenu}
-                        className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg font-medium min-h-[48px] hover:bg-gray-50 transition-colors"
+                        className="flex items-center justify-center px-4 py-3 border border-border rounded-lg font-medium min-h-[48px] hover:bg-muted transition-colors"
                       >
                         Login
                       </Link>

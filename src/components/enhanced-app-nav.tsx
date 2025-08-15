@@ -153,19 +153,19 @@ export function EnhancedAppNav({
       label: "Starter",
       icon: Zap,
       classes:
-        "bg-sky-500/15 text-sky-300 border border-sky-400/30 shadow-[0_0_0_1px_rgba(56,189,248,0.25)]",
+        "bg-[hsl(var(--chart-1)/0.15)] text-[hsl(var(--chart-1))] border border-[hsl(var(--chart-1)/0.3)] shadow-sm",
     },
     agency: {
       label: "Agency",
       icon: Target,
       classes:
-        "bg-violet-500/15 text-violet-300 border border-violet-400/30 shadow-[0_0_0_1px_rgba(167,139,250,0.25)]",
+        "bg-[hsl(var(--chart-2)/0.15)] text-[hsl(var(--chart-2))] border border-[hsl(var(--chart-2)/0.3)] shadow-sm",
     },
     enterprise: {
       label: "Enterprise",
       icon: Rocket,
       classes:
-        "bg-amber-500/15 text-amber-300 border border-amber-400/30 shadow-[0_0_0_1px_rgba(251,191,36,0.25)]",
+        "bg-[hsl(var(--chart-4)/0.15)] text-[hsl(var(--chart-4))] border border-[hsl(var(--chart-4)/0.3)] shadow-sm",
     },
   } as const;
 
@@ -226,29 +226,23 @@ export function EnhancedAppNav({
                   <Link
                   href={item.href}
                   onClick={() => handleItemClick(item, groupId)}
-                    className={cn(
-                      "tool-link group flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 relative",
-                      "w-full min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 min-h-[44px] touch-manipulation",
-                      // Hover: increased brightness (previous /12 -> now /20 ~ +25% visual) & text uplift
-                      "hover:bg-primary/20 hover:text-primary group-hover/sidebar-wrapper:text-primary",
-                      {
-                        // Active item stays brightest
-                        "text-primary bg-gradient-to-r from-primary/25 via-primary/15 to-primary/5 shadow-sm ring-1 ring-primary/35": isActive,
-                        // Active group non-selected
-                        "text-primary/90 group-hover:text-primary": !isActive && groupActive && !item.disabled,
-                        // Idle baseline
-                        "text-primary/75 group-hover:text-primary": !isActive && !groupActive && !item.disabled,
-                        // Disabled
-                        "text-primary/40": item.disabled && !isActive,
-                        // Collapsed
-                        "justify-center px-2": collapsed,
-                        // Disable pointer
-                        "opacity-50 cursor-not-allowed pointer-events-none": item.disabled,
-                      },
-                      className
-                    )}
+                      className={cn(
+                        "tool-link group flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 relative font-body",
+                        "w-full min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 min-h-[44px] mobile-touch-target",
+                        "hover:bg-primary/20 hover:text-primary group-hover/sidebar-wrapper:text-primary",
+                        {
+                          "text-primary bg-gradient-to-r from-primary/25 via-primary/15 to-primary/5 shadow-sm ring-1 ring-primary/35": isActive,
+                          "text-primary/90 group-hover:text-primary": !isActive && groupActive && !item.disabled,
+                          "text-primary/75 group-hover:text-primary": !isActive && !groupActive && !item.disabled,
+                          "text-primary/40": item.disabled && !isActive,
+                          "justify-center px-2": collapsed,
+                          "opacity-50 cursor-not-allowed pointer-events-none": item.disabled,
+                        },
+                        className
+                      )}
                   aria-current={isActive ? "page" : undefined}
                   aria-label={`${item.title}${item.description ? `. ${item.description}` : ""}${item.requiredTier ? `. Requires ${item.requiredTier} plan` : ""}`}
+                  role="link"
                   title={collapsed ? item.title : item.description}
                   tabIndex={item.disabled ? -1 : undefined}
                 >

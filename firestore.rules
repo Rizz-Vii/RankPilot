@@ -38,8 +38,10 @@ service cloud.firestore {
       return isTeamOwner(teamId) || (
         isAuthenticated() &&
         exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)) &&
-        let member = get(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)).data;
-        (member.role == 'admin' || member.role == 'owner')
+        (
+          get(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)).data.role == 'admin' ||
+          get(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)).data.role == 'owner'
+        )
       );
     }
 
@@ -54,7 +56,6 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isOwner(userId);
       allow update: if isAuthenticated() && (isOwner(userId) || isAdmin());
       allow delete: if isAdmin();
-      allow list: if isAuthenticated() && isAdmin();
 
       // User activities subcollection
       match /activities/{activityId} {
@@ -302,6 +303,13 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
+    // Sales Forecast Snapshots - NEW (read historical forecast data)
+    match /salesForecastSnapshots/{snapshotId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || (resource.data.teamId != null && isTeamMember(resource.data.teamId)) || isAdmin());
+      allow create: if false; // server/automation only
+      allow update, delete: if false; // immutable snapshots
+    }
+
     // Finance Invoices Collection - NEW
     match /financeInvoices/{invoiceId} {
       // Permit read if user owns invoice, is team member of invoice.teamId, or admin
@@ -319,6 +327,20 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && (
         resource.data.userId == request.auth.uid || isAdmin()
       );
+    }
+
+    // Rate Limiting Buckets - server-managed only
+    // Team-level fixed window counters
+    match /teamRateLimits/{docId} {
+      // Never allow client writes; optional read for admins only
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    // NeuroSEO scope-level rate limits (user/team)
+    match /neuroseoRateLimits/{docId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
     }
 
     // Content Briefs Collection - NEW (historical seeding)
@@ -362,11 +384,8 @@ service cloud.firestore {
       }
     }
 
-    // Presence
-    match /presence/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && request.auth.uid == userId;
-    }
+  // Presence (deduplicated consolidated rule)
+  // already defined above; avoid duplicate match blocks
 
     // Team Reports
     match /teams/{teamId}/reports/{reportId} {

@@ -1,0 +1,64 @@
+name: Preview Channel Cleanup (on PR close)
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Ensure Firebase CLI
+        run: npm i -g firebase-tools@13
+
+      - name: Guard secrets present
+        id: guard
+        run: |
+          if [ -z "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" ]; then
+            echo "missing_sa=true" >> $GITHUB_OUTPUT
+          else
+            echo "missing_sa=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Write Service Account
+        if: steps.guard.outputs.missing_sa == 'false'
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > $HOME/firebase_sa.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase_sa.json" >> $GITHUB_ENV
+
+      - name: Compute channel and project
+        id: meta
+        run: |
+          CHANNEL="pr-${{ github.event.pull_request.number || github.run_id }}"
+          echo "channel=$CHANNEL" >> $GITHUB_OUTPUT
+          if [ -n "${{ secrets.FIREBASE_PROJECT_ID }}" ]; then
+            echo "project=${{ secrets.FIREBASE_PROJECT_ID }}" >> $GITHUB_OUTPUT
+          else
+            PROJECT=$(jq -r '.hosting?.project || .projects?.default // empty' firebase.json 2>/dev/null || echo "")
+            echo "project=$PROJECT" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Delete preview channel
+        if: steps.guard.outputs.missing_sa == 'false'
+        continue-on-error: true
+        run: |
+          if [ -z "${{ steps.meta.outputs.project }}" ] || [ "${{ steps.meta.outputs.project }}" = "null" ]; then
+            echo "No Firebase project configured; skipping cleanup."
+            exit 0
+          fi
+          firebase --project "${{ steps.meta.outputs.project }}" hosting:channel:delete "${{ steps.meta.outputs.channel }}" -f || true
+
+      - name: Note skipped cleanup
+        if: steps.guard.outputs.missing_sa == 'true'
+        run: echo "Skipping cleanup (missing FIREBASE_SERVICE_ACCOUNT)."

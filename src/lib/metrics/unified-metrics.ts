@@ -21,6 +21,7 @@ export interface UnifiedMetricsSnapshot {
     teamRateLimitAllows?: Record<string, number>; // route or scope -> successful allowed increments (team scoped)
     compactDocs?: { count: number; totalBytes: number; avgBytes: number | null }; // optional size tracking
     inviteMaintenance?: { markedExpired: number; deletedAccepted: number; deletedExpired: number; orphanIndexes: number };
+    crawler?: { success: number; errors: number; totalCrawlMs: number; totalAnalysisMs: number; crawlP95?: number | null; analysisP95?: number | null };
 }
 
 const provenanceCounters = {
@@ -36,6 +37,7 @@ const rateLimitRejections: Record<string, number> = {};
 const teamRateLimitAllows: Record<string, number> = {};
 const compactDocSize = { count: 0, totalBytes: 0 };
 const inviteMaintenanceCounters = { markedExpired: 0, deletedAccepted: 0, deletedExpired: 0, orphanIndexes: 0 };
+const crawlerCounters = { success: 0, errors: 0, totalCrawlMs: 0, totalAnalysisMs: 0, aggregateHits: 0, legacyFallbacks: 0, quotaLimit: 0, quotaRemaining: 0, crawlSamples: [] as number[], analysisSamples: [] as number[] };
 
 export function recordProvenanceObservation(hasProvenance: boolean) {
     provenanceCounters.total += 1;
@@ -103,6 +105,7 @@ export function getUnifiedMetricsSnapshot(): UnifiedMetricsSnapshot {
         , teamRateLimitAllows: { ...teamRateLimitAllows }
         , compactDocs: { count: compactDocSize.count, totalBytes: compactDocSize.totalBytes, avgBytes: compactDocSize.count ? Math.round(compactDocSize.totalBytes / compactDocSize.count) : null }
         , inviteMaintenance: { ...inviteMaintenanceCounters }
+        , crawler: { ...crawlerCounters, crawlP95: computeSimpleP95(crawlerCounters.crawlSamples), analysisP95: computeSimpleP95(crawlerCounters.analysisSamples) }
     };
 }
 
@@ -124,4 +127,42 @@ export function recordInviteMaintenance(delta: Partial<typeof inviteMaintenanceC
     for (const k of Object.keys(delta) as (keyof typeof inviteMaintenanceCounters)[]) {
         inviteMaintenanceCounters[k] += delta[k] || 0;
     }
+}
+
+// Crawler metrics recording
+export function recordCrawlerSuccess(crawlMs: number, analysisMs: number) {
+    crawlerCounters.success += 1;
+    crawlerCounters.totalCrawlMs += crawlMs;
+    crawlerCounters.totalAnalysisMs += analysisMs;
+    crawlerCounters.crawlSamples.push(crawlMs);
+    crawlerCounters.analysisSamples.push(analysisMs);
+    if (crawlerCounters.crawlSamples.length > 500) crawlerCounters.crawlSamples.splice(0, crawlerCounters.crawlSamples.length - 500);
+    if (crawlerCounters.analysisSamples.length > 500) crawlerCounters.analysisSamples.splice(0, crawlerCounters.analysisSamples.length - 500);
+}
+export function recordCrawlerError(crawlMs: number) {
+    crawlerCounters.errors += 1;
+    crawlerCounters.totalCrawlMs += crawlMs;
+    crawlerCounters.crawlSamples.push(crawlMs);
+    if (crawlerCounters.crawlSamples.length > 500) crawlerCounters.crawlSamples.splice(0, crawlerCounters.crawlSamples.length - 500);
+}
+
+// Neural crawler aggregate read path metrics (T14)
+export function recordCrawlerAggregateHit() {
+    crawlerCounters.aggregateHits += 1;
+}
+export function recordCrawlerLegacyFallback() {
+    crawlerCounters.legacyFallbacks += 1;
+}
+
+// Firecrawl quota observation (T12 extended)
+export function recordCrawlerQuota(limit: number, remaining: number) {
+    crawlerCounters.quotaLimit = limit;
+    crawlerCounters.quotaRemaining = remaining;
+}
+
+function computeSimpleP95(samples: number[]): number | null {
+    if (!samples.length) return null;
+    const sorted = [...samples].sort((a, b) => a - b);
+    const idx = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95));
+    return sorted[idx];
 }

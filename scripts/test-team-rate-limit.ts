@@ -5,7 +5,8 @@
  */
 async function main() {
     const base = process.env.TEST_BASE_URL || 'http://localhost:3000';
-    const teamId = 'test-team-limit';
+    // Use unique team id per run to avoid stale rate-limit state
+    const teamId = 'test-team-limit-' + Date.now();
     const url = base + '/api/seo-audit/run';
     const headers: any = { 'Content-Type': 'application/json', 'x-test-team-limit': '1' };
     const body = { url: 'https://example.com', teamId };

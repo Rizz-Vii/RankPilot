@@ -9,7 +9,7 @@ import { buildQueryEmbedding, retrieveSimilarMessages } from '@/lib/chat/retriev
 import { maybeEmbedMessage } from '@/lib/chat/embedding';
 import { maybeSummarizeSession } from '@/lib/chat/sessionSummarizer';
 import { NextRequest, NextResponse } from 'next/server';
-import { enforceProvenance } from '@/lib/middleware/provenance';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { recordRouteLatency, recordError, recordRateLimitRejection } from '@/lib/metrics/unified-metrics';
 import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
 
@@ -86,7 +86,7 @@ function estimateTokens(text: string): number {
     return Math.ceil(words * 1.3);
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withProvenance(async function POST(request: NextRequest) {
     const start = Date.now();
     try {
         // Parse request body (defensive)
@@ -344,10 +344,10 @@ export async function POST(request: NextRequest) {
         recordRouteLatency('chat/customer', Date.now() - start);
         return NextResponse.json(enforceProvenance({ error: 'Internal server error', details: process.env.NODE_ENV !== 'production' ? (error?.message || String(error)) : undefined, provenance: 'synthetic' }, { path: 'chat/customer' }), { status: 500 });
     }
-}
+}, { path: 'chat/customer' });
 
 // GET endpoint for chat history (customer)
-export async function GET(request: NextRequest) {
+export const GET = withProvenance(async function GET(request: NextRequest) {
     const start = Date.now();
     try {
         const { searchParams } = new URL(request.url);
@@ -481,4 +481,4 @@ export async function GET(request: NextRequest) {
         recordRouteLatency('chat/customer', Date.now() - start);
         return NextResponse.json(enforceProvenance({ error: 'Failed to retrieve chat history', provenance: 'synthetic' }, { path: 'chat/customer' }), { status: 500 });
     }
-}
+}, { path: 'chat/customer' });

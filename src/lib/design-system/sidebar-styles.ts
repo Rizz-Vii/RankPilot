@@ -6,7 +6,7 @@
 export const sidebarStyles = {
     // Container styles
     container: {
-        base: 'h-full bg-gray-900 text-white',
+        base: 'h-full bg-sidebar text-sidebar-foreground',
         mobile: 'w-[280px]', // Fixed mobile width
         desktop: 'w-[var(--sidebar-width)]',
     },
@@ -15,45 +15,45 @@ export const sidebarStyles = {
     navItem: {
         base: 'flex items-center gap-3 rounded-lg transition-all duration-200',
         padding: 'px-3 py-2.5', // 44px minimum touch target
-        interactive: 'hover:bg-gray-800 active:bg-gray-700',
-        selected: 'bg-gray-800 border-l-2 border-blue-500',
+        interactive: 'hover:bg-sidebar-accent active:bg-sidebar-accent/80',
+        selected: 'bg-sidebar-accent border-l-2 border-primary',
     },
 
     // Navigation groups
     navGroup: {
         container: 'mb-6',
-        header: 'text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3',
+        header: 'text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3',
         content: 'space-y-1',
     },
 
     // User switching section
     userSwitch: {
-        container: 'border-t border-gray-800 pt-4 mt-4',
-        trigger: 'flex items-center gap-3 w-full px-3 py-3 rounded-lg hover:bg-gray-800',
-        dropdown: 'bg-gray-800 border border-gray-700 rounded-lg shadow-lg mt-1',
-        userItem: 'flex items-center gap-3 px-4 py-3 hover:bg-gray-700 transition-colors',
+        container: 'border-t border-sidebar-border pt-4 mt-4',
+        trigger: 'flex items-center gap-3 w-full px-3 py-3 rounded-lg hover:bg-sidebar-accent',
+        dropdown: 'bg-sidebar border border-sidebar-border rounded-lg shadow-lg mt-1',
+        userItem: 'flex items-center gap-3 px-4 py-3 hover:bg-sidebar-accent transition-colors',
     },
 
     // Badges and indicators
     badge: {
-        ai: 'bg-purple-500 text-white px-2 py-0.5 rounded text-xs font-medium',
-        tier: 'bg-blue-500 text-white px-2 py-0.5 rounded text-xs font-medium',
-        count: 'bg-gray-600 text-gray-300 px-1.5 py-0.5 rounded text-xs',
+        ai: 'bg-accent text-accent-foreground px-2 py-0.5 rounded text-xs font-medium',
+        tier: 'bg-primary text-primary-foreground px-2 py-0.5 rounded text-xs font-medium',
+        count: 'bg-muted text-muted-foreground px-1.5 py-0.5 rounded text-xs',
     },
 
     // Typography
     text: {
-        primary: 'text-sm font-medium text-white',
-        secondary: 'text-xs text-gray-400',
-        userEmail: 'text-xs text-gray-500 truncate',
-        tierLabel: 'text-xs text-gray-400',
+        primary: 'text-sm font-medium text-sidebar-foreground',
+        secondary: 'text-xs text-muted-foreground',
+        userEmail: 'text-xs text-muted-foreground truncate',
+        tierLabel: 'text-xs text-muted-foreground',
     },
 
     // Icons
     icon: {
         size: 'w-5 h-5',
-        color: 'text-gray-400 group-hover:text-white',
-        selected: 'text-blue-400',
+        color: 'text-muted-foreground group-hover:text-foreground',
+        selected: 'text-primary',
     }
 } as const;
 

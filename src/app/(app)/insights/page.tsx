@@ -151,9 +151,9 @@ export default function InsightsPage() {
   useEffect(() => { fetchInsights(); }, [fetchInsights]);
 
   const priorityColors: Record<string, string> = {
-    high: "bg-rose-500",
-    medium: "bg-amber-500",
-    low: "bg-emerald-500",
+    high: "bg-destructive",
+    medium: "bg-warning",
+    low: "bg-success",
   };
 
   const relativeGenerated = useMemo(() => {
@@ -265,7 +265,7 @@ export default function InsightsPage() {
           </Button>
           {streamSupported && (
     <Button size="sm" variant={streaming ? 'destructive' : 'secondary'} aria-pressed={streaming} onClick={streaming ? stopStream : startStream} data-testid="stream-toggle">
-      <Radio className={`h-4 w-4 mr-1 ${streaming ? 'animate-pulse text-rose-500 motion-safe:animate-pulse' : ''}`} aria-hidden="true" />
+  <Radio className={`h-4 w-4 mr-1 ${streaming ? 'animate-pulse text-destructive-foreground motion-safe:animate-pulse' : ''}`} aria-hidden="true" />
               {streaming ? 'Stop Stream' : 'Live Stream'}
             </Button>
           )}

@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from "@/components/tool-page-header";
 
 import {
@@ -295,6 +296,7 @@ export default function ContentAnalyzerPage() {
   };
 
   return (
+    <FeatureGate feature="content_analyzer" requiredTier="starter" showUpgrade>
     <main className="container mx-auto py-6 space-y-8">
       <ToolPageHeader
         title="Content Analyzer"
@@ -445,6 +447,7 @@ export default function ContentAnalyzerPage() {
         </div>
       )}
   </main>
+    </FeatureGate>
   );
 }
 

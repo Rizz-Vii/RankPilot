@@ -41,14 +41,14 @@ export function ExportButton({ chartId, format, label, config, onDone }: Props) 
   return (
     <button
       type="button"
-      className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50"
+      className="inline-flex items-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50"
       onClick={onClick}
       disabled={loading}
       aria-busy={loading}
     >
       {loading ? 'Exporting…' : (label || `Export ${format.toUpperCase()}`)}
       {error && (
-        <span role="alert" className="ml-2 text-xs text-red-500">{error}</span>
+        <span role="alert" className="ml-2 text-xs text-destructive">{error}</span>
       )}
     </button>
   );

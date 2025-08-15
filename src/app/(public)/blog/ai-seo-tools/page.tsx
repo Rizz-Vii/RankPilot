@@ -226,7 +226,7 @@ export default function AISEOToolsBlogPage() {
           </ul>
         </section>
 
-        <div className="bg-gradient-to-r from-primary/10 to-purple-50 border border-primary/20 rounded-lg p-6 mt-8">
+  <div className="bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-lg p-6 mt-8">
           <h2 className="text-xl font-semibold mb-3">
             Experience AI-Powered SEO
           </h2>

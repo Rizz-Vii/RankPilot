@@ -15,6 +15,8 @@ import { useFinanceInvoiceMetrics } from '@/hooks/useFinanceInvoiceMetrics';
 import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { computeRevenueMetrics, SubscriptionEvent } from '@/lib/finance/revenue-metrics';
+import { deriveSubscriptionEvents } from '@/lib/finance/derive-subscription-events';
 import { useProvenance } from '@/hooks/useProvenance';
 
 export default function RevenueAnalyticsPage() {
@@ -29,8 +31,19 @@ export default function RevenueAnalyticsPage() {
   const mock = getMockMetrics('finance');
   const data = (live.kpis.length ? live : { kpis: allowFinanceMocks()? mock.kpis : [], rows: [], loading:false }) as any;
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
+  const [derived, setDerived] = useState<any|null>(null);
   useEffect(() => { trackDashboardView('finance'); }, []);
   useEffect(()=> { if(live.kpis.length) markLive(); else markFallback(); }, [live.kpis.length, markLive, markFallback]);
+  // Compute derived revenue metrics (MRR, ARR, churn, LTV) using invoice history approximation
+  useEffect(()=> {
+    if (!live.rows?.length) { setDerived(null); return; }
+    try {
+  const invoices = live.rows as any[];
+  const subs: SubscriptionEvent[] = deriveSubscriptionEvents(invoices);
+  const snapshot = computeRevenueMetrics(subs);
+      setDerived(snapshot);
+    } catch { setDerived(null); }
+  }, [live.rows]);
   return (
     <FeatureGate feature="finance_revenue_analytics" requiredTier="agency" showUpgrade>
       <div className="p-6 space-y-8">
@@ -52,6 +65,14 @@ export default function RevenueAnalyticsPage() {
             <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
           ))}
         </section>
+        {derived && (
+          <section className="grid gap-4 md:grid-cols-4" aria-label="Derived revenue metrics">
+            <MetricCard key="mrr_formula" label="MRR (Derived)" value={derived.mrr.toLocaleString()} delta={0} deltaLabel="" trend={<TrendSparkline data={[derived.mrr]} />} intent="neutral" />
+            <MetricCard key="arr_formula" label="ARR" value={derived.arr.toLocaleString()} delta={0} deltaLabel="" trend={<TrendSparkline data={[derived.arr]} />} intent="neutral" />
+            <MetricCard key="churn_formula" label="Churn %" value={derived.churnRatePct} delta={0} deltaLabel="" trend={<TrendSparkline data={[derived.churnRatePct]} />} intent={derived.churnRatePct < 5 ? 'success':'warning'} />
+            <MetricCard key="ltv_formula" label="LTV" value={derived.ltv? derived.ltv.toLocaleString(): '—'} delta={0} deltaLabel="" trend={<TrendSparkline data={[derived.ltv||0]} />} intent={derived.ltv? 'accent':'neutral'} />
+          </section>
+        )}
         <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Invoices</h2>
           <LazyDataTable

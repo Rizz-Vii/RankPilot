@@ -304,7 +304,7 @@ export default function ApiManagementPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => deleteApiKey(key.id)}
-                          className="gap-1 text-red-600 hover:text-red-700"
+                          className="gap-1 text-destructive-foreground hover:text-destructive-foreground/80"
                         >
                           <Trash2 className="h-3 w-3" />
                           Delete
@@ -371,7 +371,7 @@ export default function ApiManagementPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{usage.errorRate}%</div>
-                  <p className="text-xs text-green-600">
+                  <p className="text-xs text-success-foreground">
                     Excellent performance
                   </p>
                 </CardContent>
@@ -388,7 +388,7 @@ export default function ApiManagementPage() {
                   <div className="text-2xl font-bold">
                     {usage.avgResponseTime}ms
                   </div>
-                  <p className="text-xs text-green-600">Fast response times</p>
+                  <p className="text-xs text-success-foreground">Fast response times</p>
                 </CardContent>
               </Card>
             </div>

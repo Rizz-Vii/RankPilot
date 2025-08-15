@@ -4,6 +4,18 @@
  * Embeddings: OpenAI only (to preserve a single consistent vector space for similarity search).
  */
 import OpenAI from 'openai';
+// Test hook + small infra helpers
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare const global: any;
+
+function createOpenAI(apiKey: string) {
+    const Shim = global?.__OPENAI_SHIM__;
+    return Shim ? new Shim({ apiKey }) : new OpenAI({ apiKey });
+}
+
+function sleepReject<T>(ms: number, err: Error): Promise<T> {
+    return new Promise((_, reject) => setTimeout(() => reject(err), ms));
+}
 
 export interface ChatMessage { role: 'system' | 'user' | 'assistant'; content: string; }
 
@@ -13,42 +25,57 @@ function getGeminiKey() { return process.env.GEMINI_API_KEY || process.env.GOOGL
 /** Perform a chat style completion with fallback. Returns raw text content. */
 export async function chatComplete(opts: { messages: ChatMessage[]; maxTokens?: number; temperature?: number; }): Promise<string> {
     const { messages, maxTokens = 800, temperature = 0.2 } = opts;
-    const openaiKey = getOpenAIKey();
-    if (openaiKey) {
+    const work = async (): Promise<string> => {
+        const openaiKey = getOpenAIKey();
+        if (openaiKey) {
+            try {
+                const client = createOpenAI(openaiKey);
+                const completion = await client.chat.completions.create({
+                    model: 'gpt-4o-mini',
+                    messages,
+                    max_tokens: maxTokens,
+                    temperature,
+                });
+                const txt = completion.choices?.[0]?.message?.content || '';
+                if (txt) return txt;
+            } catch {/* fall through */ }
+        }
+        const geminiKey = getGeminiKey();
+        if (geminiKey) {
+            try {
+                // Collapse messages into a single user prompt (Gemini simple REST form)
+                const systemPreamble = messages.filter(m => m.role === 'system').map(m => m.content).join('\n');
+                const conversation = messages.filter(m => m.role !== 'system').map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
+                const prompt = (systemPreamble ? systemPreamble + '\n' : '') + conversation;
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                        generationConfig: { temperature, maxOutputTokens: maxTokens }
+                    })
+                });
+                if (!res.ok) throw new Error('Gemini HTTP ' + res.status);
+                const json: any = await res.json();
+                const text = json?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('') || '';
+                if (text) return text;
+            } catch {/* ignore */ }
+        }
+        return 'Unable to generate a response at this time.';
+    };
+
+    const budgetMs = Number.parseInt(process.env.AI_CLIENT_LATENCY_BUDGET_MS || '0');
+    if (budgetMs > 0) {
         try {
-            const client = new OpenAI({ apiKey: openaiKey });
-            const completion = await client.chat.completions.create({
-                model: 'gpt-4o-mini',
-                messages,
-                max_tokens: maxTokens,
-                temperature,
-            });
-            const txt = completion.choices?.[0]?.message?.content || '';
-            if (txt) return txt;
-        } catch {/* fall through */ }
+            return await Promise.race([
+                work(),
+                sleepReject<string>(budgetMs, new Error('latency_budget_exceeded'))
+            ]);
+        } catch {
+            return 'Unable to generate a response at this time.';
+        }
     }
-    const geminiKey = getGeminiKey();
-    if (geminiKey) {
-        try {
-            // Collapse messages into a single user prompt (Gemini simple REST form)
-            const systemPreamble = messages.filter(m => m.role === 'system').map(m => m.content).join('\n');
-            const conversation = messages.filter(m => m.role !== 'system').map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
-            const prompt = (systemPreamble ? systemPreamble + '\n' : '') + conversation;
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                    generationConfig: { temperature, maxOutputTokens: maxTokens }
-                })
-            });
-            if (!res.ok) throw new Error('Gemini HTTP ' + res.status);
-            const json: any = await res.json();
-            const text = json?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('') || '';
-            if (text) return text;
-        } catch {/* ignore */ }
-    }
-    return 'Unable to generate a response at this time.';
+    return await work();
 }
 
 /** Creates an OpenAI embedding or returns null. */
@@ -56,7 +83,7 @@ export async function openAIEmbeddingOrNull(text: string): Promise<number[] | nu
     const apiKey = getOpenAIKey();
     if (!apiKey) return null;
     try {
-        const client = new OpenAI({ apiKey });
+        const client = createOpenAI(apiKey);
         const emb = await client.embeddings.create({ model: 'text-embedding-3-small', input: text.slice(0, 3000) });
         const vector = emb.data?.[0]?.embedding; return Array.isArray(vector) ? vector as number[] : null;
     } catch { return null; }

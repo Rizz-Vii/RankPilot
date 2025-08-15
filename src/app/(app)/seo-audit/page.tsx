@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 
@@ -481,13 +482,14 @@ export default function SeoAuditPage() {
   };
 
   return (
+    <FeatureGate feature="seo_audit" requiredTier="starter" showUpgrade>
     <main className="container mx-auto py-6">
       <ToolPageHeader
         title="SEO Audit"
         description="Comprehensive SEO analysis and optimization recommendations for any website."
         badges={composeToolHeaderBadges("seo-audit", provenance)}
         showBreadcrumb
-      >
+  >
         {provenance && (
           <ProvenanceLegend />
         )}
@@ -555,6 +557,7 @@ export default function SeoAuditPage() {
         </div>
       </div>
       </div>
-    </main>
+  </main>
+  </FeatureGate>
   );
 }

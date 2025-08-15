@@ -292,9 +292,9 @@ export default function NeuroSEODashboard({
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-600";
-    if (score >= 60) return "text-yellow-600";
-    return "text-red-600";
+    if (score >= 80) return "text-success";
+    if (score >= 60) return "text-warning";
+    return "text-destructive";
   };
 
   const getScoreBadgeVariant = (score: number) => {
@@ -309,10 +309,10 @@ export default function NeuroSEODashboard({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Brain className="h-8 w-8 text-blue-600" />
+            <Brain className="h-8 w-8 text-primary" />
             NeuroSEO™ Suite
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-muted-foreground mt-1">
             AI-powered content analysis and optimization platform
           </p>
         </div>
@@ -320,7 +320,7 @@ export default function NeuroSEODashboard({
         {usageStats && (
           <Card className="w-64">
             <CardContent className="p-4">
-              <div className="text-sm text-gray-600">Usage This Month</div>
+              <div className="text-sm text-muted-foreground">Usage This Month</div>
               <div className="text-2xl font-bold">
                 {usageStats.used}/{usageStats.limit}
               </div>
@@ -531,7 +531,7 @@ export default function NeuroSEODashboard({
                   {report.keyInsights.map((insight, index) => (
                     <div
                       key={index}
-                      className="border-l-4 border-blue-500 pl-4"
+                      className="border-l-4 border-primary pl-4"
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <Badge
@@ -547,10 +547,10 @@ export default function NeuroSEODashboard({
                         </Badge>
                         <span className="font-medium">{insight.title}</span>
                       </div>
-                      <p className="text-gray-600 text-sm mb-2">
+                      <p className="text-muted-foreground text-sm mb-2">
                         {insight.description}
                       </p>
-                      <p className="text-blue-600 text-sm font-medium">
+                      <p className="text-primary text-sm font-medium">
                         {insight.recommendation}
                       </p>
                     </div>
@@ -577,7 +577,7 @@ export default function NeuroSEODashboard({
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Search className="h-4 w-4 text-blue-600" />
+                      <Search className="h-4 w-4 text-primary" />
                       <span className="text-sm font-medium">SEO Score</span>
                     </div>
                     <div
@@ -593,7 +593,7 @@ export default function NeuroSEODashboard({
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Eye className="h-4 w-4 text-green-600" />
+                      <Eye className="h-4 w-4 text-success" />
                       <span className="text-sm font-medium">AI Visibility</span>
                     </div>
                     <div
@@ -609,7 +609,7 @@ export default function NeuroSEODashboard({
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Shield className="h-4 w-4 text-purple-600" />
+                      <Shield className="h-4 w-4 text-accent" />
                       <span className="text-sm font-medium">Trust Score</span>
                     </div>
                     <div
@@ -624,7 +624,7 @@ export default function NeuroSEODashboard({
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Brain className="h-4 w-4 text-orange-600" />
+                      <Brain className="h-4 w-4 text-warning" />
                       <span className="text-sm font-medium">
                         Semantic Relevance
                       </span>
@@ -650,15 +650,15 @@ export default function NeuroSEODashboard({
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <div className="text-gray-600">Engagement</div>
+                        <div className="text-muted-foreground">Engagement</div>
                         <div className={`font-semibold ${getScoreColor(ea.engagementScore)}`}>{ea.engagementScore}/100</div>
                       </div>
                       <div>
-                        <div className="text-gray-600">Lead Potential</div>
+                        <div className="text-muted-foreground">Lead Potential</div>
                         <div className={`font-semibold ${getScoreColor(ea.leadPotentialScore)}`}>{ea.leadPotentialScore}/100</div>
                       </div>
                       <div className="col-span-2 md:col-span-2">
-                        <div className="text-gray-600">Factors</div>
+                        <div className="text-muted-foreground">Factors</div>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {ea.factors.slice(0,6).map(f => (
                             <Badge key={f} variant="outline" className="text-[10px] uppercase tracking-wide">{f}</Badge>
@@ -681,7 +681,7 @@ export default function NeuroSEODashboard({
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
-                        <div className="text-sm text-gray-600">Overall SEO</div>
+                        <div className="text-sm text-muted-foreground">Overall SEO</div>
                         <div
                           className={`text-xl font-bold ${getScoreColor((result as any).seoMetrics?.overallScore || 0)}`}
                         >
@@ -689,7 +689,7 @@ export default function NeuroSEODashboard({
                         </div>
                       </div>
                       <div>
-                        <div className="text-sm text-gray-600">Technical</div>
+                        <div className="text-sm text-muted-foreground">Technical</div>
                         <div
                           className={`text-xl font-bold ${getScoreColor((result as any).seoMetrics?.technicalScore || 0)}`}
                         >
@@ -697,7 +697,7 @@ export default function NeuroSEODashboard({
                         </div>
                       </div>
                       <div>
-                        <div className="text-sm text-gray-600">Content</div>
+                        <div className="text-sm text-muted-foreground">Content</div>
                         <div
                           className={`text-xl font-bold ${getScoreColor((result as any).seoMetrics?.contentScore || 0)}`}
                         >
@@ -705,7 +705,7 @@ export default function NeuroSEODashboard({
                         </div>
                       </div>
                       <div>
-                        <div className="text-sm text-gray-600">Performance</div>
+                        <div className="text-sm text-muted-foreground">Performance</div>
                         <div
                           className={`text-xl font-bold ${getScoreColor((result as any).performance?.overallScore || 0)}`}
                         >
@@ -717,19 +717,19 @@ export default function NeuroSEODashboard({
                       <div className="mt-4 border-t pt-4">
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                           <div>
-                            <div className="text-gray-600">Load Time</div>
+                            <div className="text-muted-foreground">Load Time</div>
                             <div className="font-medium">{(result as any).technicalData.loadTime} ms</div>
                           </div>
                           <div>
-                            <div className="text-gray-600">Word Count</div>
+                            <div className="text-muted-foreground">Word Count</div>
                             <div className="font-medium">{(result as any).technicalData.wordCount}</div>
                           </div>
                           <div>
-                            <div className="text-gray-600">Title Len</div>
+                            <div className="text-muted-foreground">Title Len</div>
                             <div className="font-medium">{(result as any).technicalData.titleLength}</div>
                           </div>
                           <div>
-                            <div className="text-gray-600">Meta Desc Len</div>
+                            <div className="text-muted-foreground">Meta Desc Len</div>
                             <div className="font-medium">{(result as any).technicalData.metaDescriptionLength}</div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -756,7 +756,7 @@ export default function NeuroSEODashboard({
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       <div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-muted-foreground">
                           Citation Rate
                         </div>
                         <div className="text-xl font-bold">
@@ -764,7 +764,7 @@ export default function NeuroSEODashboard({
                         </div>
                       </div>
                       <div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-muted-foreground">
                           Avg Position
                         </div>
                         <div className="text-xl font-bold">
@@ -775,7 +775,7 @@ export default function NeuroSEODashboard({
                         </div>
                       </div>
                       <div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-muted-foreground">
                           Opportunities
                         </div>
                         <div className="text-xl font-bold">
@@ -797,7 +797,7 @@ export default function NeuroSEODashboard({
                   <CardContent>
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <div className="text-sm text-gray-600">Expertise</div>
+                        <div className="text-sm text-muted-foreground">Expertise</div>
                         <div
                           className={`text-xl font-bold ${getScoreColor(trust.metrics.expertiseScore)}`}
                         >
@@ -805,7 +805,7 @@ export default function NeuroSEODashboard({
                         </div>
                       </div>
                       <div>
-                        <div className="text-sm text-gray-600">Authority</div>
+                        <div className="text-sm text-muted-foreground">Authority</div>
                         <div
                           className={`text-xl font-bold ${getScoreColor(trust.metrics.authoritativeness)}`}
                         >
@@ -813,7 +813,7 @@ export default function NeuroSEODashboard({
                         </div>
                       </div>
                       <div>
-                        <div className="text-sm text-gray-600">Trust</div>
+                        <div className="text-sm text-muted-foreground">Trust</div>
                         <div
                           className={`text-xl font-bold ${getScoreColor(trust.metrics.trustworthiness)}`}
                         >
@@ -846,15 +846,15 @@ export default function NeuroSEODashboard({
                           </Badge>
                           <span className="font-medium">{task.title}</span>
                         </div>
-                        <div className="text-sm text-gray-600 flex items-center gap-1">
+                        <div className="text-sm text-muted-foreground flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           {task.timeframe}
                         </div>
                       </div>
-                      <p className="text-gray-600 text-sm mb-2">
+                      <p className="text-muted-foreground text-sm mb-2">
                         {task.description}
                       </p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span>Impact: {task.estimatedImpact}%</span>
                         <span>Effort: {task.estimatedEffort}</span>
                         <span>Category: {task.category}</span>
@@ -892,7 +892,7 @@ export default function NeuroSEODashboard({
                                 key={i}
                                 className="flex items-center gap-2 text-sm"
                               >
-                                <CheckCircle className="h-3 w-3 text-green-600" />
+                                <CheckCircle className="h-3 w-3 text-success" />
                                 {strength}
                               </div>
                             )
@@ -913,7 +913,7 @@ export default function NeuroSEODashboard({
                             </Badge>
                           ))}
                           {report.competitivePositioning.keywordGap.missingKeywords.length === 0 && (
-                            <span className="text-sm text-green-600">No immediate keyword gaps detected.</span>
+                            <span className="text-sm text-success">No immediate keyword gaps detected.</span>
                           )}
                         </div>
                         {report.competitivePositioning.keywordGap.opportunities && (

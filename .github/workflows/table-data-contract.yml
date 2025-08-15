@@ -57,6 +57,14 @@ jobs:
           BASE_URL: http://localhost:3000
         run: npm run -s test:table-edge
 
+      - name: Run provenance gate (strict + negative)
+        env:
+          PROV_ORIGIN: http://localhost:3000
+          PROV_REQUIRE_SERVER: "1"
+          PROV_STRICT: "1"
+          PROV_TIMEOUT_MS: "15000"
+        run: npm run -s test:provenance-gate
+
       - name: Upload dev server log on failure
         if: failure()
         uses: actions/upload-artifact@v4

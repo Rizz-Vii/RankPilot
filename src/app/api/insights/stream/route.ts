@@ -33,14 +33,17 @@ export async function GET(req: NextRequest) {
         const encoder = new TextEncoder();
         const stream = new ReadableStream({
             async start(controller) {
-                function send(obj: any, note?: string) { controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk(obj, { path: 'insights/stream', note }))}\n\n`)); }
+                let closed = false;
+                const safeEnqueue = (chunk: string) => { if (closed) return; try { controller.enqueue(encoder.encode(chunk)); } catch { closed = true; try { controller.close(); } catch {} } };
+                const safeClose = () => { if (closed) return; closed = true; try { controller.close(); } catch {} };
+                function send(obj: any, note?: string) { safeEnqueue(`data: ${JSON.stringify(enforceProvenanceOnChunk(obj, { path: 'insights/stream', note }))}\n\n`); }
                 send({ type: 'init', activityCount: activities.length, provenance: 'live' });
 
                 // If no activities, end early
                 if (!activities.length) {
                     send({ type: 'final', insights: [], provenance: 'live' });
-                    controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-                    controller.close();
+                    safeEnqueue('data: [DONE]\n\n');
+                    safeClose();
                     return;
                 }
 
@@ -63,13 +66,17 @@ export async function GET(req: NextRequest) {
                 } catch (e: any) {
                     send({ type: 'error', message: e?.message || 'insight_generation_failed', provenance: 'synthetic' });
                 } finally {
-                    controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-                    controller.close();
+                    safeEnqueue('data: [DONE]\n\n');
+                    safeClose();
                 }
             }
         });
 
-        return new Response(stream, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', 'Connection': 'keep-alive' } });
+    const res = new Response(stream, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', 'Connection': 'keep-alive' } });
+    // Abort handling
+    const abort = (req as any).signal as AbortSignal | undefined;
+    if (abort) abort.addEventListener('abort', () => { /* stream will naturally end on client disconnect */ });
+    return res;
     } catch (e: any) {
         return new Response(JSON.stringify(enforceProvenanceOnChunk({ error: e?.message || 'stream_init_failed', provenance: 'synthetic' }, { path: 'insights/stream', note: 'init-failure' })), { status: 500 });
     }

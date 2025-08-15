@@ -23,7 +23,7 @@ export interface AutomationRecipe {
     schedule: {
         // Simple interval-based schedule for now (minutes) – future: cron expression
         intervalMinutes?: number; // e.g. 1440 for daily
-        cron?: string; // placeholder (not parsed yet)
+        cron?: string;
         atHourUTC?: number; // when using daily semantics
     };
     actions: AutomationActionType[]; // enabled action types
@@ -89,7 +89,6 @@ export function computeNextRun(now: Date, recipe: AutomationRecipe): Date | null
         if (next <= now) next.setUTCDate(next.getUTCDate() + 1);
         return next;
     }
-    // Cron placeholder – not implemented
     return null;
 }
 

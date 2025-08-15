@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withProvenance } from '@/lib/middleware/provenance';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 
 export const dynamic = 'force-dynamic';
@@ -8,7 +9,7 @@ export const runtime = 'nodejs';
 // Expects: Authorization: Bearer <idToken>
 // POST /api/chat/customer/actions?sessionId=xyz
 // Body: { "progress": { "actionId": true/false, ... } }
-export async function POST(req: NextRequest) {
+export const POST = withProvenance(async function POST(req: NextRequest) {
     try {
         const authHeader = req.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
@@ -59,11 +60,11 @@ export async function POST(req: NextRequest) {
             { merge: true }
         );
 
-        return NextResponse.json({ success: true, actionStats: { totalCompleted, totalPending, completionRate } });
+        return NextResponse.json({ __provenance: { source: 'chat-actions', kind: 'mutation' }, success: true, actionStats: { totalCompleted, totalPending, completionRate } });
     } catch (e: any) {
         return NextResponse.json(
             { error: e?.message || 'Failed to update actions' },
             { status: 500 }
         );
     }
-}
+});

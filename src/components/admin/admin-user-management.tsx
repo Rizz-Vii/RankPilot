@@ -192,14 +192,14 @@ export default function AdminUserManagement() {
     switch (role) {
       case "admin":
         return (
-          <Badge className="bg-red-100 text-red-800">
+          <Badge className="bg-destructive/15 text-destructive">
             <Shield className="h-3 w-3 mr-1" />
             Admin
           </Badge>
         );
   case "agency":
         return (
-          <Badge className="bg-blue-100 text-blue-800">
+          <Badge className="bg-accent/10 text-accent">
             <Crown className="h-3 w-3 mr-1" />
             Agency
           </Badge>
@@ -214,7 +214,7 @@ export default function AdminUserManagement() {
   const getSubscriptionBadge = (status?: string, tier?: string) => {
     if (status === "active") {
       return (
-        <Badge className="bg-green-100 text-green-800">
+  <Badge className="bg-success/15 text-success">
           {tier || "Enterprise"}
         </Badge>
       );

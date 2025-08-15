@@ -30,12 +30,14 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
             case 'start':
                 if (!userId || !userTier) {
                     recordError('ai/conversational-seo', '4xx_user');
+                    recordRouteLatency('ai/conversational-seo', Date.now() - start);
                     return NextResponse.json(enforceProvenance({ success: false, error: 'Missing required fields: userId, userTier', provenance: 'synthetic' }, { path: 'ai/conversational-seo', note: 'validation' }), { status: 400 });
                 }
 
                 const newSessionId = await conversationalSEOEngine.startConversation(userId, userTier);
-
-                return NextResponse.json(enforceProvenance({ success: true, data: { sessionId: newSessionId, message: 'Conversation started successfully' }, provenance: 'live' }, { path: 'ai/conversational-seo', note: 'start' }));
+                const startResp = NextResponse.json(enforceProvenance({ success: true, data: { sessionId: newSessionId, message: 'Conversation started successfully' }, provenance: 'live' }, { path: 'ai/conversational-seo', note: 'start' }));
+                recordRouteLatency('ai/conversational-seo', Date.now() - start);
+                return startResp;
 
             case 'message':
                 if (!sessionId || !message) {
@@ -55,6 +57,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
 
             default:
                 recordError('ai/conversational-seo', '4xx_user');
+                recordRouteLatency('ai/conversational-seo', Date.now() - start);
                 return NextResponse.json(enforceProvenance({ success: false, error: 'Invalid action. Supported actions: start, message', provenance: 'synthetic' }, { path: 'ai/conversational-seo', note: 'invalid_action' }), { status: 400 });
         }
 

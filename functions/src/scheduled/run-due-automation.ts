@@ -18,7 +18,9 @@ type AutomationActionType =
     | "financeAccountingSeedSampleJournals"
     | "financeAccountingGeneratePnL"
     | "financeAccountingGenerateBalanceSheet"
-    | "financeAccountingReconcile";
+    | "financeAccountingReconcile"
+    // Test-only action to validate backoff in emulator/unit tests
+    | "testForceError";
 
 interface ScheduleSpec {
     intervalMinutes?: number;
@@ -142,6 +144,10 @@ export async function runDueAutomationTick(injectedDb?: ReturnType<typeof getFir
             for (const action of recipe.actions) {
                 const cfg = recipe.actionConfigs?.[action];
                 try {
+                    // Test-only forced error to validate backoff behavior in emulator tests
+                    if (action === "testForceError" && process.env.SCHEDULER_TEST_MODE === '1') {
+                        throw new Error("Forced error (test mode)");
+                    }
                     if (action === "sendDigestEmail") {
                         const to: string = cfg?.to || "digest@example.com";
                         const subject = cfg?.subject || "NeuroSEO Digest";

@@ -79,6 +79,7 @@ export const neuroSEOItems: NavItem[] = [
     icon: Search,
     description: "Intelligent web content extraction",
     requiredTier: "starter",
+    feature: "neural_crawler",
   },
   {
     title: "SemanticMap™",
@@ -86,6 +87,7 @@ export const neuroSEOItems: NavItem[] = [
     icon: Map,
     description: "Advanced NLP analysis and topic visualization",
     requiredTier: "starter",
+    feature: "semantic_map",
   },
   {
     title: "TrustBlock™",
@@ -93,6 +95,7 @@ export const neuroSEOItems: NavItem[] = [
     icon: Fingerprint,
     description: "E-A-T optimization and content authenticity",
     requiredTier: "starter",
+    feature: "trust_block",
   },
   // Agency: advanced visibility + rewrite
   {
@@ -101,6 +104,7 @@ export const neuroSEOItems: NavItem[] = [
     icon: Eye,
     description: "LLM citation tracking and optimization",
     requiredTier: "agency",
+    feature: "ai_visibility",
   },
   {
     title: "RewriteGen™",
@@ -108,6 +112,7 @@ export const neuroSEOItems: NavItem[] = [
     icon: RefreshCw,
     description: "AI-powered content rewriting and optimization",
     requiredTier: "agency",
+    feature: "rewrite_gen",
   },
   // Automation Recipes (agency tier, feature gated)
   {
@@ -136,6 +141,7 @@ export const seoToolsItems: NavItem[] = [
     icon: ScanText,
     description: "Content optimization and readability analysis",
     requiredTier: "starter",
+    feature: "content_analyzer",
   },
   {
     title: "SEO Audit",
@@ -143,21 +149,24 @@ export const seoToolsItems: NavItem[] = [
     icon: ListChecks,
     description: "Comprehensive technical SEO analysis",
     requiredTier: "starter",
+    feature: "seo_audit",
   },
   {
     title: "Content Brief",
     href: "/content-brief",
     icon: BookText,
     description: "AI-powered content briefs and strategy",
-    requiredTier: "starter",
+    requiredTier: "agency",
+    feature: "content_briefs",
   },
   {
     title: "Content Briefs",
     href: "/content-briefs",
     icon: FileText,
     description: "Brief performance & historical dashboard",
-    requiredTier: "starter",
+    requiredTier: "agency",
     badge: "New",
+    feature: "content_briefs",
   },
 ];
 
@@ -186,6 +195,7 @@ export const competitiveItems: NavItem[] = [
     icon: Link,
     description: "Backlink analysis and link building opportunities",
     requiredTier: "agency",
+    feature: "link_view",
   },
 ];
 
@@ -236,6 +246,7 @@ export const salesItems: NavItem[] = [
     icon: Briefcase,
     description: "Track opportunities & stages",
     requiredTier: "starter",
+    feature: "sales_pipeline",
   },
   {
     title: "Deals",
@@ -243,6 +254,7 @@ export const salesItems: NavItem[] = [
     icon: Target,
     description: "Manage active deals & close rate",
     requiredTier: "agency",
+    feature: "sales_deals",
   },
   {
     title: "Outreach",
@@ -250,6 +262,7 @@ export const salesItems: NavItem[] = [
     icon: Mail,
     description: "AI-assisted outbound sequences",
     requiredTier: "agency",
+    feature: "sales_outreach",
   },
 ];
 
@@ -261,6 +274,7 @@ export const financeItems: NavItem[] = [
     icon: CreditCard,
     description: "Plan usage & spend summary",
     requiredTier: "starter",
+    feature: "finance_billing_overview",
   },
   {
     title: "Invoices",
@@ -268,6 +282,7 @@ export const financeItems: NavItem[] = [
     icon: FileText,
     description: "Historical invoices & receipts",
     requiredTier: "starter",
+    feature: "finance_invoices",
   },
   {
     title: "Revenue Analytics",
@@ -275,6 +290,7 @@ export const financeItems: NavItem[] = [
     icon: BarChart3,
     description: "MRR / churn / LTV metrics",
     requiredTier: "agency",
+    feature: "finance_revenue_analytics",
   },
   {
     title: "Accounting",
@@ -282,6 +298,7 @@ export const financeItems: NavItem[] = [
     icon: FileText,
     description: "P&L, Balance Sheet & reconciliation",
     requiredTier: "agency",
+    feature: "finance_accounting",
   },
 ];
 
@@ -314,7 +331,7 @@ export const managementItems: NavItem[] = [
     href: "/team",
     icon: Users,
     description: "Team overview (view/invite at starter via share)",
-    requiredTier: "starter",
+    requiredTier: "agency",
     feature: "team_management",
   },
   // Cross-domain dashboards (new groups surfaced centrally)
@@ -324,6 +341,7 @@ export const managementItems: NavItem[] = [
     icon: Target,
     description: "Funnel velocity & deal health overview",
     requiredTier: "starter",
+    feature: "sales_dashboard",
   },
   {
     title: "Finance Dashboard",
@@ -331,6 +349,7 @@ export const managementItems: NavItem[] = [
     icon: DollarSign,
     description: "Billing, revenue & quota spend summary",
     requiredTier: "starter",
+    feature: "finance_dashboard",
   },
   {
     title: "Marketing Dashboard",
@@ -338,6 +357,7 @@ export const managementItems: NavItem[] = [
     icon: Megaphone,
     description: "Enterprise marketing automation intelligence",
     requiredTier: "enterprise",
+    feature: "marketing_dashboard",
   },
   // Admin link now in Management group
   {
@@ -407,6 +427,7 @@ export const navGroups: NavGroup[] = [
         icon: Mail,
         description: "AI-driven email sequencing & performance",
         requiredTier: "enterprise",
+        feature: "marketing_email_campaigns",
       },
       {
         title: "Lead Generation",
@@ -414,6 +435,7 @@ export const navGroups: NavGroup[] = [
         icon: Target,
         description: "Automated lead capture & enrichment",
         requiredTier: "enterprise",
+        feature: "marketing_lead_generation",
       },
       {
         title: "Social Presence",
@@ -421,6 +443,7 @@ export const navGroups: NavGroup[] = [
         icon: Share2,
         description: "AI scheduling & multi-channel publishing",
         requiredTier: "enterprise",
+        feature: "marketing_social_presence",
       },
       {
         title: "Marketing Content Gen",
@@ -428,6 +451,7 @@ export const navGroups: NavGroup[] = [
         icon: PenTool,
         description: "Long-form & campaign asset generation",
         requiredTier: "enterprise",
+        feature: "marketing_content_generation",
       },
     ],
     defaultExpanded: false,

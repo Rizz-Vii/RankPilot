@@ -30,42 +30,42 @@ export const typography = {
 
     // UI text
     ui: {
-        label: 'text-sm font-medium text-gray-700',
-        helper: 'text-xs text-gray-500',
-        caption: 'text-xs text-gray-400',
+        label: 'text-sm font-medium text-foreground',
+        helper: 'text-xs text-muted-foreground',
+        caption: 'text-xs text-muted-foreground',
         button: 'text-sm font-medium',
     },
 
     // Status and feedback
     status: {
-        success: 'text-green-700 font-medium',
-        warning: 'text-amber-700 font-medium',
-        error: 'text-red-700 font-medium',
-        info: 'text-blue-700 font-medium',
+        success: 'text-success-foreground font-medium',
+        warning: 'text-warning-foreground font-medium',
+        error: 'text-destructive-foreground font-medium',
+        info: 'text-primary font-medium',
     },
 
     // Navigation and sidebar
     nav: {
-        primary: 'text-sm font-medium text-gray-900',
-        secondary: 'text-sm text-gray-600',
+        primary: 'text-sm font-medium text-foreground',
+        secondary: 'text-sm text-muted-foreground',
         badge: 'text-xs font-semibold uppercase tracking-wide',
-        user: 'text-xs text-gray-500',
+        user: 'text-xs text-muted-foreground',
     },
 
     // Form elements
     form: {
-        label: 'text-sm font-medium text-gray-900 mb-2',
-        input: 'text-base text-gray-900 placeholder:text-gray-400',
-        helper: 'text-xs text-gray-600 mt-1',
-        error: 'text-xs text-red-600 mt-1',
+        label: 'text-sm font-medium text-foreground mb-2',
+        input: 'text-base text-foreground placeholder:text-muted-foreground',
+        helper: 'text-xs text-muted-foreground mt-1',
+        error: 'text-xs text-destructive-foreground mt-1',
     },
 
     // Cards and components
     card: {
-        title: 'text-lg font-semibold text-gray-900',
-        subtitle: 'text-sm text-gray-600',
-        value: 'text-2xl font-bold text-gray-900',
-        metric: 'text-xs text-gray-500 uppercase tracking-wide',
+        title: 'text-lg font-semibold text-foreground',
+        subtitle: 'text-sm text-muted-foreground',
+        value: 'text-2xl font-bold text-foreground',
+        metric: 'text-xs text-muted-foreground uppercase tracking-wide',
     },
 
     // Mobile-optimized readability

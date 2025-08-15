@@ -15,7 +15,7 @@ export default function NeuroSEOPage() {
         showBreadcrumb
       >
         <TutorialAccess
-          feature="neuroseo"
+          feature="semantic_map" // migrated from umbrella 'neuroseo'
           title="Learn NeuroSEO™"
           description="Master AI-powered SEO analysis with our comprehensive tutorials."
         />

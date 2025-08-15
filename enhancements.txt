@@ -1,0 +1,223 @@
+RankPilot Comprehensive Execution Plan
+1. Core Architecture & Event Backbone
+Objective:
+Centralize all business events (marketing, sales, finance, admin, SEO) in a unified Firestore collection for analytics, orchestration, and provenance.
+
+Files:
+
+/src/lib/events/publishEvent.ts (to be added)
+route.ts
+route.ts
+route.ts
+finance-metrics.service.ts
+marketing-metrics.service.ts
+/src/lib/services/sales-pipeline.service.ts
+Actionable Steps:
+
+Define canonical event schema/types.
+Add event publishing hooks to automation, finance, marketing, sales, admin flows.
+Stream events to BigQuery and Pub/Sub for analytics and orchestration.
+Enforce provenance and immutability (CHANGE_LOG.md).
+Update Firestore rules for event security.
+Add/validate tests for event emission and subscription.
+2. Finance Module
+Objective:
+Deliver real-time revenue analytics, billing, subscription management, and compliance.
+
+Files:
+
+page.tsx
+page.tsx
+page.tsx
+page.tsx
+invoice-aging.tsx
+mrr-trend.tsx
+invoice-detail-modal.tsx
+Actionable Steps:
+
+Compute MRR, ARR, churn, LTV in-memory; display on revenue page.
+Wire Stripe webhook to publish finance events.
+Add invoice aging bar chart, overdue invoice modal, and export buttons.
+Show provenance/fallback badge on all metrics.
+Add period selector for all charts.
+Responsive layout for mobile.
+Add “Why did this change?” button for each metric.
+Gate pages with <FeatureGate feature="finance_revenue_analytics" />.
+Document in CHANGE_LOG.md.
+3. Marketing Module
+Objective:
+Enable campaign management, lead generation, analytics, and cross-channel orchestration.
+
+Files:
+
+page.tsx
+page.tsx
+page.tsx
+page.tsx
+page.tsx
+channel-performance.tsx
+impressions-leads-trend.tsx
+campaign-detail-modal.tsx
+channel-breakdown-modal.tsx
+Actionable Steps:
+
+Implement Firestore CRUD for marketingCampaigns (raw counters only).
+Add channel performance dashboard, funnel chart, A/B test results table.
+Integrate segment breakdown and campaign timeline view.
+Inline campaign creation modal with preview/validation.
+Export campaign metrics (CSV/JSON).
+Attribution path summary (connect to sales/finance events).
+Gate pages with <FeatureGate feature="marketing_dashboard" />.
+Document in CHANGE_LOG.md.
+4. Sales Module
+Objective:
+Provide CRM, pipeline visualization, forecasting, and outreach sequencing.
+
+Files:
+
+page.tsx
+page.tsx
+pipeline-coverage.tsx
+forecast-variance.tsx
+funnel-stage-conversion.tsx
+add-deal-modal.tsx
+stage-drilldown-modal.tsx
+new-sequence-modal.tsx
+Actionable Steps:
+
+Enhance pipeline: customizable stages, probability weighting, forecasting chart.
+Implement outreach sequencing skeleton.
+Add Kanban board, weighted forecast chart, stage conversion funnel.
+Deal health badges, add deal modal, sequence builder modal.
+Export deals/pipeline metrics (CSV/JSON).
+Gate pages with <FeatureGate feature="sales_pipeline" />.
+Document in CHANGE_LOG.md.
+5. Admin Module
+Objective:
+Centralize role management, audit logs, compliance, and observability.
+
+Files:
+
+page.tsx
+page.tsx
+admin-analytics-dashboard.tsx
+admin-user-management.tsx
+access-control.ts
+Actionable Steps:
+
+Implement security center dashboard: role activity chart, rate limit sparkline, anomaly list.
+Add audit log service: Firestore auditLogs collection, mutation middleware.
+Add SSO/SAML skeleton: config hooks, placeholder route.
+Add PII scan & retention script.
+Team management cards, role editor modal, export audit logs.
+Gate pages with <FeatureGate feature="security_center" />.
+Document in CHANGE_LOG.md.
+6. Profile, Settings, Team, and Dashboards
+Objective:
+Enhance user experience, team management, and system observability.
+
+Files:
+
+page.tsx
+page.tsx
+page.tsx
+page.tsx
+page.tsx
+page.tsx
+page.tsx
+page.tsx
+Actionable Steps:
+
+Profile: editable user info, avatar upload, recent activity list.
+Settings: notification preferences, API key management, billing info.
+Team: invite/remove members, assign roles, view usage/quota.
+Dashboards: KPI cards for all modules, quick links, recent events stream.
+Observability: KPIs, rate limits, AI cost, anomaly alerts, daily KPI snapshot chart.
+Export user/team/dashboard data (CSV/JSON).
+Responsive grid and mobile-friendly charts.
+Provenance enforcement on all visualizations.
+Gate pages with <FeatureGate> as needed.
+Document in CHANGE_LOG.md.
+7. SEO & Content Modules
+Objective:
+Provide keyword research, site audits, rank tracking, and AI-powered content analysis.
+
+Files:
+
+page.tsx
+page.tsx
+page.tsx
+page.tsx
+page.tsx
+page.tsx
+page.tsx
+page.tsx
+page.tsx
+Actionable Steps:
+
+Integrate Firecrawl for deep technical audits.
+Add Zod schemas for AI JSON output validation.
+Implement quota/rate controls for crawlers.
+Add observability dashboard for SEO KPIs.
+Responsive charts and export features.
+Gate pages with <FeatureGate> as needed.
+Document in CHANGE_LOG.md.
+8. Proprietary SaaS Features
+Objective:
+Deliver category-defining, scalable, and revenue-generating features.
+
+Files:
+
+/src/lib/events/publishEvent.ts
+page.tsx
+page.tsx
+page.tsx
+page.tsx
+Actionable Steps:
+
+Business OS Graph: unify all events for cross-module orchestration.
+Event Orchestration Layer: enable automations triggered by any event.
+Revenue Truth AI: explainable analytics engine correlating events across modules.
+Embedded Workspace: browser extension/in-app widget for workflow embedding (future phase).
+Marketplace for Growth Recipes: template marketplace for workflows, dashboards, automations (future phase).
+Trust & Compliance Layer: live compliance mode, audit packs, data lineage mapping.
+Document all proprietary features and rationale in CHANGE_LOG.md.
+9. Navigation, Gating, and Testing
+Files:
+
+enhanced-nav.ts
+access-control.ts
+organized
+Actionable Steps:
+
+Add/align nav items for all new/updated pages.
+Ensure feature keys are present in FEATURE_ACCESS.
+Wrap all gated pages with <FeatureGate>.
+Add/validate locked vs unlocked visibility tests and basic success flows.
+Update warming manifests if page affects performance caches.
+Document in CHANGE_LOG.md.
+10. Documentation & Governance
+Files:
+
+CHANGE_LOG.md
+COMPREHENSIVE_DEVELOPMENT_WORKFLOW.md
+FIRESTORE_SCHEMAS.md
+COMPREHENSIVE_SYSTEM_ARCHITECTURE.md
+COMPREHENSIVE_SECURITY_PROTOCOLS.md
+Actionable Steps:
+
+Record all changes, rationale, and rollback plans in CHANGE_LOG.md.
+Update canonical docs for new workflows, schemas, and compliance.
+Ensure all new features and modules are documented for provenance and audit.
+11. Acceptance Criteria
+All new features gated and tested.
+No derived ratios stored; all metrics computed client-side.
+Provenance enforced on all dashboards and billing APIs.
+Optimistic UI updates for immediate feedback.
+All changes documented in CHANGE_LOG.md.
+Fast gate tests (npm run test:critical) remain green.
+Next Steps:
+
+Start with Finance module enhancements (highest priority per checklist).
+For each page, checkpoint with minimal UI/component diff and update tests.
+Validate with fast gate after each change.

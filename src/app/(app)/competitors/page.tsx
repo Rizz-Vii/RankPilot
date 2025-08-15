@@ -2,6 +2,7 @@
 "use client";
 
 import CompetitorAnalysisForm from "@/components/competitor-analysis-form";
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import {
@@ -397,6 +398,7 @@ export default function CompetitorsPage() {
   const comp = useCompetitorAnalysisMetrics(months);
   const isMobile = useIsMobile();
   return (
+    <FeatureGate feature="competitor_analysis" requiredTier="starter" showUpgrade>
     <main className="container mx-auto py-6 space-y-6">
       <ToolPageHeader
         title="Competitor Analysis"
@@ -503,6 +505,7 @@ export default function CompetitorsPage() {
         </div>
       </div>
   </div></div>
-    </main>
+  </main>
+  </FeatureGate>
   );
 }

@@ -19,6 +19,8 @@ export { performanceDashboard, realtimeMetrics, functionMetrics, abTestManagemen
 export { cleanupInvites } from "./scheduled/cleanup-invites.js";
 // Automation scheduler
 export { runDueAutomationScheduler } from "./scheduled/run-due-automation.js";
+// Daily KPI snapshot (T16)
+export { kpiDailySnapshot } from "./scheduled/kpi-daily-snapshot";
 
 setGlobalOptions({ region: "australia-southeast2" });
 

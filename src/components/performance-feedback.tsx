@@ -25,21 +25,15 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { severityButtonClasses, severityClasses } from '@/lib/ui/status-colors';
 
-// Helper function to get severity-based color classes
+// Map severity to semantic token-based classes (success|warning|destructive)
 const getSeverityColor = (severity: string): string => {
-  switch (severity.toLowerCase()) {
-    case "critical":
-      return "bg-red-500 text-white hover:bg-red-600";
-    case "high":
-      return "bg-orange-500 text-white hover:bg-orange-600";
-    case "medium":
-      return "bg-yellow-500 text-white hover:bg-yellow-600";
-    case "low":
-      return "bg-green-500 text-white hover:bg-green-600";
-    default:
-      return "bg-gray-500 text-white hover:bg-gray-600";
+  const level = severity.toLowerCase();
+  if (["critical","high","medium","low"].includes(level)) {
+    return severityButtonClasses(level as any);
   }
+  return "bg-muted text-foreground hover:bg-muted/80";
 };
 
 interface FeedbackData {
@@ -156,8 +150,8 @@ export function PerformanceFeedback({
             aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
             className={`p-1 rounded transition-colors ${
               star <= rating
-                ? "text-yellow-500 hover:text-yellow-600"
-                : "text-gray-300 hover:text-gray-400"
+                ? "text-warning-foreground hover:text-warning-foreground/80"
+                : "text-muted-foreground hover:text-muted-foreground/80"
             }`}
           >
             <Star className="h-6 w-6 fill-current" />
@@ -214,7 +208,7 @@ export function PerformanceFeedback({
                 {operationType}
               </Badge>
               {responseTime > showThreshold && (
-                <Badge className="bg-orange-100 text-orange-800 text-xs">
+                <Badge className={`${severityClasses('high', { variant: 'subtle' })} text-xs`}>
                   <AlertTriangle className="h-3 w-3 mr-1" />
                   Slow Response
                 </Badge>
@@ -416,8 +410,8 @@ export function FeedbackSummary() {
                   key={star}
                   className={`h-4 w-4 ${
                     star <= averageRating
-                      ? "text-yellow-500 fill-current"
-                      : "text-gray-300"
+                      ? "text-warning-foreground fill-current"
+                      : "text-muted-foreground/40"
                   }`}
                 />
               ))}

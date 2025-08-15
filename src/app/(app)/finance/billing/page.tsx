@@ -7,6 +7,8 @@ import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { QuotaBar } from '@/components/metrics/QuotaBar';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
 import { allowFinanceMocks } from '@/lib/flags/finance';
+import { Alert } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import { useFinanceInvoiceMetrics } from '@/hooks/useFinanceInvoiceMetrics';
 import { PeriodSelector } from '@/components/metrics/PeriodSelector';
@@ -31,6 +33,16 @@ export default function BillingOverviewPage() {
           <PeriodSelector value={months} onChange={setMonths} />
   </header>
   <ProvenanceLegend />
+        {allowFinanceMocks() && !live.kpis.length && (
+          <Alert className="border-warning/30 bg-warning/15 text-warning-foreground dark:bg-warning/20 dark:text-warning-foreground" aria-live="polite" aria-label="Finance mock data banner">
+            <div className="flex items-start gap-3 text-sm">
+              <AlertTriangle className="h-4 w-4 mt-0.5" />
+              <p>
+                Finance metrics are currently served from mock data (FINANCE_MOCK_MODE). This banner disappears once live metrics load or mocks are disabled.
+              </p>
+            </div>
+          </Alert>
+        )}
         <section className="grid gap-4 md:grid-cols-3">
           {data.kpis.map((k:any) => (
             <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />

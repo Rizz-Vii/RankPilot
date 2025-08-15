@@ -27,7 +27,7 @@ const STATIC_ASSETS = [
 const DYNAMIC_CACHE_PATHS = [
     '/api/user',
     '/api/dashboard',
-    '/api/neuroseo',
+    '/api/neuroseo/live',
     '/api/settings'
 ];
 
@@ -236,7 +236,7 @@ async function syncNeuroSEOAnalysis() {
             try {
                 // Support optional endpoint override in queued payloads
                 const data = request?.data || {};
-                const endpoint = typeof data.endpoint === 'string' ? data.endpoint : '/api/neuroseo';
+                const endpoint = typeof data.endpoint === 'string' ? data.endpoint : '/api/neuroseo/live';
                 const body = data && data.endpoint ? JSON.stringify(data.payload) : JSON.stringify(data);
                 const response = await fetch(endpoint, {
                     method: 'POST',

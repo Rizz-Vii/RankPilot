@@ -7,7 +7,7 @@
  * Integration: Dashboard components → Firestore real-time data
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { DashboardDataService, type DashboardData } from "@/lib/services/dashboard-data.service";
 
 // Hook for real-time dashboard data
@@ -16,47 +16,24 @@ export const useRealTimeDashboardData = (userId: string | null) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const activeUserRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
-
+    if (!userId) { setLoading(false); return; }
+    if (activeUserRef.current === userId) return; // prevent unnecessary resubscribe
+    activeUserRef.current = userId;
     console.log(`🔄 Setting up real-time dashboard data for user: ${userId}`);
-    setLoading(true);
-    setError(null);
-
-    // Initial data fetch
+    setLoading(true); setError(null);
+    let cancelled = false;
     DashboardDataService.getUserDashboardData(userId)
-      .then((initialData) => {
-        setData(initialData);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching initial dashboard data:", err);
-        setError("Failed to load dashboard data");
-        setLoading(false);
-      });
-
-    // Set up real-time subscription
-    const unsubscribe = DashboardDataService.subscribeToUserDashboardData(
-      userId,
-      (updatedData) => {
-        console.log("📊 Dashboard data updated in real-time");
-        setData(updatedData);
-        setError(null);
-      }
-    );
-
-    return () => {
-      console.log("🔌 Unsubscribing from dashboard data");
-      unsubscribe();
-    };
+      .then(d => { if (!cancelled) { setData(d); setLoading(false); } })
+      .catch(err => { if (!cancelled) { console.error('Error fetching initial dashboard data:', err); setError('Failed to load dashboard data'); setLoading(false); } });
+    const unsubscribe = DashboardDataService.subscribeToUserDashboardData(userId, upd => { if (!cancelled) { console.log('📊 Dashboard data updated in real-time'); setData(upd); setError(null); } });
+    return () => { cancelled = true; console.log('🔌 Unsubscribing from dashboard data'); unsubscribe(); };
   }, [userId]);
 
   const refresh = useCallback(async () => {
     if (!userId) return;
-    
+
     setLoading(true);
     try {
       const freshData = await DashboardDataService.getUserDashboardData(userId);
@@ -95,7 +72,7 @@ export const useChartData = (
     const fetchChartData = async () => {
       try {
         const dashboardData = await DashboardDataService.getUserDashboardData(userId);
-        
+
         switch (chartType) {
           case "seoTrend":
             setChartData(dashboardData.seoScoreTrend);

@@ -65,6 +65,8 @@ jobs:
           PROV_STRICT=1 npm run test:provenance-audit
           echo "✅ Provenance strict audit passed (policy enforced)" >> $GITHUB_STEP_SUMMARY
 
+  # Removed build-time runtime audit; moved post-deploy to verify live URL
+
       - name: 🔍 Production Validation
         if: github.event.inputs.emergency_deployment != 'true'
         run: |
@@ -233,6 +235,18 @@ jobs:
     if: always() && needs.production_deploy.result == 'success'
 
     steps:
+      - name: 🌐 Runtime Provenance Audit (Production URL, Non-blocking)
+        env:
+          PROV_ORIGIN: ${{ env.PRODUCTION_URL }}
+          PROV_REQUIRE_SERVER: "1"
+          PROV_TIMEOUT_MS: "20000"
+        run: |
+          echo "## 🌐 Runtime Provenance Audit (Production URL)" >> $GITHUB_STEP_SUMMARY
+          if npm run -s test:provenance-audit; then
+            echo "✅ Runtime provenance audit passed (production)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Runtime provenance audit failed (non-blocking, production)" >> $GITHUB_STEP_SUMMARY
+          fi
       - name: 📊 Production Performance Audit
         run: |
           echo "## 📊 Production Performance Audit" >> $GITHUB_STEP_SUMMARY

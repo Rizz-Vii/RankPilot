@@ -28,7 +28,7 @@ export default function WebScrapingGuidePage() {
       <div className="prose prose-lg max-w-none">
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4 flex items-center">
-            <Database className="w-6 h-6 mr-2 text-green-500" />
+            <Database className="w-6 h-6 mr-2 text-success" />
             What is Web Scraping for SEO?
           </h2>
           <p>
@@ -36,8 +36,8 @@ export default function WebScrapingGuidePage() {
             websites to analyze competitors, track rankings, monitor content
             changes, and gather market intelligence.
           </p>
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 my-4">
-            <p className="font-medium text-amber-800">
+          <div className="bg-warning/10 border border-warning/40 rounded-lg p-4 my-4">
+            <p className="font-medium text-warning-foreground">
               ⚠️ Always respect robots.txt files and website terms of service!
             </p>
           </div>
@@ -132,7 +132,7 @@ export default function WebScrapingGuidePage() {
 
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-semibold mb-2 text-green-600">
+              <h3 className="font-semibold mb-2 text-success-foreground">
                 ✅ Best Practices
               </h3>
               <ul className="list-disc pl-6 text-sm">
@@ -145,7 +145,7 @@ export default function WebScrapingGuidePage() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-2 text-red-600">❌ Avoid</h3>
+              <h3 className="font-semibold mb-2 text-destructive-foreground">❌ Avoid</h3>
               <ul className="list-disc pl-6 text-sm">
                 <li>Ignoring robots.txt rules</li>
                 <li>Making too many concurrent requests</li>
@@ -225,7 +225,7 @@ print(data)`}
 
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Legal Considerations</h2>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="bg-destructive/10 border border-destructive/40 rounded-lg p-6">
             <h3 className="font-semibold mb-2">Important Legal Points:</h3>
             <ul className="list-disc pl-6 text-sm">
               <li>Web scraping exists in a legal gray area</li>
@@ -241,7 +241,7 @@ print(data)`}
           <h2 className="text-2xl font-semibold mb-4">
             Automated SEO Analysis
           </h2>
-          <div className="bg-gradient-to-r from-primary/10 to-blue-50 border border-primary/20 rounded-lg p-6">
+          <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-6">
             <p className="mb-4">
               Skip the complexity of building your own scrapers. RankPilot
               provides ethical, automated SEO analysis with built-in competitive

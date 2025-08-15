@@ -237,10 +237,10 @@ const managementFeatures = [
 ];
 
 const tierColors = {
-  free: "bg-green-100 text-green-800",
-  starter: "bg-blue-100 text-blue-800",
-  agency: "bg-purple-100 text-purple-800",
-  enterprise: "bg-orange-100 text-orange-800",
+  free: "bg-muted text-foreground",
+  starter: "bg-primary/10 text-primary",
+  agency: "bg-accent/10 text-accent-foreground",
+  enterprise: "bg-warning/10 text-warning-foreground",
 };
 
 export default function FeaturesPage() {
@@ -321,7 +321,7 @@ export default function FeaturesPage() {
                     <ul className="space-y-2">
                       {feature.features.map((item, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm">
-                          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                          <CheckCircle className="h-4 w-4 text-success-foreground mt-0.5 shrink-0" />
                           {item}
                         </li>
                       ))}
@@ -378,7 +378,7 @@ export default function FeaturesPage() {
                     <ul className="space-y-1">
                       {tool.features.map((item, i) => (
                         <li key={i} className="flex items-start gap-2 text-xs">
-                          <Star className="h-3 w-3 text-yellow-500 mt-0.5 shrink-0" />
+                          <Star className="h-3 w-3 text-warning-foreground mt-0.5 shrink-0" />
                           {item}
                         </li>
                       ))}
@@ -437,7 +437,7 @@ export default function FeaturesPage() {
                     <ul className="space-y-1">
                       {feature.features.map((item, i) => (
                         <li key={i} className="flex items-start gap-2 text-xs">
-                          <CheckCircle className="h-3 w-3 text-green-500 mt-0.5 shrink-0" />
+                          <CheckCircle className="h-3 w-3 text-success-foreground mt-0.5 shrink-0" />
                           {item}
                         </li>
                       ))}
@@ -490,7 +490,7 @@ export default function FeaturesPage() {
                     <ul className="space-y-2">
                       {feature.features.map((item, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm">
-                          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                          <CheckCircle className="h-4 w-4 text-success-foreground mt-0.5 shrink-0" />
                           {item}
                         </li>
                       ))}

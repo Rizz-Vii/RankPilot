@@ -128,7 +128,7 @@ export default function SalesDashboardRoot() {
   }
 
   return (
-    <FeatureGate feature="sales_pipeline" requiredTier="starter" showUpgrade>
+  <FeatureGate feature="sales_dashboard" requiredTier="starter" showUpgrade>
       <SalesContextProvider data={metrics} range={range} refreshing={refreshing} deals={deals} forecast={forecast}>
     <SuiteAccentProvider value="sales">
   <DashboardSurface as="section" aria-label="Sales dashboard surface" className="p-6 space-y-10">

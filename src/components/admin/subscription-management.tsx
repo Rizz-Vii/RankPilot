@@ -236,8 +236,8 @@ export function SubscriptionManagement() {
           {[...Array(4)].map((_, i) => (
             <Card key={i}>
               <CardHeader className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 bg-muted rounded w-3/4"></div>
+                <div className="h-8 bg-muted rounded w-1/2"></div>
               </CardHeader>
             </Card>
           ))}
@@ -497,7 +497,7 @@ export function SubscriptionManagement() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm">Issues</span>
-                        <span className="text-sm font-medium text-red-600">
+                        <span className="text-sm font-medium text-destructive">
                           {stats.pastDue}
                         </span>
                       </div>

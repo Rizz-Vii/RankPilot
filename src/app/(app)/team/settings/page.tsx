@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/firebase";
@@ -137,6 +138,7 @@ export default function TeamSettingsPage() {
   };
 
   return (
+    <FeatureGate feature="team_management" requiredTier="agency" showUpgrade>
     <main className="container mx-auto py-6 space-y-8">
       <ToolPageHeader
         title="Team Settings"
@@ -148,7 +150,7 @@ export default function TeamSettingsPage() {
         showBreadcrumb
       />
       {loading && <div>Loading...</div>}
-      {error && <div className="text-red-500">{error}</div>}
+  {error && <div className="text-destructive-foreground">{error}</div>}
       {!loading && team && editState && (
         <>
           {/* Team Info */}
@@ -327,5 +329,6 @@ export default function TeamSettingsPage() {
         </>
       )}
   </main>
+  </FeatureGate>
   );
 }

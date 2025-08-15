@@ -34,18 +34,18 @@ const caseStudies = [
     solution:
       "Implemented NeuroSEO™ Suite with NeuralCrawler™ for technical optimization and RewriteGen™ for product descriptions.",
     results: [
-      { metric: "Organic Traffic", value: "+340%", color: "text-green-600" },
+  { metric: "Organic Traffic", value: "+340%", color: "text-success-foreground" },
       {
         metric: "Revenue from Organic",
         value: "+280%",
-        color: "text-blue-600",
+  color: "text-primary",
       },
       {
         metric: "Keyword Rankings (Top 3)",
         value: "+150%",
-        color: "text-purple-600",
+  color: "text-accent-foreground",
       },
-      { metric: "Conversion Rate", value: "+45%", color: "text-orange-600" },
+  { metric: "Conversion Rate", value: "+45%", color: "text-warning-foreground" },
     ],
     tags: ["E-commerce", "Technical SEO", "AI Content"],
     featured: true,
@@ -60,13 +60,13 @@ const caseStudies = [
     solution:
       "Used AI Visibility Engine and SemanticMap™ to identify content gaps and create authority-building content strategy.",
     results: [
-      { metric: "Brand Visibility", value: "+450%", color: "text-green-600" },
-      { metric: "Lead Generation", value: "+220%", color: "text-blue-600" },
-      { metric: "Featured Snippets", value: "+180%", color: "text-purple-600" },
+  { metric: "Brand Visibility", value: "+450%", color: "text-success-foreground" },
+  { metric: "Lead Generation", value: "+220%", color: "text-primary" },
+  { metric: "Featured Snippets", value: "+180%", color: "text-accent-foreground" },
       {
         metric: "Domain Authority",
         value: "+35 points",
-        color: "text-orange-600",
+  color: "text-warning-foreground",
       },
     ],
     tags: ["SaaS", "Content Strategy", "Brand Building"],
@@ -85,18 +85,18 @@ const caseStudies = [
       {
         metric: "Local Search Visibility",
         value: "+520%",
-        color: "text-green-600",
+  color: "text-success-foreground",
       },
-      { metric: "Patient Inquiries", value: "+180%", color: "text-blue-600" },
+  { metric: "Patient Inquiries", value: "+180%", color: "text-primary" },
       {
         metric: "Google My Business Views",
         value: "+300%",
-        color: "text-purple-600",
+  color: "text-accent-foreground",
       },
       {
         metric: "Appointment Bookings",
         value: "+150%",
-        color: "text-orange-600",
+  color: "text-warning-foreground",
       },
     ],
     tags: ["Healthcare", "Local SEO", "E-A-T"],
@@ -112,17 +112,17 @@ const caseStudies = [
     solution:
       "Deployed full NeuroSEO™ Suite for comprehensive content scaling and technical optimization across 500+ pages.",
     results: [
-      { metric: "Organic Sessions", value: "+290%", color: "text-green-600" },
-      { metric: "Content Performance", value: "+400%", color: "text-blue-600" },
+  { metric: "Organic Sessions", value: "+290%", color: "text-success-foreground" },
+  { metric: "Content Performance", value: "+400%", color: "text-primary" },
       {
         metric: "Sales Qualified Leads",
         value: "+160%",
-        color: "text-purple-600",
+  color: "text-accent-foreground",
       },
       {
         metric: "Content Production Speed",
         value: "+600%",
-        color: "text-orange-600",
+  color: "text-warning-foreground",
       },
     ],
     tags: ["Enterprise", "Content Scaling", "B2B"],
@@ -171,7 +171,7 @@ export default function CaseStudiesPage() {
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             Real Results from
-            <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               {" "}
               AI-Powered SEO
             </span>
@@ -232,7 +232,7 @@ export default function CaseStudiesPage() {
             custom={5}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
               Success Stories
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -254,7 +254,7 @@ export default function CaseStudiesPage() {
                   className={`hover:shadow-xl transition-shadow duration-300 ${study.featured ? "ring-2 ring-primary shadow-lg" : ""}`}
                 >
                   {study.featured && (
-                    <div className="bg-gradient-to-r from-primary to-purple-600 text-white px-6 py-2">
+                    <div className="bg-gradient-to-r from-primary to-accent text-white px-6 py-2">
                       <div className="flex items-center justify-center">
                         <Award className="h-4 w-4 mr-2" />
                         <span className="text-sm font-semibold">
@@ -357,7 +357,7 @@ export default function CaseStudiesPage() {
         custom={10}
       >
         <div className="max-w-4xl mx-auto">
-      <Card className="bg-gradient-to-r from-primary to-purple-600 text-white">
+  <Card className="bg-gradient-to-r from-primary to-accent text-white">
             <CardContent className="p-12 text-center">
               <h2 className="text-3xl font-bold mb-6">
                 Ready to Write Your Success Story?

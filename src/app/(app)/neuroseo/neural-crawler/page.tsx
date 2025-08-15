@@ -30,10 +30,13 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { tagSynthetic } from '@/lib/synthetic/synthetic-utils';
 import { db } from "@/lib/firebase";
-import { collection, addDoc, query, where, orderBy, limit, getDocs } from "firebase/firestore";
-import { toast } from "sonner";
+import { collection, addDoc, query, where, orderBy, limit, getDocs, getDoc, doc } from "firebase/firestore";
+import { dualWriteNeuralCrawlerAggregate } from '@/lib/neural-crawler/aggregate';
+import { recordCrawlerAggregateHit, recordCrawlerLegacyFallback } from '@/lib/metrics/unified-metrics';
+import { toast } from 'sonner';
 
 interface CrawlResult {
   id: string;
@@ -108,12 +111,112 @@ export default function NeuralCrawlerPage() {
   const [currentResult, setCurrentResult] = useState<CrawlResult | null>(null);
   const [crawlHistory, setCrawlHistory] = useState<CrawlHistory[]>([]);
   const [selectedTab, setSelectedTab] = useState("overview");
+  const aggReadFlagEnv = process.env.NEXT_PUBLIC_DATA_MIN_NEURAL_CRAWLER_READ_AGG === '1';
+  const pruneFlag = process.env.NEXT_PUBLIC_DATA_MIN_NEURAL_CRAWLER_PRUNE_LEGACY === '1';
+  // Allow runtime override via localStorage (dev/testing) key: neuralCrawlerReadAggOverride = 'on'|'off'
+  const [aggReadFlag, setAggReadFlag] = useState(aggReadFlagEnv);
+  useEffect(() => {
+    try {
+      const override = localStorage.getItem('neuralCrawlerReadAggOverride');
+      if (override === 'on') setAggReadFlag(true);
+      else if (override === 'off') setAggReadFlag(false);
+    } catch {}
+  }, []);
 
   useEffect(() => {
     if (user) {
       loadCrawlHistory();
     }
   }, [user]);
+
+  // When a currentResult is not yet set but we have history and read-cutover flag on, attempt to hydrate
+  useEffect(() => {
+    const run = async () => {
+      if (!aggReadFlag) return;
+      if (currentResult || !crawlHistory.length || !user) return;
+      const latest = crawlHistory[0];
+      try {
+        // Try aggregate doc by historyId (preferred) then legacy fallback
+        if (latest.id) {
+          const aggRef = doc(db, 'neuralCrawlerResultsAgg', latest.id); // attempt direct id match first
+          const aggSnap = await getDoc(aggRef);
+            if (aggSnap.exists()) {
+              const data: any = aggSnap.data();
+              aggHits++;
+              recordCrawlerAggregateHit();
+              console.info('[neuralCrawler] aggregate hit', { historyId: latest.id });
+              setCurrentResult(legacyFromAggregate(data));
+              return;
+            }
+        }
+        // Fallback path: search by userId + url (small query: limit 1)
+        if (latest.url) {
+            const qLegacy = query(
+              collection(db, 'neuralCrawlerResults'),
+              where('userId', '==', user.uid),
+              where('url', '==', latest.url),
+              orderBy('createdAt', 'desc'),
+              limit(1)
+            );
+            const legacySnap = await getDocs(qLegacy);
+            if (!legacySnap.empty) {
+              legacyFallbacks++;
+              recordCrawlerLegacyFallback();
+              console.warn('[neuralCrawler] legacy fallback (aggregate miss)', { url: latest.url });
+              const docData: any = legacySnap.docs[0].data();
+              setCurrentResult(docData);
+            }
+        }
+      } catch (e) {
+        console.warn('[neuralCrawler] hydrate failed', (e as any)?.message);
+      }
+    };
+    run();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [crawlHistory, aggReadFlag]);
+
+  function legacyFromAggregate(a: any): CrawlResult {
+    // Reconstruct a minimal pseudo-legacy object (omitting heavy arrays) for UI components already tolerant to partial data.
+    return {
+      id: a.historyId || a.id || `agg_${a.url}`,
+      url: a.url,
+      title: a.title || a.url,
+      metaDescription: a.metaDescription || '',
+      content: '',
+      wordCount: a.wordCount || 0,
+      readingTime: a.readingTime || 0,
+      headings: normalizeHeadingCounts(a.headings),
+      images: new Array(a.imagesCount || 0).fill(0).map((_, i) => ({ src: '', alt: `Image ${i+1}` })),
+      links: buildLinkPlaceholders(a.linksInternal, a.linksExternal),
+      technicalData: { loadTime: 0, pageSize: 0, statusCode: 200, contentType: 'text/html' },
+      seoAnalysis: { titleLength: a.titleLength || 0, metaDescriptionLength: a.metaDescriptionLength || 0, headingStructure: 'Unknown', imageOptimization: 0, internalLinks: a.linksInternal || 0, externalLinks: a.linksExternal || 0 },
+      issues: new Array(a.issuesCount || 0).fill(0).map((_, i) => ({ type: 'info', message: `Issue ${i+1}`, recommendation: '' })),
+      entities: new Array(a.entitiesCount || 0).fill(0).map((_, i) => ({ text: `Entity ${i+1}`, type: 'concept', confidence: 0 })),
+      createdAt: a.createdAt?.toDate?.() || new Date()
+    };
+  }
+
+  function normalizeHeadingCounts(h: any): CrawlResult['headings'] {
+    const slots = { h1: [], h2: [], h3: [], h4: [], h5: [], h6: [] } as Record<string,string[]>;
+    if (h && typeof h === 'object') {
+      Object.entries(h).forEach(([k,v]) => {
+        const n = typeof v === 'number' ? v : 0;
+        slots[k] = Array(n).fill('').map((_,i)=>`${k.toUpperCase()} heading ${i+1}`);
+      });
+    }
+    return slots as any;
+  }
+  function buildLinkPlaceholders(internal=0, external=0) {
+    const arr: any[] = [];
+    for (let i=0;i<internal;i++) arr.push({ href: '#', text: `Internal ${i+1}`, type: 'internal' });
+    for (let i=0;i<external;i++) arr.push({ href: '#', text: `External ${i+1}`, type: 'external' });
+    return arr;
+  }
+
+  // Simple in-memory counters for aggregate vs legacy read fallbacks (reset on HMR)
+  // Using function-scope (not state) so we don't trigger rerenders; export via console for observability.
+  let aggHits = 0;
+  let legacyFallbacks = 0;
 
   const loadCrawlHistory = async () => {
     if (!user) return;
@@ -233,14 +336,16 @@ Key areas of focus include content quality assessment, competitive analysis, per
       return;
     }
 
-    setIsAnalyzing(true);
+    const currentUserId = user.uid; // narrow non-null after guard
+
+  setIsAnalyzing(true);
     setAnalysisProgress(0);
     setCurrentResult(null);
 
     try {
       // Save crawl request to history
       const historyDoc = await addDoc(collection(db, 'neuralCrawlerHistory'), {
-        userId: user.uid,
+        userId: currentUserId,
         url: crawlUrl,
         status: 'processing',
         createdAt: new Date()
@@ -250,13 +355,18 @@ Key areas of focus include content quality assessment, competitive analysis, per
       const result = await simulateAnalysis(crawlUrl);
       setCurrentResult(result);
 
-      // Save complete result
-      await addDoc(collection(db, 'neuralCrawlerResults'), {
-        userId: user.uid,
+  // Save complete result (legacy full document)
+      const fullResult = {
+        userId: currentUserId,
         historyId: historyDoc.id,
         ...result,
         createdAt: new Date()
-      });
+      };
+      if (!pruneFlag) {
+        await addDoc(collection(db, 'neuralCrawlerResults'), fullResult);
+      }
+      // Dual-write compact aggregate (optional, non-blocking) still executed for monitoring until legacy fully retired
+      dualWriteNeuralCrawlerAggregate(fullResult as any);
 
       await loadCrawlHistory();
       toast.success("Website analysis completed successfully!");
@@ -307,6 +417,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
   );
 
   return (
+    <FeatureGate feature="neural_crawler" requiredTier="starter" showUpgrade>
     <main className="container mx-auto py-6 px-3 sm:px-6 space-y-6">
       <ToolPageHeader
         title="NeuralCrawler™"
@@ -383,7 +494,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
             <ResultsSkeleton />
           </motion.div>
         )}
-        {currentResult && (
+  {currentResult && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -411,7 +522,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
                   <Card>
                     <CardContent className="p-6">
                       <div className="flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-blue-600" />
+                        <FileText className="h-5 w-5 text-primary" />
                         <div>
                           <p className="text-2xl font-bold">{currentResult.wordCount.toLocaleString()}</p>
                           <p className="text-sm text-muted-foreground">Words</p>
@@ -422,7 +533,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
                   <Card>
                     <CardContent className="p-6">
                       <div className="flex items-center gap-2">
-                        <Clock className="h-5 w-5 text-green-600" />
+                        <Clock className="h-5 w-5 text-success-foreground" />
                         <div>
                           <p className="text-2xl font-bold">{currentResult.readingTime}</p>
                           <p className="text-sm text-muted-foreground">Min Read</p>
@@ -433,7 +544,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
                   <Card>
                     <CardContent className="p-6">
                       <div className="flex items-center gap-2">
-                        <LinkIcon className="h-5 w-5 text-purple-600" />
+                        <LinkIcon className="h-5 w-5 text-accent" />
                         <div>
                           <p className="text-2xl font-bold">{currentResult.links.length}</p>
                           <p className="text-sm text-muted-foreground">Links Found</p>
@@ -458,7 +569,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
                     </div>
                     <div>
                       <Label className="text-sm font-medium">URL</Label>
-                      <p className="text-sm mt-1 text-blue-600">{currentResult.url}</p>
+                      <p className="text-sm mt-1 text-primary">{currentResult.url}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -685,5 +796,6 @@ Key areas of focus include content quality assessment, competitive analysis, per
         </Card>
       )}
   </main>
+  </FeatureGate>
   );
 }

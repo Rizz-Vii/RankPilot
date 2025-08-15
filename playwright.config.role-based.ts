@@ -38,7 +38,7 @@ export default defineConfig({
     // FREE TIER WORKER - Tests for free users with basic functionality
     {
       name: "free-tier-worker",
-      testMatch: "**/role-based/**/*free*.spec.ts",
+      testMatch: ["**/role-based/**/*free*.spec.ts", "**/navigation/**/*.spec.ts"],
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1280, height: 720 },
@@ -206,14 +206,20 @@ export default defineConfig({
     },
   }),
 
-  ...(process.env.NODE_ENV === "development" && {
-    // Development-specific settings - FORCE SINGLE WORKER FOR STABILITY
-    workers: 1, // Fixed: was 2, causing server crashes
-    webServer: {
-      command: "npm run dev-no-turbopack", // Use stable dev server
-      port: 3000,
-      reuseExistingServer: !process.env.CI,
-      timeout: 120000,
-    },
-  }),
+  // Only auto-start a dev server if we are not pointing at an existing base URL
+  // and the caller hasn't explicitly opted out via SKIP_WEB_SERVER.
+  ...(
+    process.env.NODE_ENV === "development" &&
+    !process.env.TEST_BASE_URL &&
+    !process.env.SKIP_WEB_SERVER && {
+      // Development-specific settings - FORCE SINGLE WORKER FOR STABILITY
+      workers: 1, // Fixed: was 2, causing server crashes
+      webServer: {
+        command: "npm run dev-no-turbopack", // Use stable dev server
+        port: 3000,
+        reuseExistingServer: !process.env.CI,
+        timeout: 120000,
+      },
+    }
+  ),
 });

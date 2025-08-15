@@ -68,7 +68,7 @@ export function SecureRegisterForm({
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        {errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
+  {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
       </div>
       <div className="relative">
         <label htmlFor="password">Password</label>
@@ -87,7 +87,7 @@ export function SecureRegisterForm({
           {passwordToggle.show ? "Hide" : "Show"}
         </button>
         {errors.password && (
-          <p className="text-xs text-red-600">{errors.password}</p>
+          <p className="text-xs text-destructive">{errors.password}</p>
         )}
       </div>
       <div className="relative">
@@ -107,17 +107,17 @@ export function SecureRegisterForm({
           {confirmPasswordToggle.show ? "Hide" : "Show"}
         </button>
         {errors.confirmPassword && (
-          <p className="text-xs text-red-600">{errors.confirmPassword}</p>
+          <p className="text-xs text-destructive">{errors.confirmPassword}</p>
         )}
       </div>
       <div className="flex justify-center">{CaptchaComponent}</div>
       {errors.form && (
-        <p className="text-xs text-red-600 text-center">{errors.form}</p>
+        <p className="text-xs text-destructive text-center">{errors.form}</p>
       )}
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full py-2 bg-blue-600 text-white rounded"
+        className="w-full py-2 bg-primary text-primary-foreground rounded"
       >
         Register
       </button>

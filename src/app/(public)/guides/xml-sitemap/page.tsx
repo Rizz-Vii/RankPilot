@@ -28,7 +28,7 @@ export default function XMLSitemapGuidePage() {
       <div className="prose prose-lg max-w-none">
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4 flex items-center">
-            <Globe className="w-6 h-6 mr-2 text-blue-500" />
+            <Globe className="w-6 h-6 mr-2 text-primary" />
             What is an XML Sitemap?
           </h2>
           <p>
@@ -36,7 +36,7 @@ export default function XMLSitemapGuidePage() {
             website, helping search engines understand your site structure and
             find content more efficiently.
           </p>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 my-4">
+          <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 my-4">
             <p className="font-medium">
               Think of it as a roadmap for search engines!
             </p>
@@ -194,7 +194,7 @@ export default function XMLSitemapGuidePage() {
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-semibold mb-2 text-red-600">
+              <h3 className="font-semibold mb-2 text-destructive-foreground">
                 ❌ Common Errors
               </h3>
               <ul className="list-disc pl-6 text-sm">
@@ -206,7 +206,7 @@ export default function XMLSitemapGuidePage() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-2 text-green-600">
+              <h3 className="font-semibold mb-2 text-success-foreground">
                 ✅ Best Practices
               </h3>
               <ul className="list-disc pl-6 text-sm">
@@ -224,7 +224,7 @@ export default function XMLSitemapGuidePage() {
           <h2 className="text-2xl font-semibold mb-4">
             Analyze Your Site Structure
           </h2>
-          <div className="bg-gradient-to-r from-primary/10 to-blue-50 border border-primary/20 rounded-lg p-6">
+          <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-6">
             <p className="mb-4">
               Use RankPilot's analysis tools to understand your site structure
               and identify pages that should be included in your XML sitemap.

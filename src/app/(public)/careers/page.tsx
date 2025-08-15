@@ -125,19 +125,19 @@ export default function CareersPage() {
         custom={0}
       >
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             Build the Future of
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               {" "}
               AI-Powered SEO
             </span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Join our team of AI researchers, engineers, and SEO experts as we
             revolutionize how businesses approach search optimization with
             cutting-edge artificial intelligence.
           </p>
-          <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+          <Button size="lg" className="bg-primary hover:bg-primary/90">
             <Users className="mr-2 h-5 w-5" />
             View Open Positions
           </Button>
@@ -154,10 +154,10 @@ export default function CareersPage() {
             custom={1}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
               Why Work at RankPilot?
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               We're building something revolutionary, and we want passionate
               people to join us on this journey.
             </p>
@@ -174,13 +174,13 @@ export default function CareersPage() {
               >
                 <Card className="text-center h-full hover:shadow-lg transition-shadow duration-300">
                   <CardHeader>
-                    <div className="mx-auto w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                      <benefit.icon className="h-6 w-6 text-blue-600" />
+                    <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                      <benefit.icon className="h-6 w-6 text-primary" />
                     </div>
                     <CardTitle className="text-lg">{benefit.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-600 text-sm">
+                    <p className="text-muted-foreground text-sm">
                       {benefit.description}
                     </p>
                   </CardContent>
@@ -201,10 +201,10 @@ export default function CareersPage() {
             custom={6}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
               Open Positions
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               We're actively looking for talented individuals to join our
               growing team.
             </p>
@@ -226,7 +226,7 @@ export default function CareersPage() {
                         <CardTitle className="text-xl mb-2">
                           {job.title}
                         </CardTitle>
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                           <span className="flex items-center">
                             <Users className="h-4 w-4 mr-1" />
                             {job.department}
@@ -241,19 +241,19 @@ export default function CareersPage() {
                           </span>
                         </div>
                       </div>
-                      <Button className="bg-blue-600 hover:bg-blue-700 shrink-0">
+                      <Button className="bg-primary hover:bg-primary/90 shrink-0">
                         Apply Now
                       </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-600 mb-4">{job.description}</p>
+                    <p className="text-muted-foreground mb-4">{job.description}</p>
 
                     <div className="mb-4">
-                      <h4 className="font-semibold text-gray-900 mb-2">
+                      <h4 className="font-semibold text-foreground mb-2">
                         Key Requirements:
                       </h4>
-                      <ul className="list-disc list-inside space-y-1 text-gray-600 text-sm">
+                      <ul className="list-disc list-inside space-y-1 text-muted-foreground text-sm">
                         {job.requirements.map((req, reqIndex) => (
                           <li key={reqIndex}>{req}</li>
                         ))}
@@ -265,7 +265,7 @@ export default function CareersPage() {
                         <Badge
                           key={tagIndex}
                           variant="secondary"
-                          className="bg-blue-100 text-blue-800"
+                            className="bg-primary/10 text-primary"
                         >
                           {tag}
                         </Badge>
@@ -288,12 +288,12 @@ export default function CareersPage() {
         custom={11}
       >
         <div className="max-w-4xl mx-auto">
-          <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+          <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground">
             <CardContent className="p-12 text-center">
               <h2 className="text-3xl font-bold mb-6">
                 Don't See Your Perfect Role?
               </h2>
-              <p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto">
+              <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
                 We're always looking for exceptional talent. Send us your resume
                 and tell us how you'd like to contribute to the future of
                 AI-powered SEO.

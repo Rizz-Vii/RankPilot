@@ -300,4 +300,15 @@ test.describe('API Integration - Error Handling & Rate Limiting', () => {
             expect(hasSecurityHeaders).toBeTruthy();
         }
     });
+
+    test('Health endpoint exposes crawler metrics', async ({ request }) => {
+        const response = await request.get('/api/health');
+        expect([200, 503]).toContain(response.status());
+        const body = await response.json();
+        expect(body.crawler).toBeTruthy();
+        const keys = ['success', 'errors', 'totalCrawlMs', 'totalAnalysisMs', 'runs', 'successRatePct', 'errorRatePct', 'avgCrawlMs', 'avgAnalysisMs'];
+        keys.forEach(k => { expect(Object.prototype.hasOwnProperty.call(body.crawler, k)).toBeTruthy(); });
+        // Team quota aggregate may be null early in day but field should exist
+        expect(Object.prototype.hasOwnProperty.call(body, 'teamCrawlerQuota')).toBeTruthy();
+    });
 });

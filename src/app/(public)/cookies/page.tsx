@@ -143,7 +143,7 @@ export default function CookiesPage() {
         custom={1}
       >
         <div className="max-w-4xl mx-auto">
-      <Card className="bg-gradient-to-r from-primary to-purple-600 text-white">
+  <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground">
             <CardContent className="p-8">
               <h2 className="text-2xl font-bold mb-4">What Are Cookies?</h2>
         <p className="text-primary-foreground/80 mb-4">
@@ -199,7 +199,7 @@ export default function CookiesPage() {
                         <CardTitle className="text-lg">{cookie.type}</CardTitle>
                       </div>
                       <div
-                        className={`px-2 py-1 rounded text-xs font-medium ${cookie.canDisable ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
+                        className={`px-2 py-1 rounded text-xs font-medium ${cookie.canDisable ? "bg-success/15 text-success-foreground" : "bg-muted text-foreground"}`}
                       >
                         {cookie.canDisable ? "Optional" : "Required"}
                       </div>
@@ -218,7 +218,7 @@ export default function CookiesPage() {
                               key={exampleIndex}
                               className="flex items-center"
                             >
-                              <div className="w-1 h-1 bg-gray-400 rounded-full mr-2"></div>
+                              <div className="w-1 h-1 bg-muted-foreground/50 rounded-full mr-2"></div>
                               {example}
                             </li>
                           ))}
@@ -280,13 +280,13 @@ export default function CookiesPage() {
                         animate="visible"
                         variants={fadeIn}
                         custom={index + 8}
-                        className="border-b border-gray-100 hover:bg-gray-50"
+                        className="border-b border-border hover:bg-muted/30"
                       >
                         <td className="p-4 font-medium">{item.purpose}</td>
                         <td className="p-4 text-muted-foreground">{item.data}</td>
                         <td className="p-4">
                           <span
-                            className={`px-2 py-1 rounded text-xs font-medium ${item.legalBasis === "Consent" ? "bg-primary/10 text-primary" : "bg-orange-100 text-orange-800"}`}
+                            className={`px-2 py-1 rounded text-xs font-medium ${item.legalBasis === "Consent" ? "bg-primary/10 text-primary" : "bg-warning/15 text-warning-foreground"}`}
                           >
                             {item.legalBasis}
                           </span>
@@ -321,7 +321,7 @@ export default function CookiesPage() {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <h3 className="font-bold text-lg mb-3">Browser Controls</h3>
-                    <ul className="space-y-2 text-gray-600">
+                    <ul className="space-y-2 text-muted-foreground">
                       <li>• Block or delete cookies in browser settings</li>
                       <li>• Set preferences for third-party cookies</li>
                       <li>• Use incognito/private browsing mode</li>
@@ -332,7 +332,7 @@ export default function CookiesPage() {
                     <h3 className="font-bold text-lg mb-3">
                       RankPilot Controls
                     </h3>
-                    <ul className="space-y-2 text-gray-600">
+                    <ul className="space-y-2 text-muted-foreground">
                       <li>• Manage preferences in your account settings</li>
                       <li>• Opt out of analytics and marketing cookies</li>
                       <li>• Request deletion of stored data</li>
@@ -341,8 +341,8 @@ export default function CookiesPage() {
                   </div>
                 </div>
 
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-yellow-800 text-sm">
+                <div className="bg-warning/10 border border-warning/40 rounded-lg p-4">
+                  <p className="text-warning-foreground text-sm">
                     <strong>Note:</strong> Disabling essential cookies may
                     affect website functionality, including your ability to log
                     in and use NeuroSEO™ analysis features.
@@ -363,7 +363,7 @@ export default function CookiesPage() {
         custom={13}
       >
         <div className="max-w-4xl mx-auto">
-            <Card className="bg-gradient-to-r from-primary to-purple-600 text-white">
+            <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground">
             <CardContent className="p-12 text-center">
               <h2 className="text-3xl font-bold mb-6">
                 Questions About Cookies?

@@ -1,40 +1,7 @@
-// Shim gating: allow mocha environment to inject lightweight Next.js server substitutes
-// When FIRECRAWL_TEST_SHIM=1 we defer resolving real next/server to keep tests lightweight.
-// Production / normal dev unaffected.
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports
-let NextRequest: any; // typed dynamic for test shim
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports
-let NextResponse: any;
-if (process.env.FIRECRAWL_TEST_SHIM === '1') {
-    try {
-        const shim = require('next/server'); // allow external resolution if available (fallback for env mismatch)
-        NextRequest = shim.NextRequest; NextResponse = shim.NextResponse;
-    } catch {
-        // minimal fallback objects (tests override via module loader anyway)
-        NextResponse = class { static json(body: any, init?: any) { return { status: init?.status || 200, headers: new Map(Object.entries(init?.headers || {})), json: async () => body }; } };
-        NextRequest = class { url: string; headers: any; constructor(url: string) { this.url = url; this.headers = new Map(); } };
-    }
-} else {
-    // normal production import
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const real = require('next/server');
-    NextRequest = real.NextRequest; NextResponse = real.NextResponse;
-}
-// Conditional imports to support mocha test environment without full Next alias ESM resolution
-let withProvenance: any, enforceProvenance: any, runFirecrawl: any;
-let recordRouteLatency: any, recordRateLimitRejection: any, recordTeamRateLimitAllowed: any, recordCrawlerQuota: any, recordCrawlerSuccess: any, recordCrawlerError: any;
-if (process.env.FIRECRAWL_TEST_SHIM === '1') {
-    try {
-        ({ withProvenance, enforceProvenance } = require('../../../../../lib/middleware/provenance'));
-    } catch { ({ withProvenance, enforceProvenance } = { withProvenance: (f: any) => f, enforceProvenance: (o: any) => o }); }
-    try { ({ runFirecrawl } = require('../../../../../lib/crawler/firecrawl-client')); } catch { runFirecrawl = async (u: string) => ({ pages: [{ url: u }], elapsedMs: 0, fallback: true, degradedReason: 'shim' }); }
-    try { ({ recordRouteLatency, recordRateLimitRejection, recordTeamRateLimitAllowed, recordCrawlerQuota, recordCrawlerSuccess, recordCrawlerError } = require('../../../../../lib/metrics/unified-metrics')); }
-    catch { recordRouteLatency = recordRateLimitRejection = recordTeamRateLimitAllowed = recordCrawlerQuota = recordCrawlerSuccess = recordCrawlerError = () => { }; }
-} else {
-    ({ withProvenance, enforceProvenance } = require('@/lib/middleware/provenance'));
-    ({ runFirecrawl } = require('@/lib/crawler/firecrawl-client'));
-    ({ recordRouteLatency, recordRateLimitRejection, recordTeamRateLimitAllowed, recordCrawlerQuota, recordCrawlerSuccess, recordCrawlerError } = require('@/lib/metrics/unified-metrics'));
-}
+import { NextRequest, NextResponse } from 'next/server';
+import { withProvenance, enforceProvenance } from '@/lib/middleware/provenance';
+import { runFirecrawl } from '@/lib/crawler/firecrawl-client';
+import { recordRouteLatency, recordRateLimitRejection, recordTeamRateLimitAllowed, recordCrawlerQuota, recordCrawlerSuccess, recordCrawlerError } from '@/lib/metrics/unified-metrics';
 // Quota persistence (T12) – Firestore-backed with in-memory fallback.
 const FIRECRAWL_WINDOW_MS = 60 * 60 * 1000; // 1h
 let memWindowStart = Date.now();
@@ -86,7 +53,7 @@ async function enforceFirecrawlQuota(limit: number, scopeKey: string) {
 }
 
 // GET /api/seo-audit/firecrawl?url=...&depth=1&limit=5
-export const GET = withProvenance(async function GET(req: any) {
+export const GET = withProvenance(async function GET(req: NextRequest) {
     const started = Date.now();
     try {
         const urlObj = new URL(req.url);
@@ -120,7 +87,8 @@ export const GET = withProvenance(async function GET(req: any) {
         if (depth > 1) {
             try {
                 const robotsUrl = `${parsedTarget.origin}/robots.txt`;
-                const robotsRes = await fetch(robotsUrl, { next: { revalidate: 600 } });
+                // Use standard fetch (omit Next.js specific revalidate option for test compatibility)
+                const robotsRes = await fetch(robotsUrl);
                 if (robotsRes.ok) {
                     const txt = await robotsRes.text();
                     const disallow: string[] = [];

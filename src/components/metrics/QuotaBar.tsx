@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { statusBarBg } from '@/lib/metrics/status-colors';
 
 interface QuotaBarProps {
   used: number;
@@ -13,12 +14,13 @@ interface QuotaBarProps {
 export function QuotaBar({ used, limit, label, className, showLabel = true }: QuotaBarProps) {
   const percent = limit === -1 ? 0 : Math.min(100, (used / limit) * 100);
   const unlimited = limit === -1;
-  let color = 'bg-emerald-500';
+  let state: string = 'good';
   if (!unlimited) {
-    if (percent > 85) color = 'bg-rose-500';
-    else if (percent > 65) color = 'bg-amber-500';
-    else if (percent > 40) color = 'bg-blue-500';
+    if (percent > 85) state = 'bad';
+    else if (percent > 65) state = 'warn';
+    else if (percent > 40) state = 'near';
   }
+  const color = statusBarBg(state);
   return (
     <div className={cn('flex flex-col gap-1', className)}>
       {showLabel && (
@@ -31,7 +33,7 @@ export function QuotaBar({ used, limit, label, className, showLabel = true }: Qu
         {!unlimited && (
           <div className={cn('h-full transition-all duration-500 rounded-md', color)} style={{ width: `${percent}%` }} />
         )}
-        {unlimited && <div className="h-full w-full bg-gradient-to-r from-blue-500/40 via-violet-500/40 to-emerald-500/40 animate-pulse" />}
+  {unlimited && <div className="h-full w-full bg-gradient-to-r from-primary/40 via-accent/40 to-success/40 animate-pulse" />}
       </div>
     </div>
   );

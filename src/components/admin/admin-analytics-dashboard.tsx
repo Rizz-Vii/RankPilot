@@ -54,11 +54,11 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps) {
           {[...Array(4)].map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardHeader className="pb-2">
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-muted rounded w-3/4"></div>
               </CardHeader>
               <CardContent>
-                <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-full"></div>
+                <div className="h-8 bg-muted rounded w-1/2 mb-2"></div>
+                <div className="h-3 bg-muted rounded w-full"></div>
               </CardContent>
             </Card>
           ))}
@@ -204,20 +204,20 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps) {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">25</div>
-              <div className="text-sm text-green-700">Composite Indexes</div>
-              <div className="text-xs text-green-600">100% Synchronized</div>
+            <div className="text-center p-4 bg-success/10 rounded-lg">
+              <div className="text-2xl font-bold text-success">25</div>
+              <div className="text-sm text-success/90">Composite Indexes</div>
+              <div className="text-xs text-success">100% Synchronized</div>
             </div>
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">1.2M+</div>
-              <div className="text-sm text-blue-700">Total Records</div>
-              <div className="text-xs text-blue-600">Live Database</div>
+            <div className="text-center p-4 bg-primary/10 rounded-lg">
+              <div className="text-2xl font-bold text-primary">1.2M+</div>
+              <div className="text-sm text-primary/90">Total Records</div>
+              <div className="text-xs text-primary">Live Database</div>
             </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">15</div>
-              <div className="text-sm text-purple-700">Collections</div>
-              <div className="text-xs text-purple-600">Production Ready</div>
+            <div className="text-center p-4 bg-accent/10 rounded-lg">
+              <div className="text-2xl font-bold text-accent">15</div>
+              <div className="text-sm text-accent/90">Collections</div>
+              <div className="text-xs text-accent">Production Ready</div>
             </div>
           </div>
         </CardContent>

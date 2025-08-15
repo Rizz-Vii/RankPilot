@@ -161,10 +161,10 @@ export default function SecurityPage() {
             custom={1}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
               Security Features
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Comprehensive security measures protecting your data at every
               level
             </p>
@@ -206,7 +206,7 @@ export default function SecurityPage() {
             custom={8}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
               Compliance & Certifications
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -227,19 +227,19 @@ export default function SecurityPage() {
                   <CardContent className="p-6">
                     <div className="flex items-start space-x-4">
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center ${item.status === "active" ? "bg-green-100" : "bg-yellow-100"}`}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center ${item.status === "active" ? "bg-success/15" : "bg-warning/15"}`}
                       >
                         {item.status === "active" ? (
-                          <CheckCircle className="h-5 w-5 text-green-600" />
+                          <CheckCircle className="h-5 w-5 text-success-foreground" />
                         ) : (
-                          <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                          <AlertTriangle className="h-5 w-5 text-warning-foreground" />
                         )}
                       </div>
                       <div className="flex-1">
                         <h3 className="font-bold text-lg mb-2">{item.title}</h3>
                         <p className="text-muted-foreground">{item.description}</p>
                         {item.status === "in-progress" && (
-                          <p className="text-yellow-600 text-sm mt-2 font-medium">
+                          <p className="text-warning-foreground text-sm mt-2 font-medium">
                             Certification in progress - Expected Q2 2025
                           </p>
                         )}
@@ -263,7 +263,7 @@ export default function SecurityPage() {
             custom={13}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
               Data Handling & Retention
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -300,7 +300,7 @@ export default function SecurityPage() {
                         animate="visible"
                         variants={fadeIn}
                         custom={index + 14}
-                        className="border-b border-gray-100 hover:bg-gray-50"
+                        className="border-b border-border hover:bg-muted/30"
                       >
                         <td className="p-4 font-medium">{item.category}</td>
                         <td className="p-4 text-muted-foreground">{item.retention}</td>
@@ -325,7 +325,7 @@ export default function SecurityPage() {
         custom={18}
       >
         <div className="max-w-4xl mx-auto">
-      <Card className="bg-gradient-to-r from-primary to-purple-600 text-white">
+  <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground">
             <CardContent className="p-12 text-center">
               <h2 className="text-3xl font-bold mb-6">Security Questions?</h2>
         <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">

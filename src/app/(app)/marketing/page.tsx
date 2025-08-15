@@ -85,7 +85,7 @@ export default function MarketingDashboardRoot(){
   }
 
   return (
-    <FeatureGate feature="marketing_email_campaigns" requiredTier="enterprise" showUpgrade>
+  <FeatureGate feature="marketing_dashboard" requiredTier="enterprise" showUpgrade>
       <MarketingContextProvider data={metrics} months={months} refreshing={refreshing}>
     <SuiteAccentProvider value="marketing">
   <DashboardSurface as="section" aria-label="Marketing dashboard surface" className="space-y-10 p-6">

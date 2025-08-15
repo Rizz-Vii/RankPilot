@@ -42,7 +42,7 @@ export function AILazyWrapper({
                 </Suspense>
             ) : (
                 <div className="flex items-center justify-center" style={{ height: minHeight }}>
-                    <div className="text-center text-gray-500">
+                    <div className="text-center text-muted-foreground">
                         <div className="animate-pulse">🤖</div>
                         <div className="text-sm mt-2">AI Component Loading...</div>
                     </div>
@@ -68,12 +68,12 @@ function ProgressiveLoader({ stage }: { stage: number; }) {
             <div className="text-4xl mb-4 animate-spin">
                 {stages[stage]?.icon || '🔄'}
             </div>
-            <div className="text-gray-600">
+            <div className="text-muted-foreground">
                 {stages[stage]?.label || 'Loading...'}
             </div>
-            <div className="w-48 bg-gray-200 rounded-full h-2 mt-4">
+            <div className="w-48 bg-muted rounded-full h-2 mt-4">
                 <div
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    className="bg-primary h-2 rounded-full transition-all duration-300"
                     style={{ width: `${((stage + 1) / stages.length) * 100}%` }}
                 />
             </div>
@@ -89,7 +89,7 @@ function AILoadingFallback() {
         <div className="flex items-center justify-center py-12">
             <div className="text-center">
                 <LoadingSpinner size="lg" />
-                <div className="text-gray-600 mt-4">Loading AI Component...</div>
+                <div className="text-muted-foreground mt-4">Loading AI Component...</div>
             </div>
         </div>
     );
@@ -175,14 +175,14 @@ export class AIErrorBoundary extends React.Component<
         if (this.state.hasError) {
             return this.props.fallback || (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="text-red-500 text-4xl mb-4">⚠️</div>
-                    <div className="text-gray-700 font-medium">AI Component Error</div>
-                    <div className="text-gray-500 text-sm mt-2">
+                    <div className="text-destructive text-4xl mb-4">⚠️</div>
+                    <div className="text-muted-foreground font-medium">AI Component Error</div>
+                    <div className="text-muted-foreground text-sm mt-2">
                         Something went wrong loading this AI feature
                     </div>
                     <button
                         onClick={() => this.setState({ hasError: false })}
-                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                        className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
                     >
                         Retry
                     </button>

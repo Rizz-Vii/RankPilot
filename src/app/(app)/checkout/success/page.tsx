@@ -35,7 +35,7 @@ export default function CheckoutSuccessPage() {
   }, [sessionId, router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-background to-blue-50 flex items-center justify-center p-4">
+  <div className="min-h-screen bg-gradient-to-br from-success/10 via-background to-primary/10 flex items-center justify-center p-4">
       {showConfetti && <Confetti duration={5000} particleCount={100} />}
 
       <motion.div
@@ -44,7 +44,7 @@ export default function CheckoutSuccessPage() {
         transition={{ duration: 0.5 }}
         className="max-w-2xl w-full"
       >
-        <Card className="border-green-200 bg-white/80 backdrop-blur">
+  <Card className="border-success/30 bg-white/80 backdrop-blur">
           <CardHeader className="text-center pb-6">
             <motion.div
               initial={{ scale: 0 }}
@@ -59,12 +59,12 @@ export default function CheckoutSuccessPage() {
                   transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                   className="absolute -top-2 -right-2"
                 >
-                  <Sparkles className="h-8 w-8 text-yellow-500" />
+                  <Sparkles className="h-8 w-8 text-warning-foreground" />
                 </motion.div>
               </div>
             </motion.div>
 
-            <CardTitle className="text-3xl font-bold text-green-700 mb-4">
+            <CardTitle className="text-3xl font-bold text-success-foreground mb-4">
               Subscription Activated 🎉
             </CardTitle>
 
@@ -76,8 +76,8 @@ export default function CheckoutSuccessPage() {
 
           <CardContent className="space-y-6">
             {/* What's Next */}
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 border border-blue-100">
-              <h3 className="font-semibold text-lg mb-4 text-blue-900">
+            <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-6 border border-primary/20">
+              <h3 className="font-semibold text-lg mb-4 text-primary">
                 What's next?
               </h3>
               <div className="space-y-3">

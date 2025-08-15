@@ -234,7 +234,7 @@ function PricingContent() {
 						<button
 							onClick={() => setIsYearly(!isYearly)}
 							className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-								isYearly ? "bg-primary" : "bg-gray-200"
+								isYearly ? "bg-primary" : "bg-muted"
 							}`}
 						>
 							<span
@@ -309,7 +309,7 @@ function PricingContent() {
 											</span>
 										</div>
 										{isYearly && (
-											<p className="text-sm text-green-600 font-medium">
+											<p className="text-sm text-success-foreground font-medium">
 												Save ${plan.price * 12 - plan.yearlyPrice} annually
 											</p>
 										)}
@@ -357,7 +357,7 @@ function PricingContent() {
 
 														{/* Yearly upsell banner when on current plan and monthly view */}
 														{subscription?.tier === plan.id && !isYearly && (
-															<div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+															<div className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning-foreground">
 																Save ${plan.price * 12 - plan.yearlyPrice} per year by switching to annual billing.
 																<div className="mt-2">
 																	<Button asChild size="sm" variant="outline">

@@ -43,6 +43,59 @@ export function useSubscription() {
 
   useEffect(() => {
     async function fetchSubscription() {
+      // Ultra-early test override (Playwright / E2E) via global variable to avoid auth & Firestore
+      try {
+        if (typeof window !== 'undefined' && (window as any).__SUBSCRIPTION_OVERRIDE__) {
+          const ov = (window as any).__SUBSCRIPTION_OVERRIDE__ as { tier: SubscriptionTier; status?: string };
+          if (ov?.tier) {
+            const forcedTier = ov.tier;
+            const defaultUserAccess: UserAccess = { role: 'user', tier: forcedTier, status: (ov.status as any) || 'active' };
+            const planRef = forcedTier === 'free' ? FREE_PLAN : STRIPE_PLANS[forcedTier as PlanType] || FREE_PLAN;
+            setSubscription({
+              status: defaultUserAccess.status,
+              tier: forcedTier,
+              planName: planRef.name,
+              planLimits: planRef.limits,
+              features: planRef.features,
+              isUnlimited: planRef.limits.auditsPerMonth === -1,
+              userAccess: defaultUserAccess,
+              accessibleFeatures: getAccessibleFeatures(defaultUserAccess)
+            });
+            setLoading(false);
+            return; // Skip rest
+          }
+        }
+      } catch { }
+      // Development/testing override (Playwright/local) to bypass Firestore + Auth
+      try {
+        if (typeof window !== 'undefined') {
+          const raw = localStorage.getItem('DEV_SUBSCRIPTION_OVERRIDE');
+          if (raw) {
+            const ov = JSON.parse(raw || '{}');
+            if (ov && ov.tier) {
+              const forcedTier = ov.tier as SubscriptionTier;
+              const defaultUserAccess: UserAccess = {
+                role: 'user',
+                tier: forcedTier,
+                status: (ov.status as any) || 'active'
+              };
+              setSubscription({
+                status: defaultUserAccess.status,
+                tier: forcedTier,
+                planName: forcedTier === 'free' ? FREE_PLAN.name : STRIPE_PLANS[forcedTier as PlanType]?.name || FREE_PLAN.name,
+                planLimits: forcedTier === 'free' ? FREE_PLAN.limits : STRIPE_PLANS[forcedTier as PlanType]?.limits || FREE_PLAN.limits,
+                features: forcedTier === 'free' ? FREE_PLAN.features : STRIPE_PLANS[forcedTier as PlanType]?.features || FREE_PLAN.features,
+                isUnlimited: forcedTier !== 'free',
+                userAccess: defaultUserAccess,
+                accessibleFeatures: getAccessibleFeatures(defaultUserAccess)
+              });
+              setLoading(false);
+              return; // short-circuit normal fetch
+            }
+          }
+        }
+      } catch { }
+
       if (!user?.uid) {
         setLoading(false);
         return;
@@ -53,10 +106,16 @@ export function useSubscription() {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         const userData = userDoc.data();
 
+        // Development override: allow tests to force tier via localStorage flag (handled in page context)
+        let forcedTier: string | undefined;
+        try {
+          if (typeof window !== 'undefined') forcedTier = localStorage.getItem('DEV_FORCED_TIER') || undefined;
+        } catch { }
+
         const subData: SubscriptionData = userData
           ? {
             status: userData.subscriptionStatus || "free",
-            tier: userData.subscriptionTier || "free",
+            tier: (forcedTier as any) || userData.subscriptionTier || "free",
             customerId: userData.stripeCustomerId,
             subscriptionId: userData.stripeSubscriptionId,
             currentPeriodEnd: userData.nextBillingDate?.toDate(),

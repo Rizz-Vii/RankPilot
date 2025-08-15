@@ -20,98 +20,98 @@ const execAsync = promisify(exec);
  * 5. Performance monitoring setup
  */
 export class ProductionDeploymentAgent implements RankPilotAgent {
-    name = 'Production Deployment Agent';
-    version = '4.0.0';
+  name = 'Production Deployment Agent';
+  version = '4.0.0';
 
-    capabilities: AgentCapability[] = [
-        {
-            name: 'Firebase Hosting Deployment',
-            description: 'Deploy to Firebase hosting in australia-southeast2',
-            canAutoFix: true,
-            riskLevel: 'high'
-        },
-        {
-            name: 'Environment Variable Optimization',
-            description: 'Optimize production environment configuration',
-            canAutoFix: true,
-            riskLevel: 'medium'
-        },
-        {
-            name: 'Sentry Monitoring Integration',
-            description: 'Setup comprehensive error and performance monitoring',
-            canAutoFix: true,
-            riskLevel: 'low'
-        },
-        {
-            name: 'CDN Performance Optimization',
-            description: 'Configure CDN caching and optimization',
-            canAutoFix: true,
-            riskLevel: 'low'
-        },
-        {
-            name: 'Production Health Monitoring',
-            description: 'Setup production health checks and alerts',
-            canAutoFix: true,
-            riskLevel: 'low'
-        }
-    ];
-
-    safetyConstraints: SafetyConstraint = {
-        requiresBackup: true,
-        requiresHumanApproval: false,
-        rollbackAvailable: true,
-        maxConcurrentFixes: 1 // Production deployment should be sequential
-    };
-
-    private backupPath = './.production-deployment-backups';
-    private deploymentMetrics: Array<{ component: string, deployed: boolean, deployTime: number; }> = [];
-
-    /**
-     * Main execution method - Phase 4 implementation
-     */
-    async execute(): Promise<boolean> {
-        console.log('🎯 Production Deployment Agent - Phase 4 Execution Starting...');
-
-        try {
-            // Step 1: Prepare production environment
-            await this.prepareProductionEnvironment();
-
-            // Step 2: Optimize build configuration
-            await this.optimizeBuildConfiguration();
-
-            // Step 3: Setup Sentry monitoring
-            await this.setupSentryMonitoring();
-
-            // Step 4: Deploy to Firebase hosting
-            await this.deployToFirebaseHosting();
-
-            // Step 5: Deploy Firebase Cloud Functions
-            await this.deployFirebaseFunctions();
-
-            // Step 6: Setup production monitoring
-            await this.setupProductionMonitoring();
-
-            // Step 7: Verify deployment and generate report
-            await this.verifyDeploymentAndGenerateReport();
-
-            console.log('✅ Production Deployment Agent - Phase 4 Complete!');
-            return true;
-
-        } catch (error) {
-            console.error('🚨 Production Deployment Agent execution failed:', error);
-            await this.rollback();
-            return false;
-        }
+  capabilities: AgentCapability[] = [
+    {
+      name: 'Firebase Hosting Deployment',
+      description: 'Deploy to Firebase hosting in australia-southeast2',
+      canAutoFix: true,
+      riskLevel: 'high'
+    },
+    {
+      name: 'Environment Variable Optimization',
+      description: 'Optimize production environment configuration',
+      canAutoFix: true,
+      riskLevel: 'medium'
+    },
+    {
+      name: 'Sentry Monitoring Integration',
+      description: 'Setup comprehensive error and performance monitoring',
+      canAutoFix: true,
+      riskLevel: 'low'
+    },
+    {
+      name: 'CDN Performance Optimization',
+      description: 'Configure CDN caching and optimization',
+      canAutoFix: true,
+      riskLevel: 'low'
+    },
+    {
+      name: 'Production Health Monitoring',
+      description: 'Setup production health checks and alerts',
+      canAutoFix: true,
+      riskLevel: 'low'
     }
+  ];
 
-    /**
-     * Prepare production environment configuration
-     */
-    private async prepareProductionEnvironment(): Promise<void> {
-        console.log('🔧 Preparing production environment...');
+  safetyConstraints: SafetyConstraint = {
+    requiresBackup: true,
+    requiresHumanApproval: false,
+    rollbackAvailable: true,
+    maxConcurrentFixes: 1 // Production deployment should be sequential
+  };
 
-        // Create production environment file
-        const productionEnv = `# 🚀 RankPilot Production Environment
+  private backupPath = './.production-deployment-backups';
+  private deploymentMetrics: Array<{ component: string, deployed: boolean, deployTime: number; }> = [];
+
+  /**
+   * Main execution method - Phase 4 implementation
+   */
+  async execute(): Promise<boolean> {
+    console.log('🎯 Production Deployment Agent - Phase 4 Execution Starting...');
+
+    try {
+      // Step 1: Prepare production environment
+      await this.prepareProductionEnvironment();
+
+      // Step 2: Optimize build configuration
+      await this.optimizeBuildConfiguration();
+
+      // Step 3: Setup Sentry monitoring
+      await this.setupSentryMonitoring();
+
+      // Step 4: Deploy to Firebase hosting
+      await this.deployToFirebaseHosting();
+
+      // Step 5: Deploy Firebase Cloud Functions
+      await this.deployFirebaseFunctions();
+
+      // Step 6: Setup production monitoring
+      await this.setupProductionMonitoring();
+
+      // Step 7: Verify deployment and generate report
+      await this.verifyDeploymentAndGenerateReport();
+
+      console.log('✅ Production Deployment Agent - Phase 4 Complete!');
+      return true;
+
+    } catch (error) {
+      console.error('🚨 Production Deployment Agent execution failed:', error);
+      await this.rollback();
+      return false;
+    }
+  }
+
+  /**
+   * Prepare production environment configuration
+   */
+  private async prepareProductionEnvironment(): Promise<void> {
+    console.log('🔧 Preparing production environment...');
+
+    // Create production environment file
+    const productionEnv = `# 🚀 RankPilot Production Environment
 # Generated by Production Deployment Agent
 # Date: ${new Date().toISOString()}
 
@@ -191,24 +191,24 @@ NEXT_PUBLIC_ERROR_REPORTING=true
 NEXT_PUBLIC_ANALYTICS_ENABLED=true
 `;
 
-        await fs.writeFile('.env.production', productionEnv);
-        console.log('✅ Production environment configuration created');
+    await fs.writeFile('.env.production', productionEnv);
+    console.log('✅ Production environment configuration created');
 
-        this.deploymentMetrics.push({
-            component: 'Environment Configuration',
-            deployed: true,
-            deployTime: Date.now()
-        });
-    }
+    this.deploymentMetrics.push({
+      component: 'Environment Configuration',
+      deployed: true,
+      deployTime: Date.now()
+    });
+  }
 
-    /**
-     * Optimize build configuration for production
-     */
-    private async optimizeBuildConfiguration(): Promise<void> {
-        console.log('🔧 Optimizing build configuration for production...');
+  /**
+   * Optimize build configuration for production
+   */
+  private async optimizeBuildConfiguration(): Promise<void> {
+    console.log('🔧 Optimizing build configuration for production...');
 
-        // Create production-optimized next.config.ts
-        const productionNextConfig = `/** @type {import('next').NextConfig} */
+    // Create production-optimized next.config.ts
+    const productionNextConfig = `/** @type {import('next').NextConfig} */
 
 import { withSentryConfig } from "@sentry/nextjs";
 
@@ -408,10 +408,10 @@ const sentryWebpackPluginOptions = {
 
 export default withSentryConfig(nextConfig, sentryWebpackPluginOptions);`;
 
-        await fs.writeFile('next.config.production.ts', productionNextConfig);
+    await fs.writeFile('next.config.production.ts', productionNextConfig);
 
-        // Create production build script
-        const productionBuildScript = `#!/bin/bash
+    // Create production build script
+    const productionBuildScript = `#!/bin/bash
 # 🚀 RankPilot Production Build Script
 # Generated by Production Deployment Agent
 
@@ -453,26 +453,26 @@ else
     exit 1
 fi`;
 
-        await fs.writeFile('scripts/production-build.sh', productionBuildScript);
-        await execAsync('chmod +x scripts/production-build.sh');
+    await fs.writeFile('scripts/production-build.sh', productionBuildScript);
+    await execAsync('chmod +x scripts/production-build.sh');
 
-        console.log('✅ Production build configuration optimized');
+    console.log('✅ Production build configuration optimized');
 
-        this.deploymentMetrics.push({
-            component: 'Build Configuration',
-            deployed: true,
-            deployTime: Date.now()
-        });
-    }
+    this.deploymentMetrics.push({
+      component: 'Build Configuration',
+      deployed: true,
+      deployTime: Date.now()
+    });
+  }
 
-    /**
-     * Setup Sentry monitoring integration
-     */
-    private async setupSentryMonitoring(): Promise<void> {
-        console.log('🔧 Setting up Sentry monitoring integration...');
+  /**
+   * Setup Sentry monitoring integration
+   */
+  private async setupSentryMonitoring(): Promise<void> {
+    console.log('🔧 Setting up Sentry monitoring integration...');
 
-        // Create Sentry configuration
-        const sentryConfig = `// 🔍 Sentry Configuration for Production
+    // Create Sentry configuration
+    const sentryConfig = `// 🔍 Sentry Configuration for Production
 // Generated by Production Deployment Agent
 
 import { init, configureScope } from "@sentry/nextjs";
@@ -567,10 +567,10 @@ configureScope((scope) => {
 
 export default {};`;
 
-        await fs.writeFile('sentry.client.config.ts', sentryConfig);
+    await fs.writeFile('sentry.client.config.ts', sentryConfig);
 
-        // Create Sentry server configuration
-        const sentryServerConfig = `// 🔍 Sentry Server Configuration for Production
+    // Create Sentry server configuration
+    const sentryServerConfig = `// 🔍 Sentry Server Configuration for Production
 // Generated by Production Deployment Agent
 
 import { init } from "@sentry/nextjs";
@@ -605,10 +605,10 @@ init({
   debug: process.env.NODE_ENV !== 'production',
 });`;
 
-        await fs.writeFile('sentry.server.config.ts', sentryServerConfig);
+    await fs.writeFile('sentry.server.config.ts', sentryServerConfig);
 
-        // Create Sentry tunnel for better performance
-        const sentryTunnelRoute = `/**
+    // Create Sentry tunnel for better performance
+    const sentryTunnelRoute = `/**
  * Sentry Tunnel for australia-southeast2 Performance
  * Generated by Production Deployment Agent
  */
@@ -643,26 +643,26 @@ export async function POST(request: NextRequest) {
   }
 }`;
 
-        await fs.mkdir('src/app/monitoring/tunnel', { recursive: true });
-        await fs.writeFile('src/app/monitoring/tunnel/route.ts', sentryTunnelRoute);
+    await fs.mkdir('src/app/monitoring/tunnel', { recursive: true });
+    await fs.writeFile('src/app/monitoring/tunnel/route.ts', sentryTunnelRoute);
 
-        console.log('✅ Sentry monitoring integration setup complete');
+    console.log('✅ Sentry monitoring integration setup complete');
 
-        this.deploymentMetrics.push({
-            component: 'Sentry Monitoring',
-            deployed: true,
-            deployTime: Date.now()
-        });
-    }
+    this.deploymentMetrics.push({
+      component: 'Sentry Monitoring',
+      deployed: true,
+      deployTime: Date.now()
+    });
+  }
 
-    /**
-     * Deploy to Firebase hosting
-     */
-    private async deployToFirebaseHosting(): Promise<void> {
-        console.log('🔧 Deploying to Firebase hosting (australia-southeast2)...');
+  /**
+   * Deploy to Firebase hosting
+   */
+  private async deployToFirebaseHosting(): Promise<void> {
+    console.log('🔧 Deploying to Firebase hosting (australia-southeast2)...');
 
-        // Create Firebase hosting configuration
-        const firebaseConfig = `{
+    // Create Firebase hosting configuration
+    const firebaseConfig = `{
   "hosting": {
     "public": ".next",
     "site": "rankpilot-production",
@@ -732,10 +732,10 @@ export async function POST(request: NextRequest) {
   }
 }`;
 
-        await fs.writeFile('firebase.production.json', firebaseConfig);
+    await fs.writeFile('firebase.production.json', firebaseConfig);
 
-        // Create deployment script
-        const deploymentScript = `#!/bin/bash
+    // Create deployment script
+    const deploymentScript = `#!/bin/bash
 # 🚀 Firebase Hosting Deployment Script
 # Generated by Production Deployment Agent
 
@@ -757,26 +757,26 @@ else
     exit 1
 fi`;
 
-        await fs.writeFile('scripts/deploy-hosting.sh', deploymentScript);
-        await execAsync('chmod +x scripts/deploy-hosting.sh');
+    await fs.writeFile('scripts/deploy-hosting.sh', deploymentScript);
+    await execAsync('chmod +x scripts/deploy-hosting.sh');
 
-        console.log('✅ Firebase hosting deployment configuration ready');
+    console.log('✅ Firebase hosting deployment configuration ready');
 
-        this.deploymentMetrics.push({
-            component: 'Firebase Hosting',
-            deployed: true,
-            deployTime: Date.now()
-        });
-    }
+    this.deploymentMetrics.push({
+      component: 'Firebase Hosting',
+      deployed: true,
+      deployTime: Date.now()
+    });
+  }
 
-    /**
-     * Deploy Firebase Cloud Functions
-     */
-    private async deployFirebaseFunctions(): Promise<void> {
-        console.log('🔧 Deploying Firebase Cloud Functions...');
+  /**
+   * Deploy Firebase Cloud Functions
+   */
+  private async deployFirebaseFunctions(): Promise<void> {
+    console.log('🔧 Deploying Firebase Cloud Functions...');
 
-        // Create functions deployment script
-        const functionsDeployScript = `#!/bin/bash
+    // Create functions deployment script
+    const functionsDeployScript = `#!/bin/bash
 # 🔥 Firebase Functions Deployment Script
 # Generated by Production Deployment Agent
 
@@ -808,11 +808,11 @@ fi
 # Return to root directory
 cd ..`;
 
-        await fs.writeFile('scripts/deploy-functions.sh', functionsDeployScript);
-        await execAsync('chmod +x scripts/deploy-functions.sh');
+    await fs.writeFile('scripts/deploy-functions.sh', functionsDeployScript);
+    await execAsync('chmod +x scripts/deploy-functions.sh');
 
-        // Create functions TypeScript configuration
-        const functionsTsConfig = `{
+    // Create functions TypeScript configuration
+    const functionsTsConfig = `{
   "compilerOptions": {
     "module": "ESNext",
     "target": "ES2020",
@@ -842,25 +842,25 @@ cd ..`;
   ]
 }`;
 
-        await fs.writeFile('functions/tsconfig.json', functionsTsConfig);
+    await fs.writeFile('functions/tsconfig.json', functionsTsConfig);
 
-        console.log('✅ Firebase Cloud Functions deployment ready');
+    console.log('✅ Firebase Cloud Functions deployment ready');
 
-        this.deploymentMetrics.push({
-            component: 'Firebase Functions',
-            deployed: true,
-            deployTime: Date.now()
-        });
-    }
+    this.deploymentMetrics.push({
+      component: 'Firebase Functions',
+      deployed: true,
+      deployTime: Date.now()
+    });
+  }
 
-    /**
-     * Setup production monitoring
-     */
-    private async setupProductionMonitoring(): Promise<void> {
-        console.log('🔧 Setting up production monitoring...');
+  /**
+   * Setup production monitoring
+   */
+  private async setupProductionMonitoring(): Promise<void> {
+    console.log('🔧 Setting up production monitoring...');
 
-        // Create comprehensive monitoring dashboard
-        const monitoringDashboard = `/**
+    // Create comprehensive monitoring dashboard
+    const monitoringDashboard = `/**
  * Production Monitoring Dashboard
  * Generated by Production Deployment Agent
  */
@@ -963,13 +963,13 @@ export default function ProductionMonitoringDashboard() {
     switch (status) {
       case 'healthy':
       case 'operational':
-        return 'text-green-600 bg-green-100';
+        return 'text-success bg-success/10';
       case 'degraded':
-        return 'text-yellow-600 bg-yellow-100';
+        return 'text-warning bg-warning/10';
       case 'down':
-        return 'text-red-600 bg-red-100';
+        return 'text-destructive bg-destructive/10';
       default:
-        return 'text-gray-600 bg-gray-100';
+        return 'text-muted-foreground bg-muted';
     }
   };
 
@@ -1005,28 +1005,28 @@ export default function ProductionMonitoringDashboard() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-success">
                 {metrics?.responseTime?.toFixed(0) || '0'}ms
               </div>
-              <div className="text-sm text-gray-600">Response Time</div>
+              <div className="text-sm text-muted-foreground">Response Time</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-primary">
                 {((metrics?.uptime || 0) / 3600).toFixed(1)}h
               </div>
-              <div className="text-sm text-gray-600">Uptime</div>
+              <div className="text-sm text-muted-foreground">Uptime</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
+              <div className="text-2xl font-bold text-accent">
                 {metrics?.activeUsers || 0}
               </div>
-              <div className="text-sm text-gray-600">Active Users</div>
+              <div className="text-sm text-muted-foreground">Active Users</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
+              <div className="text-2xl font-bold text-warning">
                 {metrics?.errorRate?.toFixed(1) || '0'}%
               </div>
-              <div className="text-sm text-gray-600">Error Rate</div>
+              <div className="text-sm text-muted-foreground">Error Rate</div>
             </div>
           </div>
         </CardContent>
@@ -1047,7 +1047,7 @@ export default function ProductionMonitoringDashboard() {
                     {service.status.toUpperCase()}
                   </Badge>
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted-foreground">
                   {service.responseTime}ms
                 </div>
               </div>
@@ -1065,7 +1065,7 @@ export default function ProductionMonitoringDashboard() {
         </Alert>
       )}
 
-      <div className="text-xs text-gray-500 text-center">
+  <div className="text-xs text-muted-foreground text-center">
         Last updated: {metrics?.lastUpdated ? new Date(metrics.lastUpdated).toLocaleString() : 'Never'}
         <br />
         Production Deployment Agent v4.0.0 • australia-southeast2
@@ -1074,29 +1074,29 @@ export default function ProductionMonitoringDashboard() {
   );
 }`;
 
-        await fs.mkdir('src/app/(app)/monitoring', { recursive: true });
-        await fs.writeFile('src/app/(app)/monitoring/page.tsx', monitoringDashboard);
+    await fs.mkdir('src/app/(app)/monitoring', { recursive: true });
+    await fs.writeFile('src/app/(app)/monitoring/page.tsx', monitoringDashboard);
 
-        console.log('✅ Production monitoring dashboard created');
+    console.log('✅ Production monitoring dashboard created');
 
-        this.deploymentMetrics.push({
-            component: 'Production Monitoring',
-            deployed: true,
-            deployTime: Date.now()
-        });
-    }
+    this.deploymentMetrics.push({
+      component: 'Production Monitoring',
+      deployed: true,
+      deployTime: Date.now()
+    });
+  }
 
-    /**
-     * Verify deployment and generate comprehensive report
-     */
-    private async verifyDeploymentAndGenerateReport(): Promise<void> {
-        console.log('🔧 Verifying deployment and generating report...');
+  /**
+   * Verify deployment and generate comprehensive report
+   */
+  private async verifyDeploymentAndGenerateReport(): Promise<void> {
+    console.log('🔧 Verifying deployment and generating report...');
 
-        const totalComponents = this.deploymentMetrics.length;
-        const deployedComponents = this.deploymentMetrics.filter(c => c.deployed).length;
-        const deploymentSuccessRate = (deployedComponents / totalComponents) * 100;
+    const totalComponents = this.deploymentMetrics.length;
+    const deployedComponents = this.deploymentMetrics.filter(c => c.deployed).length;
+    const deploymentSuccessRate = (deployedComponents / totalComponents) * 100;
 
-        const report = `# 🚀 Production Deployment Agent Report - Phase 4
+    const report = `# 🚀 Production Deployment Agent Report - Phase 4
 Generated: ${new Date().toISOString()}
 Agent: Production Deployment Agent v4.0.0
 Region: australia-southeast2
@@ -1110,8 +1110,8 @@ Region: australia-southeast2
 
 ## 🎯 Deployed Components
 ${this.deploymentMetrics.map(component =>
-            `- **${component.component}**: ${component.deployed ? '✅ DEPLOYED' : '❌ FAILED'} (${new Date(component.deployTime).toLocaleTimeString()})`
-        ).join('\n')}
+      `- **${component.component}**: ${component.deployed ? '✅ DEPLOYED' : '❌ FAILED'} (${new Date(component.deployTime).toLocaleTimeString()})`
+    ).join('\n')}
 
 ## 🔥 Phase 4 Achievements
 
@@ -1218,11 +1218,11 @@ ${this.deploymentMetrics.map(component =>
 **🎉 RankPilot is now LIVE in production! 🎉**
 `;
 
-        await fs.writeFile('./production-deployment-report.md', report);
-        console.log('📊 Production deployment report generated: production-deployment-report.md');
+    await fs.writeFile('./production-deployment-report.md', report);
+    console.log('📊 Production deployment report generated: production-deployment-report.md');
 
-        // Create deployment verification script
-        const verificationScript = `#!/bin/bash
+    // Create deployment verification script
+    const verificationScript = `#!/bin/bash
 # 🔍 Production Deployment Verification Script
 # Generated by Production Deployment Agent
 
@@ -1257,39 +1257,39 @@ fi
 
 echo "🎉 Production deployment verification complete!"`;
 
-        await fs.writeFile('scripts/verify-deployment.sh', verificationScript);
-        await execAsync('chmod +x scripts/verify-deployment.sh');
+    await fs.writeFile('scripts/verify-deployment.sh', verificationScript);
+    await execAsync('chmod +x scripts/verify-deployment.sh');
+  }
+
+  /**
+   * Validate fix implementation
+   */
+  async validateFix(): Promise<boolean> {
+    const deploymentSuccessRate = this.deploymentMetrics.filter(c => c.deployed).length / this.deploymentMetrics.length;
+    return deploymentSuccessRate >= 0.8; // 80% deployment success rate threshold
+  }
+
+  /**
+   * Rollback changes if needed
+   */
+  async rollback(): Promise<boolean> {
+    console.log('🔄 Rolling back Production Deployment changes...');
+
+    try {
+      // In production, we would implement proper rollback mechanisms
+      console.log('⚠️  Production rollback requires manual intervention');
+      console.log('📋 Rollback checklist:');
+      console.log('   1. Revert Firebase hosting deployment');
+      console.log('   2. Restore previous functions deployment');
+      console.log('   3. Check environment variables');
+      console.log('   4. Verify monitoring systems');
+
+      return true;
+    } catch (error) {
+      console.error('❌ Rollback preparation failed:', error);
+      return false;
     }
-
-    /**
-     * Validate fix implementation
-     */
-    async validateFix(): Promise<boolean> {
-        const deploymentSuccessRate = this.deploymentMetrics.filter(c => c.deployed).length / this.deploymentMetrics.length;
-        return deploymentSuccessRate >= 0.8; // 80% deployment success rate threshold
-    }
-
-    /**
-     * Rollback changes if needed
-     */
-    async rollback(): Promise<boolean> {
-        console.log('🔄 Rolling back Production Deployment changes...');
-
-        try {
-            // In production, we would implement proper rollback mechanisms
-            console.log('⚠️  Production rollback requires manual intervention');
-            console.log('📋 Rollback checklist:');
-            console.log('   1. Revert Firebase hosting deployment');
-            console.log('   2. Restore previous functions deployment');
-            console.log('   3. Check environment variables');
-            console.log('   4. Verify monitoring systems');
-
-            return true;
-        } catch (error) {
-            console.error('❌ Rollback preparation failed:', error);
-            return false;
-        }
-    }
+  }
 }
 
 // Export singleton instance

@@ -122,9 +122,9 @@ export default function AdminTierMigration() {
                       key={index}
                       className={`${
                         log.includes("[ERROR]")
-                          ? "text-red-600"
+                          ? "text-destructive"
                           : log.includes("[WARN]")
-                            ? "text-yellow-600"
+                            ? "text-warning"
                             : "text-muted-foreground"
                       }`}
                     >
@@ -165,10 +165,10 @@ export default function AdminTierMigration() {
             </div>
           </div>
 
-          <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-md">
+      <div className="p-3 bg-primary/10 dark:bg-primary/15 rounded-md">
             <div className="flex items-start gap-2">
-              <AlertTriangle className="h-4 w-4 text-blue-600 mt-0.5" />
-              <div className="text-sm text-blue-800 dark:text-blue-200">
+        <AlertTriangle className="h-4 w-4 text-primary mt-0.5" />
+        <div className="text-sm text-primary dark:text-primary/80">
                 <p className="font-medium">What this migration does:</p>
                 <ul className="mt-1 list-disc list-inside space-y-1">
                   <li>Scans all users in the database</li>

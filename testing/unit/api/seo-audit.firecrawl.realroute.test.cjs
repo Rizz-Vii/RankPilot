@@ -5,16 +5,10 @@ const { expect } = require('chai');
 const Module = require('module');
 const path = require('path');
 
-// Path alias resolution for @/
+// Minimal patching: intercept next/server only
 const origResolve = Module._resolveFilename;
 Module._resolveFilename = function(request, parent, isMain, options){
-  if (request.startsWith('@/')) {
-    const p = path.join(process.cwd(), 'src', request.slice(2));
-    return origResolve.call(this, p, parent, isMain, options);
-  }
-  if (request === 'next/server') {
-    return 'virtual:next-server-stub';
-  }
+  if (request === 'next/server') return 'virtual:next-server-stub';
   return origResolve.call(this, request, parent, isMain, options);
 };
 
@@ -39,9 +33,9 @@ class NextRequestMock { constructor(url, headers){ this.url = url; this.headers 
 
 Module._load = function(request, parent, isMain){
   if (request === 'next/server' || request === 'virtual:next-server-stub') { return { NextResponse: NextResponseMock, NextRequest: NextRequestMock }; }
-  if (request === '@/lib/middleware/provenance') { return { withProvenance: (fn)=>fn, enforceProvenance: (o)=>o }; }
-  if (request === '@/lib/metrics/unified-metrics') { return { recordRouteLatency:()=>{}, recordRateLimitRejection:()=>{}, recordTeamRateLimitAllowed:()=>{}, recordCrawlerQuota:()=>{}, recordCrawlerSuccess:()=>{}, recordCrawlerError:()=>{} }; }
-  if (request === '@/lib/firebase-admin') {
+  if (request.endsWith('/lib/middleware/provenance')) { return { withProvenance: (fn)=>fn, enforceProvenance: (o)=>o }; }
+  if (request.endsWith('/lib/metrics/unified-metrics')) { return { recordRouteLatency:()=>{}, recordRateLimitRejection:()=>{}, recordTeamRateLimitAllowed:()=>{}, recordCrawlerQuota:()=>{}, recordCrawlerSuccess:()=>{}, recordCrawlerError:()=>{} }; }
+  if (request.endsWith('/lib/firebase-admin')) {
     const quotaStore = new Map();
     const adminDb = {
       collection: (name)=>({ doc: (id)=>({
@@ -53,7 +47,7 @@ Module._load = function(request, parent, isMain){
     const Timestamp = { fromMillis: (ms)=>({ toMillis: ()=>ms }) };
     return { adminDb, Timestamp };
   }
-  if (request === '@/lib/crawler/firecrawl-client') {
+  if (request.endsWith('/lib/crawler/firecrawl-client')) {
     return { runFirecrawl: async (url, opts)=> ({ pages: [{ url, content: 'X', status:200, title:'T', links:[], canonicalUrl: url, metaDescription: 'desc'}], elapsedMs: 12, fallback: false }) };
   }
   return originalLoad(request, parent, isMain);

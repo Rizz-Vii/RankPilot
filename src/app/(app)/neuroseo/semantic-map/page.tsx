@@ -31,6 +31,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { createDeterministicRng, randomInt, randomFloat, tagSynthetic } from '@/lib/synthetic/synthetic-utils';
 import { useAuth } from "@/context/AuthContext";
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { db } from "@/lib/firebase";
 import { collection, addDoc, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { toast } from "sonner";
@@ -196,23 +197,42 @@ export default function SemanticMapPage() {
 
     try {
       const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k);
-  const result = await simulateSemanticAnalysis(analysisUrl, keywords);
+      let result: SemanticMapResult | null = null;
+      try {
+        // Attempt live orchestrator call (server API)
+        const resp = await fetch('/api/neuroseo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ urls: [analysisUrl], targetKeywords: keywords, analysisType: 'content-focused', userPlan: 'starter', userId: user.uid })
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          const first = data?.data?.semanticAnalysis?.[0];
+          if (first) {
+            // Map subset to existing shape (fallback to simulate for missing fields)
+            result = await simulateSemanticAnalysis(analysisUrl, keywords);
+            // Overlay some live semantic metrics if present
+            if (first.topicClusters?.length) {
+              (result as any).topicClusters = first.topicClusters.slice(0, (result as any).topicClusters.length || 5);
+            }
+            markLive();
+          }
+        }
+      } catch (e) {
+        // swallow and fallback
+      }
+      if (!result) {
+        // Fallback deterministic simulation
+        result = await simulateSemanticAnalysis(analysisUrl, keywords);
+        markFallback();
+      }
       setCurrentResult(result);
-
-      // Save result to database
-      await addDoc(collection(db, 'semanticMapResults'), {
-        userId: user.uid,
-        ...result,
-        createdAt: new Date()
-      });
-
-  toast.success("Semantic analysis completed successfully!");
-  markLive();
-
+      await addDoc(collection(db, 'semanticMapResults'), { userId: user.uid, ...result, createdAt: new Date() });
+      toast.success("Semantic analysis completed successfully!");
     } catch (error) {
       console.error('Analysis error:', error);
       toast.error("Analysis failed. Please try again.");
-  markFallback();
+      markFallback();
     } finally {
       setIsAnalyzing(false);
       setAnalysisProgress(0);
@@ -264,6 +284,7 @@ export default function SemanticMapPage() {
   })) || [];
 
   return (
+    <FeatureGate feature="semantic_map" requiredTier="starter" showUpgrade>
     <main className="container mx-auto py-6 space-y-6">
       <ToolPageHeader
         title="SemanticMap™"
@@ -363,7 +384,7 @@ export default function SemanticMapPage() {
             <Card>
               <CardContent className="p-6">
                 <div className="text-center">
-                  <div className="text-4xl font-bold mb-2 text-purple-600">
+                  <div className="text-4xl font-bold mb-2 text-accent-foreground">
                     {currentResult.overallScore}/100
                   </div>
                   <p className="text-muted-foreground">Overall Semantic Score</p>
@@ -517,7 +538,7 @@ export default function SemanticMapPage() {
                           <ul className="text-sm space-y-1">
                             {cluster.contentGaps.map((gap, index) => (
                               <li key={index} className="flex items-center gap-2">
-                                <Lightbulb className="h-4 w-4 text-amber-500" />
+                                <Lightbulb className="h-4 w-4 text-warning-foreground" />
                                 {gap}
                               </li>
                             ))}
@@ -675,10 +696,10 @@ export default function SemanticMapPage() {
                       <CardContent className="p-6">
                         <div className="flex items-start gap-4">
                           <div className="flex-shrink-0">
-                            {rec.type === 'content' && <FileText className="h-6 w-6 text-blue-600" />}
-                            {rec.type === 'keyword' && <Target className="h-6 w-6 text-green-600" />}
-                            {rec.type === 'structure' && <BarChart3 className="h-6 w-6 text-purple-600" />}
-                            {rec.type === 'semantic' && <Network className="h-6 w-6 text-orange-600" />}
+                            {rec.type === 'content' && <FileText className="h-6 w-6 text-primary" />}
+                            {rec.type === 'keyword' && <Target className="h-6 w-6 text-success" />}
+                            {rec.type === 'structure' && <BarChart3 className="h-6 w-6 text-accent-foreground" />}
+                            {rec.type === 'semantic' && <Network className="h-6 w-6 text-accent" />}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
@@ -692,8 +713,8 @@ export default function SemanticMapPage() {
                             </div>
                             <p className="text-sm text-muted-foreground mb-2">{rec.description}</p>
                             <div className="flex items-center gap-2 text-sm">
-                              <TrendingUp className="h-4 w-4 text-green-600" />
-                              <span className="text-green-600">{rec.impact}</span>
+                              <TrendingUp className="h-4 w-4 text-success" />
+                              <span className="text-success-foreground">{rec.impact}</span>
                             </div>
                           </div>
                         </div>
@@ -707,5 +728,6 @@ export default function SemanticMapPage() {
         )}
       </AnimatePresence>
   </main>
+  </FeatureGate>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -85,16 +86,16 @@ interface Report {
 }
 
 const reportTypeConfig = {
-  weekly: { color: "bg-blue-500", label: "Weekly" },
-  monthly: { color: "bg-green-500", label: "Monthly" },
-  quarterly: { color: "bg-purple-500", label: "Quarterly" },
-  custom: { color: "bg-orange-500", label: "Custom" },
+  weekly: { color: "bg-primary", label: "Weekly" },
+  monthly: { color: "bg-success", label: "Monthly" },
+  quarterly: { color: "bg-accent", label: "Quarterly" },
+  custom: { color: "bg-warning", label: "Custom" },
 };
 
 const statusConfig = {
-  draft: { color: "bg-gray-500", label: "Draft" },
-  published: { color: "bg-green-500", label: "Published" },
-  scheduled: { color: "bg-blue-500", label: "Scheduled" },
+  draft: { color: "bg-muted", label: "Draft" },
+  published: { color: "bg-success", label: "Published" },
+  scheduled: { color: "bg-primary", label: "Scheduled" },
 };
 
 export default function TeamReportsPage() {
@@ -265,6 +266,7 @@ export default function TeamReportsPage() {
   }
 
   return (
+    <FeatureGate feature="team_management" requiredTier="enterprise" showUpgrade>
     <main className="container mx-auto py-6 space-y-8">
       <ToolPageHeader
         title="Team Reports"
@@ -487,7 +489,7 @@ export default function TeamReportsPage() {
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => handleDeleteReport(report.id)}
-                      className="text-red-600"
+                      className="text-destructive-foreground"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
                       Delete
@@ -609,5 +611,6 @@ export default function TeamReportsPage() {
         </div>
       )}
   </main>
+  </FeatureGate>
   );
 }

@@ -414,17 +414,17 @@ export default function ContentAnalyzerPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="grid md:grid-cols-3 gap-4">
-                                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                                        <div className="text-2xl font-bold text-blue-600">85%</div>
-                                        <div className="text-sm text-blue-700">Readability</div>
+                                    <div className="text-center p-4 rounded-lg bg-primary/10">
+                                        <div className="text-2xl font-bold text-primary">85%</div>
+                                        <div className="text-sm text-primary/80">Readability</div>
                                     </div>
-                                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                                        <div className="text-2xl font-bold text-green-600">72%</div>
-                                        <div className="text-sm text-green-700">SEO Score</div>
+                                    <div className="text-center p-4 rounded-lg bg-success/10">
+                                        <div className="text-2xl font-bold text-success-foreground">72%</div>
+                                        <div className="text-sm text-success-foreground/80">SEO Score</div>
                                     </div>
-                                    <div className="text-center p-4 bg-purple-50 rounded-lg">
-                                        <div className="text-2xl font-bold text-purple-600">78%</div>
-                                        <div className="text-sm text-purple-700">E-A-T Score</div>
+                                    <div className="text-center p-4 rounded-lg bg-accent/10">
+                                        <div className="text-2xl font-bold text-accent">78%</div>
+                                        <div className="text-sm text-accent/80">E-A-T Score</div>
                                     </div>
                                 </div>
                             </CardContent>
@@ -458,7 +458,7 @@ export default function ContentAnalyzerPage() {
                                             <div key={index} className="space-y-4">
                                                 <div>
                                                     <h4 className="font-semibold mb-2">AI-Enhanced Analysis</h4>
-                                                    <div className="p-3 bg-green-50 rounded border text-sm">
+                                                    <div className="p-3 rounded border text-sm bg-success/10 border-success/30 text-success-foreground/90">
                                                         Content analysis completed with {rewrite.originalAnalysis.wordCount} words
                                                     </div>
                                                 </div>
@@ -467,28 +467,28 @@ export default function ContentAnalyzerPage() {
                                                     <h4 className="font-semibold mb-2">Analysis Results</h4>
                                                     <ul className="grid md:grid-cols-2 gap-2">
                                                         <li className="flex items-center gap-2 text-sm">
-                                                            <CheckCircle className="h-4 w-4 text-green-500" />
+                                                            <CheckCircle className="h-4 w-4 text-success-foreground" />
                                                             Readability Score: {rewrite.originalAnalysis.readabilityScore}
                                                         </li>
                                                         <li className="flex items-center gap-2 text-sm">
-                                                            <CheckCircle className="h-4 w-4 text-green-500" />
+                                                            <CheckCircle className="h-4 w-4 text-success-foreground" />
                                                             SEO Score: {rewrite.originalAnalysis.seoScore}
                                                         </li>
                                                     </ul>
                                                 </div>
 
                                                 <div className="grid md:grid-cols-3 gap-4 mt-4">
-                                                    <div className="text-center p-3 bg-blue-50 rounded">
-                                                        <div className="font-bold text-blue-600">{rewrite.originalAnalysis.readabilityScore}</div>
-                                                        <div className="text-xs text-blue-700">Readability Score</div>
+                                                    <div className="text-center p-3 rounded bg-primary/10">
+                                                        <div className="font-bold text-primary">{rewrite.originalAnalysis.readabilityScore}</div>
+                                                        <div className="text-xs text-primary/80">Readability Score</div>
                                                     </div>
-                                                    <div className="text-center p-3 bg-green-50 rounded">
-                                                        <div className="font-bold text-green-600">{rewrite.originalAnalysis.seoScore}</div>
-                                                        <div className="text-xs text-green-700">SEO Score</div>
+                                                    <div className="text-center p-3 rounded bg-success/10">
+                                                        <div className="font-bold text-success-foreground">{rewrite.originalAnalysis.seoScore}</div>
+                                                        <div className="text-xs text-success-foreground/80">SEO Score</div>
                                                     </div>
-                                                    <div className="text-center p-3 bg-purple-50 rounded">
-                                                        <div className="font-bold text-purple-600">{rewrite.originalAnalysis.structureScore}</div>
-                                                        <div className="text-xs text-purple-700">Structure Score</div>
+                                                    <div className="text-center p-3 rounded bg-accent/10">
+                                                        <div className="font-bold text-accent">{rewrite.originalAnalysis.structureScore}</div>
+                                                        <div className="text-xs text-accent/80">Structure Score</div>
                                                     </div>
                                                 </div>
                                             </div>

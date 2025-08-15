@@ -137,11 +137,11 @@ export function TutorialSummary({ className = "" }: TutorialSummaryProps) {
   ) => {
     switch (difficulty) {
       case "beginner":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+  return "bg-success/15 text-success";
       case "intermediate":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+  return "bg-warning/15 text-warning";
       case "advanced":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+  return "bg-destructive/15 text-destructive";
     }
   };
 
@@ -217,7 +217,7 @@ export function TutorialSummary({ className = "" }: TutorialSummaryProps) {
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <div className="flex-shrink-0">
                   {tutorial.completed ? (
-                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <CheckCircle className="h-4 w-4 text-success" />
                   ) : (
                     getTutorialIcon(tutorial.type)
                   )}

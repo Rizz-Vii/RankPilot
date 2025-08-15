@@ -96,7 +96,7 @@ export function NeuroSEOStreamingRunner({ urls, analysisType = 'comprehensive' }
           {progress && <span>{progress.completed}/{progress.total} chunks</span>}
         </div>
         <Progress value={pct} />
-        {error && <div className="text-xs text-red-600">Error: {error}</div>}
+  {error && <div className="text-xs text-destructive">Error: {error}</div>}
         {summary && (
           <div className="text-xs bg-muted p-2 rounded border">
             <div>Overall Score: <span className="font-semibold">{summary.overallScore}</span></div>
@@ -184,7 +184,7 @@ export function NeuroSEOProgressIndicator({
           {isAnalyzing ? (
             <RefreshCw className="h-4 w-4 animate-spin" />
           ) : (
-            <CheckCircle className="h-4 w-4 text-green-500" />
+            <CheckCircle className="h-4 w-4 text-success" />
           )}
           NeuroSEO™ Analysis Progress
         </CardTitle>
@@ -212,28 +212,28 @@ export function NeuroSEOProgressIndicator({
                     scale: isCurrent ? 1.05 : 1
                   }}
                   className={`flex items-center gap-2 p-2 rounded-lg border ${isCompleted
-                      ? "bg-green-50 border-green-200"
+                      ? "bg-success/10 border-success/30"
                       : isCurrent
-                        ? "bg-blue-50 border-blue-200 animate-pulse"
-                        : "bg-gray-50 border-gray-200"
+                        ? "bg-primary/10 border-primary/30 animate-pulse"
+                        : "bg-muted border-border"
                     }`}
                 >
                   <Icon className={`h-3 w-3 ${isCompleted
-                      ? "text-green-600"
+                      ? "text-success"
                       : isCurrent
-                        ? "text-blue-600"
-                        : "text-gray-400"
+                        ? "text-primary"
+                        : "text-muted-foreground"
                     }`} />
                   <span className={`text-xs font-medium ${isCompleted
-                      ? "text-green-700"
+                      ? "text-success"
                       : isCurrent
-                        ? "text-blue-700"
-                        : "text-gray-500"
+                        ? "text-primary"
+                        : "text-muted-foreground"
                     }`}>
                     {config.name}
                   </span>
-                  {isCompleted && <CheckCircle className="h-3 w-3 text-green-500 ml-auto" />}
-                  {isCurrent && <RefreshCw className="h-3 w-3 text-blue-500 animate-spin ml-auto" />}
+                  {isCompleted && <CheckCircle className="h-3 w-3 text-success ml-auto" />}
+                  {isCurrent && <RefreshCw className="h-3 w-3 text-primary animate-spin ml-auto" />}
                 </motion.div>
               );
             })}
@@ -382,8 +382,8 @@ export function NeuroSEOInsightsPanel({ insights }: { insights: KeyInsight[]; })
                         <p className="text-sm text-muted-foreground mb-3">
                           {insight.description}
                         </p>
-                        <div className="bg-blue-50 p-3 rounded-lg">
-                          <p className="text-sm font-medium text-blue-900">
+                        <div className="bg-primary/10 p-3 rounded-lg">
+                          <p className="text-sm font-medium text-primary">
                             💡 Recommendation: {insight.recommendation}
                           </p>
                         </div>
@@ -560,7 +560,7 @@ export function NeuroSEOCompetitiveDashboard({
       <CardContent>
         <div className="grid md:grid-cols-2 gap-6">
           {/* Ranking Overview */}
-          <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg">
+          <div className="text-center p-6 bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg">
             <div className="text-3xl font-bold text-primary mb-2">
               #{positioning.overallRanking}
             </div>
@@ -597,11 +597,11 @@ export function NeuroSEOCompetitiveDashboard({
         <div className="grid md:grid-cols-2 gap-4 mt-6">
           <div className="space-y-4">
             <div>
-              <h4 className="font-semibold text-green-700 mb-2">Strengths</h4>
+              <h4 className="font-semibold text-success mb-2">Strengths</h4>
               <ul className="space-y-1">
                 {positioning.strengths.map((strength, idx) => (
                   <li key={idx} className="text-sm flex items-center gap-2">
-                    <ArrowUp className="h-3 w-3 text-green-500" />
+                    <ArrowUp className="h-3 w-3 text-success" />
                     {strength}
                   </li>
                 ))}
@@ -609,11 +609,11 @@ export function NeuroSEOCompetitiveDashboard({
             </div>
 
             <div>
-              <h4 className="font-semibold text-blue-700 mb-2">Opportunities</h4>
+              <h4 className="font-semibold text-primary mb-2">Opportunities</h4>
               <ul className="space-y-1">
                 {positioning.opportunities.map((opportunity, idx) => (
                   <li key={idx} className="text-sm flex items-center gap-2">
-                    <Star className="h-3 w-3 text-blue-500" />
+                    <Star className="h-3 w-3 text-primary" />
                     {opportunity}
                   </li>
                 ))}
@@ -623,11 +623,11 @@ export function NeuroSEOCompetitiveDashboard({
 
           <div className="space-y-4">
             <div>
-              <h4 className="font-semibold text-orange-700 mb-2">Weaknesses</h4>
+              <h4 className="font-semibold text-warning mb-2">Weaknesses</h4>
               <ul className="space-y-1">
                 {positioning.weaknesses.map((weakness, idx) => (
                   <li key={idx} className="text-sm flex items-center gap-2">
-                    <ArrowDown className="h-3 w-3 text-orange-500" />
+                    <ArrowDown className="h-3 w-3 text-warning" />
                     {weakness}
                   </li>
                 ))}
@@ -635,11 +635,11 @@ export function NeuroSEOCompetitiveDashboard({
             </div>
 
             <div>
-              <h4 className="font-semibold text-red-700 mb-2">Threats</h4>
+              <h4 className="font-semibold text-destructive mb-2">Threats</h4>
               <ul className="space-y-1">
                 {positioning.threats.map((threat, idx) => (
                   <li key={idx} className="text-sm flex items-center gap-2">
-                    <AlertTriangle className="h-3 w-3 text-red-500" />
+                    <AlertTriangle className="h-3 w-3 text-destructive" />
                     {threat}
                   </li>
                 ))}
@@ -649,12 +649,12 @@ export function NeuroSEOCompetitiveDashboard({
         </div>
 
         {/* Recommendations */}
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+  <div className="mt-6 p-4 bg-primary/10 rounded-lg">
           <h4 className="font-semibold mb-2">Strategic Recommendations</h4>
           <ul className="space-y-2">
             {positioning.recommendations.map((rec, idx) => (
               <li key={idx} className="text-sm flex items-start gap-2">
-                <Target className="h-4 w-4 text-blue-600 mt-0.5" />
+                <Target className="h-4 w-4 text-primary mt-0.5" />
                 {rec}
               </li>
             ))}

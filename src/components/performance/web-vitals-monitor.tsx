@@ -19,17 +19,17 @@ export function WebVitalsMonitor() {
 
     const getMetricColor = (rating: string) => {
         switch (rating) {
-            case 'good': return 'text-green-400';
-            case 'needs-improvement': return 'text-yellow-400';
-            case 'poor': return 'text-red-400';
-            default: return 'text-gray-400';
+            case 'good': return 'text-success-foreground';
+            case 'needs-improvement': return 'text-warning-foreground';
+            case 'poor': return 'text-destructive-foreground';
+            default: return 'text-muted-foreground';
         }
     };
 
     const getScoreColor = (score: number) => {
-        if (score >= 90) return 'text-green-400';
-        if (score >= 75) return 'text-yellow-400';
-        return 'text-red-400';
+        if (score >= 90) return 'text-success-foreground';
+        if (score >= 75) return 'text-warning-foreground';
+        return 'text-destructive-foreground';
     };
 
     return (
@@ -66,7 +66,7 @@ export function WebVitalsMonitor() {
                         <span>{vitals.ttfb.value.toFixed(0)}ms</span>
                     </div>
                 )}
-                <div className="border-t border-gray-600 pt-1 mt-2">
+                <div className="border-t border-border pt-1 mt-2">
                     <div className="flex justify-between font-bold">
                         <span>Score:</span>
                         <span className={getScoreColor(vitals.overallScore)}>
@@ -75,7 +75,7 @@ export function WebVitalsMonitor() {
                     </div>
                 </div>
                 {vitals.isLoading && (
-                    <div className="text-gray-400 text-center mt-1">
+                    <div className="text-muted-foreground text-center mt-1">
                         Loading metrics...
                     </div>
                 )}
@@ -98,8 +98,8 @@ export function PerformanceIndicator() {
         <div className="fixed bottom-2 right-2 z-40">
             <div className={`
         w-3 h-3 rounded-full 
-        ${vitals.overallScore >= 90 ? 'bg-green-500' :
-                    vitals.overallScore >= 75 ? 'bg-yellow-500' : 'bg-red-500'}
+    ${vitals.overallScore >= 90 ? 'bg-success' :
+            vitals.overallScore >= 75 ? 'bg-warning' : 'bg-destructive'}
       `}
                 title={`Performance Score: ${vitals.overallScore}/100`}
             />

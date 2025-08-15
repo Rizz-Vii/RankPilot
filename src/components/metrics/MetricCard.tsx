@@ -2,6 +2,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { statusBarBg } from '@/lib/metrics/status-colors';
 
 interface MetricCardProps {
   label: string;
@@ -23,9 +24,9 @@ interface MetricCardProps {
 
 const intentStyles: Record<string, string> = {
   neutral: 'bg-background/60 border-border',
-  success: 'bg-emerald-500/5 border-emerald-500/30',
-  warning: 'bg-amber-500/5 border-amber-500/30',
-  danger: 'bg-rose-500/5 border-rose-500/30',
+  success: 'bg-success/10 border-success/30',
+  warning: 'bg-warning/10 border-warning/30',
+  danger: 'bg-destructive/10 border-destructive/30',
   accent: 'bg-primary/5 border-primary/30'
 };
 
@@ -76,8 +77,8 @@ export function MetricCard({
                 <span
                   className={cn(
                     'text-xs font-medium px-1.5 py-0.5 rounded-md border backdrop-blur-sm',
-                    positive === true && 'text-emerald-600 border-emerald-500/30 bg-emerald-500/10',
-                    positive === false && 'text-rose-600 border-rose-500/30 bg-rose-500/10'
+                    positive === true && 'text-success-foreground border-success/30 bg-success/10',
+                    positive === false && 'text-destructive-foreground border-destructive/30 bg-destructive/10'
                   )}
                 >
                   {positive === true ? '▲' : positive === false ? '▼' : ''} {formattedDelta}%
@@ -90,7 +91,7 @@ export function MetricCard({
             {progressPct!=null && (
               <div className="mt-1 flex items-center gap-2 w-full" aria-label="Target progress">
                 <div className="flex-1 h-1.5 rounded bg-muted overflow-hidden">
-                  <div className={cn('h-full transition-all', progressState==='on' && 'bg-emerald-500', progressState==='near' && 'bg-amber-500', progressState==='far' && 'bg-rose-500')} style={{width:`${progressPct}%`}} />
+                  <div className={cn('h-full transition-all', statusBarBg(progressState||''))} style={{width:`${progressPct}%`}} />
                 </div>
                 <span className="text-[10px] font-medium text-muted-foreground tabular-nums min-w-[40px] text-right">{Math.round(progressPct)}%</span>
               </div>

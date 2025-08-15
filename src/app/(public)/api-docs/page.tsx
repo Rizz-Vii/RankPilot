@@ -147,7 +147,7 @@ export default function ApiDocsPage() {
             custom={1}
             className="mb-12"
           >
-            <Card className="bg-gradient-to-r from-primary to-purple-600 text-white">
+            <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground">
               <CardContent className="p-8">
                 <h2 className="text-2xl font-bold mb-4">Quick Start</h2>
                 <div className="grid md:grid-cols-3 gap-6">
@@ -227,7 +227,7 @@ export default function ApiDocsPage() {
                           variant={
                             endpoint.method === "GET" ? "secondary" : "default"
                           }
-                          className={`${endpoint.method === "GET" ? "bg-green-100 text-green-800" : "bg-primary/10 text-primary"} font-mono`}
+                          className={`${endpoint.method === "GET" ? "bg-success/15 text-success-foreground" : "bg-primary/10 text-primary"} font-mono`}
                         >
                           {endpoint.method}
                         </Badge>
@@ -302,7 +302,7 @@ export default function ApiDocsPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm">
+                    <pre className="bg-secondary text-secondary-foreground p-4 rounded-lg overflow-x-auto text-sm">
                       <code>{example.code}</code>
                     </pre>
                   </CardContent>

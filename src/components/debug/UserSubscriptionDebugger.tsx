@@ -145,7 +145,7 @@ export function UserSubscriptionDebugger() {
             <summary className="text-sm cursor-pointer">
               Click to expand
             </summary>
-            <pre className="text-xs bg-muted p-2 rounded mt-2 overflow-auto">
+            <pre className="text-xs bg-muted p-2 rounded mt-2 overflow-auto font-mono" aria-label="Raw user, profile, and subscription data" role="region">
               {JSON.stringify(
                 {
                   user: {

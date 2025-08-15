@@ -12,6 +12,8 @@ describe('AI Memory Manager - fallback behavior', () => {
         delete process.env.GEMINI_API_KEY;
         delete process.env.ANTHROPIC_API_KEY;
         delete process.env.AI_MOCK_FALLBACK;
+        // Clear configured services forcibly (test isolation)
+        (aiMemoryManager as any).services = new Map();
         let threw = false;
         try {
             await aiMemoryManager.processRequest({ prompt: 'Hello', model: 'gpt-4o' });
@@ -26,6 +28,7 @@ describe('AI Memory Manager - fallback behavior', () => {
         delete process.env.GEMINI_API_KEY;
         delete process.env.ANTHROPIC_API_KEY;
         process.env.AI_MOCK_FALLBACK = 'true';
+        (aiMemoryManager as any).services = new Map();
         const res = await aiMemoryManager.processRequest({ prompt: 'Hello world', model: 'gpt-4o' });
         expect(res.content).to.match(/\[mock-ai:.*\] Hello world/);
     });

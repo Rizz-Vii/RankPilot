@@ -48,3 +48,36 @@ Optional:
 - Lint/format: `npm run lint`
 - Run tests (see docs for variants): `npm test`
 
+## Automation Recipes – Cron support (subset)
+
+The scheduler supports a minimal, deterministic subset of cron for recipe schedules:
+
+- Aliases: `@daily` (00:00 UTC next day), `@hourly` (top of next hour)
+- Pattern: `m h * * *` where:
+  - `m` = minute (0–59 or `*`), `h` = hour (0–23 or `*`)
+  - Day-of-month, month, and day-of-week must be `*` (not supported yet)
+- Evaluation is in UTC. Next run is computed by scanning forward up to 48h.
+
+Examples:
+
+- `@daily` → every day at 00:00 UTC
+- `@hourly` → every hour at minute 0
+- `30 11 * * *` → 11:30 UTC daily
+- `0 * * * *` → every hour at minute 0
+
+Notes:
+
+- Don’t set both `intervalMinutes` and `cron` at the same time; creation/update will reject that combination.
+- When neither `cron` nor `intervalMinutes` is set, `atHourUTC` (0–23) can be used for daily runs.
+
+## Finance Mock Mode
+
+Finance dashboards (Finance Dashboard, Billing Overview, Invoices) can surface mock metrics for local development or demo states. Behavior is controlled by the helper `allowFinanceMocks()` which resolves in this priority order:
+
+1. Browser override: `localStorage.setItem('allowFinanceMocks','true'|'false')` (immediate toggle without rebuild).
+2. Environment variable: `NEXT_PUBLIC_ALLOW_FINANCE_MOCKS=true|false` (at build/runtime).
+3. Default: Enabled in non-production (`NODE_ENV !== 'production'`), disabled in production when unspecified.
+
+When mocks are active and no live metrics have loaded, a yellow banner appears stating that finance metrics are mock-sourced (FINANCE_MOCK_MODE). The banner disappears once live data loads or mocks are disabled.
+
+

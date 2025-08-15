@@ -50,7 +50,7 @@ export default function AdminSettings() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Badge className="bg-green-100 text-green-800">Active</Badge>
+              <Badge className="bg-success/15 text-success">Active</Badge>
               <Button variant="outline" size="sm">
                 Toggle
               </Button>
@@ -65,7 +65,7 @@ export default function AdminSettings() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Badge className="bg-green-100 text-green-800">Enabled</Badge>
+              <Badge className="bg-success/15 text-success">Enabled</Badge>
               <Button variant="outline" size="sm">
                 Disable
               </Button>
@@ -80,7 +80,7 @@ export default function AdminSettings() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Badge className="bg-green-100 text-green-800">Active</Badge>
+              <Badge className="bg-success/15 text-success">Active</Badge>
               <Button variant="outline" size="sm">
                 Configure
               </Button>
@@ -104,13 +104,13 @@ export default function AdminSettings() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 border rounded-lg">
               <div className="flex items-center gap-3 mb-3">
-                <Zap className="h-5 w-5 text-blue-600" />
+                <Zap className="h-5 w-5 text-primary" />
                 <h4 className="font-medium">Google AI (Gemini)</h4>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Status</span>
-                  <Badge className="bg-green-100 text-green-800">
+                    <Badge className="bg-success/15 text-success">
                     Connected
                   </Badge>
                 </div>
@@ -127,13 +127,13 @@ export default function AdminSettings() {
 
             <div className="p-4 border rounded-lg">
               <div className="flex items-center gap-3 mb-3">
-                <Mail className="h-5 w-5 text-purple-600" />
+                <Mail className="h-5 w-5 text-accent" />
                 <h4 className="font-medium">Email Service</h4>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Status</span>
-                  <Badge className="bg-green-100 text-green-800">Active</Badge>
+                    <Badge className="bg-success/15 text-success">Active</Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Emails Sent Today</span>
@@ -148,17 +148,17 @@ export default function AdminSettings() {
 
             <div className="p-4 border rounded-lg">
               <div className="flex items-center gap-3 mb-3">
-                <Database className="h-5 w-5 text-green-600" />
+                <Database className="h-5 w-5 text-success" />
                 <h4 className="font-medium">Firebase Services</h4>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Auth Status</span>
-                  <Badge className="bg-green-100 text-green-800">Healthy</Badge>
+                    <Badge className="bg-success/15 text-success">Healthy</Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Firestore Status</span>
-                  <Badge className="bg-green-100 text-green-800">Healthy</Badge>
+                    <Badge className="bg-success/15 text-success">Healthy</Badge>
                 </div>
                 <Button variant="outline" size="sm" className="w-full">
                   <ExternalLink className="h-4 w-4 mr-2" />
@@ -169,17 +169,17 @@ export default function AdminSettings() {
 
             <div className="p-4 border rounded-lg">
               <div className="flex items-center gap-3 mb-3">
-                <Shield className="h-5 w-5 text-orange-600" />
+                <Shield className="h-5 w-5 text-warning" />
                 <h4 className="font-medium">Security Services</h4>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">reCAPTCHA</span>
-                  <Badge className="bg-green-100 text-green-800">Active</Badge>
+                    <Badge className="bg-success/15 text-success">Active</Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">DDoS Protection</span>
-                  <Badge className="bg-green-100 text-green-800">Active</Badge>
+                    <Badge className="bg-success/15 text-success">Active</Badge>
                 </div>
                 <Button variant="outline" size="sm" className="w-full">
                   <Shield className="h-4 w-4 mr-2" />
@@ -211,7 +211,7 @@ export default function AdminSettings() {
                   Enable AI-powered content suggestions
                 </p>
               </div>
-              <Badge className="bg-green-100 text-green-800">Enabled</Badge>
+              <Badge className="bg-success/15 text-success">Enabled</Badge>
             </div>
 
             <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -221,7 +221,7 @@ export default function AdminSettings() {
                   Detailed user behavior tracking
                 </p>
               </div>
-              <Badge className="bg-green-100 text-green-800">Enabled</Badge>
+              <Badge className="bg-success/15 text-success">Enabled</Badge>
             </div>
 
             <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -231,7 +231,7 @@ export default function AdminSettings() {
                   Multi-user editing features
                 </p>
               </div>
-              <Badge variant="outline">Beta</Badge>
+              <Badge variant="outline" className="bg-success/15 text-success">Beta</Badge>
             </div>
 
             <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -241,7 +241,7 @@ export default function AdminSettings() {
                   Custom branding for agencies
                 </p>
               </div>
-              <Badge variant="secondary">Coming Soon</Badge>
+              <Badge variant="secondary" className="bg-success/15 text-success">Coming Soon</Badge>
             </div>
           </div>
         </CardContent>
@@ -267,7 +267,7 @@ export default function AdminSettings() {
                   Critical system errors and downtime
                 </p>
               </div>
-              <Badge className="bg-green-100 text-green-800">Enabled</Badge>
+              <Badge className="bg-success/15 text-success">Enabled</Badge>
             </div>
 
             <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -277,7 +277,7 @@ export default function AdminSettings() {
                   Unusual user behavior patterns
                 </p>
               </div>
-              <Badge className="bg-green-100 text-green-800">Enabled</Badge>
+              <Badge className="bg-success/15 text-success">Enabled</Badge>
             </div>
 
             <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -287,7 +287,7 @@ export default function AdminSettings() {
                   Response time and resource usage
                 </p>
               </div>
-              <Badge className="bg-green-100 text-green-800">Enabled</Badge>
+              <Badge className="bg-success/15 text-success">Enabled</Badge>
             </div>
 
             <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -297,7 +297,7 @@ export default function AdminSettings() {
                   Authentication failures and suspicious activity
                 </p>
               </div>
-              <Badge className="bg-green-100 text-green-800">Enabled</Badge>
+              <Badge className="bg-success/15 text-success">Enabled</Badge>
             </div>
           </div>
         </CardContent>

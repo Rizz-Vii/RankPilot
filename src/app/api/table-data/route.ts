@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { enforceProvenance } from "@/lib/middleware/provenance";
 import { adminDb } from "@/lib/firebase-admin";
 
 type SortBy = "metric" | "value" | "change";
@@ -217,7 +218,7 @@ export async function GET(req: NextRequest) {
                 .map((r) => `${JSON.stringify(r.metric)},${JSON.stringify(r.value)},${JSON.stringify(r.change)}`)
                 .join("\n");
             const csv = `${header}\n${body}`;
-            return new NextResponse(csv, {
+            const res = new NextResponse(csv, {
                 status: 200,
                 headers: {
                     "Content-Type": "text/csv; charset=utf-8",
@@ -225,10 +226,13 @@ export async function GET(req: NextRequest) {
                     "Content-Disposition": `attachment; filename="table_${widgetId}.csv"`,
                 },
             });
+            res.headers.set("x-provenance", teamId || userId ? "live_or_empty" : (result ? "live" : "synthetic"));
+            return res;
         }
 
-        return NextResponse.json({ rows: outRows, total }, { status: 200 });
+        const provenance = teamId || userId ? (result ? "live" : "live") : (result ? "live" : "synthetic");
+        return NextResponse.json(enforceProvenance({ rows: outRows, total, provenance }, { path: 'table-data' }), { status: 200 });
     } catch (err: any) {
-        return NextResponse.json({ error: err?.message || "Unknown error" }, { status: 500 });
+        return NextResponse.json(enforceProvenance({ error: err?.message || "Unknown error", provenance: 'synthetic' }, { path: 'table-data', note: 'exception' }), { status: 500 });
     }
 }

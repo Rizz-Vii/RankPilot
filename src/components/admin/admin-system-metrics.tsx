@@ -73,22 +73,22 @@ export default function AdminSystemMetrics() {
     switch (metric) {
       case "errorRate":
         if (value < 1)
-          return <Badge className="bg-green-100 text-green-800">Healthy</Badge>;
+          return <Badge className="bg-success/15 text-success-foreground">Healthy</Badge>;
         if (value < 3)
           return (
-            <Badge className="bg-yellow-100 text-yellow-800">Warning</Badge>
+            <Badge className="bg-warning/15 text-warning-foreground">Warning</Badge>
           );
-        return <Badge className="bg-red-100 text-red-800">Critical</Badge>;
+        return <Badge className="bg-destructive/15 text-destructive-foreground">Critical</Badge>;
       case "responseTime":
         if (value < 100)
-          return <Badge className="bg-green-100 text-green-800">Fast</Badge>;
+          return <Badge className="bg-success/15 text-success-foreground">Fast</Badge>;
         if (value < 300)
           return (
-            <Badge className="bg-yellow-100 text-yellow-800">Moderate</Badge>
+            <Badge className="bg-warning/15 text-warning-foreground">Moderate</Badge>
           );
-        return <Badge className="bg-red-100 text-red-800">Slow</Badge>;
+        return <Badge className="bg-destructive/15 text-destructive-foreground">Slow</Badge>;
       default:
-        return <Badge className="bg-green-100 text-green-800">Healthy</Badge>;
+  return <Badge className="bg-success/15 text-success-foreground">Healthy</Badge>;
     }
   };
 
@@ -142,8 +142,8 @@ export default function AdminSystemMetrics() {
                 </p>
                 <p className="text-2xl font-bold">{metrics.uptime}</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <span className="text-sm text-green-600">
+                  <CheckCircle className="h-4 w-4 text-success-foreground" />
+                  <span className="text-sm text-success-foreground">
                     All systems operational
                   </span>
                 </div>
@@ -223,7 +223,7 @@ export default function AdminSystemMetrics() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Connection Status</span>
-              <Badge className="bg-green-100 text-green-800">Connected</Badge>
+              <Badge className="bg-success/15 text-success-foreground">Connected</Badge>
             </div>
           </CardContent>
         </Card>
@@ -255,7 +255,7 @@ export default function AdminSystemMetrics() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">CDN Status</span>
-              <Badge className="bg-green-100 text-green-800">Optimized</Badge>
+              <Badge className="bg-success/15 text-success-foreground">Optimized</Badge>
             </div>
           </CardContent>
         </Card>
@@ -274,7 +274,7 @@ export default function AdminSystemMetrics() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-muted rounded-lg">
               <div className="flex items-center justify-center mb-2">
-                <Network className="h-6 w-6 text-blue-600" />
+                <Network className="h-6 w-6 text-primary" />
               </div>
               <div className="text-2xl font-bold">98.5%</div>
               <div className="text-sm text-muted-foreground">
@@ -283,7 +283,7 @@ export default function AdminSystemMetrics() {
             </div>
             <div className="text-center p-4 bg-muted rounded-lg">
               <div className="flex items-center justify-center mb-2">
-                <Clock className="h-6 w-6 text-green-600" />
+                <Clock className="h-6 w-6 text-success-foreground" />
               </div>
               <div className="text-2xl font-bold">1.2s</div>
               <div className="text-sm text-muted-foreground">
@@ -292,7 +292,7 @@ export default function AdminSystemMetrics() {
             </div>
             <div className="text-center p-4 bg-muted rounded-lg">
               <div className="flex items-center justify-center mb-2">
-                <Zap className="h-6 w-6 text-purple-600" />
+                <Zap className="h-6 w-6 text-accent-foreground" />
               </div>
               <div className="text-2xl font-bold">99.2%</div>
               <div className="text-sm text-muted-foreground">
@@ -301,7 +301,7 @@ export default function AdminSystemMetrics() {
             </div>
             <div className="text-center p-4 bg-muted rounded-lg">
               <div className="flex items-center justify-center mb-2">
-                <Server className="h-6 w-6 text-orange-600" />
+                <Server className="h-6 w-6 text-warning-foreground" />
               </div>
               <div className="text-2xl font-bold">12ms</div>
               <div className="text-sm text-muted-foreground">DB Query Time</div>
@@ -320,33 +320,33 @@ export default function AdminSystemMetrics() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+            <div className="flex items-center justify-between p-3 bg-success/10 rounded-lg border border-success/20">
               <div className="flex items-center gap-3">
-                <CheckCircle className="h-5 w-5 text-green-600" />
+                <CheckCircle className="h-5 w-5 text-success-foreground" />
                 <span className="font-medium">Authentication Service</span>
               </div>
-              <Badge className="bg-green-100 text-green-800">Healthy</Badge>
+              <Badge className="bg-success/15 text-success-foreground">Healthy</Badge>
             </div>
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+            <div className="flex items-center justify-between p-3 bg-success/10 rounded-lg border border-success/20">
               <div className="flex items-center gap-3">
-                <CheckCircle className="h-5 w-5 text-green-600" />
+                <CheckCircle className="h-5 w-5 text-success-foreground" />
                 <span className="font-medium">Database Connection</span>
               </div>
-              <Badge className="bg-green-100 text-green-800">Healthy</Badge>
+              <Badge className="bg-success/15 text-success-foreground">Healthy</Badge>
             </div>
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+            <div className="flex items-center justify-between p-3 bg-success/10 rounded-lg border border-success/20">
               <div className="flex items-center gap-3">
-                <CheckCircle className="h-5 w-5 text-green-600" />
+                <CheckCircle className="h-5 w-5 text-success-foreground" />
                 <span className="font-medium">File Storage</span>
               </div>
-              <Badge className="bg-green-100 text-green-800">Healthy</Badge>
+              <Badge className="bg-success/15 text-success-foreground">Healthy</Badge>
             </div>
-            <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+            <div className="flex items-center justify-between p-3 bg-warning/10 rounded-lg border border-warning/20">
               <div className="flex items-center gap-3">
-                <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                <AlertTriangle className="h-5 w-5 text-warning-foreground" />
                 <span className="font-medium">External APIs</span>
               </div>
-              <Badge className="bg-yellow-100 text-yellow-800">Degraded</Badge>
+              <Badge className="bg-warning/15 text-warning-foreground">Degraded</Badge>
             </div>
           </div>
         </CardContent>

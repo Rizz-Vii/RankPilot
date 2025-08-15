@@ -63,6 +63,9 @@ state.json
 *.env.production
 *.env.staging
 serviceAccount.json
+serviceAccount.*.json
+**/serviceAccount.json
+**/serviceAccount.*.json
 **/*key*.md
 **/*secret*.md
 **/*token*.md

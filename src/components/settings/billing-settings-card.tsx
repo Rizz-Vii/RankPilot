@@ -211,7 +211,7 @@ export default function BillingSettingsCard({
     switch (status) {
       case "active":
         return (
-          <Badge className="bg-green-100 text-green-800 border-green-200">
+          <Badge className="bg-success/15 text-success border-success/30">
             Active
           </Badge>
         );
@@ -335,7 +335,7 @@ export default function BillingSettingsCard({
                           <ul className="text-xs space-y-1">
                             {plan.features.slice(0, 3).map((feature, idx) => (
                               <li key={idx} className="flex items-center gap-1">
-                                <CheckCircle className="h-3 w-3 text-green-500" />
+                                <CheckCircle className="h-3 w-3 text-success" />
                                 {feature}
                               </li>
                             ))}
@@ -448,15 +448,15 @@ export default function BillingSettingsCard({
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="bg-yellow-50 border border-yellow-200 rounded-lg p-3"
+                className="bg-warning/15 border border-warning/30 rounded-lg p-3"
               >
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                  <span className="text-sm font-medium text-yellow-800">
+                  <AlertTriangle className="h-4 w-4 text-warning" />
+                  <span className="text-sm font-medium text-warning">
                     Approaching keyword limit
                   </span>
                 </div>
-                <p className="text-sm text-yellow-700 mt-1">
+                <p className="text-sm text-warning/90 mt-1">
                   You're using{" "}
                   {Math.round(
                     (billingData.usage.keywordsTracked /
@@ -542,12 +542,23 @@ export default function BillingSettingsCard({
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4">
                     <div className="text-right">
                       <p className="font-semibold">${invoice.amount}</p>
                       <div className="flex items-center gap-1">
-                        <CheckCircle className="h-3 w-3 text-green-500" />
-                        <span className="text-xs text-green-600 capitalize">
+                        {invoice.status === 'paid' && (
+                          <CheckCircle className="h-3 w-3 text-success" />
+                        )}
+                        <span
+                          className={
+                            "text-xs capitalize " +
+                            (invoice.status === 'paid'
+                              ? "text-success"
+                              : invoice.status === 'failed'
+                              ? "text-destructive"
+                              : "text-warning")
+                          }
+                        >
                           {invoice.status}
                         </span>
                       </div>

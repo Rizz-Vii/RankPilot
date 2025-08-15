@@ -248,7 +248,7 @@ export default function AutomationRecipesPage() {
                         <div className="font-medium text-muted-foreground/70">Recent Runs</div>
                         {logs.map(l => (
                           <div key={l.id} className="flex flex-col border rounded p-1 bg-muted/30">
-                            <div className="flex justify-between"><span>{new Date(l.startedAt).toLocaleTimeString()}</span><span className={l.status==='ok' ? 'text-green-600' : l.status==='partial' ? 'text-yellow-600' : 'text-red-600'}>{l.status}</span></div>
+                            <div className="flex justify-between"><span>{new Date(l.startedAt).toLocaleTimeString()}</span><span className={l.status==='ok' ? 'text-success-foreground' : l.status==='partial' ? 'text-warning-foreground' : 'text-destructive-foreground'}>{l.status}</span></div>
                             <div className="truncate">{l.actions.map((a:any)=>`${a.type}:${a.status}`).join(' | ')}</div>
                           </div>
                         ))}

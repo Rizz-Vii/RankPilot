@@ -2,7 +2,8 @@ import { onRequest } from "firebase-functions/v2/https";
 import { setGlobalOptions } from "firebase-functions/v2";
 import Stripe from "stripe";
 import { initializeApp, getApps } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { upsertFinanceInvoice } from './lib/billing/invoice-upsert';
 
 // Initialize Firebase Admin if not already initialized
 if (!getApps().length) {
@@ -82,14 +83,28 @@ export const stripeWebhook = onRequest(
             event.data.object as Stripe.PaymentIntent
           );
           break;
-        case "invoice.payment_succeeded":
-          await handleInvoicePaymentSucceeded(
-            event.data.object as Stripe.Invoice
-          );
+        case "invoice.created": {
+          const invoice = event.data.object as Stripe.Invoice;
+          await upsertFinanceInvoice(invoice, { allowUnpaid: true });
           break;
-        case "invoice.payment_failed":
-          await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+        }
+        case "invoice.finalized": {
+          const invoice = event.data.object as Stripe.Invoice;
+          await upsertFinanceInvoice(invoice, { allowUnpaid: true });
           break;
+        }
+        case "invoice.payment_succeeded": {
+          const invoice = event.data.object as Stripe.Invoice;
+          await upsertFinanceInvoice(invoice, { allowUnpaid: true });
+          await handleInvoicePaymentSucceeded(invoice);
+          break;
+        }
+        case "invoice.payment_failed": {
+          const invoice = event.data.object as Stripe.Invoice;
+          await upsertFinanceInvoice(invoice, { allowUnpaid: true });
+          await handleInvoicePaymentFailed(invoice);
+          break;
+        }
         case "customer.subscription.created":
           await handleSubscriptionCreated(
             event.data.object as Stripe.Subscription
@@ -220,6 +235,8 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     timestamp: new Date(),
   });
 }
+
+// (Refactored) invoice upsert logic centralized in lib/billing/invoice-upsert.ts
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   console.log("🗑️ Subscription deleted:", subscription.id);

@@ -58,13 +58,13 @@ export default function GuidesPage() {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "Beginner":
-        return "bg-green-100 text-green-800";
+        return "bg-success/15 text-success-foreground";
       case "Intermediate":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-warning/15 text-warning-foreground";
       case "Advanced":
-        return "bg-red-100 text-red-800";
+        return "bg-destructive/15 text-destructive-foreground";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-foreground";
     }
   };
 
@@ -86,7 +86,7 @@ export default function GuidesPage() {
               <Link
                 key={index}
                 href={guide.href}
-                className="group block p-6 bg-white border border-gray-200 rounded-lg hover:border-primary/50 hover:shadow-md transition-all duration-200"
+                className="group block p-6 bg-white border border-border rounded-lg hover:border-primary/50 hover:shadow-md transition-all duration-200"
               >
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
@@ -124,7 +124,7 @@ export default function GuidesPage() {
           })}
         </div>
 
-        <div className="mt-12 bg-gradient-to-r from-primary/10 to-blue-50 border border-primary/20 rounded-lg p-8">
+  <div className="mt-12 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-8">
           <div className="text-center">
             <TrendingUp className="w-12 h-12 text-primary mx-auto mb-4" />
             <h2 className="text-2xl font-semibold mb-4">

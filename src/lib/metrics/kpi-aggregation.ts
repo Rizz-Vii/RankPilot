@@ -16,6 +16,13 @@ export interface KpiSnapshot {
     avgCompactDocBytes: number | null; // avg persisted compact doc size
     timestamp: string;
     routesP95: Record<string, number | null>;
+    crawler?: { success: number; errors: number; totalCrawlMs: number; totalAnalysisMs: number };
+    /** Percentage of neural crawler reads served from new aggregate collection vs legacy fallback. Null until at least one hit or fallback recorded. */
+    crawlerAggregateAdoptionPct?: number | null;
+    // Daily AI usage aggregates (populated opportunistically in /api/health; not part of base snapshot computation layer)
+    aiDailyTokensIn?: number;
+    aiDailyTokensOut?: number;
+    aiDailyCostEstimate?: number; // USD approximate
 }
 
 export function getKpiSnapshot(): KpiSnapshot {
@@ -52,6 +59,16 @@ export function getKpiSnapshot(): KpiSnapshot {
     const routesP95: Record<string, number | null> = {};
     Object.entries(unified.latency).forEach(([route, stats]) => { routesP95[route] = stats.p95; });
 
+    // Crawler aggregate adoption KPI (T14): aggregateHits / (aggregateHits + legacyFallbacks)
+    let crawlerAggregateAdoptionPct: number | null = null;
+    const crawlerAny: any = unified.crawler as any;
+    if (crawlerAny && (crawlerAny.aggregateHits != null || crawlerAny.legacyFallbacks != null)) {
+        const hits = crawlerAny.aggregateHits || 0;
+        const fallbacks = crawlerAny.legacyFallbacks || 0;
+        const denom = hits + fallbacks;
+        if (denom > 0) crawlerAggregateAdoptionPct = +((hits / denom) * 100).toFixed(2);
+    }
+
     return {
         provenanceCoveragePct: unified.aiResponses.coveragePct,
         cacheHitRatio,
@@ -63,6 +80,8 @@ export function getKpiSnapshot(): KpiSnapshot {
         teamRateLimitUtilizationPct,
         avgCompactDocBytes,
         timestamp: new Date().toISOString(),
-        routesP95
+        routesP95,
+        crawler: unified.crawler,
+        crawlerAggregateAdoptionPct
     };
 }

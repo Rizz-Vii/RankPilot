@@ -163,7 +163,7 @@ export default function PaymentSuccess() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: "spring", bounce: 0.6 }}
-            className="inline-flex items-center justify-center w-20 h-20 bg-green-100 text-green-600 rounded-full mb-6"
+            className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 bg-success/15 text-success-foreground"
           >
             <CheckCircle className="h-10 w-10" />
           </motion.div>

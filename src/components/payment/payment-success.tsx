@@ -107,17 +107,18 @@ export default function PaymentSuccess() {
     }
   };
 
+  // Semantic color mapping (replaces raw palette utilities)
   const planDetails = {
-    starter: { name: "Starter", color: "bg-blue-500" },
-    agency: { name: "agency", color: "bg-purple-500" },
-    enterprise: { name: "Enterprise", color: "bg-gold-500" },
-  };
+    starter: { name: "Starter", color: "bg-primary text-primary-foreground" },
+    agency: { name: "agency", color: "bg-accent text-accent-foreground" },
+    enterprise: { name: "Enterprise", color: "bg-warning text-warning-foreground" },
+  } as const;
 
   const currentPlan =
     planDetails[plan as keyof typeof planDetails] || planDetails.agency;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-background to-green-50/50 py-8">
+  <div className="min-h-screen bg-gradient-to-br from-success/10 via-background to-success/10 py-8">
       <div className="max-w-2xl mx-auto px-4">
         {/* Success Header */}
         <motion.div
@@ -126,10 +127,10 @@ export default function PaymentSuccess() {
           transition={{ duration: 0.5 }}
           className="text-center mb-8"
         >
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
-            <CheckCircle className="h-10 w-10 text-green-600" />
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-success/15 rounded-full mb-6">
+            <CheckCircle className="h-10 w-10 text-success-foreground" />
           </div>
-          <h1 className="text-3xl font-bold text-green-800 mb-4">
+          <h1 className="text-3xl font-bold text-success-foreground mb-4">
             Payment Successful!
           </h1>
           <p className="text-lg text-muted-foreground">
@@ -156,9 +157,7 @@ export default function PaymentSuccess() {
                 <div>
                   <p className="text-sm text-muted-foreground">Plan</p>
                   <div className="flex items-center gap-2">
-                    <div
-                      className={`w-3 h-3 rounded-full ${currentPlan.color}`}
-                    />
+                    <div className={`w-3 h-3 rounded-full ${currentPlan.color.split(' ')[0]}`} />
                     <span className="font-semibold">{currentPlan.name}</span>
                   </div>
                 </div>
@@ -187,7 +186,7 @@ export default function PaymentSuccess() {
 
               <div className="flex justify-between items-center">
                 <span className="font-semibold">Total Paid</span>
-                <span className="text-xl font-bold text-green-600">
+                <span className="text-xl font-bold text-success-foreground">
                   ${amount}
                 </span>
               </div>
@@ -209,9 +208,7 @@ export default function PaymentSuccess() {
               <div className="grid gap-3">
                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <Mail
-                      className={`h-5 w-5 ${emailSent ? "text-green-600" : "text-muted-foreground"}`}
-                    />
+                    <Mail className={`h-5 w-5 ${emailSent ? "text-success-foreground" : "text-muted-foreground"}`} />
                     <div>
                       <p className="font-medium">Confirmation Email</p>
                       <p className="text-sm text-muted-foreground">
@@ -219,14 +216,12 @@ export default function PaymentSuccess() {
                       </p>
                     </div>
                   </div>
-                  {emailSent && (
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                  )}
+                  {emailSent && <CheckCircle className="h-5 w-5 text-success-foreground" />}
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <Calendar className="h-5 w-5 text-blue-600" />
+                    <Calendar className="h-5 w-5 text-primary" />
                     <div>
                       <p className="font-medium">Next Billing Date</p>
                       <p className="text-sm text-muted-foreground">
@@ -299,7 +294,7 @@ export default function PaymentSuccess() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Star className="h-5 w-5 text-yellow-500" />
+        <Star className="h-5 w-5 text-warning" />
                 Features Unlocked
               </CardTitle>
             </CardHeader>
@@ -308,17 +303,17 @@ export default function PaymentSuccess() {
                 {plan === "starter" && (
                   <>
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+          <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">
                         10 Link Analyses per month
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+          <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">Basic SERP Analysis</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+          <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">Email Support</span>
                     </div>
                   </>
@@ -326,21 +321,21 @@ export default function PaymentSuccess() {
                 {plan === "agency" && (
                   <>
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+          <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">
                         100 Link Analyses per month
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+          <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">Advanced SERP Analysis</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+          <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">Priority Support</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+          <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">API Access</span>
                     </div>
                   </>
@@ -348,19 +343,19 @@ export default function PaymentSuccess() {
                 {plan === "enterprise" && (
                   <>
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+          <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">Unlimited Link Analyses</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+          <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">Enterprise SERP Analysis</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+          <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">24/7 Phone Support</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+          <CheckCircle className="h-4 w-4 text-success-foreground" />
                       <span className="text-sm">Custom Integrations</span>
                     </div>
                   </>

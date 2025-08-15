@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { statusBarBg } from '@/lib/metrics/status-colors';
 
 export interface AdaptiveProgressProps {
   value: number; // percent 0-100
@@ -22,7 +23,7 @@ export const AdaptiveProgress: React.FC<AdaptiveProgressProps> = ({ value, thres
     if (pct >= thresholds.warn) return 'warn';
     return 'bad';
   })();
-  const color = state === 'good' ? 'bg-emerald-500' : state === 'warn' ? 'bg-amber-500' : 'bg-rose-500';
+  const color = statusBarBg(state);
   return (
     <div className={cn('relative h-2 rounded-full bg-muted overflow-hidden', className)} role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} {...rest}>
       <div className={cn('h-full transition-all duration-500 ease-out', color)} style={{ width: `${pct}%` }} />
