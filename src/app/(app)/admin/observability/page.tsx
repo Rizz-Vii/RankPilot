@@ -46,16 +46,6 @@ export default function ObservabilityDashboard() {
         const snap = await getDocs(qRef);
         const rows = snap.docs.map(d => d.data());
         setHistory(rows);
-        // Integrity cleanup: remove any test-injected placeholder badges once real data present
-        if (typeof window !== 'undefined' && rows.length) {
-          ['prov-delta-smoothed','latencyP95-delta-smoothed','crawlerAdoption-delta-smoothed','semanticAdoption-delta-smoothed'].forEach(id => {
-            const el = document.querySelector(`[data-testid="${id}"]`);
-            if (el && el.parentElement === document.body && rows[0]) {
-              // Placeholder injected directly on body by test fallback; remove to allow component version
-              el.remove();
-            }
-          });
-        }
       } catch { /* ignore */ }
     };
     const fetchAlertHistory = async () => {
@@ -84,34 +74,6 @@ export default function ObservabilityDashboard() {
     fetchAlertHistory();
   }, []);
 
-  // E2E synthetic history fallback (avoids DOM injection in tests). Activates only when window.__E2E__ flag set
-  useEffect(() => {
-    try {
-      if (typeof window !== 'undefined' && (window as any).__E2E__ === '1' && history.length === 0 && data?.kpis) {
-        const today = new Date().toISOString().slice(0,10);
-        const kpis = data.kpis as any;
-        const prov = kpis.provenanceCoveragePct ?? 95;
-        const p95 = kpis.p95LatencyOverall ?? 450;
-        const crawlAdopt = kpis.crawlerAggregateAdoptionPct ?? 70;
-        const semAdopt = kpis.semanticMapAggregateAdoptionPct ?? 68;
-        setHistory([{
-          date: today,
-            provenanceCoveragePct: prov,
-            p95LatencyOverall: p95,
-            crawlerAggregateAdoptionPct: crawlAdopt,
-            semanticMapAggregateAdoptionPct: semAdopt,
-            smoothedProvenance: prov,
-            smoothedLatencyP95: p95,
-            smoothedCrawlerAdoption: crawlAdopt,
-            smoothedSemanticAdoption: semAdopt,
-            ma7Provenance: prov,
-            ma7LatencyP95: p95,
-            ma7CrawlerAdoption: crawlAdopt,
-            ma7SemanticAdoption: semAdopt
-        }]);
-      }
-    } catch { /* ignore */ }
-  }, [history.length, data]);
 
   const forceAdmin = typeof window !== 'undefined' && (localStorage.getItem('TEST_FORCE_ADMIN')==='1');
   if (loading && !forceAdmin) return <LoadingScreen fullScreen text="Loading admin context..." />;
@@ -177,7 +139,11 @@ export default function ObservabilityDashboard() {
   const histCacheHit = history.map(r => r.cacheHitRatio).filter((v: any) => typeof v === 'number');
   const histRateLimitReject = history.map(r => r.rateLimitRejectionRate).filter((v: any) => typeof v === 'number');
 
-  // Compute client-side MA7 overlays (reverse chronological -> convert to chronological for sliding window then map back)
+  // Compute client-side MA7 overlays. Precedence order:
+  // 1. Raw latest metric value always displayed
+  // 2. MA7 delta uses server-provided MA7 if available, otherwise client-computed
+  // 3. Smoothed delta only shown if smoothed value exists in latest history
+  // Note: MA7 is never substituted for smoothed values - they are separate concepts
   const computeMA7 = (vals: number[]) => {
     if (!vals.length) return [] as number[];
     // vals currently newest->oldest; flip to oldest->newest for sliding window

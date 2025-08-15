@@ -17,6 +17,7 @@ test.describe('Admin Observability MA7 Overlays', () => {
         await page.waitForURL(/dashboard|app/).catch(() => { });
         await page.goto('/admin/observability');
         await expect(page.getByRole('heading', { name: 'Observability' })).toBeVisible();
+        await page.waitForSelector('[data-testid="prov-delta-smoothed"]', { timeout: 10000 });
         await page.waitForSelector('[data-testid="sparkline-provenance"]', { timeout: 10000 });
         for (const id of sparklineIds) {
             const el = page.locator(`[data-testid="${id}"]`);

@@ -26,5 +26,6 @@ test.describe('Admin Observability Dashboard', () => {
         await expect(page.getByText('Crawler P95')).toBeVisible();
         await expect(page.getByText('SemanticMap Adoption %')).toBeVisible();
         await expect(page.getByText('AI Daily Cost')).toBeVisible();
+        await expect(page.locator('[data-testid="prov-delta-smoothed"]').first()).toHaveText(/vs Smoothed/);
     });
 });
