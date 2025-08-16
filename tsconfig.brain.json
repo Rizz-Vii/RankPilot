@@ -5,7 +5,13 @@
     "rootDir": ".",
     "outDir": "dist/brain",
     "skipLibCheck": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "lib": ["ES2019"],
+    "strict": false,
+    "noImplicitAny": false
   },
   "include": ["scripts/brain/**/*.ts", "types/**/*.ts"]
 }
