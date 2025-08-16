@@ -222,6 +222,7 @@
     "scan:neuroseo-large": "ts-node scripts/scan-neuroseo-large-docs.ts",
     "scan:neuroseo-large:ci": "node -e \"require('fs').mkdirSync('artifacts',{recursive:true})\" && OUTPUT_FILE=artifacts/neuroseo-scan.json ts-node scripts/scan-neuroseo-large-docs.ts",
     "backfill:semantic-map-agg": "tsx scripts/backfill-semantic-map-aggregate.ts",
+    "backfill:seo-documents": "tsx scripts/backfill-seo-documents.ts",
     "seed:semantic-map-legacy": "tsx scripts/seed-semantic-map-legacy.ts",
     "test:backfill-dry-run": "ts-node scripts/test-backfill-dry-run.ts",
     "report:neuroseo-size": "ts-node scripts/report-neuroseo-size-reduction.ts",
