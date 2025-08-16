@@ -11,8 +11,8 @@
     "github": false, 
     "zapier": false, 
     "terminal": true,
-    "typecheck": false,
-    "eslint": false,
+    "typecheck": true,
+    "eslint": true,
     "unitTests": false,
     "playwright": false
   },
