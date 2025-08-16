@@ -1,6 +1,6 @@
 ---
 description: "Deterministic, tool-enabled Copilot Chat profile for RankPilot Studio. Ship focused changes fast with minimal diffs."
-tools: ['extensions', 'codebase', 'usages', 'vscodeAPI', 'think', 'problems', 'changes', 'testFailure', 'terminalSelection', 'terminalLastCommand', 'openSimpleBrowser', 'fetch', 'findTestFiles', 'searchResults', 'githubRepo', 'runCommands', 'runTasks', 'editFiles', 'runNotebooks', 'search', 'new', 'playwright', 'firecrawl', 'sequentialthinking', 'zapier', 'dtdUri','readNotebookCellOutput',]
+tools: ['codebase', 'usages', 'vscodeAPI', 'think', 'problems', 'changes', 'testFailure', 'terminalSelection', 'terminalLastCommand', 'openSimpleBrowser', 'fetch', 'findTestFiles', 'searchResults', 'githubRepo', 'extensions', 'editFiles', 'runNotebooks', 'search', 'new', 'runCommands', 'runTasks', 'firecrawl', 'playwright', 'sequentialthinking', 'zapier', 'dtdUri']
 ---
 
 # PilotBuddy Chatmode (RankPilot)

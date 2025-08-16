@@ -25,13 +25,12 @@
             "command": "npx",
             "args": [
                 "-y",
-                "@modelcontextprotocol/server-github"
+                "@modelcontextprotocol/server-github@latest"
             ],
             "env": {
-                "GITHUB_PERSONAL_ACCESS_TOKEN": "",
+                "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_PERSONAL_ACCESS_TOKEN}",
                 "MCP_SERVER_MAX_MEMORY": "256MB"
-            },
-            "disabled": true
+            }
         },
         "sequentialthinking": {
             "command": "npx",

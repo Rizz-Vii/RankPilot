@@ -14,6 +14,7 @@ npm run brain:auto
 ```
 
 ### Config notes
+
 - tools: enable/disable per-runner (typecheck, eslint, playwright, etc.).
 - limits: maxLocAdded, maxFiles; governance: maxBatchTasks, splitThresholdLoc.
 - tokens: plannerModel, temperature, maxTokens.
