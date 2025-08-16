@@ -192,6 +192,11 @@ metrics-*.json
 trace-*.json
 lighthouse-*.json
 
+# Stress Test Artifacts (keep README.md)
+# --------------------------------------
+artifacts/perf/*.json
+!artifacts/perf/README.md
+
 # Windows Optimization Files
 # --------------------------
 pagefile.sys
