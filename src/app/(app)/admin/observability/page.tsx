@@ -5,9 +5,11 @@ import LoadingScreen from '@/components/ui/loading-screen';
 import { ToolPageHeader } from '@/components/tool-page-header';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { BarChart3, Activity, Zap, Gauge, Brain, LineChart as LineIcon } from 'lucide-react';
+import { BarChart3, Activity, Zap, Gauge, Brain, LineChart as LineIcon, DollarSign, Users, TrendingUp } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { useAuth } from '@/context/AuthContext';
+import { canAccessFeature, normalizeUserAccess } from '@/lib/access-control';
 
 interface HealthPayload {
   kpis?: any;
@@ -15,7 +17,22 @@ interface HealthPayload {
   p95?: Record<string, number | null>;
   crawler?: any;
   aiUsage24h?: any;
+  subtoolUsage24h?: Record<string, number>;
   timestamp?: string;
+}
+
+interface RevenueMetrics {
+  kpis: Array<{
+    key: string;
+    label: string;
+    value: number;
+    delta: number;
+    trend: number[];
+    intent: 'success' | 'warning' | 'neutral';
+    target: number;
+  }>;
+  mrrSeries: Array<{ period: string; mrr: number }>;
+  aging: Array<{ bucket: string; count: number; amount: number }>;
 }
 
 const classify = (pct: number | null | undefined) => pct == null ? '' : pct < 50 ? 'critical' : pct < 80 ? 'warn' : 'ok';
@@ -28,14 +45,40 @@ export const preferredMA = (computed: number[] | undefined, serverVal: number | 
 };
 
 export default function ObservabilityDashboard() {
-  const { user, loading, role } = useAdminRoute();
+  const { user: adminUser, loading: adminLoading, role } = useAdminRoute();
+  const { user, subscriptionTier } = useAuth();
   const [data, setData] = useState<HealthPayload | null>(null);
+  const [revenueData, setRevenueData] = useState<RevenueMetrics | null>(null);
   const [history, setHistory] = useState<any[]>([]); // recent kpiDaily docs newest->oldest
   const [alertHistory, setAlertHistory] = useState<any[]>([]); // placeholder persisted alert snapshots (future)
   const [busy, setBusy] = useState(false);
+  
+  // Check access: admin OR enterprise tier
+  const hasAccess = useMemo(() => {
+    if (role === 'admin') return true;
+    if (!user || !subscriptionTier) return false;
+    const userAccess = normalizeUserAccess({ ...user, subscriptionTier });
+    return canAccessFeature(userAccess, 'observability');
+  }, [role, user, subscriptionTier]);
+
   const load = async () => {
     setBusy(true);
-    try { const r = await fetch('/api/health'); const j = await r.json(); setData(j); } catch { /* noop */ } finally { setBusy(false); }
+    try { 
+      const r = await fetch('/api/health'); 
+      const j = await r.json(); 
+      setData(j); 
+      
+      // Load revenue metrics for enterprise/admin users
+      if (hasAccess) {
+        try {
+          const revRes = await fetch('/api/finance/metrics?months=6');
+          if (revRes.ok) {
+            const revData = await revRes.json();
+            setRevenueData(revData);
+          }
+        } catch { /* revenue metrics optional */ }
+      }
+    } catch { /* noop */ } finally { setBusy(false); }
   };
   useEffect(() => { load(); const id = setInterval(load, 8000); return () => clearInterval(id); }, []);
   useEffect(() => {
@@ -76,8 +119,13 @@ export default function ObservabilityDashboard() {
 
 
   const forceAdmin = typeof window !== 'undefined' && (localStorage.getItem('TEST_FORCE_ADMIN')==='1');
-  if (loading && !forceAdmin) return <LoadingScreen fullScreen text="Loading admin context..." />;
-  if ((!user || role !== 'admin') && !forceAdmin) return <LoadingScreen fullScreen text="Redirecting..." />;
+  
+  if (adminLoading && !forceAdmin) return <LoadingScreen fullScreen text="Loading admin context..." />;
+  
+  // Access control: admin OR enterprise tier
+  if (!hasAccess && !forceAdmin) {
+    return <LoadingScreen fullScreen text="Access denied - requires admin or enterprise tier" />;
+  }
 
   const k = data?.kpis || {};
   const crawler = data?.crawler || {};
@@ -86,6 +134,22 @@ export default function ObservabilityDashboard() {
   const aiTokensOut = k.aiDailyTokensOut ?? null;
   const teamUtil = k.teamRateLimitUtilizationPct ?? null;
   const perModel = (data as any)?.aiUsagePerModel || null;
+  const subtoolUsage = data?.subtoolUsage24h || {};
+
+  // Revenue metrics from finance API
+  const revenueKpis = revenueData?.kpis || [];
+  const mrrMetric = revenueKpis.find(kpi => kpi.key === 'mrr');
+  const outstandingMetric = revenueKpis.find(kpi => kpi.key === 'outstanding');
+
+  // Cost spike detection - check for >20% increase in daily cost
+  const dailyCostSpike = useMemo(() => {
+    if (!histCost.length || histCost.length < 2) return null;
+    const today = histCost[0];
+    const yesterday = histCost[1];
+    if (typeof today !== 'number' || typeof yesterday !== 'number' || yesterday === 0) return null;
+    const increase = ((today - yesterday) / yesterday) * 100;
+    return increase > 20 ? { increase: +increase.toFixed(1), threshold: 20 } : null;
+  }, [histCost]);
 
   // Cards array defined later after extra computed
   let provenanceExtra: React.ReactNode = null;
@@ -220,8 +284,10 @@ export default function ObservabilityDashboard() {
     { title: 'Provenance Coverage', value: k.provenanceCoveragePct, unit: '%', help: 'Target 100%. All responses wrapped with provenance metadata.', icon: Activity, variant: 'percent', extra: provenanceExtra || (
       <span className="flex flex-col gap-0.5"><span data-testid="prov-delta-smoothed" className="text-[10px] font-medium text-muted-foreground">— vs Smoothed</span></span>
     ) },
-    { title: 'Latency P90 (ms)', value: k.p90LatencyOverall, unit: 'ms', help: 'Average overall route latency p90 (snapshot)', icon: Gauge, variant: 'ms' },
-  { title: 'Latency P95 (ms)', value: k.p95LatencyOverall, unit: 'ms', help: 'Average overall route latency p95 (snapshot)', icon: Gauge, variant: 'ms', extra: (
+    { title: 'AI Daily Cost', value: aiDailyCost, unit: '$', help: 'AI provider estimated cost (24h)', icon: Brain, variant: 'raw' },
+    { title: 'AI Daily Tokens In', value: aiTokensIn, unit: '', help: 'Input tokens (24h)', icon: Zap, variant: 'raw' },
+    { title: 'AI Daily Tokens Out', value: aiTokensOut, unit: '', help: 'Output tokens (24h)', icon: Zap, variant: 'raw' },
+    { title: 'Latency P95 (ms)', value: k.p95LatencyOverall, unit: 'ms', help: 'Average overall route latency p95 (snapshot)', icon: Gauge, variant: 'ms', extra: (
       <span className="flex flex-col gap-0.5">
         {buildDelta(k.p95LatencyOverall, maLatestP95, 'lower')}
         {(() => {
@@ -233,9 +299,60 @@ export default function ObservabilityDashboard() {
         })()}
       </span>
     ) },
-    { title: 'Latency P99 (ms)', value: k.p99LatencyOverall, unit: 'ms', help: 'Average overall route latency p99 (snapshot)', icon: Gauge, variant: 'ms' },
-    { title: 'Crawler P95 (ms)', value: crawler.crawlP95, unit: 'ms', help: 'NeuralCrawler crawl latency p95', icon: Gauge, variant: 'ms' },
-    { title: 'Analysis P95 (ms)', value: crawler.analysisP95, unit: 'ms', help: 'NeuralCrawler analysis latency p95', icon: Gauge, variant: 'ms' },
+  { title: 'Team Rate Limit Util %', value: teamUtil, unit: '%', help: 'Allows / (Allows + Rejections) across team limiters', icon: Gauge, variant: 'percent', extra: buildDelta(teamUtil, maLatestTeamUtil, 'higher') },
+  ];
+
+  // Revenue cards (for admin/enterprise users)
+  const revenueCards: Array<{ title: string; value: any; unit?: string; help?: string; icon: any; variant?: 'percent' | 'ms' | 'raw'; extra?: React.ReactNode }> = [];
+  if (hasAccess && revenueData) {
+    if (mrrMetric) {
+      revenueCards.push({
+        title: 'Monthly Recurring Revenue',
+        value: mrrMetric.value,
+        unit: '$',
+        help: 'Current month MRR from paid invoices',
+        icon: DollarSign,
+        variant: 'raw',
+        extra: mrrMetric.delta !== 0 ? (
+          <span className={`text-[10px] font-medium ${mrrMetric.delta > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {mrrMetric.delta > 0 ? '+' : ''}{mrrMetric.delta.toFixed(1)}% vs last month
+          </span>
+        ) : null
+      });
+    }
+    if (outstandingMetric) {
+      revenueCards.push({
+        title: 'Outstanding Invoices',
+        value: outstandingMetric.value,
+        unit: '',
+        help: 'Unpaid invoices requiring attention',
+        icon: TrendingUp,
+        variant: 'raw'
+      });
+    }
+  }
+
+  // Feature usage cards
+  const featureCards: Array<{ title: string; value: any; unit?: string; help?: string; icon: any; variant?: 'percent' | 'ms' | 'raw' }> = [];
+  const topSubtools = Object.entries(subtoolUsage)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 3);
+  
+  if (topSubtools.length > 0) {
+    topSubtools.forEach(([tool, count]) => {
+      featureCards.push({
+        title: `${tool} (24h)`,
+        value: count,
+        unit: ' uses',
+        help: `Feature usage count in last 24 hours`,
+        icon: Users,
+        variant: 'raw'
+      });
+    });
+  }
+
+  // Add adoption metrics to main cards
+  const adoptionCards = [
   { title: 'Crawler Adoption %', value: k.crawlerAggregateAdoptionPct, unit: '%', help: 'Aggregate vs legacy crawler reads (target ≥80%)', icon: BarChart3, variant: 'percent', extra: (
       <span className="flex flex-col gap-0.5">
         {buildDelta(k.crawlerAggregateAdoptionPct, maLatestCrawler, 'higher')}
@@ -248,10 +365,14 @@ export default function ObservabilityDashboard() {
   {(() => { if (typeof k.semanticMapAggregateAdoptionPct === 'number' && typeof smoothedSemanticAdoption === 'number') { const latest = k.semanticMapAggregateAdoptionPct; const delta = +(latest - smoothedSemanticAdoption).toFixed(2); const cls = delta < 0 ? 'text-red-600' : delta > 0 ? 'text-green-600':'text-muted-foreground'; return <span data-testid="semanticAdoption-delta-smoothed" className={`text-[10px] font-medium ${cls}`}>{delta>0? '+':''}{delta}% vs Smoothed</span>; } return <span data-testid="semanticAdoption-delta-smoothed" className="text-[10px] font-medium text-muted-foreground">— vs Smoothed</span>; })()}
       </span>
     ) },
-    { title: 'AI Daily Cost', value: aiDailyCost, unit: '$', help: 'AI provider estimated cost (24h)', icon: Brain, variant: 'raw' },
-    { title: 'AI Daily Tokens In', value: aiTokensIn, unit: '', help: 'Input tokens (24h)', icon: Zap, variant: 'raw' },
-    { title: 'AI Daily Tokens Out', value: aiTokensOut, unit: '', help: 'Output tokens (24h)', icon: Zap, variant: 'raw' },
-  { title: 'Team Rate Limit Util %', value: teamUtil, unit: '%', help: 'Allows / (Allows + Rejections) across team limiters', icon: Gauge, variant: 'percent', extra: buildDelta(teamUtil, maLatestTeamUtil, 'higher') },
+    ];
+
+  // Additional technical metrics
+  const technicalCards = [
+    { title: 'Latency P90 (ms)', value: k.p90LatencyOverall, unit: 'ms', help: 'Average overall route latency p90 (snapshot)', icon: Gauge, variant: 'ms' },
+    { title: 'Latency P99 (ms)', value: k.p99LatencyOverall, unit: 'ms', help: 'Average overall route latency p99 (snapshot)', icon: Gauge, variant: 'ms' },
+    { title: 'Crawler P95 (ms)', value: crawler.crawlP95, unit: 'ms', help: 'NeuralCrawler crawl latency p95', icon: Gauge, variant: 'ms' },
+    { title: 'Analysis P95 (ms)', value: crawler.analysisP95, unit: 'ms', help: 'NeuralCrawler analysis latency p95', icon: Gauge, variant: 'ms' },
   ];
 
   // Alert filter

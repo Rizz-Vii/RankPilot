@@ -384,6 +384,8 @@ export const managementItems: NavItem[] = [
     icon: BarChart3,
     description: "System KPIs & runtime metrics (provenance, latency, AI cost)",
     adminOnly: true,
+    requiredTier: "enterprise",
+    feature: "observability",
   },
   {
     title: "Events",

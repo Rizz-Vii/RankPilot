@@ -315,6 +315,12 @@ export const FEATURE_ACCESS: Record<string, FeatureConfig> = {
     requiredTier: "starter",
     description: "Technical SEO audit engine",
   },
+  
+  // Observability (admin or enterprise)
+  observability: {
+    requiredTier: "enterprise",
+    description: "System observability dashboard with KPIs, revenue, and cost metrics",
+  },
 } as const;
 
 // =============================================================================
