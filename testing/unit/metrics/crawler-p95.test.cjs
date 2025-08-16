@@ -22,4 +22,20 @@ describe('crawler p95 metrics', () => {
     assert.equal(snap.crawler.crawlP95, 100);
     assert.equal(snap.crawler.analysisP95, 50);
   });
+
+  it('tracks failure types separately in crawler metrics', () => {
+    const initialSnap = metrics.getUnifiedMetricsSnapshot();
+    const initialCrawlFailures = initialSnap.crawler?.failuresByType?.crawl || 0;
+    const initialAnalysisFailures = initialSnap.crawler?.failuresByType?.analysis || 0;
+    
+    // Record different types of failures
+    metrics.recordCrawlerFailure(100, 'crawl');
+    metrics.recordCrawlerFailure(200, 'analysis');
+    metrics.recordCrawlerFailure(150, 'crawl');
+    
+    const snap = metrics.getUnifiedMetricsSnapshot();
+    assert.ok(snap.crawler.failuresByType, 'failuresByType should exist');
+    assert.equal(snap.crawler.failuresByType.crawl, initialCrawlFailures + 2, 'crawl failures should increment by 2');
+    assert.equal(snap.crawler.failuresByType.analysis, initialAnalysisFailures + 1, 'analysis failures should increment by 1');
+  });
 });

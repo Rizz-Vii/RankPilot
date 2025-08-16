@@ -262,6 +262,7 @@
     "test:unit:firecrawl-real-perf": "MOCHA_COLORS=true mocha ./testing/unit/api/seo-audit.firecrawl.realroute.test.cjs ./testing/performance/api/seo-audit.firecrawl.realroute.performance.test.cjs --timeout 20000",
     "test:unit:firecrawl-perf": "MOCHA_COLORS=true FIRECRAWL_TEST_SHIM=1 mocha -r ts-node/register/transpile-only -r tsconfig-paths/register ./testing/unit/api/seo-audit.firecrawl.realroute.test.cjs ./testing/performance/api/seo-audit.firecrawl.realroute.performance.test.cjs --timeout 20000",
     "test:unit:audit-timings": "MOCHA_COLORS=true GENKIT_TEST_STUB=1 mocha -r ts-node/register/transpile-only ./testing/unit/audit/audit-timings.test.cjs --timeout 10000",
+    "test:unit:audit-failures": "MOCHA_COLORS=true GENKIT_TEST_STUB=1 mocha -r ts-node/register/transpile-only ./testing/unit/audit/audit-failure-classification.test.cjs --timeout 10000",
     "test:scheduler-unit": "mocha -r ./testing/mocha-jsdom-setup.cjs ./testing/unit/automation/run-scheduler-tests.cjs --timeout 10000",
     "seed:table": "ts-node -P scripts/tsconfig.json scripts/seed-dashboard-table-rows.ts",
     "seed:table:scoped": "TEAM_ID=team-edge USER_ID=user-edge ts-node -P scripts/tsconfig.json scripts/seed-dashboard-table-rows.ts",

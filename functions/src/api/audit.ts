@@ -17,6 +17,15 @@ import * as cheerio from 'cheerio';
 const crawlerLocal = { success: 0, errors: 0, totalCrawlMs: 0, totalAnalysisMs: 0 };
 function recordCrawlerSuccess(crawlMs: number, analysisMs: number) { crawlerLocal.success++; crawlerLocal.totalCrawlMs += crawlMs; crawlerLocal.totalAnalysisMs += analysisMs; }
 function recordCrawlerError(crawlMs: number) { crawlerLocal.errors++; crawlerLocal.totalCrawlMs += crawlMs; }
+function recordCrawlerFailure(crawlMs: number, failureType: 'crawl' | 'analysis') { 
+  crawlerLocal.errors++; 
+  crawlerLocal.totalCrawlMs += crawlMs; 
+  // Record in unified metrics for aggregation
+  try {
+    const unifiedMetrics = require('../../../src/lib/metrics/unified-metrics');
+    unifiedMetrics.recordCrawlerFailure(crawlMs, failureType);
+  } catch { /* fallback to basic recording if unified metrics not available */ }
+}
 import { z } from 'zod';
 
 // Set options for the audit function
@@ -59,6 +68,8 @@ interface EnrichedAuditResponse extends AuditCoreResponse {
   quota?: { limit: number; used: number; remaining: number; team?: { limit: number; used: number; remaining: number } };
   // Multi-phase timings (Phase 3 instrumentation)
   timings?: { crawl_time_ms: number; analysis_time_ms: number; total_time_ms: number };
+  // Failure classification metadata (Wave 3)
+  failure?: { type: 'crawl' | 'analysis'; message: string; timestamp: number };
 }
 
 // ----------------------------------------------------------------------------
@@ -522,6 +533,8 @@ ONLY JSON, no prose outside JSON.`;
           cacheKey,
           userPlan: plan || null,
           processingMs: enriched.totalProcessingTime,
+          // Wave 3: Include timing metadata for performance analysis
+          timings: enriched.timings,
           createdAt: FieldValue.serverTimestamp(),
         });
       }
@@ -535,7 +548,25 @@ ONLY JSON, no prose outside JSON.`;
     return { ...enriched, ephemeralMetrics: { cacheHitRate: metrics.cacheHitRate, avgProcessingTime: metrics.avgProcessingTime } };
   } catch (error) {
     console.error('Error generating SEO audit:', error);
-    recordCrawlerError(Date.now() - start);
+    
+    // Classify failure type based on when it occurred
+    const processingTime = Date.now() - start;
+    let failureType: 'crawl' | 'analysis' = 'analysis'; // default to analysis failure
+    
+    // Check if error occurred during crawl phase (before line 373 where crawlDuration is set)
+    // Look for crawl-specific error patterns in the error message or check timing
+    const errorMessage = (error as any)?.message || String(error);
+    if (errorMessage.includes('fetch') || 
+        errorMessage.includes('timeout') || 
+        errorMessage.includes('network') ||
+        errorMessage.includes('ENOTFOUND') ||
+        errorMessage.includes('ECONNREFUSED') ||
+        processingTime < 5000) { // Quick failures are likely crawl issues
+      failureType = 'crawl';
+    }
+    
+    recordCrawlerFailure(processingTime, failureType);
+    
     try { await db.collection('runtimeMetrics').doc('crawler').set({ ...crawlerLocal, updatedAt: FieldValue.serverTimestamp() }, { merge: true }); } catch { }
     // Historical fallback: try most recent stored audit for user+url
     if (uid) {
@@ -612,9 +643,41 @@ ONLY JSON, no prose outside JSON.`;
       cacheHit: false,
       source: 'fallback',
       quota: quotaInfo,
-      timings: { crawl_time_ms: Date.now() - start, analysis_time_ms: 0, total_time_ms: Date.now() - start }
+      timings: { crawl_time_ms: Date.now() - start, analysis_time_ms: 0, total_time_ms: Date.now() - start },
+      failure: { type: failureType, message: errorMessage, timestamp: Date.now() }
     };
     metrics.totalProcessingTime += fallback.totalProcessingTime;
+    
+    // Persist fallback audit document with failure information for analysis
+    try {
+      if (uid) {
+        const auditsCol = db.collection('audits').doc(uid).collection('urls');
+        await auditsCol.add({
+          url: normalizedUrl,
+          score: {
+            overall: fallback.overallScore,
+            performance: fallback.performanceMetrics?.pageSpeed || 0,
+            accessibility: fallback.performanceMetrics?.accessibility || 0,
+            seo: fallback.overallScore,
+            bestPractices: 0,
+          },
+          issues: fallback.items.filter(i => i.status !== 'pass').map(i => i.title),
+          suggestions: fallback.recommendations || [],
+          raw: { issues: fallback.issues, performanceMetrics: fallback.performanceMetrics },
+          source: 'fallback',
+          cacheKey: `${normalizedUrl}|d=${depth}|m=${checkMobile}`,
+          userPlan: plan || null,
+          processingMs: fallback.totalProcessingTime,
+          // Wave 3: Include failure classification metadata
+          failure: fallback.failure,
+          timings: fallback.timings,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (persistErr) {
+      console.warn('fallback_audit_persist_failed', (persistErr as any)?.message);
+    }
+    
     logPhase('fallback', { url: normalizedUrl });
     return { ...fallback, ephemeralMetrics: { cacheHitRate: metrics.cacheHitRate, avgProcessingTime: metrics.avgProcessingTime } };
   }

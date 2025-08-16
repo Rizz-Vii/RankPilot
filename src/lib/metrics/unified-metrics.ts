@@ -21,7 +21,7 @@ export interface UnifiedMetricsSnapshot {
     teamRateLimitAllows?: Record<string, number>; // route or scope -> successful allowed increments (team scoped)
     compactDocs?: { count: number; totalBytes: number; avgBytes: number | null }; // optional size tracking
     inviteMaintenance?: { markedExpired: number; deletedAccepted: number; deletedExpired: number; orphanIndexes: number };
-    crawler?: { success: number; errors: number; totalCrawlMs: number; totalAnalysisMs: number; crawlP95?: number | null; analysisP95?: number | null; crawlP99?: number | null; analysisP99?: number | null };
+    crawler?: { success: number; errors: number; totalCrawlMs: number; totalAnalysisMs: number; crawlP95?: number | null; analysisP95?: number | null; crawlP99?: number | null; analysisP99?: number | null; failuresByType?: { crawl: number; analysis: number }; };
     semanticMap?: { aggregateHits: number; legacyFallbacks: number };
 }
 
@@ -38,7 +38,7 @@ const rateLimitRejections: Record<string, number> = {};
 const teamRateLimitAllows: Record<string, number> = {};
 const compactDocSize = { count: 0, totalBytes: 0 };
 const inviteMaintenanceCounters = { markedExpired: 0, deletedAccepted: 0, deletedExpired: 0, orphanIndexes: 0 };
-const crawlerCounters = { success: 0, errors: 0, totalCrawlMs: 0, totalAnalysisMs: 0, aggregateHits: 0, legacyFallbacks: 0, quotaLimit: 0, quotaRemaining: 0, crawlSamples: [] as number[], analysisSamples: [] as number[] };
+const crawlerCounters = { success: 0, errors: 0, totalCrawlMs: 0, totalAnalysisMs: 0, aggregateHits: 0, legacyFallbacks: 0, quotaLimit: 0, quotaRemaining: 0, crawlSamples: [] as number[], analysisSamples: [] as number[], failuresByType: { crawl: 0, analysis: 0 } };
 // Semantic Map aggregate adoption counters (T14 extension)
 const semanticMapCounters = { aggregateHits: 0, legacyFallbacks: 0 };
 
@@ -108,7 +108,7 @@ export function getUnifiedMetricsSnapshot(): UnifiedMetricsSnapshot {
         , teamRateLimitAllows: { ...teamRateLimitAllows }
         , compactDocs: { count: compactDocSize.count, totalBytes: compactDocSize.totalBytes, avgBytes: compactDocSize.count ? Math.round(compactDocSize.totalBytes / compactDocSize.count) : null }
         , inviteMaintenance: { ...inviteMaintenanceCounters }
-        , crawler: { ...crawlerCounters, crawlP95: computeSimpleP95(crawlerCounters.crawlSamples), analysisP95: computeSimpleP95(crawlerCounters.analysisSamples), crawlP99: computeSimpleP99(crawlerCounters.crawlSamples), analysisP99: computeSimpleP99(crawlerCounters.analysisSamples) }
+        , crawler: { ...crawlerCounters, crawlP95: computeSimpleP95(crawlerCounters.crawlSamples), analysisP95: computeSimpleP95(crawlerCounters.analysisSamples), crawlP99: computeSimpleP99(crawlerCounters.crawlSamples), analysisP99: computeSimpleP99(crawlerCounters.analysisSamples), failuresByType: { ...crawlerCounters.failuresByType } }
         , semanticMap: { ...semanticMapCounters }
     };
 }
@@ -148,6 +148,14 @@ export function recordCrawlerError(crawlMs: number) {
     crawlerCounters.totalCrawlMs += crawlMs;
     crawlerCounters.crawlSamples.push(crawlMs);
     if (crawlerCounters.crawlSamples.length > 500) crawlerCounters.crawlSamples.splice(0, crawlerCounters.crawlSamples.length - 500);
+}
+
+export function recordCrawlerFailure(crawlMs: number, failureType: 'crawl' | 'analysis') {
+    crawlerCounters.errors += 1;
+    crawlerCounters.totalCrawlMs += crawlMs;
+    crawlerCounters.crawlSamples.push(crawlMs);
+    if (crawlerCounters.crawlSamples.length > 500) crawlerCounters.crawlSamples.splice(0, crawlerCounters.crawlSamples.length - 500);
+    crawlerCounters.failuresByType[failureType] += 1;
 }
 
 // Neural crawler aggregate read path metrics (T14)
