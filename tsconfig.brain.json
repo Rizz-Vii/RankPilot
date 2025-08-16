@@ -1,14 +1,19 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
     "target": "ES2019",
+    "lib": ["ES2019"],
+    "module": "commonjs",
     "rootDir": ".",
     "outDir": "dist/brain",
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "types": ["node"]
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "strict": false,
+    "noEmit": false
   },
-  "include": ["scripts/brain/**/*.ts", "types/**/*.ts"]
+  "include": ["scripts/brain/**/*.ts", "types/**/*.ts"],
+  "exclude": ["node_modules", "src", "dist", "testing", "tests", "functions"]
 }
 

@@ -13,11 +13,15 @@ function computeDiffStats(): { files: number; locAdded: number } {
   } catch { return { files: 0, locAdded: 0 }; }
 }
 
-function writeRemediation(reason: string, tasks: Task[]) {
+function writeRemediation(reason: string, tasks: Task[], metrics?: { batchCount?: number; estTokens?: number; elapsedMs?: number; budgetInfo?: any }) {
   try {
     fs.mkdirSync('artifacts/brain', { recursive: true });
     const ts = new Date().toISOString().replace(/[:.]/g, '-');
-    fs.writeFileSync(`artifacts/brain/remediation-${ts}.json`, JSON.stringify({ reason, tasks }, null, 2));
+    const payload: any = { reason, tasks };
+    if (metrics) {
+      payload.metrics = metrics;
+    }
+    fs.writeFileSync(`artifacts/brain/remediation-${ts}.json`, JSON.stringify(payload, null, 2));
   } catch {}
 }
 

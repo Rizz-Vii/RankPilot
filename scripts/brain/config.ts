@@ -21,13 +21,13 @@ export function loadConfig(): any {
     cfg = { ...cfg, ...j, limits: { ...defaults.limits, ...(j.limits || {}) }, tools: { ...defaults.tools, ...(j.tools || {}) }, modes: { ...defaults.modes, ...(j.modes || {}) }, budget: { ...defaults.budget, ...(j.budget || {}) } };
   } catch { }
   // Environment overrides (lightweight for tests / CI)
-  if (process.env.PB_BRAIN_BUDGET_TOKEN) {
-    const v = parseInt(process.env.PB_BRAIN_BUDGET_TOKEN, 10);
+  if (process.env.PB_BRAIN_BUDGET_TOKENS) {
+    const v = parseInt(process.env.PB_BRAIN_BUDGET_TOKENS, 10);
     if (!isNaN(v)) cfg.budget.token = v;
   }
-  if (process.env.PB_BRAIN_BUDGET_TIME) {
-    const v = parseInt(process.env.PB_BRAIN_BUDGET_TIME, 10);
-    if (!isNaN(v)) cfg.budget.timeSeconds = v;
+  if (process.env.PB_BRAIN_BUDGET_MS) {
+    const v = parseInt(process.env.PB_BRAIN_BUDGET_MS, 10);
+    if (!isNaN(v)) cfg.budget.timeSeconds = Math.floor(v / 1000); // Convert MS to seconds for internal use
   }
   return cfg;
 }

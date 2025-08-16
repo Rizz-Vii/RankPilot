@@ -18,6 +18,7 @@ export interface RunRecord {
   validation?: { lint?: string; typecheck?: string; tests?: string; performance?: string };
   outcome: { status: 'OK' | 'FAIL'; failures?: string[] };
   followUps?: Task[];
+  metrics: { batchCount: number; estTokens: number; elapsedMs: number };
 }
 
 export interface TaskSource { name: string; fetch(): Promise<Task[]>; }

@@ -12,7 +12,7 @@ export interface RunRecord {
   diffs?: { files: number; locAdded: number };
   validation?: any;
   outcome?: { status: 'OK' | 'FAIL' };
-  metrics?: { elapsedMs?: number; estTokens?: number; batches?: number; budget?: { tokenUsed?: number; tokenBudget?: number; timeUsedMs?: number; timeBudgetMs?: number } };
+  metrics?: { batchCount?: number; estTokens?: number; elapsedMs?: number; budget?: { tokenUsed?: number; tokenBudget?: number; timeUsedMs?: number; timeBudgetMs?: number } };
   followUps?: any[];
   aborted?: boolean;
   reason?: string;

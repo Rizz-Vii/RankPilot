@@ -36,40 +36,118 @@ async function main() {
   const tStart = Date.now();
   let tokenUsed = Math.round((JSON.stringify(p).length || 0) / 4);
   let aborted = false;
+  let batchCount = 0;
   const followUps: any[] = [];
+  
+  // Helper function to check budget limits
+  const checkBudgetLimits = () => {
+    const timeUsedMs = Date.now() - tStart;
+    const timeBudgetMs = cfg.budget.timeSeconds * 1000;
+    const tokenBudget = cfg.budget.token;
+    
+    if (timeUsedMs > timeBudgetMs) {
+      return { exceeded: true, reason: 'time', timeUsedMs, timeBudgetMs, tokenUsed, tokenBudget };
+    }
+    if (tokenUsed > tokenBudget) {
+      return { exceeded: true, reason: 'token', timeUsedMs, timeBudgetMs, tokenUsed, tokenBudget };
+    }
+    return { exceeded: false, timeUsedMs, timeBudgetMs, tokenUsed, tokenBudget };
+  };
+
   if (mode === 'execute') {
+    batchCount = 1;
     validation = await runValidators({ cfg, forceFail: forceValidatorFail || process.env.PB_BRAIN_FORCE_VALIDATION_FAIL === '1' });
     const exec = await runBatch(tasks, { mode, cfg, preflightEstimate: verifyGuardFail ? { files: 99, locAdded: 9999 } : preflightEstimate });
     diffs = exec.diffs;
+    tokenUsed += Math.round(JSON.stringify(exec).length / 4); // Estimate tokens from execution results
   } else if (mode === 'dry-run') {
+    batchCount = 1;
     validation = await runValidators({ cfg, forceFail: forceValidatorFail || process.env.PB_BRAIN_FORCE_VALIDATION_FAIL === '1' });
     writeRunLog({ ts: Date.now(), runId: 'plan-' + Date.now(), mode: 'dry-run', plan: p, validation });
   } else if (mode === 'auto') {
-    // Minimal auto: single-batch execute with validators
+    // Enhanced auto mode with comprehensive budget checking
     const steps = p.steps || [];
     const { splitPlan } = await import('./governance/splitter.js');
     const groups = splitPlan(steps, cfg);
     let first = true;
     for (const _ of groups) {
+      batchCount++;
+      
+      // Check budget before each batch
+      const budgetCheck = checkBudgetLimits();
+      if (budgetCheck.exceeded) {
+        aborted = true;
+        followUps.push({ type: 'budget', note: `${budgetCheck.reason} budget exceeded` });
+        // Create remediation artifact when budget exceeded
+        try {
+          const fs = await import('fs');
+          const ts = new Date().toISOString().replace(/[:.]/g, '-');
+          fs.mkdirSync('artifacts/brain', { recursive: true });
+          const metrics = { batchCount: batchCount - 1, estTokens: tokenUsed, elapsedMs: budgetCheck.timeUsedMs };
+          fs.writeFileSync(`artifacts/brain/remediation-${ts}.json`, JSON.stringify({ 
+            reason: 'budget', 
+            tasks, 
+            metrics,
+            budgetExceeded: budgetCheck.reason,
+            budgetInfo: { tokenUsed: budgetCheck.tokenUsed, tokenBudget: budgetCheck.tokenBudget, timeUsedMs: budgetCheck.timeUsedMs, timeBudgetMs: budgetCheck.timeBudgetMs }
+          }, null, 2));
+        } catch { }
+        break;
+      }
+      
       validation = await runValidators({ cfg, forceFail: !first && (forceValidatorFail || process.env.PB_BRAIN_FORCE_VALIDATION_FAIL === '1'), plugins });
       const exec = await runBatch(tasks, { mode: 'execute', cfg, preflightEstimate });
       diffs = exec.diffs;
+      tokenUsed += Math.round(JSON.stringify(exec).length / 4); // Update token usage estimate
       first = false;
-      // Simple budget check per group
-      if (Date.now() - tStart > (cfg.budget.timeSeconds * 1000)) { aborted = true; followUps.push({ type: 'budget', note: 'time exceeded' }); break; }
-      if (tokenUsed > cfg.budget.token) { aborted = true; followUps.push({ type: 'budget', note: 'token exceeded' }); break; }
     }
   } else {
     // plan-only
+    batchCount = 0;
     console.log(JSON.stringify({ strategy: p.strategy, steps: p.steps.length }));
   }
-  const t0 = Date.now();
+  
+  const elapsedMs = Date.now() - tStart;
+  const finalBudgetCheck = checkBudgetLimits();
   const outcome = aborted ? { status: 'FAIL' as const } : (validation && (validation.lint === 'fail' || validation.typecheck === 'fail' || validation.tests === 'fail')) ? { status: 'FAIL' as const } : { status: 'OK' as const };
-  if (outcome.status === 'FAIL') {
-    try { const fs = await import('fs'); const ts = new Date().toISOString().replace(/[:.]/g, '-'); fs.mkdirSync('artifacts/brain', { recursive: true }); fs.writeFileSync(`artifacts/brain/remediation-${ts}.json`, JSON.stringify({ reason: 'validation', tasks }, null, 2)); } catch { }
-    if (aborted) followUps.push({ type: 'action', suggestion: 'Reduce scope or increase budget' });
+  
+  if (outcome.status === 'FAIL' && !aborted) {
+    try { 
+      const fs = await import('fs'); 
+      const ts = new Date().toISOString().replace(/[:.]/g, '-'); 
+      fs.mkdirSync('artifacts/brain', { recursive: true }); 
+      const metrics = { batchCount, estTokens: tokenUsed, elapsedMs };
+      fs.writeFileSync(`artifacts/brain/remediation-${ts}.json`, JSON.stringify({ reason: 'validation', tasks, metrics }, null, 2)); 
+    } catch { }
   }
-  await writeRunLog({ ts: Date.now(), runId, mode, tasks, domains: [...new Set(tasks.map(t => t.domain))], toolsInvoked, diffs, validation, outcome, followUps, aborted, reason: aborted ? 'budget' : 'normal', metrics: { elapsedMs: Date.now() - t0, estTokens: tokenUsed, budget: { tokenUsed, tokenBudget: cfg.budget.token, timeUsedMs: Date.now() - tStart, timeBudgetMs: cfg.budget.timeSeconds * 1000 } } });
+  
+  if (aborted) followUps.push({ type: 'action', suggestion: 'Reduce scope or increase budget' });
+  
+  await writeRunLog({ 
+    ts: Date.now(), 
+    runId, 
+    mode, 
+    tasks, 
+    domains: [...new Set(tasks.map(t => t.domain))], 
+    toolsInvoked, 
+    diffs, 
+    validation, 
+    outcome, 
+    followUps, 
+    aborted, 
+    reason: aborted ? 'budget' : 'normal', 
+    metrics: { 
+      batchCount, 
+      estTokens: tokenUsed, 
+      elapsedMs,
+      budget: { 
+        tokenUsed: finalBudgetCheck.tokenUsed, 
+        tokenBudget: finalBudgetCheck.tokenBudget, 
+        timeUsedMs: finalBudgetCheck.timeUsedMs, 
+        timeBudgetMs: finalBudgetCheck.timeBudgetMs 
+      } 
+    } 
+  });
 }
 
 main().catch((e) => { console.error(e.message || String(e)); process.exit(1); });
