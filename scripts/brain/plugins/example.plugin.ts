@@ -10,4 +10,6 @@ export async function exampleValidator() {
     return { name: 'exampleValidator', status: 'skip', note: 'example plugin validator' };
 }
 
-module.exports = { runners: [ExampleEchoRunner], validators: [exampleValidator] };
+// Export for CommonJS compatibility
+export const runners = [ExampleEchoRunner];
+export const validators = [exampleValidator];
