@@ -24,6 +24,9 @@ export interface KpiSnapshot {
     aiDailyTokensIn?: number;
     aiDailyTokensOut?: number;
     aiDailyCostEstimate?: number; // USD approximate
+    // Wave 5 additions for enhanced monitoring
+    quotaHeadroomPct?: number | null; // remaining capacity vs team quota limits
+    snapshotFreshnessHours?: number | null; // hours since last KPI snapshot was taken
 }
 
 export function getKpiSnapshot(): KpiSnapshot {

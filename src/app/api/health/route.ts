@@ -7,6 +7,8 @@ import { getNeuroseoMetricsSnapshot } from '@/lib/neuroseo/metrics-registry';
 import { adminDb } from '@/lib/firebase-admin';
 import { hasProvenance } from '@/lib/middleware/provenance';
 import { ensureDailyUnifiedMetricsExport } from '@/lib/metrics/unified-metrics-export';
+import { calculateQuotaHeadroom } from '@/lib/metrics/quota-headroom';
+import { calculateSnapshotFreshness } from '@/lib/metrics/snapshot-freshness';
 export const dynamic = 'force-dynamic';
 export async function GET() {
   const ts = Date.now();
@@ -52,6 +54,16 @@ export async function GET() {
     let dIn = 0, dOut = 0, dCost = 0; dailySnap.docs.forEach(d => { const data: any = d.data(); dIn += data.tokensIn || 0; dOut += data.tokensOut || 0; dCost += data.costEstimate || 0; });
     ; (kpis as any).aiDailyTokensIn = dIn; (kpis as any).aiDailyTokensOut = dOut; (kpis as any).aiDailyCostEstimate = +dCost.toFixed(4);
   } catch { }
+
+  // Wave 5: Calculate quota headroom and snapshot freshness
+  const [quotaResult, freshnessResult] = await Promise.all([
+    calculateQuotaHeadroom(),
+    calculateSnapshotFreshness()
+  ]);
+
+  // Add Wave 5 fields to KPIs
+  (kpis as any).quotaHeadroomPct = quotaResult.quotaHeadroomPct;
+  (kpis as any).snapshotFreshnessHours = freshnessResult.snapshotFreshnessHours;
   // Basic alert derivation (OPS-01): threshold checks mapped to warning/critical levels
   const alerts: Array<{ type: string; level: 'warn' | 'critical'; message: string; value: number | null; threshold: number }> = [];
   const push = (cond: boolean, level: 'warn' | 'critical', type: string, value: number | null, threshold: number, message: string) => { if (cond) alerts.push({ type, level, message, value, threshold }); };
@@ -85,6 +97,20 @@ export async function GET() {
     push(smAdoption < 50, 'critical', 'semanticMapAggregateAdoption', smAdoption, 50, 'Semantic map aggregate adoption below 50%');
     if (smAdoption >= 50) push(smAdoption < 80, 'warn', 'semanticMapAggregateAdoption', smAdoption, 80, 'Semantic map aggregate adoption below 80%');
   }
+
+  // Wave 5: Quota headroom alerts
+  const quotaHeadroom = (kpis as any).quotaHeadroomPct as number | null;
+  if (quotaHeadroom != null) {
+    push(quotaHeadroom < 10, 'critical', 'quotaHeadroom', quotaHeadroom, 10, 'Quota headroom critically low (<10%)');
+    push(quotaHeadroom < 25 && quotaHeadroom >= 10, 'warn', 'quotaHeadroom', quotaHeadroom, 25, 'Quota headroom low (<25%)');
+  }
+
+  // Wave 5: Snapshot freshness alerts
+  const snapshotAge = (kpis as any).snapshotFreshnessHours as number | null;
+  if (snapshotAge != null) {
+    push(snapshotAge > 12, 'critical', 'snapshotFreshness', snapshotAge, 12, 'KPI snapshots critically outdated (>12h)');
+    push(snapshotAge > 6 && snapshotAge <= 12, 'warn', 'snapshotFreshness', snapshotAge, 6, 'KPI snapshots stale (>6h)');
+  }
   const aiUsage = getAIUsage24h();
   // Per-model cost breakdown (optional fields if tracking present in aiUsage map)
   let perModelCosts: Record<string, { tokensIn: number; tokensOut: number; cost: number }> | null = null;
@@ -116,6 +142,10 @@ export async function GET() {
     kpis,
     alerts,
     aiUsage24h: aiUsage,
+    aiTokenUsage24h: { tokensIn: aiUsage.tokensIn, tokensOut: aiUsage.tokensOut }, // Wave 5: explicit field
+    aiCostEstimate24h: aiUsage.costEstimate, // Wave 5: explicit field
+    quotaHeadroomPct: quotaResult.quotaHeadroomPct, // Wave 5: explicit field
+    snapshotFreshnessHours: freshnessResult.snapshotFreshnessHours, // Wave 5: explicit field
     aiUsagePerModel: perModelCosts || undefined,
     subtoolUsage24h: subtoolUsage,
     crawler: crawlerMetrics,
