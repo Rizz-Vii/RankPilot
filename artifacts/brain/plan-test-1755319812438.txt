@@ -1,0 +1,11 @@
+{
+  "steps": [
+    {
+      "kind": "do-task",
+      "taskId": "t",
+      "domain": "docs",
+      "contextNote": "files:4"
+    }
+  ],
+  "strategy": "heuristic"
+}

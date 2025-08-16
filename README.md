@@ -81,4 +81,27 @@ Finance dashboards (Finance Dashboard, Billing Overview, Invoices) can surface m
 
 When mocks are active and no live metrics have loaded, a yellow banner appears stating that finance metrics are mock-sourced (FINANCE_MOCK_MODE). The banner disappears once live data loads or mocks are disabled.
 
+## Brain Commands (PilotBuddy Central Brain)
+
+Core development / orchestration helpers:
+
+```
+npm run brain:baseline   # minimal baseline generation run
+npm run brain:plan-only  # produce a plan JSON summary only
+npm run brain:dry-run    # plan + validators (no execution)
+npm run brain:execute    # plan + single batch execute + validators
+npm run brain:auto       # heuristic splitting + iterative execute (early abort on budget)
+npm run test:brain       # fast brain test harness
+npm run brain:verify     # baseline verification wrapper
+```
+
+Environment overrides (budget):
+
+```
+PB_BRAIN_BUDGET_TOKEN=5000 PB_BRAIN_BUDGET_TIME=30 npm run brain:auto
+```
+
+Artifacts written under `artifacts/brain/` (run-*.json, remediation-*.json, plan-*.txt). Sensitive fields redacted.
+
+
 

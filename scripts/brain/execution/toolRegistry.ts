@@ -1,4 +1,8 @@
 import type { ToolRunner } from '../../../types/brain';
+import { spawnSync } from 'child_process';
+import { loadPlugins } from '../plugins';
+import fs from 'fs';
+import path from 'path';
 
 function mk(name: string, supportsDomains: string[] = []): ToolRunner {
   return {
@@ -17,15 +21,43 @@ export const MCPGitHub = mk('MCPGitHub', ['backend', 'frontend']);
 export const MCPZapier = mk('MCPZapier', ['ops']);
 export const TerminalRunner = mk('TerminalRunner');
 // Minimal validator/tool names for tests
-export const TypecheckRunner = mk('TypecheckRunner');
-export const ESLintRunner = mk('ESLintRunner', ['frontend', 'docs']);
-export const PlaywrightRunner = mk('PlaywrightRunner', ['frontend']);
+function runShell(cmd: string, args: string[]) {
+  if (process.env.PB_BRAIN_FORCE_SKIP_BIN === '1') return { ok: false, note: 'skipped:forced' };
+  try {
+    const r = spawnSync(cmd, args, { stdio: 'ignore' });
+    if (r.error && (r.error as any).code === 'ENOENT') return { ok: false, note: 'skipped:missing-binary' };
+    return { ok: r.status === 0, note: r.status === 0 ? 'ok' : `fail:${r.status}` };
+  } catch { return { ok: false, note: 'skipped:error' }; }
+}
+
+export const TypecheckRunner: ToolRunner = {
+  name: 'TypecheckRunner',
+  supports: () => true,
+  run: async () => runShell('npx', ['tsc', '--noEmit'])
+};
+
+export const ESLintRunner: ToolRunner = {
+  name: 'ESLintRunner',
+  supports: (d: string) => ['frontend', 'docs', 'backend', 'infra', 'ops', 'data'].includes(d),
+  run: async () => runShell('npx', ['eslint', '--version'])
+};
+
+export const PlaywrightRunner: ToolRunner = {
+  name: 'PlaywrightRunner',
+  supports: (d: string) => ['frontend'].includes(d),
+  run: async () => runShell('npx', ['playwright', '--version'])
+};
 
 export function getRegistry(): ToolRunner[] {
-  return [
+  const base = [
     OpenAIPlanner, CodexRunner, AiderRunner, MCPFirecrawl, MCPSequential, MCPGitHub, MCPZapier, TerminalRunner,
     TypecheckRunner, ESLintRunner, PlaywrightRunner
   ];
+  try {
+    const plugins = loadPlugins();
+    if (plugins.runners.length) return [...base, ...plugins.runners];
+  } catch { }
+  return base;
 }
 
 export function getRunnersFor(domain: string, cfg?: any): ToolRunner[] {
