@@ -5,8 +5,13 @@
     "rootDir": ".",
     "outDir": "dist/brain",
     "skipLibCheck": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "allowJs": true,
+    "noImplicitAny": false,
+    "strict": false,
+    "typeRoots": []
   },
-  "include": ["scripts/brain/**/*.ts", "types/**/*.ts"]
+  "include": ["scripts/brain/**/*.ts", "types/brain.ts"],
+  "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts"]
 }
 
