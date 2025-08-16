@@ -7,9 +7,13 @@ import { getNeuroseoMetricsSnapshot } from '@/lib/neuroseo/metrics-registry';
 import { adminDb } from '@/lib/firebase-admin';
 import { hasProvenance } from '@/lib/middleware/provenance';
 import { ensureDailyUnifiedMetricsExport } from '@/lib/metrics/unified-metrics-export';
+import { getTeamQuotaStats } from '@/lib/team-quota';
 export const dynamic = 'force-dynamic';
-export async function GET() {
+export async function GET(request: NextRequest) {
   const ts = Date.now();
+  const url = new URL(request.url);
+  const teamId = url.searchParams.get('teamId');
+  
   // Firestore connectivity (lightweight): get a non-existent doc (no cost write)
   let firestoreOk = false;
   try { await adminDb.collection('_health').doc('ping').get(); firestoreOk = true; } catch { firestoreOk = false; }
@@ -105,6 +109,34 @@ export async function GET() {
     }
   });
   const subtoolUsage = getSubtoolUsage24h();
+  
+  // Team-specific quota headroom (if teamId provided)
+  let teamQuotaHeadroom: any = null;
+  if (teamId) {
+    try {
+      const teamStats = await getTeamQuotaStats(teamId);
+      if (teamStats) {
+        teamQuotaHeadroom = {
+          teamId: teamStats.teamId,
+          date: teamStats.date,
+          headroom: teamStats.headroom,
+          quotaUsage: Object.entries(teamStats.quotas).reduce((acc, [type, quota]) => {
+            acc[type] = {
+              used: quota.used,
+              limit: quota.limit,
+              remaining: quota.limit - quota.used,
+              percentUsed: quota.limit > 0 ? Math.round((quota.used / quota.limit) * 100) : 0
+            };
+            return acc;
+          }, {} as any),
+          totalRejections: teamStats.totalRejections
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching team quota headroom:', error);
+    }
+  }
+  
   return NextResponse.json({
     status,
     timestamp: new Date(ts).toISOString(),
@@ -120,6 +152,7 @@ export async function GET() {
     subtoolUsage24h: subtoolUsage,
     crawler: crawlerMetrics,
     teamCrawlerQuota: teamQuota,
+    teamQuotaHeadroom,
     metrics: {
       neuro,
       unified

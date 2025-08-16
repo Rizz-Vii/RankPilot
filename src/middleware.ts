@@ -2,15 +2,51 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { rateLimit } from "./middleware/rate-limit";
 
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { rateLimit } from "./middleware/rate-limit";
+import { quotaMiddleware, shouldEnforceQuota, extractTeamId } from "./lib/middleware/quota-guard";
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname || "";
   const isApi = pathname.startsWith("/api/");
+  
   // For API routes, run rate limiter first and short-circuit on 429
   if (isApi) {
     const rl = await rateLimit(request);
     if (rl.status === 429) {
       return rl;
     }
+    
+    // Check if this route needs quota enforcement
+    const quotaCheck = shouldEnforceQuota(pathname);
+    if (quotaCheck.enforce) {
+      const teamId = extractTeamId(request);
+      
+      if (teamId && quotaCheck.quotaType) {
+        // Apply quota enforcement
+        const quotaResult = await quotaMiddleware(request, {
+          quotaType: quotaCheck.quotaType,
+          teamId,
+          // TODO: Extract plan from user context/headers
+          // For now, use default plan - this should be enhanced based on actual user plan detection
+        });
+        
+        if (quotaResult && quotaResult.status === 429) {
+          return quotaResult;
+        }
+        
+        // Merge quota headers with rate limit headers
+        if (quotaResult) {
+          const mergedHeaders = new Headers(rl.headers);
+          quotaResult.headers.forEach((value, key) => {
+            mergedHeaders.set(key, value);
+          });
+          return NextResponse.next({ headers: mergedHeaders });
+        }
+      }
+    }
+    
     // For API success path, propagate any rate-limit headers and return early without CSP
     return rl;
   }
