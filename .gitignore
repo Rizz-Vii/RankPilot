@@ -45,6 +45,7 @@ test-snapshots/
 testing/results/
 testing/reports/
 artifacts/brain/*.json
+artifacts/brain/plan*.txt
 coverage/
 .nyc_output/
 *.spec.js.map

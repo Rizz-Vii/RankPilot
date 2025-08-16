@@ -2,7 +2,7 @@
 import { loadConfig, validateConfig } from './config';
 import { parseTasks } from './core/taskParsing';
 import { classify } from './core/classification';
-import { plan, savePlanText } from './planning/planner';
+import { plan, savePlanText, planWithOpenAI } from './planning/planner';
 import { runBatch } from './execution/runBatch';
 import { runValidators } from './validation/validators';
 import { writeRunLog } from './state/logWriter';

@@ -20,6 +20,8 @@ declare var module: {
   exports: any;
 };
 
+declare var setTimeout: (callback: () => void, delay: number) => any;
+
 declare module 'fs' {
   export function readFileSync(path: string, encoding?: string): string | Buffer;
   export function writeFileSync(path: string, data: string | Buffer): void;
@@ -40,4 +42,26 @@ declare module 'path' {
 declare module 'child_process' {
   export function execSync(command: string, options?: any): Buffer;
   export function spawnSync(command: string, args?: string[], options?: any): any;
+}
+
+declare module 'openai' {
+  export default class OpenAI {
+    constructor(config: { apiKey: string });
+    chat: {
+      completions: {
+        create(params: {
+          model: string;
+          messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+          temperature?: number;
+          max_tokens?: number;
+        }): Promise<{
+          choices: Array<{
+            message: {
+              content: string;
+            };
+          }>;
+        }>;
+      };
+    };
+  }
 }
