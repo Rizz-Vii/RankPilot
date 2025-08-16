@@ -33,7 +33,9 @@ export async function GET() {
     avgCrawlMs: crawlerRuns ? Math.round(crawlerRaw.totalCrawlMs / crawlerRuns) : null,
     avgAnalysisMs: crawlerRaw.success ? Math.round(crawlerRaw.totalAnalysisMs / crawlerRaw.success) : null,
     crawlP95: crawlerRaw.crawlP95 ?? null,
-    analysisP95: crawlerRaw.analysisP95 ?? null
+    analysisP95: crawlerRaw.analysisP95 ?? null,
+    crawlP99: (crawlerRaw as any).crawlP99 ?? null,
+    analysisP99: (crawlerRaw as any).analysisP99 ?? null
   };
   // Aggregate team quota usage for today (lightweight; limit query to 200 docs)
   let teamQuota: { totalTeams: number; totalUsed: number; totalLimit: number; totalRejections: number } | null = null;
@@ -77,7 +79,31 @@ export async function GET() {
     push(adoption < 50, 'critical', 'crawlerAggregateAdoption', adoption, 50, 'Crawler aggregate adoption below 50%');
     if (adoption >= 50) push(adoption < 80, 'warn', 'crawlerAggregateAdoption', adoption, 80, 'Crawler aggregate adoption below 80%');
   }
+  // Semantic Map aggregate adoption alerts (T14)
+  const smAdoption = (kpis as any).semanticMapAggregateAdoptionPct as number | undefined;
+  if (smAdoption != null) {
+    push(smAdoption < 50, 'critical', 'semanticMapAggregateAdoption', smAdoption, 50, 'Semantic map aggregate adoption below 50%');
+    if (smAdoption >= 50) push(smAdoption < 80, 'warn', 'semanticMapAggregateAdoption', smAdoption, 80, 'Semantic map aggregate adoption below 80%');
+  }
   const aiUsage = getAIUsage24h();
+  // Per-model cost breakdown (optional fields if tracking present in aiUsage map)
+  let perModelCosts: Record<string, { tokensIn: number; tokensOut: number; cost: number }> | null = null;
+  const anyUsage: any = aiUsage as any;
+  if (anyUsage && typeof anyUsage === 'object' && anyUsage.providers && typeof anyUsage.providers === 'object') {
+    perModelCosts = {};
+    Object.entries<any>(anyUsage.providers).forEach(([prov, val]) => {
+      perModelCosts![prov] = { tokensIn: val.tokensIn || 0, tokensOut: val.tokensOut || 0, cost: +((val.costEstimate || 0)).toFixed(4) };
+    });
+  }
+  // Route latency p95 alerts (warn >600ms, critical >1200ms) limited to top offenders
+  const routeLatencyEntries = Object.entries(p95).filter(([, v]) => typeof v === 'number' && v != null) as Array<[string, number]>;
+  routeLatencyEntries.forEach(([routeKey, val]) => {
+    if (val > 1200) {
+      alerts.push({ type: `routeLatency:${routeKey}`, level: 'critical', message: `Route ${routeKey} p95 ${val}ms >1200ms`, value: val, threshold: 1200 });
+    } else if (val > 600) {
+      alerts.push({ type: `routeLatency:${routeKey}`, level: 'warn', message: `Route ${routeKey} p95 ${val}ms >600ms`, value: val, threshold: 600 });
+    }
+  });
   const subtoolUsage = getSubtoolUsage24h();
   return NextResponse.json({
     status,
@@ -90,6 +116,7 @@ export async function GET() {
     kpis,
     alerts,
     aiUsage24h: aiUsage,
+    aiUsagePerModel: perModelCosts || undefined,
     subtoolUsage24h: subtoolUsage,
     crawler: crawlerMetrics,
     teamCrawlerQuota: teamQuota,

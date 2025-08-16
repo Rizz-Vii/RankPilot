@@ -35,6 +35,7 @@ import {
   Receipt,
   CreditCard,
   FileText,
+  Activity,
 } from "lucide-react";
 
 export interface NavItem {
@@ -88,6 +89,15 @@ export const neuroSEOItems: NavItem[] = [
     description: "Advanced NLP analysis and topic visualization",
     requiredTier: "starter",
     feature: "semantic_map",
+  },
+  {
+    title: "Adoption KPIs",
+    href: "/neuroseo/adoption",
+    icon: BarChart3,
+    description: "Aggregate vs legacy read adoption metrics",
+    requiredTier: "starter",
+    feature: "semantic_map",
+    badge: "New"
   },
   {
     title: "TrustBlock™",
@@ -367,6 +377,21 @@ export const managementItems: NavItem[] = [
     description: "Administrative controls and user management",
     adminOnly: true,
 
+  },
+  {
+    title: "Observability",
+    href: "/admin/observability",
+    icon: BarChart3,
+    description: "System KPIs & runtime metrics (provenance, latency, AI cost)",
+    adminOnly: true,
+  },
+  {
+    title: "Events",
+    href: "/admin/events",
+    icon: Activity,
+    description: "Event Backbone explorer (admin-only)",
+    adminOnly: true,
+    feature: "observability",
   },
   {
     title: "Integration Hub",

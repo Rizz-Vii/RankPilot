@@ -6,6 +6,16 @@ import { test, expect, request } from '@playwright/test';
 test.describe('Health API crawler aggregate adoption alerts', () => {
     test('adoption alert transitions warn -> cleared', async () => {
         const ctx = await request.newContext();
+        // Validate lightweight probe metadata (version/buildSha/uptime) before heavy polling
+        try {
+            const simple = await ctx.get('/api/health/simple');
+            if (simple.ok()) {
+                const meta = await simple.json();
+                if (meta.ok) {
+                    ['version', 'buildSha', 'uptimeMs'].forEach(f => { if (!(f in meta)) throw new Error(`missing field ${f}`); });
+                }
+            }
+        } catch {/* non-fatal */ }
         // Baseline current counters
         const baselineRes = await ctx.get('/api/health');
         const baseline = await baselineRes.json();

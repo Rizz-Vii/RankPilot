@@ -112,23 +112,11 @@ export const FEATURE_ACCESS: Record<string, FeatureConfig> = {
   keyword_analysis: { description: "Basic keyword analysis" },
 
   // Starter Features
-  // audit:ignore-orphan category=legacy-ui rationale="Not yet surfaced as standalone nav item; kept for future Link Intelligence module"
-  link_analysis: {
-    requiredTier: "starter",
-    description: "Link analysis tools",
-  },
   // audit:ignore-orphan category=legacy-ui rationale="Superseded by consolidated NeuroSEO SERP component; retained for backward compatibility"
   serp_analysis: {
     requiredTier: "starter",
     description: "SERP analysis features",
   },
-  // audit:ignore-orphan category=internal-metrics rationale="Will be aggregated into performance dashboard; key preserved for historical data mapping"
-  performance_metrics: {
-    requiredTier: "starter",
-    description: "Performance tracking",
-  },
-  // audit:ignore-orphan category=export rationale="Implicit capability; gated via export surface rather than dedicated nav"
-  export_pdf: { requiredTier: "starter", description: "PDF export capability (alias -> export_formats)" },
 
   // Agency Features
   competitor_analysis: {
@@ -150,8 +138,6 @@ export const FEATURE_ACCESS: Record<string, FeatureConfig> = {
     requiredTier: "agency",
     description: "Priority customer support",
   },
-  // audit:ignore-orphan category=export rationale="Implicit capability; UI groups export formats"
-  export_csv: { requiredTier: "agency", description: "CSV export capability (alias -> export_formats)" },
 
   // Enterprise Features
   custom_integrations: {
@@ -207,18 +193,6 @@ export const FEATURE_ACCESS: Record<string, FeatureConfig> = {
     description: "Enterprise Integration Hub (demo)",
   },
 
-  // CRITICAL MISSING FEATURES - Fix for "Unknown feature" errors
-  // audit:ignore-orphan category=legacy-ui rationale="Top-level umbrella; granular subtools now explicit"
-  neuroseo: {
-    requiredTier: "starter",
-    description: "NeuroSEO™ AI-powered SEO optimization and analysis",
-  },
-
-  // audit:ignore-orphan category=roadmap rationale="Future unified AI content studio"
-  ai_content_generation: {
-    requiredTier: "agency",
-    description: "AI-powered content generation",
-  },
 
   // audit:ignore-orphan category=roadmap rationale="To be merged into analytics surfaces"
   ai_insights: {
@@ -350,18 +324,15 @@ export const FEATURE_ACCESS: Record<string, FeatureConfig> = {
 // Entitlement metadata now resolved via dedicated helper (Phase 2 refactor)
 import { DEFAULT_ENTITLEMENTS } from './access/entitlements';
 
+// Track entitlement keys we've already warned about to avoid console spam
+const _warnedEntitlements = new Set<string>();
+
 // =============================================================================
 // FEATURE ALIASES (legacy -> canonical)
 // =============================================================================
 export const FEATURE_ALIASES: Record<string, string> = {
-  // Legacy / umbrella keys mapped to canonical granular features or capabilities
-  link_analysis: "link_view",
-  performance_metrics: "dashboard", // folded into main dashboard metrics
-  export_pdf: "export_formats",
-  export_csv: "export_formats",
-  neuroseo: "semantic_map", // umbrella -> representative core tool (retain others separately)
-  ai_content_generation: "rewrite_gen", // umbrella -> concrete implemented subtool
-  ai_insights: "advanced_analytics", // insights folded into analytics scope
+  // Legacy / umbrella keys (RETIRING: aliases removed T17). Remaining minimal transitional mapping (remove next release if unused):
+  ai_insights: "advanced_analytics",
 };
 
 
@@ -387,9 +358,13 @@ export function canAccessFeature(
   // Phase 2: Entitlements no longer resolved via canAccessFeature.
   // If callers pass an entitlement key here, warn for migration to canAccessEntitlement.
   if ((DEFAULT_ENTITLEMENTS as any)[resolved]) {
-    console.warn(
-      `Entitlement key '${resolved}' passed to canAccessFeature(). Use canAccessEntitlement(userAccess, key) instead.`
-    );
+    // Warn only once per entitlement key to reduce noise while legacy callers migrate
+    if (!_warnedEntitlements.has(resolved)) {
+      console.warn(
+        `Entitlement key '${resolved}' passed to canAccessFeature(). Use canAccessEntitlement(userAccess, key) instead.`
+      );
+      _warnedEntitlements.add(resolved);
+    }
     return false; // do not grant access implicitly
   }
 
@@ -571,6 +546,18 @@ export function canAccessEntitlement(
   const ent = (DEFAULT_ENTITLEMENTS as any)[entitlementKey];
   if (!ent) return false;
   return canAccessTier(userAccess.tier, ent.minimumTier as SubscriptionTier);
+}
+
+// =============================================================================
+// Bridged capability helper (feature OR entitlement) – migration aid
+// Prefer explicit canAccessFeature / canAccessEntitlement in new code; this
+// suppresses entitlement warnings by routing directly when a key matches.
+// =============================================================================
+export function canAccessCapability(userAccess: UserAccess, key: string): boolean {
+  if ((DEFAULT_ENTITLEMENTS as any)[key]) {
+    return canAccessEntitlement(userAccess, key);
+  }
+  return canAccessFeature(userAccess, key);
 }
 
 export function listEntitlementsForTier(tier: SubscriptionTier): string[] {

@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { doc, getDoc } from "firebase/firestore";
+// Optional real-time subscription consolidation
+// We intentionally lazy-load onSnapshot only when realtime enabled to avoid bundling cost for static pages
+let _onSnapshot: any = null;
 import { db } from "@/lib/firebase";
 import { SubscriptionData } from "@/lib/subscription";
 import { STRIPE_PLANS, FREE_PLAN, PlanType } from "@/lib/stripe";
@@ -9,6 +12,7 @@ import {
   SubscriptionTier,
   UserRole,
   canAccessFeature,
+  canAccessCapability,
   getUserLimits,
   getRemainingUsage,
   isAtUsageLimit,
@@ -34,15 +38,19 @@ export interface SubscriptionInfo extends SubscriptionData {
   accessibleFeatures: string[];
 }
 
-export function useSubscription() {
+export function useSubscription(options: { realtime?: boolean } = {}) {
   const { user, profile } = useAuth();
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(
     null
   );
   const [loading, setLoading] = useState(true);
+  const realtime = options.realtime === true; // default off to reduce duplicate listeners
+  // Track active realtime listener (single consolidated)
+  const [unsubRef, setUnsubRef] = useState<null | (() => void)>(null);
 
   useEffect(() => {
-    async function fetchSubscription() {
+    let cancelled = false;
+    async function fetchSubscription(initial: boolean) {
       // Ultra-early test override (Playwright / E2E) via global variable to avoid auth & Firestore
       try {
         if (typeof window !== 'undefined' && (window as any).__SUBSCRIPTION_OVERRIDE__) {
@@ -51,7 +59,7 @@ export function useSubscription() {
             const forcedTier = ov.tier;
             const defaultUserAccess: UserAccess = { role: 'user', tier: forcedTier, status: (ov.status as any) || 'active' };
             const planRef = forcedTier === 'free' ? FREE_PLAN : STRIPE_PLANS[forcedTier as PlanType] || FREE_PLAN;
-            setSubscription({
+            if (!cancelled) setSubscription({
               status: defaultUserAccess.status,
               tier: forcedTier,
               planName: planRef.name,
@@ -61,7 +69,7 @@ export function useSubscription() {
               userAccess: defaultUserAccess,
               accessibleFeatures: getAccessibleFeatures(defaultUserAccess)
             });
-            setLoading(false);
+            if (!cancelled) setLoading(false);
             return; // Skip rest
           }
         }
@@ -79,7 +87,7 @@ export function useSubscription() {
                 tier: forcedTier,
                 status: (ov.status as any) || 'active'
               };
-              setSubscription({
+              if (!cancelled) setSubscription({
                 status: defaultUserAccess.status,
                 tier: forcedTier,
                 planName: forcedTier === 'free' ? FREE_PLAN.name : STRIPE_PLANS[forcedTier as PlanType]?.name || FREE_PLAN.name,
@@ -89,7 +97,7 @@ export function useSubscription() {
                 userAccess: defaultUserAccess,
                 accessibleFeatures: getAccessibleFeatures(defaultUserAccess)
               });
-              setLoading(false);
+              if (!cancelled) setLoading(false);
               return; // short-circuit normal fetch
             }
           }
@@ -97,7 +105,7 @@ export function useSubscription() {
       } catch { }
 
       if (!user?.uid) {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
         return;
       }
 
@@ -127,11 +135,8 @@ export function useSubscription() {
         if (subData.tier === "free") {
           planInfo = FREE_PLAN;
         } else if (subData.tier === ("admin" as any)) {
-          // Admin users get enterprise-level features but with admin tier label
-          planInfo = {
-            ...STRIPE_PLANS.enterprise,
-            name: "Admin",
-          };
+          // Treat admin as enterprise tier for plan benefits (avoid custom name that breaks PlanType types)
+          planInfo = STRIPE_PLANS.enterprise;
         } else if (subData.tier && subData.tier in STRIPE_PLANS) {
           planInfo = STRIPE_PLANS[subData.tier as PlanType];
         }
@@ -158,7 +163,7 @@ export function useSubscription() {
           accessibleFeatures: getAccessibleFeatures(userAccess),
         };
 
-        setSubscription(subscriptionInfo);
+        if (!cancelled) setSubscription(subscriptionInfo);
       } catch (error) {
         console.error("Error fetching subscription:", error);
 
@@ -169,7 +174,7 @@ export function useSubscription() {
           status: "free",
         };
 
-        setSubscription({
+        if (!cancelled) setSubscription({
           status: "free",
           tier: "free",
           planName: FREE_PLAN.name,
@@ -180,16 +185,54 @@ export function useSubscription() {
           accessibleFeatures: getAccessibleFeatures(defaultUserAccess),
         });
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
+    // Initial fetch
+    fetchSubscription(true);
 
-    fetchSubscription();
-  }, [user?.uid, profile?.role]);
+    // Optional realtime listener (single consolidated) only when enabled & user present
+    if (realtime && user?.uid) {
+      (async () => {
+        if (!_onSnapshot) {
+          const mod = await import('firebase/firestore');
+          _onSnapshot = mod.onSnapshot;
+        }
+        const ref = doc(db, 'users', user.uid);
+        const unsub = _onSnapshot(ref, (snap: any) => {
+          if (!snap.exists()) return;
+          const data = snap.data();
+          const subData: SubscriptionData = {
+            status: data.subscriptionStatus || 'free',
+            tier: data.subscriptionTier || 'free',
+            customerId: data.stripeCustomerId,
+            subscriptionId: data.stripeSubscriptionId,
+            currentPeriodEnd: data.nextBillingDate?.toDate?.() || data.nextBillingDate,
+            cancelAtPeriodEnd: data.cancelAtPeriodEnd || false,
+          } as any;
+          let planInfo = subData.tier === 'free' ? FREE_PLAN : STRIPE_PLANS[subData.tier as PlanType] || FREE_PLAN;
+          if (subData.tier === ('admin' as any)) planInfo = STRIPE_PLANS.enterprise;
+          const userAccess = normalizeUserAccess({ role: profile?.role || 'user', subscriptionTier: subData.tier, subscriptionStatus: subData.status });
+          const subscriptionInfo: SubscriptionInfo = {
+            ...subData,
+            planName: planInfo.name,
+            planLimits: planInfo.limits,
+            features: planInfo.features,
+            isUnlimited: planInfo.limits.auditsPerMonth === -1,
+            userAccess,
+            accessibleFeatures: getAccessibleFeatures(userAccess)
+          };
+          if (!cancelled) setSubscription(subscriptionInfo);
+        }, (err: any) => console.error('[SubscriptionRealtime] snapshot error', err));
+        setUnsubRef(() => unsub);
+      })();
+    }
+    return () => { cancelled = true; if (unsubRef) unsubRef(); };
+  }, [user?.uid, profile?.role, realtime]);
 
   const canUseFeature = (featureName: string): boolean => {
     if (!subscription?.userAccess) return false;
-    return canAccessFeature(subscription.userAccess, featureName);
+    return canAccessCapability(subscription.userAccess, featureName);
   };
 
   const getRemainingUsageCount = (

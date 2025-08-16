@@ -1,20 +1,25 @@
 import { defineConfig, devices } from "@playwright/test";
 import { getProxyConfig } from "./testing/specs/main/utils/proxy";
+import fs from 'fs';
+const storageStatePath = process.env.PLAYWRIGHT_STORAGE || 'test-results/.auth/admin.json';
+const hasStorage = fs.existsSync(storageStatePath);
 
 export default defineConfig({
   testDir: "./testing",
   timeout: 30000,
   workers: process.env.CI ? 1 : undefined,
+  globalSetup: './testing/specs/main/global-setup.ts',
   reporter: [
     ["html"],
     ["junit", { outputFile: "test-results/junit.xml" }],
     ["list"],
   ],
   use: {
-    baseURL: process.env.TEST_BASE_URL || "http://localhost:3000",
-    trace: "retain-on-failure",
-    screenshot: "only-on-failure",
-    video: "retain-on-failure",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
+    trace: 'on-first-retry',
+    video: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    storageState: hasStorage ? storageStatePath : undefined,
     actionTimeout: 15000,
     navigationTimeout: 15000,
   },

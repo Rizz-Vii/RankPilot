@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2025-08-15T11:48:36.043Z",
+  "semantic": {
+    "legacyCount": 6,
+    "aggCount": 6,
+    "matched": 6,
+    "legacyBytes": 59138,
+    "aggBytes": 6831,
+    "reductionPct": 88.45
+  },
+  "crawler": {
+    "legacyCount": 2,
+    "aggCount": 2,
+    "matched": 2,
+    "legacyBytes": 4803,
+    "aggBytes": 842,
+    "reductionPct": 82.47
+  }
+}

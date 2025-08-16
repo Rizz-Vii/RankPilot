@@ -90,6 +90,81 @@ Clarify ambiguities before large refactors; keep edits scoped & deterministic.
 - No unrelated file churn or formatting diffs.
 - Provenance, rate limits, and data contract rules are preserved.
 
+### 13. Division of Labor (Copilot vs Aider)
+Use Copilot (this agent) for: architecture, data contracts, security-sensitive paths, flaky test root-cause, multi-step orchestration, KPI snapshot logic, Firestore schema changes.
+Use Aider CLI for: mechanical multi-file edits (≥5 files) with stable patterns (FeatureGate insertions, smoothing extensions, token renames, test ID alignment, doc touch-ups, scaffold duplication) when NO new runtime logic or security implications.
+
+#### 13.1 Autonomous Aider Loop (Experimental)
+You may orchestrate limited background mechanical work via the delegation queue while continuing interactive tasks:
+
+Workflow (manual vs autorun):
+1. Prepare a Delegation Block in chat (see section 15) and get user confirmation if ambiguous.
+2. Enqueue: `npm run delegate:enqueue -- --taskId=DEL-XYZ --files=path1,path2 --summary="Short description"`.
+3. Process (manual): `npm run delegate:process` – prints aider command for operator to run (non-destructive).
+4. Process (autorun): `AIDER_AUTORUN=1 npm run delegate:process` – spawns aider automatically per pending task.
+5. On completion, ensure a log line in `sessions/aider-log.jsonl` (append if process script didn’t). Validate lint + targeted tests.
+
+Hard Safety Rules:
+- One task at a time (no parallel aider instances).
+- Diff size estimate ≤180 LOC (abort >220 LOC).
+- NO security/auth/Firestore schema/KPI logic.
+- If tests or lint fail: mark task failed and enqueue `DEL-<ID>-FIX` with narrowed scope.
+- Timeouts (>30m running) → mark failed with `timeout` note.
+
+Queue File (`sessions/aider-queue.jsonl`) States: `pending`, `running`, `done`, `failed`.
+Log File (`sessions/aider-log.jsonl`) Records: `{ taskId, filesChanged, locAdded, locRemoved, status, ts, notes? }` (rotate >200KB).
+
+User Intents (phrases to honor):
+- “show delegation status” → summarize queue + recent logs.
+- “flush delegation” → process all pending sequentially (if none running).
+- “stop auto delegation” → halt autonomous loop.
+
+Do NOT auto-enqueue new tasks without explicit prior user approval.
+
+### 14. Delegation Heuristic
+Delegate if ALL apply:
+1. Patterned edit (clear find/replace or templated insertion) OR test scaffolding after first exemplar.
+2. Expected total diff < 180 LOC (soft). Split if >180; hard stop 220 LOC.
+3. No secrets / env / serviceAccount exposure.
+4. Rollback is trivial (single commit revert).
+Else: keep in Copilot scope.
+
+### 15. Delegation Block Format
+When delegating, emit (instead of immediate edits):
+```
+/delegate
+TaskID: DEL-<SHORT>
+Summary: <What & Why>
+Files: <explicit relative paths | NEW: path>
+Constraints:
+	- MaxDiffLines: 180 (hard 220)
+	- Preserve style; no reformat churn
+	- Keep test IDs stable
+ExitCriteria:
+	- Tests: <npm script(s)>
+	- Lint & type check pass
+Rollback: git revert HEAD
+Observability: append JSON line to sessions/aider-log.jsonl
+```
+If aide exceeds limits: split into DEL-<SHORT>-A / -B.
+
+### 16. Aider Session Guardrails
+Pre-flight: clean tree (`git diff --quiet`), optional `npm run ai:aider:prep` if defined, scope add files only. Post-flight: run targeted tests + lint/type. If failing, produce `/delegate:fix` block with narrowed file list.
+
+### 17. Observability Precedence (Authoritative)
+Badge / value source order: Smoothed > Server MA7 > Client MA7 > Raw. Never silently downgrade without adjusting badge label. Tests asserting `[data-testid="prov-delta-smoothed"]` must not rely on synthetic injections.
+
+### 18. Logging (sessions/aider-log.jsonl)
+Each delegation may append JSON line:
+`{"taskId":"DEL-OBS-PREC","filesChanged":3,"locAdded":54,"locRemoved":12,"status":"pass","ts":"<ISO>"}`
+File kept small (<200KB); rotate or prune when large. Pure tooling artifact—no CHANGE_LOG entry needed unless behavior changed.
+
+### 19. Slash Commands (Internal Guidance)
+`/delegate` emit block; `/abort-delegate` cancel queued; `/refine <TaskID>` create narrowed follow-up; `/metrics aide` summarize recent delegation stats (lines changed, pass/fail).
+
+### 20. Diff Safety Checklist (Quick)
+Before accepting a mechanical aide diff: related? size < cap? tests updated? no secrets? rollback simple? If any NO → revise.
+
 ## Canonical Docs
 
 - Implementation Workflow: `docs/COMPREHENSIVE_DEVELOPMENT_WORKFLOW.md`

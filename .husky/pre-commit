@@ -16,4 +16,7 @@ npm run lint:fix
 # Type check
 npm run typecheck
 
+# CHANGE_LOG enforcement (T57)
+node scripts/validate-changelog.mjs || exit 1
+
 echo "✅ Pre-commit checks passed!"

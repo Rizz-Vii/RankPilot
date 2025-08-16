@@ -170,7 +170,8 @@ export default function FinanceDashboardRoot() {
               <Button size="sm" onClick={handleRefresh} disabled={refreshing} className={cn('gap-1', refreshing && 'animate-pulse')} aria-live="polite" aria-busy={refreshing}><RefreshCw className={cn('h-4 w-4', refreshing && 'animate-spin')} />{refreshing? 'Refreshing':'Refresh'}</Button>
             </div>
           </ToolPageHeader>
-          {allowFinanceMocks() && (!metrics || !metrics.kpis?.length) && (
+          {/* Banner: show whenever mocks are allowed AND we either have no metrics yet OR metrics resolved but contain no invoices (mock fallback). */}
+          {allowFinanceMocks() && (!metrics || (metrics && (((metrics as any).invoicesCount ?? (metrics as any).invoices?.length) === 0))) && (
             <Alert className="border-warning/30 bg-warning/15 text-warning-foreground dark:bg-warning/20 dark:text-warning-foreground" aria-live="polite" aria-label="Finance mock data banner">
               <div className="flex items-start gap-3 text-sm">
                 <AlertTriangle className="h-4 w-4 mt-0.5" />

@@ -1,6 +1,6 @@
 # Incomplete Code Audit
 
-Date: 2025-08-13
+Date: 2025-08-15 (refresh)
 Branch: workshop/performance
 
 This report catalogs incomplete, stubbed, or placeholder code across the repo. It prioritizes items that impact users vs. safe mocks/UX placeholders. Sources: automated scans (TODO/FIXME/placeholder/stub/not implemented) and spot reads of key files.
@@ -119,6 +119,21 @@ Legend
 - [P3] `src/app/(app)/insights/page.tsx`: Fallback to stub util allowed; add provenance and visibility gating if exposed to non-admin.
 - [P3] `src/components/neuroseo/NeuroSEOEnhancedComponents.tsx`: Mock scores for demo; keep behind feature flag or replace with signals.
 
+## Newly detected / updated items (2025-08-15 refresh)
+
+| Area | File / Path | Gap | Priority | Action |
+|------|-------------|-----|----------|--------|
+| Stripe Webhook | `src/app/api/stripe/webhook/route.ts` | `// TODO(T6): unify financeInvoices upsert` still pending unification with Functions webhook logic | P2 | Implement shared invoice upsert util (idempotent) and call from both paths; add contract test |
+| Delegation Framework | `scripts/delegation/*.ts` | Missing automatic LOC diff computation + auto log append + timeout / test run hooks | P2 | Phase 1: LOC diff + log (DONE this refresh). Phase 2: optional `--run-tests` integration & 30m timeout enforcement |
+| UI Stub | `src/components/ui/enhanced-card-stub.tsx` | Temporary stub; verify no remaining imports then remove | P3 | Grep for `enhanced-card-stub`; if unused delete & log in CHANGE_LOG |
+| Progress Stub | `src/components/ui/chart-components.tsx` (Progress) | Simplistic visual placeholder | P3 | Replace with shared progress component or Tailwind primitive; low priority |
+| Insights Page Fallback | `src/app/(app)/insights/page.tsx` | Uses stub util for AI analysis if real flow missing | P3 | Gate behind feature flag + provenance note or wire to live AI orchestrator |
+| Billing Placeholder | `src/app/(app)/billing/page.tsx` (if present) | Placeholder usage/payment method metrics (FIN-02) | P2 | Source live usage + payment method summary from Stripe / Firestore; add tests |
+| Marketing Backlog | `checkList.txt` tasks T18–T24 | Marked `TODO` (CRUD, security, SSO, audit log, PII) | P3 | Convert into tracked issues with acceptance criteria |
+| Adoption Workflow | `.github/workflows/adoption-gate.yml` | Deprecated with TODO removal date (≥2025-08-22) | P3 | Schedule deletion task; ensure prune threshold spec covered elsewhere |
+| Finance Mocks | Finance pages | Live metrics gated; mocks still default when no data | P2 | Implement real aggregation endpoints (in progress); keep gating |
+| NeuroSEO Prune Prep | Legacy collections | Prune script present; rely on ≥95% adoption sustained | P2 | Add sustained adoption CI guard & dry-run report before enabling destructive mode |
+
 ## Suggested next steps
 
 - Visualizations export polish [P3]
@@ -134,8 +149,20 @@ Legend
   - Add circuit breaker/capability metrics dashboards; extend tests (provider preference/fallback ordering, broader capability coverage).
 
 - Cleanup stubs [P3]
-  - Remove deprecated or temp files (`page-backup.tsx`, `page-fixed.tsx`, `enhanced-card-stub.tsx`) once references are gone.
-  - Reconcile placeholder comments in streaming API and chat components; add provenance headers where applicable.
+
+### New prioritized actions (subset extracted for immediate execution)
+
+1. (DONE) Delegation Phase 1: Implement LOC diff + automatic log append after each completed delegated task.
+2. Delegation Phase 2: Add optional test run flag (`DELEGATION_RUN_TESTS=1`) to execute `npm run lint && npm run test:critical` post-diff; append pass/fail to log.
+3. Stripe Webhook Unification: Extract shared invoice upsert util (idempotent on invoice id) consumed by webhook & any seeding endpoints.
+4. Stub Cleanup: Remove `enhanced-card-stub.tsx` once no imports remain.
+5. Adoption Workflow Retirement: Delete `.github/workflows/adoption-gate.yml` after 2025-08-22 and note in CHANGE_LOG.
+
+---
+(*This refresh appended new gaps and marked delegation enhancement Phase 1 as completed.*)
+
+- Remove deprecated or temp files (`page-backup.tsx`, `page-fixed.tsx`, `enhanced-card-stub.tsx`) once references are gone.
+- Reconcile placeholder comments in streaming API and chat components; add provenance headers where applicable.
 
 ## Notes
 

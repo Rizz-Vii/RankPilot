@@ -310,7 +310,7 @@ export default function TutorialsPage() {
           duration: "30 min",
           type: "video",
           requiredTier: "agency",
-          feature: "link_analysis",
+          feature: "link_view",
           tags: ["links", "backlinks", "authority"],
           popularity: 4,
           lastUpdated: new Date("2024-07-06"),

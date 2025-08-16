@@ -1,4 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
+import fs from 'fs';
+const storageStatePath = process.env.PLAYWRIGHT_STORAGE || 'test-results/.auth/admin.json';
+const hasStorage = fs.existsSync(storageStatePath);
 
 export default defineConfig({
     testDir: "./testing/specs",
@@ -16,6 +19,7 @@ export default defineConfig({
         video: "retain-on-failure",
         actionTimeout: 30000,
         navigationTimeout: 60000,
+        storageState: hasStorage ? storageStatePath : undefined,
     },
     expect: {
         timeout: 15000,

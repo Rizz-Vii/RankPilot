@@ -78,6 +78,23 @@ class SimpleAgentExecutor {
 // Agent executor instance
 const agentExecutor = new SimpleAgentExecutor();
 
+// Thin shim to PilotBuddy Central Brain baseline (non-blocking)
+(function invokeBrain() {
+  const candidates = [
+    '../dist/brain/scripts/brain/index.js',
+    '../dist/brain/index.js',
+    './brain/index.js',
+    './brain/index.ts'
+  ];
+  for (const p of candidates) {
+    try {
+      const mod = require(p);
+      const fn = (mod && (mod.runBaseline || (mod.default && mod.default.runBaseline))) || null;
+      if (typeof fn === 'function') { fn().catch(() => {}); break; }
+    } catch (_) { /* ignore */ }
+  }
+})();
+
 // TypeScript Guardian Agent Implementation
 async function executeTypeScriptGuardian() {
     console.log('🤖 TypeScript Guardian Agent - Starting execution...');

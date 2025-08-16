@@ -37,23 +37,59 @@ export const GET = withProvenance(async function GET(req: NextRequest) {
     const logger = getLogger('api.finance.metrics');
     try {
         const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
+        let uid: string | undefined;
+        let decoded: any;
         if (!authHeader) {
-            const res = NextResponse.json(enforceProvenance({ error: 'auth_required' }, { path: 'finance/metrics', note: 'auth' }), { status: 401 });
-            res.headers.set('x-finance-diagnostics', 'auth=missing');
-            return res;
+            // Non-production test bypass: ?testUser=email@example.com
+            if (process.env.NODE_ENV !== 'production') {
+                const urlObj = new URL(req.url);
+                const testUserEmail = urlObj.searchParams.get('testUser');
+                if (testUserEmail) {
+                    try {
+                        const userRecord = await adminAuth.getUserByEmail(testUserEmail).catch(() => null);
+                        if (userRecord) {
+                            uid = userRecord.uid;
+                            decoded = { uid };
+                        }
+                    } catch { /* ignore */ }
+                }
+            }
+            if (!uid) {
+                const res = NextResponse.json(enforceProvenance({ error: 'auth_required' }, { path: 'finance/metrics', note: 'auth' }), { status: 401 });
+                res.headers.set('x-finance-diagnostics', 'auth=missing');
+                return res;
+            }
+        } else {
+            const idToken = authHeader.replace('Bearer ', '');
+            decoded = await adminAuth.verifyIdToken(idToken);
+            uid = decoded.uid;
         }
-        const idToken = authHeader.replace('Bearer ', '');
-        const decoded = await adminAuth.verifyIdToken(idToken);
-        const uid = decoded.uid;
         const monthsParam = Number(new URL(req.url).searchParams.get('months') || 6);
         const months = Math.max(1, Math.min(24, isNaN(monthsParam) ? 6 : monthsParam));
         const teamId = new URL(req.url).searchParams.get('teamId') || undefined;
 
         const condField = teamId ? 'teamId' : 'userId';
-        const q = await adminDb.collection('financeInvoices').where(condField, '==', teamId || uid).orderBy('period', 'desc').limit(months * 30).get();
-        const invoices: FinanceInvoiceDoc[] = q.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
-        const payload = aggregateInvoices(invoices, months);
-        const diag = `auth=ok; items=${payload.invoices.length}; months=${months}; scope=${teamId ? 'team' : 'user'}`;
+        let invoices: FinanceInvoiceDoc[] = [];
+        try {
+            const q = await adminDb.collection('financeInvoices')
+                .where(condField, '==', teamId || uid)
+                .orderBy('period', 'desc')
+                .limit(months * 30)
+                .get();
+            invoices = q.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+        } catch (err: any) {
+            // Fallback path when composite index (condField + period) is missing in local/emulated envs.
+            if (err?.code === 9 || /FAILED_PRECONDITION/i.test(err?.message || '')) {
+                const q2 = await adminDb.collection('financeInvoices')
+                    .where(condField, '==', teamId || uid)
+                    .limit(months * 30)
+                    .get();
+                invoices = q2.docs.map(d => ({ id: d.id, ...(d.data() as any) })).sort((a, b) => (a.period || '').localeCompare(b.period || ''));
+            } else { throw err; }
+        }
+        const payload: any = aggregateInvoices(invoices, months);
+        payload.invoicesCount = payload.invoices?.length || invoices.length;
+        const diag = `auth=${authHeader ? 'ok' : 'bypass'}; items=${payload.invoices.length}; months=${months}; scope=${teamId ? 'team' : 'user'}`;
         const res = NextResponse.json(enforceProvenance({ ...payload, __provenance: 'live' }, { path: 'finance/metrics', note: 'ok' }));
         res.headers.set('x-finance-diagnostics', diag);
         return res;

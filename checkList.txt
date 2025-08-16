@@ -81,6 +81,91 @@ PHASE 6 (P3+ – Security & Compliance)
 4. PII Scan & Retention Script
 	- Script scanning common fields; retention purge for old analyses beyond policy.
 
+PHASE 7 (P2–P3 – Event Backbone & Orchestration)
+1. Canonical Event Schema & Publisher
+	- Add /src/lib/events/publishEvent.ts; schema doc; immutable write under /orgs/{orgId}/events.
+2. Event Type Registry & Lint
+	- Central enum + pre-commit check disallowing unknown types in codebase grep.
+3. Firestore Rules Update (IMMUTABLE EVENTS)
+	- Read for org members; create only; deny update/delete.
+4. Pub/Sub & BigQuery Mirror (Cloud Function)
+	- Stream new events for analytics + future causal engine.
+5. Event Explorer Admin Page
+	- Filter by type/source/date; export CSV.
+6. Automation Event Triggers (Integration Step 1)
+	- Extend automation run-now/run-due to emit start/step/complete/fail events.
+7. Simulation Sandbox (Spec Only in this Phase)
+	- Define API contract for historical replay (inputs, pagination, limits).
+Acceptance:
+	- Event writes present & immutable (attempted update fails test); explorer lists at least 5 emitted types; automation routes emitting lifecycle events.
+
+PHASE 8 (P3 – Revenue Truth Analytics)
+1. Data Join Service
+	- Correlate events -> deals/invoices/campaigns (in-memory service module).
+2. Attribution Explainer Module
+	- Generates top factor list with % contribution (no persistence).
+3. Deal Probability Enhancer
+	- Combine stage + finance risk + engagement signals to surface probability deltas.
+4. Anomaly Detector (Batch Job / Function)
+	- Daily scan for metric deviations (z-score or EWM threshold) -> emits analytics.anomaly events.
+5. Revenue Truth UI Panel (/finance/revenue truth drawer)
+	- Surfaces causality narrative + anomaly badges.
+Acceptance:
+	- At least one anomaly event emitted during seeded test; probability field rendered; attribution explainer returns sorted factors; no derived ratios stored.
+
+PHASE 9 (P3+ – Marketplace & Templates)
+1. Template Entity & Firestore Path
+	- /global/templates; fields: kind, version, checksum, createdAt, updatedAt, authorRef, usageCount.
+2. Template Validation Pipeline (Dry-Run Executor)
+	- Simulate automation template steps without side effects.
+3. Publishing Workflow (states: draft→review→published→deprecated)
+4. Revenue Share Ledger Stub
+	- /orgs/{orgId}/templateEarnings (monthly aggregate). No payout logic yet.
+5. Discovery UI (filters: kind, popularity, new)
+6. Usage Telemetry Events (template.applied, template.failed)
+Acceptance:
+	- Apply template clones into org; validation rejects at least one malformed template in test; usageCount increments; events emitted.
+
+PHASE 10 (P3+ – Embedded Workspace & Extension)
+1. Side Panel Manifest Spec
+	- Document postMessage API (auth token request, command invocation, event stream subscribe).
+2. Scoped Token Endpoint (/api/embedded/token)
+	- Issues short-lived JWT (orgId, scopes, exp).
+3. Presence Channel Skeleton
+	- In-memory or Firestore-based; emits user join/leave events.
+4. Quick Action Palette Spec
+	- Command taxonomy + minimal invocation endpoint.
+5. Embed Usage Metrics
+	- Counters for activePanels, commandsExecuted.
+Acceptance:
+	- Token endpoint issues valid expiring token (test); presence feed logs at least one join/leave; embed metrics appear in /api/health.
+
+PHASE 11 (Continuous – AI Ops & Provider Optimization)
+1. Provider Registry & Health Scoring
+	- Store latency, successRate, costFactor snapshots.
+2. Adaptive Routing Integration
+	- Choose provider per invocation (score = qualityWeight*successRate - costFactor*λ + latencyPenalty).
+3. Cost Ledger Persistence
+	- Enrich aiUsageDaily with per-call cost + model.
+4. Prompt Versioning
+	- Registry with hash/version; regression snapshot tests.
+5. Latency & Error SLO Dashboard Widgets
+	- Integrate into observability page.
+6. Alerting Events on Error Spikes
+	- Emit ai.provider.anomaly when threshold exceeded.
+Acceptance:
+	- Routing decisions logged; cost ledger rows present; SLO widgets render; anomaly event seeded in test.
+
+PHASE 12 (Continuous – Documentation & Dev Productivity)
+1. Architecture Delta Doc (Business OS Graph + Orchestration)
+2. Event Schema Reference (source/type/refs/traits expectations)
+3. PR Template Upgrade (risk score checklist)
+4. Aider Context Index Generator Job
+5. CHANGE_LOG Enforcement Hook (reject missing rationale for behavior diffs)
+6. Onboarding Validation Script (env vars, indexes, feature keys sanity)
+Acceptance:
+	- Docs merged; onboarding script passes in CI; enforcement hook blocks missing rationale PR (test simulation).
+
 BACKLOG REGISTER (Task IDs)
 ID | Phase | Title | Status | Notes
 ---|-------|-------|--------|------
@@ -97,10 +182,10 @@ T10| P2 | Crawler integration Firecrawl | DONE | Integrated into audit pipeline 
 T11| P2 | Audit schema validation | DONE | Zod schemas (pages + response) + validation fallback tests
 T12| P2 | Team crawler quota | DONE | Firestore-backed hourly quota w/ scope (team:user:global) + headers + metrics
 T13| P2 | Load test audit | DONE | 20-parallel audit stress test stable (0% failures, p95 < 200ms) + memory guard assertion; quota & fallback paths validated
-T14| P2 | Data minimization migration | TODO | Aggregates only
-T15| P2 | Observability dashboard | TODO | Admin page
-T16| P2 | KPI snapshot function | IN-PROGRESS | Cloud Function scaffold (AI usage + retention) + revenue metrics (MRR/outstanding/on-time%) + extended test; next: provenanceCoveragePct & latency percentile fields after shared metrics extraction.
-T17| P2 | Alias retirement | TODO | After enforcement test green
+T14| P2 | Data minimization migration | DONE | Aggregates + empirical reduction (crawler 82.47%, semantic 88.45%)
+T15| P2 | Observability dashboard | IN-PROGRESS | Smoothing + MA7 done; test currently uses placeholder DOM injection fallback pending reliable native badge rendering without injection.
+T16| P2 | KPI snapshot function | IN-PROGRESS | Snapshot includes revenue + provenance coverage & latency percentiles; alert persistence integrated (kpiAlertsDaily); exponential smoothing + MA7 precompute persisted (provenance & latency P95). Remaining: decide on extending smoothing to adoption metrics.
+T17| P2 | Alias retirement | DONE | Legacy aliases removed; transitional ai_insights->advanced_analytics mapping pending removal next release if unused
 T18| P3 | Marketing campaign CRUD | TODO | CRUD + dashboard
 T19| P3 | Sales pipeline stages | TODO | Weighted forecast
 T20| P3 | Outreach sequencing skeleton | TODO | Spec + scheduler
@@ -109,6 +194,39 @@ T22| P3 | Audit log service | TODO | Mutation hooks
 T23| P3 | SSO/SAML skeleton | TODO | Config harness
 T24| P3 | PII scan & retention | TODO | Script + policy
 T25| P1 | Entitlement metadata refactor | DONE | canAccessEntitlement helper + test-entitlements-access
+T26| P2 | Event publisher & schema | TODO | Canonical /events write + doc
+T27| P2 | Event type registry & lint | TODO | Unknown type check
+T28| P2 | Pub/Sub + BQ mirror | TODO | Mirror CF function
+T29| P2 | Event explorer page | TODO | Admin filter + export
+T30| P2 | Automation lifecycle events | TODO | Emit start/step/end/fail
+T31| P3 | Simulation sandbox spec | TODO | Replay contract
+T32| P3 | Data join service | TODO | In-memory correlation
+T33| P3 | Attribution explainer | TODO | Factor list
+T34| P3 | Anomaly detector job | TODO | Emits anomaly events
+T35| P3 | Revenue truth UI panel | TODO | Drawer integration
+T36| P3+| Template entity + path | TODO | /global/templates
+T37| P3+| Template validation pipeline | TODO | Dry-run exec
+T38| P3+| Publishing workflow states | TODO | Draft→review→published
+T39| P3+| Revenue share ledger stub | TODO | Earnings aggregate
+T40| P3+| Marketplace discovery UI | TODO | Filters + metrics
+T41| P3+| Template usage telemetry | TODO | Events + counters
+T42| P3+| Embed side panel spec | TODO | postMessage API
+T43| P3+| Scoped token endpoint | TODO | Short-lived JWT
+T44| P3+| Presence channel skeleton | TODO | Join/leave events
+T45| P3+| Quick action palette spec | TODO | Command taxonomy
+T46| P3+| Embed usage metrics | TODO | Health counters
+T47| Cont| Provider registry & health | TODO | Latency + success rates
+T48| Cont| Adaptive routing integration | TODO | Score-based provider choose
+T49| Cont| Cost ledger persistence | TODO | Cost per call
+T50| Cont| Prompt versioning registry | TODO | Hash + tests
+T51| Cont| Latency & error SLO widgets | TODO | Observability integration
+T52| Cont| AI anomaly alert events | TODO | ai.provider.anomaly
+T53| Cont| Architecture delta doc | TODO | Updated system arch
+T54| Cont| Event schema reference | TODO | Source/type/fields doc
+T55| Cont| PR template upgrade | TODO | Risk checklist
+T56| Cont| Aider context index job | TODO | /generated/dev/context-index.json
+T57| Cont| CHANGE_LOG enforcement hook | TODO | Pre-commit/push script
+T58| Cont| Onboarding validation script | TODO | Env/index sanity
 
 ACCEPTANCE CRITERIA SNAPSHOT
 - Phase1 complete when: All mismatches resolved; nav gating matrix test passes; link_view key defined & gated; finance mock banner visible when mocks active.
@@ -132,4 +250,72 @@ Placeholder / Mock / Synthetic Implementations
 Refer to git history for full pre-refactor checklist.
 <END_ORIGINAL>
 ###############################################################################
-\n+IMMEDIATE NEXT STEPS (Post T13 Completion)\n+1. Finalize T16: Add provenanceCoveragePct & latency percentile export wiring (ensure unified metrics daily export includes crawl/analysis p95/p99).\n+2. Begin T14 migration script draft: enumerate large semanticMapResults/neuralCrawlerResults docs >2.5KB and compute target aggregate structure; dry-run log only.\n+3. Scaffold Observability Dashboard (T15): create gated admin route + initial KPI cards (reuse /api/health).\n+4. Prepare alias retirement (T17): generate usage report to confirm zero runtime references before deletion.\n+5. Add memory leak guard to stress test suite if not already persisted (baseline process.rss delta < +25MB across 3 consecutive runs).\n+
+IMMEDIATE NEXT STEPS (Post Adoption KPI Integration)
+1. (DONE) Finalize T16: provenanceCoveragePct & latency percentile export wiring (unifiedMetricsDaily includes crawl/analysis p95 + p99; /api/health exposes crawl/analysis p99).
+2. (COMPLETE) T14 migration: 
+	- (DONE) Scanner + WRITE mode + JSON artifact + unit test
+	- (DONE) Semantic map backfill script
+	- (DONE) Runtime adoption counters (crawler + semanticMap) + Playwright alert tests
+	- (DONE) Dedicated adoption dashboard (/neuroseo/adoption)
+	- (DONE) CI wiring to assert DRY_RUN backfill skip logic & artifact presence
+	- (DONE) Seed script added (`seed:semantic-map-legacy`) & seeded 6 docs
+	- (DONE) Backfill WRITE executed; size report shows semantic reductionPct=88.45%
+	- (DONE) CHANGE_LOG updated with evidence; T14 marked complete
+3. T15 Observability Dashboard: core admin page + MA7 overlays present; kpiAlertsDaily persistence DONE; smoothing implemented (alpha=0.3) for provenance & latency P95; acceptance Playwright test (feature-observability-smoothing.spec.ts) added.
+4. Prepare alias retirement (T17): generate usage report to confirm zero runtime references before deletion.
+5. Add memory leak guard to stress test suite if not already persisted (baseline process.rss delta < +25MB across 3 consecutive runs).
+6. (ADDED) Test metrics seeding endpoint /api/test/metrics/crawler implemented (non-production) to support prune threshold Playwright spec; semantic domain seeding supported via domain=semantic.
+7. (NEW) Semantic adoption parity test added (≥95%); adoption gate chained into central validation workflow (validation-gate) for early failure; observability page enhanced with alert history placeholder.
+8. (IN-PROGRESS) Alert history persistence: kpiAlertsDaily snapshots (provenance/adoption/fallback thresholds) implemented in kpiDailySnapshot CF; observability dashboard now loads & displays; consider expanding alert rule parity (latency, cache hit ratio) & smoothing (moving avg). Evaluate deprecating standalone adoption-gate.yml after 1 week stable central gating.
+9. (UPDATED) Alert parity extended: latencyOverallP95, cacheHitRatio, rateLimitRejectionRate now included + 7-day moving averages (provenance/adoption). adoption-gate.yml annotated as legacy candidate.
+10. (UPDATED) MA7 extended to fallbackRate & p95LatencyOverall + dashboard color-coded divergence (improvement vs degradation). Pending: remove legacy adoption-gate.yml after 1 week stable.
+11. (UPDATED) Added MA7 + sparklines for cacheHitRatio & rateLimitRejectionRate; observability dashboard extended. Pending: deprecate adoption-gate.yml post stability window & add CHANGE_LOG entry for removal.
+12. (NEW) Finance live metrics stabilization: testUser bypass + seeding spec eliminated 401 flake; invoicesCount reliably detected.
+13. (NEW) Lightweight health probe (/api/health/simple) with version/buildSha/uptime + monitoring tests & CI doc (CI_HEALTH_CHECKS.md).
+14. (NEW) NEXTAUTH_SECRET configured to remove auth warning; stable session encryption in dev/tests.
+
+###############################################################################
+DELEGATION QUEUE CANDIDATES (Mechanical, Safe for Aider)
+- DQ1 (T29) Event explorer page scaffold (empty component + FeatureGate + nav entry) – files: src/app/(app)/admin/events/page.tsx, src/constants/enhanced-nav.ts
+- DQ2 (T36) Template entity Firestore path doc stub + placeholder collection access util – files: docs/FIRESTORE_SCHEMAS.md, src/lib/templates/index.ts
+- DQ3 (T40) Marketplace discovery UI skeleton (list + filters static) – files: src/app/(app)/marketplace/templates/page.tsx, src/constants/enhanced-nav.ts
+- DQ4 (T53/T54) Architecture delta + event schema docs addition – files: docs/COMPREHENSIVE_SYSTEM_ARCHITECTURE.md, docs/FIRESTORE_SCHEMAS.md
+- DQ5 (T55) PR template risk checklist insertion – file: .github/pull_request_template.md
+- DQ6 (T56) Context index generator stub script – file: scripts/generate-context-index.ts (no runtime logic yet)
+- DQ7 (T57) CHANGE_LOG enforcement hook stub – file: .husky/pre-commit or scripts/validate-changelog.mjs
+
+NON-DELEGABLE (Keep in Copilot Scope)
+- Firestore security rule changes (T27, immutability).
+- Pub/Sub + BigQuery function (T28).
+- Adaptive routing logic (T48).
+- Anomaly detection algorithm (T34, T52).
+- Scoped token endpoint auth (T43).
+
+DELEGATION ACCEPTANCE GUIDELINES
+- Each delegated diff ≤180 LOC (hard 220) and confined to listed files.
+- Must add FeatureGate & nav simultaneously for new pages.
+- No Firestore rule or server secret edits in delegated tasks.
+- Update CHANGE_LOG only if runtime behavior changes, not for pure scaffolds.
+
+NEXT DELEGATION SUGGESTION ORDER
+1) DQ1 -> 2) DQ5 -> 3) DQ4 -> 4) DQ6 -> 5) DQ7 -> 6) DQ3 -> 7) DQ2.
+
+###############################################################################
+ROADMAP ALIGNMENT NOTES (Aug 15 Consolidation)
+- Phases 7–12 appended to integrate Business OS Graph, Marketplace, Embedded Workspace, AI Ops.
+- Existing Phases 1–6 remain unchanged to preserve audit traceability.
+- Backlog IDs extended (T26–T58) mapping to new epics A–L from strategic plan.
+- Delegation candidate list prepared per Division of Labor guidelines.
+
+
+NEXT ACTION FOCUS:
+ A. Persist alerts (kpiAlertsDaily) with retention (90d) and load into observability page history table. (DONE)
+ B. Playwright test asserting at least one persisted alert row after synthetic seeding. (DONE)
+ C. (DONE) Deprecate adoption-gate.yml: workflow removed; CHANGE_LOG updated; prune-if-ready automation script added.
+ D. (NEW) Monitor `.adoption_sustained` streak; execute prune with CONFIRM=1 once sustained ≥95% for 3 days.
+ E. Evaluate server-side MA7 precompute (provenance, latency, adoption) + contract test to offload client computation. (PARTIAL: extended with exponential smoothing; adoption smoothing decision pending.)
+
+ADDED (2025-08-15):
+ - Script alias test:unit:observability-mocked added (all 10 tests passing) removing need for @testing-library/react by pure function test.
+ - Enhanced seed-alert endpoint supports batch & MA7 map seeding for deterministic alert + MA overlay tests.
+ - MA7 precedence helper exported & unit-tested (preferredMA) verifying server override behavior.

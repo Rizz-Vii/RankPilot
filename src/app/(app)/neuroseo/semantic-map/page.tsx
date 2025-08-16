@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
@@ -36,6 +35,7 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { toast } from "sonner";
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Progress } from '@/components/ui/progress';
 
 interface TopicCluster {
   id: string;
@@ -95,6 +95,23 @@ export default function SemanticMapPage() {
   const [currentResult, setCurrentResult] = useState<SemanticMapResult | null>(null);
   const [selectedTab, setSelectedTab] = useState("overview");
   const { provenance, setProvenance, markLive, markFallback } = useProvenance();
+  const [adoptionPct, setAdoptionPct] = useState<number | null>(null);
+  const [adoptionLoading, setAdoptionLoading] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setAdoptionLoading(true);
+      try {
+        const r = await fetch('/api/health');
+        if (!r.ok) return;
+        const data = await r.json();
+        if (!cancelled) setAdoptionPct(data?.kpis?.semanticMapAggregateAdoptionPct ?? null);
+      } catch { /* noop */ } finally { if (!cancelled) setAdoptionLoading(false); }
+    };
+    load();
+    const id = setInterval(load, 8000); // light poll for live changes
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
 
   const simulateSemanticAnalysis = async (url: string, keywords: string[]): Promise<SemanticMapResult> => {
     // Simulate progressive analysis
@@ -292,6 +309,23 @@ export default function SemanticMapPage() {
         badges={composeToolHeaderBadges("semantic-map", provenance)}
         showBreadcrumb
       />
+
+      {/* Adoption KPI (T14) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" /> Aggregate Adoption
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span>SemanticMap Aggregate Read Adoption</span>
+            <span className="font-medium">{adoptionPct != null ? `${adoptionPct.toFixed(2)}%` : (adoptionLoading ? 'Loading…' : '—')}</span>
+          </div>
+          <Progress value={adoptionPct || 0} className={adoptionPct != null ? (adoptionPct < 50 ? 'bg-red-200' : adoptionPct < 80 ? 'bg-amber-200' : 'bg-green-200') : ''} />
+          <p className="text-xs text-muted-foreground">Target: ≥80% (warn if 50–&lt;80, critical &lt;50). Reflects usage of new compact aggregate vs legacy large docs.</p>
+        </CardContent>
+      </Card>
 
       {/* Analysis Input */}
       <Card>

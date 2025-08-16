@@ -53,6 +53,13 @@ export default function RevenueAnalyticsPage() {
           <PeriodSelector value={months} onChange={setMonths} />
   </header>
   <ProvenanceLegend />
+        {/* Mock banner (harmonized): show when mocks enabled and either KPIs not loaded or no invoice rows available. */}
+  {allowFinanceMocks() && (!live.rows.length) && (
+          <div className="rounded-md border border-warning/30 bg-warning/15 text-warning-foreground dark:bg-warning/20 dark:text-warning-foreground p-3 text-sm flex gap-3" aria-label="Finance mock data banner" aria-live="polite">
+            <span className="font-medium">Mock Data</span>
+            <span>Finance metrics are currently served from mock data (FINANCE_MOCK_MODE). This banner disappears once live metrics load or mocks are disabled.</span>
+          </div>
+        )}
         {loadingSnap && <Skeleton className="h-14 rounded-lg" shimmer />}
         {!loadingSnap && revSnap && (
           <div className="rounded-lg border p-3 bg-background/60 flex items-center justify-between text-xs mb-2" aria-label="Latest revenue snapshot">

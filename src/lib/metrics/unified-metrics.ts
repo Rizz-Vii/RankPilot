@@ -21,7 +21,8 @@ export interface UnifiedMetricsSnapshot {
     teamRateLimitAllows?: Record<string, number>; // route or scope -> successful allowed increments (team scoped)
     compactDocs?: { count: number; totalBytes: number; avgBytes: number | null }; // optional size tracking
     inviteMaintenance?: { markedExpired: number; deletedAccepted: number; deletedExpired: number; orphanIndexes: number };
-    crawler?: { success: number; errors: number; totalCrawlMs: number; totalAnalysisMs: number; crawlP95?: number | null; analysisP95?: number | null };
+    crawler?: { success: number; errors: number; totalCrawlMs: number; totalAnalysisMs: number; crawlP95?: number | null; analysisP95?: number | null; crawlP99?: number | null; analysisP99?: number | null };
+    semanticMap?: { aggregateHits: number; legacyFallbacks: number };
 }
 
 const provenanceCounters = {
@@ -38,6 +39,8 @@ const teamRateLimitAllows: Record<string, number> = {};
 const compactDocSize = { count: 0, totalBytes: 0 };
 const inviteMaintenanceCounters = { markedExpired: 0, deletedAccepted: 0, deletedExpired: 0, orphanIndexes: 0 };
 const crawlerCounters = { success: 0, errors: 0, totalCrawlMs: 0, totalAnalysisMs: 0, aggregateHits: 0, legacyFallbacks: 0, quotaLimit: 0, quotaRemaining: 0, crawlSamples: [] as number[], analysisSamples: [] as number[] };
+// Semantic Map aggregate adoption counters (T14 extension)
+const semanticMapCounters = { aggregateHits: 0, legacyFallbacks: 0 };
 
 export function recordProvenanceObservation(hasProvenance: boolean) {
     provenanceCounters.total += 1;
@@ -105,7 +108,8 @@ export function getUnifiedMetricsSnapshot(): UnifiedMetricsSnapshot {
         , teamRateLimitAllows: { ...teamRateLimitAllows }
         , compactDocs: { count: compactDocSize.count, totalBytes: compactDocSize.totalBytes, avgBytes: compactDocSize.count ? Math.round(compactDocSize.totalBytes / compactDocSize.count) : null }
         , inviteMaintenance: { ...inviteMaintenanceCounters }
-        , crawler: { ...crawlerCounters, crawlP95: computeSimpleP95(crawlerCounters.crawlSamples), analysisP95: computeSimpleP95(crawlerCounters.analysisSamples) }
+        , crawler: { ...crawlerCounters, crawlP95: computeSimpleP95(crawlerCounters.crawlSamples), analysisP95: computeSimpleP95(crawlerCounters.analysisSamples), crawlP99: computeSimpleP99(crawlerCounters.crawlSamples), analysisP99: computeSimpleP99(crawlerCounters.analysisSamples) }
+        , semanticMap: { ...semanticMapCounters }
     };
 }
 
@@ -154,6 +158,14 @@ export function recordCrawlerLegacyFallback() {
     crawlerCounters.legacyFallbacks += 1;
 }
 
+// Semantic Map aggregate read path metrics (T14)
+export function recordSemanticMapAggregateHit() {
+    semanticMapCounters.aggregateHits += 1;
+}
+export function recordSemanticMapLegacyFallback() {
+    semanticMapCounters.legacyFallbacks += 1;
+}
+
 // Firecrawl quota observation (T12 extended)
 export function recordCrawlerQuota(limit: number, remaining: number) {
     crawlerCounters.quotaLimit = limit;
@@ -164,5 +176,12 @@ function computeSimpleP95(samples: number[]): number | null {
     if (!samples.length) return null;
     const sorted = [...samples].sort((a, b) => a - b);
     const idx = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95));
+    return sorted[idx];
+}
+
+function computeSimpleP99(samples: number[]): number | null {
+    if (!samples.length) return null;
+    const sorted = [...samples].sort((a, b) => a - b);
+    const idx = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.99));
     return sorted[idx];
 }

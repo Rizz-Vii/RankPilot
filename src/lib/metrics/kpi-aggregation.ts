@@ -19,6 +19,7 @@ export interface KpiSnapshot {
     crawler?: { success: number; errors: number; totalCrawlMs: number; totalAnalysisMs: number };
     /** Percentage of neural crawler reads served from new aggregate collection vs legacy fallback. Null until at least one hit or fallback recorded. */
     crawlerAggregateAdoptionPct?: number | null;
+    semanticMapAggregateAdoptionPct?: number | null; // T14 semantic map aggregate adoption
     // Daily AI usage aggregates (populated opportunistically in /api/health; not part of base snapshot computation layer)
     aiDailyTokensIn?: number;
     aiDailyTokensOut?: number;
@@ -61,12 +62,19 @@ export function getKpiSnapshot(): KpiSnapshot {
 
     // Crawler aggregate adoption KPI (T14): aggregateHits / (aggregateHits + legacyFallbacks)
     let crawlerAggregateAdoptionPct: number | null = null;
+    let semanticMapAggregateAdoptionPct: number | null = null;
     const crawlerAny: any = unified.crawler as any;
     if (crawlerAny && (crawlerAny.aggregateHits != null || crawlerAny.legacyFallbacks != null)) {
         const hits = crawlerAny.aggregateHits || 0;
         const fallbacks = crawlerAny.legacyFallbacks || 0;
         const denom = hits + fallbacks;
         if (denom > 0) crawlerAggregateAdoptionPct = +((hits / denom) * 100).toFixed(2);
+    }
+
+    // Semantic Map aggregate adoption KPI
+    const smAny: any = (unified as any).semanticMap;
+    if (smAny && (smAny.aggregateHits != null || smAny.legacyFallbacks != null)) {
+        const hits = smAny.aggregateHits || 0; const fallbacks = smAny.legacyFallbacks || 0; const denom = hits + fallbacks; if (denom > 0) semanticMapAggregateAdoptionPct = +((hits / denom) * 100).toFixed(2);
     }
 
     return {
@@ -82,6 +90,7 @@ export function getKpiSnapshot(): KpiSnapshot {
         timestamp: new Date().toISOString(),
         routesP95,
         crawler: unified.crawler,
-        crawlerAggregateAdoptionPct
+        crawlerAggregateAdoptionPct,
+        semanticMapAggregateAdoptionPct
     };
 }

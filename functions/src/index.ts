@@ -21,6 +21,8 @@ export { cleanupInvites } from "./scheduled/cleanup-invites.js";
 export { runDueAutomationScheduler } from "./scheduled/run-due-automation.js";
 // Daily KPI snapshot (T16)
 export { kpiDailySnapshot } from "./scheduled/kpi-daily-snapshot";
+// Event Backbone mirroring (T28 scaffold)
+export { onEventWrite } from "./events/onEventWrite.js";
 
 setGlobalOptions({ region: "australia-southeast2" });
 

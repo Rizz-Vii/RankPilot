@@ -31,7 +31,7 @@ export class EnhancedAuth {
    */
   async loginAndGoToDashboard(user?: UnifiedTestUser | UserTier): Promise<void> {
     // TEMPORARY: Use dev user (abbas_ali_rizvi@hotmail.com) for all tiers until Firebase Admin is configured
-    const targetUser = DEV_USER; // resolveTestUser(user);
+    const targetUser = user ? resolveTestUser(user) : DEV_USER;
 
     try {
       console.log(`🔐 Logging in as ${targetUser.displayName} (${targetUser.tier}) [USING DEV USER]`);

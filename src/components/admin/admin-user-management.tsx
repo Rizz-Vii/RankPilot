@@ -181,9 +181,12 @@ export default function AdminUserManagement() {
   };
 
   const filteredUsers = users.filter((user) => {
+    const email = typeof user.email === 'string' ? user.email : '';
+    const name = typeof user.displayName === 'string' ? user.displayName : '';
+    const term = searchTerm.toLowerCase();
     const matchesSearch =
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.displayName?.toLowerCase().includes(searchTerm.toLowerCase());
+      email.toLowerCase().includes(term) ||
+      name.toLowerCase().includes(term);
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
     return matchesSearch && matchesRole;
   });

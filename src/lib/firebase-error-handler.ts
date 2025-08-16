@@ -1,6 +1,6 @@
 // Firebase error handling utilities
 import { FirebaseError } from "firebase/app";
-import { analytics } from "./firebase/index";
+import { analytics } from "./firebase";
 import { logEvent } from "firebase/analytics";
 
 export class FirebaseErrorHandler {

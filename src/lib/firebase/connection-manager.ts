@@ -6,7 +6,7 @@
 import { FirebaseApp, getApp, getApps, initializeApp } from 'firebase/app';
 import { connectFirestoreEmulator, Firestore, initializeFirestore, terminate } from 'firebase/firestore';
 
-// Firebase configuration - matches the one in firebase/index.ts
+// Firebase configuration - kept in sync with legacy defaults previously duplicated in firebase/index.ts
 const firebaseConfig = {
     apiKey:
         process.env.NEXT_PUBLIC_FIREBASE_API_KEY ||
@@ -24,6 +24,10 @@ const firebaseConfig = {
         process.env.NEXT_PUBLIC_FIREBASE_APP_ID ||
         "1:283736429782:web:a3e387a3a79a592121e577",
 };
+
+// Global sentinel key to suppress duplicate noisy init logs across HMR / route workers
+// (placed on globalThis to survive module reload boundaries in dev)
+const CLIENT_INIT_SENTINEL = '__RP_FIREBASE_INIT_LOGGED__';
 
 class FirestoreConnectionManager {
     private static instance: FirestoreConnectionManager;
@@ -52,10 +56,20 @@ class FirestoreConnectionManager {
             // Ensure single app instance - prevents "Firebase App named '[DEFAULT]' already exists" errors
             if (getApps().length === 0) {
                 this.app = initializeApp(firebaseConfig);
-                console.log('🔥 Firebase app initialized');
+                // Only log once per process (or dev multi-worker session) using a global sentinel
+                try {
+                    const g: any = globalThis as any;
+                    if (!g[CLIENT_INIT_SENTINEL]) {
+                        console.log('🔥 Firebase app initialized');
+                        g[CLIENT_INIT_SENTINEL] = true;
+                    }
+                } catch { /* ignore sentinel issues */ }
             } else {
                 this.app = getApp();
-                console.log('🔥 Using existing Firebase app');
+                // Suppress noisy reuse log (can be re-enabled with NEXT_PUBLIC_FIREBASE_VERBOSE_INIT=1)
+                if (process.env.NEXT_PUBLIC_FIREBASE_VERBOSE_INIT === '1') {
+                    console.log('🔥 Using existing Firebase app');
+                }
             }
 
             // Initialize Firestore with robust browser settings (before any Firestore use)
@@ -87,7 +101,9 @@ class FirestoreConnectionManager {
             }
 
             this.initialized = true;
-            console.log('✅ Firestore connection established successfully');
+            if (process.env.NEXT_PUBLIC_FIREBASE_VERBOSE_INIT === '1') {
+                console.log('✅ Firestore connection established successfully');
+            }
         } catch (error) {
             console.error('❌ Firestore initialization failed:', error);
             throw error;
@@ -115,11 +131,21 @@ class FirestoreConnectionManager {
     isConnected(): boolean {
         return this.initialized && this.db !== null;
     }
+
+    // Expose app instance (ensures initialization if not already done)
+    getAppInstance(): FirebaseApp {
+        if (!this.initialized) {
+            this.initializeDatabase();
+        }
+        return this.app!;
+    }
 }
 
 // Export singleton instance
 export const connectionManager = FirestoreConnectionManager.getInstance();
+// Export primary singletons
 export const db = connectionManager.getDatabase();
+export const app = connectionManager.getAppInstance();
 export const resetFirestoreConnection = () => connectionManager.resetConnection();
 
 // Health check function

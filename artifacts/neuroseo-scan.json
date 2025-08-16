@@ -1,0 +1,561 @@
+{
+  "generatedAt": "2025-08-15T11:47:33.500Z",
+  "threshold": 2500,
+  "write": false,
+  "semantic": {
+    "scanned": 6,
+    "oversized": 6
+  },
+  "crawler": {
+    "scanned": 2,
+    "oversized": 0
+  },
+  "entries": [
+    {
+      "collection": "semanticMapResults",
+      "id": "3PjxMIZDD4GnhuhSpkBH",
+      "size": 9842,
+      "proposedAggregateSize": 1135,
+      "reductionPct": 88.47,
+      "userId": "seedUser_semantic",
+      "url": "https://example.dev/seed/semantic/0-1755258429893",
+      "aggregatePreview": {
+        "userId": "seedUser_semantic",
+        "url": "https://example.dev/seed/semantic/0-1755258429893",
+        "overallScore": 70,
+        "topicClustersCount": 12,
+        "keywordAnalysisCount": 30,
+        "topTopicClusters": [
+          {
+            "topic": "topic_0_0",
+            "semanticScore": 90,
+            "opportunity": "high"
+          },
+          {
+            "topic": "topic_0_1",
+            "semanticScore": 72.07,
+            "opportunity": "medium"
+          },
+          {
+            "topic": "topic_0_2",
+            "semanticScore": 75.46,
+            "opportunity": "low"
+          },
+          {
+            "topic": "topic_0_3",
+            "semanticScore": 97.06,
+            "opportunity": "high"
+          },
+          {
+            "topic": "topic_0_4",
+            "semanticScore": 82.16,
+            "opportunity": "medium"
+          }
+        ],
+        "topKeywords": [
+          {
+            "keyword": "kw_0_0",
+            "semanticRelevance": 50
+          },
+          {
+            "keyword": "kw_0_1",
+            "semanticRelevance": 92.07
+          },
+          {
+            "keyword": "kw_0_2",
+            "semanticRelevance": 95.46
+          },
+          {
+            "keyword": "kw_0_3",
+            "semanticRelevance": 57.06
+          },
+          {
+            "keyword": "kw_0_4",
+            "semanticRelevance": 62.16
+          },
+          {
+            "keyword": "kw_0_5",
+            "semanticRelevance": 52.05
+          },
+          {
+            "keyword": "kw_0_6",
+            "semanticRelevance": 86.03
+          },
+          {
+            "keyword": "kw_0_7",
+            "semanticRelevance": 82.85
+          }
+        ],
+        "readabilityScore": 80,
+        "contentDepth": 70,
+        "topicCoverage": 75,
+        "semanticRichness": 65,
+        "expertiseSignals": 72,
+        "graphNodesCount": 40,
+        "graphEdgesCount": 60,
+        "recommendationsCount": 15,
+        "version": 1,
+        "createdAt": {
+          "_seconds": 1755258433,
+          "_nanoseconds": 649000000
+        }
+      },
+      "wrote": false
+    },
+    {
+      "collection": "semanticMapResults",
+      "id": "AN2GPS41eYtMp9BqAT4i",
+      "size": 9853,
+      "proposedAggregateSize": 1140,
+      "reductionPct": 88.43,
+      "userId": "seedUser_semantic",
+      "url": "https://example.dev/seed/semantic/3-1755258433955",
+      "aggregatePreview": {
+        "userId": "seedUser_semantic",
+        "url": "https://example.dev/seed/semantic/3-1755258433955",
+        "overallScore": 73,
+        "topicClustersCount": 12,
+        "keywordAnalysisCount": 30,
+        "topTopicClusters": [
+          {
+            "topic": "topic_3_0",
+            "semanticScore": 70.01,
+            "opportunity": "high"
+          },
+          {
+            "topic": "topic_3_1",
+            "semanticScore": 92.06,
+            "opportunity": "medium"
+          },
+          {
+            "topic": "topic_3_2",
+            "semanticScore": 79.8,
+            "opportunity": "low"
+          },
+          {
+            "topic": "topic_3_3",
+            "semanticScore": 79.33,
+            "opportunity": "high"
+          },
+          {
+            "topic": "topic_3_4",
+            "semanticScore": 93.51,
+            "opportunity": "medium"
+          }
+        ],
+        "topKeywords": [
+          {
+            "keyword": "kw_3_0",
+            "semanticRelevance": 52.21
+          },
+          {
+            "keyword": "kw_3_1",
+            "semanticRelevance": 59.16
+          },
+          {
+            "keyword": "kw_3_2",
+            "semanticRelevance": 53.66
+          },
+          {
+            "keyword": "kw_3_3",
+            "semanticRelevance": 90.76
+          },
+          {
+            "keyword": "kw_3_4",
+            "semanticRelevance": 86.36
+          },
+          {
+            "keyword": "kw_3_5",
+            "semanticRelevance": 98.53
+          },
+          {
+            "keyword": "kw_3_6",
+            "semanticRelevance": 66.08
+          },
+          {
+            "keyword": "kw_3_7",
+            "semanticRelevance": 68.85
+          }
+        ],
+        "readabilityScore": 83,
+        "contentDepth": 73,
+        "topicCoverage": 78,
+        "semanticRichness": 68,
+        "expertiseSignals": 75,
+        "graphNodesCount": 40,
+        "graphEdgesCount": 60,
+        "recommendationsCount": 15,
+        "version": 1,
+        "createdAt": {
+          "_seconds": 1755258434,
+          "_nanoseconds": 180000000
+        }
+      },
+      "wrote": false
+    },
+    {
+      "collection": "semanticMapResults",
+      "id": "J5v4rIkJIVXjXeCQ6cZv",
+      "size": 9861,
+      "proposedAggregateSize": 1140,
+      "reductionPct": 88.44,
+      "userId": "seedUser_semantic",
+      "url": "https://example.dev/seed/semantic/1-1755258433618",
+      "aggregatePreview": {
+        "userId": "seedUser_semantic",
+        "url": "https://example.dev/seed/semantic/1-1755258433618",
+        "overallScore": 71,
+        "topicClustersCount": 12,
+        "keywordAnalysisCount": 30,
+        "topTopicClusters": [
+          {
+            "topic": "topic_1_0",
+            "semanticScore": 94.68,
+            "opportunity": "high"
+          },
+          {
+            "topic": "topic_1_1",
+            "semanticScore": 82.6,
+            "opportunity": "medium"
+          },
+          {
+            "topic": "topic_1_2",
+            "semanticScore": 79.74,
+            "opportunity": "low"
+          },
+          {
+            "topic": "topic_1_3",
+            "semanticScore": 91.15,
+            "opportunity": "high"
+          },
+          {
+            "topic": "topic_1_4",
+            "semanticScore": 73.92,
+            "opportunity": "medium"
+          }
+        ],
+        "topKeywords": [
+          {
+            "keyword": "kw_1_0",
+            "semanticRelevance": 56.34
+          },
+          {
+            "keyword": "kw_1_1",
+            "semanticRelevance": 96.91
+          },
+          {
+            "keyword": "kw_1_2",
+            "semanticRelevance": 90.32
+          },
+          {
+            "keyword": "kw_1_3",
+            "semanticRelevance": 96.67
+          },
+          {
+            "keyword": "kw_1_4",
+            "semanticRelevance": 60.11
+          },
+          {
+            "keyword": "kw_1_5",
+            "semanticRelevance": 64.26
+          },
+          {
+            "keyword": "kw_1_6",
+            "semanticRelevance": 51.27
+          },
+          {
+            "keyword": "kw_1_7",
+            "semanticRelevance": 83.08
+          }
+        ],
+        "readabilityScore": 81,
+        "contentDepth": 71,
+        "topicCoverage": 76,
+        "semanticRichness": 66,
+        "expertiseSignals": 73,
+        "graphNodesCount": 40,
+        "graphEdgesCount": 60,
+        "recommendationsCount": 15,
+        "version": 1,
+        "createdAt": {
+          "_seconds": 1755258433,
+          "_nanoseconds": 832000000
+        }
+      },
+      "wrote": false
+    },
+    {
+      "collection": "semanticMapResults",
+      "id": "VzCBkDLa3KAkhhmkusTU",
+      "size": 9869,
+      "proposedAggregateSize": 1139,
+      "reductionPct": 88.46,
+      "userId": "seedUser_semantic",
+      "url": "https://example.dev/seed/semantic/4-1755258434115",
+      "aggregatePreview": {
+        "userId": "seedUser_semantic",
+        "url": "https://example.dev/seed/semantic/4-1755258434115",
+        "overallScore": 74,
+        "topicClustersCount": 12,
+        "keywordAnalysisCount": 30,
+        "topTopicClusters": [
+          {
+            "topic": "topic_4_0",
+            "semanticScore": 77.45,
+            "opportunity": "high"
+          },
+          {
+            "topic": "topic_4_1",
+            "semanticScore": 74.91,
+            "opportunity": "medium"
+          },
+          {
+            "topic": "topic_4_2",
+            "semanticScore": 83.82,
+            "opportunity": "low"
+          },
+          {
+            "topic": "topic_4_3",
+            "semanticScore": 98.41,
+            "opportunity": "high"
+          },
+          {
+            "topic": "topic_4_4",
+            "semanticScore": 77.69,
+            "opportunity": "medium"
+          }
+        ],
+        "topKeywords": [
+          {
+            "keyword": "kw_4_0",
+            "semanticRelevance": 94.7
+          },
+          {
+            "keyword": "kw_4_1",
+            "semanticRelevance": 55.3
+          },
+          {
+            "keyword": "kw_4_2",
+            "semanticRelevance": 61.02
+          },
+          {
+            "keyword": "kw_4_3",
+            "semanticRelevance": 52.59
+          },
+          {
+            "keyword": "kw_4_4",
+            "semanticRelevance": 87.74
+          },
+          {
+            "keyword": "kw_4_5",
+            "semanticRelevance": 84.17
+          },
+          {
+            "keyword": "kw_4_6",
+            "semanticRelevance": 99.18
+          },
+          {
+            "keyword": "kw_4_7",
+            "semanticRelevance": 68.98
+          }
+        ],
+        "readabilityScore": 84,
+        "contentDepth": 74,
+        "topicCoverage": 79,
+        "semanticRichness": 69,
+        "expertiseSignals": 76,
+        "graphNodesCount": 40,
+        "graphEdgesCount": 60,
+        "recommendationsCount": 15,
+        "version": 1,
+        "createdAt": {
+          "_seconds": 1755258434,
+          "_nanoseconds": 326000000
+        }
+      },
+      "wrote": false
+    },
+    {
+      "collection": "semanticMapResults",
+      "id": "fmFhPNXRxnfGnQ5ygsQX",
+      "size": 9850,
+      "proposedAggregateSize": 1140,
+      "reductionPct": 88.43,
+      "userId": "seedUser_semantic",
+      "url": "https://example.dev/seed/semantic/2-1755258433792",
+      "aggregatePreview": {
+        "userId": "seedUser_semantic",
+        "url": "https://example.dev/seed/semantic/2-1755258433792",
+        "overallScore": 72,
+        "topicClustersCount": 12,
+        "keywordAnalysisCount": 30,
+        "topTopicClusters": [
+          {
+            "topic": "topic_2_0",
+            "semanticScore": 76.34,
+            "opportunity": "high"
+          },
+          {
+            "topic": "topic_2_1",
+            "semanticScore": 86.91,
+            "opportunity": "medium"
+          },
+          {
+            "topic": "topic_2_2",
+            "semanticScore": 70.32,
+            "opportunity": "low"
+          },
+          {
+            "topic": "topic_2_3",
+            "semanticScore": 76.67,
+            "opportunity": "high"
+          },
+          {
+            "topic": "topic_2_4",
+            "semanticScore": 70.11,
+            "opportunity": "medium"
+          }
+        ],
+        "topKeywords": [
+          {
+            "keyword": "kw_2_0",
+            "semanticRelevance": 57.45
+          },
+          {
+            "keyword": "kw_2_1",
+            "semanticRelevance": 54.91
+          },
+          {
+            "keyword": "kw_2_2",
+            "semanticRelevance": 93.82
+          },
+          {
+            "keyword": "kw_2_3",
+            "semanticRelevance": 88.41
+          },
+          {
+            "keyword": "kw_2_4",
+            "semanticRelevance": 97.69
+          },
+          {
+            "keyword": "kw_2_5",
+            "semanticRelevance": 63.12
+          },
+          {
+            "keyword": "kw_2_6",
+            "semanticRelevance": 66.49
+          },
+          {
+            "keyword": "kw_2_7",
+            "semanticRelevance": 50.67
+          }
+        ],
+        "readabilityScore": 82,
+        "contentDepth": 72,
+        "topicCoverage": 77,
+        "semanticRichness": 67,
+        "expertiseSignals": 74,
+        "graphNodesCount": 40,
+        "graphEdgesCount": 60,
+        "recommendationsCount": 15,
+        "version": 1,
+        "createdAt": {
+          "_seconds": 1755258434,
+          "_nanoseconds": 18000000
+        }
+      },
+      "wrote": false
+    },
+    {
+      "collection": "semanticMapResults",
+      "id": "rgU37qt2GSYv3ST0PWcR",
+      "size": 9863,
+      "proposedAggregateSize": 1137,
+      "reductionPct": 88.47,
+      "userId": "seedUser_semantic",
+      "url": "https://example.dev/seed/semantic/5-1755258434266",
+      "aggregatePreview": {
+        "userId": "seedUser_semantic",
+        "url": "https://example.dev/seed/semantic/5-1755258434266",
+        "overallScore": 75,
+        "topicClustersCount": 12,
+        "keywordAnalysisCount": 30,
+        "topTopicClusters": [
+          {
+            "topic": "topic_5_0",
+            "semanticScore": 96.61,
+            "opportunity": "high"
+          },
+          {
+            "topic": "topic_5_1",
+            "semanticScore": 70.18,
+            "opportunity": "medium"
+          },
+          {
+            "topic": "topic_5_2",
+            "semanticScore": 89.55,
+            "opportunity": "low"
+          },
+          {
+            "topic": "topic_5_3",
+            "semanticScore": 76.92,
+            "opportunity": "high"
+          },
+          {
+            "topic": "topic_5_4",
+            "semanticScore": 78.73,
+            "opportunity": "medium"
+          }
+        ],
+        "topKeywords": [
+          {
+            "keyword": "kw_5_0",
+            "semanticRelevance": 91.34
+          },
+          {
+            "keyword": "kw_5_1",
+            "semanticRelevance": 96
+          },
+          {
+            "keyword": "kw_5_2",
+            "semanticRelevance": 58.36
+          },
+          {
+            "keyword": "kw_5_3",
+            "semanticRelevance": 63.04
+          },
+          {
+            "keyword": "kw_5_4",
+            "semanticRelevance": 51.7
+          },
+          {
+            "keyword": "kw_5_5",
+            "semanticRelevance": 84.76
+          },
+          {
+            "keyword": "kw_5_6",
+            "semanticRelevance": 81.84
+          },
+          {
+            "keyword": "kw_5_7",
+            "semanticRelevance": 99.64
+          }
+        ],
+        "readabilityScore": 80,
+        "contentDepth": 75,
+        "topicCoverage": 80,
+        "semanticRichness": 70,
+        "expertiseSignals": 77,
+        "graphNodesCount": 40,
+        "graphEdgesCount": 60,
+        "recommendationsCount": 15,
+        "version": 1,
+        "createdAt": {
+          "_seconds": 1755258434,
+          "_nanoseconds": 389000000
+        }
+      },
+      "wrote": false
+    }
+  ]
+}

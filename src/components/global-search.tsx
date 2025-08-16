@@ -19,6 +19,45 @@ const placeholderQueries = [
   "Generate a content brief for 'AI ethics'",
 ];
 
+// Small internal hook to cycle/animate placeholder text deterministically.
+// Typing speed and pause replicates prior inline effect (80ms per char, 3s pause, 500ms initial delay).
+function useRotatingPlaceholder(queries: string[], typingMs = 80, pauseMs = 3000, initialDelay = 500) {
+  const [placeholder, setPlaceholder] = useState(() => queries[0] || "");
+  const indexRef = useRef(0);
+  useEffect(() => {
+    let typingTimeout: NodeJS.Timeout | null = null;
+    let nextPlaceholderTimeout: NodeJS.Timeout | null = null;
+    let startTypingTimeout: NodeJS.Timeout | null = null;
+
+    const typeNextCharacter = (text: string, i: number) => {
+      if (i <= text.length) {
+        setPlaceholder(text.substring(0, i));
+        typingTimeout = setTimeout(() => typeNextCharacter(text, i + 1), typingMs);
+      } else {
+        nextPlaceholderTimeout = setTimeout(() => {
+          indexRef.current = (indexRef.current + 1) % queries.length;
+          scheduleTyping();
+        }, pauseMs);
+      }
+    };
+
+    const scheduleTyping = () => {
+      const current = queries[indexRef.current] || "";
+      startTypingTimeout = setTimeout(() => typeNextCharacter(current, 0), 0);
+    };
+
+    // Maintain initial delay for first cycle to replicate original UX.
+    startTypingTimeout = setTimeout(() => scheduleTyping(), initialDelay);
+
+    return () => {
+      if (typingTimeout) clearTimeout(typingTimeout);
+      if (nextPlaceholderTimeout) clearTimeout(nextPlaceholderTimeout);
+      if (startTypingTimeout) clearTimeout(startTypingTimeout);
+    };
+  }, [queries, typingMs, pauseMs, initialDelay]);
+  return placeholder;
+}
+
 export default function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -30,45 +69,7 @@ export default function GlobalSearch() {
   const debouncedQuery = useDebounce(query, 300);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  const [placeholder, setPlaceholder] = useState(placeholderQueries[0]);
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
-
-  useEffect(() => {
-    let typingTimeout: NodeJS.Timeout;
-    let nextPlaceholderTimeout: NodeJS.Timeout;
-
-    const currentQuery = placeholderQueries[placeholderIndex];
-
-    const typeNextCharacter = (text: string, index: number) => {
-      if (index <= text.length) {
-        setPlaceholder(text.substring(0, index));
-        typingTimeout = setTimeout(
-          () => typeNextCharacter(text, index + 1),
-          80
-        ); // Typing speed
-      } else {
-        // Wait for a bit before switching to the next placeholder
-        nextPlaceholderTimeout = setTimeout(() => {
-          setPlaceholderIndex(
-            (prevIndex) => (prevIndex + 1) % placeholderQueries.length
-          );
-        }, 3000); // 3-second delay after typing finishes
-      }
-    };
-
-    // Start typing the current placeholder
-    const startTyping = setTimeout(
-      () => typeNextCharacter(currentQuery, 0),
-      500
-    );
-
-    // Cleanup function to clear timeouts
-    return () => {
-      clearTimeout(typingTimeout);
-      clearTimeout(nextPlaceholderTimeout);
-      clearTimeout(startTyping);
-    };
-  }, [placeholderIndex]);
+  const placeholder = useRotatingPlaceholder(placeholderQueries, 80, 3000, 500);
 
   useEffect(() => {
     const performSearch = async () => {

@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
-import { canAccessFeature, FEATURE_ACCESS, TIER_HIERARCHY } from '@/lib/access-control';
+import { canAccessFeature, canAccessCapability, FEATURE_ACCESS, TIER_HIERARCHY } from '@/lib/access-control';
 import { Crown, Lock, Star, Zap } from 'lucide-react';
 import React from 'react';
 
@@ -46,7 +46,8 @@ export function FeatureGate({
     }
 
     // Check if user has access using the userAccess from useSubscription
-    const hasAccess = userAccess ? canAccessFeature(userAccess, feature) : false;
+    // Use capability helper (feature or entitlement) – avoids noisy warnings for entitlement keys
+    const hasAccess = userAccess ? canAccessCapability(userAccess, feature) : false;
 
     if (hasAccess) {
         return <div className={className}>{children}</div>;
@@ -196,7 +197,7 @@ export function useFeatureAccess(feature: string): {
         return { hasAccess: false, featureConfig: null, requiredTier: null };
     }
 
-    const hasAccess = userAccess ? canAccessFeature(userAccess, feature) : false;
+    const hasAccess = userAccess ? canAccessCapability(userAccess, feature) : false;
 
     return {
         hasAccess,

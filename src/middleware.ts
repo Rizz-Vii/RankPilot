@@ -99,15 +99,13 @@ export async function middleware(request: NextRequest) {
     // Referrer Policy
     "Referrer-Policy": "strict-origin-when-cross-origin",
 
-    // Permissions Policy (relax payment in local dev to avoid Stripe console noise)
-    // Allow microphone for voice note feature; keep camera blocked. If you must disable voice recording set RP_DISABLE_MIC=1.
-    "Permissions-Policy": process.env.RP_DISABLE_MIC === "1"
-      ? (isLocal
-        ? "camera=(), microphone=(), geolocation=(), payment=(self)"
-        : "camera=(), microphone=(), geolocation=(), payment=()")
-      : (isLocal
-        ? "camera=(), microphone=(self), geolocation=(), payment=(self)"
-        : "camera=(), microphone=(self), geolocation=(), payment=()"),
+    // Permissions Policy (central definition – keep in sync with any security modules). We explicitly disable interest-cohort (FLoC).
+    // Microphone optionally disabled via RP_DISABLE_MIC. Camera & geolocation always blocked. Payment directive removed (default browser handling) to reduce console noise.
+    "Permissions-Policy": (() => {
+      const mic = process.env.RP_DISABLE_MIC === '1' ? 'microphone=()' : 'microphone=(self)';
+      const base = `camera=(), ${mic}, geolocation=(), interest-cohort=()`;
+      return base;
+    })(),
 
     // HSTS
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",

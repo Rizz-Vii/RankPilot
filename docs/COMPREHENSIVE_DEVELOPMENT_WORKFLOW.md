@@ -562,6 +562,7 @@ Maintain robust security standards:
 - ESLint + Prettier for code quality
 - Component-driven development
 - Test-driven development approach
+- Delegation governance: validate JSONL delegation log via `npm run validate:aider-log` (non-blocking, rotate when >200KB)
 
 ### Testing Workflow
 

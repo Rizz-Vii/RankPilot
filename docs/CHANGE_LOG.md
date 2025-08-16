@@ -1,4 +1,257 @@
+# 2025-08-15 Event Backbone Foundation (T26/T27)
+
+Added event registry + `publishEvent`, immutable Firestore rules, and basic unit tests.
+
+- Added event type registry (`src/lib/events/event-types.ts`).
+- Implemented publisher with validation and idempotency hash (`src/lib/events/publishEvent.ts`).
+- Enforced create-only writes via Firestore rules block for `/orgs/{orgId}/events`.
+- Added minimal unit tests for happy path and unknown type.
+
+# 2025-08-15 Delegated Aider Workflow Formalization
+ 
+## 2025-08-15 T28 Event Mirroring Scaffold
+
+Added Firestore onCreate trigger and mirroring stub behind `EVENT_MIRROR_ENABLED`.
+
+- New Cloud Function trigger `onEventWrite` (functions/src/events/onEventWrite.ts) listening on `/orgs/{orgId}/events/{eventId}`.
+- Mirroring module `mirrorEvent` (functions/src/lib/event-mirror.ts) publishes minimal payload to Pub/Sub topic `events-raw` when enabled; BigQuery stub left as TODO.
+- Single unit test `functions/test/event-mirror.test.ts` covering flag off/on behavior.
+
+Rollback: delete `functions/src/events/onEventWrite.ts`, `functions/src/lib/event-mirror.ts`, test file above, remove export from `functions/src/index.ts`, and remove this CHANGE_LOG section.
+
+## 2025-08-15 Delegation Validation & Dry-Run Enhancements
+
+### Added
+
+- Validation layer in `scripts/delegation/process-delegation-queue.ts` enforcing:
+  - Extension allowlist (`.ts`, `.tsx`, `.js`, `.mjs`, `.cjs`, `.json`, `.md`, `.yml`, `.yaml`, `.css`).
+  - Per-file size cap (~80KB) and aggregate task size soft cap (~40KB) with risk classification (`file_issue`, `large_file`, `aggregate_too_large`).
+  - `DRY_RUN=1` mode: prints aider command, validation table, aggregate bytes, leaves task pending.
+  - Early failure logging (`validation_failed:<reason>`) appended to `sessions/aider-log.jsonl`.
+  - Log rotation when `aider-log.jsonl` exceeds 200KB (renames with timestamp, seeds fresh header).
+
+### Rationale
+
+Prevents unsafe or overly large mechanical edits from entering autorun, provides operators a non-mutating inspection mode, and guards telemetry file growth.
+
+### Follow-Up
+
+- Integrate Phase 2 QA (`DELEGATION_RUN_TESTS=1`) post-success.
+- Add lock file to prevent concurrent runs.
+- Emit task risk metrics for dashboard.
+
+### Rollback
+
+Revert changes in `process-delegation-queue.ts` to prior commit removing validation + DRY_RUN code; delete this CHANGE_LOG section.
+
+
+## 2025-08-15 Incomplete Code Audit Refresh & Delegation Phase 1 Enhancement
+
+### Added
+
+- Refreshed `INCOMPLETE_CODE_AUDIT.md` (date 2025-08-15) adding new gaps: Stripe webhook upsert unification, delegation framework Phase 2 (tests/timeout), adoption workflow retirement schedule, stub cleanup plan, billing placeholders, insights fallback gating.
+- Delegation Framework Phase 1 enhancement: implemented automatic LOC diff capture & log append (task completion) inside processing script (will emit approximate line counts; groundwork for Phase 2 test integration). Updated audit to mark Phase 1 DONE and enumerate Phase 2 actions.
+
+### Rationale
+
+Maintains a living inventory of incomplete logic while incrementally improving autonomous delegation observability (lines changed telemetry) before adding automated test runs.
+
+### Rollback
+
+1. Revert changes in `INCOMPLETE_CODE_AUDIT.md` to prior commit.
+2. Remove LOC diff logic from delegation processing script (if introduced in follow-up commit) and corresponding log fields.
+
+### Follow-Up
+
+- Phase 2: Optional `DELEGATION_RUN_TESTS=1` to run lint + critical tests post-diff and annotate log status.
+- Phase 3: 30m running task timeout auto-fail + retry enqueue.
+- Phase 4: Aggregate delegation metrics surfaced in developer dashboard (deferred).
+
+## 2025-08-15 Delegation Queue Scaffold
+
+Added minimal queue scripts (`delegate:enqueue`, `delegate:process`) and chat/doc updates enabling structured mechanical edit task listing prior to aide execution (manual or `AIDER_AUTORUN=1`).
+
+Limitations: No auto LOC validation or test run yet.
+
+## Added
+
+- Unified Copilot ↔ Aider delegation framework (soft 180 LOC / hard 220 cap per block; split A/B if exceeded) embedding Division of Labor, Delegation Block template, guardrails, logging policy.
+- Documentation updates across: `.github/copilot-instructions.md` (Sections 13–20), chat profile `/.github/chatmodes/pilotBuddy.chatmode.md`, and developer guide `docs/DEVELOPER_AI_AGENT.md` aligning wording (diff caps, logging, rollback steps).
+- Optional JSONL telemetry file scaffold `sessions/aider-log.jsonl` (capped ≤200KB; rotate by renaming with timestamp) capturing: taskId, filesChanged, locAdded, locRemoved, status, timestamp.
+
+## Rationale
+
+Creates a governed, measurable pathway for mechanical multi-file edits, reducing cognitive load on Copilot while enforcing minimal diffs, safe rollback, and auditable change history. Establishes quantitative limits to prevent over-scoped AI commits.
+
+## Rollback
+
+1. Remove delegation sections from the three docs listed above.
+2. Delete `sessions/aider-log.jsonl` (telemetry artifact) if present.
+3. Remove LOC cap guidance; treat edits as direct Copilot operations.
+
+Risk: Low (documentation + tooling scaffold only). No runtime or build behavior modified.
+
 # 2025-08-14 Semantic Token Migration (Admin & Chat & Metrics)
+
+## 2025-08-15 Entitlement Warning De-Noise & Admin User Mgmt Hardening
+
+### Changed
+
+- Added `canAccessCapability()` helper in `access-control.ts` (routes to `canAccessEntitlement` when key matches an entitlement) and updated `FeatureGate` + `useSubscription` to use it, suppressing repetitive entitlement misuse warnings while migration completes. Warnings now emit once per entitlement key (Set-based dedupe) instead of on every render/access attempt.
+- Hardened `AdminUserManagement` search filtering against undefined/null `email` or `displayName` values (previously could throw `.toLowerCase` TypeError when Firestore doc missing field) by normalizing to empty strings.
+- Added unit test `testing/unit/access/entitlement-warn-once.test.cjs` ensuring each entitlement key logs at most one migration warning (prevents console spam regressions).
+- Consolidated subscription listener: `useSubscription` hook now accepts `{ realtime?: true }` to enable a single lazy-loaded Firestore `onSnapshot` (default static fetch) preventing duplicate listeners across pages/components; preserves previous behavior when option omitted.
+- Unified Permissions-Policy headers (middleware + next.config): added `interest-cohort=()`, consistent payment scoping (`payment=(self)` only in local/dev, blocked in production), microphone toggle via `RP_DISABLE_MIC`, to eliminate console payment directive warnings.
+  
+## 2025-08-15 Permissions-Policy Simplification & Subscription Listener Consolidation Follow-Up
+
+### Changed
+
+- Simplified Permissions-Policy: removed explicit `payment` directive (letting browser defaults apply) while retaining `camera=(), microphone=(self|())` (env toggle), `geolocation=()`, and `interest-cohort=()`. This reduces Stripe/PayPal dev console noise and aligns security modules (`middleware.ts`, `advanced-security.ts`).
+- Consolidated real-time subscription handling: `useSubscription` now lazy-loads a single Firestore `onSnapshot` only when `{ realtime: true }` is requested; default path stays static to prevent duplicate listeners and unnecessary bundle cost. Added internal sentinel `_onSnapshot` to reuse module after first dynamic import.
+- Removed custom plan name override ("Admin") that previously produced a non-enumerated PlanType and TypeScript error. Admin users transparently inherit Enterprise plan attributes without altering displayed plan names, ensuring pricing UI consistency.
+
+### Added
+
+- Playwright regression test (pending commit) to assert pricing UI never renders an "Admin" plan label and only shows the canonical tier names (Starter, Agency, Enterprise). Prevents future leakage if an override reappears.
+
+### Rationale
+
+Reduces warning noise, hardens type safety for plan metadata, and guarantees consistent public pricing presentation while minimizing real-time listener overhead.
+
+### Rollback
+
+1. Reintroduce payment directive if explicit allow/block granularity needed: add `payment=(self)` in dev and `payment=()` prod.
+2. Restore prior admin label logic by re-adding name override block in `useSubscription` (not recommended – causes PlanType drift).
+3. Remove lazy snapshot gating by unconditionally importing `onSnapshot` if blanket real-time behavior desired.
+
+
+### Rationale
+
+Reduces console noise obscuring real issues and prevents rare crash in admin panel with incomplete user documents. Transitional helper keeps explicit feature vs entitlement APIs while offering safe bridging.
+
+### Rollback
+
+1. Remove `canAccessCapability` export and revert FeatureGate / useSubscription to `canAccessFeature`.
+2. Remove Set-based suppression logic if per-call warnings preferred.
+3. Revert admin user management filter block to prior implementation.
+
+
+## 2025-08-15 Firebase Single Initialization Regression Test
+
+### Added
+
+- Playwright spec `firebase-single-init.spec.ts` under `testing/specs/organized/firebase/` asserting exactly one `🔥 Firebase app initialized` log across multiple navigations within a single browser context. Guards against duplicate client `initializeApp` calls after refactors or HMR churn. Rollback: delete spec file and this entry.
+
+
+## 2025-08-15 Finance Mock Gating Playwright Contract Test
+
+### Added
+
+- Harmonized finance mock banner predicate across /finance, /finance/billing, /finance/invoices, /finance/revenue (show only when mocks enabled AND zero invoices). Added invoicesCount field in /api/finance/metrics for robust detection.
+- Added test user bypass to finance invoice seeding endpoint (non-production) for E2E reliability.
+- KPI Daily Snapshot contract test ensuring provenance & latency percentile fields persisted.
+
+- Added Playwright spec `finance-mock-gating.spec.ts` validating finance dashboard mock banner visibility when `/api/finance/metrics` fails and `allowFinanceMocks()` permits fallback, and disappearance after setting `localStorage.allowFinanceMocks='false'` (forced API failure persists). Ensures UI respects runtime mock disable without rebuild. No production code changes.
+
+## 2025-08-15 Finance Live Metrics Seeding Test Endpoint & Playwright Spec
+
+- Added non-production test endpoint `/api/test/finance/seed-invoice` (provenance wrapped) to seed a paid `financeInvoices` doc for the authenticated user to exercise live aggregation path.
+- New Playwright spec `finance-live-metrics.spec.ts` confirms that after seeding at least one paid invoice, the Finance Dashboard renders KPI cards and the mock data banner is absent.
+- Endpoint returns 404 in production; safe additive tool for CI & local contract validation. Rollback: delete route file & spec and remove this entry.
+
+## 2025-08-15 (T15 Observability Completion – MA7 Overlays & Extended KPI Persistence)
+
+Added final enhancements to complete Task T15 (Observability hardening & historical analytics):
+
+- Persisted `cacheHitRatio` and `rateLimitRejectionRate` directly into `kpiDaily` snapshot documents (previously only surfaced via alerts MA7 computation) enabling longitudinal sparklines & moving average overlay calculations.
+- Extended `KpiDailyDoc` interface and Cloud Function transaction write (`kpiDailySnapshot`) to include new fields; added unit test coverage asserting persistence when unified metrics export supplies values.
+- Introduced deprecation marker into legacy `adoption-gate` workflow (`.github/workflows/adoption-gate.yml`) scheduling removal after a 7‑day stability window (target ≥2025-08-22) now that central validation covers adoption prune gating.
+- Added MA7 (7‑day moving average) overlay infrastructure (client-side computation) for provenance coverage, latency p95, adoption %, fallback rate, cache hit ratio, and rate limit rejection metrics (UI sparkline overlay w/ test IDs). (NOTE: UI test scaffolding pending – follow-up to add component spec or Playwright route once Sparkline overlay component extracted. Client overlay is additive and non-breaking.)
+- CHANGE_LOG updated to mark T15 COMPLETE; next milestone T16 (KPI parity + finance real metrics gating) proceeds.
+
+Risk: Low (additive fields + UI). Rollback: remove added fields from interface & snapshot write, delete new test, and excise overlay rendering blocks in observability dashboard.
+
+Follow-Up (Post-Completion):
+
+1. Remove legacy adoption-gate workflow after target date.
+2. Add Playwright spec asserting presence of MA7 overlay test IDs (if not already covered by component unit test).
+3. Consider persisting pre-computed MA7 series if client-side cost grows with expanded history (>30d window).
+4. (Done) Client Observability dashboard now prefers server precomputed MA7 fields when present (falls back to client compute). Added MA7 contract test `functions/src/test/kpi-daily-ma7-contract.test.ts` ensuring last 7 snapshot docs have MA7 fields numeric or null.
+
+
+
+## 2025-08-15 (T17 Alias Retirement – Phase 1 Removal)
+
+Retired legacy feature alias keys after confirming zero runtime usages via nav gating audit (`npm run audit:nav-gates`) and alias enforcement test:
+
+- Removed alias feature keys and their canonical duplicates from `FEATURE_ACCESS` / alias map: `export_pdf`, `export_csv`, `neuroseo`, `performance_metrics`, `link_analysis`, `ai_content_generation`.
+
+## 2025-08-15 Aider Delegation Framework Introduction
+
+### Added
+
+- Formal Copilot ↔ Aider delegation heuristic (soft 180 LOC / hard 220 LOC, mechanical multi-file patterns only) documented in `.github/copilot-instructions.md`, chatmode profile, and `DEVELOPER_AI_AGENT.md`.
+- Delegation Block template with required fields (TaskID, Files, Constraints, ExitCriteria, Rollback, Observability logging).
+- sessions/aider-log.jsonl logging convention (optional) for analytics (taskId, filesChanged, locAdded, locRemoved, status, timestamp).
+
+### Rationale
+
+Reduces cognitive load on Copilot for repetitive edits, enforces minimal diffs and safe rollback, and creates measurable telemetry for process refinement without impacting runtime code.
+
+### Rollback
+
+1. Remove delegation sections from the three docs.
+2. Delete any generated `sessions/aider-log.jsonl` (tooling artifact).
+3. Revert MaxDiffLines policies; treat all edits as direct Copilot operations.
+
+
+- Updated tutorial components and banners replacing `link_analysis` references with canonical `link_view` feature key.
+- Pruned `FEATURE_ALIASES` down to a single transitional mapping `ai_insights -> advanced_analytics` (scheduled for removal next release window pending usage grep; current grep shows only onboarding reference plus alias map entry).
+- Adjusted access control logic remains unchanged aside from smaller alias set; alias resolution loop still bounded with cycle guard.
+- Ran gating audit and alias usage unit test: PASS (0 findings, no disallowed alias gates).
+
+Why: Reduces surface area & audit noise, enforces canonical capability (`export_formats`) and granular NeuroSEO subtool keys, aligns with Phase 4 data minimization + observability consolidation.
+
+Deployment Notes:
+
+- Change is additive-removal (no new keys introduced); any stale client referencing removed aliases will now resolve as unknown feature (graceful denial + console.warn). Monitor logs for `Unknown feature:` lines post deploy for unexpected external references.
+- Keep transitional `ai_insights` one more release to allow analytics dashboards or saved configs (if any) to migrate; schedule verification task (grep + metrics) before final removal.
+
+Rollback Plan:
+
+1. Reintroduce removed alias keys in `FEATURE_ALIASES` mapping to their canonical targets (see git history of `src/lib/access-control.ts` prior to this change for exact values).
+2. Optionally restore removed legacy entries in `FEATURE_ACCESS` if any UI still directly checked them (not expected after audit PASS).
+3. Re-add tutorial references if required (unlikely) by reverting tutorial component edits.
+4. Re-run `npm run audit:nav-gates` & alias usage test to confirm restored state is clean.
+
+Risk: Low. All removed keys were internally mapped duplicates with no direct FeatureGate usage (enforced by existing alias usage spec). Unknown external persistence of alias strings would result only in denied access rather than elevated permissions (safe failure). Monitoring guidance above mitigates stealth regressions.
+
+### Pending (T14 Evidence)
+
+- Seed script `seed:semantic-map-legacy` added to create representative large `semanticMapResults` docs (>2.5KB) for semantic reduction measurement.
+- Next staging cycle: seed >=5 docs, run scan/backfill/report sequence to capture semantic `reductionPct`; then mark T14 complete.
+
+### 2025-08-15 (T14 Data Minimization – Evidence Captured & Completion)
+
+- Executed semantic map legacy seed (`SEED_COUNT=6`) producing 6 oversized `semanticMapResults` docs (≈9.8 KB each; total 59,138 bytes).
+- Ran backfill aggregate writer producing 6 matching compact aggregate docs totaling 6,831 bytes.
+- Size reduction report now shows:
+  - Semantic Map: legacyBytes=59,138 aggBytes=6,831 reductionPct=88.45% (matched=6)
+  - Neural Crawler (previous evidence): legacyBytes=4,803 aggBytes=842 reductionPct=82.47% (matched=2)
+- Evidence artifact: `artifacts/size-reduction.json` (CI-friendly) generated via `npm run report:neuroseo-size:ci`.
+- Acceptance Criteria Met for T14: tooling (scan/backfill/report), aggregate collections (crawler & semantic), empirical reduction >70% for both domains (crawler 82.47%, semantic 88.45%), verification scripts & adoption KPI in place.
+- Marking T14 COMPLETE. Follow-up hardening: monitor `crawlerAggregateAdoptionPct` until ≥95% then enable prune flag permanently & schedule legacy doc archival script (separate task).
+
+#### 2025-08-15 Test Metrics Seeding Endpoint (Adoption Prune Gating Support)
+
+- Added non-production endpoint `/api/test/metrics/crawler` accepting query params `hits`, `fallbacks`, `domain=crawler|semantic` to mutate in-memory aggregate adoption counters for crawler or semantic map.
+- Enables new Playwright contract spec `health-neuroseo-adoption-prune-threshold.spec.ts` to deterministically raise crawler adoption to ≥95% before validating prune readiness.
+- Safety: Returns 404 in production; caps per-invocation increments at 1000; no persistence side effects.
+- Rollback: Delete `src/app/api/test/metrics/crawler/route.ts` and remove related test references.
+
+
+
 
 ## 2025-08-15 (T13 Load Test Completion & Audit Timings Instrumentation)
 
@@ -44,6 +297,30 @@ Risk: Low. Additive fields; failure path already silent with warning log. Transa
 ### 2025-08-15 Observability & Finance API Additions (Consolidated Documentation)
 
 New API surface (additive; all provenance-wrapped where applicable):
+
+## 2025-08-15 Optional AI CLI Agent (Aider) Integration
+
+### Added
+
+- Documentation file `docs/DEVELOPER_AI_AGENT.md` outlining opt-in usage of Aider (AI pair programming CLI) for constrained, minimal-diff refactors (smoothing extension, CRUD scaffolds, test adjustments). No production/runtime code paths modified.
+- Project-scoped `.aiderignore` excluding large/generated/sensitive files (mirrors existing `.gitignore` plus explicit secret & binary patterns) to reduce accidental context expansion & secret exposure.
+- NPM script `ai:aider` (informational echo) – does not install dependencies; directs contributors to the doc for local-only setup.
+
+### Rationale
+
+Accelerate remaining backlog (T15/T16/T18+) with a disciplined AI assistant while preserving repository determinism (no added deps, no build impact). Provides a standardized, documented workflow avoiding ad hoc AI edits.
+
+### Risk
+
+Low. Purely additive docs + ignore + script. No runtime, build, or test behavior change. Secret leakage risk mitigated via `.aiderignore` and existing `.gitignore`.
+
+### Rollback
+
+1. Delete `docs/DEVELOPER_AI_AGENT.md` & `.aiderignore`.
+2. Remove `ai:aider` script from `package.json`.
+3. Remove this CHANGE_LOG section.
+
+No further cleanup required (no persisted config elsewhere).
 
 - `/api/admin/ai-usage/daily` (GET) – historical AI token & cost usage range with optional `seed=1` for local test seeding and date range query params (`start`, optional `end`). Auth gated via `x-observability-key` when `OBSERVABILITY_API_KEY` is set; otherwise open in non‑production. Persisted documents live in `aiUsageDaily` collection (one per provider/date). Used by health KPI exposure & Playwright contract tests.
 - `/api/chat/admin/stream` (POST SSE) – admin chat streaming endpoint supporting OpenAI provider (if `OPENAI_API_KEY`) with circuit breaker + synthetic fallback (one‑shot) + rate limiting (team aware). Emits structured JSON SSE frames with provenance marker and final summary event. Records route latency, errors, fallbacks, and rate limit rejections into unified metrics.
@@ -466,7 +743,11 @@ Rollback: Delete client file, endpoint route, unit test, and this CHANGE_LOG sec
 
 ## Rollback
 
-- Remove both docs and any CI validation referencing them; revert related CHANGE_LOG segment.
+### Rollback
+
+1. Remove delegation sections from the three docs.
+2. Delete any generated `sessions/aider-log.jsonl` (tooling artifact).
+3. Revert MaxDiffLines policies; treat all edits as direct Copilot operations.
 
 # 2025-08-10: Removed self-reexport JS stubs for dashboard charts
 
@@ -639,199 +920,550 @@ trialEnd: (subscription as any).trial_end ? (subscription as any).trial_end * 10
 
 ---
 
-## 🛠️ **VS Code Extension Optimization Details**
+## 🔄 **File Changes Tracked**
 
-### **Extensions Removed (8 total):**
+### **A. Restored Critical Payment Infrastructure**
 
-1. `ms-python.python@2025.10.1` - Python language support
-2. `ms-toolsai.jupyter@2025.6.0` - Jupyter notebook support
-3. `ms-toolsai.jupyter-keymap@1.1.2` - Jupyter keyboard shortcuts
-4. `ms-toolsai.jupyter-renderers@1.0.20` - Jupyter output renderers
-5. `ms-toolsai.vscode-jupyter-cell-tags@0.1.9` - Jupyter cell tagging
-6. `ms-toolsai.vscode-jupyter-slideshow@0.1.6` - Jupyter slideshow
-7. `ms-python.debugpy@2025.1.0` - Python debugging
-8. `ms-python.vscode-pylance@2025.1.1` - Python language server
+#### **1. Stripe Webhook Handler** - `/src/app/api/stripe/webhook/route.ts`
 
-### **Extension Count Optimization:**
+**Status:** ✅ **RESTORED** (was intentionally deleted during optimization)
+**Purpose:** Critical Stripe webhook processing for payment events
+**Key Components:**
 
-- **Before:** 21 extensions installed
-- **After:** 13 extensions (38% reduction)
-- **Focus:** TypeScript/Next.js development without Python/Jupyter conflicts
+```typescript
+- Complete webhook signature verification
+- Event handling for checkout.session.completed
+- Subscription lifecycle management (created/updated/deleted)
+- Payment success/failure processing
+- Firebase Firestore integration for user updates
+- Comprehensive error handling and logging
+```
 
-### **Performance Improvements:**
+#### **2. Stripe Checkout Handler** - `/src/app/api/stripe/checkout/route.ts`
 
-- **Memory:** TypeScript server increased from 4GB to 6GB
-- **Conflicts:** Eliminated Python extension interference with TypeScript
-- **Startup:** Reduced extension load time and resource usage
-- **IntelliSense:** Improved TypeScript performance and suggestions
+**Status:** ✅ **RESTORED** (was intentionally deleted during optimization)
+**Purpose:** Stripe checkout session creation for subscription tiers
+**Key Components:**
+
+```typescript
+- Firebase Functions integration via httpsCallable
+- Tier validation (starter/agency/enterprise)
+- Checkout session creation with metadata
+- Error handling for authentication and validation
+- GET endpoint for session retrieval
+```
+
+#### **3. Subscription Management Library** - `/src/lib/stripe/subscription-management.ts`
+
+**Status:** 🔧 **MODIFIED** (TypeScript compatibility fixes)
+**Changes Made:**
+
+```typescript
+// BEFORE: Direct property access causing TypeScript errors
+currentPeriodEnd: subscription.current_period_end,
+trialEnd: subscription.trial_end
+
+// AFTER: Type-safe property access with conversion
+currentPeriodEnd: (subscription as any).current_period_end * 1000, // Stripe API compatibility
+trialEnd: (subscription as any).trial_end ? (subscription as any).trial_end * 1000 : null
+```
+
+### **B. VS Code Development Environment Optimization**
+
+#### **4. Extensions Configuration** - `/.vscode/extensions.json`
+
+**Status:** ✅ **CREATED** (new optimized configuration)
+**Purpose:** Curated extension management with conflict resolution
+**Configuration:**
+
+```json
+{
+  "recommendations": [
+    "ms-vscode.vscode-typescript-next", // TypeScript support
+    "bradlc.vscode-tailwindcss", // Tailwind CSS IntelliSense
+    "esbenp.prettier-vscode", // Code formatting
+    "GitHub.copilot", // AI assistance
+    "GitHub.copilot-chat", // AI chat
+    "ms-playwright.playwright", // Testing framework
+    "zerotask.firebase-configuration-schema", // Firebase support
+    "ms-vscode.powershell", // PowerShell scripting
+    "davidanson.vscode-markdownlint" // Markdown linting
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-typescript", // Conflicts with typescript-next
+    "ms-python.python", // Removed - not needed for this project
+    "ms-python.debugpy", // Removed - Python debugging
+    "ms-toolsai.jupyter", // Removed - Jupyter notebooks
+    "ms-toolsai.jupyter-keymap", // Removed - Jupyter shortcuts
+    "ms-toolsai.jupyter-renderers", // Removed - Jupyter renderers
+    "ms-toolsai.vscode-jupyter-cell-tags", // Removed - Jupyter cell tagging
+    "ms-toolsai.vscode-jupyter-slideshow" // Removed - Jupyter slideshow
+  ]
+}
+```
+
+#### **5. Workspace Settings Enhancement** - `/.vscode/settings.json`
+
+**Status:** 🔧 **MODIFIED** (TypeScript memory optimization)
+**Key Enhancement:**
+
+```json
+// BEFORE: 4GB TypeScript server memory
+"typescript.tsserver.maxTsServerMemory": 4096,
+
+// AFTER: 6GB TypeScript server memory for better performance
+"typescript.tsserver.maxTsServerMemory": 6144,
+```
+
+### **C. Security Infrastructure Cleanup**
+
+#### **6. Unused Security API Routes** - `/src/app/api/security/*`
+
+**Status:** ❌ **DELETED** (confirmed unused via codebase analysis)
+**Deleted Files:**
+
+- `/src/app/api/security/rotate-credentials/route.ts` (empty file)
+- `/src/app/api/security/validate-access/route.ts` (empty file)
+- `/src/app/api/security/check-permissions/route.ts` (empty file)
+
+**Justification:**
+
+- Comprehensive grep search revealed **zero references** to these endpoints
+- Files were **empty** with no implementation
+- Security is handled via **Firebase Auth middleware** and **tier-based access control**
+- Removal improves **API surface area security** and **build performance**
+
+### **D. Development Infrastructure**
+
+#### **7. AI Implementation Roadmap** - `/Agents_implementation.prompt.md`
+
+**Status:** ✅ **CREATED** (development planning document)
+**Purpose:** Comprehensive AI agent implementation roadmap
+**Contains:**
+
+- Content Intelligence Agent specifications
+- Technical SEO Agent framework
+- Keyword Intelligence Agent design
+- Competitive Intelligence Agent architecture
+- 4-phase implementation priority plan
 
 ---
 
-## 🔍 **Technical Analysis Summary**
+## 🔄 **File Changes Tracked**
 
-\n## Unreleased (2025-08-11)
+### **A. Restored Critical Payment Infrastructure**
 
-### Data Integrity & Cleanup
+#### **1. Stripe Webhook Handler** - `/src/app/api/stripe/webhook/route.ts`
 
-- Stripped derived fields (ctr, roi) from all marketing optimistic inserts; added provenance flag `__provenance`.
-- Added `sanitizeMarketingCampaignDoc` write guard to enforce raw-only marketingCampaigns storage.
-- Removed heuristic revenue multipliers in marketing automation (replaced with 0) and tagged synthetic records.
-- Deleted unused `empty-module.js` and redundant empty `subscription.tsx`.
-- Annotated deprecated legacy pages (`dashboard/page-backup.tsx`, `team/page-fixed.tsx`, `mobile-nav-test/page.tsx`) pending removal after parity verification.
-- Added comments clarifying exclusion of derived ratios from persistence.
+**Status:** ✅ **RESTORED** (was intentionally deleted during optimization)
+**Purpose:** Critical Stripe webhook processing for payment events
+**Key Components:**
 
-### NeuroSEO Module Simplification (2025-08-11)
+```typescript
+- Complete webhook signature verification
+- Event handling for checkout.session.completed
+- Subscription lifecycle management (created/updated/deleted)
+- Payment success/failure processing
+- Firebase Firestore integration for user updates
+- Comprehensive error handling and logging
+```
 
-- Removed hand-written proxy file `src/lib/neuroseo.js`; all dynamic imports now target extensionless specifier `lib/neuroseo` relying on Bundler module resolution for `.ts`.
-- Rationale: eliminated duplicate re-export (JS + TS) after confirming `moduleResolution: Bundler` resolves `.ts` without explicit extension and `allowJs` is false (no emission concerns).
-- Ensures single authoritative export surface (`neuroseo.ts`) and reduces maintenance overhead.
+#### **2. Stripe Checkout Handler** - `/src/app/api/stripe/checkout/route.ts`
 
-#### Rollback Plan
+**Status:** ✅ **RESTORED** (was intentionally deleted during optimization)
+**Purpose:** Stripe checkout session creation for subscription tiers
+**Key Components:**
 
-1. Recreate `src/lib/neuroseo.js` with `export * from './neuroseo/index';` if any runtime or test environment fails to resolve the TS module.
-2. Change dynamic imports in `src/app/api/neuroseo/route.ts` and any agents (grep `lib/neuroseo"`) back to `lib/neuroseo.js`.
-3. Document reversal here and investigate build pipeline incompatibility with extensionless specifiers.
+```typescript
+- Firebase Functions integration via httpsCallable
+- Tier validation (starter/agency/enterprise)
+- Checkout session creation with metadata
+- Error handling for authentication and validation
+- GET endpoint for session retrieval
+```
 
-### Template Persistence (2025-08-11)
+#### **3. Subscription Management Library** - `/src/lib/stripe/subscription-management.ts`
 
-### Template/Workflow Indexing (2025-08-11)
+**Status:** 🔧 **MODIFIED** (TypeScript compatibility fixes)
+**Changes Made:**
 
-- Persisted workflows to Firestore (`workflows` collection) with minimal schema and provenance marker.
-- Added Firestore composite index for `workflows` on (`userId` ASC, `metadata.updated` DESC) to support recent-first per-user queries.
-- Initial implementation auto-loaded recent workflows globally; superseded by security hardening (user-scoped explicit loading) while retaining debounced persistence (create/update/status/delete) with silent degradation.
+```typescript
+// BEFORE: Direct property access causing TypeScript errors
+currentPeriodEnd: subscription.current_period_end,
+trialEnd: subscription.trial_end
 
-#### Rollback Plan
+// AFTER: Type-safe property access with conversion
+currentPeriodEnd: (subscription as any).current_period_end * 1000, // Stripe API compatibility
+trialEnd: (subscription as any).trial_end ? (subscription as any).trial_end * 1000 : null
+```
 
-1. Remove persistence helper methods (`persistWorkflow`, `loadPersistedWorkflows`, `deletePersistedWorkflow`).
-2. Delete the `workflows` collection (after confirming no dependent features) and remove the composite index from `firestore.indexes.json`.
-3. Remove this changelog section; workflows revert to in-memory volatile state.
+### **B. VS Code Development Environment Optimization**
 
-- Added Firestore persistence for dashboard and workflow (Zapier) templates.
-- New collections: `dashboardTemplates`, `workflowTemplates` storing minimal template documents (no derived metrics; includes widgets/layout and trigger/action definitions only).
-- Builders (`CustomDashboardBuilder`, `ZapierWorkflowBuilder`) now:
-  - Seed in-memory templates then fire-and-forget sync from Firestore.
-  - Upsert missing local templates to Firestore (idempotent) with `__provenance: 'seed'`.
-  - Provide cached (10‑min TTL) fetch + `refreshTemplates()` for admin/manual refresh.
-- Silent degrade on Firestore errors (logs warn prefix, no user disruption) per degradation policy.
+#### **4. Extensions Configuration** - `/.vscode/extensions.json`
 
-#### Rollback Plan
+**Status:** ✅ **CREATED** (new optimized configuration)
+**Purpose:** Curated extension management with conflict resolution
+**Configuration:**
 
-1. Remove persistence methods (`persistLocalTemplates`, `syncTemplatesFromFirestore`, `refreshTemplates`) from both builders.
-2. Optionally delete new collections (`dashboardTemplates`, `workflowTemplates`) after confirming no other readers.
-3. Remove changelog section and provenance markers; retain in-memory initialization only.
+```json
+{
+  "recommendations": [
+    "ms-vscode.vscode-typescript-next", // TypeScript support
+    "bradlc.vscode-tailwindcss", // Tailwind CSS IntelliSense
+    "esbenp.prettier-vscode", // Code formatting
+    "GitHub.copilot", // AI assistance
+    "GitHub.copilot-chat", // AI chat
+    "ms-playwright.playwright", // Testing framework
+    "zerotask.firebase-configuration-schema", // Firebase support
+    "ms-vscode.powershell", // PowerShell scripting
+    "davidanson.vscode-markdownlint" // Markdown linting
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-typescript", // Conflicts with typescript-next
+    "ms-python.python", // Removed - not needed for this project
+    "ms-python.debugpy", // Removed - Python debugging
+    "ms-toolsai.jupyter", // Removed - Jupyter notebooks
+    "ms-toolsai.jupyter-keymap", // Removed - Jupyter shortcuts
+    "ms-toolsai.jupyter-renderers", // Removed - Jupyter renderers
+    "ms-toolsai.vscode-jupyter-cell-tags", // Removed - Jupyter cell tagging
+    "ms-toolsai.vscode-jupyter-slideshow" // Removed - Jupyter slideshow
+  ]
+}
+```
 
-#### Rollback Plan
+#### **5. Workspace Settings Enhancement** - `/.vscode/settings.json`
 
-1. Reintroduce revenue heuristic by reverting changes in `marketing-automation.ts` if required for interim forecasting.
-2. Restore deleted empty files from git history if any build integration unexpectedly referenced them.
-3. Remove provenance flags by search (`__provenance:`) if telemetry dashboards mis-handle the marker.
+**Status:** 🔧 **MODIFIED** (TypeScript memory optimization)
+**Key Enhancement:**
 
-### **Git History Investigation:**
+```json
+// BEFORE: 4GB TypeScript server memory
+"typescript.tsserver.maxTsServerMemory": 4096,
 
-### Security & Theming Hardening (2025-08-11)
+// AFTER: 6GB TypeScript server memory for better performance
+"typescript.tsserver.maxTsServerMemory": 6144,
+```
 
-- Replaced global eager workflow loading with explicit user-scoped `loadUserWorkflows(userId)` to prevent cross-tenant exposure.
-- Added debounced workflow persistence queue (500ms) lowering Firestore write amplification.
-- Began theming refactor: tokenized chart palette in `EnterpriseDashboard.tsx` using CSS variables `--chart-1..5` instead of hex literals.
-- Extended theming refactor: replaced remaining NeuroSEO chart hex colors (semantic-map, trust-block, rewrite-gen, NeuroSEOEnhancedComponents) with token palette `--chart-1..5`.
-- Added rollback guidance; further theming refactor pending for other chart components.
+### **C. Security Infrastructure Cleanup**
 
-### Team Schema & Logging Unification (2025-08-11)
+#### **6. Unused Security API Routes** - `/src/app/api/security/*`
 
-- TEAM-01 Phase 1: Tightened Firestore `teams` rules – reads now restricted to members (via `memberIds`) or admin; creation allowed for authenticated owner (must appear in `memberIds`); updates/deletes remain admin-only pending granular RBAC.
-- Added documentation `docs/teams/TEAM_SCHEMA_PLAN.md` outlining Phase 2 & 3 evolution (subcollection membership, invites, event sourcing) and rollback plan.
-- LOG-01 Phase 1: Introduced unified isomorphic structured logger `src/lib/logging/app-logger.ts` producing JSON envelopes with trace IDs; replaced ad-hoc console logger in `enhanced-orchestrator.ts` (NeuroSEO) with `getLogger('neuroseo-orchestrator').withTrace()`.
-  - LOG-01 (expansion): Added streaming generator `runAnalysisStream` leveraging structured events (chunk.start, progress, complete) for SSE endpoint.
-- Rationale: Establish consistent logging contract ahead of cross-service trace propagation & future ingestion pipeline (BigQuery / OTLP exporter).
-- Rollback: Revert Firestore rule block & restore inline console logger if unexpected UI authorization regressions surface.
+**Status:** ❌ **DELETED** (confirmed unused via codebase analysis)
+**Deleted Files:**
 
-### Team Schema Phase 2 Scaffolding (2025-08-11)
+- `/src/app/api/security/rotate-credentials/route.ts` (empty file)
+- `/src/app/api/security/validate-access/route.ts` (empty file)
+- `/src/app/api/security/check-permissions/route.ts` (empty file)
 
-- Added membership subcollection `teams/{teamId}/members/{memberId}` and invites subcollection `teams/{teamId}/invites/{inviteId}` rules (read for members/admin, create restricted to owner/admin, update/delete admin for invites).
-- Updated `team.service.ts` to prefer subcollection members if present (fallback to embedded array).
-- Added backfill script `scripts/backfill-team-members-subcollection.ts` plus npm script `teams:backfill:members`.
-- Extended Firestore rules for granular future RBAC without yet migrating writes to subcollection (read-first strategy reduces risk).
-- Added safeguards: creation/update guarded by ownership; invites limited to owner/admin (delete limited to admin pending moderation model).
+**Justification:**
 
-#### Rollback Plan
+- Comprehensive grep search revealed **zero references** to these endpoints
+- Files were **empty** with no implementation
+- Security is handled via **Firebase Auth middleware** and **tier-based access control**
+- Removal improves **API surface area security** and **build performance**
 
-1. If debounced persistence causes stale state after rapid multi-updates, shrink debounce window or revert to immediate writes.
-2. If tokens missing in production theme, reintroduce hex palette temporarily and open issue to align `globals.css` variables.
-3. For admin aggregate views, introduce a separate admin-only loader rather than reverting to global preload.
+### **D. Development Infrastructure**
 
-# 2025-08-14 Semantic Token Migration (Admin & Chat & Metrics)
+#### **7. AI Implementation Roadmap** - `/Agents_implementation.prompt.md`
 
-## 2025-08-15 (T14 Data Minimization – Neural Crawler Aggregate Dual-Write Scaffold)
+**Status:** ✅ **CREATED** (development planning document)
+**Purpose:** Comprehensive AI agent implementation roadmap
+**Contains:**
 
-Initial slice of T14:
+- Content Intelligence Agent specifications
+- Technical SEO Agent framework
+- Keyword Intelligence Agent design
+- Competitive Intelligence Agent architecture
+- 4-phase implementation priority plan
 
-- Added compact aggregate collection `neuralCrawlerResultsAgg` (schema documented in FIRESTORE_SCHEMAS.md) storing only counts + key numeric fields (no large content arrays) – versioned (v1).
-- Implemented client-side dual-write helper `dualWriteNeuralCrawlerAggregate` gated by env flag `NEXT_PUBLIC_DATA_MIN_NEURAL_CRAWLER_DUAL_WRITE=1` (silent degrade on failure).
-- Updated neural crawler page to invoke dual-write after legacy `neuralCrawlerResults` insertion (does not block primary write).
-- No read path changes yet; pending: backfill script, verification parity test, read cutover flag, legacy field pruning.
+---
 
-Rollback Plan:
+## 🔄 **File Changes Tracked**
 
-1. Remove invocation in `neuroseo/neural-crawler/page.tsx`.
-2. Delete `src/lib/neural-crawler/aggregate.ts` and collection (optional purge) if unused.
-3. Remove schema section from FIRESTORE_SCHEMAS.md (or mark deprecated) if abandoning.
+### **A. Restored Critical Payment Infrastructure**
 
-Risk: Low – additive optional write; failures are silent and non-blocking.
+#### **1. Stripe Webhook Handler** - `/src/app/api/stripe/webhook/route.ts`
 
-### 2025-08-15 (T14 Backfill & Verification Tooling)
+**Status:** ✅ **RESTORED** (was intentionally deleted during optimization)
+**Purpose:** Critical Stripe webhook processing for payment events
+**Key Components:**
 
-- Added backfill script `scripts/backfill-neural-crawler-aggregate.ts` (env: DRY_RUN=1, BATCH_SIZE). Iterates `neuralCrawlerResults` in paginated batches, skips existing aggregates (historyId or userId+url), derives compact docs.
-- Added verification script `scripts/verify-neural-crawler-aggregate.ts` sampling legacy docs and asserting count parity (links/images/issues/entities/wordCount/readingTime).
-- NPM scripts: `backfill:neural-crawler-agg`, `verify:neural-crawler-agg`.
-- Next planned: read cutover flag `NEXT_PUBLIC_DATA_MIN_NEURAL_CRAWLER_READ_AGG`, UI fallback logic, then prune phase disabling legacy writes.
+```typescript
+- Complete webhook signature verification
+- Event handling for checkout.session.completed
+- Subscription lifecycle management (created/updated/deleted)
+- Payment success/failure processing
+- Firebase Firestore integration for user updates
+- Comprehensive error handling and logging
+```
 
-Rollback: Remove scripts + npm entries; delete CHANGE_LOG section. Aggregates remain harmless or can be purged.
+#### **2. Stripe Checkout Handler** - `/src/app/api/stripe/checkout/route.ts`
 
-### 2025-08-15 (T14 Read Cutover Flag – Aggregate Preferred Read Path)
+**Status:** ✅ **RESTORED** (was intentionally deleted during optimization)
+**Purpose:** Stripe checkout session creation for subscription tiers
+**Key Components:**
 
-- Implemented environment flag `NEXT_PUBLIC_DATA_MIN_NEURAL_CRAWLER_READ_AGG=1` enabling aggregate-first read strategy on Neural Crawler page.
-- When enabled, page attempts to hydrate latest crawl result from `neuralCrawlerResultsAgg` (by matching historyId = latest history doc id) and reconstructs a minimal legacy-shape object (synthetic placeholders for omitted arrays) for existing UI components.
-- Fallback: If aggregate doc missing it queries legacy `neuralCrawlerResults` (userId + url, latest) and logs a console warning `[neuralCrawler] legacy fallback (aggregate miss)`; aggregate hits log `[neuralCrawler] aggregate hit` for quick manual telemetry.
-- Added lightweight reconstruction helpers (heading & link placeholder builders) to avoid UI null checks while keeping memory footprint low.
-- No destructive changes; legacy full document still written until prune phase flag introduced.
-- FIRESTORE_SCHEMAS.md updated (neuralCrawlerResultsAgg section) noting read cutover flag.
+```typescript
+- Firebase Functions integration via httpsCallable
+- Tier validation (starter/agency/enterprise)
+- Checkout session creation with metadata
+- Error handling for authentication and validation
+- GET endpoint for session retrieval
+```
 
-Rollback Plan:
+#### **3. Subscription Management Library** - `/src/lib/stripe/subscription-management.ts`
 
-1. Remove hydrate effect & helper functions in `neuroseo/neural-crawler/page.tsx` (search for `aggregate hit`).
-2. Delete flag references; unset env variable.
-3. (Optional) Remove console logs if verbosity undesired.
+**Status:** 🔧 **MODIFIED** (TypeScript compatibility fixes)
+**Changes Made:**
 
-Risk: Low – additive read path + fallback. UI gracefully handles partial reconstructed data. Pending: prune phase script & dual‑write disable flag.
+```typescript
+// BEFORE: Direct property access causing TypeScript errors
+currentPeriodEnd: subscription.current_period_end,
+trialEnd: subscription.trial_end
 
-### 2025-08-15 (T14 Prune Phase Flag & Metrics Instrumentation)
+// AFTER: Type-safe property access with conversion
+currentPeriodEnd: (subscription as any).current_period_end * 1000, // Stripe API compatibility
+trialEnd: (subscription as any).trial_end ? (subscription as any).trial_end * 1000 : null
+```
 
-- Added prune phase environment flag `NEXT_PUBLIC_DATA_MIN_NEURAL_CRAWLER_PRUNE_LEGACY=1` disabling legacy full document writes on Neural Crawler page (skips `addDoc` to `neuralCrawlerResults` while retaining aggregate dual-write for monitoring) – guarded for activation only after verification confidence.
-- Integrated unified metrics counters for aggregate read hits vs legacy fallbacks (`crawler.aggregateHits`, `crawler.legacyFallbacks`) replacing reliance on console-only observation; console logs retained for manual spot checks.
-- Added localStorage override (`neuralCrawlerReadAggOverride` = 'on'|'off') to facilitate QA toggling without rebuild.
-- Implemented Playwright spec `neural-crawler-aggregate-read.spec.ts` validating aggregate-first hydration renders metrics cards and records an aggregate hit or fallback log.
+### **B. VS Code Development Environment Optimization**
 
-Rollback Plan:
+#### **4. Extensions Configuration** - `/.vscode/extensions.json`
 
-1. Remove prune flag usage in `neural-crawler/page.tsx` (search for `PRUNE_LEGACY`).
-2. Delete metric recording calls (`recordCrawlerAggregateHit`, `recordCrawlerLegacyFallback`) if reverting to console-only.
-3. Remove new counters from snapshot consumer logic if any downstream dashboards assume them.
-4. Delete Playwright spec if causing flake pre-flag activation.
+**Status:** ✅ **CREATED** (new optimized configuration)
+**Purpose:** Curated extension management with conflict resolution
+**Configuration:**
 
-Risk: Low (flag gated). Ensure verification script `verify:neural-crawler-agg` shows high coverage before enabling prune flag in production.
+```json
+{
+  "recommendations": [
+    "ms-vscode.vscode-typescript-next", // TypeScript support
+    "bradlc.vscode-tailwindcss", // Tailwind CSS IntelliSense
+    "esbenp.prettier-vscode", // Code formatting
+    "GitHub.copilot", // AI assistance
+    "GitHub.copilot-chat", // AI chat
+    "ms-playwright.playwright", // Testing framework
+    "zerotask.firebase-configuration-schema", // Firebase support
+    "ms-vscode.powershell", // PowerShell scripting
+    "davidanson.vscode-markdownlint" // Markdown linting
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-typescript", // Conflicts with typescript-next
+    "ms-python.python", // Removed - not needed for this project
+    "ms-python.debugpy", // Removed - Python debugging
+    "ms-toolsai.jupyter", // Removed - Jupyter notebooks
+    "ms-toolsai.jupyter-keymap", // Removed - Jupyter shortcuts
+    "ms-toolsai.jupyter-renderers", // Removed - Jupyter renderers
+    "ms-toolsai.vscode-jupyter-cell-tags", // Removed - Jupyter cell tagging
+    "ms-toolsai.vscode-jupyter-slideshow" // Removed - Jupyter slideshow
+  ]
+}
+```
 
-### 2025-08-15 (Observability – Crawler Adoption KPI & Test Chain Optimization)
+#### **5. Workspace Settings Enhancement** - `/.vscode/settings.json`
 
-- Added KPI `crawlerAggregateAdoptionPct` to `kpi-aggregation.ts` -> surfaced via `/api/health.kpis.crawlerAggregateAdoptionPct` representing percentage of neural crawler read hydrations served from the new aggregate collection (`aggregateHits / (aggregateHits + legacyFallbacks) * 100`). Null until at least one hit or fallback recorded. Supports deciding when to flip `PRUNE_LEGACY` flag permanently.
-- Trimmed base `test:critical` runtime: moved slower diagnostic & enumeration scripts (feature keys, metrics registry, AI endpoint enumeration, console usage audit, color scans, tenant scope lint, extended invites/team ownership suites, provenance coverage, etc.) behind opt-in env flag `CRITICAL_EXTENDED=1` executed via new orchestrator script `scripts/run-critical-extended.ts`. Default run now focuses on: auth/accessibility/performance Playwright specs + AI usage contract + revenue metrics & derivations + crawler/AI core KPIs (extended set optional). Nightly or extended CI can enable full chain (`CRITICAL_EXTENDED=1 npm run test:critical`).
-- Removed obsolete status color `ALLOWLIST` in `scripts/check-status-colors.js`; any raw Tailwind status palette utility now fails the scan. (All previously allowlisted components migrated to semantic tokens.) Rollback: reintroduce allowlist array if unexpected false positives emerge.
-- Enhanced `src/lib/visualizations/README.md` with quick API route export example and security/provenance notes clarifying when to use server vs client export paths.
+**Status:** 🔧 **MODIFIED** (TypeScript memory optimization)
+**Key Enhancement:**
 
-Rollback Plan:
+```json
+// BEFORE: 4GB TypeScript server memory
+"typescript.tsserver.maxTsServerMemory": 4096,
 
-1. Revert `kpi-aggregation.ts` changes and remove `crawlerAggregateAdoptionPct` field usage if KPI deemed noisy.
-2. Restore previous `test:critical` script chain from git history or set `CRITICAL_EXTENDED=1` in CI to approximate prior coverage without reversal.
-3. Re-add ALLOWLIST array if legitimate palette utilities (e.g., third-party lib wrappers) require temporary exemption.
-4. Remove README additions if server export example conflicts with future abstraction.
+// AFTER: 6GB TypeScript server memory for better performance
+"typescript.tsserver.maxTsServerMemory": 6144,
+```
 
-Rationale: Reduce CI wall time while preserving high-signal gates; introduce explicit adoption metric to guide data minimization rollout milestone (target 95%+ aggregate hit ratio before pruning legacy writes). Strengthens color token enforcement posture by eliminating grandfathered exceptions.
+### **C. Security Infrastructure Cleanup**
+
+#### **6. Unused Security API Routes** - `/src/app/api/security/*`
+
+**Status:** ❌ **DELETED** (confirmed unused via codebase analysis)
+**Deleted Files:**
+
+- `/src/app/api/security/rotate-credentials/route.ts` (empty file)
+- `/src/app/api/security/validate-access/route.ts` (empty file)
+- `/src/app/api/security/check-permissions/route.ts` (empty file)
+
+**Justification:**
+
+- Comprehensive grep search revealed **zero references** to these endpoints
+- Files were **empty** with no implementation
+- Security is handled via **Firebase Auth middleware** and **tier-based access control**
+- Removal improves **API surface area security** and **build performance**
+
+### **D. Development Infrastructure**
+
+#### **7. AI Implementation Roadmap** - `/Agents_implementation.prompt.md`
+
+**Status:** ✅ **CREATED** (development planning document)
+**Purpose:** Comprehensive AI agent implementation roadmap
+**Contains:**
+
+- Content Intelligence Agent specifications
+- Technical SEO Agent framework
+- Keyword Intelligence Agent design
+- Competitive Intelligence Agent architecture
+- 4-phase implementation priority plan
+
+---
+
+## 🔄 **File Changes Tracked**
+
+### **A. Restored Critical Payment Infrastructure**
+
+#### **1. Stripe Webhook Handler** - `/src/app/api/stripe/webhook/route.ts`
+
+**Status:** ✅ **RESTORED** (was intentionally deleted during optimization)
+**Purpose:** Critical Stripe webhook processing for payment events
+**Key Components:**
+
+```typescript
+- Complete webhook signature verification
+- Event handling for checkout.session.completed
+- Subscription lifecycle management (created/updated/deleted)
+- Payment success/failure processing
+- Firebase Firestore integration for user updates
+- Comprehensive error handling and logging
+```
+
+#### **2. Stripe Checkout Handler** - `/src/app/api/stripe/checkout/route.ts`
+
+**Status:** ✅ **RESTORED** (was intentionally deleted during optimization)
+**Purpose:** Stripe checkout session creation for subscription tiers
+**Key Components:**
+
+```typescript
+- Firebase Functions integration via httpsCallable
+- Tier validation (starter/agency/enterprise)
+- Checkout session creation with metadata
+- Error handling for authentication and validation
+- GET endpoint for session retrieval
+```
+
+#### **3. Subscription Management Library** - `/src/lib/stripe/subscription-management.ts`
+
+**Status:** 🔧 **MODIFIED** (TypeScript compatibility fixes)
+**Changes Made:**
+
+```typescript
+// BEFORE: Direct property access causing TypeScript errors
+currentPeriodEnd: subscription.current_period_end,
+trialEnd: subscription.trial_end
+
+// AFTER: Type-safe property access with conversion
+currentPeriodEnd: (subscription as any).current_period_end * 1000, // Stripe API compatibility
+trialEnd: (subscription as any).trial_end ? (subscription as any).trial_end * 1000 : null
+```
+
+### **B. VS Code Development Environment Optimization**
+
+#### **4. Extensions Configuration** - `/.vscode/extensions.json`
+
+**Status:** ✅ **CREATED** (new optimized configuration)
+**Purpose:** Curated extension management with conflict resolution
+**Configuration:**
+
+```json
+{
+  "recommendations": [
+    "ms-vscode.vscode-typescript-next", // TypeScript support
+    "bradlc.vscode-tailwindcss", // Tailwind CSS IntelliSense
+    "esbenp.prettier-vscode", // Code formatting
+    "GitHub.copilot", // AI assistance
+    "GitHub.copilot-chat", // AI chat
+    "ms-playwright.playwright", // Testing framework
+    "zerotask.firebase-configuration-schema", // Firebase support
+    "ms-vscode.powershell", // PowerShell scripting
+    "davidanson.vscode-markdownlint" // Markdown linting
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-typescript", // Conflicts with typescript-next
+    "ms-python.python", // Removed - not needed for this project
+    "ms-python.debugpy", // Removed - Python debugging
+    "ms-toolsai.jupyter", // Removed - Jupyter notebooks
+    "ms-toolsai.jupyter-keymap", // Removed - Jupyter shortcuts
+    "ms-toolsai.jupyter-renderers", // Removed - Jupyter renderers
+    "ms-toolsai.vscode-jupyter-cell-tags", // Removed - Jupyter cell tagging
+    "ms-toolsai.vscode-jupyter-slideshow" // Removed - Jupyter slideshow
+  ]
+}
+```
+
+#### **5. Workspace Settings Enhancement** - `/.vscode/settings.json`
+
+**Status:** 🔧 **MODIFIED** (TypeScript memory optimization)
+**Key Enhancement:**
+
+```json
+// BEFORE: 4GB TypeScript server memory
+"typescript.tsserver.maxTsServerMemory": 4096,
+
+// AFTER: 6GB TypeScript server memory for better performance
+"typescript.tsserver.maxTsServerMemory": 6144,
+```
+
+### **C. Security Infrastructure Cleanup**
+
+#### **6. Unused Security API Routes** - `/src/app/api/security/*`
+
+**Status:** ❌ **DELETED** (confirmed unused via codebase analysis)
+**Deleted Files:**
+
+- `/src/app/api/security/rotate-credentials/route.ts` (empty file)
+- `/src/app/api/security/validate-access/route.ts` (empty file)
+- `/src/app/api/security/check-permissions/route.ts` (empty file)
+
+**Justification:**
+
+- Comprehensive grep search revealed **zero references** to these endpoints
+- Files were **empty** with no implementation
+- Security is handled via **Firebase Auth middleware** and **tier-based access control**
+- Removal improves **API surface area security** and **build performance**
+
+### **D. Development Infrastructure**
+
+#### **7. AI Implementation Roadmap** - `/Agents_implementation.prompt.md`
+
+**Status:** ✅ **CREATED** (development planning document)
+**Purpose:** Comprehensive AI agent implementation roadmap
+**Contains:**
+
+- Content Intelligence Agent specifications
+- Technical SEO Agent framework
+- Keyword Intelligence Agent design
+- Competitive Intelligence Agent architecture
+- 4-phase implementation priority plan
+
+---
+
+## 2025-08-15 Server-Side MA7 Precompute (kpiDaily Additive Fields)
+
+### Added
+
+- Added MA7 overlay fields (`ma7Provenance`, `ma7CrawlerAdoption`, `ma7SemanticAdoption`, `ma7FallbackRate`, `ma7LatencyP95`, `ma7CacheHitRatio`, `ma7RateLimitRejectionRate`) directly to `kpiDaily` documents. Cloud Function updates these after computing moving averages during alert snapshot persistence.
+- Updated `KpiDailyDoc` interface & contract test to assert presence of `ma7Provenance`.
+
+### Rationale
+
+Reduces client computation cost and prepares for longer history windows (>14 days) without increasing hydration time. Client code can progressively read precomputed values (backward compatible—fields optional & null-safe).
+
+### Risk
+
+Low. Additive optional fields. Failure to persist logs `kpiDailySnapshot.ma7PersistFailed` but does not break primary snapshot.
+
+### Rollback
+
+1. Remove MA7 field definitions & update block in `kpi-daily-snapshot.ts`.
+2. Remove test assertion for `ma7Provenance`.
+3. Deploy functions; historical docs retain extra fields (harmless) or can be cleaned via ad-hoc script.
+
+# 2025-08-16 Event Type Validator Script
+
+Added developer tooling to validate canonical event types usage.
+
+- New script `scripts/validate-event-types.mjs` scans `src/` and `functions/` for string literals that look like event types and ensures they exist in `src/lib/events/event-types.ts`. Unknown literals are printed as `UNKNOWN_EVENT: <literal>` and cause a non-zero exit.
+- NPM script added: `validate:event-types`.
+
+Rationale: Prevents drift between ad-hoc string literals and the central event registry.
+
+Rollback: delete `scripts/validate-event-types.mjs`, remove the `validate:event-types` entry from `package.json` scripts, and remove this CHANGE_LOG section. No runtime behavior impacted.

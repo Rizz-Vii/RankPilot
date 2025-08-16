@@ -58,17 +58,29 @@ test.describe("🚨 Critical System Validation", () => {
     });
 
     test("API health check passes", async ({ page }) => {
-        // Test a basic API endpoint
+        // Full health snapshot
         const response = await page.request.get("/api/health");
-
-        // Should respond successfully or with expected error format
         expect(response.status()).toBeLessThan(500);
-
-        // If 404, that's acceptable for health endpoint
-        // If 200, should have proper response
         if (response.status() === 200) {
-            const responseText = await response.text();
-            expect(responseText.length).toBeGreaterThan(0);
+            const json = await response.json();
+            expect(json).toHaveProperty('kpis');
+            expect(json).toHaveProperty('p95');
+            // Core KPI invariants (non-fatal soft checks)
+            if (json.kpis) {
+                ['provenanceCoveragePct', 'fallbackRate', 'cacheHitRatio', 'rateLimitRejectionRate'].forEach(k => {
+                    if (k in json.kpis && json.kpis[k] != null) {
+                        expect(typeof json.kpis[k]).toBe('number');
+                    }
+                });
+            }
+        }
+        // Lightweight probe for version/build info
+        const simple = await page.request.get('/api/health/simple');
+        if (simple.ok()) {
+            const s = await simple.json();
+            expect(s).toHaveProperty('version');
+            expect(s).toHaveProperty('buildSha');
+            expect(typeof s.uptimeMs).toBe('number');
         }
     });
 

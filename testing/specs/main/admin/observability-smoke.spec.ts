@@ -3,11 +3,10 @@ import { test, expect } from '@playwright/test';
 // Smoke test: Admin Observability page loads and key KPI labels render
 // Assumes admin test user credentials available via existing helper.
 
-test.describe('Admin Observability Dashboard', () => {
+test.describe('@observability Admin Observability Dashboard', () => {
+    // Restrict to primary chromium project to avoid duplicate multi-browser runs for now
     test.beforeEach(async ({ }, testInfo) => {
-        if (testInfo.project.name !== 'chromium') {
-            test.skip();
-        }
+        if (testInfo.project.name !== 'chromium') test.skip();
     });
     test('loads and shows core KPI labels', async ({ page }) => {
 

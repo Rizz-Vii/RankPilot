@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "limits": {
+      "type": "object",
+      "properties": {
+        "maxLocAdded": { "type": "number" },
+        "maxFiles": { "type": "number" }
+      },
+      "required": ["maxLocAdded", "maxFiles"]
+    },
+    "tools": { "type": "object" },
+    "modes": { "type": "object" },
+    "budget": { "type": "object" },
+    "auto": { "type": "object" }
+  },
+  "required": ["limits"]
+}

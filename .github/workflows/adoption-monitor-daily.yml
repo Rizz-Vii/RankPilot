@@ -1,0 +1,45 @@
+name: "🗓️ NeuroSEO Adoption Monitor (Daily)"
+
+on:
+  schedule:
+    - cron: '5 3 * * *'
+  workflow_dispatch: {}
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install deps
+        run: npm ci
+      - name: Start dev server
+        run: |
+          nohup npm run dev-no-turbopack > dev.log 2>&1 &
+          echo $! > dev.pid
+      - name: Wait for server
+        run: npx --yes wait-on@7 http://localhost:3000 --timeout 90000 --httpTimeout 45000
+      - name: Capture adoption summary (soft fail)
+        run: |
+          mkdir -p artifacts
+          TARGET_CRAWLER_PCT=95 TARGET_SEMANTIC_PCT=95 OUTPUT_FILE=artifacts/adoption-summary.json npm run --silent monitor:neuroseo-adoption || true
+      - name: Upload adoption artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: adoption-summary-${{ github.run_id }}
+          path: artifacts/adoption-summary.json
+          if-no-files-found: warn
+      - name: Parse & warn if below thresholds
+        run: |
+          node -e 'const fs=require("fs");const f="artifacts/adoption-summary.json";if(!fs.existsSync(f)){process.exit(0)};const j=JSON.parse(fs.readFileSync(f,"utf8"));const m=[];if(j.thresholds?.crawler&&j.passes?.crawler===false)m.push(`Crawler adoption ${j.crawlerPct}% < ${j.thresholds.crawler}%`);if(j.thresholds?.semantic&&j.passes?.semantic===false)m.push(`Semantic adoption ${j.semanticPct}% < ${j.thresholds.semantic}%`);if(m.length){console.log("::warning ::"+m.join(" | "));}';
+      - name: Done
+        run: echo "Daily adoption monitor completed."

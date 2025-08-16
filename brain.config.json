@@ -1,0 +1,11 @@
+{
+  "$schema": "./schemas/brain-config.schema.json",
+  "limits": { "maxLocAdded": 450, "maxFiles": 15 },
+  "domains": ["backend", "frontend", "docs", "infra", "ops", "data"],
+  "tools": { "codex": true, "aider": true, "openaiPlanner": true, "firecrawl": true, "sequential": true, "github": false, "zapier": false, "terminal": true },
+  "retry": { "planner": { "retries": 2, "backoffMs": [250, 750] } },
+  "modes": { "default": "execute+verify" },
+  "budget": { "token": 60000, "timeSeconds": 360 }
+  ,
+  "auto": { "enabled": true, "defaultTarget": "phase-1", "maxBatches": 6, "maxMinutes": 8, "maxConsecFails": 2 }
+}

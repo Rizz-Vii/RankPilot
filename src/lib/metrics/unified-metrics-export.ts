@@ -4,6 +4,7 @@
 // in-process unified metrics.
 import { adminDb } from '@/lib/firebase-admin';
 import { getKpiSnapshot } from './kpi-aggregation';
+import { getUnifiedMetricsSnapshot } from './unified-metrics';
 
 let lastWrittenDate: string | null = null;
 
@@ -32,8 +33,14 @@ export async function ensureDailyUnifiedMetricsExport(): Promise<void> {
                     success: externalCrawler.success || 0,
                     errors: externalCrawler.errors || 0,
                     totalCrawlMs: externalCrawler.totalCrawlMs || 0,
-                    totalAnalysisMs: externalCrawler.totalAnalysisMs || 0
+                    totalAnalysisMs: externalCrawler.totalAnalysisMs || 0,
+                    crawlP95: externalCrawler.crawlP95 ?? null,
+                    analysisP95: externalCrawler.analysisP95 ?? null,
+                    crawlP99: externalCrawler.crawlP99 ?? null,
+                    analysisP99: externalCrawler.analysisP99 ?? null
                 } : (kpis.crawler ? { ...kpis.crawler } : undefined),
+                // Persist semantic map aggregate adoption counters (raw) if present
+                semanticMap: (getUnifiedMetricsSnapshot() as any).semanticMap || undefined,
                 updatedAt: new Date(),
                 _schema: 1
             };

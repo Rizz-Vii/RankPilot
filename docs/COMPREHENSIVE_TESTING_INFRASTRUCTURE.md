@@ -291,6 +291,9 @@ npm run test:high-memory:content-analyzer
 
 # Full AI test suite
 npm run test:high-memory
+
+# Delegation governance (non-blocking)
+npm run validate:aider-log
 ```
 
 ---

@@ -47,6 +47,7 @@ Optional:
 
 - Lint/format: `npm run lint`
 - Run tests (see docs for variants): `npm test`
+- Validate delegation log (non-blocking governance check): `npm run validate:aider-log`
 
 ## Automation Recipes – Cron support (subset)
 

@@ -56,3 +56,44 @@ try {
     };
   }
 } catch {}
+
+// Optional network fetch mock to stabilize unit tests relying on /api/health endpoints.
+// Activate with TEST_MOCK_FETCH=1 environment variable.
+if (process.env.TEST_MOCK_FETCH === '1') {
+  const mockHealth = {
+    kpis: {
+      provenanceCoveragePct: 97,
+      p90LatencyOverall: 180,
+      p95LatencyOverall: 220,
+      p99LatencyOverall: 480,
+      crawlerAggregateAdoptionPct: 91,
+      semanticMapAggregateAdoptionPct: 89,
+      aiDailyCostEstimate: 1.2345,
+      aiDailyTokensIn: 12345,
+      aiDailyTokensOut: 23456,
+      teamRateLimitUtilizationPct: 42,
+      fallbackRatePct: 3.2,
+      cacheHitRatio: 78.5,
+      rateLimitRejectionRate: 1.1
+    },
+    crawler: { crawlP95: 140, analysisP95: 260 },
+    p95: { '/api/health': 120, '/api/finance/metrics': 210 },
+    alerts: [ { type: 'provenanceCoverage', level: 'warn', message: 'coverage dip', value: 97, threshold: 0 } ],
+    timestamp: new Date().toISOString()
+  };
+  const mockAlerts = {
+    rows: [
+      { date: new Date().toISOString().slice(0,10), alerts: mockHealth.alerts, ma7Provenance: 96.5 }
+    ]
+  };
+  global.fetch = async (input, init) => {
+    const url = typeof input === 'string' ? input : input.url || '';
+    if (url.includes('/api/health/alerts')) {
+      return new Response(JSON.stringify(mockAlerts), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    if (url.includes('/api/health')) {
+      return new Response(JSON.stringify(mockHealth), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+  };
+}

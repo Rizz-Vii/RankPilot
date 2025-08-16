@@ -33,7 +33,8 @@ export default function BillingOverviewPage() {
           <PeriodSelector value={months} onChange={setMonths} />
   </header>
   <ProvenanceLegend />
-        {allowFinanceMocks() && !live.kpis.length && (
+  {/* Banner: show whenever mocks are allowed AND either no KPIs loaded OR no invoice rows (mock fallback). */}
+  {allowFinanceMocks() && (!live.rows.length) && (
           <Alert className="border-warning/30 bg-warning/15 text-warning-foreground dark:bg-warning/20 dark:text-warning-foreground" aria-live="polite" aria-label="Finance mock data banner">
             <div className="flex items-start gap-3 text-sm">
               <AlertTriangle className="h-4 w-4 mt-0.5" />

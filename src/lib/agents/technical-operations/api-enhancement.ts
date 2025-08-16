@@ -310,7 +310,7 @@ export async function GET(request: NextRequest) {
           top_performing_url: "Enhanced real-time analysis data",
           avg_processing_time: 3500 + Math.floor(Math.random() * 2000)
         },
-        performance_metrics: {
+        performance: {
           avg_response_time: 250 + Math.floor(Math.random() * 200),
           cache_hit_rate: 0.85 + Math.random() * 0.1,
           real_time_success_rate: 0.95 + Math.random() * 0.04,

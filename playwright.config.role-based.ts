@@ -1,8 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
+import fs from 'fs';
+const storageStatePath = process.env.PLAYWRIGHT_STORAGE || 'test-results/.auth/admin.json';
+const hasStorage = fs.existsSync(storageStatePath);
 import { getProxyConfig } from "./testing/specs/main/utils/proxy";
 
 export default defineConfig({
-  testDir: "./testing/specs/main",
+  // Expanded to cover both main and organized spec directories (for contract + feature acceptance specs)
+  testDir: "./testing/specs",
   timeout: 60000, // Increased timeout for complex flows
   retries: process.env.CI ? 2 : 1,
   // Global worker limit to prevent server crashes
@@ -21,6 +25,7 @@ export default defineConfig({
     video: "retain-on-failure",
     actionTimeout: 20000,
     navigationTimeout: 20000,
+    storageState: hasStorage ? storageStatePath : undefined,
   },
   expect: {
     timeout: 10000,
@@ -177,7 +182,12 @@ export default defineConfig({
         "**/auth-consolidated.spec.ts",
         "**/mobile-nav-consolidated.spec.ts",
         "**/features/**/*.spec.ts",
-        "**/public-pages-e2e.spec.ts"
+        "**/public-pages-e2e.spec.ts",
+        // Include organized specs (health-ai-usage-contract, observability smoothing, etc.)
+        "**/organized/**/*.spec.ts",
+        // Admin area (observability, etc.) gradually migrating
+        "**/admin/observability-*.spec.ts"
+        , "**/admin/observability-alert-history.spec.ts"
       ],
       use: {
         ...devices["Desktop Chrome"],

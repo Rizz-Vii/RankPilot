@@ -119,10 +119,12 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Permissions-Policy",
-            value:
-              process.env.NODE_ENV === "production"
-                ? "payment=(), microphone=(), camera=(), geolocation=(), interest-cohort=()"
-                : "payment=(self), microphone=(), camera=(), geolocation=(), interest-cohort=()",
+            // Mirror middleware.ts logic (source of truth) to avoid mismatch during static asset requests not passing through middleware.
+            value: (() => {
+              const isLocal = process.env.NODE_ENV !== 'production';
+              const mic = process.env.RP_DISABLE_MIC === '1' ? 'microphone=()' : 'microphone=(self)';
+              return `camera=(), ${mic}, geolocation=(), interest-cohort=(), payment=${isLocal ? '(self)' : '()'}`;
+            })(),
           },
           {
             key: "Strict-Transport-Security",

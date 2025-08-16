@@ -4,6 +4,9 @@
  */
 
 import { defineConfig, devices } from '@playwright/test';
+import fs from 'fs';
+const storageStatePath = process.env.PLAYWRIGHT_STORAGE || 'test-results/.auth/admin.json';
+const hasStorage = fs.existsSync(storageStatePath);
 import path from 'path';
 
 export default defineConfig({
@@ -34,8 +37,7 @@ export default defineConfig({
         navigationTimeout: 45000, // Increased for AI compilation
         actionTimeout: 30000, // Increased for heavy components
 
-        // Browser context persistence for caching (optional)
-        // storageState: 'testing/cache/warmed-storage-state.json',
+        storageState: hasStorage ? storageStatePath : undefined,
     }, projects: [
         {
             name: 'high-memory-desktop',

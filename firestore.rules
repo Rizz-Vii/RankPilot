@@ -407,5 +407,14 @@ service cloud.firestore {
         allow create, update, delete: if isAdmin();
       }
     }
+
+    // TODO: Narrow org membership read scope for events once membership index finalized.
+    // Events Backbone (T26/T27) — immutable create-only
+    match /orgs/{orgId}/events/{eventId} {
+      allow create: if request.auth != null && request.resource.data.orgId == orgId;
+      allow update, delete: if false;
+      // Adjust read to align with org membership helper when available
+      allow get, list: if request.auth != null;
+    }
   }
 }

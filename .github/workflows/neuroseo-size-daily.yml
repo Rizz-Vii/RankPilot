@@ -1,0 +1,47 @@
+name: 🗓️ NeuroSEO Size Snapshot (Daily)
+
+on:
+  schedule:
+    - cron: '15 2 * * *'
+  workflow_dispatch: {}
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: 📦 Install deps
+        run: npm ci
+
+      - name: ▶️ Run snapshot script
+        env:
+          OUTPUT_DIR: artifacts
+        run: npm run --silent snapshot:neuroseo-size
+
+      - name: 📤 Upload snapshot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: neuroseo-size-snapshot-${{ github.run_id }}
+          path: artifacts/size-reduction-*.json
+          if-no-files-found: warn
+
+      - name: 🧪 Sanity: ensure reduction fields present
+        run: |
+          file=$(ls artifacts/size-reduction-*.json | head -1)
+          echo "Inspecting $file" && cat $file
+          node -e 'const f=process.argv[1];const d=require("fs").readFileSync(f,"utf8");const j=JSON.parse(d);if(!j.semantic||!j.crawler){process.exit(1)};if(typeof j.semantic.reductionPct!=="number"||typeof j.crawler.reductionPct!=="number"){process.exit(1)}' "$file"
+
+      - name: ✅ Completed
+        run: echo "Daily NeuroSEO size snapshot captured."

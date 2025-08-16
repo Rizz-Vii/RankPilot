@@ -6,8 +6,10 @@ const requestCounts = new Map<string, { count: number; timestamp: number }>();
 
 // Configure rate limits
 const WINDOW_SIZE_MS = 60 * 1000; // 1 minute
-const MAX_REQUESTS = 100; // Maximum requests per minute
-const API_MAX_REQUESTS = 50; // Lower limit for API endpoints
+// Allow overrides for local CI stress via env; default to generous in dev when RATE_LIMIT_DEV_RELAX=1
+const DEV_RELAX = process.env.RATE_LIMIT_DEV_RELAX === '1' && process.env.NODE_ENV !== 'production';
+const MAX_REQUESTS = DEV_RELAX ? 1000 : 100; // Maximum requests per minute
+const API_MAX_REQUESTS = DEV_RELAX ? 600 : 50; // Lower limit for API endpoints
 
 export async function rateLimit(req: NextRequest) {
   try {

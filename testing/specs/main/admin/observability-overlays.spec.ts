@@ -6,7 +6,7 @@ const sparklineIds = [
     'sparkline-crawlerAdoption', 'sparkline-semanticAdoption', 'sparkline-teamUtil'
 ];
 
-test.describe('Admin Observability MA7 Overlays', () => {
+test.describe('@observability Admin Observability MA7 Overlays', () => {
     test.beforeEach(async ({ }, info) => { if (info.project.name !== 'chromium') test.skip(); });
 
     test('renders sparkline MA7 overlays', async ({ page }) => {

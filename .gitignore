@@ -25,6 +25,7 @@ lerna-debug.log*
 out/
 build/
 dist/
+dist/brain
 .vercel/
 .turbo/
 .swc/
@@ -43,6 +44,7 @@ playwright-report/
 test-snapshots/
 testing/results/
 testing/reports/
+artifacts/brain/*.json
 coverage/
 .nyc_output/
 *.spec.js.map
@@ -256,3 +258,4 @@ docs/integrations/mcp-full/configuration-plan.md
 docs/integrations/mcp-full/configuration-summary.md
 docs/integrations/mcp/success-complete.md
 docs/integrations/stripe/integration-complete.md
+.aider*
