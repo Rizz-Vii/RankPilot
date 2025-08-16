@@ -5,7 +5,9 @@
     "rootDir": ".",
     "outDir": "dist/brain",
     "skipLibCheck": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["node"]
   },
   "include": ["scripts/brain/**/*.ts", "types/**/*.ts"]
 }
