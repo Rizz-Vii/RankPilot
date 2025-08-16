@@ -28,7 +28,7 @@ import {
   Lightbulb
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { createDeterministicRng, randomInt, randomFloat, tagSynthetic } from '@/lib/synthetic/synthetic-utils';
+import { generateDeterministicSemanticAnalysis } from '@/lib/neuroseo/semantic-map-fallback';
 import { useAuth } from "@/context/AuthContext";
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { db } from "@/lib/firebase";
@@ -113,93 +113,7 @@ export default function SemanticMapPage() {
     return () => { cancelled = true; clearInterval(id); };
   }, []);
 
-  const simulateSemanticAnalysis = async (url: string, keywords: string[]): Promise<SemanticMapResult> => {
-    // Simulate progressive analysis
-    for (let i = 0; i <= 100; i += 12) {
-      setAnalysisProgress(i);
-      await new Promise(resolve => setTimeout(resolve, 300));
-    }
 
-    const sampleTopics = ['SEO Strategy', 'Content Marketing', 'Digital Analytics', 'User Experience', 'Technical Optimization'];
-    const sampleKeywords = ['seo', 'optimization', 'content', 'keywords', 'ranking', 'traffic', 'conversion'];
-
-    const rng = createDeterministicRng([url, keywords.sort().join(','), 'semantic-map']);
-    const pickOpportunity = () => {
-      const r = rng();
-      if (r > 0.6) return 'high';
-      if (r > 0.3) return 'medium';
-      return 'low';
-    };
-    const mockResult: SemanticMapResult = {
-      id: `semantic_${Date.now()}`,
-      url,
-      topicClusters: sampleTopics.map((topic, index) => ({
-        id: `cluster_${index}`,
-        topic,
-        keywords: sampleKeywords.slice(index, index + 3),
-        semanticScore: randomInt(rng, 70, 100),
-        contentGaps: ['Advanced techniques', 'Case studies', 'ROI measurement'],
-        relatedTopics: sampleTopics.filter(t => t !== topic).slice(0, 2),
-        searchVolume: randomInt(rng, 5000, 55000),
-        difficulty: randomInt(rng, 30, 70),
-        opportunity: pickOpportunity()
-      })),
-      keywordAnalysis: sampleKeywords.map(keyword => ({
-        keyword,
-        density: randomFloat(rng, 0.5, 3.5),
-        prominence: randomFloat(rng, 0, 100),
-        semanticRelevance: randomFloat(rng, 60, 100),
-        context: ['Main content', 'Headings', 'Meta tags'].slice(0, randomInt(rng,1,3))
-      })),
-      contentAnalysis: {
-        readabilityScore: randomInt(rng,70,100),
-        contentDepth: randomInt(rng,60,100),
-        topicCoverage: randomInt(rng,70,100),
-        semanticRichness: randomInt(rng,60,100),
-        expertiseSignals: randomInt(rng,70,100)
-      },
-      semanticGraph: {
-        nodes: sampleTopics.map((topic, index) => ({
-          id: `node_${index}`,
-          label: topic,
-          type: 'topic',
-          score: randomFloat(rng,60,100)
-        })),
-        edges: [
-          { source: 'node_0', target: 'node_1', weight: 0.8 },
-          { source: 'node_1', target: 'node_2', weight: 0.6 },
-          { source: 'node_2', target: 'node_3', weight: 0.7 },
-          { source: 'node_0', target: 'node_4', weight: 0.5 }
-        ]
-      },
-      recommendations: [
-        {
-          type: 'content',
-          priority: 'high',
-          title: 'Expand topic coverage',
-          description: 'Add more comprehensive coverage of related semantic topics',
-          impact: 'Improved topical authority and search visibility'
-        },
-        {
-          type: 'keyword',
-          priority: 'medium',
-          title: 'Optimize keyword density',
-          description: 'Balance primary keyword usage throughout the content',
-          impact: 'Better keyword relevance signals'
-        },
-        {
-          type: 'semantic',
-          priority: 'high',
-          title: 'Strengthen semantic connections',
-          description: 'Add more related terms and concepts to improve semantic richness',
-          impact: 'Enhanced understanding by search engines'
-        }
-      ],
-      overallScore: randomInt(rng,70,100),
-      createdAt: new Date()
-    };
-    return tagSynthetic(mockResult);
-  };
 
   const handleAnalyze = async () => {
     if (!analysisUrl || !user) {
@@ -207,44 +121,59 @@ export default function SemanticMapPage() {
       return;
     }
 
-  setIsAnalyzing(true);
+    setIsAnalyzing(true);
     setAnalysisProgress(0);
     setCurrentResult(null);
-  setProvenance(null);
+    setProvenance(null);
 
     try {
       const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k);
       let result: SemanticMapResult | null = null;
+      
       try {
-        // Attempt live orchestrator call (server API)
+        // Attempt live orchestrator call via NeuroSEOSuite
         const resp = await fetch('/api/neuroseo', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ urls: [analysisUrl], targetKeywords: keywords, analysisType: 'content-focused', userPlan: 'starter', userId: user.uid })
+          body: JSON.stringify({ 
+            urls: [analysisUrl], 
+            targetKeywords: keywords, 
+            analysisType: 'content-focused', 
+            userPlan: 'starter', 
+            userId: user.uid 
+          })
         });
+        
         if (resp.ok) {
           const data = await resp.json();
-          const first = data?.data?.semanticAnalysis?.[0];
-          if (first) {
-            // Map subset to existing shape (fallback to simulate for missing fields)
-            result = await simulateSemanticAnalysis(analysisUrl, keywords);
-            // Overlay some live semantic metrics if present
-            if (first.topicClusters?.length) {
-              (result as any).topicClusters = first.topicClusters.slice(0, (result as any).topicClusters.length || 5);
-            }
+          const semanticAnalysis = data?.data?.semanticAnalysis?.[0];
+          
+          if (semanticAnalysis) {
+            // Map orchestrator response to SemanticMapResult format
+            result = mapOrchestratorToSemanticResult(semanticAnalysis, analysisUrl, keywords);
             markLive();
           }
         }
       } catch (e) {
-        // swallow and fallback
+        console.warn('Orchestrator call failed, falling back to deterministic simulation:', e);
       }
+      
       if (!result) {
-        // Fallback deterministic simulation
-        result = await simulateSemanticAnalysis(analysisUrl, keywords);
+        // Use deterministic fallback when orchestrator is unavailable
+        result = await generateDeterministicSemanticAnalysis(
+          analysisUrl, 
+          keywords,
+          (progress) => setAnalysisProgress(progress)
+        );
         markFallback();
       }
+      
       setCurrentResult(result);
-      await addDoc(collection(db, 'semanticMapResults'), { userId: user.uid, ...result, createdAt: new Date() });
+      await addDoc(collection(db, 'semanticMapResults'), { 
+        userId: user.uid, 
+        ...result, 
+        createdAt: new Date() 
+      });
       toast.success("Semantic analysis completed successfully!");
     } catch (error) {
       console.error('Analysis error:', error);
@@ -254,6 +183,36 @@ export default function SemanticMapPage() {
       setIsAnalyzing(false);
       setAnalysisProgress(0);
     }
+  };
+
+  // Helper function to map orchestrator response to SemanticMapResult format
+  const mapOrchestratorToSemanticResult = (semanticAnalysis: any, url: string, keywords: string[]): SemanticMapResult => {
+    return {
+      id: `semantic_${Date.now()}`,
+      url,
+      topicClusters: semanticAnalysis.topicClusters || [],
+      keywordAnalysis: semanticAnalysis.keywordAnalysis || keywords.map(keyword => ({
+        keyword,
+        density: 2.1,
+        prominence: 75,
+        semanticRelevance: 85,
+        context: ['Main content']
+      })),
+      contentAnalysis: semanticAnalysis.contentAnalysis || {
+        readabilityScore: 80,
+        contentDepth: 85,
+        topicCoverage: 78,
+        semanticRichness: 82,
+        expertiseSignals: 76
+      },
+      semanticGraph: semanticAnalysis.semanticGraph || {
+        nodes: [],
+        edges: []
+      },
+      recommendations: semanticAnalysis.recommendations || [],
+      overallScore: semanticAnalysis.overallRelevanceScore || 78,
+      createdAt: new Date()
+    };
   };
 
   const exportResults = () => {
