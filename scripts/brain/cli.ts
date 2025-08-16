@@ -64,10 +64,31 @@ async function main() {
     console.log(JSON.stringify({ strategy: p.strategy, steps: p.steps.length }));
   }
   const t0 = Date.now();
-  const outcome = aborted ? { status: 'FAIL' as const } : (validation && (validation.lint === 'fail' || validation.typecheck === 'fail' || validation.tests === 'fail')) ? { status: 'FAIL' as const } : { status: 'OK' as const };
+  const hasValidationFailure = validation && (validation.lint === 'fail' || validation.typecheck === 'fail' || validation.tests === 'fail' || validation.performance === 'fail');
+  const outcome = aborted ? { status: 'FAIL' as const } : hasValidationFailure ? { status: 'FAIL' as const } : { status: 'OK' as const };
   if (outcome.status === 'FAIL') {
-    try { const fs = await import('fs'); const ts = new Date().toISOString().replace(/[:.]/g, '-'); fs.mkdirSync('artifacts/brain', { recursive: true }); fs.writeFileSync(`artifacts/brain/remediation-${ts}.json`, JSON.stringify({ reason: 'validation', tasks }, null, 2)); } catch { }
-    if (aborted) followUps.push({ type: 'action', suggestion: 'Reduce scope or increase budget' });
+    try { 
+      const fs = await import('fs'); 
+      const ts = new Date().toISOString().replace(/[:.]/g, '-'); 
+      fs.mkdirSync('artifacts/brain', { recursive: true }); 
+      const remediationData = { 
+        reason: hasValidationFailure ? 'validation' : 'budget', 
+        tasks, 
+        validationFailures: hasValidationFailure ? validation : undefined,
+        timestamp: ts
+      };
+      fs.writeFileSync(`artifacts/brain/remediation-${ts}.json`, JSON.stringify(remediationData, null, 2)); 
+    } catch { }
+    
+    if (aborted) {
+      followUps.push({ type: 'action', suggestion: 'Reduce scope or increase budget' });
+    } else if (hasValidationFailure) {
+      followUps.push({ type: 'remediation', suggestion: 'Fix validation failures before proceeding' });
+      if (validation.lint === 'fail') followUps.push({ type: 'task', suggestion: 'Run: npm run lint:fix' });
+      if (validation.typecheck === 'fail') followUps.push({ type: 'task', suggestion: 'Fix TypeScript compilation errors' });
+      if (validation.tests === 'fail') followUps.push({ type: 'task', suggestion: 'Fix failing unit tests' });
+      if (validation.performance === 'fail') followUps.push({ type: 'task', suggestion: 'Fix Playwright test failures' });
+    }
   }
   await writeRunLog({ ts: Date.now(), runId, mode, tasks, domains: [...new Set(tasks.map(t => t.domain))], toolsInvoked, diffs, validation, outcome, followUps, aborted, reason: aborted ? 'budget' : 'normal', metrics: { elapsedMs: Date.now() - t0, estTokens: tokenUsed, budget: { tokenUsed, tokenBudget: cfg.budget.token, timeUsedMs: Date.now() - tStart, timeBudgetMs: cfg.budget.timeSeconds * 1000 } } });
 }
