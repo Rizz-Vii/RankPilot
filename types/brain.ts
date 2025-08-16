@@ -20,6 +20,15 @@ export interface RunRecord {
   followUps?: Task[];
 }
 
+export interface RemediationRecord {
+  runId: string;
+  timestamp: string;
+  failureReason: 'validation' | 'guard' | 'budget' | 'other';
+  originalTasks: Task[];
+  followUpTasks: Task[];
+  summary: string;
+}
+
 export interface TaskSource { name: string; fetch(): Promise<Task[]>; }
 export interface Guard { name: string; check(input: any, cfg: any): { ok: boolean; reason?: string } }
 export interface Reporter { name: string; write(rec: RunRecord): Promise<void> }

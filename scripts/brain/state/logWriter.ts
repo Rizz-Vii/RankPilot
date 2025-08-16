@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import type { Task, RemediationRecord } from '../../types/brain';
 
 export interface RunRecord {
   ts: number | string;
@@ -13,7 +14,7 @@ export interface RunRecord {
   validation?: any;
   outcome?: { status: 'OK' | 'FAIL' };
   metrics?: { elapsedMs?: number; estTokens?: number; batches?: number; budget?: { tokenUsed?: number; tokenBudget?: number; timeUsedMs?: number; timeBudgetMs?: number } };
-  followUps?: any[];
+  followUps?: Task[];
   aborted?: boolean;
   reason?: string;
 }
@@ -44,5 +45,39 @@ export function writeRunLog(obj: any) {
   return file;
 }
 
-export default { writeRunLog };
+export function writeRemediationFile(record: RemediationRecord): string {
+  const dir = path.join(process.cwd(), 'artifacts', 'brain');
+  try { fs.mkdirSync(dir, { recursive: true }); } catch { }
+  
+  const jsonFile = path.join(dir, `remediation-${record.runId}.json`);
+  const mdFile = path.join(dir, `remediation-${record.runId}.md`);
+  
+  // Write JSON remediation record
+  fs.writeFileSync(jsonFile, JSON.stringify(record, null, 2));
+  
+  // Write markdown summary
+  const mdContent = `# Remediation Report
+**Run ID:** ${record.runId}
+**Timestamp:** ${record.timestamp}
+**Failure Reason:** ${record.failureReason}
+
+## Summary
+${record.summary}
+
+## Original Tasks (${record.originalTasks.length})
+${record.originalTasks.map((task, i) => `${i + 1}. **${task.title}** (${task.domain}) - ${task.status}`).join('\n')}
+
+## Follow-up Tasks (${record.followUpTasks.length})
+${record.followUpTasks.map((task, i) => `${i + 1}. **${task.title}** (${task.domain})`).join('\n')}
+
+## Next Steps
+Review the follow-up tasks above and execute them to resolve the failure conditions.
+`;
+  
+  fs.writeFileSync(mdFile, mdContent);
+  
+  return jsonFile;
+}
+
+export default { writeRunLog, writeRemediationFile };
 
