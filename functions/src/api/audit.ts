@@ -1,5 +1,6 @@
 import { onCall, HttpsOptions } from "firebase-functions/v2/https";
 import { ai } from "@/ai/genkit.js";
+import { publishEvent, EventType } from "../../src/lib/events";
 
 // Set options for the audit function
 const httpsOptions: HttpsOptions = {
@@ -32,11 +33,33 @@ interface AuditResponse {
  */
 export const runSeoAudit = onCall(httpsOptions, async (request) => {
   const { url, depth = 1, checkMobile = true } = request.data as AuditRequest;
+  const userId = request.auth?.uid;
+  const startTime = Date.now();
+
+  // Publish audit started event
+  await publishEvent(EventType.SEO_AUDIT_STARTED, {
+    userId,
+    data: { url, depth, checkMobile }
+  });
 
   try {
     // Demo/mock response for emulator testing
     if (process.env.FUNCTIONS_EMULATOR === "true") {
-      return mockAuditResponse();
+      const result = mockAuditResponse();
+      
+      // Publish audit completed event
+      await publishEvent(EventType.SEO_AUDIT_COMPLETED, {
+        userId,
+        data: { 
+          url, 
+          depth, 
+          checkMobile, 
+          score: result.score,
+          duration: Date.now() - startTime
+        }
+      });
+      
+      return result;
     }
 
     // In production, this would use AI to generate a comprehensive audit
@@ -48,7 +71,7 @@ export const runSeoAudit = onCall(httpsOptions, async (request) => {
 
     // Process AI response (simplified for demo)
     // In a real implementation, you would parse the AI response thoroughly
-    return {
+    const result = {
       score: 72,
       issues: {
         critical: ["Missing meta description on some pages"],
@@ -66,8 +89,35 @@ export const runSeoAudit = onCall(httpsOptions, async (request) => {
         accessibility: 82,
       },
     };
+    
+    // Publish audit completed event
+    await publishEvent(EventType.SEO_AUDIT_COMPLETED, {
+      userId,
+      data: { 
+        url, 
+        depth, 
+        checkMobile, 
+        score: result.score,
+        duration: Date.now() - startTime
+      }
+    });
+    
+    return result;
   } catch (error) {
     console.error("Error generating SEO audit:", error);
+    
+    // Publish audit failed event
+    await publishEvent(EventType.SEO_AUDIT_FAILED, {
+      userId,
+      data: { 
+        url, 
+        depth, 
+        checkMobile,
+        duration: Date.now() - startTime,
+        error: error instanceof Error ? error.message : String(error)
+      }
+    });
+    
     throw new Error("Failed to generate SEO audit. Please try again later.");
   }
 });

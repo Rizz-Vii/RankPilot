@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase-admin/app";
 import { onCall, HttpsOptions } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions";
+import { EventPublisher, EventType } from "../src/lib/events";
 
 // Initialize Firebase Admin SDK first
 initializeApp();
@@ -21,20 +22,34 @@ process.on("unhandledRejection", (reason, promise) => {
 
 // Health check function to confirm functions are working correctly
 export const healthCheck = onCall(httpsOptions, async (request) => {
+  const startTime = Date.now();
+  
   try {
     logger.info("Health check function called", {
       auth: request.auth ? "authenticated" : "unauthenticated",
       timestamp: new Date().toISOString(),
     });
 
+    const responseTime = Date.now() - startTime;
+    const timestamp = new Date().toISOString();
+    
+    // Publish health check event
+    await EventPublisher.healthCheck('ok', responseTime, timestamp);
+
     return {
       status: "ok",
-      timestamp: new Date().toISOString(),
+      timestamp,
       runtime: "Node.js v" + process.version,
       region: httpsOptions.region,
     };
   } catch (error) {
+    const responseTime = Date.now() - startTime;
+    const timestamp = new Date().toISOString();
+    
     logger.error("Health check function failed:", error);
+    
+    // Publish health check event for failure
+    await EventPublisher.healthCheck('error', responseTime, timestamp);
 
     throw new Error("Health check failed");
   }
