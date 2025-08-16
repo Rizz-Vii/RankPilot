@@ -1,0 +1,24 @@
+{
+  "plugins": {
+    "enabled": true,
+    "loadPlugins": true
+  },
+  "tools": {
+    "codex": true,
+    "aider": true,
+    "openaiPlanner": true,
+    "firecrawl": true,
+    "sequential": true,
+    "github": false,
+    "zapier": false,
+    "terminal": true
+  },
+  "limits": {
+    "maxLocAdded": 450,
+    "maxFiles": 15
+  },
+  "budget": {
+    "token": 60000,
+    "timeSeconds": 360
+  }
+}
