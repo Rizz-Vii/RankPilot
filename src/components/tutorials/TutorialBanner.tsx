@@ -36,7 +36,7 @@ export function TutorialBanner({
       string,
       { title: string; description: string; tutorials: string[] }
     > = {
-      neuroseo: {
+      semantic_map: { // Updated from alias 'neuroseo'
         title: "New to NeuroSEO™?",
         description:
           "Learn how to leverage AI-powered SEO analysis for better results.",

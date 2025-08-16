@@ -31,8 +31,8 @@ const footerSections = {
       { href: "/content-brief", label: "Content Brief" },
     ],
   },
-  neuroseo: {
-    title: "NeuroSEO™ Suite",
+  semantic_map: {
+    title: "NeuroSEO™ Suite", // Updated from alias 'neuroseo'
     links: [
       { href: "/neuroseo", label: "NeuroSEO™ Dashboard" },
       { href: "/neuroseo/neural-crawler", label: "NeuralCrawler™" },

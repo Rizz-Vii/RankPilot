@@ -55,7 +55,7 @@ export function TutorialAccess({
       string,
       { id: string; title: string; description: string; tier: string }[]
     > = {
-      neuroseo: [
+      semantic_map: [ // Updated from alias 'neuroseo'
         {
           id: "ns-1",
           title: "NeuroSEO™ AI Features",

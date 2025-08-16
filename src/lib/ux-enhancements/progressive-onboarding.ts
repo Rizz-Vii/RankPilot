@@ -56,11 +56,8 @@ export const onboardingFlows = {
       estimatedTime: 180,
     },
     {
-      // NOTE: id currently matches transitional alias feature key `ai_insights`.
-      // This alias is scheduled for removal next release (T17 follow-up). When removed,
-      // update this onboarding step id to `advanced_analytics_insights` (or similar)
-      // and adjust any persisted progress keys accordingly.
-      id: "ai_insights",
+      // Updated from alias `ai_insights` to canonical feature key
+      id: "advanced_analytics_insights",
       title: "AI-Powered Insights",
       description: "Master the full NeuroSEO™ Suite",
       component: "AIInsightsStep",

@@ -395,8 +395,8 @@ export default function TutorialsPage() {
           duration: "25 min",
           type: "video",
           requiredTier: "agency",
-          feature: "neuroseo",
-          tags: ["ai", "neuroseo", "automation"],
+          feature: "semantic_map", // Updated from umbrella 'neuroseo' to canonical
+          tags: ["ai", "semantic_map", "automation"],
           popularity: 5,
           lastUpdated: new Date("2024-06-30"),
         },
