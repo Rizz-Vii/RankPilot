@@ -2,14 +2,14 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "ES2019",
-    "lib": ["ES2019"],
+    "lib": ["ES2019", "dom"],
     "rootDir": ".",
     "outDir": "dist/brain",
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
-    "types": ["node"]
+    "typeRoots": ["./node_modules/@types", "./node_modules/firebase-admin/node_modules/@types"]
   },
   "include": ["scripts/brain/**/*.ts", "types/**/*.ts"]
 }

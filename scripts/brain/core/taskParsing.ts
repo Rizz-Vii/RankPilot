@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { Task } from '../../../types/brain';
+import { collectTasks } from './taskSources';
 
 export function parseTasks(inputs: { checkList?: string; queues?: string; changeLog?: string; todos?: string }): Task[] {
   const out: Task[] = [];
@@ -16,11 +17,8 @@ export function parseTasks(inputs: { checkList?: string; queues?: string; change
   if (inputs.todos) push(inputs.todos, 'TD');
   // Auto-ingest from common sources if none provided
   if (!out.length) {
-    const root = process.cwd();
-    const safeRead = (p: string) => { try { return fs.readFileSync(path.join(root, p), 'utf8'); } catch { return ''; } };
-    const cl = safeRead('checkList.txt'); if (cl) push(cl, 'CLF');
-    const ch = safeRead('docs/CHANGE_LOG.md'); if (ch) push(ch.split('\n').filter(l=>/TODO|BACKLOG/i.test(l)).join('\n'), 'CHD');
-    const inc = safeRead('docs/INCOMPLETE_CODE_AUDIT.md'); if (inc) push(inc, 'INC');
+    const autoTasks = collectTasks();
+    out.push(...autoTasks);
   }
   // Dedupe by title
   const seen = new Set<string>();
