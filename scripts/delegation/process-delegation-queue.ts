@@ -1,5 +1,5 @@
 #!/usr/bin/env ts-node
-import { readQueue, writeQueue } from './queue-utils';
+import { readQueue, writeQueue, createLock, isLocked, getLock, releaseLock, cleanupLock } from './queue-utils';
 import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
@@ -143,8 +143,37 @@ function isDirectDeleteTask(task: any): boolean {
     return /delete unused|remove deprecated|delete obsolete|remove content-analyzer page-fixed/.test(s);
 }
 
+// Check for existing lock before processing
+const existingLock = getLock();
+if (existingLock) {
+    console.error(`[lockfile] Another delegation process is already running:`);
+    console.error(`  PID: ${existingLock.pid}`);
+    console.error(`  Hostname: ${existingLock.hostname}`);
+    console.error(`  Task: ${existingLock.taskId}`);
+    console.error(`  Started: ${existingLock.timestamp}`);
+    console.error(`  Expires: ${existingLock.expiresAt}`);
+    console.error(`[lockfile] Wait for it to complete or remove the lock file manually: sessions/aider-delegation.lock`);
+    process.exit(1);
+}
+
 for (const task of tasks) {
     if (task.status !== 'pending') continue;
+    
+    // Create lock for this task processing
+    if (!createLock(task.taskId)) {
+        console.error(`[lockfile] Failed to create lock for task ${task.taskId}`);
+        continue;
+    }
+    
+    // Ensure lock is released on exit
+    const releaseLockOnExit = () => {
+        releaseLock();
+        process.exit();
+    };
+    process.on('SIGINT', releaseLockOnExit);
+    process.on('SIGTERM', releaseLockOnExit);
+    process.on('exit', () => releaseLock());
+    
     task.status = 'running';
     task.updatedAt = new Date().toISOString();
     changed = true;
@@ -187,7 +216,27 @@ for (const task of tasks) {
         }
         task.status = 'done';
         const { added, removed } = computeLocDelta(task.files);
-        appendLog({ taskId: task.taskId, filesChanged: task.files.length, locAdded: added, locRemoved: removed, status: 'pass', ts: new Date().toISOString(), notes: 'direct_delete' });
+        
+        // Calculate risk metadata for direct delete operations
+        const totalLoc = added + removed;
+        let locRisk = 'low';
+        if (totalLoc > 200) locRisk = 'high';
+        else if (totalLoc > 100) locRisk = 'medium';
+        
+        appendLog({ 
+            taskId: task.taskId, 
+            filesChanged: task.files.length, 
+            locAdded: added, 
+            locRemoved: removed, 
+            status: 'pass', 
+            ts: new Date().toISOString(), 
+            notes: 'direct_delete',
+            risk: {
+                locDelta: locRisk,
+                totalLoc: totalLoc,
+                fileCount: task.files.length
+            }
+        });
         task.updatedAt = new Date().toISOString();
         changed = true;
         continue;
@@ -220,7 +269,26 @@ for (const task of tasks) {
         if (res.status === 0) {
             task.status = 'done';
             const { added, removed } = computeLocDelta(task.files);
-            const baseEntry: any = { taskId: task.taskId, filesChanged: task.files.length, locAdded: added, locRemoved: removed, status: 'pass', ts: new Date().toISOString() };
+            
+            // Calculate risk metadata based on LOC delta
+            const totalLoc = added + removed;
+            let locRisk = 'low';
+            if (totalLoc > 200) locRisk = 'high';
+            else if (totalLoc > 100) locRisk = 'medium';
+            
+            const baseEntry: any = { 
+                taskId: task.taskId, 
+                filesChanged: task.files.length, 
+                locAdded: added, 
+                locRemoved: removed, 
+                status: 'pass', 
+                ts: new Date().toISOString(),
+                risk: {
+                    locDelta: locRisk,
+                    totalLoc: totalLoc,
+                    fileCount: task.files.length
+                }
+            };
             if (RUN_TESTS) {
                 try {
                     console.log('[delegation] Running post-task lint (DELEGATION_RUN_TESTS=1)');
@@ -255,6 +323,9 @@ for (const task of tasks) {
     }
     task.updatedAt = new Date().toISOString();
     changed = true;
+    
+    // Release lock after task completion
+    releaseLock();
 }
 
 if (changed) writeQueue(tasks);

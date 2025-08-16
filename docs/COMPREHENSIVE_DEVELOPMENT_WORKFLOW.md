@@ -564,6 +564,81 @@ Maintain robust security standards:
 - Test-driven development approach
 - Delegation governance: validate JSONL delegation log via `npm run validate:aider-log` (non-blocking, rotate when >200KB)
 
+### Delegation Framework (Wave 7)
+
+The delegation framework provides automated aider integration with safety mechanisms and quality gates.
+
+#### Lockfile Mechanism
+
+- **Purpose**: Prevents concurrent aider runs that could cause file conflicts
+- **Location**: `sessions/aider-delegation.lock`
+- **Features**:
+  - Timestamp and expiry (default 30 minutes)
+  - Process ID and hostname tracking
+  - Automatic cleanup of stale locks
+  - Atomic lock creation with temp file approach
+
+#### Test Gating
+
+- **Environment Variable**: `DELEGATION_RUN_TESTS=1`
+- **Default Test Script**: `test:delegation-smoke`
+- **Custom Script**: Set `DELEGATION_TEST_SCRIPT=your-script`
+- **Behavior**: Automatically runs critical tests after successful aider runs
+- **Quality Assurance**: Logs test results in aider-log with QA metadata
+
+#### Risk Metadata
+
+All delegation runs emit risk classification in `sessions/aider-log.jsonl`:
+
+```json
+{
+  "taskId": "DEL-001",
+  "locAdded": 45,
+  "locRemoved": 12,
+  "risk": {
+    "locDelta": "low|medium|high",
+    "totalLoc": 57,
+    "fileCount": 3
+  }
+}
+```
+
+Risk levels:
+- **Low**: ≤100 total LOC changes
+- **Medium**: 101-200 total LOC changes  
+- **High**: >200 total LOC changes
+
+#### Usage
+
+```bash
+# Process delegation queue (manual mode)
+npm run delegate:process
+
+# Process with auto-run enabled
+AIDER_AUTORUN=1 npm run delegate:process
+
+# Process with test gating enabled
+DELEGATION_RUN_TESTS=1 npm run delegate:process
+
+# Test lockfile mechanism
+npm run test:delegation-lockfile
+
+# Test gating functionality
+npm run test:delegation-gating
+```
+
+#### Lock File Structure
+
+```json
+{
+  "pid": 12345,
+  "hostname": "dev-machine",
+  "taskId": "DEL-001",
+  "timestamp": "2025-08-16T21:30:00.000Z",
+  "expiresAt": "2025-08-16T22:00:00.000Z"
+}
+```
+
 ### Testing Workflow
 
 #### Test Types
