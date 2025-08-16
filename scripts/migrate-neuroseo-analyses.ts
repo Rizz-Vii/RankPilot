@@ -45,6 +45,14 @@ async function migrate() {
                         migratedFrom: col,
                         migratedAt: new Date().toISOString(),
                     }, { merge: true });
+                    
+                    // Mark original document as migrated for Wave 4 cleanup
+                    await doc.ref.update({
+                        migrated: true,
+                        migratedToCanonical: canonicalId,
+                        migratedAt: new Date().toISOString()
+                    });
+                    
                     results.push({ legacyId: doc.id, canonicalId, sourceCollection: col });
                 } catch (wErr) {
                     errors++; console.warn('[migrate] write failed', col, doc.id, (wErr as any)?.message);
