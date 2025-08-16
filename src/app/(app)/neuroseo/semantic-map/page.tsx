@@ -11,18 +11,15 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Map, 
-  FileText, 
-  Target, 
-  TrendingUp, 
+import {
+  FileText,
+  Target,
+  TrendingUp,
   Brain,
   Download,
   RefreshCw,
-  Zap,
   BarChart3,
   Network,
-  Eye,
   Search,
   BookOpen,
   Lightbulb
@@ -119,6 +116,7 @@ export default function SemanticMapPage() {
       setAnalysisProgress(i);
       await new Promise(resolve => setTimeout(resolve, 300));
     }
+    setAnalysisProgress(100);
 
     const sampleTopics = ['SEO Strategy', 'Content Marketing', 'Digital Analytics', 'User Experience', 'Technical Optimization'];
     const sampleKeywords = ['seo', 'optimization', 'content', 'keywords', 'ranking', 'traffic', 'conversion'];
@@ -207,10 +205,10 @@ export default function SemanticMapPage() {
       return;
     }
 
-  setIsAnalyzing(true);
+    setIsAnalyzing(true);
     setAnalysisProgress(0);
     setCurrentResult(null);
-  setProvenance(null);
+    setProvenance(null);
 
     try {
       const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k);
