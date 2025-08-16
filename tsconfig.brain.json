@@ -8,7 +8,9 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "lib": ["ES2019"],
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "noImplicitAny": false,
+    "strict": false
   },
   "include": ["scripts/brain/**/*.ts", "types/**/*.ts"]
 }

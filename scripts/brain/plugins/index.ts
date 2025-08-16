@@ -13,7 +13,20 @@ export interface LoadedPlugins {
     names: string[];
 }
 
-export function loadPlugins(): LoadedPlugins {
+export function loadPlugins(cfg?: any): LoadedPlugins {
+    // Check if plugins are disabled via environment variable (for compilation/testing)
+    if (process.env.PB_BRAIN_DISABLE_PLUGINS === '1') {
+        return { runners: [], validators: [], names: ['disabled-env'] };
+    }
+    
+    // Check if plugins are enabled in configuration
+    if (cfg && cfg.plugins && cfg.plugins.enabled === false) {
+        return { runners: [], validators: [], names: ['disabled'] };
+    }
+    if (cfg && cfg.plugins && cfg.plugins.loadPlugins === false) {
+        return { runners: [], validators: [], names: ['disabled'] };
+    }
+    
     const dir = path.join(process.cwd(), 'scripts', 'brain', 'plugins');
     let runners: ToolRunner[] = [];
     let validators: LoadedPlugins['validators'] = [];

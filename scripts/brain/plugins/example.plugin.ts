@@ -6,10 +6,10 @@ export const ExampleEchoRunner: ToolRunner = {
     run: async () => ({ ok: true, note: 'echo:ok' })
 };
 
-export async function exampleValidator() {
-    return { name: 'exampleValidator', status: 'skip', note: 'example plugin validator' };
+export async function ExamplePluginValidator(ctx: any) {
+    return { name: 'ExamplePluginValidator', status: 'skip', note: 'example plugin validator' };
 }
 
 // Export for CommonJS compatibility
 export const runners = [ExampleEchoRunner];
-export const validators = [exampleValidator];
+export const validators = [ExamplePluginValidator];

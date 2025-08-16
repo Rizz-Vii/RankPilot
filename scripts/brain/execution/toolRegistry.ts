@@ -48,20 +48,20 @@ export const PlaywrightRunner: ToolRunner = {
   run: async () => runShell('npx', ['playwright', '--version'])
 };
 
-export function getRegistry(): ToolRunner[] {
+export function getRegistry(cfg?: any): ToolRunner[] {
   const base = [
     OpenAIPlanner, CodexRunner, AiderRunner, MCPFirecrawl, MCPSequential, MCPGitHub, MCPZapier, TerminalRunner,
     TypecheckRunner, ESLintRunner, PlaywrightRunner
   ];
   try {
-    const plugins = loadPlugins();
+    const plugins = loadPlugins(cfg);
     if (plugins.runners.length) return [...base, ...plugins.runners];
   } catch { }
   return base;
 }
 
 export function getRunnersFor(domain: string, cfg?: any): ToolRunner[] {
-  const base = getRegistry();
+  const base = getRegistry(cfg);
   const byToggle = (r: ToolRunner) => {
     if (!cfg || !cfg.tools) return true;
     const map: Record<string, string> = {
