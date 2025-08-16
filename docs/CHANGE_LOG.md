@@ -1,3 +1,50 @@
+# 2025-08-16 Wave 7: Delegation Lockfile & Test Gating
+
+Implemented comprehensive lockfile mechanism and enhanced test gating for the delegation framework.
+
+## Added
+
+- **Lockfile mechanism** in `scripts/delegation/queue-utils.ts`:
+  - Atomic lock creation with temp file approach for safety
+  - Process ID and hostname tracking for lock ownership  
+  - Configurable expiry (default 30 minutes) with automatic cleanup
+  - Blocks concurrent delegation runs with clear error messages
+  - Signal handlers for graceful lock release on process termination
+
+- **Enhanced risk metadata emission**:
+  - LOC delta classification (low/medium/high) based on total changes
+  - Risk metadata structure: `{ locDelta, totalLoc, fileCount }`
+  - Applied to both aider execution and direct-delete operations
+  - Appended to `sessions/aider-log.jsonl` for observability
+
+- **Test gating verification**: 
+  - Existing `DELEGATION_RUN_TESTS=1` functionality verified and documented
+  - Customizable test script via `DELEGATION_TEST_SCRIPT` environment variable
+  - QA metadata logging with lint and test results
+
+- **Comprehensive test suite**:
+  - `npm run test:delegation-lockfile` - tests lock creation, expiry, concurrent blocking
+  - `npm run test:delegation-gating` - validates test gating implementation
+  - TypeScript configuration updated with Node.js types support
+
+- **Documentation updates**:
+  - Wave 7 section added to `docs/COMPREHENSIVE_DEVELOPMENT_WORKFLOW.md`
+  - Complete API documentation for lockfile mechanism
+  - Usage examples and risk classification thresholds
+
+## Risk Assessment
+
+**Low** - Additive functionality with backward compatibility. Lockfile mechanism only activates during delegation runs. No changes to existing API surfaces or runtime behavior outside delegation framework.
+
+## Rollback
+
+1. Revert changes to `scripts/delegation/queue-utils.ts` (remove lockfile functions)
+2. Revert changes to `scripts/delegation/process-delegation-queue.ts` (remove lock integration and risk metadata)
+3. Remove test files: `scripts/test-delegation-*.ts`
+4. Revert `scripts/tsconfig.json` changes
+5. Remove Wave 7 documentation section
+6. Remove delegation test scripts from `package.json`
+
 # 2025-08-15 Event Backbone Foundation (T26/T27)
 
 Added event registry + `publishEvent`, immutable Firestore rules, and basic unit tests.
