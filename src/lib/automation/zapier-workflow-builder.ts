@@ -31,7 +31,7 @@ export interface ZapierWorkflow {
     lastRun?: {
         timestamp: number;
         status: 'success' | 'error' | 'partial';
-        results?: any;
+        results?: unknown;
         errorMessage?: string;
     };
     metadata: {
@@ -51,8 +51,8 @@ export interface ZapierTrigger {
         endpoint?: string;
         method?: string;
         headers?: Record<string, string>;
-        payload?: any;
-        filters?: Record<string, any>;
+        payload?: unknown;
+        filters?: Record<string, unknown>;
         frequency?: 'hourly' | 'daily' | 'weekly' | 'monthly';
         day?: string;
         time?: string;
@@ -71,8 +71,8 @@ export interface ZapierAction {
     config: {
         template?: string;
         recipients?: string[];
-        data?: Record<string, any>;
-        formatting?: Record<string, any>;
+        data?: Record<string, unknown>;
+        formatting?: Record<string, unknown>;
         channel?: string;
         format?: string;
         sheetId?: string;
@@ -89,7 +89,7 @@ export interface ZapierCondition {
     id: string;
     field: string;
     operator: 'equals' | 'not_equals' | 'contains' | 'greater_than' | 'less_than' | 'exists';
-    value: any;
+    value: unknown;
     logicalOperator?: 'AND' | 'OR';
 }
 
@@ -109,7 +109,7 @@ export interface WorkflowTemplate {
 export class ZapierWorkflowBuilder extends EventEmitter {
     private workflows: Map<string, ZapierWorkflow> = new Map();
     private templates: Map<string, WorkflowTemplate> = new Map();
-    private activeRuns: Map<string, any> = new Map();
+    private activeRuns: Map<string, unknown> = new Map();
     private rateLimits: Map<string, { count: number; resetTime: number; }> = new Map();
     private lastTemplateSync = 0;
     private static TEMPLATE_SYNC_TTL = 10 * 60 * 1000; // 10 minutes
@@ -294,7 +294,8 @@ export class ZapierWorkflowBuilder extends EventEmitter {
                 }
             }
         } catch (err) {
-            console.warn('[ZapierWorkflowBuilder] Persist templates skipped:', (err as any)?.message);
+            const msg = err instanceof Error ? err.message : String(err);
+            console.warn('[ZapierWorkflowBuilder] Persist templates skipped:', msg);
         }
     }
 
@@ -306,25 +307,26 @@ export class ZapierWorkflowBuilder extends EventEmitter {
             const { collection, getDocs } = await import('firebase/firestore');
             const snapshot = await getDocs(collection(db, 'workflowTemplates'));
             snapshot.forEach(d => {
-                const data = d.data() as any;
-                if (!this.templates.has(data.id)) {
-                    this.templates.set(data.id, {
-                        id: data.id,
-                        name: data.name,
-                        category: data.category,
-                        description: data.description,
-                        triggers: data.triggers || [],
-                        actions: data.actions || [],
-                        conditions: data.conditions || [],
-                        requiredApps: data.requiredApps || [],
-                        requiredTier: data.requiredTier,
-                        setupInstructions: data.setupInstructions || []
+                const raw = d.data() as Partial<WorkflowTemplate> & { id?: string };
+                if (raw.id && !this.templates.has(raw.id)) {
+                    this.templates.set(raw.id, {
+                        id: raw.id,
+                        name: raw.name || 'Untitled Template',
+                        category: (raw.category as WorkflowTemplate['category']) || 'seo-monitoring',
+                        description: raw.description || '',
+                        triggers: (raw.triggers as Partial<ZapierTrigger>[]) || [],
+                        actions: (raw.actions as Partial<ZapierAction>[]) || [],
+                        conditions: (raw.conditions as Partial<ZapierCondition>[]) || [],
+                        requiredApps: raw.requiredApps || [],
+                        requiredTier: raw.requiredTier || 'starter',
+                        setupInstructions: raw.setupInstructions || []
                     });
                 }
             });
             this.lastTemplateSync = Date.now();
         } catch (err) {
-            console.warn('[ZapierWorkflowBuilder] Template sync failed:', (err as any)?.message);
+            const msg = err instanceof Error ? err.message : String(err);
+            console.warn('[ZapierWorkflowBuilder] Template sync failed:', msg);
         }
     }
 
@@ -337,13 +339,12 @@ export class ZapierWorkflowBuilder extends EventEmitter {
      */
     private setupRateLimiting(): void {
         // Rate limits per hour by tier
-        const tierLimits = {
-            free: 10,
-            starter: 50,
-            agency: 200,
-            enterprise: 1000,
-            admin: 5000
-        };
+        // (all values per hour)
+        // Stored only for reference; actual counts tracked in this.rateLimits map
+        // (If extended, keep deterministic order for test stability)
+        /* const tierLimits = {
+            free: 10, starter: 50, agency: 200, enterprise: 1000, admin: 5000
+        }; */
 
         // Initialize rate limiting logic
         setInterval(() => {
@@ -410,12 +411,11 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Execute a workflow
      */
-    async executeWorkflow(workflowId: string): Promise<any> {
+    async executeWorkflow(workflowId: string): Promise<unknown> {
         const workflow = this.workflows.get(workflowId);
         if (!workflow) {
             throw new Error(`Workflow ${workflowId} not found`);
         }
-
         if (workflow.status !== 'active') {
             throw new Error(`Workflow ${workflowId} is not active`);
         }
@@ -480,7 +480,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Execute a trigger
      */
-    private async executeTrigger(trigger: ZapierTrigger, workflow: ZapierWorkflow): Promise<any> {
+    private async executeTrigger(trigger: ZapierTrigger, workflow: ZapierWorkflow): Promise<unknown> {
         switch (trigger.type) {
             case 'webhook':
                 return this.executeWebhookTrigger(trigger);
@@ -498,7 +498,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Execute webhook trigger
      */
-    private async executeWebhookTrigger(trigger: ZapierTrigger): Promise<any> {
+    private async executeWebhookTrigger(trigger: ZapierTrigger): Promise<unknown> {
         const { endpoint, method = 'GET', headers = {}, payload } = trigger.config;
 
         const response = await fetch(endpoint!, {
@@ -520,7 +520,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Execute NeuroSEO analysis trigger
      */
-    private async executeNeuroSEOTrigger(trigger: ZapierTrigger, workflow: ZapierWorkflow): Promise<any> {
+    private async executeNeuroSEOTrigger(trigger: ZapierTrigger, workflow: ZapierWorkflow): Promise<unknown> {
         // Integration with NeuroSEO Suite
         try {
             const response = await fetch('/api/neuroseo/trigger-analysis', {
@@ -546,7 +546,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Execute keyword ranking trigger
      */
-    private async executeKeywordTrigger(trigger: ZapierTrigger, workflow: ZapierWorkflow): Promise<any> {
+    private async executeKeywordTrigger(trigger: ZapierTrigger, workflow: ZapierWorkflow): Promise<unknown> {
         // Mock keyword ranking data - in production, integrate with actual keyword tracking
         return {
             keywords: [
@@ -560,7 +560,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Execute competitor change trigger
      */
-    private async executeCompetitorTrigger(trigger: ZapierTrigger, workflow: ZapierWorkflow): Promise<any> {
+    private async executeCompetitorTrigger(trigger: ZapierTrigger, workflow: ZapierWorkflow): Promise<unknown> {
         // Integration with Firecrawl MCP for competitor analysis
         try {
             const response = await fetch('/api/competitors/check-changes', {
@@ -585,7 +585,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Execute an action
      */
-    private async executeAction(action: ZapierAction, triggerData: any[], workflow: ZapierWorkflow): Promise<any> {
+    private async executeAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<unknown> {
         let attempt = 0;
         const maxRetries = action.retryConfig.maxRetries;
 
@@ -623,7 +623,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Execute email action via Zapier MCP
      */
-    private async executeEmailAction(action: ZapierAction, triggerData: any[], workflow: ZapierWorkflow): Promise<any> {
+    private async executeEmailAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<unknown> {
         const mappedData = this.mapTriggerDataToAction(action.mapping, triggerData);
 
         // Use Zapier MCP for email sending
@@ -638,7 +638,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Execute Slack action via Zapier MCP
      */
-    private async executeSlackAction(action: ZapierAction, triggerData: any[], workflow: ZapierWorkflow): Promise<any> {
+    private async executeSlackAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<unknown> {
         const mappedData = this.mapTriggerDataToAction(action.mapping, triggerData);
 
         return {
@@ -652,7 +652,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Execute task creation action
      */
-    private async executeTaskAction(action: ZapierAction, triggerData: any[], workflow: ZapierWorkflow): Promise<any> {
+    private async executeTaskAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<unknown> {
         const mappedData = this.mapTriggerDataToAction(action.mapping, triggerData);
 
         return {
@@ -667,7 +667,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Execute dashboard update action
      */
-    private async executeDashboardAction(action: ZapierAction, triggerData: any[], workflow: ZapierWorkflow): Promise<any> {
+    private async executeDashboardAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<unknown> {
         const mappedData = this.mapTriggerDataToAction(action.mapping, triggerData);
 
         // Integration with Custom Dashboard Builder
@@ -695,7 +695,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Execute report generation action
      */
-    private async executeReportAction(action: ZapierAction, triggerData: any[], workflow: ZapierWorkflow): Promise<any> {
+    private async executeReportAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<unknown> {
         const mappedData = this.mapTriggerDataToAction(action.mapping, triggerData);
 
         // Integration with report generation system
@@ -711,7 +711,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Execute sheet update action
      */
-    private async executeSheetAction(action: ZapierAction, triggerData: any[], workflow: ZapierWorkflow): Promise<any> {
+    private async executeSheetAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<unknown> {
         const mappedData = this.mapTriggerDataToAction(action.mapping, triggerData);
 
         return {
@@ -725,8 +725,8 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Map trigger data to action fields
      */
-    private mapTriggerDataToAction(mapping: Record<string, string>, triggerData: any[]): Record<string, any> {
-        const mapped: Record<string, any> = {};
+    private mapTriggerDataToAction(mapping: Record<string, string>, triggerData: unknown[]): Record<string, unknown> {
+        const mapped: Record<string, unknown> = {};
 
         Object.entries(mapping).forEach(([actionField, triggerPath]) => {
             // Simple path resolution - in production, implement more sophisticated mapping
@@ -749,7 +749,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Evaluate workflow conditions
      */
-    private evaluateConditions(conditions: ZapierCondition[], triggerData: any[]): boolean {
+    private evaluateConditions(conditions: ZapierCondition[], triggerData: unknown[]): boolean {
         if (conditions.length === 0) return true;
 
         return conditions.every(condition => {
@@ -900,7 +900,8 @@ export class ZapierWorkflowBuilder extends EventEmitter {
                 __provenance: workflow.metadata.runCount === 0 ? 'seed|user-init' : 'user'
             }, { merge: true });
         } catch (err) {
-            console.warn('[ZapierWorkflowBuilder] persistWorkflow failed:', (err as any)?.message);
+            const msg = err instanceof Error ? err.message : String(err);
+            console.warn('[ZapierWorkflowBuilder] persistWorkflow failed:', msg);
         }
     }
 
@@ -908,27 +909,33 @@ export class ZapierWorkflowBuilder extends EventEmitter {
         try {
             const { db } = await import('../firebase');
             const { doc, deleteDoc, collection } = await import('firebase/firestore');
-            await deleteDoc(doc(collection(db, 'workflows'), workflowId));
+            const docRef = doc(collection(db, 'workflows'), workflowId);
+            await deleteDoc(docRef);
         } catch (err) {
-            console.warn('[ZapierWorkflowBuilder] deletePersistedWorkflow failed:', (err as any)?.message);
+            const msg = err instanceof Error ? err.message : String(err);
+            console.warn('[ZapierWorkflowBuilder] deletePersistedWorkflow failed:', msg);
         }
     }
 
     private async loadPersistedWorkflows(): Promise<void> {
         try {
             const { db } = await import('../firebase');
-            const { collection, getDocs, query, where, orderBy, limit } = await import('firebase/firestore');
+            const { collection, getDocs, query, orderBy, limit } = await import('firebase/firestore');
             // Load a bounded recent set (avoid huge scans)
             const q = query(collection(db, 'workflows'), orderBy('metadata.updated', 'desc'), limit(200));
             const snap = await getDocs(q);
             snap.forEach(d => {
-                const data = d.data() as any;
-                if (!this.workflows.has(data.id)) {
-                    this.workflows.set(data.id, data as ZapierWorkflow);
+                const data = d.data() as Partial<ZapierWorkflow> & { id?: string };
+                if (data.id && !this.workflows.has(data.id)) {
+                    // Minimal validation (id + userId exist) else skip
+                    if (data.userId) {
+                        this.workflows.set(data.id, data as ZapierWorkflow);
+                    }
                 }
             });
         } catch (err) {
-            console.warn('[ZapierWorkflowBuilder] loadPersistedWorkflows failed:', (err as any)?.message);
+            const msg = err instanceof Error ? err.message : String(err);
+            console.warn('[ZapierWorkflowBuilder] loadPersistedWorkflows failed:', msg);
         }
     }
 }

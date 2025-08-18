@@ -52,7 +52,7 @@ export type AnalyzeContentOutput = z.infer<typeof AnalyzeContentOutputSchema>;
 export async function analyzeContent(
   input: AnalyzeContentInput
 ): Promise<AnalyzeContentOutput> {
-  return analyzeContentFlow(input);
+  return _analyzeContentFlow(input);
 }
 
 const analyzeContentPrompt = ai.definePrompt({
@@ -88,7 +88,7 @@ const analyzeContentPrompt = ai.definePrompt({
   `,
 });
 
-const analyzeContentFlow = ai.defineFlow(
+const _analyzeContentFlow = ai.defineFlow(
   {
     name: "analyzeContentFlow",
     inputSchema: AnalyzeContentInputSchema,
@@ -99,3 +99,5 @@ const analyzeContentFlow = ai.defineFlow(
     return output!;
   }
 );
+
+export const analyzeContentFlow = _analyzeContentFlow;

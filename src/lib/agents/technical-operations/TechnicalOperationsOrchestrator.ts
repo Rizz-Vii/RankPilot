@@ -516,7 +516,7 @@ class TechnicalOperationsOrchestrator implements RankPilotAgent {
     /**
      * Validate technical operations fix
      */
-    async validateFix(issue: any): Promise<boolean> {
+    async validateFix(): Promise<boolean> {
         console.log('🔍 Technical Operations: Validating fix...');
 
         // Multi-layer validation

@@ -85,6 +85,7 @@ interface ChatMessage {
   replyTo?: string;
   edited?: boolean;
   editedAt?: Date;
+  [key: string]: unknown; // allow extra fields for virtualization/generic utils
 }
 
 interface ChatChannel {
@@ -195,7 +196,8 @@ export default function TeamChatPage() {
       }
       // Fallback to users/{uid}.teamId
       const uSnap = await getDoc(doc(db, 'users', user.uid));
-      const tId = uSnap.exists() ? (uSnap.data() as any)?.teamId : (user as any)?.teamId;
+      const uData = uSnap.exists() ? (uSnap.data() as any) : undefined;
+      const tId = typeof uData?.teamId === 'string' ? uData.teamId : (user as any)?.teamId;
       if (typeof tId === 'string') setTeamId(tId);
     })();
   }, [user?.uid]);
@@ -216,7 +218,7 @@ export default function TeamChatPage() {
     const unsubscribeMessages = onSnapshot(messagesQuery, (snapshot) => {
       const newMessages: ChatMessage[] = [];
       snapshot.forEach((doc) => {
-        const data = doc.data();
+        const data = doc.data() as any;
         newMessages.push({
           id: doc.id,
           ...data,
@@ -233,7 +235,7 @@ export default function TeamChatPage() {
     const unsubscribePresence = onSnapshot(presenceQuery, (snapshot) => {
       const users: UserPresence[] = [];
       snapshot.forEach((doc) => {
-        const data = doc.data();
+        const data = doc.data() as any;
         users.push({
           userId: doc.id,
           ...data,
@@ -262,21 +264,20 @@ export default function TeamChatPage() {
       updateUserPresence('offline');
     };
   }, [user, teamId]);
-
-  const updateUserPresence = async (status: 'online' | 'away' | 'busy' | 'offline') => {
-    if (!user) return;
-
+  
+  // Simple presence updater; merges into presence/{uid}
+  const updateUserPresence = async (status: UserPresence['status']) => {
     try {
+      if (!user) return;
       await setDoc(doc(db, 'presence', user.uid), {
         userName: user.displayName || user.email?.split('@')[0] || 'User',
-        userAvatar: user.photoURL,
+        userAvatar: user.photoURL ?? null,
         status,
         lastSeen: serverTimestamp(),
-        isTyping: false
+        isTyping: false,
+        typingIn: null,
       }, { merge: true });
-    } catch (error) {
-      console.warn('Presence update failed:', error);
-    }
+    } catch {}
   };
 
   // Load channel settings from localStorage when channel/team changes
@@ -316,7 +317,7 @@ export default function TeamChatPage() {
     if (!newMessage.trim() || !user) return;
 
     try {
-      const messageData: any = {
+      const messageData: Record<string, any> = {
         content: newMessage.trim(),
         authorId: user.uid,
         authorName: user.displayName || user.email?.split('@')[0] || 'User',
@@ -356,9 +357,7 @@ export default function TeamChatPage() {
     }
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  // Removed legacy auto-scroll function wrapper; consider adding explicit scroll handler if needed.
 
   const addReaction = async (messageId: string, emoji: string) => {
     if (!user) return;

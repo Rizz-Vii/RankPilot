@@ -1,4 +1,4 @@
-import { collection, getDocs, limit, orderBy, query, where, Firestore } from 'firebase/firestore';
+import { collection, getDocs, limit, orderBy, query, where, Firestore, QueryDocumentSnapshot } from 'firebase/firestore';
 import { getLogger } from '@/lib/logging/app-logger';
 
 export interface NormalizedUsageMetrics {
@@ -25,21 +25,22 @@ export async function fetchUsageMetrics(firestore: Firestore, userId: string): P
         const q = query(collection(firestore, 'usage'), where('userId', '==', userId), orderBy('period', 'desc'), limit(1));
         const snap = await getDocs(q);
         if (snap.empty) return null;
-        const d: any = snap.docs[0].data();
-        const period: string = d.period;
+        const raw = snap.docs[0].data() as Record<string, any>;
+        const period = typeof raw.period === 'string' ? raw.period : '1970-01';
         const { start, end } = monthBounds(period);
         return {
             period,
             periodStart: start,
             periodEnd: end,
-            keywordsTracked: d.usage?.keywordSearches ?? 0,
-            keywordsLimit: d.limits?.keywordSearches ?? 0,
-            competitorAnalysis: d.usage?.competitorReports ?? 0,
-            competitorLimit: d.limits?.competitorReports ?? 0,
-            reportsGenerated: d.usage?.neuroSeoAnalyses ?? 0,
+            keywordsTracked: Number(raw.usage?.keywordSearches) || 0,
+            keywordsLimit: Number(raw.limits?.keywordSearches) || 0,
+            competitorAnalysis: Number(raw.usage?.competitorReports) || 0,
+            competitorLimit: Number(raw.limits?.competitorReports) || 0,
+            reportsGenerated: Number(raw.usage?.neuroSeoAnalyses) || 0,
         };
-    } catch (e: any) {
-        logger.error('billing-usage.error', { userId, error: e?.message });
+    } catch (e: unknown) {
+        const msg = (e && typeof e === 'object' && 'message' in e) ? (e as any).message : String(e);
+        logger.error('billing-usage.error', { userId, error: msg });
         return null;
     }
 }

@@ -103,13 +103,15 @@ export default function SecuritySettingsForm({
 
       // Reset form
       form.reset();
-    } catch (error: any) {
+    } catch (error: unknown) {
       let errorMessage = "Failed to update password. Please try again.";
-
-      if (error.code === "auth/wrong-password") {
-        errorMessage = "Current password is incorrect.";
-      } else if (error.code === "auth/weak-password") {
-        errorMessage = "New password is too weak.";
+      if (typeof error === 'object' && error) {
+        const anyErr = error as { code?: unknown };
+        if (anyErr.code === "auth/wrong-password") {
+          errorMessage = "Current password is incorrect.";
+        } else if (anyErr.code === "auth/weak-password") {
+          errorMessage = "New password is too weak.";
+        }
       }
 
       toast({

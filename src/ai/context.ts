@@ -27,7 +27,7 @@ export interface SiteContext {
     totalPages: number;
     contentSummary: string;
     keywords: string[];
-    recentAnalyses: any[];
+    recentAnalyses: unknown[];
 }
 
 export interface AdminContext {
@@ -37,13 +37,13 @@ export interface AdminContext {
         totalAnalyses: number;
         errorRate: number;
     };
-    recentActivity: any[];
+    recentActivity: unknown[];
     performanceInsights: string[];
 }
 
 export interface ChatContext {
     userTier: PlanType | "free";
-    recentConversations: any[];
+    recentConversations: unknown[];
     availableFeatures: string[];
 }
 
@@ -146,7 +146,7 @@ export async function getSiteContext(uid: string): Promise<SiteContext> {
  * Fetches admin-level context for system management chatbot
  * Includes system metrics, monitoring data, and insights
  */
-export async function getAdminContext(adminLevel: 'admin' | 'enterprise'): Promise<AdminContext> {
+export async function getAdminContext(): Promise<AdminContext> {
     try {
         // Get system metrics (aggregated data)
         const usersRef = collection(db, 'users');
@@ -270,7 +270,7 @@ function getAvailableFeatures(tier: PlanType, isAdmin: boolean): string[] {
  * Integrates with NeuroSEO™ Suite for enhanced context
  * Provides AI-powered insights for chatbot responses
  */
-export async function getNeuroSEOContext(uid: string, url?: string): Promise<any> {
+export async function getNeuroSEOContext(uid: string, url?: string): Promise<unknown> {
     try {
         const neuroSEO = new NeuroSEOSuite();
 
@@ -311,10 +311,10 @@ export async function getNeuroSEOContext(uid: string, url?: string): Promise<any
  * Caching utilities for context data
  * Reduces Firebase reads and improves performance
  */
-const contextCache = new Map<string, { data: any; timestamp: number; }>();
+const contextCache = new Map<string, { data: unknown; timestamp: number; }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-export function getCachedContext(key: string): any | null {
+export function getCachedContext(key: string): unknown | null {
     const cached = contextCache.get(key);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
         return cached.data;
@@ -322,7 +322,7 @@ export function getCachedContext(key: string): any | null {
     return null;
 }
 
-export function setCachedContext(key: string, data: any): void {
+export function setCachedContext(key: string, data: unknown): void {
     contextCache.set(key, { data, timestamp: Date.now() });
 }
 

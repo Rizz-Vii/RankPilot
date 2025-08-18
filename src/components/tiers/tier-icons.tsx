@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 export type AppTier = "free" | "starter" | "agency" | "enterprise";
 
-export const TIER_ICON_CONFIG: Record<AppTier, { icon: any; bg: string; color: string; ring: string; label: string }> = {
+export const TIER_ICON_CONFIG: Record<AppTier, { icon: React.ComponentType<{ className?: string }>; bg: string; color: string; ring: string; label: string }> = {
   free: {
     icon: Circle,
     bg: "bg-muted/40",

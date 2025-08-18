@@ -357,7 +357,7 @@ export function canAccessFeature(
 
   // Phase 2: Entitlements no longer resolved via canAccessFeature.
   // If callers pass an entitlement key here, warn for migration to canAccessEntitlement.
-  if ((DEFAULT_ENTITLEMENTS as any)[resolved]) {
+  if (Object.prototype.hasOwnProperty.call(DEFAULT_ENTITLEMENTS, resolved)) {
     // Warn only once per entitlement key to reduce noise while legacy callers migrate
     if (!_warnedEntitlements.has(resolved)) {
       console.warn(
@@ -464,7 +464,7 @@ export function getFeaturesForTier(tier: SubscriptionTier): string[] {
  * Get upgrade message for restricted features
  */
 export function getUpgradeMessage(
-  userTier: SubscriptionTier,
+  _userTier: SubscriptionTier,
   featureName: string
 ): string {
   const feature = FEATURE_ACCESS[featureName];
@@ -491,15 +491,13 @@ export function getUpgradeMessage(
 /**
  * Validate user access object
  */
-export function validateUserAccess(userAccess: any): userAccess is UserAccess {
+export function validateUserAccess(userAccess: unknown): userAccess is UserAccess {
+  if (!userAccess || typeof userAccess !== 'object') return false;
+  const ua = userAccess as Partial<UserAccess>;
   return (
-    userAccess &&
-    typeof userAccess.role === "string" &&
-    ["admin", "user"].includes(userAccess.role) &&
-    typeof userAccess.tier === "string" &&
-    TIER_HIERARCHY.includes(userAccess.tier) &&
-    typeof userAccess.status === "string" &&
-    ["active", "canceled", "past_due", "free"].includes(userAccess.status)
+    typeof ua.role === 'string' && ["admin", "user"].includes(ua.role) &&
+    typeof ua.tier === 'string' && (TIER_HIERARCHY as string[]).includes(ua.tier) &&
+    typeof ua.status === 'string' && ["active", "canceled", "past_due", "free"].includes(ua.status)
   );
 }
 
@@ -511,12 +509,12 @@ export function normalizeUserAccess(dbUser: any): UserAccess {
   let mappedTier: SubscriptionTier;
   let mappedRole: UserRole;
 
-  if (dbUser.subscriptionTier === "admin" || dbUser.tier === "admin") {
+  if (dbUser?.subscriptionTier === "admin" || dbUser?.tier === "admin") {
     mappedTier = "enterprise"; // Admin gets enterprise-level features
     mappedRole = "admin"; // But with admin role for special permissions
   } else {
-    mappedRole = (dbUser.role === "admin" ? "admin" : "user") as UserRole;
-    mappedTier = (TIER_HIERARCHY.includes(dbUser.subscriptionTier)
+    mappedRole = (dbUser?.role === "admin" ? "admin" : "user") as UserRole;
+    mappedTier = (TIER_HIERARCHY.includes(dbUser?.subscriptionTier)
       ? dbUser.subscriptionTier
       : "free") as SubscriptionTier;
   }
@@ -524,7 +522,7 @@ export function normalizeUserAccess(dbUser: any): UserAccess {
   return {
     role: mappedRole,
     tier: mappedTier,
-    status: dbUser.subscriptionStatus || "free",
+    status: dbUser?.subscriptionStatus || "free",
   };
 }
 
@@ -543,7 +541,7 @@ export function canAccessEntitlement(
   userAccess: UserAccess,
   entitlementKey: string
 ): boolean {
-  const ent = (DEFAULT_ENTITLEMENTS as any)[entitlementKey];
+  const ent = (DEFAULT_ENTITLEMENTS as Record<string, { minimumTier: SubscriptionTier }>)[entitlementKey];
   if (!ent) return false;
   return canAccessTier(userAccess.tier, ent.minimumTier as SubscriptionTier);
 }
@@ -554,7 +552,7 @@ export function canAccessEntitlement(
 // suppresses entitlement warnings by routing directly when a key matches.
 // =============================================================================
 export function canAccessCapability(userAccess: UserAccess, key: string): boolean {
-  if ((DEFAULT_ENTITLEMENTS as any)[key]) {
+  if (Object.prototype.hasOwnProperty.call(DEFAULT_ENTITLEMENTS, key)) {
     return canAccessEntitlement(userAccess, key);
   }
   return canAccessFeature(userAccess, key);

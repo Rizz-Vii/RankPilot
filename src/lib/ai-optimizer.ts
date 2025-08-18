@@ -3,15 +3,12 @@
  */
 
 import { withAITimeout, TimeoutResult } from "./timeout";
-import {
-  performanceMonitor,
-  withPerformanceMonitoring,
-} from "./performance-monitor";
+import { performanceMonitor, withPerformanceMonitoring } from "./performance-monitor";
 
 export interface CacheOptions {
   ttlMs?: number;
   maxSize?: number;
-  keyGenerator?: (...args: any[]) => string;
+  keyGenerator?: (...args: unknown[]) => string;
 }
 
 export interface BatchOptions {
@@ -36,9 +33,9 @@ interface CacheEntry<T> {
 }
 
 interface BatchRequest<T> {
-  args: any[];
+  args: unknown[];
   resolve: (value: T) => void;
-  reject: (reason: any) => void;
+  reject: (reason: unknown) => void;
   timestamp: number;
 }
 
@@ -137,7 +134,7 @@ class RequestBatcher<T> {
     this.maxWaitMs = options.maxWaitMs || 1000;
   }
 
-  async batch<A extends any[]>(
+  async batch<A extends unknown[]>(
     batchKey: string,
     args: A,
     batchProcessor: (batchedArgs: A[]) => Promise<T[]>
@@ -184,9 +181,9 @@ class RequestBatcher<T> {
     });
   }
 
-  private async processBatch<A extends any[]>(
+  private async processBatch<A extends unknown[]>(
     batchKey: string,
-    batchProcessor: (batchedArgs: A[]) => Promise<any[]>
+    batchProcessor: (batchedArgs: A[]) => Promise<T[]>
   ): Promise<void> {
     const requests = this.pendingRequests.get(batchKey);
     if (!requests || requests.length === 0) return;
@@ -223,30 +220,25 @@ class RequestBatcher<T> {
 }
 
 class AIResponseOptimizer {
+  // Store caches/batchers as unknown internally to allow per-call generic casting safely
   private caches = new Map<string, ResponseCache<any>>();
   private batchers = new Map<string, RequestBatcher<any>>();
 
-  private getCache<T>(
-    operationType: string,
-    options: CacheOptions
-  ): ResponseCache<T> {
+  private getCache<T>(operationType: string, options: CacheOptions): ResponseCache<T> {
     if (!this.caches.has(operationType)) {
-      this.caches.set(operationType, new ResponseCache<T>(options));
+      this.caches.set(operationType, new ResponseCache<any>(options));
     }
-    return this.caches.get(operationType)!;
+    return this.caches.get(operationType)! as ResponseCache<T>;
   }
 
-  private getBatcher<T>(
-    operationType: string,
-    options: BatchOptions
-  ): RequestBatcher<T> {
+  private getBatcher<T>(operationType: string, options: BatchOptions): RequestBatcher<T> {
     if (!this.batchers.has(operationType)) {
-      this.batchers.set(operationType, new RequestBatcher<T>(options));
+      this.batchers.set(operationType, new RequestBatcher<any>(options));
     }
-    return this.batchers.get(operationType)!;
+    return this.batchers.get(operationType)! as RequestBatcher<T>;
   }
 
-  async optimizeRequest<T, A extends any[]>(
+  async optimizeRequest<T, A extends unknown[]>(
     operationType: string,
     operation: (...args: A) => Promise<T>,
     args: A,
@@ -262,7 +254,12 @@ class AIResponseOptimizer {
 
     return withPerformanceMonitoring(operationType, async () => {
       // Generate cache key
-      const cacheKey = keyGenerator(...args);
+      let cacheKey: string;
+      try {
+        cacheKey = keyGenerator(...args);
+      } catch {
+        cacheKey = `${operationType}:${args.map(a => typeof a === 'string' ? a.slice(0, 50) : JSON.stringify(a).slice(0, 50)).join('|')}`;
+      }
 
       // Try cache first
       if (enableCaching) {
@@ -280,16 +277,9 @@ class AIResponseOptimizer {
       // Use batching if enabled
       if (enableBatching) {
         const batcher = this.getBatcher<T>(operationType, options);
-        resultPromise = batcher.batch(
-          operationType,
-          args,
-          async (batchedArgs: A[]) => {
-            // Process batch - this would need to be customized per operation type
-            return Promise.all(
-              batchedArgs.map((batchArgs) => operation(...batchArgs))
-            );
-          }
-        );
+        resultPromise = batcher.batch(operationType, args, async (batchedArgs: A[]) => {
+          return Promise.all(batchedArgs.map(batchArgs => operation(...batchArgs)));
+        });
       } else {
         resultPromise = operation(...args);
       }
@@ -324,14 +314,21 @@ class AIResponseOptimizer {
       enableCaching: true,
       ttlMs: 10 * 60 * 1000, // 10 minutes for AI responses
       operationType: "llm-generation",
-      keyGenerator: (prompt: string) => `openai:${btoa(prompt.slice(0, 200))}`,
+      keyGenerator: (p: unknown) => {
+        const str = String(p);
+        const slice = str.slice(0, 200);
+        if (typeof window !== 'undefined' && typeof window.btoa === 'function') {
+          return `openai:${window.btoa(slice)}`;
+        }
+        try { return `openai:${Buffer.from(slice, 'utf-8').toString('base64')}`; } catch { return `openai:${slice}`; }
+      },
       ...options,
     });
   }
 
   async optimizeDataProcessing<T>(
-    operation: (data: any) => Promise<T>,
-    data: any,
+    operation: (data: unknown) => Promise<T>,
+    data: unknown,
     options: Partial<OptimizationOptions> = {}
   ): Promise<TimeoutResult<T>> {
     return this.optimizeRequest("data-processing", operation, [data], {
@@ -339,7 +336,7 @@ class AIResponseOptimizer {
       enableBatching: true,
       maxBatchSize: 3,
       operationType: "data-processing",
-      keyGenerator: (data: any) => `data:${JSON.stringify(data).slice(0, 100)}`,
+      keyGenerator: (data: unknown) => `data:${JSON.stringify(data).slice(0, 100)}`,
       ...options,
     });
   }
@@ -353,13 +350,13 @@ class AIResponseOptimizer {
     }
   }
 
-  getCacheStats(operationType?: string): Record<string, any> {
+  getCacheStats(operationType?: string): Record<string, unknown> {
     if (operationType) {
       const cache = this.caches.get(operationType);
       return cache ? { [operationType]: cache.getStats() } : {};
     }
 
-    const stats: Record<string, any> = {};
+    const stats: Record<string, unknown> = {};
     this.caches.forEach((cache, type) => {
       stats[type] = cache.getStats();
     });
@@ -367,8 +364,8 @@ class AIResponseOptimizer {
   }
 
   getHealthStatus(): {
-    cacheHealth: Record<string, any>;
-    performanceHealth: any;
+    cacheHealth: Record<string, unknown>;
+    performanceHealth: unknown;
     recommendations: string[];
   } {
     const cacheStats = this.getCacheStats();
@@ -376,13 +373,14 @@ class AIResponseOptimizer {
     const recommendations: string[] = [];
 
     // Analyze cache performance
-    Object.entries(cacheStats).forEach(([type, stats]) => {
-      if (stats.hitRate < 30) {
+    Object.entries(cacheStats).forEach(([type, statsUnknown]) => {
+      const stats = statsUnknown as { hitRate?: number; size?: number };
+      if ((stats.hitRate ?? 0) < 30) {
         recommendations.push(
           `Consider increasing cache TTL for ${type} operations`
         );
       }
-      if (stats.size > 80) {
+      if ((stats.size ?? 0) > 80) {
         recommendations.push(
           `Consider increasing cache size for ${type} operations`
         );
@@ -404,29 +402,12 @@ class AIResponseOptimizer {
 export const aiOptimizer = new AIResponseOptimizer();
 
 // Convenience functions
-export async function optimizeAICall<T>(
-  operationType: string,
-  operation: () => Promise<T>,
-  options: OptimizationOptions = {}
-): Promise<T> {
-  const result = await aiOptimizer.optimizeRequest(
-    operationType,
-    operation,
-    [],
-    options
-  );
-  return result.result;
+export async function optimizeAICall<T>(operationType: string, operation: () => Promise<T>, options: OptimizationOptions = {}): Promise<T> {
+  const result = await aiOptimizer.optimizeRequest(operationType, operation, [], options);
+  return result.result as T;
 }
 
-export async function optimizeOpenAI<T>(
-  operation: (prompt: string) => Promise<T>,
-  prompt: string,
-  options: Partial<OptimizationOptions> = {}
-): Promise<T> {
-  const result = await aiOptimizer.optimizeOpenAIRequest(
-    operation,
-    prompt,
-    options
-  );
-  return result.result;
+export async function optimizeOpenAI<T>(operation: (prompt: string) => Promise<T>, prompt: string, options: Partial<OptimizationOptions> = {}): Promise<T> {
+  const result = await aiOptimizer.optimizeOpenAIRequest(operation, prompt, options);
+  return result.result as T;
 }

@@ -62,7 +62,7 @@ export async function adminUpdateUserSubscription(
     }
 
     // Prepare update data
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       subscriptionStatus: update.status,
       subscriptionTier: update.tier,
       updatedAt: serverTimestamp(),
@@ -136,13 +136,12 @@ async function findUserByEmail(email: string): Promise<string | null> {
  * Get plan price by tier
  */
 function getPlanPrice(tier: string): number {
-  const prices: Record<string, number> = {
-    free: 0,
-    starter: 29,
-    professional: 79,
-    enterprise: 199,
-  };
-  return prices[tier] || 0;
+  switch (tier) {
+    case 'starter': return 29;
+    case 'agency': return 79;
+    case 'enterprise': return 199;
+    default: return 0;
+  }
 }
 
 /**

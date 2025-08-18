@@ -28,7 +28,8 @@ import dynamic from 'next/dynamic';
 // Dynamic sparkline import (client only)
 // Removed explicit .js extension so Next resolves the .tsx module; ensures LatencySparkline export is found.
 // Import TSX module (extensionless for Next.js). Ensure no duplicate .js wrapper exists.
-const LatencySparkline = dynamic<any>(() => import('./performance/latency-sparkline').then(m => m.LatencySparkline || m.default), { ssr: false, loading: () => <div className="h-9 w-full bg-muted rounded" /> });
+interface LatencySparklineProps { samples: number[]; id?: string; describedBy?: string }
+const LatencySparkline = dynamic<LatencySparklineProps>(() => import('./performance/latency-sparkline').then(m => (m as any).LatencySparkline || (m as any).default), { ssr: false, loading: () => <div className="h-9 w-full bg-muted rounded" /> });
 
 // Threshold adaptive progress bar wrapper
 const AdaptiveProgress: React.FC<{ value: number; thresholds?: { good: number; warn: number }; label: string; invert?: boolean }> = ({ value, thresholds = { good: 90, warn: 70 }, label, invert }) => {
@@ -115,12 +116,13 @@ export function PerformanceDashboard() {
       const cacheStats = aiOptimizer.getCacheStats();
 
       // Calculate overall cache hit rate
-      const totalCacheOps = Object.values(cacheStats).reduce(
-        (sum: number, stat: any) => sum + stat.entries,
+      type CacheStat = { entries: number; hitRate: number };
+      const totalCacheOps = Object.values(cacheStats as Record<string, CacheStat>).reduce(
+        (sum: number, stat: CacheStat) => sum + (stat?.entries || 0),
         0
       );
-      const totalCacheHits = Object.values(cacheStats).reduce(
-        (sum: number, stat: any) => sum + (stat.hitRate * stat.entries) / 100,
+      const totalCacheHits = Object.values(cacheStats as Record<string, CacheStat>).reduce(
+        (sum: number, stat: CacheStat) => sum + (((stat?.hitRate || 0) * (stat?.entries || 0)) / 100),
         0
       );
       const overallCacheHitRate =
@@ -206,7 +208,7 @@ export function PerformanceDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Tabs value={selectedTimeRange} onValueChange={(value) => setSelectedTimeRange(value as any)}>
+          <Tabs value={selectedTimeRange} onValueChange={(value) => setSelectedTimeRange(value as '5m' | '1h' | '24h')}>
             <TabsList aria-label="Select time range" role="tablist">
               <TabsTrigger value="5m" aria-label="5 minutes range">5m</TabsTrigger>
               <TabsTrigger value="1h" aria-label="1 hour range">1h</TabsTrigger>

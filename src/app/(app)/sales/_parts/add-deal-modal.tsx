@@ -8,7 +8,7 @@ import { db } from '@/lib/firebase';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
-interface Props { open: boolean; onOpenChange: (open: boolean)=>void; onCreated?: (deal: any)=>void; }
+interface Props { open: boolean; onOpenChange: (open: boolean)=>void; onCreated?: (deal: unknown)=>void; }
 
 export function AddDealModal({ open, onOpenChange, onCreated }: Props) {
   const { user } = useAuth();
@@ -32,8 +32,8 @@ export function AddDealModal({ open, onOpenChange, onCreated }: Props) {
       toast({ title:'Deal added', description: name });
       setName(''); setAmount(''); setStage('qualification');
       onOpenChange(false);
-    } catch(e:any) {
-      toast({ title:'Failed', description: e.message||'Could not add deal', variant:'destructive'});
+    } catch(e:unknown) {
+      toast({ title:'Failed', description: (e instanceof Error ? e.message : String(e)) || 'Could not add deal', variant:'destructive'});
     } finally { setSaving(false); }
   }
 

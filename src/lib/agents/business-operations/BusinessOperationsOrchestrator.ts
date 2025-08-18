@@ -219,7 +219,7 @@ export interface BusinessTrigger {
 export interface BusinessAction {
     type: string;
     target: string;
-    parameters: Record<string, any>;
+    parameters: Record<string, unknown>;
 }
 
 export interface CronSchedule {

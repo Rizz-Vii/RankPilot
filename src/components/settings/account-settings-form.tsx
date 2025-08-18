@@ -29,6 +29,7 @@ import { updateEmail } from "firebase/auth";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "firebase/auth";
+import { asUserProfile, type UserProfile } from "../../../types/user-profile";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const formSchema = z.object({
@@ -46,7 +47,7 @@ type AccountFormValues = z.infer<typeof formSchema>;
 
 export interface AccountSettingsFormProps {
   user: User;
-  profile: any;
+  profile: unknown;
 }
 
 export default function AccountSettingsForm({
@@ -55,16 +56,17 @@ export default function AccountSettingsForm({
 }: AccountSettingsFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const prof: UserProfile | undefined = asUserProfile(profile);
 
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: user.email || "",
-      firstName: profile?.firstName || "",
-      lastName: profile?.lastName || "",
-      company: profile?.company || "",
+      firstName: prof?.firstName || "",
+      lastName: prof?.lastName || "",
+      company: prof?.company || "",
       timezone:
-        profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+        prof?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
     },
   });
 
@@ -91,12 +93,13 @@ export default function AccountSettingsForm({
         title: "Account Updated",
         description: "Your account information has been successfully updated.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const msg = (error && typeof error === 'object' && 'message' in error) ? (error as any).message : undefined;
       toast({
         variant: "destructive",
         title: "Update Failed",
         description:
-          error.message || "Could not update your account. Please try again.",
+          msg || "Could not update your account. Please try again.",
       });
     } finally {
       setIsLoading(false);

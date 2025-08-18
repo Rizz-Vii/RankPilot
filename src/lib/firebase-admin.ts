@@ -83,27 +83,33 @@ function initializeFirebaseAdmin(name?: string): admin.app.App {
   throw new Error('No valid Firebase admin configuration found');
 }
 
-function createMockAdmin(): any {
-  // Mock admin for development/build mode
-  return {
-    auth: () => ({
-      verifyIdToken: async () => ({ uid: 'mock-user' }),
-      getUser: async () => ({ uid: 'mock-user', email: 'mock@example.com' })
-    }),
-    firestore: () => ({
-      collection: () => ({
-        doc: () => ({
-          get: async () => ({ exists: false, data: () => null }),
-          set: async () => ({}),
-          update: async () => ({})
-        }),
-        add: async () => ({ id: 'mock-id' }),
-        where: () => ({
-          get: async () => ({ empty: true, docs: [] })
-        })
+function createMockAdmin(): admin.app.App {
+  // Create minimalist stub implementing subset of admin.app.App we use
+  const mockApp = {
+    name: 'mock-app',
+    options: {},
+    delete: async () => { /* noop */ },
+  } as unknown as admin.app.App;
+  // Attach needed service accessors via module augmentation pattern
+  (mockApp as unknown as { auth: () => unknown }).auth = () => ({
+    verifyIdToken: async () => ({ uid: 'mock-user' }),
+    getUser: async () => ({ uid: 'mock-user', email: 'mock@example.com' })
+  });
+  (mockApp as unknown as { firestore: () => unknown }).firestore = () => ({
+    collection: () => ({
+      doc: () => ({
+        get: async () => ({ exists: false, data: () => null }),
+        set: async () => ({}),
+        update: async () => ({})
+      }),
+      add: async () => ({ id: 'mock-id' }),
+      where: () => ({
+        get: async () => ({ empty: true, docs: [] })
       })
     })
-  };
+  });
+  (mockApp as unknown as { storage: () => unknown }).storage = () => ({ bucket: () => ({}) });
+  return mockApp;
 }
 
 // Export Firebase Admin services for use in other parts of your application
@@ -112,11 +118,11 @@ export const adminDb = app.firestore();
 const SETTINGS_KEY = '__RP_FIRESTORE_SETTINGS_APPLIED__';
 try {
   // @ts-ignore
-  if (!(global as any)[SETTINGS_KEY]) {
+  if (!(global as unknown)[SETTINGS_KEY]) {
     // @ts-ignore
     adminDb.settings?.({ ignoreUndefinedProperties: true });
     // @ts-ignore
-    (global as any)[SETTINGS_KEY] = true;
+    (global as unknown)[SETTINGS_KEY] = true;
   }
 } catch (e) {
   // Silently ignore (will not impact critical functionality)

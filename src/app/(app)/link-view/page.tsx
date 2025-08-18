@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/table";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { cn } from "@/lib/utils";
+import { cn, safeErrorMessage } from "@/lib/utils";
 import { analyzeLinks } from "@/lib/utils/content-functions";
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import type {
@@ -214,10 +214,8 @@ export default function LinkViewPage() {
           resultsSummary: `Analyzed backlinks for ${values.url}. Found ${result.summary.totalBacklinks} links.`,
         });
       }
-    } catch (e: any) {
-      setError(
-        e.message || "An unexpected error occurred during link analysis."
-      );
+    } catch (e: unknown) {
+      setError(safeErrorMessage(e) || "An unexpected error occurred during link analysis.");
       if (!results) markFallback();
     } finally {
       setIsLoading(false);

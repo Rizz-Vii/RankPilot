@@ -5,6 +5,20 @@
 
 import { EventEmitter } from 'events';
 
+// --- Type Hardening Interfaces (added to replace prior 'unknown' usage clusters) ---
+interface CacheEvaluationRequest { path: string; method: string; headers: Record<string, string>; query: Record<string, string>; }
+type CacheCondition = CacheRule['conditions'][number];
+type LoadBalancingTarget = LoadBalancingRule['targets'][number];
+interface ClientInfo { ip: string; country: string; region: string; }
+interface AssetInput { path: string; type: 'css' | 'js' | 'image' | 'font'; size: number; content?: string; }
+interface OptimizedAsset { path: string; original_size: number; optimized_size: number; savings: number; optimizations_applied: string[]; }
+interface OptimizationRecommendation { type: string; priority: 'low' | 'medium' | 'high' | 'critical'; description: string; expected_impact: { performance_improvement: number; cost_savings: number; implementation_effort: string; }; implementation_steps: string[]; }
+interface EdgeMetrics { total: number; active: number; avg_latency: number; avg_cache_hit_rate: number; total_bandwidth: number; }
+interface CacheMetrics { total_rules: number; active_rules: number; global_hit_rate: number; bandwidth_savings: number; }
+interface LoadBalancingMetrics { total_rules: number; healthy_targets: number; avg_response_time: number; request_distribution: Record<string, number>; }
+interface OptimizationMetrics { active_optimizations: number; total_size_reduction: number; performance_improvement: number; bandwidth_savings: number; }
+interface DatabaseMetrics { active_optimizations: number; avg_query_improvement: number; throughput_increase: number; }
+
 export interface EdgeLocation {
     id: string;
     name: string;
@@ -44,7 +58,7 @@ export interface CacheRule {
     }>;
     actions: Array<{
         type: 'cache' | 'bypass' | 'purge' | 'transform';
-        parameters: Record<string, any>;
+        parameters: Record<string, unknown>;
     }>;
     priority: number;
     enabled: boolean;
@@ -97,7 +111,7 @@ export interface PerformanceOptimization {
     id: string;
     type: 'compression' | 'minification' | 'image_optimization' | 'prefetch' | 'http2_push';
     enabled: boolean;
-    configuration: Record<string, any>;
+    configuration: Record<string, unknown>;
     impact: {
         size_reduction: number;
         performance_improvement: number;
@@ -316,25 +330,12 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
     /**
      * Optimize static assets
      */
-    async optimizeAssets(assets: Array<{
-        path: string;
-        type: 'css' | 'js' | 'image' | 'font';
-        size: number;
-        content?: string;
-    }>): Promise<Array<{
-        path: string;
-        original_size: number;
-        optimized_size: number;
-        savings: number;
-        optimizations_applied: string[];
-    }>> {
-        const results = [];
-
+    async optimizeAssets(assets: AssetInput[]): Promise<OptimizedAsset[]> {
+        const results: OptimizedAsset[] = [];
         for (const asset of assets) {
             const optimized = await this.optimizeAsset(asset);
             results.push(optimized);
         }
-
         this.emit('assets-optimized', results);
         return results;
     }
@@ -365,7 +366,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
 
         try {
             // Simulate implementation
-            await this.simulateOptimizationImplementation(optimization);
+            await this.simulateOptimizationImplementation();
 
             optimization.status = 'active';
             optimization.implemented_at = Date.now();
@@ -438,18 +439,8 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
     /**
      * Generate optimization recommendations
      */
-    async generateOptimizationRecommendations(): Promise<Array<{
-        type: string;
-        priority: 'low' | 'medium' | 'high' | 'critical';
-        description: string;
-        expected_impact: {
-            performance_improvement: number;
-            cost_savings: number;
-            implementation_effort: string;
-        };
-        implementation_steps: string[];
-    }>> {
-        const recommendations = [];
+    async generateOptimizationRecommendations(): Promise<OptimizationRecommendation[]> {
+        const recommendations: OptimizationRecommendation[] = [];
 
         // Analyze edge performance
         const edgeRecommendations = await this.analyzeEdgePerformance();
@@ -521,7 +512,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return (latencyScore * 0.3 + cacheScore * 0.3 + uptimeScore * 0.2 + errorScore * 0.2);
     }
 
-    private matchesCacheRule(request: any, rule: CacheRule): boolean {
+    private matchesCacheRule(request: CacheEvaluationRequest, rule: CacheRule): boolean {
         // Check if request path matches rule pattern
         const pathMatches = new RegExp(rule.pattern).test(request.path);
         if (!pathMatches) return false;
@@ -536,7 +527,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return true;
     }
 
-    private evaluateCondition(request: any, condition: any): boolean {
+    private evaluateCondition(request: CacheEvaluationRequest, condition: CacheCondition): boolean {
         let value: string;
 
         switch (condition.type) {
@@ -546,12 +537,19 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
             case 'method':
                 value = request.method;
                 break;
-            case 'header':
-                value = request.headers[condition.name] || '';
+            case 'header': {
+                // Interpret condition.value as header key when operator applies to retrieved header value
+                const headerKey = condition.value.split('=')[0];
+                const headerVal = request.headers[headerKey] || '';
+                value = headerVal;
                 break;
-            case 'query':
-                value = request.query[condition.name] || '';
+            }
+            case 'query': {
+                const queryKey = condition.value.split('=')[0];
+                const queryVal = request.query[queryKey] || '';
+                value = queryVal;
                 break;
+            }
             default:
                 return true;
         }
@@ -570,24 +568,24 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         }
     }
 
-    private async purgeCacheAtLocation(locationId: string, patterns: string[]): Promise<number> {
+    private async purgeCacheAtLocation(_locationId: string, patterns: string[]): Promise<number> {
         // Simulate cache purging at specific location
         return patterns.length * Math.floor(Math.random() * 100 + 50);
     }
 
-    private getRoundRobinTarget(targets: any[]): string {
+    private getRoundRobinTarget(targets: LoadBalancingTarget[]): string {
         // Simple round-robin implementation
         const index = Date.now() % targets.length;
         return targets[index].id;
     }
 
-    private getLeastConnectionsTarget(targets: any[]): string {
+    private getLeastConnectionsTarget(targets: LoadBalancingTarget[]): string {
         return targets.reduce((min, target) =>
             target.current_connections < min.current_connections ? target : min
         ).id;
     }
 
-    private getWeightedTarget(targets: any[]): string {
+    private getWeightedTarget(targets: LoadBalancingTarget[]): string {
         const totalWeight = targets.reduce((sum, t) => sum + t.weight, 0);
         const random = Math.random() * totalWeight;
 
@@ -602,7 +600,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return targets[0].id;
     }
 
-    private getGeographicTarget(rule: LoadBalancingRule, targets: any[], clientInfo?: any): string {
+    private getGeographicTarget(rule: LoadBalancingRule, targets: LoadBalancingTarget[], clientInfo?: ClientInfo): string {
         if (!rule.geographic_routing.enabled || !clientInfo) {
             return this.getRoundRobinTarget(targets);
         }
@@ -618,15 +616,15 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return this.getRoundRobinTarget(targets);
     }
 
-    private getPerformanceTarget(targets: any[]): string {
+    private getPerformanceTarget(targets: LoadBalancingTarget[]): string {
         return targets.reduce((best, target) =>
             target.response_time < best.response_time ? target : best
         ).id;
     }
 
-    private async optimizeAsset(asset: any): Promise<any> {
+    private async optimizeAsset(asset: AssetInput): Promise<OptimizedAsset> {
         let optimizedSize = asset.size;
-        const appliedOptimizations = [];
+        const appliedOptimizations: string[] = [];
 
         // Simulate various optimizations based on asset type
         switch (asset.type) {
@@ -657,14 +655,14 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         };
     }
 
-    private async simulateOptimizationImplementation(optimization: DatabaseOptimization): Promise<void> {
+    private async simulateOptimizationImplementation(): Promise<void> {
         // Simulate implementation delay
         return new Promise(resolve => {
             setTimeout(resolve, Math.random() * 5000 + 1000);
         });
     }
 
-    private calculateEdgeMetrics(): any {
+    private calculateEdgeMetrics(): EdgeMetrics {
         const locations = Array.from(this.edgeLocations.values());
         const active = locations.filter(l => l.status === 'active');
 
@@ -677,7 +675,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         };
     }
 
-    private calculateCacheMetrics(): any {
+    private calculateCacheMetrics(): CacheMetrics {
         const rules = Array.from(this.cacheRules.values());
         const active = rules.filter(r => r.enabled);
 
@@ -689,7 +687,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         };
     }
 
-    private calculateLoadBalancingMetrics(): any {
+    private calculateLoadBalancingMetrics(): LoadBalancingMetrics {
         const rules = Array.from(this.loadBalancingRules.values());
         const allTargets = rules.flatMap(r => r.targets);
         const healthy = allTargets.filter(t => t.status === 'healthy');
@@ -702,7 +700,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         };
     }
 
-    private calculateOptimizationMetrics(): any {
+    private calculateOptimizationMetrics(): OptimizationMetrics {
         const optimizations = Array.from(this.optimizations.values());
         const active = optimizations.filter(o => o.enabled);
 
@@ -714,7 +712,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         };
     }
 
-    private calculateDatabaseMetrics(): any {
+    private calculateDatabaseMetrics(): DatabaseMetrics {
         const optimizations = Array.from(this.databaseOptimizations.values());
         const active = optimizations.filter(o => o.status === 'active');
 
@@ -784,8 +782,8 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         }
     }
 
-    private async analyzeEdgePerformance(): Promise<any[]> {
-        const recommendations = [];
+    private async analyzeEdgePerformance(): Promise<OptimizationRecommendation[]> {
+        const recommendations: OptimizationRecommendation[] = [];
 
         for (const location of this.edgeLocations.values()) {
             if (location.performance.avg_latency > 500) {
@@ -810,8 +808,8 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return recommendations;
     }
 
-    private async analyzeCacheEfficiency(): Promise<any[]> {
-        const recommendations = [];
+    private async analyzeCacheEfficiency(): Promise<OptimizationRecommendation[]> {
+        const recommendations: OptimizationRecommendation[] = [];
 
         for (const rule of this.cacheRules.values()) {
             if (rule.enabled && rule.statistics.hit_rate < 0.7) {
@@ -836,7 +834,7 @@ export class GlobalInfrastructureOptimizer extends EventEmitter {
         return recommendations;
     }
 
-    private async analyzeDatabasePerformance(): Promise<any[]> {
+    private async analyzeDatabasePerformance(): Promise<OptimizationRecommendation[]> {
         // Analyze database performance and suggest optimizations
         return [
             {

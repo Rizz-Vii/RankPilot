@@ -28,7 +28,7 @@ interface UserSubscriptionData {
   email: string;
   subscriptionTier: string;
   subscriptionStatus: string;
-  updatedAt?: any;
+  updatedAt?: unknown;
 }
 
 export async function identifyAndCorrectUserTiers(): Promise<void> {

@@ -4,7 +4,8 @@ import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { withProvenance, enforceProvenance } from '@/lib/middleware/provenance';
 import { getLogger } from '@/lib/logging/app-logger';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {} as any);
+const STRIPE_API_VERSION = '2025-07-30.basil' as const;
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: STRIPE_API_VERSION });
 
 export const POST = withProvenance(async function POST(req: NextRequest) {
     const logger = getLogger('api.billing.portal');
@@ -19,7 +20,7 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
 
         const userSnap = await adminDb.collection('users').doc(uid).get();
         const user = userSnap.data() as any | undefined;
-        const customerId = user?.stripeCustomerId;
+        const customerId = (user as any)?.stripeCustomerId as string | undefined;
         if (!customerId) {
             return NextResponse.json(enforceProvenance({ error: 'no_customer' }, { path: 'billing/portal', note: 'no_customer' }), { status: 404 });
         }
@@ -29,8 +30,8 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
 
         logger.info('billing.portal.created', { uid });
         return NextResponse.json(enforceProvenance({ url: session.url }, { path: 'billing/portal', note: 'ok' }));
-    } catch (e: any) {
-        const msg = e?.message || 'internal_error';
+    } catch (e: unknown) {
+        const msg = (e as any)?.message || 'internal_error';
         logger.error('billing.portal.error', { error: msg });
         return NextResponse.json(enforceProvenance({ error: 'internal_error' }, { path: 'billing/portal', note: 'exception' }), { status: 500 });
     }

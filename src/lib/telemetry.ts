@@ -12,9 +12,9 @@ export type TelemetryProvider = {
   start: () => void;
   shutdown: () => Promise<void>;
   isActive: boolean;
-  getTracer?: () => any; // Tracer instance (from @opentelemetry/api)
-  getMeter?: () => any; // Meter instance (from @opentelemetry/api)
-  getLogger?: () => any; // Logger instance (from @opentelemetry/api)
+  getTracer?: () => unknown; // Tracer instance (from @opentelemetry/api)
+  getMeter?: () => unknown; // Meter instance (from @opentelemetry/api)
+  getLogger?: () => unknown; // Logger instance (from @opentelemetry/api)
 };
 
 // A no-operation (noop) provider that does nothing. This is used on the client-side
@@ -123,18 +123,19 @@ export function createSpan<T>(name: string, fn: () => T): T {
 
   try {
     const provider = getTelemetryProvider();
-    // Get the tracer from the provider if it exists.
-    const tracer = provider.getTracer ? provider.getTracer() : undefined;
+    type SpanLike = { end: () => void; recordException: (err: unknown) => void };
+    type TracerLike = { startActiveSpan: (n: string, f: (s: SpanLike) => T) => T };
+    const tracer = provider.getTracer ? (provider.getTracer() as unknown as TracerLike) : undefined;
 
     if (tracer) {
       // If a tracer is available, start an active span.
       // The function `fn` will be executed within the context of this span.
-      return tracer.startActiveSpan(name, (span: any) => {
+      return tracer.startActiveSpan(name, (span: SpanLike) => {
         try {
           const result = fn(); // Execute the provided function
           span.end(); // End the span after function execution
           return result;
-        } catch (err: any) {
+        } catch (err: unknown) {
           // Catch errors during function execution
           span.recordException(err); // Record the exception on the span
           span.end(); // End the span even if an error occurred

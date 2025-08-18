@@ -14,6 +14,17 @@
 import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
 
+// Minimal incident shape used internally (previously passed as 'unknown')
+export interface Incident {
+    id: string;
+    severity?: string;
+    impact?: string;
+    category?: string;
+    source?: string;
+    indicators?: string[];
+    [key: string]: any; // Allow extensibility without losing type safety for known fields
+}
+
 export interface IncidentResponse {
     id: string;
     incidentId: string;
@@ -73,7 +84,7 @@ export interface ResponsePlaybook {
     triggers: Array<{
         type: 'severity' | 'category' | 'source' | 'indicator';
         condition: string;
-        value: any;
+        value: unknown;
     }>;
     actions: Array<{
         order: number;
@@ -107,11 +118,11 @@ export interface AutomationRule {
     conditions: Array<{
         field: string;
         operator: 'equals' | 'contains' | 'greater_than' | 'less_than' | 'regex';
-        value: any;
+        value: unknown;
     }>;
     actions: Array<{
         type: 'contain' | 'block' | 'isolate' | 'notify' | 'remediate';
-        parameters: Record<string, any>;
+        parameters: Record<string, unknown>;
         requiresApproval: boolean;
     }>;
     riskThreshold: 'low' | 'medium' | 'high';
@@ -426,7 +437,7 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
     /**
      * Initiate incident response
      */
-    async initiateResponse(incident: any): Promise<IncidentResponse> {
+    async initiateResponse(incident: Incident): Promise<IncidentResponse> {
         const responseId = `response_${Date.now()}_${randomBytes(4).toString('hex')}`;
         const startTime = Date.now();
 
@@ -482,7 +493,7 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
     /**
      * Select appropriate playbook
      */
-    private selectPlaybook(incident: any): ResponsePlaybook | undefined {
+    private selectPlaybook(incident: Incident): ResponsePlaybook | undefined {
         for (const playbook of this.playbooks.values()) {
             const matches = playbook.triggers.every(trigger => {
                 switch (trigger.type) {
@@ -493,9 +504,10 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
                     case 'source':
                         return incident.source === trigger.value;
                     case 'indicator':
-                        return incident.indicators?.some((ind: string) =>
-                            trigger.condition === 'contains' ? ind.includes(trigger.value) : ind === trigger.value
-                        );
+                        return incident.indicators?.some((ind: string) => {
+                            const val = String(trigger.value);
+                            return trigger.condition === 'contains' ? ind.includes(val) : ind === val;
+                        });
                     default:
                         return false;
                 }
@@ -512,7 +524,7 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
     /**
      * Check automation rules
      */
-    private checkAutomationRules(incident: any): AutomationRule[] {
+    private checkAutomationRules(incident: Incident): AutomationRule[] {
         const applicableRules: AutomationRule[] = [];
 
         for (const rule of this.automationRules.values()) {
@@ -526,14 +538,18 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
                         return fieldValue === condition.value;
                     case 'contains':
                         return Array.isArray(fieldValue)
-                            ? fieldValue.includes(condition.value)
-                            : String(fieldValue).includes(condition.value);
+                            ? fieldValue.includes(condition.value as any)
+                            : String(fieldValue).includes(String(condition.value));
                     case 'greater_than':
                         return Number(fieldValue) > Number(condition.value);
                     case 'less_than':
                         return Number(fieldValue) < Number(condition.value);
                     case 'regex':
-                        return new RegExp(condition.value).test(String(fieldValue));
+                        try {
+                            return new RegExp(String(condition.value)).test(String(fieldValue));
+                        } catch {
+                            return false;
+                        }
                     default:
                         return false;
                 }
@@ -550,7 +566,7 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
     /**
      * Calculate incident priority
      */
-    private calculatePriority(incident: any): IncidentResponse['priority'] {
+    private calculatePriority(incident: Incident): IncidentResponse['priority'] {
         const severityMap: Record<string, number> = {
             'critical': 5,
             'high': 4,
@@ -567,8 +583,8 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
             'none': 1
         };
 
-        const severityScore = severityMap[incident.severity] || 1;
-        const impactScore = impactMap[incident.impact] || 1;
+        const severityScore = severityMap[String(incident.severity) as keyof typeof severityMap] || 1;
+        const impactScore = impactMap[String(incident.impact) as keyof typeof impactMap] || 1;
         const totalScore = (severityScore + impactScore) / 2;
 
         if (totalScore >= 4.5) return 'p0';
@@ -645,7 +661,7 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
     /**
      * Execute individual automation action
      */
-    private async executeAutomationAction(action: any): Promise<any> {
+    private async executeAutomationAction(action: { type: string; parameters: Record<string, any> }): Promise<{ success: boolean; output: string; artifacts: string[]; }> {
         // Simulate automation action execution
         await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
 
@@ -694,7 +710,7 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
         const response = this.responses.get(responseId);
         if (!response) return;
 
-        const incident = { id: response.incidentId }; // Get incident details
+        const incident: Incident = { id: response.incidentId }; // Retrieve incident details (minimal)
         const playbook = this.selectPlaybook(incident);
         if (!playbook) return;
 
@@ -737,7 +753,7 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
                     action.status = 'completed';
                     action.completedAt = Date.now();
                     action.duration = action.completedAt - (action.startedAt || 0);
-                    action.result = result as any;
+                    action.result = result as { success: boolean; output: string; artifacts: string[] };
 
                     // Update response status based on action type
                     if (action.type === 'analyze') {
@@ -804,7 +820,7 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
     /**
      * Execute playbook action
      */
-    private async executePlaybookAction(action: any, incident: any): Promise<any> {
+    private async executePlaybookAction(action: { type: IncidentAction['type']; description: string }, _incident?: Incident): Promise<{ success: boolean; output: string; artifacts: string[] }> {
         // Simulate playbook action execution
         const executionTime = Math.random() * 2000 + 1000; // 1-3 seconds
         await new Promise(resolve => setTimeout(resolve, executionTime));
@@ -868,7 +884,7 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
     /**
      * Get response metrics
      */
-    getResponseMetrics(): any {
+    getResponseMetrics(): unknown {
         const responses = Array.from(this.responses.values());
         const completedResponses = responses.filter(r => r.status === 'resolved');
 

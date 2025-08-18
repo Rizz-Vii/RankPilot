@@ -106,14 +106,15 @@ export function useNetworkStatus() {
   });
 
   useEffect(() => {
+    type NavigatorWithConnection = Navigator & { connection?: { downlink?: number; effectiveType?: string; saveData?: boolean; addEventListener?: any; removeEventListener?: any } };
     const updateNetworkStatus = () => {
-      const nav = navigator as any; // For Navigator with connection property
-
+      const nav = navigator as NavigatorWithConnection;
+      const conn = nav.connection;
       setStatus({
-        online: navigator.onLine,
-        downlink: nav.connection?.downlink || 10,
-        effectiveType: nav.connection?.effectiveType || "unknown",
-        saveData: nav.connection?.saveData || false,
+        online: nav.onLine,
+        downlink: typeof conn?.downlink === 'number' ? conn.downlink : 10,
+        effectiveType: typeof conn?.effectiveType === 'string' ? conn.effectiveType : "unknown",
+        saveData: Boolean(conn?.saveData),
       });
     };
 
@@ -124,22 +125,17 @@ export function useNetworkStatus() {
     window.addEventListener("offline", updateNetworkStatus);
 
     // Listen for connection changes if supported
-    if ((navigator as any).connection) {
-      (navigator as any).connection.addEventListener(
-        "change",
-        updateNetworkStatus
-      );
+    const navWith = navigator as NavigatorWithConnection;
+    if (navWith.connection?.addEventListener) {
+      navWith.connection.addEventListener("change", updateNetworkStatus);
     }
 
     return () => {
       window.removeEventListener("online", updateNetworkStatus);
       window.removeEventListener("offline", updateNetworkStatus);
 
-      if ((navigator as any).connection) {
-        (navigator as any).connection.removeEventListener(
-          "change",
-          updateNetworkStatus
-        );
+      if (navWith.connection?.removeEventListener) {
+        navWith.connection.removeEventListener("change", updateNetworkStatus);
       }
     };
   }, []);
@@ -156,9 +152,7 @@ export function useTouchDevice() {
   useEffect(() => {
     const detectTouch = () => {
       setIsTouch(
-        "ontouchstart" in window ||
-          navigator.maxTouchPoints > 0 ||
-          (navigator as any).msMaxTouchPoints > 0
+        "ontouchstart" in window || navigator.maxTouchPoints > 0 || (navigator as any).msMaxTouchPoints > 0
       );
     };
 
@@ -295,7 +289,7 @@ export function useNetworkAwareFetching(
 
     // Check data saver preference if available
     const updateConnectionInfo = () => {
-      const connection = (navigator as any).connection;
+      const connection = (navigator as any).connection as { saveData?: boolean; effectiveType?: string } | undefined;
 
       if (connection) {
         setNetworkStatus({
@@ -311,10 +305,7 @@ export function useNetworkAwareFetching(
 
     if (options.enableSaveData && "connection" in navigator) {
       updateConnectionInfo();
-      (navigator as any).connection.addEventListener(
-        "change",
-        updateConnectionInfo
-      );
+      (navigator as any).connection?.addEventListener("change", updateConnectionInfo);
     }
 
     if (options.enableOfflineDetection) {
@@ -325,10 +316,7 @@ export function useNetworkAwareFetching(
     // Cleanup
     return () => {
       if (options.enableSaveData && "connection" in navigator) {
-        (navigator as any).connection.removeEventListener(
-          "change",
-          updateConnectionInfo
-        );
+        (navigator as any).connection?.removeEventListener("change", updateConnectionInfo);
       }
 
       if (options.enableOfflineDetection) {
@@ -353,7 +341,7 @@ export function getAdaptiveImageProps(
   }
 ): { src: string; loading: "lazy" | "eager"; quality?: number } {
   // Check for network conditions
-  const connection = (navigator as any).connection;
+  const connection = (navigator as any).connection as { effectiveType?: string; saveData?: boolean } | undefined;
   const isSlowConnection =
     connection?.effectiveType === "2g" ||
     connection?.effectiveType === "slow-2g";

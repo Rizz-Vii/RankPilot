@@ -153,7 +153,7 @@ What would you like to analyze today?`,
 
         try {
             // Get fresh user token to avoid 401 from stale tokens
-            const curr = auth.currentUser || (user as any);
+            const curr = auth.currentUser;
             if (!curr || typeof curr.getIdToken !== 'function') {
                 throw new Error('Authentication failed. Please sign in again and retry.');
             }
@@ -223,7 +223,8 @@ What would you like to analyze today?`,
             e.nativeEvent.stopImmediatePropagation();
         }
         // Avoid sending during IME composition
-        const composing = (e.nativeEvent as any)?.isComposing || isComposing;
+    const nativeAny: any = e.nativeEvent as any;
+    const composing = nativeAny && typeof nativeAny === 'object' && nativeAny.isComposing ? true : isComposing;
         if (composing) return;
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -320,7 +321,7 @@ What would you like to analyze today?`,
                                 {/* Messages */}
                                 <ScrollArea className="flex-1 p-4">
                                     <div className="space-y-4">
-                                        {messages.map((msg, index) => (
+                                        {messages.map((msg) => (
                                             <div
                                                 key={msg.id}
                                                 className={cn(

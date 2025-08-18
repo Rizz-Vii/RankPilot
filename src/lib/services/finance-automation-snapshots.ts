@@ -2,6 +2,7 @@
 // Collections: financeRevenueSnapshots, financeInvoiceAgingSummaries
 import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase/connection-manager';
+import { z } from 'zod';
 
 export interface FinanceRevenueSnapshotDoc {
     id: string;
@@ -11,7 +12,7 @@ export interface FinanceRevenueSnapshotDoc {
     mrr: number;
     onTimePct: number;
     outstanding: number;
-    createdAt?: any;
+    createdAt?: unknown;
 }
 
 export interface FinanceInvoiceAgingSummaryDoc {
@@ -19,8 +20,25 @@ export interface FinanceInvoiceAgingSummaryDoc {
     userId: string;
     teamId?: string | null;
     buckets: { '0-30': number; '31-60': number; '61-90': number; '90+': number };
-    createdAt?: any;
+    createdAt?: unknown;
 }
+
+const revenueSnapshotSchema = z.object({
+    period: z.string(),
+    mrr: z.number(),
+    onTimePct: z.number(),
+    outstanding: z.number(),
+    createdAt: z.any().optional(),
+    userId: z.string().optional(),
+    teamId: z.string().nullable().optional()
+});
+
+const invoiceAgingSchema = z.object({
+    buckets: z.object({ '0-30': z.number(), '31-60': z.number(), '61-90': z.number(), '90+': z.number() }),
+    createdAt: z.any().optional(),
+    userId: z.string().optional(),
+    teamId: z.string().nullable().optional()
+});
 
 function scopeField(teamId?: string) { return teamId ? 'teamId' : 'userId'; }
 
@@ -32,7 +50,12 @@ export async function fetchRecentFinanceRevenueSnapshots(userId: string, teamId?
         limit(max)
     );
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as FinanceRevenueSnapshotDoc[];
+    return snap.docs.map(d => {
+        const data = d.data() as Record<string, unknown>;
+        const raw = { id: d.id, ...data };
+        const parsed = revenueSnapshotSchema.safeParse(raw);
+        return parsed.success ? (parsed.data as FinanceRevenueSnapshotDoc) : (raw as FinanceRevenueSnapshotDoc);
+    });
 }
 
 export async function fetchLatestFinanceInvoiceAging(userId: string, teamId?: string): Promise<FinanceInvoiceAgingSummaryDoc | null> {
@@ -45,5 +68,8 @@ export async function fetchLatestFinanceInvoiceAging(userId: string, teamId?: st
     const snap = await getDocs(q);
     if (snap.empty) return null;
     const d = snap.docs[0];
-    return { id: d.id, ...(d.data() as any) } as FinanceInvoiceAgingSummaryDoc;
+    const data = d.data() as Record<string, unknown>;
+    const raw = { id: d.id, ...data };
+    const parsed = invoiceAgingSchema.safeParse(raw);
+    return parsed.success ? (parsed.data as FinanceInvoiceAgingSummaryDoc) : (raw as FinanceInvoiceAgingSummaryDoc);
 }

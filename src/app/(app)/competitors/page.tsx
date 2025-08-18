@@ -74,7 +74,7 @@ const RankingsChart = ({
       fill: "hsl(var(--chart-1))",
     },
     ...competitorUrls.map((url, index) => {
-      const competitorData = (firstKeywordData as any)[String(url)];
+      const competitorData = (firstKeywordData as Record<string, unknown>)[String(url)] as { rank?: number } | undefined;
       return {
         name: new URL(String(url)).hostname,
         rank:
@@ -191,7 +191,7 @@ const CompetitorResults = ({
                   </TableCell>
                   {competitorHeaders.map((url) => (
                     <TableCell key={String(url)} className="text-center">
-                      {(item as any)[String(url)]?.rank ?? "N/A"}
+                      {((item as Record<string, unknown>)[String(url)] as { rank?: number } | undefined)?.rank ?? "N/A"}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -248,7 +248,7 @@ export default function CompetitorsPage() {
   const [targetKeywords, setTargetKeywords] = useState("");
 
   // Get user subscription tier for feature gating
-  const userTier = (user as any)?.subscriptionTier || "free";
+  const userTier = (user as { subscriptionTier?: string } | null | undefined)?.subscriptionTier || "free";
 
   const resultsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -290,17 +290,8 @@ export default function CompetitorsPage() {
 
   const handleSubmit = async (values: { yourUrl: string; competitorUrls: string; keywords: string; }) => {
     // Transform form values to CompetitorAnalysisInput
-    const competitorUrlList = values.competitorUrls.split('\n').map(url => url.trim()).filter(url => url);
-    const keywordList = values.keywords.split(',').map(keyword => keyword.trim()).filter(keyword => keyword);
-
-    const analysisInput: CompetitorAnalysisInput = {
-      urls: [values.yourUrl, ...competitorUrlList],
-      yourUrl: values.yourUrl,
-      competitorUrls: competitorUrlList,
-      keywords: keywordList,
-      targetKeywords: keywordList,
-      analysisDepth: 'standard'
-    };
+  const competitorUrlList = values.competitorUrls.split('\n').map(url => url.trim()).filter(Boolean);
+  const keywordList = values.keywords.split(',').map(keyword => keyword.trim()).filter(Boolean);
 
     if (!values.yourUrl.trim()) {
       setError("Please enter your website URL");
@@ -357,7 +348,7 @@ export default function CompetitorsPage() {
         return;
       }
 
-      setReport(result as any);
+      setReport(result as NeuroSEOReport);
       toast({ title: 'Analysis complete', description: 'Competitive analysis results are ready.' });
 
       if (user) {
@@ -379,14 +370,15 @@ export default function CompetitorsPage() {
           resultsSummary: `NeuroSEO™ competitive analysis completed for ${yourUrl.trim()} vs ${competitorUrls.split(',').length} competitors.`,
         });
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (e instanceof TimeoutError) {
         console.warn("Competitor analysis timed out:", e.message);
         setError(
           "Competitor analysis is taking longer than expected. Please try again later or with fewer competitors."
         );
       } else {
-        setError(e.message || "An unexpected error occurred during analysis.");
+        const err = e as { message?: string };
+        setError(err.message || "An unexpected error occurred during analysis.");
       }
     } finally {
       setIsLoading(false);
@@ -409,7 +401,7 @@ export default function CompetitorsPage() {
         ]}
         showBreadcrumb
       />
-      <div className="space-y-10 px-2 sm:px-0">
+  <div className="space-y-10 px-2 sm:px-0">
         <div className="flex items-start justify-between flex-wrap gap-6">
           <KPIGrid
             loading={comp.loading && !comp.kpis.length}
@@ -431,19 +423,19 @@ export default function CompetitorsPage() {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Competitive Analyses</h2>
           <LazyDataTable
             columns={[
-              { key: 'period', header: 'Period', render: (r: any) => r.period || '-' },
-              { key: 'competitors', header: 'Competitors', render: (r: any) => (r.competitors ? r.competitors.length : (r.competitorUrls ? r.competitorUrls.length : '-')) },
-              { key: 'avgDA', header: 'Avg DA', render: (r: any) => {
-                  const over = r.analysis?.overview || [];
+              { key: 'period', header: 'Period', render: (r: unknown) => (r as any).period || '-' },
+              { key: 'competitors', header: 'Competitors', render: (r: unknown) => ((r as any).competitors ? (r as any).competitors.length : ((r as any).competitorUrls ? (r as any).competitorUrls.length : '-')) },
+              { key: 'avgDA', header: 'Avg DA', render: (r: unknown) => {
+                  const over = ((r as any).analysis?.overview || []) as Array<{ domainAuthority?: number }>;
                   if (!over.length) return '-';
-                  const avg = over.reduce((s: number, o: any) => s + (o.domainAuthority || 0), 0) / over.length;
+                  const avg = over.reduce((s: number, o) => s + (o.domainAuthority || 0), 0) / over.length;
                   return avg.toFixed(1);
                 } },
-              { key: 'gaps', header: 'Gaps', render: (r: any) => {
-                  const over = r.analysis?.overview || [];
+              { key: 'gaps', header: 'Gaps', render: (r: unknown) => {
+                  const over = ((r as any).analysis?.overview || []) as Array<{ domainAuthority?: number }>;
                   if (!over.length) return '-';
-                  const max = over.reduce((m: number, o: any) => Math.max(m, o.domainAuthority || 0), 0);
-                  return over.filter((o: any) => (o.domainAuthority || 0) < max - 5).length;
+                  const max = over.reduce((m: number, o) => Math.max(m, o.domainAuthority || 0), 0);
+                  return over.filter((o) => (o.domainAuthority || 0) < max - 5).length;
                 } },
             ]}
             rows={comp.rows}

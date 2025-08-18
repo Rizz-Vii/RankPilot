@@ -88,10 +88,10 @@ export default function SalesDashboardRoot() {
           fetchRecentSalesForecastSnapshots(userId, teamId, 1)
         ]);
         if (metricsSnaps.length) {
-          setSnapMetrics({ pipeline: metricsSnaps[0].pipeline, closedWon: metricsSnaps[0].closedWon, ts: metricsSnaps[0].createdAt?.toDate?.() || new Date() });
+          setSnapMetrics({ pipeline: metricsSnaps[0].pipeline, closedWon: metricsSnaps[0].closedWon, ts: ((metricsSnaps[0].createdAt as any)?.toDate?.() || metricsSnaps[0].createdAt || new Date()) });
         }
         if (forecastSnaps.length) {
-          setSnapForecast({ forecast: forecastSnaps[0].forecast, period: forecastSnaps[0].period, ts: forecastSnaps[0].createdAt?.toDate?.() || new Date() });
+          setSnapForecast({ forecast: forecastSnaps[0].forecast, period: forecastSnaps[0].period, ts: ((forecastSnaps[0].createdAt as any)?.toDate?.() || forecastSnaps[0].createdAt || new Date()) });
         }
       } catch { /* silent */ }
     })();

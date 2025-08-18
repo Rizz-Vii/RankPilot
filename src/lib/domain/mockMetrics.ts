@@ -1,6 +1,6 @@
 // Deterministic mock metrics for dashboards (replace with real Firestore/AI aggregation later)
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const seedrandom: any = require('seedrandom');
+const seedrandom: (seed: string) => (() => number) = require('seedrandom');
 
 export interface DomainMetricSet {
     kpis: Array<{
@@ -14,7 +14,7 @@ export interface DomainMetricSet {
     quotas?: Array<{ key: string; label: string; used: number; limit: number }>;
 }
 
-function generateTrend(rng: any, points = 20, base = 50) {
+function generateTrend(rng: () => number, points = 20, base = 50) {
     const arr: number[] = [];
     let current = base + rng() * 10 - 5;
     for (let i = 0; i < points; i++) {

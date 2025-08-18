@@ -5,6 +5,10 @@ import crypto from 'crypto';
 // Cleanup: scripts/cleanup-invites.ts prunes accepted/expired invites and orphan index docs.
 
 // Simple invariant helpers
+interface TeamMember { userId?: string; id?: string; email?: string; role?: string; status?: string; invitedAt?: any; lastActive?: any; joinedAt?: any; }
+interface TeamDoc { memberIds?: string[]; members?: TeamMember[];[k: string]: unknown; }
+interface InviteData { emailLower: string; role: string; status: string; invitedAt: any; expiresAt?: any; tokenHash?: string; email?: string;[k: string]: unknown; }
+
 async function getTeamForUser(uid: string) {
     // membership via memberIds
     // Firestore admin SDK uses 'array-contains'
@@ -30,15 +34,15 @@ export async function POST(req: NextRequest) {
         if (!email || !role) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
         const team = await getTeamForUser(decoded.uid);
         if (!team) return NextResponse.json({ error: "Team not found" }, { status: 404 });
-        const teamData: any = team.data || {};
-        const acting = (Array.isArray(teamData.members) ? teamData.members : []).find((m: any) => m.userId === decoded.uid || m.id === decoded.uid || m.email === decoded.email);
-        if (!acting || !['owner', 'admin'].includes(acting.role)) return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+        const teamData: TeamDoc = (team.data as TeamDoc) || {};
+        const acting = (Array.isArray(teamData.members) ? teamData.members : []).find((m: TeamMember) => m.userId === decoded.uid || m.id === decoded.uid || m.email === decoded.email);
+        if (!acting || !['owner', 'admin'].includes(acting.role || '')) return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
 
         // Duplicate guard: check existing members subcollection & invites
         const invitesCol = adminDb.collection('teams').doc(team.id).collection('invites');
         const existingInv = await invitesCol.where('emailLower', '==', email.toLowerCase()).limit(1).get();
         if (existingInv.size) return NextResponse.json({ error: 'Already invited' }, { status: 409 });
-        if ((teamData.memberIds || []).some((m: string) => m === email)) return NextResponse.json({ error: 'Already a member' }, { status: 409 });
+        if ((teamData.memberIds || []).some((m) => m === email)) return NextResponse.json({ error: 'Already a member' }, { status: 409 });
 
         const inviteId = crypto.randomUUID();
         const tokenPlain = crypto.randomBytes(24).toString('hex');
@@ -53,8 +57,8 @@ export async function POST(req: NextRequest) {
         adminDb.collection('invites_index').doc(inviteId).set({ teamId: team.id, emailLower: email.toLowerCase(), status: 'pending', createdAt: new Date() }).catch(() => { });
         try { await adminDb.collection('emailQueue').add({ to: email, template: 'team_invite_v2', createdAt: new Date(), payload: { inviter: decoded.uid, teamId: team.id, role: inviteDoc.role, token: tokenPlain } }); } catch { }
         return NextResponse.json({ success: true, inviteId, token: tokenPlain });
-    } catch (e: any) {
-        console.error('Team invite error', e); return NextResponse.json({ error: e.message || 'Internal error' }, { status: 500 });
+    } catch (e: unknown) {
+        console.error('Team invite error', e); const msg = typeof e === 'object' && e && 'message' in e ? (e as any).message : 'Internal error'; return NextResponse.json({ error: msg }, { status: 500 });
     }
 }
 
@@ -72,14 +76,15 @@ export async function PUT(req: NextRequest) {
 
         // Optimized lookup: global mapping doc (invites_index/{inviteId}) -> { teamId }
         // Write path populated lazily (if absent we still fall back to scan for backward compatibility)
-        let found: { teamId: string; inviteDoc: FirebaseFirestore.QueryDocumentSnapshot } | null = null;
+        let found: { teamId: string; inviteDoc: FirebaseFirestore.DocumentSnapshot } | null = null;
         const indexDoc = await adminDb.collection('invites_index').doc(inviteId).get();
         if (indexDoc.exists) {
-            const teamId = (indexDoc.data() as any).teamId;
+            const indexData = indexDoc.data() as { teamId?: string } | undefined;
+            const teamId = indexData?.teamId;
             if (teamId) {
                 const inv = await adminDb.collection('teams').doc(teamId).collection('invites').doc(inviteId).get();
                 if (inv.exists) {
-                    found = { teamId, inviteDoc: inv as any };
+                    found = { teamId, inviteDoc: inv };
                 }
             }
         }
@@ -89,7 +94,7 @@ export async function PUT(req: NextRequest) {
             for (const t of allTeams.docs) {
                 const inv = await adminDb.collection('teams').doc(t.id).collection('invites').doc(inviteId).get();
                 if (inv.exists) {
-                    found = { teamId: t.id, inviteDoc: inv as any };
+                    found = { teamId: t.id, inviteDoc: inv };
                     // Fire and forget index creation
                     adminDb.collection('invites_index').doc(inviteId).set({ teamId: t.id, createdAt: new Date() }).catch(() => { });
                     break;
@@ -97,21 +102,21 @@ export async function PUT(req: NextRequest) {
             }
         }
         if (!found) return NextResponse.json({ error: 'Invite not found' }, { status: 404 });
-        const invData: any = found.inviteDoc.data();
+        const invData = found.inviteDoc.data() as InviteData;
         if (invData.status !== 'pending') return NextResponse.json({ error: 'Invite not pending' }, { status: 400 });
         const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
         if (tokenHash !== invData.tokenHash) return NextResponse.json({ error: 'Invalid token' }, { status: 403 });
         if (invData.emailLower !== (decoded.email || '').toLowerCase()) return NextResponse.json({ error: 'Email mismatch' }, { status: 403 });
-        if (invData.expiresAt?.toDate && invData.expiresAt.toDate().getTime() < Date.now()) return NextResponse.json({ error: 'Invite expired' }, { status: 410 });
+        if ((invData.expiresAt?.toDate && invData.expiresAt.toDate().getTime() < Date.now())) return NextResponse.json({ error: 'Invite expired' }, { status: 410 });
 
         // Append member to team doc arrays & memberIds; also create subcollection member doc
         const teamRef = adminDb.collection('teams').doc(found.teamId);
         await adminDb.runTransaction(async tx => {
             const tSnap = await tx.get(teamRef);
             if (!tSnap.exists) throw new Error('Team missing');
-            const tData: any = tSnap.data();
+            const tData = tSnap.data() as TeamDoc;
             if ((tData.memberIds || []).includes(uid)) throw new Error('Already member');
-            const updatedMembers = [...(tData.members || []), { userId: uid, email: invData.email, role: invData.role, status: 'active', joinedAt: new Date(), lastActive: new Date() }];
+            const updatedMembers: TeamMember[] = [...(tData.members || []), { userId: uid, email: invData.email, role: invData.role, status: 'active', joinedAt: new Date(), lastActive: new Date() }];
             const updatedMemberIds = [...(tData.memberIds || []), uid];
             tx.update(teamRef, { members: updatedMembers, memberIds: updatedMemberIds });
             tx.update(teamRef.collection('invites').doc(inviteId), { status: 'accepted', acceptedAt: new Date() });
@@ -128,8 +133,8 @@ export async function PUT(req: NextRequest) {
             tx.set(adminDb.collection('invites_index').doc(inviteId), { teamId: found!.teamId, status: 'accepted', updatedAt: new Date() }, { merge: true });
         });
         return NextResponse.json({ success: true, teamId: found.teamId });
-    } catch (e: any) {
-        console.error('Accept invite error', e); return NextResponse.json({ error: e.message || 'Internal error' }, { status: 500 });
+    } catch (e: unknown) {
+        console.error('Accept invite error', e); const msg = typeof e === 'object' && e && 'message' in e ? (e as any).message : 'Internal error'; return NextResponse.json({ error: msg }, { status: 500 });
     }
 }
 
@@ -143,8 +148,9 @@ export async function PATCH(req: NextRequest) {
         const expiresAt = new Date(Date.now() - delta * 60 * 1000);
         await adminDb.collection('teams').doc(teamId).collection('invites').doc(inviteId).update({ expiresAt });
         return NextResponse.json({ success: true, expiredAt: expiresAt.toISOString() });
-    } catch (e: any) {
-        return NextResponse.json({ error: e.message || 'Internal error' }, { status: 500 });
+    } catch (e: unknown) {
+        const msg = typeof e === 'object' && e && 'message' in e ? (e as any).message : 'Internal error';
+        return NextResponse.json({ error: msg }, { status: 500 });
     }
 }
 
@@ -158,11 +164,11 @@ export async function GET(req: NextRequest) {
         if (!emailLower) return NextResponse.json({ invites: [] });
         // Owner/admin path: identify their team then list its invites
         const team = await getTeamForUser(decoded.uid);
-        const results: any[] = [];
+        const results: unknown[] = [];
         if (team) {
-            const teamData: any = team.data || {};
-            const acting = (Array.isArray(teamData.members) ? teamData.members : []).find((m: any) => m.userId === decoded.uid || m.id === decoded.uid || m.email === decoded.email);
-            if (acting && ['owner', 'admin'].includes(acting.role)) {
+            const teamData = (team.data as TeamDoc) || {};
+            const acting = (Array.isArray(teamData.members) ? teamData.members : []).find((m: TeamMember) => m.userId === decoded.uid || m.id === decoded.uid || m.email === decoded.email);
+            if (acting && ['owner', 'admin'].includes(acting.role || '')) {
                 const invSnap = await adminDb.collection('teams').doc(team.id).collection('invites').where('status', '==', 'pending').get();
                 invSnap.forEach(d => results.push({ id: d.id, teamId: team.id, ...d.data() }));
                 return NextResponse.json({ invites: results, scope: 'team' });
@@ -175,7 +181,7 @@ export async function GET(req: NextRequest) {
             invs.forEach(d => results.push({ id: d.id, teamId: t.id, role: d.data().role, invitedAt: d.data().invitedAt, expiresAt: d.data().expiresAt }));
         }
         return NextResponse.json({ invites: results, scope: 'self' });
-    } catch (e: any) {
-        console.error('List invites error', e); return NextResponse.json({ error: e.message || 'Internal error' }, { status: 500 });
+    } catch (e: unknown) {
+        console.error('List invites error', e); const msg = typeof e === 'object' && e && 'message' in e ? (e as any).message : 'Internal error'; return NextResponse.json({ error: msg }, { status: 500 });
     }
 }

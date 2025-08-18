@@ -1,11 +1,10 @@
 // API Health Check
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getUnifiedMetricsSnapshot } from '@/lib/metrics/unified-metrics';
 import { getAIUsage24h, getSubtoolUsage24h } from '@/lib/metrics/ai-usage';
 import { getKpiSnapshot } from '@/lib/metrics/kpi-aggregation';
 import { getNeuroseoMetricsSnapshot } from '@/lib/neuroseo/metrics-registry';
 import { adminDb } from '@/lib/firebase-admin';
-import { hasProvenance } from '@/lib/middleware/provenance';
 import { ensureDailyUnifiedMetricsExport } from '@/lib/metrics/unified-metrics-export';
 export const dynamic = 'force-dynamic';
 export async function GET() {
@@ -23,7 +22,10 @@ export async function GET() {
   const kpis = getKpiSnapshot();
   await ensureDailyUnifiedMetricsExport();
   // Derive crawler metrics (exposed explicitly for observability)
-  const crawlerRaw = (unified as any).crawler || { success: 0, errors: 0, totalCrawlMs: 0, totalAnalysisMs: 0 };
+  interface CrawlerRaw { success: number; errors: number; totalCrawlMs: number; totalAnalysisMs: number; crawlP95?: number; analysisP95?: number; crawlP99?: number; analysisP99?: number }
+  const crawlerRaw: CrawlerRaw = (typeof (unified as any)?.crawler === 'object' && (unified as any).crawler)
+    ? (unified as any).crawler as CrawlerRaw
+    : { success: 0, errors: 0, totalCrawlMs: 0, totalAnalysisMs: 0 };
   const crawlerRuns = crawlerRaw.success + crawlerRaw.errors;
   const crawlerMetrics = {
     ...crawlerRaw,
@@ -34,8 +36,8 @@ export async function GET() {
     avgAnalysisMs: crawlerRaw.success ? Math.round(crawlerRaw.totalAnalysisMs / crawlerRaw.success) : null,
     crawlP95: crawlerRaw.crawlP95 ?? null,
     analysisP95: crawlerRaw.analysisP95 ?? null,
-    crawlP99: (crawlerRaw as any).crawlP99 ?? null,
-    analysisP99: (crawlerRaw as any).analysisP99 ?? null
+    crawlP99: crawlerRaw.crawlP99 ?? null,
+    analysisP99: crawlerRaw.analysisP99 ?? null
   };
   // Aggregate team quota usage for today (lightweight; limit query to 200 docs)
   let teamQuota: { totalTeams: number; totalUsed: number; totalLimit: number; totalRejections: number } | null = null;
@@ -43,13 +45,13 @@ export async function GET() {
     const today = new Date(ts).toISOString().slice(0, 10);
     const snap = await adminDb.collection('teamCrawlerUsage').where('date', '==', today).limit(200).get();
     let totalTeams = 0, totalUsed = 0, totalLimit = 0, totalRejections = 0;
-    snap.docs.forEach(d => { const data: any = d.data(); totalTeams++; totalUsed += data.count || 0; totalLimit += data.limit || 0; totalRejections += data.rejections || 0; });
+    snap.docs.forEach(d => { const data: any = d.data() as any; totalTeams++; totalUsed += (data?.count || 0); totalLimit += (data?.limit || 0); totalRejections += (data?.rejections || 0); });
     teamQuota = { totalTeams, totalUsed, totalLimit, totalRejections };
   } catch { }
   try {
     const dateKey = new Date(ts).toISOString().slice(0, 10);
     const dailySnap = await adminDb.collection('aiUsageDaily').where('date', '==', dateKey).get();
-    let dIn = 0, dOut = 0, dCost = 0; dailySnap.docs.forEach(d => { const data: any = d.data(); dIn += data.tokensIn || 0; dOut += data.tokensOut || 0; dCost += data.costEstimate || 0; });
+    let dIn = 0, dOut = 0, dCost = 0; dailySnap.docs.forEach(d => { const data: any = d.data() as any; dIn += (data?.tokensIn || 0); dOut += (data?.tokensOut || 0); dCost += (data?.costEstimate || 0); });
     ; (kpis as any).aiDailyTokensIn = dIn; (kpis as any).aiDailyTokensOut = dOut; (kpis as any).aiDailyCostEstimate = +dCost.toFixed(4);
   } catch { }
   // Basic alert derivation (OPS-01): threshold checks mapped to warning/critical levels
@@ -88,11 +90,12 @@ export async function GET() {
   const aiUsage = getAIUsage24h();
   // Per-model cost breakdown (optional fields if tracking present in aiUsage map)
   let perModelCosts: Record<string, { tokensIn: number; tokensOut: number; cost: number }> | null = null;
-  const anyUsage: any = aiUsage as any;
-  if (anyUsage && typeof anyUsage === 'object' && anyUsage.providers && typeof anyUsage.providers === 'object') {
+  const anyUsage: unknown = aiUsage as unknown;
+  const providers: any = (anyUsage as any)?.providers;
+  if (providers && typeof providers === 'object') {
     perModelCosts = {};
-    Object.entries<any>(anyUsage.providers).forEach(([prov, val]) => {
-      perModelCosts![prov] = { tokensIn: val.tokensIn || 0, tokensOut: val.tokensOut || 0, cost: +((val.costEstimate || 0)).toFixed(4) };
+    Object.entries<any>(providers).forEach(([prov, val]) => {
+      perModelCosts![prov] = { tokensIn: (val?.tokensIn || 0), tokensOut: (val?.tokensOut || 0), cost: +(((val?.costEstimate || 0))).toFixed(4) };
     });
   }
   // Route latency p95 alerts (warn >600ms, critical >1200ms) limited to top offenders

@@ -15,6 +15,8 @@ import { Separator } from "@/components/ui/separator";
 
 export function UserSubscriptionDebugger() {
   const { user, profile } = useAuth();
+  interface ProfileLike { email?: string; role?: string; subscriptionStatus?: string; subscriptionTier?: string; stripeCustomerId?: string; nextBillingDate?: { seconds?: number }; }
+  const prof: ProfileLike | null = profile && typeof profile === 'object' ? (profile as ProfileLike) : null;
   const { subscription, loading } = useSubscription();
 
   if (!user) {
@@ -56,34 +58,32 @@ export function UserSubscriptionDebugger() {
         {/* Profile Data */}
         <div>
           <h4 className="font-medium">Profile Data (Firestore)</h4>
-          {profile ? (
+          {prof ? (
             <div className="text-sm space-y-1 mt-2">
               <div>
-                Email: <code>{profile.email}</code>
+                Email: <code>{prof.email}</code>
               </div>
               <div>
-                Role: <Badge variant="outline">{profile.role}</Badge>
+                Role: <Badge variant="outline">{prof.role}</Badge>
               </div>
               <div>
                 Subscription Status:{" "}
-                <Badge>{profile.subscriptionStatus || "Not set"}</Badge>
+                <Badge>{prof.subscriptionStatus || "Not set"}</Badge>
               </div>
               <div>
                 Subscription Tier:{" "}
-                <Badge>{profile.subscriptionTier || "Not set"}</Badge>
+                <Badge>{prof.subscriptionTier || "Not set"}</Badge>
               </div>
-              {profile.stripeCustomerId && (
+              {prof.stripeCustomerId && (
                 <div>
-                  Stripe Customer ID: <code>{profile.stripeCustomerId}</code>
+                  Stripe Customer ID: <code>{prof.stripeCustomerId}</code>
                 </div>
               )}
-              {profile.nextBillingDate && (
+              {prof.nextBillingDate && (
                 <div>
                   Next Billing:{" "}
                   <code>
-                    {new Date(
-                      profile.nextBillingDate.seconds * 1000
-                    ).toLocaleDateString()}
+                    {prof.nextBillingDate?.seconds ? new Date(prof.nextBillingDate.seconds * 1000).toLocaleDateString() : ''}
                   </code>
                 </div>
               )}
@@ -153,7 +153,7 @@ export function UserSubscriptionDebugger() {
                     email: user.email,
                     displayName: user.displayName,
                   },
-                  profile,
+                  profile: prof,
                   subscription,
                 },
                 null,

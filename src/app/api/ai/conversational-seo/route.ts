@@ -15,8 +15,8 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
     try {
         const body = await request.json();
         const { action, sessionId, message, userId, userTier, teamId } = body;
-        if (teamId) {
-            try { await enforceTeamRateLimit(adminDb as any, teamId, { routeKey: 'ai/conversational-seo' }); } catch (e: any) {
+        if (typeof teamId === 'string' && teamId) {
+            try { await enforceTeamRateLimit(adminDb, teamId, { routeKey: 'ai/conversational-seo' }); } catch (e: unknown) {
                 if (e instanceof TeamRateLimitError) {
                     recordRateLimitRejection('ai/conversational-seo');
                     recordRateLimitRejection(`team:${teamId}`);
@@ -70,7 +70,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
     }
 }, { path: 'ai/conversational-seo' });
 
-export async function GET(request: NextRequest) {
+export async function GET() {
     const start = Date.now();
     const resp = NextResponse.json(enforceProvenance({
         success: true,

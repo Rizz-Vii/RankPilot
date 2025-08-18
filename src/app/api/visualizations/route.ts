@@ -15,10 +15,11 @@ import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { generateChartExport, generateDashboardExport, persistExportArtifact, persistBufferToStorage } from '@/lib/visualizations/server-exports';
 import { NextRequest, NextResponse } from 'next/server';
 
-export const POST = withProvenance(async function POST(request: NextRequest) {
+export const POST = withProvenance(async function POST(request: Request) {
+    const nreq = request as NextRequest;
     try {
         // Verify authentication
-        const authHeader = request.headers.get('authorization');
+        const authHeader = nreq.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(enforceProvenance({ error: 'Unauthorized' }, { path: 'visualizations', note: 'auth' }), { status: 401 });
         }
@@ -41,8 +42,9 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         if (!['agency', 'enterprise', 'admin'].includes(subscriptionTier)) {
             return NextResponse.json(enforceProvenance({ error: 'Advanced visualizations require Agency tier or higher' }, { path: 'visualizations', note: 'tier' }), { status: 403 });
         }
-        const body = await request.json();
-        const { action, data } = body;
+        const body = await nreq.json().catch(() => ({}));
+        const action: string | undefined = (body && typeof body === 'object') ? (body as any).action : undefined;
+        const data = (body && typeof body === 'object') ? (body as any).data : undefined;
         switch (action) {
             case 'create_chart':
                 return await createChart(userId, data);
@@ -65,17 +67,18 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
     }
 }, { path: 'visualizations' });
 
-export const GET = withProvenance(async function GET(request: NextRequest) {
+export const GET = withProvenance(async function GET(request: Request) {
+    const nreq = request as NextRequest;
     try {
         // Verify authentication
-        const authHeader = request.headers.get('authorization');
+        const authHeader = nreq.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(enforceProvenance({ error: 'Unauthorized' }, { path: 'visualizations', note: 'auth' }), { status: 401 });
         }
         const token = authHeader.split('Bearer ')[1];
         const decodedToken = await adminAuth.verifyIdToken(token);
         const userId = decodedToken.uid;
-        const url = new URL(request.url);
+        const url = new URL(nreq.url);
         const type = url.searchParams.get('type');
         const id = url.searchParams.get('id');
         switch (type) {
@@ -102,17 +105,18 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
     }
 }, { path: 'visualizations' });
 
-export const DELETE = withProvenance(async function DELETE(request: NextRequest) {
+export const DELETE = withProvenance(async function DELETE(request: Request) {
+    const nreq = request as NextRequest;
     try {
         // Verify authentication
-        const authHeader = request.headers.get('authorization');
+        const authHeader = nreq.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(enforceProvenance({ error: 'Unauthorized' }, { path: 'visualizations', note: 'auth' }), { status: 401 });
         }
         const token = authHeader.split('Bearer ')[1];
         const decodedToken = await adminAuth.verifyIdToken(token);
         const userId = decodedToken.uid;
-        const url = new URL(request.url);
+        const url = new URL(nreq.url);
         const type = url.searchParams.get('type');
         const id = url.searchParams.get('id');
         if (!type || !id) {
@@ -133,24 +137,32 @@ export const DELETE = withProvenance(async function DELETE(request: NextRequest)
 }, { path: 'visualizations' });
 
 // Chart Management Functions
-async function createChart(userId: string, chartData: any) {
-    const chartDoc = {
-        id: chartData.id || `chart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+interface ChartMetadata { title: string; description?: string; tags: string[]; created: Date; updated: Date; version: string }
+interface ChartSettings { shared: boolean; exportEnabled: boolean; refreshInterval: number }
+interface ChartDoc { id: string; userId: string; config?: Record<string, any>; data?: any[]; metadata: ChartMetadata; settings: ChartSettings }
+type ChartCreateInput = Partial<Omit<ChartDoc, 'id' | 'userId' | 'metadata' | 'settings'>> & {
+    id?: string; title?: string; description?: string; tags?: string[]; shared?: boolean; exportEnabled?: boolean; refreshInterval?: number;
+};
+function isObj(v: unknown): v is Record<string, any> { return !!v && typeof v === 'object'; }
+async function createChart(userId: string, chartData: unknown) {
+    const cd: ChartCreateInput = isObj(chartData) ? chartData as ChartCreateInput : {};
+    const chartDoc: ChartDoc = {
+        id: cd.id || `chart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         userId,
-        config: chartData.config,
-        data: chartData.data || [],
+        config: cd.config,
+        data: Array.isArray(cd.data) ? cd.data : [],
         metadata: {
-            title: chartData.title || 'Untitled Chart',
-            description: chartData.description,
-            tags: chartData.tags || [],
+            title: cd.title || 'Untitled Chart',
+            description: cd.description,
+            tags: Array.isArray(cd.tags) ? cd.tags : [],
             created: new Date(),
             updated: new Date(),
             version: '1.0'
         },
         settings: {
-            shared: chartData.shared || false,
-            exportEnabled: chartData.exportEnabled !== false,
-            refreshInterval: chartData.refreshInterval || 60000
+            shared: !!cd.shared,
+            exportEnabled: cd.exportEnabled !== false,
+            refreshInterval: typeof cd.refreshInterval === 'number' ? cd.refreshInterval : 60000
         }
     };
 
@@ -159,8 +171,10 @@ async function createChart(userId: string, chartData: any) {
     return NextResponse.json(enforceProvenance({ success: true, chartId: chartDoc.id, message: 'Chart created successfully' }, { path: 'visualizations', note: 'create_chart' }));
 }
 
-async function updateChart(userId: string, updateData: any) {
-    const { chartId, ...updates } = updateData;
+type ChartUpdateInput = Partial<ChartCreateInput & { metadata: Partial<ChartMetadata>; settings: Partial<ChartSettings> }> & { chartId?: string };
+async function updateChart(userId: string, updateData: unknown) {
+    const ud: ChartUpdateInput = isObj(updateData) ? updateData as ChartUpdateInput : {};
+    const { chartId, ...updates } = ud;
 
     if (!chartId) {
         return NextResponse.json({ error: 'Chart ID required' }, { status: 400 });
@@ -178,23 +192,30 @@ async function updateChart(userId: string, updateData: any) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const updatedChart = {
-        ...chartData,
-        ...updates,
+    const updatedChart: ChartDoc = {
+        ...(chartData as ChartDoc),
+        ...(updates as any),
         metadata: {
-            ...chartData.metadata,
-            ...updates.metadata,
+            ...(chartData.metadata || { title: 'Untitled Chart', tags: [], created: new Date(), updated: new Date(), version: '1.0' }),
+            ...(updates as any)?.metadata,
             updated: new Date()
+        },
+        settings: {
+            ...(chartData.settings || { shared: false, exportEnabled: true, refreshInterval: 60000 }),
+            ...(updates as any)?.settings,
         }
     };
 
-    await chartRef.update(updatedChart);
+    // Firestore update expects plain object; ensure no prototype & allow partial merge
+    await chartRef.update({ ...updatedChart } as Record<string, any>);
 
     return NextResponse.json(enforceProvenance({ success: true, message: 'Chart updated successfully' }, { path: 'visualizations', note: 'update_chart' }));
 }
 
-async function exportChart(userId: string, exportData: any) {
-    const { chartId, format, config, artifact } = exportData;
+interface ChartExportInput { chartId?: string; format?: string; config?: any; artifact?: any }
+async function exportChart(userId: string, exportData: unknown) {
+    const ed: ChartExportInput = isObj(exportData) ? exportData as ChartExportInput : {};
+    const { chartId, format, config, artifact } = ed;
 
     if (!chartId || !format) {
         return NextResponse.json({ error: 'Chart ID and format required' }, { status: 400 });
@@ -212,9 +233,20 @@ async function exportChart(userId: string, exportData: any) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    // Narrow export shape (avoid passing raw DocumentData which may include non-serializables)
+    const exportBase = {
+        id: chartId,
+        userId,
+        config: (chartData as any).config || {},
+        data: Array.isArray((chartData as any).data) ? (chartData as any).data : [],
+        metadata: (chartData as any).metadata || {},
+        settings: (chartData as any).settings || {}
+    };
+    const allowedFormats = new Set(['png', 'jpeg', 'json', 'csv', 'pdf']);
+    const safeFormat = (format && allowedFormats.has(format)) ? format : 'json';
     const exportUrl = artifact
-        ? await persistExportArtifact({ userId, kind: 'chart', id: chartId, format, artifact, metadata: { chartType: chartData.config?.type } })
-        : await generateChartExport(chartData, format, config);
+        ? await persistExportArtifact({ userId, kind: 'chart', id: chartId, format: safeFormat as any, artifact, metadata: { chartType: (chartData as any).config?.type } })
+        : await generateChartExport(exportBase as any, safeFormat as any, config);
 
     // Track export in analytics
     await adminDb.collection('analytics').add({
@@ -239,10 +271,7 @@ async function getCharts(userId: string) {
         .orderBy('metadata.updated', 'desc')
         .get();
 
-    const charts = chartsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-    }));
+    const charts = chartsSnapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) } as Record<string, unknown>));
 
     return NextResponse.json(enforceProvenance({ success: true, charts, count: charts.length }, { path: 'visualizations', note: 'charts' }));
 }
@@ -260,7 +289,7 @@ async function getChart(userId: string, chartId: string) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    return NextResponse.json(enforceProvenance({ success: true, chart: { id: chartDoc.id, ...chartData } }, { path: 'visualizations', note: 'chart' }));
+    return NextResponse.json(enforceProvenance({ success: true, chart: { id: chartDoc.id, ...(chartData as Record<string, unknown>) } }, { path: 'visualizations', note: 'chart' }));
 }
 
 async function deleteChart(userId: string, chartId: string) {
@@ -282,25 +311,30 @@ async function deleteChart(userId: string, chartId: string) {
 }
 
 // Dashboard Management Functions
-async function createDashboard(userId: string, dashboardData: any) {
-    const dashboardDoc = {
-        id: dashboardData.id || `dashboard_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+interface DashboardSettings { theme: string; refreshInterval: number; autoSave: boolean; shared: boolean; exportOptions: Record<string, any> }
+interface DashboardMetadata { created: Date; updated: Date; version: string; tags: string[] }
+interface DashboardDoc { id: string; userId: string; name: string; description?: string; widgets: any[]; settings: DashboardSettings; metadata: DashboardMetadata }
+type DashboardCreateInput = Partial<Omit<DashboardDoc, 'id' | 'userId' | 'settings' | 'metadata'>> & { id?: string; theme?: string; refreshInterval?: number; autoSave?: boolean; shared?: boolean; exportOptions?: Record<string, any>; tags?: string[] };
+async function createDashboard(userId: string, dashboardData: unknown) {
+    const dd: DashboardCreateInput = isObj(dashboardData) ? dashboardData as DashboardCreateInput : {};
+    const dashboardDoc: DashboardDoc = {
+        id: dd.id || `dashboard_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         userId,
-        name: dashboardData.name || 'Untitled Dashboard',
-        description: dashboardData.description,
-        widgets: dashboardData.widgets || [],
+        name: dd.name || 'Untitled Dashboard',
+        description: dd.description,
+        widgets: Array.isArray(dd.widgets) ? dd.widgets : [],
         settings: {
-            theme: dashboardData.theme || 'light',
-            refreshInterval: dashboardData.refreshInterval || 60000,
-            autoSave: dashboardData.autoSave !== false,
-            shared: dashboardData.shared || false,
-            exportOptions: dashboardData.exportOptions || {}
+            theme: dd.theme || 'light',
+            refreshInterval: typeof dd.refreshInterval === 'number' ? dd.refreshInterval : 60000,
+            autoSave: dd.autoSave !== false,
+            shared: !!dd.shared,
+            exportOptions: dd.exportOptions || {}
         },
         metadata: {
             created: new Date(),
             updated: new Date(),
             version: '1.0',
-            tags: dashboardData.tags || []
+            tags: Array.isArray(dd.tags) ? dd.tags : []
         }
     };
 
@@ -309,8 +343,10 @@ async function createDashboard(userId: string, dashboardData: any) {
     return NextResponse.json(enforceProvenance({ success: true, dashboardId: dashboardDoc.id, message: 'Dashboard created successfully' }, { path: 'visualizations', note: 'create_dashboard' }));
 }
 
-async function updateDashboard(userId: string, updateData: any) {
-    const { dashboardId, ...updates } = updateData;
+type DashboardUpdateInput = Partial<DashboardCreateInput & { settings: Partial<DashboardSettings>; metadata: Partial<DashboardMetadata> }> & { dashboardId?: string };
+async function updateDashboard(userId: string, updateData: unknown) {
+    const ud: DashboardUpdateInput = isObj(updateData) ? updateData as DashboardUpdateInput : {};
+    const { dashboardId, ...updates } = ud;
 
     if (!dashboardId) {
         return NextResponse.json({ error: 'Dashboard ID required' }, { status: 400 });
@@ -328,23 +364,29 @@ async function updateDashboard(userId: string, updateData: any) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const updatedDashboard = {
-        ...dashboardData,
-        ...updates,
+    const updatedDashboard: DashboardDoc = {
+        ...(dashboardData as DashboardDoc),
+        ...(updates as any),
         metadata: {
-            ...dashboardData.metadata,
-            ...updates.metadata,
+            ...(dashboardData.metadata || { created: new Date(), updated: new Date(), version: '1.0', tags: [] }),
+            ...(updates as any)?.metadata,
             updated: new Date()
+        },
+        settings: {
+            ...(dashboardData.settings || { theme: 'light', refreshInterval: 60000, autoSave: true, shared: false, exportOptions: {} }),
+            ...(updates as any)?.settings,
         }
     };
 
-    await dashboardRef.update(updatedDashboard);
+    await dashboardRef.update({ ...updatedDashboard } as Record<string, any>);
 
     return NextResponse.json(enforceProvenance({ success: true, message: 'Dashboard updated successfully' }, { path: 'visualizations', note: 'update_dashboard' }));
 }
 
-async function exportDashboard(userId: string, exportData: any) {
-    const { dashboardId, format, config, artifact } = exportData;
+interface DashboardExportInput { dashboardId?: string; format?: string; config?: any; artifact?: any }
+async function exportDashboard(userId: string, exportData: unknown) {
+    const ed: DashboardExportInput = isObj(exportData) ? exportData as DashboardExportInput : {};
+    const { dashboardId, format, config, artifact } = ed;
 
     if (!dashboardId || !format) {
         return NextResponse.json({ error: 'Dashboard ID and format required' }, { status: 400 });
@@ -362,9 +404,19 @@ async function exportDashboard(userId: string, exportData: any) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    const dashboardExportBase = {
+        id: dashboardId,
+        userId,
+        widgets: Array.isArray((dashboardData as any).widgets) ? (dashboardData as any).widgets : [],
+        settings: (dashboardData as any).settings || {},
+        metadata: (dashboardData as any).metadata || {},
+        name: (dashboardData as any).name || 'Dashboard'
+    };
+    const allowedDashFormats = new Set(['png', 'jpeg', 'json', 'csv', 'pdf']);
+    const safeDashFormat = (format && allowedDashFormats.has(format)) ? format : 'json';
     const exportUrl = artifact
-        ? await persistExportArtifact({ userId, kind: 'dashboard', id: dashboardId, format, artifact, metadata: { widgetCount: dashboardData.widgets?.length || 0 } })
-        : await generateDashboardExport(dashboardData, format, config);
+        ? await persistExportArtifact({ userId, kind: 'dashboard', id: dashboardId, format: safeDashFormat as any, artifact, metadata: { widgetCount: ((dashboardData as any).widgets?.length) || 0 } })
+        : await generateDashboardExport(dashboardExportBase as any, safeDashFormat as any, config);
 
     // Track export in analytics
     await adminDb.collection('analytics').add({
@@ -389,10 +441,7 @@ async function getDashboards(userId: string) {
         .orderBy('metadata.updated', 'desc')
         .get();
 
-    const dashboards = dashboardsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-    }));
+    const dashboards = dashboardsSnapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) } as Record<string, unknown>));
 
     return NextResponse.json(enforceProvenance({ success: true, dashboards, count: dashboards.length }, { path: 'visualizations', note: 'dashboards' }));
 }
@@ -410,7 +459,7 @@ async function getDashboard(userId: string, dashboardId: string) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    return NextResponse.json(enforceProvenance({ success: true, dashboard: { id: dashboardDoc.id, ...dashboardData } }, { path: 'visualizations', note: 'dashboard' }));
+    return NextResponse.json(enforceProvenance({ success: true, dashboard: { id: dashboardDoc.id, ...(dashboardData as Record<string, unknown>) } }, { path: 'visualizations', note: 'dashboard' }));
 }
 
 async function deleteDashboard(userId: string, dashboardId: string) {

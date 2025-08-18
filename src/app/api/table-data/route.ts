@@ -30,6 +30,12 @@ function parseNumeric(val: string) {
 }
 
 type TableRow = { metric: string; value: string; change: string };
+interface RawRow {
+    metric?: string; name?: string; label?: string;
+    valueNum?: number; value?: string | number;
+    changeNum?: number; change?: string | number;
+    [k: string]: unknown;
+}
 
 function formatCurrency(val: number) {
     // Format like $50,000 (no decimals by default)
@@ -41,7 +47,7 @@ function formatPercent(val: number) {
     return `${sign}${Math.round(val)}%`;
 }
 
-function normalizeRow(docData: any): TableRow {
+function normalizeRow(docData: RawRow): TableRow {
     // Accept a variety of shapes and normalize to strings expected by client
     const metric = String(docData.metric ?? docData.name ?? docData.label ?? "Metric");
 
@@ -85,7 +91,7 @@ async function fetchFromFirestore(opts: {
         let total = 0;
         try {
             // @ts-ignore - count() may not be typed in some versions
-            const aggSnap = await (base as any).count().get();
+            const aggSnap = await (base as unknown).count().get();
             total = aggSnap.data().count || 0;
         } catch {
             // Fallback: attempt to get first 1 with offset large to detect existence; otherwise assume 0
@@ -232,7 +238,8 @@ export async function GET(req: NextRequest) {
 
         const provenance = teamId || userId ? (result ? "live" : "live") : (result ? "live" : "synthetic");
         return NextResponse.json(enforceProvenance({ rows: outRows, total, provenance }, { path: 'table-data' }), { status: 200 });
-    } catch (err: any) {
-        return NextResponse.json(enforceProvenance({ error: err?.message || "Unknown error", provenance: 'synthetic' }, { path: 'table-data', note: 'exception' }), { status: 500 });
+    } catch (err: unknown) {
+        const message = typeof err === 'object' && err && 'message' in err ? (err as any).message : 'Unknown error';
+        return NextResponse.json(enforceProvenance({ error: message, provenance: 'synthetic' }, { path: 'table-data', note: 'exception' }), { status: 500 });
     }
 }

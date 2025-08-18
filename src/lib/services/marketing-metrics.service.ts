@@ -1,10 +1,12 @@
 // Marketing Metrics Service - aggregates campaign data with realtime subscription
-import { collection, getDocs, orderBy, query, where, Unsubscribe, limit } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, where, Unsubscribe, limit, DocumentData, QuerySnapshot } from 'firebase/firestore';
 import { managedOnSnapshot } from '@/lib/firebase/write-guard';
 import { db } from '@/lib/firebase/connection-manager';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
+import { MarketingCampaignFirestore, mapMarketingCampaignDoc } from '@/types/firestore-docs';
+import { mapDocs } from '@/lib/firebase/snapshot-map';
 
-export interface MarketingCampaignDoc { id?: string; userId?: string; teamId?: string; period: string; name?: string; channel?: string; impressions?: number; clicks?: number; leads?: number; spend?: number; revenue?: number; status?: string; createdAt?: any; }
+export interface MarketingCampaignDoc { id?: string; userId?: string; teamId?: string; period: string; name?: string; channel?: string; impressions?: number; clicks?: number; leads?: number; spend?: number; revenue?: number; status?: string; createdAt?: unknown; }
 
 export interface AggregatedMarketingMetrics {
     kpis: { key: string; label: string; value: number; delta: number; trend: number[]; intent?: 'neutral' | 'success' | 'warning' | 'danger' | 'accent'; target?: number; invertTarget?: boolean }[];
@@ -14,14 +16,17 @@ export interface AggregatedMarketingMetrics {
 }
 
 function aggregateCampaigns(campaigns: MarketingCampaignDoc[], months: number): AggregatedMarketingMetrics {
-    if (!campaigns.length) { const mock = getMockMetrics('marketing'); return { kpis: mock.kpis, campaigns: [], channelPerformance: [], trendSeries: [] }; }
+    if (!campaigns.length) {
+        const mock = getMockMetrics('marketing');
+        return { kpis: mock.kpis, campaigns: [], channelPerformance: [], trendSeries: [] };
+    }
     const periods = Array.from(new Set(campaigns.map(c => c.period))).sort();
     const recent = periods.slice(-months);
     const filtered = campaigns.filter(c => recent.includes(c.period));
     const byPeriod: Record<string, MarketingCampaignDoc[]> = {};
     for (const c of filtered) { (byPeriod[c.period] ||= []).push(c); }
     const ordered = Object.keys(byPeriod).sort();
-    const sum = (arr: any[], f: (x: any) => number) => arr.reduce((a, x) => a + (f(x) || 0), 0);
+    const sum = (arr: MarketingCampaignDoc[], f: (x: MarketingCampaignDoc) => number) => arr.reduce((a, x) => a + f(x), 0);
     const last = ordered.at(-1)!; const prev = ordered.at(-2);
     const lastArr = byPeriod[last]; const prevArr = prev ? byPeriod[prev] : lastArr;
     const impressions = sum(lastArr, c => c.impressions || 0); const prevImpr = Math.max(1, sum(prevArr, c => c.impressions || 0));
@@ -30,9 +35,25 @@ function aggregateCampaigns(campaigns: MarketingCampaignDoc[], months: number): 
     const leads = sum(lastArr, c => c.leads || 0); const prevLeads = Math.max(1, sum(prevArr, c => c.leads || 0));
     const spend = sum(lastArr, c => c.spend || 0); const revenue = sum(lastArr, c => c.revenue || 0); const roi = spend ? ((revenue - spend) / spend * 100) : 0;
     const prevSpend = sum(prevArr, c => c.spend || 0); const prevRevenue = sum(prevArr, c => c.revenue || 0); const prevRoi = prevSpend ? ((prevRevenue - prevSpend) / prevSpend * 100) : 0;
-    const trendSeries = ordered.map(p => { const arr = byPeriod[p]; const imp = sum(arr, c => c.impressions || 0); const clk = sum(arr, c => c.clicks || 0); const ld = sum(arr, c => c.leads || 0); const sp = sum(arr, c => c.spend || 0); const rev = sum(arr, c => c.revenue || 0); return { period: p, impressions: imp, leads: ld, ctr: imp ? clk / imp * 100 : 0, roi: sp ? (rev - sp) / sp * 100 : 0 }; });
+    const trendSeries = ordered.map(p => {
+        const arr = byPeriod[p];
+        const imp = sum(arr, c => c.impressions || 0);
+        const clk = sum(arr, c => c.clicks || 0);
+        const ld = sum(arr, c => c.leads || 0);
+        const sp = sum(arr, c => c.spend || 0);
+        const rev = sum(arr, c => c.revenue || 0);
+        return { period: p, impressions: imp, leads: ld, ctr: imp ? clk / imp * 100 : 0, roi: sp ? (rev - sp) / sp * 100 : 0 };
+    });
     const channelMap = new Map<string, { impressions: number; leads: number; spend: number; revenue: number }>();
-    for (const c of filtered) { const key = c.channel || 'unknown'; if (!channelMap.has(key)) channelMap.set(key, { impressions: 0, leads: 0, spend: 0, revenue: 0 }); const rec = channelMap.get(key)!; rec.impressions += c.impressions || 0; rec.leads += c.leads || 0; rec.spend += c.spend || 0; rec.revenue += c.revenue || 0; }
+    for (const c of filtered) {
+        const key = c.channel || 'unknown';
+        if (!channelMap.has(key)) channelMap.set(key, { impressions: 0, leads: 0, spend: 0, revenue: 0 });
+        const rec = channelMap.get(key)!;
+        rec.impressions += c.impressions || 0;
+        rec.leads += c.leads || 0;
+        rec.spend += c.spend || 0;
+        rec.revenue += c.revenue || 0;
+    }
     const channelPerformance = Array.from(channelMap.entries()).map(([channel, v]) => ({ channel, impressions: v.impressions, leads: v.leads, roi: v.spend ? ((v.revenue - v.spend) / v.spend * 100) : 0 })).sort((a, b) => b.leads - a.leads);
     const kpis: AggregatedMarketingMetrics['kpis'] = [
         { key: 'impr', label: 'Impressions', value: impressions, delta: impressions ? (impressions - prevImpr) / prevImpr * 100 : 0, trend: trendSeries.map(t => t.impressions), intent: 'neutral', target: impressions * 1.1 },
@@ -48,7 +69,7 @@ export async function fetchMarketingMetrics(userId: string, months: number, team
         const conds = teamId ? [where('teamId', '==', teamId)] : [where('userId', '==', userId)];
         const q = query(collection(db, 'marketingCampaigns'), ...conds, orderBy('period', 'desc'), limit(months * 40));
         const snap = await getDocs(q);
-        const campaigns: MarketingCampaignDoc[] = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+        const campaigns: MarketingCampaignDoc[] = mapDocs(snap as QuerySnapshot<DocumentData>, (id, data) => mapMarketingCampaignDoc(id, data as MarketingCampaignFirestore));
         if (!campaigns.length) throw new Error('empty');
         return aggregateCampaigns(campaigns, months);
     } catch {
@@ -61,6 +82,14 @@ export function subscribeMarketingMetrics(userId: string, months: number, cb: (m
     const conds = teamId ? [where('teamId', '==', teamId)] : [where('userId', '==', userId)];
     const q = query(collection(db, 'marketingCampaigns'), ...conds, orderBy('period', 'desc'));
     let campaigns: MarketingCampaignDoc[] = [];
-    const unsub = managedOnSnapshot(q, snap => { campaigns = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) })); cb(aggregateCampaigns(campaigns, months)); }, err => { console.error('[MarketingMetrics] snapshot error', err); }, { debounceMs: 120 });
+    const unsub = managedOnSnapshot(
+        q,
+        (snap) => {
+            campaigns = mapDocs(snap as QuerySnapshot<DocumentData>, (id, data) => mapMarketingCampaignDoc(id, data as MarketingCampaignFirestore));
+            cb(aggregateCampaigns(campaigns, months));
+        },
+        err => { console.error('[MarketingMetrics] snapshot error', err); },
+        { debounceMs: 120 }
+    );
     return () => { unsub(); };
 }

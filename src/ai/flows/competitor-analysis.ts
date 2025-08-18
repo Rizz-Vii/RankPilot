@@ -65,7 +65,7 @@ export type CompetitorAnalysisOutput = z.infer<
 export async function analyzeCompetitors(
   input: CompetitorAnalysisInput
 ): Promise<CompetitorAnalysisOutput> {
-  return competitorAnalysisFlow(input);
+  return _competitorAnalysisFlow(input);
 }
 
 const analysisPrompt = ai.definePrompt({
@@ -112,7 +112,7 @@ Use the following API keys for enhanced analysis:
   `,
 });
 
-const competitorAnalysisFlow = ai.defineFlow(
+const _competitorAnalysisFlow = ai.defineFlow(
   {
     name: "competitorAnalysisFlow",
     inputSchema: CompetitorAnalysisInputSchema,
@@ -126,3 +126,5 @@ const competitorAnalysisFlow = ai.defineFlow(
     return output!;
   }
 );
+
+export const competitorAnalysisFlow = _competitorAnalysisFlow;

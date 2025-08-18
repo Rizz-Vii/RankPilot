@@ -14,7 +14,7 @@ export interface ChatMessage {
     timestamp: string;
     isUser: boolean;
     tokensUsed?: number;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 
 export interface ChatSession {
@@ -24,7 +24,7 @@ export interface ChatSession {
     createdAt: string;
     lastActivity: string;
     messageCount: number;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 
 export interface ChatContext {
@@ -89,14 +89,17 @@ export const validateMessage = (message: string): { isValid: boolean; error?: st
     return { isValid: true };
 };
 
-export const getErrorMessage = (error: any): string => {
+export const getErrorMessage = (error: unknown): string => {
     if (typeof error === 'string') return error;
-    if (error?.message) return error.message;
-    if (error?.error) return error.error;
+    if (error && typeof error === 'object') {
+        const anyErr = error as { message?: unknown; error?: unknown };
+        if (typeof anyErr.message === 'string') return anyErr.message;
+        if (typeof anyErr.error === 'string') return anyErr.error;
+    }
     return 'An unexpected error occurred';
 };
 
-export const showChatError = (error: any) => {
+export const showChatError = (error: unknown) => {
     const message = getErrorMessage(error);
     console.error('Chat Error:', message);
     // toast({
@@ -242,14 +245,15 @@ export const checkRateLimit = (userId: string): { allowed: boolean; resetTime?: 
 };
 
 // Analytics helpers
-export const trackChatEvent = (event: string, data?: Record<string, any>): void => {
+export const trackChatEvent = (event: string, data?: Record<string, unknown>): void => {
     try {
         // In production, integrate with your analytics service
         console.log('Chat Event:', event, data);
 
         // Example: Google Analytics
-        if (typeof window !== 'undefined' && (window as any).gtag) {
-            (window as any).gtag('event', event, {
+        const w = typeof window !== 'undefined' ? window as any : undefined;
+        if (w?.gtag) {
+            w.gtag('event', event, {
                 event_category: 'chat',
                 ...data,
             });

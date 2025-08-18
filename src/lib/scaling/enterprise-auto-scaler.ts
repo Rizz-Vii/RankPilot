@@ -69,6 +69,13 @@ export interface LoadPrediction {
     factors: string[];
 }
 
+// Internal analytical result types (replacing prior unknown usage)
+interface TrendAnalysis { direction: 'up' | 'down' | 'stable'; strength: number; }
+interface SeasonalityAnalysis { pattern: 'strong' | 'weak' | 'none'; }
+interface VolatilityAnalysis { level: 'high' | 'medium' | 'low'; }
+interface ScalingPerformanceResult { newCapacity: number; performanceImprovement: number; }
+type AnalysisComplexity = 'light' | 'medium' | 'heavy' | 'enterprise';
+
 /**
  * Enterprise Auto-Scaling Engine
  * Handles predictive scaling for 10,000+ concurrent users
@@ -157,7 +164,7 @@ export class EnterpriseAutoScaler {
         const volatility = this.analyzeVolatility(historicalData);
 
         // Predict based on multiple factors
-        const trendPrediction = this.calculateTrendPrediction(trends, timeHorizonMinutes);
+        const trendPrediction = this.calculateTrendPrediction(trends);
         const seasonalAdjustment = this.calculateSeasonalAdjustment(seasonality);
         const volatilityBuffer = this.calculateVolatilityBuffer(volatility);
 
@@ -241,7 +248,7 @@ export class EnterpriseAutoScaler {
                 duration
             };
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Scaling action failed:', error);
 
             // Attempt rollback if needed
@@ -399,7 +406,7 @@ export class EnterpriseAutoScaler {
         return squaredDifferences.reduce((a, b) => a + b, 0) / data.length;
     }
 
-    private calculateTrendPrediction(trends: any, timeHorizon: number): number {
+    private calculateTrendPrediction(trends: TrendAnalysis): number {
         // Simplified trend extrapolation
         const lastValue = this.getLastKnownValue('concurrent_users');
         const trendMultiplier = trends.direction === 'up' ? 1 + (trends.strength * 0.1) :
@@ -408,7 +415,7 @@ export class EnterpriseAutoScaler {
         return lastValue * trendMultiplier;
     }
 
-    private calculateSeasonalAdjustment(seasonality: any): number {
+    private calculateSeasonalAdjustment(seasonality: SeasonalityAnalysis): number {
         // Simplified seasonal adjustment
         switch (seasonality.pattern) {
             case 'strong': return 1.15; // 15% increase for strong patterns
@@ -417,7 +424,7 @@ export class EnterpriseAutoScaler {
         }
     }
 
-    private calculateVolatilityBuffer(volatility: any): number {
+    private calculateVolatilityBuffer(volatility: VolatilityAnalysis): number {
         // Add buffer based on volatility
         switch (volatility.level) {
             case 'high': return 50;   // Add 50 units buffer
@@ -426,7 +433,7 @@ export class EnterpriseAutoScaler {
         }
     }
 
-    private calculatePredictionConfidence(trends: any, seasonality: any, volatility: any): number {
+    private calculatePredictionConfidence(trends: TrendAnalysis, seasonality: SeasonalityAnalysis, volatility: VolatilityAnalysis): number {
         let confidence = 0.7; // Base confidence
 
         // Adjust based on trend strength
@@ -565,7 +572,7 @@ export class EnterpriseAutoScaler {
         };
     }
 
-    private async validateScalingSuccess(action: ScalingAction, result: any): Promise<void> {
+    private async validateScalingSuccess(action: ScalingAction, result: ScalingPerformanceResult): Promise<void> {
         // Validate that scaling was successful
         if (result.newCapacity !== action.targetCapacity) {
             throw new Error(`Scaling target not achieved: expected ${action.targetCapacity}, got ${result.newCapacity}`);
@@ -586,7 +593,7 @@ export class EnterpriseAutoScaler {
         // Implementation would rollback the scaling changes
     }
 
-    private getBaseResourcePerUser(complexity: string): { memory: number; cpu: number; storage: number; } {
+    private getBaseResourcePerUser(complexity: AnalysisComplexity): { memory: number; cpu: number; storage: number; } {
         const resourceMap = {
             light: { memory: 2, cpu: 0.1, storage: 1 },
             medium: { memory: 4, cpu: 0.2, storage: 2 },
@@ -594,10 +601,10 @@ export class EnterpriseAutoScaler {
             enterprise: { memory: 16, cpu: 0.8, storage: 8 }
         };
 
-        return resourceMap[complexity as keyof typeof resourceMap] || resourceMap.medium;
+        return resourceMap[complexity];
     }
 
-    private getComplexityMultiplier(complexity: string): number {
+    private getComplexityMultiplier(complexity: AnalysisComplexity): number {
         const multiplierMap = {
             light: 1.0,
             medium: 1.5,
@@ -605,10 +612,10 @@ export class EnterpriseAutoScaler {
             enterprise: 4.0
         };
 
-        return multiplierMap[complexity as keyof typeof multiplierMap] || 1.5;
+        return multiplierMap[complexity];
     }
 
-    private getOptimalTimeout(complexity: string): number {
+    private getOptimalTimeout(complexity: AnalysisComplexity): number {
         const timeoutMap = {
             light: 120,      // 2 minutes
             medium: 300,     // 5 minutes
@@ -616,7 +623,7 @@ export class EnterpriseAutoScaler {
             enterprise: 900  // 15 minutes
         };
 
-        return timeoutMap[complexity as keyof typeof timeoutMap] || 300;
+        return timeoutMap[complexity];
     }
 
     private calculateOptimalEdgeLocations(users: number): number {

@@ -185,7 +185,7 @@ export function EnhancedAppNav({
   );
 
   // Feature badges now suppressed unless also locked (kept for potential future use)
-  const featureBadgeClass = useCallback(() => "", []);
+
 
   // Highest tier among LOCKED items only (relative to current user)
   const getGroupLockedTier = (group: NavGroup) => {
@@ -193,7 +193,7 @@ export function EnhancedAppNav({
     let highest: keyof typeof tierVisual | undefined;
     group.items.forEach((item) => {
       if (item.requiredTier && tierOrder.includes(item.requiredTier)) {
-        const userIndex = tierOrder.indexOf(userTier as any);
+  const userIndex = tierOrder.indexOf(userTier as any);
         const reqIndex = tierOrder.indexOf(item.requiredTier);
         if (userIndex === -1 || reqIndex > userIndex) {
           if (!highest) highest = item.requiredTier;

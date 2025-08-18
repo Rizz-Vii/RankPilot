@@ -53,9 +53,11 @@ export default function FinanceDashboardRoot() {
   useEffect(()=> { trackDashboardView('finance'); }, []);
 
   // Persist months selection
-  useEffect(()=> { if(typeof window==='undefined') return; const stored = window.localStorage.getItem('financeMonths'); if(stored) { const num = parseInt(stored,10); if([3,6,9,12].includes(num)) setMonths(num as any); } }, []);
+  useEffect(()=> { if(typeof window==='undefined') return; const stored = window.localStorage.getItem('financeMonths'); if(stored) { const num = parseInt(stored,10); if([3,6,9,12].includes(num)) setMonths(num as 3|6|9|12); } }, []);
   useEffect(()=> { if(typeof window!=='undefined') window.localStorage.setItem('financeMonths', String(months)); }, [months]);
 
+  interface RevenueSnapshotDoc { mrr:number; onTimePct:number; outstanding:number; period:string; createdAt?: { toDate?:()=>Date } }
+  interface AgingSnapshotDoc { buckets: Record<string, number>; createdAt?: { toDate?:()=>Date } }
   useEffect(()=> {
     if(!userId && !authLoading){ setInitialLoading(false); return; }
     if(!userId) return;
@@ -99,15 +101,17 @@ export default function FinanceDashboardRoot() {
     (async () => {
       try {
         const [rev, aging] = await Promise.all([
-          fetchRecentFinanceRevenueSnapshots(userId, teamId, 1),
-          fetchLatestFinanceInvoiceAging(userId, teamId)
+          fetchRecentFinanceRevenueSnapshots(userId, teamId, 1) as Promise<RevenueSnapshotDoc[]>,
+          fetchLatestFinanceInvoiceAging(userId, teamId) as Promise<AgingSnapshotDoc | null>
         ]);
         if (rev.length) {
           const r = rev[0];
-            setRevSnap({ mrr: r.mrr, onTime: r.onTimePct, outstanding: r.outstanding, period: r.period, ts: r.createdAt?.toDate?.() || new Date() });
+            const ts = r.createdAt && typeof r.createdAt === 'object' && r.createdAt.toDate? r.createdAt.toDate(): new Date();
+            setRevSnap({ mrr: r.mrr, onTime: r.onTimePct, outstanding: r.outstanding, period: r.period, ts });
         }
         if (aging) {
-          setAgingSnap({ buckets: aging.buckets, ts: aging.createdAt?.toDate?.() || new Date() });
+          const ts = aging.createdAt && typeof aging.createdAt === 'object' && aging.createdAt.toDate? aging.createdAt.toDate(): new Date();
+          setAgingSnap({ buckets: aging.buckets, ts });
         }
       } catch { /* silent */ }
     })();
@@ -171,7 +175,7 @@ export default function FinanceDashboardRoot() {
             </div>
           </ToolPageHeader>
           {/* Banner: show whenever mocks are allowed AND we either have no metrics yet OR metrics resolved but contain no invoices (mock fallback). */}
-          {allowFinanceMocks() && (!metrics || (metrics && (((metrics as any).invoicesCount ?? (metrics as any).invoices?.length) === 0))) && (
+          {allowFinanceMocks() && (!metrics || ((metrics as any)?.invoicesCount ?? (metrics as any)?.invoices?.length) === 0) && (
             <Alert className="border-warning/30 bg-warning/15 text-warning-foreground dark:bg-warning/20 dark:text-warning-foreground" aria-live="polite" aria-label="Finance mock data banner">
               <div className="flex items-start gap-3 text-sm">
                 <AlertTriangle className="h-4 w-4 mt-0.5" />

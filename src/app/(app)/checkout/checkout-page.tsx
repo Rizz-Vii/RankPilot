@@ -22,6 +22,7 @@ import getStripe, {
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { safeErrorMessage } from "@/lib/utils";
 
 const createCheckoutSession = httpsCallable(functions, "createCheckoutSession");
 
@@ -101,12 +102,12 @@ export default function CheckoutPage() {
       if (!stripe) throw new Error("Stripe failed to load");
 
       await stripe.redirectToCheckout({ sessionId });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Checkout error:", error);
       toast({
         variant: "destructive",
         title: "Checkout Failed",
-        description: error.message || "Something went wrong. Please try again.",
+        description: safeErrorMessage(error) || "Something went wrong. Please try again.",
       });
     } finally {
       setLoading(false);
@@ -299,4 +300,3 @@ export default function CheckoutPage() {
     </div>
   );
 }
-

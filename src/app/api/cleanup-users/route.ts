@@ -32,7 +32,7 @@ interface UserData {
   dataCleanupDate?: Date;
   cleanupVersion?: string;
   isTestUser?: boolean;
-  [key: string]: any; // Allow additional properties
+  [key: string]: unknown; // Allow additional properties
 }
 
 type TierType = "free" | "starter" | "agency" | "enterprise" | "admin";

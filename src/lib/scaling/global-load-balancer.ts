@@ -472,7 +472,7 @@ export class EnterpriseGlobalLoadBalancer {
             endpoint: best.endpoint,
             estimatedLatency,
             loadBalancingRule: this.determineLoadBalancingRule(best.endpoint),
-            reason: this.generateSelectionReason(best, candidates.slice(1, 3))
+            reason: this.generateSelectionReason(best)
         };
     }
 
@@ -626,10 +626,7 @@ export class EnterpriseGlobalLoadBalancer {
     /**
      * Get comprehensive traffic distribution analytics
      */
-    async getTrafficDistribution(timeRange: {
-        start: Date;
-        end: Date;
-    }): Promise<TrafficDistribution> {
+    async getTrafficDistribution(): Promise<TrafficDistribution> {
         // Mock implementation - in production would fetch real analytics
         const totalRequests = 1500000; // 1.5M requests in time range
 
@@ -728,7 +725,7 @@ export class EnterpriseGlobalLoadBalancer {
     private async performHealthChecks(): Promise<void> {
         for (const [id, endpoint] of this.endpoints) {
             try {
-                const healthStatus = await this.checkEndpointHealth(endpoint);
+                const healthStatus = await this.checkEndpointHealth();
                 endpoint.healthStatus = healthStatus;
 
                 if (healthStatus === 'unhealthy') {
@@ -742,7 +739,7 @@ export class EnterpriseGlobalLoadBalancer {
         }
     }
 
-    private async checkEndpointHealth(endpoint: GlobalEndpoint): Promise<'healthy' | 'degraded' | 'unhealthy'> {
+    private async checkEndpointHealth(): Promise<'healthy' | 'degraded' | 'unhealthy'> {
         // Mock health check - in production would make actual HTTP requests
         const randomHealth = Math.random();
 
@@ -790,7 +787,8 @@ export class EnterpriseGlobalLoadBalancer {
         return Math.max(0, 1 - utilization); // Higher score for lower utilization
     }
 
-    private calculateLatencyScore(endpoint: GlobalEndpoint, userLocation: any): number {
+    private calculateLatencyScore(endpoint: GlobalEndpoint, userLocation: unknown): number {
+        if (!this.isLatLong(userLocation)) return 0;
         const baseLatency = endpoint.latency.average;
         const distance = this.calculateDistance(userLocation, this.getEndpointLocation(endpoint));
         const estimatedLatency = baseLatency + (distance * 0.01); // Add 0.01ms per km
@@ -803,7 +801,7 @@ export class EnterpriseGlobalLoadBalancer {
         return Math.min(1, availableCapacity / 1000); // Normalize against 1000 capacity units
     }
 
-    private estimateLatency(endpoint: GlobalEndpoint, userLocation: any): number {
+    private estimateLatency(endpoint: GlobalEndpoint, userLocation: { latitude: number; longitude: number; }): number {
         const baseLatency = endpoint.latency.average;
         const distance = this.calculateDistance(userLocation, this.getEndpointLocation(endpoint));
         return baseLatency + (distance * 0.01); // Add 0.01ms per km
@@ -817,9 +815,7 @@ export class EnterpriseGlobalLoadBalancer {
     }
 
     private generateSelectionReason(
-        selected: any,
-        alternatives: any[]
-    ): string {
+        selected: { latencyScore: number; loadScore: number; capacityScore: number; distance: number; }): string {
         const reasons = [];
 
         if (selected.latencyScore > 0.8) {
@@ -882,5 +878,11 @@ export class EnterpriseGlobalLoadBalancer {
         }
 
         console.log(`Executed failover from ${failedEndpoint.region} to ${failoverEndpoint.region}`);
+    }
+
+    // Type guard for loose user location inputs
+    private isLatLong(value: any): value is { latitude: number; longitude: number; } {
+        return value && typeof value === 'object' &&
+            typeof value.latitude === 'number' && typeof value.longitude === 'number';
     }
 }

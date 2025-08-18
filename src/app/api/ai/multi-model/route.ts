@@ -16,8 +16,8 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         // Parse request body
         const body = await request.json();
         const { task, input, options, userTier, userId, teamId } = body;
-        if (teamId) {
-            try { await enforceTeamRateLimit(adminDb as any, teamId, { routeKey: 'ai/multi-model' }); } catch (e: any) {
+        if (typeof teamId === 'string' && teamId) {
+            try { await enforceTeamRateLimit(adminDb, teamId, { routeKey: 'ai/multi-model' }); } catch (e: unknown) {
                 if (e instanceof TeamRateLimitError) {
                     recordRateLimitRejection('ai/multi-model');
                     recordRateLimitRejection(`team:${teamId}`);
@@ -76,7 +76,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
     }
 }, { path: 'ai/multi-model' });
 
-export const GET = withProvenance(async function GET(request: NextRequest) {
+export const GET = withProvenance(async function GET() {
     const start = Date.now();
     try {
         // Get performance analytics

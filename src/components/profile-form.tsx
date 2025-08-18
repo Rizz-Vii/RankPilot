@@ -30,6 +30,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "firebase/auth";
+import { asUserProfile, type UserProfile } from "../../types/user-profile";
 
 const formSchema = z.object({
   displayName: z
@@ -57,26 +58,24 @@ const formSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof formSchema>;
 
-interface ProfileFormProps {
-  user: User;
-  profile: any;
-}
+interface ProfileFormProps { user: User; profile: unknown; }
 
 export default function ProfileForm({ user, profile }: ProfileFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const prof: UserProfile | undefined = asUserProfile(profile);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      displayName: profile?.displayName || "",
-      professionalTitle: profile?.professionalTitle || "",
-      bio: profile?.bio || "",
-      primaryKeywords: profile?.primaryKeywords || "",
-      specializations: profile?.specializations || "",
-      website: profile?.website || "",
-      linkedIn: profile?.linkedIn || "",
-      twitter: profile?.twitter || "",
+      displayName: prof?.displayName || "",
+      professionalTitle: prof?.professionalTitle || "",
+      bio: prof?.bio || "",
+      primaryKeywords: prof?.primaryKeywords || "",
+      specializations: prof?.specializations || "",
+      website: prof?.website || "",
+      linkedIn: prof?.linkedIn || "",
+      twitter: prof?.twitter || "",
     },
   });
 

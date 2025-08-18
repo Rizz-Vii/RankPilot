@@ -44,8 +44,10 @@ const polymorphicCardVariants = cva(
 
 type PolymorphicCardElement = React.ElementRef<"div">;
 
+type BaseDivProps = Omit<React.ComponentPropsWithoutRef<'div'>, 'onDrag' | 'onDragStart' | 'onDragEnd'>;
+
 interface PolymorphicCardProps
-    extends React.ComponentPropsWithoutRef<"div">,
+    extends BaseDivProps,
     VariantProps<typeof polymorphicCardVariants> {
     asChild?: boolean;
     /**
@@ -56,11 +58,11 @@ interface PolymorphicCardProps
      * Animation configuration for motion variant
      */
     animation?: {
-        initial?: any;
-        animate?: any;
-        whileHover?: any;
-        whileTap?: any;
-        transition?: any;
+        initial?: unknown;
+        animate?: unknown;
+        whileHover?: unknown;
+        whileTap?: unknown;
+        transition?: unknown;
     };
     /**
      * Slot-based content areas for composition
@@ -89,7 +91,7 @@ const PolymorphicCard = React.forwardRef<PolymorphicCardElement, PolymorphicCard
         },
         ref
     ) => {
-        const Comp = asChild ? Slot : useMotion ? motion.div : "div";
+    const Comp: any = asChild ? Slot : useMotion ? motion.div : 'div';
 
         // Use static mappings instead of dynamic template classes to satisfy Tailwind JIT
         const spacingToStack: Record<NonNullable<PolymorphicCardProps["spacing"]>, string> = {
@@ -124,13 +126,13 @@ const PolymorphicCard = React.forwardRef<PolymorphicCardElement, PolymorphicCard
             </div>
         ) : children;
 
-        const motionProps = useMotion && animation ? animation : {};
+    const motionProps: Record<string, unknown> = useMotion && animation ? animation : {};
 
         return (
             <Comp
                 ref={ref}
                 className={cn(polymorphicCardVariants({ variant, size, spacing }), className)}
-                {...(useMotion ? (motionProps as any) : {})}
+                {...(useMotion ? motionProps : {})}
                 {...props}
             >
                 {cardContent}

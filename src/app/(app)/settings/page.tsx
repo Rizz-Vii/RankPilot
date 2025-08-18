@@ -12,13 +12,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthContext';
 import { useAccessibility } from '@/lib/accessibility/accessibility-system';
 import { useI18n } from '@/lib/i18n/internationalization-system';
-import { useTheme } from '@/lib/themes/theme-system';
+import { useTheme, type ThemePreferences, type ThemeMode } from '@/lib/themes/theme-system';
 import { Accessibility, Bell, CreditCard, ExternalLink, Globe, Lock, Palette, Shield, User } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
 import React, { useState } from 'react';
+import { toJsDate } from '@/lib/utils';
 import { ToolPageHeader } from '@/components/tool-page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -62,16 +63,20 @@ export default function SettingsPage() {
         // Initialize preference toggles & theme from profile once hydrated
         React.useEffect(() => {
             if (!hydrated || !profile?.preferences) return;
-            const prefs = profile.preferences || {};
-            const initPrefs: Record<string, any> = {};
+            const prefs = (profile.preferences as Partial<ThemePreferences>) || {};
+            const initPrefs: Partial<ThemePreferences> = {};
             if (typeof prefs.highContrast === 'boolean') initPrefs.highContrast = prefs.highContrast;
             if (typeof prefs.reducedMotion === 'boolean') initPrefs.reducedMotion = prefs.reducedMotion;
-            if (typeof prefs.fontSize === 'string') initPrefs.fontSize = prefs.fontSize;
+            if (typeof prefs.fontSize === 'string') initPrefs.fontSize = prefs.fontSize as ThemePreferences['fontSize'];
             if (typeof prefs.colorBlindnessSupport === 'boolean') initPrefs.colorBlindnessSupport = prefs.colorBlindnessSupport;
-            if (prefs.customColors) initPrefs.customColors = prefs.customColors;
+            if ((prefs as any).customColors) (initPrefs as any).customColors = (prefs as any).customColors;
             if (Object.keys(initPrefs).length) setPreferences(initPrefs);
-            if (typeof prefs.mode === 'string') setTheme(prefs.mode);
-            if (typeof prefs.voiceCommands === 'boolean') setIsVoiceEnabled(prefs.voiceCommands);
+            if (typeof prefs.mode === 'string') {
+                const m = prefs.mode as string;
+                const allowed: ThemeMode[] = ['light','dark','high-contrast','auto'];
+                if ((allowed as string[]).includes(m)) setTheme(m as ThemeMode);
+            }
+            if (typeof (prefs as any).voiceCommands === 'boolean') setIsVoiceEnabled(Boolean((prefs as any).voiceCommands));
         }, [hydrated, profile, setPreferences, setIsVoiceEnabled, setTheme]);
 
         // Persist accessibility/theme preferences & voice commands (debounced) via API with offline queue fallback
@@ -338,26 +343,26 @@ export default function SettingsPage() {
 
                 <TabsContent value="privacy" className="space-y-6">
                     {loadingState ? <Skeleton className="h-64 w-full" /> : <PrivacySettingsCard user={user} profile={profile} />}
-                            {!loadingState && (profile?.lastExportAt || profile?.deletionRequestedAt) && (
+                            {!loadingState && Boolean((profile as any)?.lastExportAt || (profile as any)?.deletionRequestedAt) && (
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="text-sm">{tr('settings.privacy.auditTrail','Privacy Audit Trail')}</CardTitle>
                                         <CardDescription>{tr('settings.privacy.auditTrailDesc','Recent privacy-related account actions')}</CardDescription>
                                     </CardHeader>
                                     <CardContent className="text-sm space-y-2">
-                                        {profile?.lastExportAt && (
+                                        {Boolean((profile as any)?.lastExportAt) && (
                                             <div className="flex justify-between">
                                                 <span>{tr('settings.privacy.lastExport','Last Data Export')}:</span>
                                                 <span>
-                                                    {formatRelative(new Date(profile.lastExportAt.seconds ? profile.lastExportAt.seconds * 1000 : profile.lastExportAt))}
+                                                    {formatRelative(toJsDate((profile as any).lastExportAt))}
                                                 </span>
                                             </div>
                                         )}
-                                        {profile?.deletionRequestedAt && (
+                                        {Boolean((profile as any)?.deletionRequestedAt) && (
                                             <div className="flex flex-col gap-1">
                                                 <div className="flex justify-between">
                                                     <span>{tr('settings.privacy.deletionRequested','Deletion Requested')}:</span>
-                                                    <span>{formatRelative(new Date(profile.deletionRequestedAt.seconds ? profile.deletionRequestedAt.seconds * 1000 : profile.deletionRequestedAt))}</span>
+                                                    <span>{formatRelative(toJsDate((profile as any).deletionRequestedAt))}</span>
                                                 </div>
                                                 <Button
                                                     variant="outline"
@@ -379,7 +384,7 @@ export default function SettingsPage() {
                                     </CardContent>
                                 </Card>
                             )}
-                    {profile?.deletionRequestedAt && (
+                    {Boolean((profile as any)?.deletionRequestedAt) && (
                         <Card className="border-destructive/40">
                             <CardHeader>
                                 <CardTitle className="text-destructive text-sm">{tr('settings.privacy.deletionScheduled', 'Account Deletion Scheduled')}</CardTitle>

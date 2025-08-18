@@ -6,12 +6,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 interface Props { open:boolean; onOpenChange:(o:boolean)=>void; }
 export function OnTimeBreakdownModal({ open, onOpenChange }: Props){
   const { data } = useFinanceContext();
-  const invoices = data?.invoices||[];
+  interface Invoice { id:string; status:string; planTier?:string; paidAt?: { toDate?:()=>Date }; dueAt?: { toDate?:()=>Date } }
+  const invoices: Invoice[] = Array.isArray(data?.invoices) ? (data!.invoices as Invoice[]) : [];
   const paid = invoices.filter(i=> i.status==='paid');
   const groups = paid.map(p=> ({
     id: p.id,
     tier: p.planTier||'-',
-    onTime: (()=> { const paidAt=p.paidAt?.toDate?.(); const due=p.dueAt?.toDate?.(); if(!paidAt||!due) return false; return paidAt.getTime() <= due.getTime(); })()
+  onTime: (()=> { const paidAt=p.paidAt?.toDate ? p.paidAt.toDate(): undefined; const due=p.dueAt?.toDate ? p.dueAt.toDate(): undefined; if(!paidAt||!due) return false; return paidAt.getTime() <= due.getTime(); })()
   }));
   const onTime = groups.filter(g=> g.onTime).length;
   const pct = paid.length? (onTime/paid.length*100):0;

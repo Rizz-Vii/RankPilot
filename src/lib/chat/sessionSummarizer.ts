@@ -20,9 +20,9 @@ export async function maybeSummarizeSession(params: {
     try {
         const sessionSnap = await sessionRef.get();
         if (!sessionSnap.exists) return { updated: false };
-        const sessionData = sessionSnap.data() as any;
-        const messageCount: number = sessionData?.messageCount || 0;
-        const lastSummarizedCount: number = sessionData?.lastSummarizedCount || 0;
+        const sessionData = (sessionSnap.data() as any) || {};
+        const messageCount: number = typeof sessionData.messageCount === 'number' ? sessionData.messageCount : 0;
+        const lastSummarizedCount: number = typeof sessionData.lastSummarizedCount === 'number' ? sessionData.lastSummarizedCount : 0;
         if (messageCount < MESSAGE_INTERVAL || (messageCount - lastSummarizedCount) < MESSAGE_INTERVAL) {
             return { updated: false };
         }
@@ -36,9 +36,9 @@ export async function maybeSummarizeSession(params: {
             }
         }
         await lockRef.set({ created: FieldValue.serverTimestamp() });
-        let existingSummary: string = sessionData?.sessionSummary || '';
+        let existingSummary: string = typeof sessionData.sessionSummary === 'string' ? sessionData.sessionSummary : '';
         // Completed actions (from persisted actionProgress) should be excluded from future pending actions.
-        const actionProgress = sessionData?.actionProgress || {};
+        const actionProgress = (sessionData && typeof sessionData.actionProgress === 'object') ? sessionData.actionProgress : {};
         const completedActions: string[] = Object.entries(actionProgress)
             .filter(([, v]) => !!v)
             .map(([k]) => k)
@@ -72,9 +72,9 @@ export async function maybeSummarizeSession(params: {
         } finally {
             await lockRef.delete().catch(() => { });
         }
-        if (!jsonObj?.summary) return { updated: false };
+        if (!jsonObj || typeof jsonObj.summary !== 'string') return { updated: false };
         // Filter out any actions that were marked as completed, in case the model still returned them.
-        let pending: string[] = Array.isArray(jsonObj.pending_actions) ? jsonObj.pending_actions : [];
+        let pending: string[] = Array.isArray(jsonObj.pending_actions) ? jsonObj.pending_actions.filter((p: any) => typeof p === 'string') : [];
         if (completedActions.length && pending.length) {
             const completedSet = new Set(completedActions.map(a => a.toLowerCase().trim()));
             pending = pending.filter(a => !completedSet.has(String(a).toLowerCase().trim()));
@@ -82,7 +82,7 @@ export async function maybeSummarizeSession(params: {
         await sessionRef.set({
             sessionSummary: jsonObj.summary,
             pendingActions: pending,
-            keywords: Array.isArray(jsonObj.keywords) ? jsonObj.keywords : [],
+            keywords: Array.isArray(jsonObj.keywords) ? jsonObj.keywords.filter((k: any) => typeof k === 'string') : [],
             lastSummarizedCount: messageCount,
             summaryUpdatedAt: FieldValue.serverTimestamp()
         }, { merge: true });

@@ -135,7 +135,7 @@ const DashboardMetricCard: React.FC<{
   </Card>
 );
 
-const SeoScoreTrendChart = ({ data }: { data: any[] }) => (
+const SeoScoreTrendChart = ({ data }: { data: Array<{ date: string; score: number }> }) => (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Overall SEO Score</CardTitle>
@@ -191,11 +191,11 @@ const SeoScoreTrendChart = ({ data }: { data: any[] }) => (
   </Card>
 );
 
-const KeywordVisibilityChart = ({ visibility }: { visibility: any }) => {
+const KeywordVisibilityChart = ({ visibility }: { visibility?: { score?: number; top10?: number } }) => {
   const data = [
     {
       name: "Visibility",
-      value: visibility?.score || 0,
+      value: (visibility?.score as number | undefined) || 0,
       fill: "var(--color-score)",
     },
   ];
@@ -209,7 +209,7 @@ const KeywordVisibilityChart = ({ visibility }: { visibility: any }) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex items-center justify-center">
-        {visibility && (visibility.top10 > 0 || visibility.score > 0) ? (
+        {visibility && ((visibility.top10 || 0) > 0 || (visibility.score || 0) > 0) ? (
           <ChartContainer config={lineChartConfig} className="h-[200px] w-full">
             <RadialBarChart
               data={data}
@@ -229,7 +229,7 @@ const KeywordVisibilityChart = ({ visibility }: { visibility: any }) => {
                 dominantBaseline="middle"
                 className="text-4xl font-headline fill-foreground"
               >
-                {`${visibility.score}%`}
+                {`${visibility?.score || 0}%`}
               </text>
             </RadialBarChart>
           </ChartContainer>
@@ -247,7 +247,7 @@ const KeywordVisibilityChart = ({ visibility }: { visibility: any }) => {
   );
 };
 
-const DomainAuthorityChart = ({ data }: { data: any }) => (
+const DomainAuthorityChart = ({ data }: { data?: { history?: Array<{ date: string; score: number }>; score?: number } }) => (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Domain Authority</CardTitle>
@@ -300,7 +300,7 @@ const DomainAuthorityChart = ({ data }: { data: any }) => (
   </Card>
 );
 
-const BacklinksChart = ({ data }: { data: any }) => (
+const BacklinksChart = ({ data }: { data?: { history?: Array<{ month: string; new: number; lost: number }> } }) => (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Backlink Growth</CardTitle>
@@ -341,7 +341,7 @@ const BacklinksChart = ({ data }: { data: any }) => (
   </Card>
 );
 
-const TrafficSourcesChart = ({ data }: { data: any[] }) => (
+const TrafficSourcesChart = ({ data }: { data: Array<{ name: string; value: number; fill: string }> }) => (
   <Card>
     <CardHeader>
       <CardTitle className="font-headline">Traffic Sources</CardTitle>
@@ -454,7 +454,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-headline font-semibold text-foreground">
-              Welcome, {profile?.displayName || user?.email}!
+              Welcome, {String(profile?.displayName ?? user?.email ?? "")}!
             </h1>
             <p className="text-muted-foreground font-body">
               Here&apos;s your SEO command center with real-time data.

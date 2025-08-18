@@ -68,6 +68,9 @@ interface SubscriptionUser {
   lastLoginAt?: number;
 }
 
+interface TimestampLike { seconds: number }
+const isTimestampLike = (v: any): v is TimestampLike => v && typeof v === 'object' && typeof v.seconds === 'number';
+
 interface SubscriptionStats {
   total: number;
   active: number;
@@ -121,18 +124,22 @@ export function SubscriptionManagement() {
         enterpriseCount: 0,
       };
 
-      usersSnapshot.forEach((doc) => {
-        const userData = doc.data() as any;
+      usersSnapshot.forEach((d) => {
+        const data = d.data() as Record<string, any>;
+        const sub = data.subscription || { tier: 'free', status: 'inactive' };
         const user: SubscriptionUser = {
-          id: doc.id,
-          email: userData.email,
-          displayName: userData.displayName,
-          subscription: userData.subscription || {
-            tier: "free",
-            status: "inactive",
+          id: d.id,
+          email: typeof data.email === 'string' ? data.email : '',
+          displayName: typeof data.displayName === 'string' ? data.displayName : undefined,
+          subscription: {
+            tier: typeof sub.tier === 'string' ? sub.tier : 'free',
+            status: typeof sub.status === 'string' ? sub.status : 'inactive',
+            current_period_end: typeof sub.current_period_end === 'number' ? sub.current_period_end : undefined,
+            customer_id: typeof sub.customer_id === 'string' ? sub.customer_id : undefined,
+            subscription_id: typeof sub.subscription_id === 'string' ? sub.subscription_id : undefined
           },
-          createdAt: userData.createdAt?.seconds * 1000 || Date.now(),
-          lastLoginAt: userData.lastLoginAt?.seconds * 1000,
+          createdAt: isTimestampLike(data.createdAt) ? data.createdAt.seconds * 1000 : Date.now(),
+          lastLoginAt: isTimestampLike(data.lastLoginAt) ? data.lastLoginAt.seconds * 1000 : undefined
         };
 
         usersData.push(user);
@@ -173,11 +180,10 @@ export function SubscriptionManagement() {
 
   const updateUserSubscription = async (
     userId: string,
-    updates: { [key: string]: any }
-  ) => {
+    updates: Record<string, string>) => {
     try {
       const userRef = doc(db, "users", userId);
-      const updateData: { [key: string]: any } = {};
+  const updateData: Record<string, string> = {};
       Object.keys(updates).forEach((key) => {
         updateData[`subscription.${key}`] = updates[key];
       });

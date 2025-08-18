@@ -9,7 +9,7 @@ import { db } from '@/lib/firebase';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
-interface Props { open: boolean; onOpenChange: (open:boolean)=>void; onCreated?: (seq:any)=>void; }
+interface Props { open: boolean; onOpenChange: (open:boolean)=>void; onCreated?: (seq:unknown)=>void; }
 
 export function NewSequenceModal({ open, onOpenChange, onCreated }: Props) {
   const { user } = useAuth();
@@ -29,7 +29,7 @@ export function NewSequenceModal({ open, onOpenChange, onCreated }: Props) {
       toast({ title:'Sequence created', description: name });
       setName(''); setSteps('Hi {{firstName}},\nQuick note about...');
       onOpenChange(false);
-    } catch(e:any) { toast({ title:'Failed', description: e.message||'Could not save sequence', variant:'destructive'}); }
+    } catch(e:unknown) { toast({ title:'Failed', description: (e instanceof Error ? e.message : String(e)) || 'Could not save sequence', variant:'destructive'}); }
     finally { setSaving(false); }
   }
 

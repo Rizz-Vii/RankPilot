@@ -16,6 +16,16 @@
 import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
 
+// Narrowed request type used internally (was previously 'unknown' in many helpers)
+export interface SecurityRequest {
+    ip: string;
+    method?: string;
+    url: string;
+    headers: Record<string, string> & { 'user-agent'?: string; 'referer'?: string; 'origin'?: string; 'x-correlation-id'?: string };
+    body?: unknown;
+    userId?: string;
+}
+
 export interface SecurityThreat {
     id: string;
     type: 'injection' | 'xss' | 'csrf' | 'brute-force' | 'dos' | 'data-breach' | 'privilege-escalation';
@@ -49,7 +59,7 @@ export interface SecurityPolicy {
     rules: Array<{
         condition: string;
         action: 'allow' | 'deny' | 'log' | 'alert';
-        parameters?: Record<string, any>;
+        parameters?: Record<string, unknown>;
     }>;
     enabled: boolean;
     priority: number;
@@ -66,7 +76,7 @@ export interface SecurityAuditLog {
     details: {
         ip: string;
         userAgent?: string;
-        payload?: any;
+        payload?: unknown;
         threatLevel?: string;
         policyViolations?: string[];
     };
@@ -142,14 +152,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
     /**
      * Validate incoming request for security threats
      */
-    async validateRequest(request: {
-        ip: string;
-        method: string;
-        url: string;
-        headers: Record<string, string>;
-        body?: any;
-        userId?: string;
-    }): Promise<{
+    async validateRequest(request: SecurityRequest & { method: string }): Promise<{
         allowed: boolean;
         threats: SecurityThreat[];
         warnings: string[];
@@ -473,7 +476,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
         return { allowed: true, remaining: maxRequests - existing.count };
     }
 
-    private detectSQLInjection(request: any): SecurityThreat | null {
+    private detectSQLInjection(request: SecurityRequest): SecurityThreat | null {
         const testString = JSON.stringify(request.body || '') + request.url;
 
         for (const pattern of this.threatPatterns.sqlInjection) {
@@ -502,7 +505,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
         return null;
     }
 
-    private detectXSS(request: any): SecurityThreat | null {
+    private detectXSS(request: SecurityRequest): SecurityThreat | null {
         const testString = JSON.stringify(request.body || '') + request.url;
 
         for (const pattern of this.threatPatterns.xssAttack) {
@@ -531,7 +534,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
         return null;
     }
 
-    private detectCSRF(request: any): SecurityThreat | null {
+    private detectCSRF(request: SecurityRequest): SecurityThreat | null {
         const referer = request.headers['referer'] || '';
         const origin = request.headers['origin'] || '';
 
@@ -561,7 +564,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
         return null;
     }
 
-    private detectBruteForce(request: any): SecurityThreat | null {
+    private detectBruteForce(request: SecurityRequest): SecurityThreat | null {
         const key = `brute_force:${request.ip}`;
         const attempts = this.suspiciousPatterns.get(key) || 0;
 
@@ -597,7 +600,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
         return null;
     }
 
-    private async advancedThreatAnalysis(request: any): Promise<SecurityThreat[]> {
+    private async advancedThreatAnalysis(request: SecurityRequest): Promise<SecurityThreat[]> {
         const threats: SecurityThreat[] = [];
 
         // Anomaly detection based on request patterns
@@ -625,7 +628,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
         return threats;
     }
 
-    private calculateAnomalyScore(request: any): number {
+    private calculateAnomalyScore(request: SecurityRequest): number {
         // Simplified anomaly detection
         let score = 0;
 
@@ -665,7 +668,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
         console.log(`[SecurityFramework] Critical threats detected and mitigated for IP: ${ip}`);
     }
 
-    private async logSecurityEvent(request: any, eventType: string, threats: SecurityThreat[]): Promise<void> {
+    private async logSecurityEvent(request: SecurityRequest, eventType: string, threats: SecurityThreat[]): Promise<void> {
         const logEntry: SecurityAuditLog = {
             id: this.generateId(),
             timestamp: Date.now(),
@@ -751,8 +754,8 @@ export class AdvancedSecurityFramework extends EventEmitter {
         return Math.min(totalRisk / threats.length, 100);
     }
 
-    private calculateFalsePositiveRate(threats: SecurityThreat[]): number {
-        // Mock false positive calculation
+    private calculateFalsePositiveRate(_threats?: SecurityThreat[]): number {
+        // Mock false positive calculation (could incorporate _threats later)
         return Math.random() * 5; // 0-5%
     }
 
@@ -770,7 +773,7 @@ export class AdvancedSecurityFramework extends EventEmitter {
         return Object.entries(violations).map(([policy, count]) => ({ policy, count }));
     }
 
-    private generateRecommendations(metrics: SecurityMetrics, threats: SecurityThreat[]): string[] {
+    private generateRecommendations(metrics: SecurityMetrics, _threats?: SecurityThreat[]): string[] {
         const recommendations: string[] = [];
 
         if (metrics.threatsByType.injection > 0) {

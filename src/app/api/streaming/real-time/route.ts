@@ -13,7 +13,7 @@ interface StreamingRequest {
     connectionType?: 'websocket' | 'sse';
     dashboardId?: string;
     streamTypes?: string[];
-    collaborationEvent?: any;
+    collaborationEvent?: unknown;
 }
 
 export async function POST(request: NextRequest) {
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
         // For demo purposes, we can use a mock user only if explicitly allowed
         // In production, verify the JWT token here
-        const mockUser = allowStreamingMockUser() ? { uid: 'demo-user', tier: 'enterprise' as const } : null as any;
+        const mockUser: { uid: string; tier: 'enterprise' } | null = allowStreamingMockUser() ? { uid: 'demo-user', tier: 'enterprise' } : null;
         if (!mockUser) {
             return NextResponse.json(
                 { error: 'Unauthorized - Mock user disabled' },
@@ -98,12 +98,13 @@ export async function POST(request: NextRequest) {
                     );
                 }
 
+                const ev: any = body.collaborationEvent as any;
                 await realTimeDataStreamer.broadcastCollaboration({
-                    type: body.collaborationEvent.type,
+                    type: ev?.type,
                     userId: mockUser.uid,
-                    userName: body.collaborationEvent.userName || 'Demo User',
-                    dashboardId: body.collaborationEvent.dashboardId,
-                    data: body.collaborationEvent.data,
+                    userName: ev?.userName || 'Demo User',
+                    dashboardId: ev?.dashboardId,
+                    data: ev?.data,
                     timestamp: Date.now()
                 });
 
@@ -167,7 +168,7 @@ export async function GET(request: NextRequest) {
                     );
 
                     // Listen for SSE data events
-                    const handleSSEData = (id: string, data: any) => {
+                    const handleSSEData = (id: string, data: unknown) => {
                         if (id === clientId) {
                             controller.enqueue(
                                 encoder.encode(`data: ${JSON.stringify(data)}\n\n`)

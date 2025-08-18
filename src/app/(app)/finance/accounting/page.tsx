@@ -18,30 +18,43 @@ export default function AccountingPage(){
   const { user } = useAuth();
   const userId = user?.uid; const teamId = (user as any)?.teamId as string|undefined;
   const [loading, setLoading] = useState(false);
-  const [pnlSnap, setPnlSnap] = useState<any|null>(null);
-  const [bsSnap, setBsSnap] = useState<any|null>(null);
-  const [recentPnL, setRecentPnL] = useState<any[]>([]);
+  interface BaseAccountingSnapshot { createdAt?: { toDate: () => Date }; }
+  interface PnLSnapshot extends BaseAccountingSnapshot { type:'pnl'; figures: PnLFigures; }
+  interface BalanceSheetSnapshot extends BaseAccountingSnapshot { type:'balance_sheet'; figures: BSFigures; }
+  type AccountingSnapshot = PnLSnapshot | BalanceSheetSnapshot;
+  const [pnlSnap, setPnlSnap] = useState<PnLSnapshot|null>(null);
+  const [bsSnap, setBsSnap] = useState<BalanceSheetSnapshot|null>(null);
+  const [recentPnL, setRecentPnL] = useState<PnLSnapshot[]>([]);
   const { trigger, running } = useAutomationTrigger();
 
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(()=> { trackDashboardView('finance'); }, []);
 
-  useEffect(()=> { if(!userId) return; setLoading(true); (async()=> { try { const snaps = await fetchRecentAccountingSnapshots(userId, teamId, undefined, 8); setPnlSnap(snaps.find(s=> s.type==='pnl')||null); setBsSnap(snaps.find(s=> s.type==='balance_sheet')||null); setRecentPnL(snaps.filter(s=> s.type==='pnl')); if(snaps.length) markLive(); else markFallback(); } finally { setLoading(false); } })(); }, [userId, teamId, markLive, markFallback]);
+  useEffect(()=> { if(!userId) return; setLoading(true); (async()=> { try {
+  const rawSnaps = await fetchRecentAccountingSnapshots(userId, teamId, undefined, 8) as any[];
+  // Narrow by presence of expected figure keys
+  const pnl = rawSnaps.find(s=> s.type==='pnl' && s.figures && 'grossProfit' in s.figures);
+  const bs = rawSnaps.find(s=> s.type==='balance_sheet' && s.figures && 'assets' in s.figures);
+  setPnlSnap(pnl || null);
+  setBsSnap(bs || null);
+  setRecentPnL(rawSnaps.filter(s=> s.type==='pnl' && s.figures && 'grossProfit' in s.figures));
+  if(rawSnaps.length) markLive(); else markFallback();
+  } finally { setLoading(false); } })(); }, [userId, teamId, markLive, markFallback]);
 
   function run(action: 'financeAccountingSeedSampleJournals'|'financeAccountingGeneratePnL'|'financeAccountingGenerateBalanceSheet'|'financeAccountingReconcile') {
-    trigger(action, { optimistic: ()=> { if(action==='financeAccountingGeneratePnL'){ setPnlSnap((s:any)=> s? { ...s, createdAt:{ toDate:()=> new Date() } } : s); } if(action==='financeAccountingGenerateBalanceSheet'){ setBsSnap((s:any)=> s? { ...s, createdAt:{ toDate:()=> new Date() } } : s); } }, label: action });
+  trigger(action, { optimistic: ()=> { if(action==='financeAccountingGeneratePnL'){ setPnlSnap((s)=> s? { ...s, createdAt:{ toDate:()=> new Date() } } : s); } if(action==='financeAccountingGenerateBalanceSheet'){ setBsSnap((s)=> s? { ...s, createdAt:{ toDate:()=> new Date() } } : s); } }, label: action });
   }
 
   const kpis = useMemo(()=> {
-    if(!pnlSnap) return [] as any[];
-    const f = pnlSnap.figures as PnLFigures;
+  if(!pnlSnap) return [] as { key:string; label:string; value:number; delta:number; trend:number[]; intent?: 'neutral'|'success'|'warning'|'accent'|'danger' }[];
+  const f = pnlSnap.figures;
     const grossMargin = f.revenue? (f.grossProfit / f.revenue)*100 : 0;
     const netMargin = f.revenue? (f.netIncome / f.revenue)*100 : 0;
     const opexRatio = f.revenue? (f.opex / f.revenue)*100 : 0;
     return [
-      { key:'gross_margin', label:'Gross Margin %', value: Number(grossMargin.toFixed(1)), delta:0, trend: recentPnL.map(p=> { const pf = p.figures as PnLFigures; return pf.revenue? ((pf.revenue - pf.cogs)/pf.revenue)*100 : 0; }) },
-      { key:'net_margin', label:'Net Margin %', value: Number(netMargin.toFixed(1)), delta:0, trend: recentPnL.map(p=> { const pf = p.figures as PnLFigures; return pf.revenue? (pf.netIncome / pf.revenue)*100 : 0; }) },
-      { key:'opex_ratio', label:'OpEx Ratio %', value: Number(opexRatio.toFixed(1)), delta:0, trend: recentPnL.map(p=> { const pf = p.figures as PnLFigures; return pf.revenue? (pf.opex / pf.revenue)*100 : 0; }) },
+  { key:'gross_margin', label:'Gross Margin %', value: Number(grossMargin.toFixed(1)), delta:0, trend: recentPnL.map(p=> p.figures.revenue? ((p.figures.revenue - p.figures.cogs)/p.figures.revenue)*100 : 0) },
+  { key:'net_margin', label:'Net Margin %', value: Number(netMargin.toFixed(1)), delta:0, trend: recentPnL.map(p=> p.figures.revenue? (p.figures.netIncome / p.figures.revenue)*100 : 0) },
+  { key:'opex_ratio', label:'OpEx Ratio %', value: Number(opexRatio.toFixed(1)), delta:0, trend: recentPnL.map(p=> p.figures.revenue? (p.figures.opex / p.figures.revenue)*100 : 0) },
     ];
   }, [pnlSnap, recentPnL]);
 
@@ -78,7 +91,7 @@ export default function AccountingPage(){
         )}
         <section className="grid gap-4 md:grid-cols-3">
           {kpis.map(k => (
-            <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last" trend={<TrendSparkline data={k.trend} />} intent={k.intent||'neutral'} />
+            <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last" trend={<TrendSparkline data={k.trend} />} intent={(k as any).intent||'neutral'} />
           ))}
         </section>
         <section className="space-y-4">

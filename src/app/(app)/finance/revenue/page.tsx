@@ -14,6 +14,7 @@ import { useAutomationTrigger } from '@/hooks/useAutomationTrigger';
 import { useFinanceInvoiceMetrics } from '@/hooks/useFinanceInvoiceMetrics';
 import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
+import type { RevenueSnapshot } from '@/lib/finance/revenue-metrics';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 import { computeRevenueMetrics, SubscriptionEvent } from '@/lib/finance/revenue-metrics';
 import { deriveSubscriptionEvents } from '@/lib/finance/derive-subscription-events';
@@ -24,14 +25,31 @@ export default function RevenueAnalyticsPage() {
   const live = useFinanceInvoiceMetrics(months);
   const { user } = useAuth();
   const userId = user?.uid; const teamId = (user as any)?.teamId as string|undefined;
-  const [revSnap, setRevSnap] = useState<any|null>(null);
+  interface FinanceRevenueSnapshot { mrr: number; onTime: number; outstanding: number; ts: Date; period: string; }
+  const [revSnap, setRevSnap] = useState<FinanceRevenueSnapshot|null>(null);
   const [loadingSnap, setLoadingSnap] = useState(false);
   const { trigger, running } = useAutomationTrigger();
-  useEffect(()=> { if(!userId) return; setLoadingSnap(true); (async()=> { try { const r = await fetchRecentFinanceRevenueSnapshots(userId, teamId,1); if(r.length) setRevSnap({ mrr:r[0].mrr, onTime:r[0].onTimePct, outstanding:r[0].outstanding, ts:r[0].createdAt?.toDate?.()||new Date(), period:r[0].period }); } finally { setLoadingSnap(false);} })(); }, [userId, teamId]);
+  useEffect(()=> { if(!userId) return; setLoadingSnap(true); (async()=> { try { const r = await fetchRecentFinanceRevenueSnapshots(userId, teamId,1); if(r.length) { const first:any = r[0]; const ts = first.createdAt && typeof first.createdAt==='object' && first.createdAt.toDate? first.createdAt.toDate(): new Date(); setRevSnap({ mrr:first.mrr, onTime:first.onTimePct, outstanding:first.outstanding, ts, period:first.period }); } } finally { setLoadingSnap(false);} })(); }, [userId, teamId]);
   const mock = getMockMetrics('finance');
-  const data = (live.kpis.length ? live : { kpis: allowFinanceMocks()? mock.kpis : [], rows: [], loading:false }) as any;
+  type MetricIntent = 'neutral' | 'success' | 'warning' | 'accent' | 'danger';
+  interface KpiItem { key: string; label: string; value: number; delta: number; trend: number[]; intent?: MetricIntent }
+  interface InvoiceRow { period:string; planTier:string; amount:number; status:string; issuedAt?:{ toDate?:()=>Date }; paidAt?:{ toDate?:()=>Date }|null }
+  interface InvoiceMetrics { kpis: KpiItem[]; rows: InvoiceRow[]; loading: boolean }
+  const adaptInvoice = (r: any): InvoiceRow | null => {
+    if(!r || typeof r !== 'object') return null;
+    if(typeof r.period !== 'string' || typeof r.planTier !== 'string') return null;
+    return {
+      period: r.period,
+      planTier: r.planTier,
+      amount: typeof r.amount === 'number'? r.amount : 0,
+      status: typeof r.status === 'string'? r.status : 'pending',
+      issuedAt: r.issuedAt && typeof r.issuedAt === 'object'? r.issuedAt : undefined,
+      paidAt: r.paidAt && typeof r.paidAt === 'object'? r.paidAt : undefined
+    };
+  };
+  const data: InvoiceMetrics = live.kpis.length ? ({ kpis: live.kpis as KpiItem[], rows: (Array.isArray(live.rows)? live.rows.map(adaptInvoice).filter(Boolean) as InvoiceRow[]: []), loading: live.loading }) : { kpis: allowFinanceMocks()? (mock.kpis as KpiItem[]) : [], rows: [], loading:false };
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
-  const [derived, setDerived] = useState<any|null>(null);
+  const [derived, setDerived] = useState<RevenueSnapshot|null>(null);
   useEffect(() => { trackDashboardView('finance'); }, []);
   useEffect(()=> { if(live.kpis.length) markLive(); else markFallback(); }, [live.kpis.length, markLive, markFallback]);
   // Compute derived revenue metrics (MRR, ARR, churn, LTV) using invoice history approximation
@@ -68,8 +86,8 @@ export default function RevenueAnalyticsPage() {
           </div>
         )}
         <section className="grid gap-4 md:grid-cols-3">
-          {data.kpis.map((k:any) => (
-            <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
+          {data.kpis.map((k) => (
+              <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
           ))}
         </section>
         {derived && (
@@ -83,9 +101,16 @@ export default function RevenueAnalyticsPage() {
         <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Invoices</h2>
           <LazyDataTable
-            columns={[{ key:'period', header:'Period'}, { key:'planTier', header:'Tier'}, { key:'amount', header:'Amount'}, { key:'status', header:'Status'}, { key:'issuedAt', header:'Issued', render:(r:any)=> r.issuedAt?.toDate?.()?.toISOString().slice(0,10)}, { key:'paidAt', header:'Paid', render:(r:any)=> r.paidAt? r.paidAt.toDate().toISOString().slice(0,10): '-' }]}
-            rows={live.rows}
-            loading={live.loading}
+              columns={[
+                { key:'period', header:'Period'},
+                { key:'planTier', header:'Tier'},
+                { key:'amount', header:'Amount'},
+                { key:'status', header:'Status'},
+                { key:'issuedAt', header:'Issued', render:(r:InvoiceRow)=> (r.issuedAt && typeof r.issuedAt === 'object' && r.issuedAt.toDate)? r.issuedAt.toDate().toISOString().slice(0,10): '-'},
+                { key:'paidAt', header:'Paid', render:(r:InvoiceRow)=> (r.paidAt && typeof r.paidAt === 'object' && r.paidAt.toDate)? r.paidAt.toDate().toISOString().slice(0,10): '-'}
+              ]}
+            rows={data.rows}
+            loading={data.loading}
             empty="No invoice data"
           />
         </section>

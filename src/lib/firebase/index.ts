@@ -3,7 +3,7 @@ import { app, db } from '@/lib/firebase/connection-manager';
 import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
-import { getAnalytics, isSupported } from 'firebase/analytics';
+import { getAnalytics, isSupported, type Analytics } from 'firebase/analytics';
 
 export const auth = getAuth(app);
 export { db, app };
@@ -20,15 +20,16 @@ if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_USE_FUNCTIONS_EMULA
 }
 
 // Analytics (only prod + supported + measurementId provided via env)
-let analytics: any = null;
+let analyticsInstance: Analytics | null = null;
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
   const measurementId = process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID;
   if (measurementId) {
     isSupported().then(supported => {
       if (supported) {
-        try { analytics = getAnalytics(app); } catch { analytics = null; }
+        try { analyticsInstance = getAnalytics(app); } catch { analyticsInstance = null; }
       }
     });
   }
 }
-export { analytics };
+// Export with stable name; downstream should use guards before logging events.
+export const analytics: Analytics | null = analyticsInstance;

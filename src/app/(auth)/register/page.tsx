@@ -65,7 +65,7 @@ export default function RegisterPage() {
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
     try {
-      const userCredential = await createUserWithEmailAndPassword(
+      await createUserWithEmailAndPassword(
         auth,
         email.trim(),
         password.trim()
@@ -73,9 +73,10 @@ export default function RegisterPage() {
       // User document will be created by ensureUserSubscription in AuthContext
       // This ensures consistent subscription structure across all auth methods
       router.push("/dashboard");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Registration failed. Please try again.';
       setErrors({
-        form: error?.message || "Registration failed. Please try again.",
+        form: message,
       });
     }
   }

@@ -5,12 +5,13 @@
 
 import { EventEmitter } from 'events';
 
-export interface AnomalyPattern {
+export type Severity = 'low' | 'medium' | 'high' | 'critical';
+export type ThresholdOperator = 'greater_than' | 'less_than' | 'equals';
+
+interface BasePattern {
     id: string;
     name: string;
     description: string;
-    type: 'statistical' | 'seasonal' | 'trending' | 'threshold' | 'ml_model';
-    parameters: Record<string, any>;
     sensitivity: number;
     confidence_threshold: number;
     enabled: boolean;
@@ -18,10 +19,18 @@ export interface AnomalyPattern {
     last_updated: number;
 }
 
+export interface StatisticalPattern extends BasePattern { type: 'statistical'; parameters: { window_size: number }; }
+export interface ThresholdPattern extends BasePattern { type: 'threshold'; parameters: { threshold: number; operator?: ThresholdOperator; severity?: Severity; actions?: string[] }; }
+export interface SeasonalPattern extends BasePattern { type: 'seasonal'; parameters: { period?: number }; }
+export interface TrendingPattern extends BasePattern { type: 'trending'; parameters: { trend_threshold: number }; }
+export interface MLModelPattern extends BasePattern { type: 'ml_model'; parameters: { modelName?: string; version?: string }; }
+
+export type AnomalyPattern = StatisticalPattern | ThresholdPattern | SeasonalPattern | TrendingPattern | MLModelPattern;
+
 export interface DataPoint {
     timestamp: number;
     value: number;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 
 export interface Anomaly {
@@ -32,10 +41,10 @@ export interface Anomaly {
     expected_value: number;
     deviation_score: number;
     confidence: number;
-    severity: 'low' | 'medium' | 'high' | 'critical';
+    severity: Severity;
     description: string;
     suggested_actions: string[];
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
     acknowledged: boolean;
     resolved: boolean;
     resolution_time?: number;
@@ -74,11 +83,38 @@ export interface ScalingRecommendation {
     reasoning: string;
 }
 
+// Supporting internal interfaces introduced during refactor
+interface SimpleModel {
+    type: string;
+    parameters: { trend: number; mean: number };
+    trained_at: number;
+    data_points: number;
+}
+
+interface InfluencingFactor {
+    name: string;
+    influence: number; // 0..1 influence weight
+    description: string;
+}
+
+interface IdentifiedPattern {
+    description: string;
+    frequency: number; // 0..1 occurrence frequency
+    impact: string;
+    recommendation: string;
+}
+
+interface AnomalyTrend {
+    metric: string;
+    trend: string; // could be 'increasing' | 'decreasing' | 'stable'
+    confidence: number; // 0..1
+}
+
 export class AIAnomalyDetector extends EventEmitter {
     private patterns: Map<string, AnomalyPattern> = new Map();
     private dataHistory: Map<string, DataPoint[]> = new Map();
     private anomalies: Map<string, Anomaly> = new Map();
-    private models: Map<string, any> = new Map();
+    private models: Map<string, SimpleModel> = new Map();
     private isAnalyzing: boolean = false;
     private analysisInterval?: NodeJS.Timer;
 
@@ -313,9 +349,9 @@ export class AIAnomalyDetector extends EventEmitter {
 
         const summary = {
             total_anomalies: anomalies.length,
-            by_severity: this.groupBy(anomalies, 'severity'),
-            by_metric: this.groupBy(anomalies, (a: Anomaly) => a.metadata.metric || 'unknown'),
-            resolution_rate: anomalies.filter(a => a.resolved).length / anomalies.length,
+            by_severity: this.groupBy(anomalies, a => a.severity),
+            by_metric: this.groupBy(anomalies, a => (a.metadata.metric as string) || 'unknown'),
+            resolution_rate: anomalies.length ? anomalies.filter(a => a.resolved).length / anomalies.length : 0,
             avg_resolution_time: this.calculateAverageResolutionTime(anomalies)
         };
 
@@ -366,7 +402,7 @@ export class AIAnomalyDetector extends EventEmitter {
     private detectStatisticalAnomaly(
         metric: string,
         history: DataPoint[],
-        pattern: AnomalyPattern,
+        pattern: StatisticalPattern,
         latest: DataPoint
     ): Anomaly | null {
         const values = history.slice(-100).map(p => p.value); // Last 100 points
@@ -404,12 +440,12 @@ export class AIAnomalyDetector extends EventEmitter {
 
     private detectThresholdAnomaly(
         metric: string,
-        history: DataPoint[],
-        pattern: AnomalyPattern,
+        _history: DataPoint[],
+        pattern: ThresholdPattern,
         latest: DataPoint
     ): Anomaly | null {
         const threshold = pattern.parameters.threshold;
-        const operator = pattern.parameters.operator || 'greater_than';
+        const operator: ThresholdOperator = pattern.parameters.operator || 'greater_than';
 
         let isAnomaly = false;
         switch (operator) {
@@ -448,11 +484,11 @@ export class AIAnomalyDetector extends EventEmitter {
     private detectSeasonalAnomaly(
         metric: string,
         history: DataPoint[],
-        pattern: AnomalyPattern,
+        pattern: SeasonalPattern,
         latest: DataPoint
     ): Anomaly | null {
         // Simplified seasonal detection (real implementation would use time series analysis)
-        const seasonalPeriod = pattern.parameters.period || 24 * 60 * 60 * 1000; // 24 hours
+        const seasonalPeriod = pattern.parameters.period || 24 * 60 * 60 * 1000;
         const seasonalData = history.filter(p =>
             (latest.timestamp - p.timestamp) % seasonalPeriod < 3600000 // Within 1 hour of seasonal pattern
         );
@@ -495,7 +531,7 @@ export class AIAnomalyDetector extends EventEmitter {
     private detectTrendingAnomaly(
         metric: string,
         history: DataPoint[],
-        pattern: AnomalyPattern,
+        pattern: TrendingPattern,
         latest: DataPoint
     ): Anomaly | null {
         if (history.length < 20) return null;
@@ -578,28 +614,11 @@ export class AIAnomalyDetector extends EventEmitter {
         return (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
     }
 
-    private identifyInfluencingFactors(metric: string, history: DataPoint[]): Array<{
-        name: string;
-        influence: number;
-        description: string;
-    }> {
-        // Simplified factor analysis (real implementation would use correlation analysis)
+    private identifyInfluencingFactors(_metric: string, _history: DataPoint[]): InfluencingFactor[] {
         return [
-            {
-                name: 'time_of_day',
-                influence: 0.3,
-                description: 'Metric shows correlation with time of day patterns'
-            },
-            {
-                name: 'user_activity',
-                influence: 0.5,
-                description: 'Metric correlates with user activity levels'
-            },
-            {
-                name: 'system_load',
-                influence: 0.2,
-                description: 'System load appears to influence this metric'
-            }
+            { name: 'time_of_day', influence: 0.3, description: 'Metric shows correlation with time of day patterns' },
+            { name: 'user_activity', influence: 0.5, description: 'Metric correlates with user activity levels' },
+            { name: 'system_load', influence: 0.2, description: 'System load appears to influence this metric' }
         ];
     }
 
@@ -635,7 +654,7 @@ export class AIAnomalyDetector extends EventEmitter {
         };
     }
 
-    private createSimpleModel(history: DataPoint[], modelType: string): any {
+    private createSimpleModel(history: DataPoint[], modelType: string): SimpleModel {
         // Simplified model creation (real implementation would use proper ML libraries)
         const trend = this.calculateTrend(history);
         const mean = history.reduce((sum, p) => sum + p.value, 0) / history.length;
@@ -648,7 +667,7 @@ export class AIAnomalyDetector extends EventEmitter {
         };
     }
 
-    private calculateSeverity(score: number, threshold: number): 'low' | 'medium' | 'high' | 'critical' {
+    private calculateSeverity(score: number, threshold: number): Severity {
         const ratio = score / threshold;
         if (ratio > 3) return 'critical';
         if (ratio > 2) return 'high';
@@ -656,14 +675,12 @@ export class AIAnomalyDetector extends EventEmitter {
         return 'low';
     }
 
-    private groupBy<T>(array: T[], keyFn: string | ((item: T) => string)): Record<string, number> {
+    private groupBy<T>(array: T[], keyFn: (item: T) => string): Record<string, number> {
         const result: Record<string, number> = {};
-
         for (const item of array) {
-            const key = typeof keyFn === 'string' ? (item as any)[keyFn] : keyFn(item);
+            const key = keyFn(item);
             result[key] = (result[key] || 0) + 1;
         }
-
         return result;
     }
 
@@ -675,36 +692,14 @@ export class AIAnomalyDetector extends EventEmitter {
         return totalTime / resolved.length;
     }
 
-    private identifyAnomalyPatterns(anomalies: Anomaly[]): Array<{
-        description: string;
-        frequency: number;
-        impact: string;
-        recommendation: string;
-    }> {
-        // Simplified pattern identification
+    private identifyAnomalyPatterns(_anomalies: Anomaly[]): IdentifiedPattern[] {
         return [
-            {
-                description: 'High CPU usage during peak hours',
-                frequency: 0.3,
-                impact: 'Performance degradation',
-                recommendation: 'Consider auto-scaling configuration'
-            }
+            { description: 'High CPU usage during peak hours', frequency: 0.3, impact: 'Performance degradation', recommendation: 'Consider auto-scaling configuration' }
         ];
     }
 
-    private analyzeAnomalyTrends(anomalies: Anomaly[]): Array<{
-        metric: string;
-        trend: string;
-        confidence: number;
-    }> {
-        // Simplified trend analysis
-        return [
-            {
-                metric: 'api.response_time',
-                trend: 'increasing',
-                confidence: 0.85
-            }
-        ];
+    private analyzeAnomalyTrends(_anomalies: Anomaly[]): AnomalyTrend[] {
+        return [{ metric: 'api.response_time', trend: 'increasing', confidence: 0.85 }];
     }
 
     private initializeDefaultPatterns(): void {

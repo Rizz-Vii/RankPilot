@@ -100,7 +100,7 @@ const EnhancedButton = forwardRef<HTMLButtonElement, EnhancedButtonProps>(
   ) => {
   // Only use Slot when a single, non-Fragment React element is provided
   const childCount = React.Children.count(children);
-  const isValidChildEl = React.isValidElement(children) && (children as any)?.type !== React.Fragment;
+  const isValidChildEl = React.isValidElement(children) && (children as any).type !== React.Fragment;
   const useSlot = !!asChild && childCount === 1 && isValidChildEl;
   const Comp = useSlot ? Slot : motion.button;
 

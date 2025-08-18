@@ -55,9 +55,18 @@ type SupportMessage = {
   emailStatus?: string; // sent | replied | failed
   emailMessageId?: string;
   assignedTo?: string; // admin email or uid
-  createdAt?: any;
-  updatedAt?: any;
+  createdAt?: unknown;
+  updatedAt?: unknown;
 };
+
+// Minimal Firestore Timestamp-like narrowing
+interface TimestampLike {
+  toDate: () => Date;
+}
+
+function isTimestampLike(v: unknown): v is TimestampLike {
+  return !!v && typeof v === 'object' && 'toDate' in v && typeof (v as any).toDate === 'function';
+}
 
 export default function AdminSupport() {
   const { user } = useAuth();
@@ -76,14 +85,33 @@ export default function AdminSupport() {
     const unsub = onSnapshot(
       qy,
       (snap) => {
-        const list: SupportMessage[] = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+        const list: SupportMessage[] = snap.docs.map((d) => {
+          const data = d.data() as Partial<SupportMessage>;
+          return {
+            id: d.id,
+            name: data.name || '',
+            email: data.email || '',
+            subject: data.subject || '',
+            message: data.message || '',
+            category: data.category || 'general',
+            status: data.status,
+            emailStatus: data.emailStatus,
+            emailMessageId: data.emailMessageId,
+            assignedTo: data.assignedTo,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt
+          };
+        });
         setItems(list);
         setLoading(false);
       },
-      (error) => {
+      (error: unknown) => {
         console.error("AdminSupport Firestore error:", error);
         setLoading(false);
-        const msg = error?.message || "Failed to load support messages";
+        let msg = 'Failed to load support messages';
+        if (error && typeof error === 'object' && 'message' in error && typeof (error as any).message === 'string') {
+          msg = (error as any).message;
+        }
         try { toast.error(msg); } catch {}
       }
     );
@@ -107,8 +135,10 @@ export default function AdminSupport() {
     try {
       await updateDoc(doc(db, "supportMessages", id), { status, updatedAt: serverTimestamp() });
       toast.success("Status updated");
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to update status");
+    } catch (e: unknown) {
+      let msg = 'Failed to update status';
+      if (e && typeof e === 'object' && 'message' in e && typeof (e as any).message === 'string') msg = (e as any).message;
+      toast.error(msg);
     }
   };
 
@@ -121,8 +151,10 @@ export default function AdminSupport() {
         updatedAt: serverTimestamp(),
       });
       toast.success("Assigned to you");
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to assign");
+    } catch (e: unknown) {
+      let msg = 'Failed to assign';
+      if (e && typeof e === 'object' && 'message' in e && typeof (e as any).message === 'string') msg = (e as any).message;
+      toast.error(msg);
     }
   };
 
@@ -145,11 +177,20 @@ export default function AdminSupport() {
           reply: replyBody,
         }),
       });
-      if (!res.ok) throw new Error((await res.json()).message || "Failed to send reply");
+      if (!res.ok) {
+        let fallback = 'Failed to send reply';
+        try {
+          const j = await res.json();
+          if (j && typeof j === 'object' && 'message' in j && typeof j.message === 'string') fallback = j.message;
+        } catch {}
+        throw new Error(fallback);
+      }
       toast.success("Reply sent");
       setReplyOpen(false);
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to send reply");
+    } catch (e: unknown) {
+      let msg = 'Failed to send reply';
+      if (e && typeof e === 'object' && 'message' in e && typeof (e as any).message === 'string') msg = (e as any).message;
+      toast.error(msg);
     }
   };
 
@@ -223,7 +264,7 @@ export default function AdminSupport() {
                 {filtered.map((m) => (
                   <TableRow key={m.id}>
                     <TableCell className="whitespace-nowrap">
-                      {m.createdAt?.toDate
+                      {isTimestampLike(m.createdAt)
                         ? formatDistanceToNow(m.createdAt.toDate(), { addSuffix: true })
                         : "—"}
                     </TableCell>

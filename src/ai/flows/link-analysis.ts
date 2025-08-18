@@ -58,7 +58,7 @@ export async function analyzeLinks(
   input: LinkAnalysisInput
 ): Promise<LinkAnalysisOutput> {
   // This function now correctly calls the Genkit flow.
-  return linkAnalysisFlow(input);
+  return _linkAnalysisFlow(input);
 }
 
 // --- Genkit Prompt Definition ---
@@ -102,7 +102,7 @@ const linkAnalysisPrompt = ai.definePrompt({
 
 // --- Genkit Flow Definition with Fallback Logic ---
 
-const linkAnalysisFlow = ai.defineFlow(
+const _linkAnalysisFlow = ai.defineFlow(
   {
     name: "linkAnalysisFlow",
     inputSchema: LinkAnalysisInputSchema,
@@ -117,12 +117,14 @@ const linkAnalysisFlow = ai.defineFlow(
         throw new Error("Primary AI provider returned no output.");
       }
       return output;
-    } catch (error: any) {
-      console.warn("Primary provider (Google) failed:", error.message);
+    } catch (error: unknown) {
+      const err = error as { message?: string; cause?: unknown };
+      console.warn("Primary provider (Google) failed:", err.message);
       // Check if it's a service availability error
+      const cause = err.cause as { status?: number } | undefined;
       if (
-        (error.cause as any)?.status === 503 ||
-        (error.message && error.message.includes("overloaded"))
+        (cause && cause.status === 503) ||
+        (err.message && err.message.includes("overloaded"))
       ) {
         // --- Attempt 2: Fallback Provider (OpenAI) ---
         try {
@@ -149,10 +151,11 @@ const linkAnalysisFlow = ai.defineFlow(
 
           const jsonOutput = JSON.parse(text);
           return LinkAnalysisOutputSchema.parse(jsonOutput);
-        } catch (fallbackError) {
+        } catch (fallbackError: unknown) {
+          const fe = fallbackError as { message?: string };
           console.error(
             "Secondary provider (OpenAI) also failed:",
-            fallbackError
+            fe.message || fallbackError
           );
           throw new Error("Both primary and fallback AI services failed.");
         }
@@ -162,3 +165,6 @@ const linkAnalysisFlow = ai.defineFlow(
     }
   }
 );
+
+// Provide a named export aligned with call-sites when needed
+export const linkAnalysisFlow = _linkAnalysisFlow;

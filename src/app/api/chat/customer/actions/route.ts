@@ -39,8 +39,9 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
 
         // Fetch current pendingActions for analytics
         const sessionSnap = await sessionRef.get();
-        const sData = sessionSnap.exists ? (sessionSnap.data() as any) : {};
-        const pendingActions: string[] = Array.isArray(sData?.pendingActions) ? sData.pendingActions : [];
+        interface SessionData { pendingActions?: unknown }
+        const sData: SessionData = sessionSnap.exists ? (sessionSnap.data() as SessionData) : {};
+        const pendingActions: string[] = Array.isArray(sData.pendingActions) ? (sData.pendingActions as string[]) : [];
         const totalCompleted = Object.values(progress).filter(v => !!v).length;
         const totalPending = pendingActions.length;
         const denominator = totalCompleted + totalPending;
@@ -61,9 +62,9 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         );
 
         return NextResponse.json({ __provenance: { source: 'chat-actions', kind: 'mutation' }, success: true, actionStats: { totalCompleted, totalPending, completionRate } });
-    } catch (e: any) {
+    } catch (e: unknown) {
         return NextResponse.json(
-            { error: e?.message || 'Failed to update actions' },
+            { error: (e as any)?.message || 'Failed to update actions' },
             { status: 500 }
         );
     }

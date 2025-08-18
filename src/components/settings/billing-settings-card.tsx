@@ -83,7 +83,7 @@ interface BillingData {
 
 interface BillingSettingsCardProps {
   user: User;
-  profile: any;
+  profile: unknown;
 }
 
 const planFeatures = {
@@ -175,7 +175,7 @@ export default function BillingSettingsCard({
 
       const { url } = result.data as { url: string };
       window.open(url, "_blank");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error opening billing portal:", error);
       toast.error("Failed to open billing portal");
     } finally {
@@ -199,7 +199,7 @@ export default function BillingSettingsCard({
 
       const { url } = result.data as { url: string };
       window.location.href = url;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating checkout session:", error);
       toast.error("Failed to start upgrade process");
     } finally {

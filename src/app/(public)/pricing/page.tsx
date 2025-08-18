@@ -432,7 +432,7 @@ function PricingContent() {
 															{item.starter}
 														</td>
 														<td className="p-4 text-center text-sm">
-															{(item as any).agency}
+																{(item as any).agency}
 														</td>
 														<td className="p-4 text-center text-sm">
 															{item.enterprise}
@@ -554,4 +554,3 @@ export default function PricingPage() {
 		</Suspense>
 	);
 }
-

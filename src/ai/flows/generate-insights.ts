@@ -75,7 +75,7 @@ export type GenerateInsightsOutput = z.infer<
 export async function generateInsights(
   input: GenerateInsightsInput
 ): Promise<GenerateInsightsOutput> {
-  return generateInsightsFlow(input);
+  return _generateInsightsFlow(input);
 }
 
 const insightsPrompt = ai.definePrompt({
@@ -106,7 +106,7 @@ Your entire output MUST be a single, valid JSON object that conforms to the prov
 `,
 });
 
-const generateInsightsFlow = ai.defineFlow(
+const _generateInsightsFlow = ai.defineFlow(
   {
     name: "generateInsightsFlow",
     inputSchema: GenerateInsightsInputSchema,
@@ -117,3 +117,5 @@ const generateInsightsFlow = ai.defineFlow(
     return output!;
   }
 );
+
+export const generateInsightsFlow = _generateInsightsFlow;

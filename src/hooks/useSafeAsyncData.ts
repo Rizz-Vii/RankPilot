@@ -14,11 +14,11 @@ interface AsyncDataState<T> {
     isStale: boolean;
 }
 
-interface AsyncDataOptions {
+interface AsyncDataOptions<T> {
     retryCount?: number;
     retryDelay?: number;
     onError?: (error: Error) => void;
-    onSuccess?: (data: any) => void;
+    onSuccess?: (data: T) => void;
     enabled?: boolean;
     staleTime?: number; // ms
 }
@@ -31,7 +31,7 @@ export function useSafeAsyncData<T>(
     fetchFn: () => Promise<T>,
     dependencies: React.DependencyList,
     defaultValue: T,
-    options: AsyncDataOptions = {}
+    options: AsyncDataOptions<T> = {}
 ): AsyncDataState<T> {
     const [data, setData] = useState<T>(defaultValue);
     const [loading, setLoading] = useState(true);
@@ -152,7 +152,7 @@ export function useSafeFirestoreSubscription<T>(
     subscriptionFn: (callback: (data: T) => void) => () => void,
     dependencies: React.DependencyList,
     defaultValue: T,
-    options: Pick<AsyncDataOptions, 'onError' | 'onSuccess' | 'enabled'> = {}
+    options: Pick<AsyncDataOptions<T>, 'onError' | 'onSuccess' | 'enabled'> = {}
 ): Omit<AsyncDataState<T>, 'refetch'> {
     const [data, setData] = useState<T>(defaultValue);
     const [loading, setLoading] = useState(true);
@@ -209,15 +209,25 @@ export function useSafeFirestoreSubscription<T>(
  */
 export const safeAccess = {
     array: <T>(arr: T[] | undefined | null): T[] => arr || [],
-    length: (arr: any[] | undefined | null): number => arr?.length || 0,
-    property: <T>(obj: any, path: string, fallback: T): T => {
-        return path.split('.').reduce((curr, key) => curr?.[key], obj) ?? fallback;
+    length: (arr: unknown[] | undefined | null): number => arr?.length || 0,
+    property: <T>(obj: unknown, path: string, fallback: T): T => {
+        if (obj == null) return fallback;
+        const parts = path.split('.');
+        let curr: any = obj as any; // deliberate narrow to indexed container
+        for (const key of parts) {
+            if (curr && typeof curr === 'object' && key in curr) {
+                curr = curr[key];
+            } else {
+                return fallback;
+            }
+        }
+        return (curr as T) ?? fallback;
     },
-    number: (value: any, fallback = 0): number => {
+    number: (value: unknown, fallback = 0): number => {
         const num = Number(value);
         return isNaN(num) ? fallback : num;
     },
-    string: (value: any, fallback = ''): string => {
+    string: (value: unknown, fallback = ''): string => {
         return value?.toString() || fallback;
     }
 };

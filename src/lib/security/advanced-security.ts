@@ -241,7 +241,7 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
 /**
  * Log security events for monitoring
  */
-function logSecurityEvent(request: NextRequest, eventType: string, details?: any) {
+function logSecurityEvent(request: NextRequest, eventType: string, details?: unknown) {
     const securityEvent = {
         timestamp: new Date().toISOString(),
         type: eventType,
@@ -307,7 +307,7 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
  */
 export class SecurityMonitor {
     private static instance: SecurityMonitor;
-    private events: any[] = [];
+    private events: Array<{ id: string; timestamp: string; type: string; details: any }> = [];
 
     static getInstance(): SecurityMonitor {
         if (!SecurityMonitor.instance) {
@@ -316,7 +316,7 @@ export class SecurityMonitor {
         return SecurityMonitor.instance;
     }
 
-    logEvent(eventType: string, details: any) {
+    logEvent(eventType: string, details: unknown) {
         const event = {
             id: crypto.randomUUID(),
             timestamp: new Date().toISOString(),
@@ -335,11 +335,11 @@ export class SecurityMonitor {
         console.log('[SECURITY_MONITOR]', event);
     }
 
-    getRecentEvents(limit = 100): any[] {
+    getRecentEvents(limit = 100): Array<{ id: string; timestamp: string; type: string; details: any }> {
         return this.events.slice(-limit);
     }
 
-    getEventsByType(eventType: string, limit = 100): any[] {
+    getEventsByType(eventType: string, limit = 100): Array<{ id: string; timestamp: string; type: string; details: any }> {
         return this.events
             .filter(event => event.type === eventType)
             .slice(-limit);
@@ -369,7 +369,7 @@ export function validateCompliance(request: NextRequest): {
     const issues: string[] = [];
 
     // Check for required security headers in response
-    const requiredHeaders = [
+    const complianceHeaders = [
         'X-Frame-Options',
         'X-Content-Type-Options',
         'X-XSS-Protection',

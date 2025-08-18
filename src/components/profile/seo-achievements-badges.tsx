@@ -20,6 +20,10 @@ import {
   Clock,
 } from "lucide-react";
 import type { User } from "firebase/auth";
+import { asUserProfile, type UserProfile } from "../../../types/user-profile";
+
+// Minimal Firestore-like timestamp support
+interface ActivityTimestamp { seconds?: number; toDate?: () => Date }
 
 interface Activity {
   id: string;
@@ -28,13 +32,13 @@ interface Activity {
   url?: string;
   keywords?: string[];
   score?: number;
-  timestamp: any;
-  metadata?: any;
+  timestamp: ActivityTimestamp | Date | number;
+  metadata?: unknown;
 }
 
 interface SEOAchievementsBadgesProps {
   user: User;
-  profile: any;
+  profile: unknown; // runtime fetched – normalized via asUserProfile
   activities: Activity[];
 }
 
@@ -54,6 +58,7 @@ export default function SEOAchievementsBadges({
   profile,
   activities,
 }: SEOAchievementsBadgesProps) {
+  const prof: UserProfile | undefined = asUserProfile(profile);
   // Calculate achievement progress
   const auditCount = activities.filter((a) => a.type === "audit").length;
   const keywordCount = activities.filter(
@@ -79,7 +84,17 @@ export default function SEOAchievementsBadges({
       earned: auditCount >= 1,
       earnedDate:
         auditCount >= 1
-          ? activities.find((a) => a.type === "audit")?.timestamp.toDate()
+          ? (() => {
+              const ts = activities.find((a) => a.type === "audit")?.timestamp;
+              if (!ts) return undefined;
+              if (typeof ts === 'number') return new Date(ts * 1000);
+              if (ts instanceof Date) return ts;
+              if (typeof ts === 'object' && 'toDate' in ts && typeof ts.toDate === 'function') {
+                try { return ts.toDate(); } catch {}
+              }
+              if (typeof ts === 'object' && 'seconds' in ts && typeof ts.seconds === 'number') return new Date(ts.seconds * 1000);
+              return undefined;
+            })()
           : undefined,
       progress: Math.min(auditCount, 1),
       requirement: 1,
@@ -144,14 +159,14 @@ export default function SEOAchievementsBadges({
       description: "Completed profile with all details",
       icon: <Users className="h-5 w-5" />,
       earned: !!(
-        profile?.displayName &&
-        profile?.bio &&
-        profile?.primaryKeywords
+        prof?.displayName &&
+        prof?.bio &&
+        prof?.primaryKeywords
       ),
       progress: [
-        profile?.displayName,
-        profile?.bio,
-        profile?.primaryKeywords,
+        prof?.displayName,
+        prof?.bio,
+        prof?.primaryKeywords,
       ].filter(Boolean).length,
       requirement: 3,
     },

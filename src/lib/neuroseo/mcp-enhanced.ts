@@ -6,7 +6,7 @@
 import { MCPResponse, mcpService } from '@/lib/mcp';
 
 export interface NeuroSEOMCPAnalysis {
-    originalAnalysis: any;
+    originalAnalysis: unknown;
     mcpEnhancements: {
         huggingfaceModels?: MCPResponse;
         competitorAnalysis?: MCPResponse;
@@ -181,14 +181,14 @@ export class NeuroSEOMCPOrchestrator {
     /**
      * Generate strategic insights with Sequential Thinking MCP
      */
-    async generateStrategicInsights(analysisResults: any): Promise<MCPResponse> {
+    async generateStrategicInsights(analysisResults: { performance?: number; contentQuality?: string; technicalSEO?: string; competitivePosition?: string;[k: string]: unknown; }): Promise<MCPResponse> {
         try {
             const problemStatement = `
         SEO Analysis Results Summary:
-        - Performance Score: ${analysisResults.performance || 85}
-        - Content Quality: ${analysisResults.contentQuality || 'Good'}
-        - Technical SEO: ${analysisResults.technicalSEO || 'Needs Improvement'}
-        - Competitive Position: ${analysisResults.competitivePosition || 'Moderate'}
+    - Performance Score: ${typeof analysisResults.performance === 'number' ? analysisResults.performance : 85}
+    - Content Quality: ${typeof analysisResults.contentQuality === 'string' ? analysisResults.contentQuality : 'Good'}
+    - Technical SEO: ${typeof analysisResults.technicalSEO === 'string' ? analysisResults.technicalSEO : 'Needs Improvement'}
+    - Competitive Position: ${typeof analysisResults.competitivePosition === 'string' ? analysisResults.competitivePosition : 'Moderate'}
         
         Generate strategic recommendations for improvement.
       `;

@@ -67,7 +67,7 @@ export const UXEnhancedComponent: React.FC<UXEnhancedComponentProps> = ({
 
   const handleActionComplete = (
     action: string,
-    metadata: Record<string, any> = {}
+    metadata: Record<string, unknown> = {}
   ) => {
     // Track gamification action
     const { newAchievements, levelUp } = gamification.trackAction(action, {

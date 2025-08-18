@@ -4,7 +4,7 @@
  */
 
 import { LRUCache } from 'lru-cache';
-import { NeuroSEOSuite } from '../neuroseo';
+import { NeuroSEOSuite, type NeuroSEOReport, type KeyInsight } from '../neuroseo';
 
 interface CacheConfig {
     max: number;
@@ -17,8 +17,26 @@ interface NeuroSEORequest {
     analysisType: 'comprehensive' | 'competitive' | 'seo-focused' | 'content-focused';
     userPlan: string;
     userId: string;
-}interface CachedResult {
-    data: any;
+}
+
+interface OptimizedMergedResult {
+    summary: {
+        totalAnalyzed: number;
+        averageScore: number;
+        insights: KeyInsight[];
+    };
+    engines: Record<string, unknown[]>; // Aggregated per-engine arrays
+    metadata: {
+        totalUrls: number;
+        processedBatches: number;
+        optimizationApplied: boolean;
+        timestamp: number;
+    };
+    batches: NeuroSEOReport[]; // Raw batch reports (reference for drill‑down)
+}
+
+interface CachedResult {
+    data: OptimizedMergedResult;
     timestamp: number;
     userPlan: string;
 }
@@ -35,7 +53,7 @@ interface MemoryStats {
 export class EnhancedNeuroSEOOrchestrator {
     private cache: LRUCache<string, CachedResult>;
     private neuroSEO: NeuroSEOSuite;
-    private requestQueue: Map<string, Promise<any>>;
+    private requestQueue: Map<string, Promise<OptimizedMergedResult>>;
     private memoryThreshold: number;
     private cacheConfig: CacheConfig;
 
@@ -55,12 +73,13 @@ export class EnhancedNeuroSEOOrchestrator {
     /**
      * Run NeuroSEO™ analysis with intelligent caching
      */
-    async runAnalysis(request: NeuroSEORequest): Promise<any> {
+    async runAnalysis(request: NeuroSEORequest): Promise<OptimizedMergedResult> {
         const cacheKey = this.generateCacheKey(request);
 
         // Check for existing request in progress
         if (this.requestQueue.has(cacheKey)) {
-            return this.requestQueue.get(cacheKey);
+            const inFlight = this.requestQueue.get(cacheKey);
+            if (inFlight) return inFlight;
         }
 
         // Check cache first
@@ -105,7 +124,7 @@ export class EnhancedNeuroSEOOrchestrator {
     /**
      * Get cached result with plan-based validation
      */
-    private getCachedResult(cacheKey: string, userPlan: string): any | null {
+    private getCachedResult(cacheKey: string, userPlan: string): OptimizedMergedResult | null {
         const cached = this.cache.get(cacheKey);
 
         if (!cached) return null;
@@ -125,7 +144,7 @@ export class EnhancedNeuroSEOOrchestrator {
     /**
      * Set cached result with metadata
      */
-    private setCachedResult(cacheKey: string, data: any, userPlan: string): void {
+    private setCachedResult(cacheKey: string, data: OptimizedMergedResult, userPlan: string): void {
         const cachedResult: CachedResult = {
             data,
             timestamp: Date.now(),
@@ -138,7 +157,7 @@ export class EnhancedNeuroSEOOrchestrator {
     /**
      * Perform actual NeuroSEO™ analysis with optimizations
      */
-    private async performAnalysis(request: NeuroSEORequest): Promise<any> {
+    private async performAnalysis(request: NeuroSEORequest): Promise<OptimizedMergedResult> {
         try {
             // Add performance monitoring
             const startTime = performance.now();
@@ -177,7 +196,7 @@ export class EnhancedNeuroSEOOrchestrator {
     /**
      * OPTIMIZATION: Run analysis with parallel engine execution and token efficiency
      */
-    private async runOptimizedAnalysis(request: NeuroSEORequest): Promise<any> {
+    private async runOptimizedAnalysis(request: NeuroSEORequest): Promise<OptimizedMergedResult> {
         // OPTIMIZATION 1: Batch URLs for efficient processing
         const batchSize = this.getBatchSize(request.userPlan);
         const urlBatches = this.chunkArray(request.urls, batchSize);
@@ -241,9 +260,8 @@ export class EnhancedNeuroSEOOrchestrator {
     /**
      * Merge optimized results with intelligent deduplication
      */
-    private mergeOptimizedResults(batchResults: any[], request: NeuroSEORequest): any {
-        // OPTIMIZATION: Intelligent result merging to reduce redundancy
-        const mergedResult = {
+    private mergeOptimizedResults(batchResults: NeuroSEOReport[], request: NeuroSEORequest): OptimizedMergedResult {
+        return {
             summary: this.mergeSummaries(batchResults),
             engines: this.mergeEngineResults(batchResults),
             metadata: {
@@ -251,10 +269,9 @@ export class EnhancedNeuroSEOOrchestrator {
                 processedBatches: batchResults.length,
                 optimizationApplied: true,
                 timestamp: Date.now()
-            }
+            },
+            batches: batchResults
         };
-
-        return mergedResult;
     }
 
     /**
@@ -278,40 +295,48 @@ export class EnhancedNeuroSEOOrchestrator {
     /**
      * Merge summaries from batch results
      */
-    private mergeSummaries(batchResults: any[]): any {
-        // Intelligent summary merging logic
-        return batchResults.reduce((merged, batch) => {
-            if (batch?.summary) {
-                return {
-                    ...merged,
-                    totalAnalyzed: (merged.totalAnalyzed || 0) + (batch.summary.totalAnalyzed || 0),
-                    averageScore: this.calculateWeightedAverage(merged.averageScore, batch.summary.averageScore),
-                    insights: [...(merged.insights || []), ...(batch.summary.insights || [])]
-                };
-            }
-            return merged;
-        }, {});
+    private mergeSummaries(batchResults: NeuroSEOReport[]): OptimizedMergedResult['summary'] {
+        let totalAnalyzed = 0;
+        let scoreAccumulator = 0;
+        const insights: KeyInsight[] = [];
+        batchResults.forEach(r => {
+            totalAnalyzed += r.crawlResults.length;
+            scoreAccumulator += r.overallScore;
+            if (Array.isArray(r.keyInsights)) insights.push(...r.keyInsights);
+        });
+        const averageScore = batchResults.length ? Math.round(scoreAccumulator / batchResults.length) : 0;
+        // Deduplicate insights by title to avoid repetition
+        const seen = new Set<string>();
+        const deduped = insights.filter(i => {
+            if (seen.has(i.title)) return false;
+            seen.add(i.title);
+            return true;
+        }).slice(0, 100); // cap to prevent runaway growth
+        return { totalAnalyzed, averageScore, insights: deduped };
     }
 
     /**
      * Merge engine results from batch results
      */
-    private mergeEngineResults(batchResults: any[]): Record<string, any[]> {
-        // Merge results from all engines across batches
-        const engineResults: Record<string, any[]> = {};
-
-        batchResults.forEach(batch => {
-            if (batch?.engines) {
-                Object.keys(batch.engines).forEach(engineName => {
-                    if (!engineResults[engineName]) {
-                        engineResults[engineName] = [];
-                    }
-                    engineResults[engineName].push(batch.engines[engineName]);
-                });
-            }
+    private mergeEngineResults(batchResults: NeuroSEOReport[]): Record<string, unknown[]> {
+        // Aggregate per-engine style arrays from the canonical report fields
+        const engines: Record<string, unknown[]> = {
+            crawl: [],
+            semantic: [],
+            visibility: [],
+            trust: [],
+            rewrite: [],
+            engagement: []
+        };
+        batchResults.forEach(r => {
+            engines.crawl.push(...r.crawlResults);
+            engines.semantic.push(...r.semanticAnalysis);
+            engines.visibility.push(...r.visibilityAnalysis);
+            engines.trust.push(...r.trustAnalysis);
+            if (r.rewriteRecommendations) engines.rewrite.push(...r.rewriteRecommendations);
+            if (r.engagementAnalysis) engines.engagement.push(...r.engagementAnalysis);
         });
-
-        return engineResults;
+        return engines;
     }
 
     /**
@@ -327,8 +352,9 @@ export class EnhancedNeuroSEOOrchestrator {
      * Check memory usage and clear cache if needed
      */
     private async checkMemoryUsage(): Promise<void> {
-        if (typeof window !== 'undefined' && 'memory' in performance) {
-            const memory = (performance as any).memory;
+        if (typeof window !== 'undefined' && typeof (performance as any)?.memory === 'object') {
+            // Non‑standard: Chrome exposes performance.memory (mark as unsafe cast)
+            const memory = (performance as any).memory as { usedJSHeapSize: number; totalJSHeapSize: number; };
             const memoryStats: MemoryStats = {
                 used: memory.usedJSHeapSize,
                 total: memory.totalJSHeapSize,
@@ -340,8 +366,8 @@ export class EnhancedNeuroSEOOrchestrator {
                 this.clearOldCache();
 
                 // Force garbage collection if available
-                if ('gc' in window) {
-                    (window as any).gc();
+                if (typeof (window as any).gc === 'function') {
+                    try { (window as any).gc(); } catch {/* ignore */ }
                 }
             }
         }
@@ -362,7 +388,7 @@ export class EnhancedNeuroSEOOrchestrator {
     }    /**
      * Handle cache disposal
      */
-    private onCacheDispose(value: CachedResult, key: string): void {
+    private onCacheDispose(_value: CachedResult, key: string): void {
         // Log cache eviction for monitoring
         console.debug('Cache entry evicted:', key);
     }
@@ -376,7 +402,7 @@ export class EnhancedNeuroSEOOrchestrator {
         requestSize: number;
         responseSize: number;
     }): void {
-        if (typeof window !== 'undefined' && 'gtag' in window) {
+        if (typeof window !== 'undefined' && typeof (window as any).gtag === 'function') {
             (window as any).gtag('event', 'neuroseo_performance', {
                 event_category: 'AI Performance',
                 operation: metrics.operation,

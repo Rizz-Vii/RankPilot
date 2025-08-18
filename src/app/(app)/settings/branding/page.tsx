@@ -85,39 +85,20 @@ export default function WhiteLabelPage() {
     }
   }, [user, canUseFeature]);
 
-  const fetchBrandingSettings = async () => {
+  async function fetchBrandingSettings() {
     try {
-      // Mock data - replace with actual API call
-      const mockBranding: BrandingSettings = {
-        companyName: "Acme SEO Solutions",
-        logo: "/images/sample-logo.png",
-        favicon: "/images/sample-favicon.ico",
-        primaryColor: "hsl(var(--primary))",
-        secondaryColor: "hsl(var(--secondary))",
-        accentColor: "hsl(var(--accent))",
-        fontFamily: "Inter",
-        customCSS: "/* Custom styles */\n.header { border-radius: 8px; }",
-      };
-
-      const mockReportSettings: ReportSettings = {
-        showPoweredBy: false,
-        customFooter: "© 2024 Acme SEO Solutions. All rights reserved.",
-        headerText: "Professional SEO Analysis Report",
-        contactInfo: "contact@acmeseo.com | (555) 123-4567",
-        disclaimerText:
-          "This report is confidential and intended for internal use only.",
-        reportTemplate: "modern",
-      };
-
-      setBranding(mockBranding);
-      setReportSettings(mockReportSettings);
-    } catch (error) {
-      console.error("Error fetching branding settings:", error);
-      toast.error("Failed to load branding settings");
+      // Demo state; replace with real API
+      setBranding((b) => ({
+        ...b,
+        companyName: "RankPilot",
+        logo: b.logo,
+        favicon: b.favicon,
+      }));
+      setReportSettings((r) => ({ ...r, showPoweredBy: true }));
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   const saveBrandingSettings = async () => {
     setIsSaving(true);
@@ -661,4 +642,3 @@ export default function WhiteLabelPage() {
     </FeatureGate>
   );
 }
-

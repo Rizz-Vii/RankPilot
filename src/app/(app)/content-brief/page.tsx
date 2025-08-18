@@ -239,7 +239,7 @@ export default function ContentBriefPage() {
         contentType: 'blog post'
       };
   const result = await generateContentBrief(contentBriefInput);
-      setBriefResult(result);
+  setBriefResult(result);
   markLive();
 
       if (user) {
@@ -260,8 +260,9 @@ export default function ContentBriefPage() {
           resultsSummary: `Generated content brief for keyword: "${values.keyword}".`,
         });
       }
-    } catch (e: any) {
-      setError(e.message || "An unexpected error occurred.");
+    } catch (e: unknown) {
+      const msg = (e && typeof e === 'object' && 'message' in e) ? (e as any).message : 'An unexpected error occurred.';
+      setError(msg);
       if (!briefResult) markFallback();
     } finally {
       setIsLoading(false);

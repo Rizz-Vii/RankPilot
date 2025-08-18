@@ -219,7 +219,7 @@ export class EmotionalUXMapper {
     userId: string,
     stage: string,
     emotion: EmotionalState,
-    context: Record<string, any> = {}
+    context: Record<string, unknown> = {}
   ): void {
     const timestamp = new Date().toISOString();
     const data = {
@@ -244,7 +244,7 @@ export class EmotionalUXMapper {
     console.log("Emotional state tracked:", data);
   }
 
-  static getStoredEmotionalData(userId: string): any[] {
+  static getStoredEmotionalData(userId: string): unknown[] {
     if (typeof window === "undefined") return [];
 
     const stored = localStorage.getItem(`${this.STORAGE_KEY}_${userId}`);
@@ -255,15 +255,16 @@ export class EmotionalUXMapper {
     userId: string,
     stage: string
   ): EmotionalState[] {
-    const data = this.getStoredEmotionalData(userId);
+    const data = this.getStoredEmotionalData(userId) as Array<{ stage?: string; emotion?: EmotionalState }>;
     return data
       .filter((entry) => entry.stage === stage)
-      .map((entry) => entry.emotion);
+      .map((entry) => entry.emotion as EmotionalState)
+      .filter(Boolean) as EmotionalState[];
   }
 
   static getLastEmotionalState(userId: string): EmotionalState | null {
-    const data = this.getStoredEmotionalData(userId);
-    return data.length > 0 ? data[data.length - 1].emotion : null;
+    const data = this.getStoredEmotionalData(userId) as Array<{ emotion?: EmotionalState }>;
+    return data.length > 0 ? ((data[data.length - 1].emotion as EmotionalState | undefined) ?? null) : null;
   }
 
   static getOptimizationSuggestions(
@@ -325,7 +326,7 @@ export class EmotionalUXMapper {
 export const useEmotionalUXMapping = (userId: string, currentStage: string) => {
   const trackEmotion = (
     emotion: EmotionalState,
-    context: Record<string, any> = {}
+    context: Record<string, unknown> = {}
   ) => {
     EmotionalUXMapper.trackEmotionalState(
       userId,

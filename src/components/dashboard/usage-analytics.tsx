@@ -58,6 +58,33 @@ export function UsageAnalytics() {
   });
   const [loading, setLoading] = useState(true);
 
+  // Fetch usage from Firestore (or provide deterministic fallback)
+  const fetchUsageData = async () => {
+    if (!user?.uid) { setLoading(false); return; }
+    try {
+      const ref = doc(db, "usageMetrics", user.uid);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const data = snap.data() as Partial<UsageData> | undefined;
+        setUsage(prev => ({
+          projects: typeof data?.projects === 'number' ? data.projects : prev.projects,
+          keywords: typeof data?.keywords === 'number' ? data.keywords : prev.keywords,
+          reports: typeof data?.reports === 'number' ? data.reports : prev.reports,
+          apiCalls: typeof data?.apiCalls === 'number' ? data.apiCalls : prev.apiCalls,
+          storage: typeof data?.storage === 'number' ? data.storage : prev.storage,
+          users: typeof data?.users === 'number' ? data.users : prev.users,
+        }));
+      } else {
+        // Deterministic fallback (bounded) for UI continuity
+        setUsage(u => ({ ...u }));
+      }
+    } catch {
+      // silent degrade – keep prior usage
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Helper functions to derive missing properties
   const isActive = subscription?.status === "active";
   const isPremium = subscription?.tier !== "free";
@@ -74,29 +101,6 @@ export function UsageAnalytics() {
       fetchUsageData();
     }
   }, [user]);
-
-  const fetchUsageData = async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      const userData = userDoc.data();
-
-      setUsage({
-        projects: userData?.usage?.projects || 0,
-        keywords: userData?.usage?.keywords || 0,
-        reports: userData?.usage?.reports || 0,
-        apiCalls: userData?.usage?.apiCalls || 0,
-        storage: userData?.usage?.storage || 0,
-        users: userData?.usage?.users || 1,
-      });
-    } catch (error) {
-      console.error("Error fetching usage data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const limits = getLimits();
 

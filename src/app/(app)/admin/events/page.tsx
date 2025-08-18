@@ -1,5 +1,5 @@
 import React from 'react';
-import FeatureGate from '@/components/feature-gate';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 
 // Admin Event Explorer scaffold (T29 / DQ1)
 // Displays system events once Event Backbone implemented.

@@ -62,7 +62,7 @@ export type ContentBriefOutput = z.infer<typeof ContentBriefOutputSchema>;
 export async function generateContentBrief(
   input: ContentBriefInput
 ): Promise<ContentBriefOutput> {
-  return contentBriefFlow(input);
+  return _contentBriefFlow(input);
 }
 
 const briefPrompt = ai.definePrompt({
@@ -93,7 +93,7 @@ Your entire output MUST be a single, valid JSON object that conforms to the prov
 `,
 });
 
-const contentBriefFlow = ai.defineFlow(
+const _contentBriefFlow = ai.defineFlow(
   {
     name: "contentBriefFlow",
     inputSchema: ContentBriefInputSchema,
@@ -104,3 +104,5 @@ const contentBriefFlow = ai.defineFlow(
     return output!;
   }
 );
+
+export const contentBriefFlow = _contentBriefFlow;

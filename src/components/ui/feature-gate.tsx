@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
-import { canAccessFeature, canAccessCapability, FEATURE_ACCESS, TIER_HIERARCHY } from '@/lib/access-control';
+import { canAccessFeature, canAccessCapability, FEATURE_ACCESS, TIER_HIERARCHY, type SubscriptionTier, type FeatureConfig } from '@/lib/access-control';
 import { Crown, Lock, Star, Zap } from 'lucide-react';
 import React from 'react';
 
@@ -82,11 +82,12 @@ function UpgradePrompt({
     currentTier
 }: {
     feature: string;
-    featureConfig: any;
-    currentTier: string;
+    featureConfig: FeatureConfig;
+    currentTier: SubscriptionTier | string;
 }) {
-    const requiredTier = featureConfig.requiredTier || 'starter';
-    const currentTierIndex = TIER_HIERARCHY.indexOf(currentTier as any);
+    const normalizedCurrent: SubscriptionTier = (TIER_HIERARCHY.includes(currentTier as SubscriptionTier) ? currentTier : 'free') as SubscriptionTier;
+    const requiredTier: SubscriptionTier = featureConfig.requiredTier || 'starter';
+    const currentTierIndex = TIER_HIERARCHY.indexOf(normalizedCurrent);
     const requiredTierIndex = TIER_HIERARCHY.indexOf(requiredTier);
 
     const tierIcons = {
@@ -117,8 +118,8 @@ function UpgradePrompt({
             <CardContent className="text-center space-y-4">
                 <div className="flex items-center justify-center gap-2">
                     <span className="text-sm text-muted-foreground">Requires:</span>
-                    <Badge variant="secondary" className={tierColors[requiredTier as keyof typeof tierColors]}>
-                        {tierIcons[requiredTier as keyof typeof tierIcons]}
+                    <Badge variant="secondary" className={tierColors[requiredTier]}>
+                        {tierIcons[requiredTier]}
                         <span className="ml-1 capitalize">{requiredTier}</span>
                     </Badge>
                 </div>
@@ -126,7 +127,7 @@ function UpgradePrompt({
                 {currentTierIndex < requiredTierIndex && (
                     <div className="space-y-2">
                         <p className="text-sm text-muted-foreground">
-                            Your current plan: <Badge variant="outline" className="capitalize">{currentTier}</Badge>
+                            Your current plan: <Badge variant="outline" className="capitalize">{normalizedCurrent}</Badge>
                         </p>
                         <Button
                             className="w-full"
@@ -184,8 +185,8 @@ export function withFeatureGate<P extends object>(
  */
 export function useFeatureAccess(feature: string): {
     hasAccess: boolean;
-    featureConfig: any;
-    requiredTier: string | null;
+    featureConfig: FeatureConfig | null;
+    requiredTier: SubscriptionTier | null;
 } {
     const { user } = useAuth();
     const { subscription, userAccess } = useSubscription();

@@ -24,7 +24,7 @@ export interface DashboardWidget {
     dataSource: {
         type: 'neuroseo' | 'analytics' | 'keywords' | 'performance' | 'custom';
         query: string;
-        filters?: Record<string, any>;
+        filters?: Record<string, unknown>;
         refreshInterval?: number; // seconds
     };
     visualization: {
@@ -32,7 +32,7 @@ export interface DashboardWidget {
         colorScheme?: string;
         showLegend?: boolean;
         showGrid?: boolean;
-        customConfig?: Record<string, any>;
+        customConfig?: Record<string, unknown>;
     };
     styling: {
         backgroundColor?: string;
@@ -107,7 +107,8 @@ export interface DashboardTemplate {
 export class CustomDashboardBuilder {
     private dashboards: Map<string, DashboardLayout> = new Map();
     private templates: Map<string, DashboardTemplate> = new Map();
-    private dataProviders: Map<string, any> = new Map();
+    // Data providers expose a uniform query interface; results are heterogeneous (kept as unknown)
+    private dataProviders: Map<string, { query: (queryType: string, filters?: Record<string, unknown>) => Promise<unknown> | unknown }> = new Map();
     private realTimeSubscriptions: Map<string, NodeJS.Timeout> = new Map();
     // Simple in-memory cache TTL (ms) for Firestore template reloads
     private lastTemplateSync = 0;
@@ -335,7 +336,7 @@ export class CustomDashboardBuilder {
     /**
      * Get widget data with real-time updates
      */
-    async getWidgetData(widgetId: string, widget: DashboardWidget): Promise<any> {
+    async getWidgetData(widgetId: string, widget: DashboardWidget): Promise<{ widgetId: string; data: unknown; timestamp: number; refreshInterval?: number; error?: string; }> {
         const { dataSource } = widget;
         const provider = this.dataProviders.get(dataSource.type);
 
@@ -344,22 +345,11 @@ export class CustomDashboardBuilder {
         }
 
         try {
-            const data = await provider.query(dataSource.query, dataSource.filters);
-
-            return {
-                widgetId,
-                data,
-                timestamp: Date.now(),
-                refreshInterval: dataSource.refreshInterval
-            };
+            const data = await provider.query(dataSource.query, dataSource.filters || {});
+            return { widgetId, data, timestamp: Date.now(), refreshInterval: dataSource.refreshInterval };
         } catch (error) {
             console.error(`[DashboardBuilder] Data fetch error for widget ${widgetId}:`, error);
-            return {
-                widgetId,
-                data: null,
-                error: 'Failed to fetch data',
-                timestamp: Date.now()
-            };
+            return { widgetId, data: null, error: 'Failed to fetch data', timestamp: Date.now() };
         }
     }
 
@@ -393,11 +383,11 @@ export class CustomDashboardBuilder {
 
             switch (format) {
                 case 'pdf':
-                    return await this.exportToPDF(exportData, options?.branding);
+                    return await this.exportToPDF(exportData);
                 case 'excel':
-                    return await this.exportToExcel(exportData, options?.branding);
+                    return await this.exportToExcel(exportData);
                 case 'json':
-                    return await this.exportToJSON(exportData);
+                    return await this.exportToJSON();
                 default:
                     return { success: false, error: 'Unsupported export format' };
             }
@@ -619,8 +609,8 @@ export class CustomDashboardBuilder {
                 }
             }
         } catch (err) {
-            // Silent degrade per policy
-            console.warn('[DashboardBuilder] Persist templates skipped:', (err as any)?.message);
+            const msg = err instanceof Error ? err.message : '';
+            console.warn('[DashboardBuilder] Persist templates skipped:', msg);
         }
     }
 
@@ -635,23 +625,25 @@ export class CustomDashboardBuilder {
             const { collection, getDocs } = await import('firebase/firestore');
             const snapshot = await getDocs(collection(db, 'dashboardTemplates'));
             snapshot.forEach(d => {
-                const data = d.data() as any;
-                if (!this.templates.has(data.id)) {
-                    this.templates.set(data.id, {
-                        id: data.id,
-                        name: data.name,
-                        description: data.description,
-                        category: data.category,
-                        preview: data.preview,
-                        requiredTier: data.requiredTier,
-                        estimatedSetupTime: data.estimatedSetupTime,
-                        layout: data.layout
+                const raw = d.data() as Partial<DashboardTemplate> & { layout?: any; };
+                if (!raw?.id) return;
+                if (!this.templates.has(raw.id)) {
+                    this.templates.set(raw.id, {
+                        id: raw.id,
+                        name: raw.name || 'Unnamed Template',
+                        description: raw.description || '',
+                        category: (raw.category as any) || 'seo',
+                        preview: raw.preview || '',
+                        requiredTier: raw.requiredTier || 'free',
+                        estimatedSetupTime: raw.estimatedSetupTime || 'unknown',
+                        layout: raw.layout as any
                     });
                 }
             });
             this.lastTemplateSync = Date.now();
         } catch (err) {
-            console.warn('[DashboardBuilder] Template sync failed:', (err as any)?.message);
+            const msg = err instanceof Error ? err.message : '';
+            console.warn('[DashboardBuilder] Template sync failed:', msg);
         }
     }
 
@@ -665,7 +657,7 @@ export class CustomDashboardBuilder {
     private setupDataProviders(): void {
         // NeuroSEO Data Provider
         this.dataProviders.set('neuroseo', {
-            query: async (queryType: string, filters?: any) => {
+            query: async (queryType: string) => {
                 // Mock NeuroSEO data - integrate with actual NeuroSEO orchestrator
                 switch (queryType) {
                     case 'overview-metrics':
@@ -689,7 +681,7 @@ export class CustomDashboardBuilder {
 
         // Keywords Data Provider
         this.dataProviders.set('keywords', {
-            query: async (queryType: string, filters?: any) => {
+            query: async (queryType: string) => {
                 switch (queryType) {
                     case 'ranking-trends':
                         return Array.from({ length: 30 }, (_, i) => ({
@@ -704,7 +696,7 @@ export class CustomDashboardBuilder {
 
         // Performance Data Provider
         this.dataProviders.set('performance', {
-            query: async (queryType: string, filters?: any) => {
+            query: async (queryType: string) => {
                 switch (queryType) {
                     case 'vitals-history':
                         return Array.from({ length: 30 }, (_, i) => ({
@@ -739,8 +731,8 @@ export class CustomDashboardBuilder {
         };
     }
 
-    private setupRealTimeUpdate(widgetId: string, dataSource: any): void {
-        if (dataSource.refreshInterval && dataSource.refreshInterval > 0) {
+    private setupRealTimeUpdate(widgetId: string, dataSource: { refreshInterval?: number }): void {
+        if (dataSource?.refreshInterval && dataSource.refreshInterval > 0) {
             const interval = setInterval(async () => {
                 // Emit real-time update event
                 console.log(`[DashboardBuilder] Real-time update for widget ${widgetId}`);
@@ -758,7 +750,7 @@ export class CustomDashboardBuilder {
         }
     }
 
-    private async generateExportData(dashboard: DashboardLayout, options?: any): Promise<any> {
+    private async generateExportData(dashboard: DashboardLayout, options?: { includeData?: boolean }): Promise<{ dashboard: { name: string; description: string; created: number; updated: number; }; widgets: Array<{ widget: DashboardWidget; data: unknown; }>; metadata: { exportedAt: number; format: string; options?: { includeData?: boolean }; }; }> {
         const exportData = {
             dashboard: {
                 name: dashboard.name,
@@ -766,7 +758,7 @@ export class CustomDashboardBuilder {
                 created: dashboard.metadata.created,
                 updated: dashboard.metadata.updated
             },
-            widgets: [] as Array<{ widget: DashboardWidget; data: any; }>,
+            widgets: [] as Array<{ widget: DashboardWidget; data: unknown; }>,
             metadata: {
                 exportedAt: Date.now(),
                 format: 'export',
@@ -787,7 +779,7 @@ export class CustomDashboardBuilder {
         return exportData;
     }
 
-    private async exportToPDF(data: any, branding?: any): Promise<any> {
+    private async exportToPDF(_data: unknown): Promise<{ success: boolean; downloadUrl: string; }> {
         // Mock PDF export - integrate with actual PDF generation library
         return {
             success: true,
@@ -795,7 +787,7 @@ export class CustomDashboardBuilder {
         };
     }
 
-    private async exportToExcel(data: any, branding?: any): Promise<any> {
+    private async exportToExcel(_data: unknown): Promise<{ success: boolean; downloadUrl: string; }> {
         // Mock Excel export - integrate with actual Excel generation library
         return {
             success: true,
@@ -803,7 +795,7 @@ export class CustomDashboardBuilder {
         };
     }
 
-    private async exportToJSON(data: any): Promise<any> {
+    private async exportToJSON(): Promise<{ success: boolean; downloadUrl: string; }> {
         return {
             success: true,
             downloadUrl: '/api/downloads/dashboard-export.json'

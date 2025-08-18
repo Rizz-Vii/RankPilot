@@ -61,7 +61,7 @@ export type SerpViewOutput = z.infer<typeof SerpViewOutputSchema>;
 export async function getSerpData(
   input: SerpViewInput
 ): Promise<SerpViewOutput> {
-  return serpViewFlow(input);
+  return _serpViewFlow(input);
 }
 
 const serpPrompt = ai.definePrompt({
@@ -83,7 +83,7 @@ Use the following API keys for enhanced analysis:
 `,
 });
 
-const serpViewFlow = ai.defineFlow(
+const _serpViewFlow = ai.defineFlow(
   {
     name: "serpViewFlow",
     inputSchema: SerpViewInputSchema,
@@ -97,3 +97,5 @@ const serpViewFlow = ai.defineFlow(
     return output;
   }
 );
+
+export const serpViewFlow = _serpViewFlow;

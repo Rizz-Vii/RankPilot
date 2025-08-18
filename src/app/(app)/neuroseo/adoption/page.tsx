@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { BarChart3 } from 'lucide-react';
 
-interface HealthPayload { kpis?: any; alerts?: any[]; metrics?: any; }
+interface HealthPayload { kpis?: unknown; alerts?: unknown[]; metrics?: unknown; }
 
 export default function AdoptionDashboard() {
   const { provenance } = useProvenance();
@@ -23,8 +23,9 @@ export default function AdoptionDashboard() {
     } catch { } finally { setLoading(false); }
   };
   useEffect(() => { load(); const id = setInterval(load, 8000); return () => clearInterval(id); }, []);
-  const crawlerPct = data?.kpis?.crawlerAggregateAdoptionPct ?? null;
-  const smPct = data?.kpis?.semanticMapAggregateAdoptionPct ?? null;
+  const kpis: any = (data as any)?.kpis;
+  const crawlerPct = (kpis?.crawlerAggregateAdoptionPct as number | undefined) ?? null;
+  const smPct = (kpis?.semanticMapAggregateAdoptionPct as number | undefined) ?? null;
   const classify = (v: number | null) => v == null ? '' : (v < 50 ? 'critical' : v < 80 ? 'warn' : 'ok');
   const statCard = (label: string, pct: number | null, help: string) => (
     <Card><CardHeader><CardTitle className="flex items-center gap-2"><BarChart3 className="h-5 w-5" />{label}</CardTitle></CardHeader><CardContent className="space-y-2"><div className="flex justify-between text-sm"><span>{label}</span><span className="font-medium">{pct!=null? pct.toFixed(2)+"%" : loading? 'Loading…':'—'}</span></div><Progress value={pct||0} className={pct!=null? classify(pct)==='critical'? 'bg-red-200': classify(pct)==='warn'? 'bg-amber-200':'bg-green-200':''} /><p className="text-xs text-muted-foreground">{help}</p></CardContent></Card>

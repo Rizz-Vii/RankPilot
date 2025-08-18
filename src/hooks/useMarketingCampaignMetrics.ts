@@ -5,12 +5,23 @@ import { db } from '@/lib/firebase';
 import { AuthContext } from '@/context/AuthContext';
 
 interface Metric { key: string; label: string; value: number; delta: number; trend: number[]; intent?: 'neutral' | 'success' | 'warning' | 'danger' | 'accent'; }
-interface Result { loading: boolean; error?: string; kpis: Metric[]; rows: any[]; addOptimistic: (row: any) => void; }
+interface MarketingCampaignDoc {
+    id: string;
+    period: string;
+    impressions?: number;
+    clicks?: number;
+    leads?: number;
+    spend?: number;
+    revenue?: number;
+    // Allow forward-compatible extension
+    [k: string]: unknown;
+}
+interface Result { loading: boolean; error?: string; kpis: Metric[]; rows: MarketingCampaignDoc[]; addOptimistic: (row: MarketingCampaignDoc) => void; }
 
 export function useMarketingCampaignMetrics(monthWindow = 6): Result {
-    const { user } = useContext<any>(AuthContext);
+    const { user } = useContext(AuthContext);
     const [state, setState] = useState<Omit<Result, 'addOptimistic'>>({ loading: true, kpis: [], rows: [] });
-    const addOptimistic = useCallback((row: any) => {
+    const addOptimistic = useCallback((row: MarketingCampaignDoc) => {
         setState(s => ({ ...s, rows: [row, ...s.rows].slice(0, 200) }));
     }, []);
     useEffect(() => {
@@ -18,12 +29,12 @@ export function useMarketingCampaignMetrics(monthWindow = 6): Result {
         const q = query(collection(db, 'marketingCampaigns'), where('userId', '==', user.uid), orderBy('period', 'desc'), limit(monthWindow * 60));
         const unsub = onSnapshot(q, snap => {
             if (cancelled) return;
-            const docs = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+            const docs: MarketingCampaignDoc[] = snap.docs.map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as MarketingCampaignDoc[];
             if (!docs.length) { setState({ loading: false, kpis: [], rows: [] }); return; }
             const periods = Array.from(new Set(docs.map(d => d.period))).sort();
             const cutoff = periods.slice(-monthWindow); const filtered = docs.filter(d => cutoff.includes(d.period));
-            const byPeriod: Record<string, any[]> = {}; for (const d of filtered) { (byPeriod[d.period] ||= []).push(d); } const ordered = Object.keys(byPeriod).sort();
-            function sum(arr: any[], f: (x: any) => number) { return arr.reduce((s, x) => s + f(x), 0); }
+            const byPeriod: Record<string, MarketingCampaignDoc[]> = {}; for (const d of filtered) { (byPeriod[d.period] ||= []).push(d); } const ordered = Object.keys(byPeriod).sort();
+            function sum(arr: MarketingCampaignDoc[], f: (x: MarketingCampaignDoc) => number) { return arr.reduce((s, x) => s + f(x), 0); }
             const last = ordered.at(-1)!; const prev = ordered.at(-2);
             const impressions = sum(byPeriod[last], d => d.impressions || 0); const prevImp = (prev ? sum(byPeriod[prev], d => d.impressions || 0) : impressions) || 1;
             const clicks = sum(byPeriod[last], d => d.clicks || 0); const ctr = impressions ? (clicks / impressions * 100) : 0;

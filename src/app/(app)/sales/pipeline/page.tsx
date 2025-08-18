@@ -22,9 +22,12 @@ export default function SalesPipelinePage() {
   const data = getMockMetrics('sales');
   const { user } = useAuth();
   const userId = user?.uid; const teamId = (user as any)?.teamId as string | undefined;
-  const [snapMetrics, setSnapMetrics] = useState<any | null>(null);
-  const [snapForecast, setSnapForecast] = useState<any | null>(null);
-  const [metricsHistory, setMetricsHistory] = useState<any[]>([]);
+  interface SalesPipelineMetricsSnapshot { pipeline:number; closedWon:number; totalDeals:number; ts:Date }
+  interface SalesPipelineForecastSnapshot { forecast:number; period:string; ts:Date }
+  const [snapMetrics, setSnapMetrics] = useState<SalesPipelineMetricsSnapshot | null>(null);
+  const [snapForecast, setSnapForecast] = useState<SalesPipelineForecastSnapshot | null>(null);
+  interface PipelineHistory { ts:Date; pipeline:number }
+  const [metricsHistory, setMetricsHistory] = useState<PipelineHistory[]>([]);
   const { toast } = useToast();
   const { trigger, running } = useAutomationTrigger();
   const [addOpen, setAddOpen] = useState(false);
@@ -41,10 +44,10 @@ export default function SalesPipelinePage() {
         ]);
         if(!active) return;
         if(m.length) {
-          setSnapMetrics({ pipeline: m[0].pipeline, closedWon: m[0].closedWon, totalDeals: m[0].totalDeals, ts: m[0].createdAt?.toDate?.() || new Date() });
-          setMetricsHistory(m.map(s => ({ ts: s.createdAt?.toDate?.() || new Date(), pipeline: s.pipeline })));
+          setSnapMetrics({ pipeline: m[0].pipeline, closedWon: m[0].closedWon, totalDeals: m[0].totalDeals, ts: (m[0].createdAt as any)?.toDate?.() || new Date() });
+          setMetricsHistory(m.map(s => ({ ts: (s.createdAt as any)?.toDate?.() || new Date(), pipeline: s.pipeline })));
         }
-        if(f.length) setSnapForecast({ forecast: f[0].forecast, period: f[0].period, ts: f[0].createdAt?.toDate?.() || new Date() });
+  if(f.length) setSnapForecast({ forecast: f[0].forecast, period: f[0].period, ts: (f[0].createdAt as any)?.toDate?.() || new Date() });
     if(m.length || f.length) { markLive(); } else { markFallback(); }
       } finally { if(active) setLoadingSnaps(false); }
     })();
@@ -54,9 +57,9 @@ export default function SalesPipelinePage() {
   function handleAutomation(action: 'salesForecastSnapshot'|'salesRefreshMetrics') {
     trigger(action, {
       optimistic: action === 'salesRefreshMetrics' ? () => {
-        // optimistic: inject a pseudo snapshot bar timestamp to visually indicate refresh
-  setSnapMetrics((s: any) => s ? { ...s, ts: new Date() } : s);
-  setMetricsHistory((h: any[]) => h.length ? [{ ...h[0], ts: new Date() }, ...h] : h);
+    // optimistic: inject a pseudo snapshot bar timestamp to visually indicate refresh
+  setSnapMetrics((s) => s ? { ...s, ts: new Date() } : s);
+  setMetricsHistory((h) => h.length ? [{ ...h[0], ts: new Date() }, ...h] : h);
       } : undefined,
       label: action
     });
@@ -64,7 +67,7 @@ export default function SalesPipelinePage() {
   return (
     <FeatureGate feature="sales_pipeline" requiredTier="starter" showUpgrade>
       <div className="p-6 space-y-10">
-  <AddDealModal open={addOpen} onOpenChange={setAddOpen} onCreated={(d)=> { /* lightweight optimistic pipeline adjustment */ setSnapMetrics((s: any) => s ? { ...s, totalDeals: (s.totalDeals||0)+1, pipeline: s.pipeline + (d.amount||0) } : s); }} />
+  <AddDealModal open={addOpen} onOpenChange={setAddOpen} onCreated={(d: any)=> { /* lightweight optimistic pipeline adjustment */ setSnapMetrics((s) => s ? { ...s, totalDeals: (s.totalDeals||0)+1, pipeline: s.pipeline + (d?.amount||0) } : s); }} />
   <ToolPageHeader
           title="Sales Pipeline"
           description="Stage health, velocity, conversion yield & coverage readiness for forecast confidence."
@@ -88,7 +91,7 @@ export default function SalesPipelinePage() {
                   <p className="text-muted-foreground">Pipeline {snapMetrics.pipeline.toLocaleString()} · Deals {snapMetrics.totalDeals} · Won {snapMetrics.closedWon}</p>
                   {metricsHistory.length > 1 && (
                     <div className="flex gap-1 items-end mt-1" aria-label="Pipeline mini history">
-                      {metricsHistory.slice(0,8).reverse().map((h,i,a)=> {
+                      {metricsHistory.slice(0,8).reverse().map((h,i)=> {
                         const max = Math.max(...metricsHistory.map(x=> x.pipeline));
                         const pct = max? Math.max(4, Math.round((h.pipeline / max)*32)) : 4;
                         return <span key={i} className="inline-block w-1.5 rounded-sm bg-primary/70" style={{height: pct}} aria-hidden="true" />;

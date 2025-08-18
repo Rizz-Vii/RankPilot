@@ -17,14 +17,15 @@ export async function GET() {
         'neuroSeoAnalyses',
         'linkAnalyses'
     ];
-    const results: Record<string, any> = {};
+    const results: Record<string, unknown> = {};
     for (const colName of targets) {
         try {
             const q = query(collection(db, colName), limit(1));
             const snap = await getDocs(q);
             results[colName] = { ok: true, count: snap.size };
-        } catch (e: any) {
-            results[colName] = { ok: false, error: e?.code || e?.message };
+        } catch (e: unknown) {
+            const err = e as any;
+            results[colName] = { ok: false, error: err?.code || err?.message };
         }
     }
     return NextResponse.json({ ts: new Date().toISOString(), results });

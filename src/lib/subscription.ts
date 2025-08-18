@@ -16,19 +16,29 @@ export async function getUserSubscription(
 ): Promise<SubscriptionData> {
   try {
     const userDoc = await getDoc(doc(db, "users", userId));
-    const userData = userDoc.data();
+    const userData = userDoc.data() as Record<string, unknown> | undefined;
 
     if (!userData) {
       return { status: "free", tier: "free" };
     }
 
+    const toDate = (v: unknown): Date | undefined => {
+      if (!v) return undefined;
+      if (v instanceof Date) return v;
+      const maybeTs = v as { toDate?: () => Date };
+      return typeof maybeTs.toDate === "function" ? maybeTs.toDate() : undefined;
+    };
+
+    const status = (userData["subscriptionStatus"] as SubscriptionData["status"]) || "free";
+    const tier = (userData["subscriptionTier"] as SubscriptionData["tier"]) || "free";
+
     return {
-      status: userData.subscriptionStatus || "free",
-      tier: userData.subscriptionTier || "free",
-      customerId: userData.stripeCustomerId,
-      subscriptionId: userData.stripeSubscriptionId,
-      currentPeriodEnd: userData.nextBillingDate?.toDate(),
-      cancelAtPeriodEnd: userData.cancelAtPeriodEnd || false,
+      status,
+      tier,
+      customerId: userData["stripeCustomerId"] as string | undefined,
+      subscriptionId: userData["stripeSubscriptionId"] as string | undefined,
+      currentPeriodEnd: toDate(userData["nextBillingDate"]),
+      cancelAtPeriodEnd: (userData["cancelAtPeriodEnd"] as boolean) || false,
     };
   } catch (error) {
     console.error("Error fetching user subscription:", error);
@@ -41,7 +51,7 @@ export async function updateUserSubscription(
   subscriptionData: Partial<SubscriptionData>
 ): Promise<void> {
   try {
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = Object.create(null);
 
     if (subscriptionData.status) {
       updateData.subscriptionStatus = subscriptionData.status;

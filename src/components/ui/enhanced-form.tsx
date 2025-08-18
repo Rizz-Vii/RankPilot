@@ -11,15 +11,15 @@ interface EnhancedFormContextType {
   isSubmitting: boolean;
   errors: Record<string, string>;
   touched: Record<string, boolean>;
-  values: Record<string, any>;
-  setFieldValue: (name: string, value: any) => void;
+  values: Record<string, unknown>;
+  setFieldValue: (name: string, value: unknown) => void;
   setFieldTouched: (name: string, touched: boolean) => void;
   setFieldError: (name: string, error: string) => void;
   clearFieldError: (name: string) => void;
   /**
    * Validation schema for type-safe field validation
    */
-  schema?: any;
+  schema?: unknown;
   /**
    * Field registration for better composition
    */
@@ -32,9 +32,9 @@ interface EnhancedFormContextType {
 }
 
 interface FieldConfig {
-  validate?: (value: any) => string | undefined;
-  transform?: (value: any) => any;
-  defaultValue?: any;
+  validate?: (value: unknown) => string | undefined;
+  transform?: (value: unknown) => unknown;
+  defaultValue?: unknown;
 }
 
 const EnhancedFormContext = createContext<EnhancedFormContextType | null>(null);
@@ -51,9 +51,9 @@ export function useEnhancedForm() {
 
 interface EnhancedFormProps {
   children: React.ReactNode;
-  onSubmit: (values: Record<string, any>) => Promise<void> | void;
-  initialValues?: Record<string, any>;
-  validationSchema?: any; // Could be Zod schema
+  onSubmit: (values: Record<string, unknown>) => Promise<void> | void;
+  initialValues?: Record<string, unknown>;
+  validationSchema?: unknown; // Could be Zod schema
   className?: string;
   autoComplete?: string;
   noValidate?: boolean;
@@ -80,7 +80,7 @@ export function EnhancedForm({
   const formRef = useRef<HTMLFormElement>(null);
   const hydrated = useHydration();
 
-  const setFieldValue = (name: string, value: any) => {
+  const setFieldValue = (name: string, value: unknown) => {
     setValues((prev) => ({ ...prev, [name]: value }));
     // Clear error when user starts typing
     if (errors[name]) {
@@ -172,7 +172,7 @@ export function EnhancedForm({
     if (submitOnEnter && e.key === "Enter" && !e.shiftKey) {
       // Don't submit on Enter for textareas
       if (target.tagName.toLowerCase() !== "textarea") {
-        handleSubmit(e as any);
+  handleSubmit(e as any);
       }
     }
   };
@@ -252,10 +252,10 @@ interface EnhancedFieldProps {
   disabled?: boolean;
   className?: string;
   description?: string;
-  validate?: (value: any) => string | undefined;
+  validate?: (value: unknown) => string | undefined;
   children?: (props: {
-    value: any;
-    onChange: (value: any) => void;
+    value: unknown;
+    onChange: (value: unknown) => void;
     onBlur: () => void;
     error?: string;
     touched: boolean;
@@ -292,7 +292,7 @@ export function EnhancedField({
   const isDisabled = disabled || isSubmitting;
   const hydrated = useHydration();
 
-  const handleChange = (value: any) => {
+  const handleChange = (value: unknown) => {
     setFieldValue(name, value);
 
     // Run validation if provided
@@ -381,7 +381,7 @@ export function EnhancedField({
         id={fieldId}
         name={name}
         type={type}
-        value={fieldValue}
+  value={typeof fieldValue === 'string' || typeof fieldValue === 'number' ? fieldValue : (fieldValue as any ?? '')}
         onChange={(e) => handleChange(e.target.value)}
         onBlur={handleBlur}
         placeholder={placeholder}

@@ -18,7 +18,7 @@ export async function middleware(request: NextRequest) {
   // Non-API: proceed with security headers response
   const response = NextResponse.next();
 
-  const isLocal = process.env.NODE_ENV !== "production" || request.nextUrl.hostname === "localhost";
+
 
   // Add security headers - Enhanced with complete domain coverage
   const cspHeader = [

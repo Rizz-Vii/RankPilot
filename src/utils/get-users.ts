@@ -10,10 +10,10 @@ interface FirestoreUser {
   role?: string;
   subscriptionTier?: string;
   subscriptionStatus?: string;
-  subscriptionMetadata?: any;
-  createdAt?: any;
-  lastLoginAt?: any;
-  [key: string]: any;
+  subscriptionMetadata?: unknown;
+  createdAt?: unknown;
+  lastLoginAt?: unknown;
+  [key: string]: unknown;
 }
 
 export async function getAllUsers(): Promise<{
@@ -141,10 +141,17 @@ export async function getUserById(uid: string): Promise<FirestoreUser | null> {
 }
 
 // Console helper - run in browser dev tools
+declare global {
+  interface Window {
+    getAllUsers?: typeof getAllUsers;
+    displayAllUsers?: typeof displayAllUsers;
+    getUserById?: typeof getUserById;
+  }
+}
 if (typeof window !== "undefined") {
-  (window as any).getAllUsers = getAllUsers;
-  (window as any).displayAllUsers = displayAllUsers;
-  (window as any).getUserById = getUserById;
+  window.getAllUsers = getAllUsers;
+  window.displayAllUsers = displayAllUsers;
+  window.getUserById = getUserById;
   console.log(
     "🚀 User utilities available: getAllUsers(), displayAllUsers(), getUserById()"
   );

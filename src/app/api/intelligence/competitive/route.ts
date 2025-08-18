@@ -29,16 +29,17 @@ interface CompetitorRequestBody {
     name?: string;
     industry?: string;
     targetKeywords?: string[];
-    trackingConfig?: any;
+    trackingConfig?: unknown;
     reportConfig?: {
         competitorIds: string[];
         analysisType: 'overview' | 'keyword-gap' | 'content-gap' | 'technical' | 'comprehensive';
     };
 }
 
-export const POST = withProvenance(async function POST(request: NextRequest) {
+export const POST = withProvenance(async function POST(request: Request) {
+    const nreq = request as NextRequest;
     try {
-        const authHeader = request.headers.get('authorization');
+        const authHeader = nreq.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(enforceProvenance({ success: false, error: 'Missing or invalid authorization header', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'auth' }), { status: 401 });
         }
@@ -46,7 +47,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         const token = authHeader.split('Bearer ')[1];
         const auth = getAuth();
 
-        let decodedToken;
+        let decodedToken: any;
         try {
             decodedToken = await auth.verifyIdToken(token);
         } catch (error) {
@@ -55,14 +56,27 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         }
 
         const userId = decodedToken.uid;
-        const userTier = decodedToken.tier || 'free';
+        const userTier = (decodedToken as any)?.tier || 'free';
 
         // Check tier access for competitive intelligence
         if (!['agency', 'enterprise', 'admin'].includes(userTier)) {
             return NextResponse.json(enforceProvenance({ success: false, error: 'Competitive intelligence requires Agency tier or higher', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'tier' }), { status: 403 });
         }
 
-        const body: CompetitorRequestBody = await request.json();
+        const body: CompetitorRequestBody = await nreq.json();
+
+        // Narrow trackingConfig if present
+        const tc = body.trackingConfig;
+        const trackingConfig = (tc && typeof tc === 'object' && 'crawlFrequency' in tc)
+            ? {
+                crawlFrequency: (tc as any).crawlFrequency as 'daily' | 'weekly' | 'monthly',
+                pages: Array.isArray((tc as any).pages) ? (tc as any).pages as string[] : [],
+                metrics: Array.isArray((tc as any).metrics) ? (tc as any).metrics as any[] : [],
+                alertThresholds: (typeof (tc as any).alertThresholds === 'object' && (tc as any).alertThresholds)
+                    ? (tc as any).alertThresholds as Record<string, number>
+                    : {}
+            }
+            : undefined;
 
         switch (body.action) {
             case 'add':
@@ -77,7 +91,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
                         name: body.name,
                         industry: body.industry,
                         targetKeywords: body.targetKeywords,
-                        trackingConfig: body.trackingConfig
+                        trackingConfig
                     }
                 );
 
@@ -108,7 +122,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
                         name: body.name,
                         industry: body.industry,
                         targetKeywords: body.targetKeywords,
-                        trackingConfig: body.trackingConfig
+                        trackingConfig
                     }
                 );
 
@@ -167,9 +181,10 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
     }
 }, { path: 'intelligence/competitive' });
 
-export const GET = withProvenance(async function GET(request: NextRequest) {
+export const GET = withProvenance(async function GET(request: Request) {
+    const nreq = request as NextRequest;
     try {
-        const authHeader = request.headers.get('authorization');
+        const authHeader = nreq.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(enforceProvenance({ success: false, error: 'Missing or invalid authorization header', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'auth' }), { status: 401 });
         }

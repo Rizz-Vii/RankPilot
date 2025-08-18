@@ -8,5 +8,5 @@ export async function POST(request: NextRequest) {
         const resp = await fetch(`https://www.google.com/recaptcha/api/siteverify?secret=${secret}&response=${token}`, { method: 'POST' });
         const data = await resp.json(); if (!data.success) return NextResponse.json({ error: 'captcha_verification_failed' }, { status: 400 });
         return NextResponse.json({ success: true });
-    } catch (e: any) { return NextResponse.json({ error: 'invalid_request', message: e?.message }, { status: 400 }); }
+    } catch (e: unknown) { return NextResponse.json({ error: 'invalid_request', message: (e as any)?.message }, { status: 400 }); }
 }

@@ -8,8 +8,8 @@ export interface TeamRecord {
     ownerId: string;
     memberIds?: string[]; // Transitional legacy list
     planTier?: TeamPlanTier;
-    createdAt?: any;
-    updatedAt?: any;
+    createdAt?: unknown;
+    updatedAt?: unknown;
     stripeCustomerId?: string;
     active?: boolean;
 }
@@ -20,8 +20,8 @@ export interface TeamMemberRecord {
     email: string;
     role: TeamRole;
     status: "active" | "pending" | "inactive";
-    joinedAt?: any;
-    lastActive?: any;
+    joinedAt?: unknown;
+    lastActive?: unknown;
     displayName?: string;
     avatarUrl?: string;
 }
@@ -31,8 +31,8 @@ export interface TeamInviteRecord {
     email: string;
     invitedBy: string;
     role: TeamRole;
-    createdAt?: any;
-    expiresAt?: any;
+    createdAt?: unknown;
+    expiresAt?: unknown;
     status?: "pending" | "accepted" | "expired" | "revoked";
 }
 

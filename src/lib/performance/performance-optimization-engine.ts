@@ -15,6 +15,15 @@
 
 import { EventEmitter } from 'events';
 
+// Utility: safely derive an error message from unknown
+function safeErrorMessage(err: unknown): string {
+    if (typeof err === 'string') return err;
+    if (err && typeof err === 'object' && 'message' in err && typeof (err as any).message === 'string') {
+        return (err as any).message as string;
+    }
+    return 'Unexpected error';
+}
+
 export interface PerformanceMetrics {
     timestamp: number;
     // Core Web Vitals
@@ -49,7 +58,7 @@ export interface OptimizationRule {
     action: string;
     priority: number;
     impact: 'low' | 'medium' | 'high' | 'critical';
-    parameters: Record<string, any>;
+    parameters: Record<string, unknown>;
     enabled: boolean;
 }
 
@@ -81,12 +90,13 @@ export interface OptimizationResult {
 export class PerformanceOptimizationEngine extends EventEmitter {
     private metrics: PerformanceMetrics[] = [];
     private optimizationRules: Map<string, OptimizationRule> = new Map();
-    private activeOptimizations: Map<string, any> = new Map();
+    private activeOptimizations: Map<string, unknown> = new Map();
     private performanceAlerts: PerformanceAlert[] = [];
     private optimizationHistory: OptimizationResult[] = [];
     private monitoringInterval: NodeJS.Timeout | null = null;
-    private resourcePool: Map<string, any> = new Map();
-    private cacheManager: Map<string, any> = new Map();
+    // Internal typed resource/cache maps
+    private resourcePool: Map<string, { maxConnections: number; activeConnections: number; availableConnections: number }> = new Map();
+    private cacheManager: Map<string, { maxSize: number; currentSize: number; hitRatio: number; evictionRate?: number }> = new Map();
 
     // Performance thresholds for different metrics
     private thresholds = {
@@ -137,16 +147,13 @@ export class PerformanceOptimizationEngine extends EventEmitter {
         // Execute optimization rules
         for (const rule of this.optimizationRules.values()) {
             if (!rule.enabled) continue;
-
-            if (this.evaluateCondition(rule.condition, currentMetrics)) {
-                try {
-                    const result = await this.executeOptimization(rule, currentMetrics);
-                    if (result) {
-                        optimizations.push(result);
-                    }
-                } catch (error) {
-                    console.error(`[PerformanceEngine] Optimization failed for rule ${rule.id}:`, error);
-                }
+            const shouldRun = this.evaluateCondition(rule.condition, currentMetrics);
+            if (!shouldRun) continue;
+            try {
+                const result = await this.executeOptimization(rule, currentMetrics);
+                if (result) optimizations.push(result);
+            } catch (error) {
+                console.error(`[PerformanceEngine] Optimization failed for rule ${rule.id}:`, safeErrorMessage(error));
             }
         }
 
@@ -203,7 +210,7 @@ export class PerformanceOptimizationEngine extends EventEmitter {
             return { queriesOptimized, performanceGain, recommendations };
 
         } catch (error) {
-            console.error('[PerformanceEngine] Database optimization failed:', error);
+            console.error('[PerformanceEngine] Database optimization failed:', safeErrorMessage(error));
             return { queriesOptimized: 0, performanceGain: 0, recommendations: [] };
         }
     }
@@ -246,7 +253,7 @@ export class PerformanceOptimizationEngine extends EventEmitter {
             };
 
         } catch (error) {
-            console.error('[PerformanceEngine] Cache optimization failed:', error);
+            console.error('[PerformanceEngine] Cache optimization failed:', safeErrorMessage(error));
             return { cacheHitRatio: 0, memoryOptimization: 0, recommendations: [] };
         }
     }
@@ -296,7 +303,7 @@ export class PerformanceOptimizationEngine extends EventEmitter {
             };
 
         } catch (error) {
-            console.error('[PerformanceEngine] Resource optimization failed:', error);
+            console.error('[PerformanceEngine] Resource optimization failed:', safeErrorMessage(error));
             return { assetsOptimized: 0, sizeReduction: 0, loadTimeImprovement: 0, recommendations: [] };
         }
     }
@@ -347,7 +354,8 @@ export class PerformanceOptimizationEngine extends EventEmitter {
         overallRisk: 'low' | 'medium' | 'high';
     }> {
         const recentMetrics = this.metrics.slice(-10); // Last 10 data points
-        const predictions: any[] = [];
+        interface Prediction { metric: string; predictedValue: number; confidence: number; timeToThreshold: number; recommendation: string; }
+        const predictions: Prediction[] = [];
 
         if (recentMetrics.length < 3) {
             return { predictions: [], overallRisk: 'low' };
@@ -642,7 +650,7 @@ export class PerformanceOptimizationEngine extends EventEmitter {
 
             return eval(conditionCode);
         } catch (error) {
-            console.error('[PerformanceEngine] Condition evaluation error:', error);
+            console.error('[PerformanceEngine] Condition evaluation error:', safeErrorMessage(error));
             return false;
         }
     }
@@ -710,7 +718,7 @@ export class PerformanceOptimizationEngine extends EventEmitter {
             return result;
 
         } catch (error) {
-            console.error(`[PerformanceEngine] Optimization execution failed for ${rule.id}:`, error);
+            console.error(`[PerformanceEngine] Optimization execution failed for ${rule.id}:`, safeErrorMessage(error));
             return null;
         }
     }
@@ -771,7 +779,8 @@ export class PerformanceOptimizationEngine extends EventEmitter {
         // Simulate cache eviction optimization
         const cache = this.cacheManager.get('main');
         if (cache) {
-            cache.evictionRate = Math.max(0.5, cache.evictionRate - 1);
+            const current = cache.evictionRate ?? 0;
+            cache.evictionRate = Math.max(0.5, current - 1);
         }
     }
 
@@ -824,8 +833,7 @@ export class PerformanceOptimizationEngine extends EventEmitter {
 
         for (const key of metricKeys) {
             const values = metrics.map(m => m[key as keyof PerformanceMetrics] as number);
-            averages[key as keyof PerformanceMetrics] =
-                values.reduce((sum, val) => sum + val, 0) / values.length as any;
+            (averages as any)[key] = values.reduce((sum, val) => sum + val, 0) / values.length;
         }
 
         return averages;

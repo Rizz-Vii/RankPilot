@@ -12,6 +12,45 @@
 
 import { EventEmitter } from 'events';
 
+/**
+ * Crawl response/page structures (simplified from Firecrawl MCP expected shape)
+ */
+interface CrawledPageMetadata {
+    title?: string;
+    description?: string;
+    // Allow additional metadata fields without forcing unknown everywhere
+    [key: string]: unknown;
+}
+
+interface CrawledPage {
+    markdown?: string;
+    html?: string;
+    metadata?: CrawledPageMetadata;
+}
+
+interface CrawlResponse {
+    data: CrawledPage[];
+    [key: string]: unknown;
+}
+
+export interface CompetitorAggregatedMetrics {
+    // Selected numeric summary metrics we compute/track
+    seoScore?: number;
+    totalPages?: number;
+    coreWebVitals?: {
+        lcp: number;
+        cls: number;
+        fid: number;
+        overall: number;
+    };
+    pageSpeed?: {
+        desktop: number;
+        mobile: number;
+    };
+    // Bag of additional metrics without strict typing yet
+    [key: string]: unknown;
+}
+
 export interface CompetitorProfile {
     id: string;
     domain: string;
@@ -28,7 +67,7 @@ export interface CompetitorProfile {
     lastAnalysis?: {
         timestamp: number;
         status: 'success' | 'error' | 'partial';
-        metrics: Record<string, any>;
+        metrics: CompetitorAggregatedMetrics;
         changes: CompetitorChange[];
     };
     metadata: {
@@ -55,8 +94,8 @@ export interface CompetitorChange {
     description: string;
     impact: 'high' | 'medium' | 'low';
     metric: string;
-    oldValue: any;
-    newValue: any;
+    oldValue: unknown;
+    newValue: unknown;
     timestamp: number;
     confidence: number; // 0-1
 }
@@ -100,7 +139,7 @@ export interface CompetitiveOpportunity {
     competitorData: {
         domain: string;
         metric: string;
-        value: any;
+        value: unknown;
     };
     actionItems: string[];
 }
@@ -121,7 +160,7 @@ export interface CompetitiveInsight {
     title: string;
     description: string;
     confidence: number; // 0-1
-    supportingData: any[];
+    supportingData: unknown[];
     implications: string[];
 }
 
@@ -275,13 +314,13 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
             const seoMetrics = await this.analyzeSEOMetrics(crawlData, competitor);
 
             // Analyze content
-            const contentMetrics = await this.analyzeContent(crawlData, competitor);
+            const contentMetrics = await this.analyzeContent(crawlData);
 
             // Analyze technical aspects
-            const technicalMetrics = await this.analyzeTechnical(crawlData, competitor);
+            const technicalMetrics = await this.analyzeTechnical(crawlData);
 
             // Analyze performance
-            const performanceMetrics = await this.analyzePerformance(competitor.domain);
+            const performanceMetrics = await this.analyzePerformance();
 
             // Detect changes from previous analysis
             const changes = this.detectChanges(competitor, {
@@ -337,7 +376,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
     /**
      * Crawl competitor site using Firecrawl MCP
      */
-    private async crawlCompetitorSite(competitor: CompetitorProfile): Promise<any> {
+    private async crawlCompetitorSite(competitor: CompetitorProfile): Promise<CrawlResponse> {
         try {
             // Use Firecrawl MCP to scrape competitor website
             const response = await fetch('/api/mcp/firecrawl/crawl', {
@@ -361,8 +400,10 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
             if (!response.ok) {
                 throw new Error(`Firecrawl crawl failed: ${response.statusText}`);
             }
-
-            return response.json();
+            const json = await response.json();
+            // Basic structural validation / fallback
+            const data: CrawledPage[] = Array.isArray(json?.data) ? json.data : [];
+            return { ...(json || {}), data } as CrawlResponse;
         } catch (error) {
             throw new Error(`Failed to crawl competitor site: ${error instanceof Error ? error.message : error}`);
         }
@@ -371,8 +412,8 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
     /**
      * Analyze SEO metrics from crawled data
      */
-    private async analyzeSEOMetrics(crawlData: any, competitor: CompetitorProfile): Promise<Record<string, any>> {
-        const pages = crawlData.data || [];
+    private async analyzeSEOMetrics(crawlData: CrawlResponse, competitor: CompetitorProfile): Promise<CompetitorAggregatedMetrics> {
+        const pages = crawlData.data;
 
         const metrics = {
             totalPages: pages.length,
@@ -390,9 +431,9 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
         };
 
         let totalWordCount = 0;
-        let totalLoadTime = 0;
 
-        pages.forEach((page: any) => {
+
+        pages.forEach((page: CrawledPage) => {
             const content = page.markdown || page.html || '';
 
             // Count basic SEO elements
@@ -433,14 +474,14 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
         metrics.avgWordCount = pages.length > 0 ? Math.round(totalWordCount / pages.length) : 0;
         metrics.altTextCoverage = metrics.images > 0 ? Math.round((metrics.altTextCoverage / metrics.images) * 100) : 0;
 
-        return metrics;
+        return metrics as CompetitorAggregatedMetrics;
     }
 
     /**
      * Analyze content metrics
      */
-    private async analyzeContent(crawlData: any, competitor: CompetitorProfile): Promise<Record<string, any>> {
-        const pages = crawlData.data || [];
+    private async analyzeContent(crawlData: CrawlResponse): Promise<Record<string, unknown>> {
+        const pages = crawlData.data;
 
         const metrics = {
             contentTypes: {} as Record<string, number>,
@@ -455,7 +496,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
         const topics: Record<string, number> = {};
         let totalContentLength = 0;
 
-        pages.forEach((page: any) => {
+        pages.forEach((page: CrawledPage) => {
             const content = page.markdown || '';
             totalContentLength += content.length;
 
@@ -474,14 +515,14 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
             .slice(0, 10)
             .map(([topic]) => topic);
 
-        return metrics;
+        return metrics as Record<string, unknown>;
     }
 
     /**
      * Analyze technical metrics
      */
-    private async analyzeTechnical(crawlData: any, competitor: CompetitorProfile): Promise<Record<string, any>> {
-        const pages = crawlData.data || [];
+    private async analyzeTechnical(crawlData: CrawlResponse): Promise<CompetitorAggregatedMetrics> {
+        const pages = crawlData.data;
 
         const metrics = {
             seoScore: 0,
@@ -499,7 +540,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
 
         const titles: string[] = [];
 
-        pages.forEach((page: any) => {
+        pages.forEach((page: CrawledPage) => {
             const title = page.metadata?.title || '';
             const description = page.metadata?.description || '';
 
@@ -532,13 +573,13 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
         const maxPossibleIssues = pages.length * 4; // 4 potential issues per page
         metrics.seoScore = maxPossibleIssues > 0 ? Math.max(0, 100 - (totalIssues / maxPossibleIssues) * 100) : 100;
 
-        return metrics;
+        return metrics as CompetitorAggregatedMetrics;
     }
 
     /**
      * Analyze performance metrics
      */
-    private async analyzePerformance(domain: string): Promise<Record<string, any>> {
+    private async analyzePerformance(): Promise<CompetitorAggregatedMetrics> {
         // Mock performance data - in production, integrate with PageSpeed API
         const metrics = {
             coreWebVitals: {
@@ -565,7 +606,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
 
         metrics.coreWebVitals.overall = Math.round((lcpScore + clsScore + fidScore) / 3);
 
-        return metrics;
+        return metrics as CompetitorAggregatedMetrics;
     }
 
     /**
@@ -573,7 +614,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
      */
     private detectChanges(
         competitor: CompetitorProfile,
-        currentMetrics: Record<string, any>
+        currentMetrics: CompetitorAggregatedMetrics
     ): CompetitorChange[] {
         const changes: CompetitorChange[] = [];
 
@@ -585,7 +626,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
         const thresholds = competitor.trackingConfig.alertThresholds;
 
         // Compare SEO score
-        if (previousMetrics.seoScore && currentMetrics.seoScore) {
+        if (typeof previousMetrics.seoScore === 'number' && typeof currentMetrics.seoScore === 'number') {
             const change = currentMetrics.seoScore - previousMetrics.seoScore;
             if (Math.abs(change) >= (thresholds.rankingChange || 5)) {
                 changes.push({
@@ -602,7 +643,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
         }
 
         // Compare Core Web Vitals
-        if (previousMetrics.coreWebVitals?.overall && currentMetrics.coreWebVitals?.overall) {
+        if (previousMetrics.coreWebVitals?.overall != null && currentMetrics.coreWebVitals?.overall != null) {
             const change = currentMetrics.coreWebVitals.overall - previousMetrics.coreWebVitals.overall;
             if (Math.abs(change) >= 10) {
                 changes.push({
@@ -619,7 +660,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
         }
 
         // Compare content metrics
-        if (previousMetrics.totalPages && currentMetrics.totalPages) {
+        if (typeof previousMetrics.totalPages === 'number' && typeof currentMetrics.totalPages === 'number') {
             const change = currentMetrics.totalPages - previousMetrics.totalPages;
             if (Math.abs(change) >= 5) {
                 changes.push({
@@ -711,7 +752,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
      */
     private async generateFindings(
         competitors: CompetitorProfile[],
-        analysisType: string
+        _analysisType: CompetitiveAnalysisReport['analysisType']
     ): Promise<CompetitiveAnalysisReport['findings']> {
         const opportunities: CompetitiveOpportunity[] = [];
         const threats: CompetitiveThreat[] = [];
@@ -725,7 +766,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
             const metrics = competitor.lastAnalysis.metrics;
 
             // SEO opportunities
-            if (metrics.seoScore > 80) {
+            if (typeof metrics.seoScore === 'number' && metrics.seoScore > 80) {
                 opportunities.push({
                     type: 'technical',
                     title: `Learn from ${competitor.name}'s SEO Excellence`,
@@ -747,7 +788,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
             }
 
             // Performance opportunities
-            if (metrics.coreWebVitals?.overall > 90) {
+            if (metrics.coreWebVitals?.overall != null && metrics.coreWebVitals.overall > 90) {
                 opportunities.push({
                     type: 'performance',
                     title: `Performance Optimization Opportunity`,
@@ -769,7 +810,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
             }
 
             // Content threats
-            if (metrics.totalPages > 100) {
+            if (typeof metrics.totalPages === 'number' && metrics.totalPages > 100) {
                 threats.push({
                     type: 'content-gap',
                     title: `Content Volume Advantage`,
@@ -824,7 +865,7 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
      */
     private async generateCompetitiveData(
         competitors: CompetitorProfile[],
-        analysisType: string
+        _analysisType: CompetitiveAnalysisReport['analysisType']
     ): Promise<CompetitiveAnalysisReport['data']> {
         // Mock data generation - in production, compile actual competitor data
         const keywordAnalysis: KeywordCompetitionData = {
@@ -870,18 +911,17 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
 
         // Populate with actual competitor data
         competitors.forEach(competitor => {
-            if (competitor.lastAnalysis?.metrics) {
-                const metrics = competitor.lastAnalysis.metrics;
-                keywordAnalysis.visibilityScore[competitor.domain] = metrics.seoScore || 0;
-                technicalAnalysis.seoScore[competitor.domain] = metrics.seoScore || 0;
-
-                if (metrics.coreWebVitals) {
-                    performanceAnalysis.coreWebVitals[competitor.domain] = metrics.coreWebVitals;
-                }
-
-                if (metrics.pageSpeed) {
-                    performanceAnalysis.pageSpeed[competitor.domain] = metrics.pageSpeed;
-                }
+            const metrics = competitor.lastAnalysis?.metrics;
+            if (!metrics) return;
+            if (typeof metrics.seoScore === 'number') {
+                keywordAnalysis.visibilityScore[competitor.domain] = metrics.seoScore;
+                technicalAnalysis.seoScore[competitor.domain] = metrics.seoScore;
+            }
+            if (metrics.coreWebVitals) {
+                performanceAnalysis.coreWebVitals[competitor.domain] = metrics.coreWebVitals as PerformanceCompetitionData['coreWebVitals'][string];
+            }
+            if (metrics.pageSpeed) {
+                performanceAnalysis.pageSpeed[competitor.domain] = metrics.pageSpeed as PerformanceCompetitionData['pageSpeed'][string];
             }
         });
 

@@ -24,7 +24,7 @@ export async function PUT(req: NextRequest) {
     }
     // Whitelist preference keys
     const allowedKeys = new Set(['highContrast', 'reducedMotion', 'fontSize', 'colorBlindnessSupport', 'customColors', 'mode', 'voiceCommands', 'language']);
-    const filtered: Record<string, any> = {};
+    const filtered: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(prefs)) {
       if (allowedKeys.has(k)) filtered[k] = v;
     }
@@ -34,7 +34,7 @@ export async function PUT(req: NextRequest) {
 
     await adminDb.collection('users').doc(uid).set({ preferences: filtered, updatedAt: new Date() }, { merge: true });
     return NextResponse.json(enforceProvenance({ success: true, updated: Object.keys(filtered), ms: Date.now() - started, provenance: 'live' }));
-  } catch (e: any) {
-    return NextResponse.json(enforceProvenance({ success: false, error: e?.message || 'internal', provenance: 'synthetic' }), { status: 500 });
+  } catch (e: unknown) {
+    return NextResponse.json(enforceProvenance({ success: false, error: (e as any)?.message || 'internal', provenance: 'synthetic' }), { status: 500 });
   }
 }

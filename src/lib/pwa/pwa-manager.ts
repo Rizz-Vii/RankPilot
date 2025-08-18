@@ -30,7 +30,7 @@ interface NotificationOptions {
     tag?: string;
     icon?: string;
     badge?: string;
-    data?: any;
+    data?: unknown;
     actions?: Array<{
         action: string;
         title: string;
@@ -43,7 +43,7 @@ export class PWAManager {
     private registration: ServiceWorkerRegistration | null = null;
     private installPrompt: PWAInstallPrompt | null = null;
     private isOnline = true;
-    private pendingData: any[] = [];
+    private pendingData: Array<{ tag: string; data: unknown; timestamp: number; }> = [];
 
     static getInstance(): PWAManager {
         if (!PWAManager.instance) {
@@ -328,7 +328,7 @@ export class PWAManager {
         });
     }
 
-    async syncInBackground(tag: string, data: any) {
+    async syncInBackground(tag: string, data: unknown) {
         if (!this.registration) {
             this.addToPendingData(tag, data);
             return;
@@ -339,8 +339,9 @@ export class PWAManager {
             await this.storeDataForSync(tag, data);
 
             // Register background sync if supported
-            if ('sync' in this.registration) {
-                await (this.registration as any).sync.register(tag);
+            const regAny = this.registration as ServiceWorkerRegistration & { sync?: { register: (t: string) => Promise<void> } };
+            if (regAny.sync && typeof regAny.sync.register === 'function') {
+                await regAny.sync.register(tag);
                 console.log('[PWA] Background sync registered:', tag);
             } else {
                 console.log('[PWA] Background sync not supported, queuing for manual sync');
@@ -350,7 +351,7 @@ export class PWAManager {
             console.error('[PWA] Background sync registration failed:', error);
             this.addToPendingData(tag, data);
         }
-    } private async storeDataForSync(tag: string, data: any) {
+    } private async storeDataForSync(tag: string, data: unknown) {
         // Store in IndexedDB for service worker access
         if ('indexedDB' in window) {
             const db = await this.openIndexedDB();
@@ -385,7 +386,7 @@ export class PWAManager {
         });
     }
 
-    private addToPendingData(tag: string, data: any) {
+    private addToPendingData(tag: string, data: unknown) {
         this.pendingData.push({ tag, data, timestamp: Date.now() });
     }
 
@@ -396,7 +397,7 @@ export class PWAManager {
 
         console.log('[PWA] Syncing pending data...');
 
-        for (const item of this.pendingData) {
+        for (const item of [...this.pendingData]) {
             try {
                 await this.syncInBackground(item.tag, item.data);
             } catch (error) {
@@ -412,8 +413,13 @@ export class PWAManager {
     }
 
     isInstalled(): boolean {
-        return window.matchMedia('(display-mode: standalone)').matches ||
-            (window.navigator as any).standalone === true;
+        try {
+            const standalone = window.matchMedia('(display-mode: standalone)').matches;
+            const legacyIOS = (window.navigator as any)?.standalone === true;
+            return standalone || legacyIOS;
+        } catch {
+            return false;
+        }
     }
 
     getConnectionStatus(): 'online' | 'offline' {
@@ -502,7 +508,7 @@ export function usePWA() {
         return success;
     };
 
-    const syncData = async (tag: string, data: any) => {
+    const syncData = async (tag: string, data: unknown) => {
         await pwaManager.syncInBackground(tag, data);
     };
 

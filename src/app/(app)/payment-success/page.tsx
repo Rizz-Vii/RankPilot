@@ -55,7 +55,7 @@ export default function PaymentSuccess() {
   const [isLoading, setIsLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
 
-  const router = useRouter();
+
   const searchParams = useSearchParams();
   const { user } = useAuth();
 

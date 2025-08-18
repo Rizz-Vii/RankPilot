@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { TIER_HIERARCHY } from "@/lib/access-control";
+import { TIER_HIERARCHY, type SubscriptionTier } from "@/lib/access-control";
 import {
   LayoutDashboard,
   KeyRound,
@@ -561,7 +561,7 @@ export const flatNavItems: NavItem[] = [
 
 // Helper functions
 export const getVisibleNavGroups = (
-  userTier?: string,
+  userTier?: SubscriptionTier | string,
   isAdmin?: boolean,
   options: { includeLocked?: boolean } = {}
 ): NavGroup[] => {
@@ -578,9 +578,9 @@ export const getVisibleNavGroups = (
               ? { ...item, disabled: true }
               : null;
           }
-          const userIndex = TIER_HIERARCHY.indexOf(userTier as any);
+          const userIndex = TIER_HIERARCHY.indexOf(userTier as SubscriptionTier);
           const requiredIndex = TIER_HIERARCHY.indexOf(
-            item.requiredTier as any
+            item.requiredTier as SubscriptionTier
           );
           if (userIndex === -1 || requiredIndex === -1) {
             return includeLocked ? { ...item, disabled: true } : null;
@@ -597,7 +597,7 @@ export const getVisibleNavGroups = (
 };
 
 export const getVisibleNavItems = (
-  userTier?: string,
+  userTier?: SubscriptionTier | string,
   isAdmin?: boolean,
   options: { includeLocked?: boolean } = {}
 ): NavItem[] => {
@@ -607,8 +607,8 @@ export const getVisibleNavItems = (
       if (item.adminOnly && !isAdmin) return null;
       if (!item.requiredTier) return { ...item, disabled: false };
       if (!userTier) return includeLocked ? { ...item, disabled: true } : null;
-      const userIndex = TIER_HIERARCHY.indexOf(userTier as any);
-      const requiredIndex = TIER_HIERARCHY.indexOf(item.requiredTier as any);
+      const userIndex = TIER_HIERARCHY.indexOf(userTier as SubscriptionTier);
+      const requiredIndex = TIER_HIERARCHY.indexOf(item.requiredTier as SubscriptionTier);
       const unlocked = userIndex >= requiredIndex;
       if (!unlocked && !includeLocked) return null;
       return { ...item, disabled: !unlocked };
@@ -672,7 +672,7 @@ export const handleNavError = (error: Error, context: string) => {
 
 // Navigation analytics
 export const trackNavigation = (itemHref: string, groupId?: string) => {
-  if (typeof window !== "undefined" && (window as any).gtag) {
+  if (typeof window !== "undefined" && 'gtag' in window && typeof (window as any).gtag === 'function') {
     (window as any).gtag("event", "navigation_click", {
       event_category: "navigation",
       event_label: itemHref,

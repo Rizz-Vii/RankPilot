@@ -58,15 +58,16 @@ export default function NeuroSEODashboard({
   const { user } = useAuth();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [report, setReport] = useState<NeuroSEOReport | null>(null);
-  const [usageStats, setUsageStats] = useState<any>(null);
+  interface UsageStats { used: number; limit: number; periodStart?: string; periodEnd?: string; [key:string]: any }
+  const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
-  const formRef = useRef<HTMLFormElement>(null);
+
   const resultRef = useRef<HTMLDivElement>(null);
 
   // Get hydration and device context
   const hydrated = useHydration();
-  const isMobile = useIsMobile();
+
   const networkStatus = useNetworkStatus();
   const { toast } = useToast();
 
@@ -410,7 +411,7 @@ export default function NeuroSEODashboard({
               </Label>
               <Select
                 value={analysisType}
-                onValueChange={(value: any) => setAnalysisType(value)}
+                onValueChange={(value) => setAnalysisType(value as any)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -828,7 +829,7 @@ export default function NeuroSEODashboard({
 
             <TabsContent value="tasks" className="space-y-4">
               <div className="space-y-3">
-                {report.actionableTasks.map((task, index) => (
+                {report.actionableTasks.map((task) => (
                   <Card key={task.id}>
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-2">

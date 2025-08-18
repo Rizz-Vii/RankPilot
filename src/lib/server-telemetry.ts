@@ -14,9 +14,9 @@ type OpenTelemetryNodeSDKModule = typeof import("@opentelemetry/sdk-node");
 
 // Global variables to hold the OpenTelemetry API instances (Tracer, Meter, Logger).
 // These are initialized to undefined and populated upon successful SDK startup.
-let tracer: any = undefined;
-let meter: any = undefined;
-let logger: any = undefined;
+let tracer: unknown = undefined; // use unknown to avoid importing heavy types globally
+let meter: unknown = undefined;
+let logger: unknown = undefined;
 
 /**
  * Creates a server-side telemetry provider that integrates with OpenTelemetry.
@@ -50,7 +50,7 @@ export async function createTelemetryProvider(): Promise<TelemetryProvider> {
  * @returns A Promise that resolves to a TelemetryProvider instance.
  */
 async function createRealProvider(): Promise<TelemetryProvider> {
-  let sdkInstance: any | null = null; // Holds the OpenTelemetry Node.js SDK instance
+  let sdkInstance: { shutdown: () => Promise<void>; start: () => void } | null = null; // minimal shape used
 
   try {
     // Dynamically import all necessary OpenTelemetry packages.
@@ -169,7 +169,7 @@ async function createRealProvider(): Promise<TelemetryProvider> {
     });
 
     // Start the OpenTelemetry SDK. This initializes all configured components.
-    await sdkInstance.start();
+    sdkInstance!.start();
 
     // --- Set Global API Instances ---
     // Set the global tracer, meter, and logger instances. This allows other parts
@@ -192,13 +192,14 @@ async function createRealProvider(): Promise<TelemetryProvider> {
     // Listen for SIGTERM signal (e.g., from process managers like PM2, Docker).
     // This ensures that all buffered telemetry data is flushed before the process exits.
     process.on("SIGTERM", () => {
-      sdkInstance
-        .shutdown()
+      if (!sdkInstance) {
+        process.exit(0);
+        return;
+      }
+      sdkInstance.shutdown()
         .then(() => console.log("OpenTelemetry SDK shut down gracefully."))
-        .catch((error: Error) =>
-          console.error("Error shutting down OpenTelemetry:", error)
-        )
-        .finally(() => process.exit(0)); // Ensure process exits after shutdown attempt
+        .catch((error: Error) => console.error("Error shutting down OpenTelemetry:", error))
+        .finally(() => process.exit(0));
     });
 
     // Return the TelemetryProvider interface with the active instances.

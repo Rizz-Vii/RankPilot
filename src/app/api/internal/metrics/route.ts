@@ -12,8 +12,8 @@ export async function GET(_req: NextRequest) {
         const neuro = getNeuroseoMetricsSnapshot();
         const unified = getUnifiedMetricsSnapshot();
         return NextResponse.json({ neuro, unified });
-    } catch (e: any) {
-        logger.error('metrics.error', { message: e?.message });
+    } catch (e: unknown) {
+        logger.error('metrics.error', { message: (e as any)?.message });
         return NextResponse.json({ error: 'internal_error' }, { status: 500 });
     }
 }

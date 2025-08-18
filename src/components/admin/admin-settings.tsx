@@ -23,10 +23,7 @@ import {
 } from "lucide-react";
 
 export default function AdminSettings() {
-  const handleConfigUpdate = (setting: string) => {
-    // In a real app, this would update system configurations
-    console.log(`Updating ${setting} configuration`);
-  };
+  // TODO: implement settings handlers; legacy placeholder removed.
 
   return (
     <div className="space-y-6">

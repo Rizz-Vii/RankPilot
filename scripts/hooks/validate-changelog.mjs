@@ -25,6 +25,6 @@ function main() {
 }
 
 try { main(); } catch (e) {
-  console.error('[CHANGE_LOG ENFORCEMENT] Error:', (e as any)?.message);
+  console.error('[CHANGE_LOG ENFORCEMENT] Error:', e && typeof e === 'object' ? (e).message : e);
   process.exit(2);
 }

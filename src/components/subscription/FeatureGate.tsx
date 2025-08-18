@@ -20,6 +20,8 @@ interface FeatureGateProps {
   requiredTier?: "starter" | "agency" | "enterprise";
   fallback?: ReactNode;
   showUpgrade?: boolean;
+  /** Gate strictly to admin role (admin maps to enterprise tier but some features may be admin-only) */
+  adminOnly?: boolean;
 }
 
 export function FeatureGate({
@@ -28,11 +30,13 @@ export function FeatureGate({
   requiredTier,
   fallback,
   showUpgrade = true,
+  adminOnly = false,
 }: FeatureGateProps) {
   const { subscription, canUseFeature, userAccess, loading } = useSubscription();
 
   // Test bypass: if window.__TEST_MODE__ true, always render children (Playwright deterministic bypass)
-  if (typeof window !== 'undefined' && (window as any).__TEST_MODE__) {
+  const w: any = typeof window !== 'undefined' ? window : undefined;
+  if (w && w.__TEST_MODE__) {
     return <>{children}</>;
   }
 
@@ -57,7 +61,9 @@ export function FeatureGate({
       })()
     : true;
 
-  if (hasAccess && meetsTierRequirement) {
+  const isAdminEligible = !adminOnly || userAccess?.role === 'admin';
+
+  if (hasAccess && meetsTierRequirement && isAdminEligible) {
     return <>{children}</>;
   }
 
@@ -224,8 +230,8 @@ export function withSubscriptionAccess<P extends object>(
       );
     }
 
-    const userIndex = TIER_HIERARCHY.indexOf(userTier as any);
-    const requiredIndex = TIER_HIERARCHY.indexOf(requiredTier as any);
+  const userIndex = TIER_HIERARCHY.indexOf(userTier);
+  const requiredIndex = TIER_HIERARCHY.indexOf(requiredTier);
     const hasAccess = userIndex !== -1 && requiredIndex !== -1 && userIndex >= requiredIndex;
 
     if (!hasAccess) {

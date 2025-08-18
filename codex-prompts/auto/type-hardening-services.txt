@@ -1,0 +1,79 @@
+# Codex Autonomous Prompt: Type Hardening (Service + Server Visualization Layer)
+
+Objective:
+Systematically eliminate unsafe `unknown` usages, broad casts (`as unknown`), and implicit any patterns across the remaining service layer (marketing, sales, team) and server visualization export modules (`server-exports.ts`, `server-artifacts.ts`). Produce strongly typed domain contracts without inflating complexity or introducing derived data persistence. Keep each batch minimal, deterministic, and under LOC limits.
+
+Strategic Goals:
+1. Replace all `unknown` spreads `(d.data() as unknown)` in services with typed snapshot mappers.
+2. Introduce shared domain types (Firestore DTOs + mapped runtime shapes) in a single `types/firestore-docs.ts` (create if absent) or reuse an existing central types file if more appropriate after scan.
+3. Refactor `server-exports.ts` and `server-artifacts.ts`:
+   - Remove `format as unknown` casts.
+   - Add discriminated union for formats.
+   - Introduce `ServerChartArtifactData` and `ServerDashboardArtifactData` minimal shapes.
+   - Ensure no property access on `unknown` remains (zero TS18046 errors locally after refactor).
+4. Team service: define `RawTeamMember` (Firestore shape) vs `TeamMember` (runtime). Replace `mapMember(raw: unknown)` signature with `mapMember(raw: RawTeamMember)` eliminating unsafe optional chaining on unknown. Provide minimal field guards.
+5. Add generic snapshot helper: `mapDocs<T>(snap: QuerySnapshot<DocumentData>, mapper: (id: string, data: DocumentData) => T): T[]` (or narrower) to cut repetition.
+6. Add lightweight unit contract tests (TypeScript-only or mocha) under `testing/unit/types/` verifying transformations compile and a couple of runtime mapping assertions (e.g., campaign aggregation, server artifact format guard). Keep tests <120 LOC total.
+7. Ensure no derived ratios (CTR, ROI) get persisted—only computed in runtime aggregation; maintain existing behavior.
+8. Preserve existing public exports & function names (non-breaking) unless renaming purely internal helpers (ok) — document renamed internals inline as comments.
+9. Keep diffs segmented: one batch per logical cluster (services marketing + helper, then sales, then team, then server visualization export, then tests). Each batch < 160 LOC added (hard stop 200). Abort batch if risk of exceeding.
+10. After each batch: run `npm run typecheck` and if available `npm run test:unit:types`. If failures: self-correct within same batch (preferred) OR open a follow-up batch with narrow scope fix.
+
+Acceptance Criteria per Batch:
+- TypeScript: 0 new errors introduced; net reduction of `unknown` property access warnings.
+- No introduction of `any` unless explicitly justified in inline comment referencing reason + TODO conversion path.
+- Firestore DTOs expose only raw stored fields: do not add derived metrics or ratios.
+- Runtime mapped shapes use concrete types (Date, number, string) without `unknown`.
+- Server artifact generation uses explicit param interfaces; no implicit `any` in exported functions.
+- Tests (if touched) pass locally.
+
+Explicit Tasks Ordering (execute sequentially unless dependency requires reorder):
+Batch 1: Scan for service layer files using `(d.data() as unknown)` or `unknown` casts (marketing, sales). Introduce `types/firestore-docs.ts` with interfaces:
+  - MarketingCampaignFirestore { period: string; name?: string; channel?: string; impressions?: number; clicks?: number; leads?: number; spend?: number; revenue?: number; status?: string; userId?: string; teamId?: string; createdAt?: Timestamp | Date }
+  - SalesDealFirestore { stage?: string; amount?: number; probability?: number; status?: string; cycleDays?: number; userId?: string; teamId?: string; createdAt?: Timestamp | Date; updatedAt?: Timestamp | Date }
+  - ForecastSnapshotFirestore { period: string; forecast?: number; actual?: number; createdAt?: Timestamp | Date; userId?: string; teamId?: string }
+Add mapping helpers converting Timestamp -> Date and defaulting numerics to 0 safely.
+Refactor `marketing-metrics.service.ts` & `sales-metrics.service.ts` to use these mappers (remove inline spreads). Keep exported function signatures unchanged.
+
+Batch 2: Introduce generic `mapDocs` helper in a shared utils file (`src/lib/firebase/snapshot-map.ts`) returning typed array via mapper. Update both marketing & sales services to use it (reducing duplication). Ensure tree-shaking safe (no side effects).
+
+Batch 3: Team service refactor.
+  - Define `RawTeamMemberFirestore` interface.
+  - Refactor `mapMember` to accept `RawTeamMemberFirestore`.
+  - Replace `unknown` snapshot types with Firestore snapshot generic or `DocumentData` then map via explicit function.
+  - Remove `as unknown` occurrences; add minimal guards.
+
+Batch 4: Server visualization export typing.
+  - Create `types/visualization-exports.ts` defining:
+      type ExportFormat = 'pdf' | 'excel' | 'json' | 'png' | 'svg'
+      interface ServerChartArtifactData { userId: string; id: string; config?: { type?: string; width?: number; height?: number; title?: string }; svg?: string; image?: string; data?: unknown; previewImage?: string; metadata?: Record<string,string|number|boolean|undefined>; }
+      interface ServerDashboardArtifactData { userId: string; id: string; widgets?: Array<{ id: string; type: string }>; }
+  - Update `generateServerArtifact` signature: `(format: ExportFormat, chartData: ServerChartArtifactData | { table?: unknown[][]; data?: unknown[]; svg?: string; image?: string }, config?: Partial<ServerArtifactConfig>)`.
+  - Update `generateChartExport` / `generateDashboardExport` to use these types; remove `format as unknown`.
+  - Add runtime guard for unsupported format early (narrow switch exhaustive) — use `never` check technique.
+
+Batch 5: Add tests under `testing/unit/types/`:
+  - `firestore-mapping.test.ts`: create mock raw campaign & deal docs with Timestamp-like stubs; assert mapping outputs correct Date instances & default 0 numerics.
+  - `server-artifact-formats.test.ts`: import `generateServerArtifact`; test json & svg minimal paths (provide simple svg string; ensure buffer contentType matches expected) — skip PNG if sharp unavailable; wrap in try/catch and assert fallback.
+Keep test minimal & deterministic.
+
+Batch 6 (Optional Cleanup): Remove any lingering TODO unknown mentions or dead helpers created earlier; run final `npm run scan:unknown-state` & `npm run scan:unknown-array-state`; if hits remain within touched domains, address; otherwise leave summary note.
+
+Constraints & Guardrails:
+- Do NOT modify persistence schema (no new Firestore writes here).
+- Avoid reformatting unrelated lines; minimal diff.
+- If a batch exceeds ~160 added LOC, split into Batch N.a / N.b.
+- Preserve existing mock fallback logic & aggregation semantics.
+- No additional dependencies.
+
+Telemetry & Logging:
+- Keep existing console.error statements; do not add verbose logging.
+
+Completion Output (final batch):
+Provide a concise summary listing:
+  - Batches executed with line add/remove counts
+  - Remaining (if any) `unknown` occurrences in targeted files (expected 0)
+  - Confirmation TypeScript passes
+  - Any skipped optional cleanups with reasons
+
+Begin now at Batch 1.

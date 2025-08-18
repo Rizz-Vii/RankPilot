@@ -9,9 +9,7 @@ import { Badge } from "@/components/ui/badge";
 // ===== ERROR HANDLING PATTERNS =====
 
 // ❌ AVOID: Arbitrary palette tokens (example shown for documentation only, replaced with semantic)
-const ErrorMessageBad = ({ message }: { message: string }) => (
-  <p className="text-sm text-destructive mt-1">{message}</p>
-);
+// (Removed stray JSX example that broke compilation)
 
 // ✅ USE: Semantic error tokens
 const ErrorMessage = ({ message }: { message: string }) => (
@@ -26,7 +24,7 @@ const ErrorInput = ({
   ...props
 }: {
   error?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }) => (
   <input
     className={`border ${error ? "border-destructive" : "border-input"} rounded-md px-3 py-2`}
@@ -85,7 +83,7 @@ const PrimaryAction = ({
   ...props
 }: {
   children: React.ReactNode;
-  [key: string]: any;
+  [key: string]: unknown;
 }) => (
   <EnhancedButton className="font-body" {...props}>
     {children}
@@ -97,7 +95,7 @@ const SecondaryAction = ({
   ...props
 }: {
   children: React.ReactNode;
-  [key: string]: any;
+  [key: string]: unknown;
 }) => (
   <EnhancedButton variant="outline" className="font-body" {...props}>
     {children}
@@ -259,34 +257,32 @@ export {
 
 // ===== USAGE EXAMPLES =====
 
-// Example page implementation following patterns
-const ExamplePage = () => (
-  <PageLayout
-    title="NeuroSEO™ Dashboard"
-    description="Professional AI-powered SEO intelligence platform"
-  >
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <FeatureCard
-        title="Site Audit"
-        description="Enterprise-grade crawling with NeuroSEO™ intelligence"
-        icon={() => <div className="w-6 h-6 bg-primary rounded" />}
-      >
-        <PrimaryAction>Start Audit</PrimaryAction>
-      </FeatureCard>
-
-      <FeatureCard
-        title="Keyword Intelligence"
-        description="AI-powered keyword analysis and optimization"
-        icon={() => <div className="w-6 h-6 bg-primary rounded" />}
-      >
-        <SecondaryAction>View Keywords</SecondaryAction>
-      </FeatureCard>
-    </div>
-
-    <div className="mt-8">
-      <StatusIndicator status="success">
-        NeuroSEO™ Suite is operating at 99.9% uptime
-      </StatusIndicator>
-    </div>
-  </PageLayout>
-);
+// Example page implementation (commented for reference only)
+/*
+<PageLayout
+  title="NeuroSEO™ Dashboard"
+  description="Professional AI-powered SEO intelligence platform"
+>
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <FeatureCard
+      title="Site Audit"
+      description="Enterprise-grade crawling with NeuroSEO™ intelligence"
+      icon={() => <div className="w-6 h-6 bg-primary rounded" />}
+    >
+      <PrimaryAction>Start Audit</PrimaryAction>
+    </FeatureCard>
+    <FeatureCard
+      title="Keyword Intelligence"
+      description="AI-powered keyword analysis and optimization"
+      icon={() => <div className="w-6 h-6 bg-primary rounded" />}
+    >
+      <SecondaryAction>View Keywords</SecondaryAction>
+    </FeatureCard>
+  </div>
+  <div className="mt-8">
+    <StatusIndicator status="success">
+      NeuroSEO™ Suite is operating at 99.9% uptime
+    </StatusIndicator>
+  </div>
+</PageLayout>
+*/

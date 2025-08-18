@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 
+interface TeamMember { userId?: string; id?: string; email?: string; role?: string; status?: string; invitedAt?: any; lastActive?: any; }
+interface TeamDoc { memberIds?: string[]; members?: TeamMember[];[k: string]: unknown; }
+
 async function getTeam(uid: string) {
     const snap = await adminDb.collection("teams").where("memberIds", 'array-contains', uid).limit(1).get();
     if (!snap.empty) return { id: snap.docs[0].id, data: snap.docs[0].data() };
@@ -13,8 +16,9 @@ async function getTeam(uid: string) {
     return null;
 }
 
-export async function POST(req: NextRequest, context: any) {
-    const params = context?.params || {};
+interface RouteContext { params: { memberId: string } }
+export async function POST(req: NextRequest, context: RouteContext) {
+    const { params } = context;
     try {
         const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
         if (!authHeader) return NextResponse.json({ error: "Missing auth" }, { status: 401 });
@@ -23,15 +27,15 @@ export async function POST(req: NextRequest, context: any) {
 
         const team = await getTeam(decoded.uid);
         if (!team) return NextResponse.json({ error: "Team not found" }, { status: 404 });
-        const data: any = team.data || {};
-        const members = Array.isArray(data.members) ? [...data.members] : [];
+        const data: TeamDoc = (team.data as TeamDoc) || {};
+        const members: TeamMember[] = Array.isArray(data.members) ? [...data.members] : [];
 
-        const acting = members.find((m: any) => m.userId === decoded.uid || m.id === decoded.uid || m.email === decoded.email);
-        if (!acting || !['owner', 'admin'].includes(acting.role)) {
+        const acting = members.find((m) => m.userId === decoded.uid || m.id === decoded.uid || m.email === decoded.email);
+        if (!acting || !['owner', 'admin'].includes(acting.role || '')) {
             return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
         }
 
-        const target = members.find((m: any) => m.userId === params.memberId || m.id === params.memberId || m.email === params.memberId);
+        const target = members.find((m) => m.userId === params.memberId || m.id === params.memberId || m.email === params.memberId);
         if (!target) return NextResponse.json({ error: "Member not found" }, { status: 404 });
         if (target.status !== 'pending') return NextResponse.json({ error: "Member not pending" }, { status: 400 });
 
@@ -56,8 +60,9 @@ export async function POST(req: NextRequest, context: any) {
             console.warn('Failed to enqueue resend email', e);
         }
         return NextResponse.json({ success: true });
-    } catch (e: any) {
+    } catch (e: unknown) {
         console.error("Resend invite error", e);
-        return NextResponse.json({ error: e.message || 'Internal error' }, { status: 500 });
+        const msg = typeof e === 'object' && e && 'message' in e ? (e as any).message : 'Internal error';
+        return NextResponse.json({ error: msg }, { status: 500 });
     }
 }

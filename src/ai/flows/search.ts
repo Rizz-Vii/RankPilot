@@ -35,7 +35,7 @@ export type SearchOutput = z.infer<typeof SearchOutputSchema>;
 export async function searchFeatures(
   input: SearchInput
 ): Promise<SearchOutput> {
-  return searchFeaturesFlow(input);
+  return _searchFeaturesFlow(input);
 }
 
 const searchPrompt = ai.definePrompt({
@@ -70,7 +70,7 @@ Return a JSON array of the most relevant features based on the query. If the que
 `,
 });
 
-const searchFeaturesFlow = ai.defineFlow(
+const _searchFeaturesFlow = ai.defineFlow(
   {
     name: "searchFeaturesFlow",
     inputSchema: SearchInputSchema,
@@ -81,3 +81,5 @@ const searchFeaturesFlow = ai.defineFlow(
     return output!;
   }
 );
+
+export const searchFeaturesFlow = _searchFeaturesFlow;

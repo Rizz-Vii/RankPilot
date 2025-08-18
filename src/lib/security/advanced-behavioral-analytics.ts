@@ -113,7 +113,7 @@ export interface UserActivity {
     id: string;
     timestamp: number;
     type: 'login' | 'logout' | 'page_view' | 'click' | 'form_submit' | 'api_call' | 'download' | 'upload';
-    details: Record<string, any>;
+    details: Record<string, unknown>;
     riskContribution: number;
     context: {
         url: string;
@@ -122,6 +122,19 @@ export interface UserActivity {
         ipAddress: string;
         userAgent: string;
     };
+}
+
+interface AnomalyEvidence {
+    expected: number | number[] | string | string[] | Record<string, any>;
+    observed: number | string | Record<string, any>;
+    deviation: number;
+    confidence: number; // 0-1
+}
+
+interface AnomalyContext {
+    baselineData: any; // Using any here intentionally to allow diverse baseline structures
+    sessionContext: UserBehaviorProfile['currentSession'];
+    environmentalFactors: Record<string, any>;
 }
 
 export interface BehavioralAnomaly {
@@ -133,17 +146,8 @@ export interface BehavioralAnomaly {
     severity: 'low' | 'medium' | 'high' | 'critical';
     score: number; // 0-100
     description: string;
-    evidence: {
-        expected: any;
-        observed: any;
-        deviation: number;
-        confidence: number;
-    };
-    context: {
-        baselineData: any;
-        sessionContext: any;
-        environmentalFactors: any;
-    };
+    evidence: AnomalyEvidence;
+    context: AnomalyContext;
     response: {
         triggered: boolean;
         actions: string[];
@@ -151,16 +155,18 @@ export interface BehavioralAnomaly {
     };
 }
 
+export interface ThreatIndicator {
+    type: string;
+    weight: number;
+    threshold: number;
+    timeWindow: number;
+}
+
 export interface ThreatModel {
     id: string;
     name: string;
     description: string;
-    indicators: Array<{
-        type: string;
-        weight: number;
-        threshold: number;
-        timeWindow: number;
-    }>;
+    indicators: ThreatIndicator[];
     riskScore: number;
     mitigations: string[];
     lastUpdated: number;
@@ -500,7 +506,7 @@ export class AdvancedBehavioralAnalytics extends EventEmitter {
      */
     private async detectVelocityAnomaly(
         profile: UserBehaviorProfile,
-        activity: UserActivity
+        _activity: UserActivity
     ): Promise<BehavioralAnomaly | null> {
         const recentActivities = profile.currentSession.activities
             .filter(a => Date.now() - a.timestamp < 60000) // Last minute
@@ -648,7 +654,7 @@ export class AdvancedBehavioralAnalytics extends EventEmitter {
      */
     private async detectTimingAnomaly(
         profile: UserBehaviorProfile,
-        activity: UserActivity
+        _activity: UserActivity
     ): Promise<BehavioralAnomaly | null> {
         const currentHour = new Date().getHours();
         const baselineHours = profile.baseline.loginTimes.map(t => new Date(t).getHours());
@@ -694,7 +700,7 @@ export class AdvancedBehavioralAnalytics extends EventEmitter {
      */
     private async detectPatternAnomaly(
         profile: UserBehaviorProfile,
-        activity: UserActivity
+        _activity: UserActivity
     ): Promise<BehavioralAnomaly | null> {
         // Analyze navigation patterns, click patterns, etc.
         // This is a simplified implementation
@@ -791,7 +797,7 @@ export class AdvancedBehavioralAnalytics extends EventEmitter {
      */
     private async evaluateIndicator(
         profile: UserBehaviorProfile,
-        indicator: any
+        indicator: ThreatIndicator
     ): Promise<number> {
         // Simplified indicator evaluation
         switch (indicator.type) {
@@ -839,9 +845,9 @@ export class AdvancedBehavioralAnalytics extends EventEmitter {
     /**
      * Update user baseline with new activity data
      */
-    private async updateBaseline(profile: UserBehaviorProfile, activity: UserActivity): Promise<void> {
+    private async updateBaseline(profile: UserBehaviorProfile, _activity?: UserActivity): Promise<void> {
         // Update baseline with adaptive learning
-        const alpha = this.learningRate;
+
 
         // This is a simplified baseline update
         // In a real implementation, this would be more sophisticated
@@ -942,7 +948,7 @@ export class AdvancedBehavioralAnalytics extends EventEmitter {
     /**
      * Get behavioral analytics metrics
      */
-    getAnalyticsMetrics(): any {
+    getAnalyticsMetrics(): BehavioralAnalyticsMetrics {
         const profiles = Array.from(this.profiles.values());
         const totalUsers = profiles.length;
         const activeUsers = profiles.filter(p => Date.now() - p.currentSession.startTime < 3600000).length; // Active in last hour
@@ -971,3 +977,14 @@ export class AdvancedBehavioralAnalytics extends EventEmitter {
 
 // Export singleton instance
 export const advancedBehavioralAnalytics = new AdvancedBehavioralAnalytics();
+
+// Placed after class to avoid confusion with class members
+export interface BehavioralAnalyticsMetrics {
+    totalUsers: number;
+    activeUsers: number;
+    riskDistribution: Record<string, number>;
+    totalAnomalies: number;
+    avgRiskScore: number;
+    modelsStatus: Record<string, MLModel['status']>;
+    threatModelsCount: number;
+}

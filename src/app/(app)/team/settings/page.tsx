@@ -17,12 +17,14 @@ export default function TeamSettingsPage() {
     name: string;
     description: string;
     members: Array<{ userId: string; name: string; email: string; role: string }>;
-    projects: string[];
+    projects: string[] | ProjectLite[];
     integrations: Array<{ id: string; name: string; status: string }>;
   };
   const [team, setTeam] = useState<Team | null>(null);
-  const [allProjects, setAllProjects] = useState<any[]>([]);
-  const [editState, setEditState] = useState<any>(null);
+  interface ProjectLite { id:string; name?:string; [k:string]:unknown }
+  const [allProjects, setAllProjects] = useState<ProjectLite[]>([]);
+  interface EditState { name:string; description:string; members: Team['members']; projects: ProjectLite[]; integrations: Team['integrations']; }
+  const [editState, setEditState] = useState<EditState|null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,8 +62,8 @@ export default function TeamSettingsPage() {
         if (!teamDoc) throw new Error("Team not found");
 
         // Fetch only the team's projects (limit 10 per 'in' query)
-        const projectIds: string[] = Array.isArray((teamDoc as any).projects) ? (teamDoc as any).projects : [];
-        let allProjectsArr: any[] = [];
+  const projectIds: string[] = Array.isArray((teamDoc as any).projects) ? (teamDoc as any).projects as string[] : [];
+        let allProjectsArr: unknown[] = [];
         if (projectIds.length > 0) {
           try {
             const chunk = <T,>(arr: T[], size: number) => arr.reduce<T[][]>((acc, _, i) => (i % size ? acc : [...acc, arr.slice(i, i + size)]), []);
@@ -79,15 +81,15 @@ export default function TeamSettingsPage() {
         }
 
         setTeam(teamDoc);
-        setAllProjects(allProjectsArr);
+        setAllProjects(allProjectsArr as ProjectLite[]);
         setEditState({
           name: (teamDoc as any).name ?? "",
           description: (teamDoc as any).description ?? "",
           members: Array.isArray((teamDoc as any).members) ? (teamDoc as any).members : [],
-          projects: allProjectsArr.filter(p => Array.isArray((teamDoc as any).projects) && (teamDoc as any).projects.includes(p.id)),
+          projects: (allProjectsArr as ProjectLite[]).filter(p => Array.isArray((teamDoc as any).projects) && (teamDoc as any).projects.includes(p.id)) as ProjectLite[],
           integrations: Array.isArray((teamDoc as any).integrations) ? (teamDoc as any).integrations : [],
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error("TeamSettings load error:", e);
         setError("Failed to load team data.");
       } finally {
@@ -98,22 +100,23 @@ export default function TeamSettingsPage() {
 
   // Handlers for editing
   const handleInputChange = (e: any) => {
-    setEditState((prev: any) => ({ ...prev, [e.target.name]: e.target.value }));
+    setEditState(prev => prev ? ({ ...prev, [e.target.name]: e.target.value }) : prev);
   };
   const handleMemberRoleChange = (id: string, role: string) => {
-    setEditState((prev: any) => ({
+    setEditState(prev => prev ? ({
       ...prev,
-      members: prev.members.map((m: any) => (m.userId === id ? { ...m, role } : m)),
-    }));
+      members: prev.members.map(m => (m.userId === id ? { ...m, role } : m)),
+    }) : prev);
   };
   const handleProjectToggle = (projectId: string) => {
-    setEditState((prev: any) => {
-      const exists = prev.projects.some((p: any) => p.id === projectId);
+    setEditState(prev => {
+      if(!prev) return prev;
+      const exists = prev.projects.some(p => p.id === projectId);
       return {
         ...prev,
         projects: exists
-          ? prev.projects.filter((p: any) => p.id !== projectId)
-          : [...prev.projects, allProjects.find((p) => p.id === projectId)],
+          ? prev.projects.filter(p => p.id !== projectId)
+          : [...prev.projects, allProjects.find(p => p.id === projectId)!],
       };
     });
   };
@@ -122,15 +125,16 @@ export default function TeamSettingsPage() {
     setSaving(true);
     setError(null);
     try {
+      if(!editState) return;
       await updateDoc(doc(db, "teams", team.id), {
         name: editState.name,
         description: editState.description,
         members: editState.members,
-        projects: editState.projects.map((p: any) => p.id),
+        projects: editState.projects.map(p => p.id),
         integrations: editState.integrations,
       });
-      setTeam({ ...team, ...editState });
-    } catch (e: any) {
+  setTeam({ ...team, ...editState } as any as Team);
+    } catch (e: unknown) {
       setError("Failed to save changes.");
     } finally {
       setSaving(false);
@@ -198,7 +202,7 @@ export default function TeamSettingsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {editState.members.map((m: any) => (
+                  {editState.members.map((m: { userId: string; name: string; email: string; role: string }) => (
                     <tr key={m.userId} className="border-b last:border-0">
                       <td className="py-2">{m.name}</td>
                       <td>{m.email}</td>
@@ -237,7 +241,7 @@ export default function TeamSettingsPage() {
                     <input
                       type="checkbox"
                       className="checkbox"
-                      checked={editState.projects.some((p: any) => p.id === project.id)}
+                      checked={editState.projects.some((p: ProjectLite) => p.id === project.id)}
                       onChange={() => handleProjectToggle(project.id)}
                       disabled={saving}
                     />
@@ -294,7 +298,7 @@ export default function TeamSettingsPage() {
               <CardTitle>Integrations</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {editState.integrations.map((integration: any) => (
+              {editState.integrations.map((integration: { id: string; name: string; status: string }) => (
                 <div key={integration.id} className="flex items-center gap-2">
                   <span className="font-medium">{integration.name}</span>
                   {integration.status === "connected" ? (

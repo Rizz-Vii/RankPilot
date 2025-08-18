@@ -26,8 +26,25 @@ export interface KpiSnapshot {
     aiDailyCostEstimate?: number; // USD approximate
 }
 
+// Narrow structural typing for only the fields we consume to avoid pervasive any/unknown casts
+interface UnifiedLatencyStats { p90: number | null; p95: number | null; p99: number | null }
+interface UnifiedCrawlerStats { success: number; errors: number; totalCrawlMs: number; totalAnalysisMs: number; aggregateHits?: number; legacyFallbacks?: number }
+interface UnifiedSemanticMapStats { aggregateHits?: number; legacyFallbacks?: number }
+interface UnifiedSnapshotShape {
+    aiResponses: { total: number; coveragePct: number };
+    analysisRuns: number;
+    analysisCacheHits: number;
+    fallbackReasons: Record<string, number>;
+    latency: Record<string, UnifiedLatencyStats>;
+    rateLimitRejections: Record<string, number>;
+    teamRateLimitAllows?: Record<string, number>; // optional team allow counters
+    compactDocs?: { avgBytes?: number };
+    crawler?: UnifiedCrawlerStats;
+    semanticMap?: UnifiedSemanticMapStats;
+}
+
 export function getKpiSnapshot(): KpiSnapshot {
-    const unified = getUnifiedMetricsSnapshot();
+    const unified = getUnifiedMetricsSnapshot() as unknown as UnifiedSnapshotShape; // Scoped narrowing with explicit intermediate cast
     const neuro = getNeuroseoMetricsSnapshot();
 
     const cacheDenom = neuro.analysisRuns + neuro.analysisCacheHits;
@@ -49,8 +66,8 @@ export function getKpiSnapshot(): KpiSnapshot {
 
     // Team limiter utilization: consider only team-scoped counters if present (keys starting with 'team:')
     let teamAllows = 0; let teamRejects = 0;
-    if ((unified as any).teamRateLimitAllows) {
-        Object.entries((unified as any).teamRateLimitAllows as Record<string, number>).forEach(([k, v]) => { if (k.startsWith('team:')) teamAllows += v; });
+    if (unified.teamRateLimitAllows) {
+        Object.entries(unified.teamRateLimitAllows).forEach(([k, v]) => { if (k.startsWith('team:')) teamAllows += v; });
     }
     Object.entries(unified.rateLimitRejections).forEach(([k, v]) => { if (k.startsWith('team:')) teamRejects += v; });
     const teamRateLimitUtilizationPct = (teamAllows + teamRejects) > 0 ? +(teamAllows / (teamAllows + teamRejects) * 100).toFixed(2) : null;
@@ -63,18 +80,21 @@ export function getKpiSnapshot(): KpiSnapshot {
     // Crawler aggregate adoption KPI (T14): aggregateHits / (aggregateHits + legacyFallbacks)
     let crawlerAggregateAdoptionPct: number | null = null;
     let semanticMapAggregateAdoptionPct: number | null = null;
-    const crawlerAny: any = unified.crawler as any;
+    const crawlerAny = unified.crawler;
     if (crawlerAny && (crawlerAny.aggregateHits != null || crawlerAny.legacyFallbacks != null)) {
-        const hits = crawlerAny.aggregateHits || 0;
-        const fallbacks = crawlerAny.legacyFallbacks || 0;
+        const hits = crawlerAny.aggregateHits ?? 0;
+        const fallbacks = crawlerAny.legacyFallbacks ?? 0;
         const denom = hits + fallbacks;
         if (denom > 0) crawlerAggregateAdoptionPct = +((hits / denom) * 100).toFixed(2);
     }
 
     // Semantic Map aggregate adoption KPI
-    const smAny: any = (unified as any).semanticMap;
+    const smAny = unified.semanticMap;
     if (smAny && (smAny.aggregateHits != null || smAny.legacyFallbacks != null)) {
-        const hits = smAny.aggregateHits || 0; const fallbacks = smAny.legacyFallbacks || 0; const denom = hits + fallbacks; if (denom > 0) semanticMapAggregateAdoptionPct = +((hits / denom) * 100).toFixed(2);
+        const hits = smAny.aggregateHits ?? 0;
+        const fallbacks = smAny.legacyFallbacks ?? 0;
+        const denom = hits + fallbacks;
+        if (denom > 0) semanticMapAggregateAdoptionPct = +((hits / denom) * 100).toFixed(2);
     }
 
     return {
@@ -89,7 +109,12 @@ export function getKpiSnapshot(): KpiSnapshot {
         avgCompactDocBytes,
         timestamp: new Date().toISOString(),
         routesP95,
-        crawler: unified.crawler,
+        crawler: unified.crawler ? {
+            success: unified.crawler.success,
+            errors: unified.crawler.errors,
+            totalCrawlMs: unified.crawler.totalCrawlMs,
+            totalAnalysisMs: unified.crawler.totalAnalysisMs
+        } : undefined,
         crawlerAggregateAdoptionPct,
         semanticMapAggregateAdoptionPct
     };

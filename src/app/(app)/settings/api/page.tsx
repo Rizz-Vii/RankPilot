@@ -74,56 +74,34 @@ export default function ApiManagementPage() {
     }
   }, [user, canUseFeature]);
 
-  const fetchApiKeys = async () => {
+  async function fetchApiKeys() {
     try {
-      // Mock data - replace with actual API call
-      const mockKeys: ApiKey[] = [
+      // Demo data; replace with real API call
+      const now = new Date();
+      setApiKeys([
         {
-          id: "key_1",
-          name: "Production API",
-          keyPreview: "rp_live_sk_1a2b...3c4d",
-          created: new Date("2024-01-15"),
-          lastUsed: new Date("2024-01-20"),
-          usageCount: 15420,
+          id: "key_demo_1",
+          name: "Production",
+          keyPreview: "rp_live_sk_x8a9...d3f2",
+          created: now,
+          lastUsed: now,
+          usageCount: 12345,
           status: "active",
-          permissions: ["read", "write", "analytics"],
+          permissions: ["read", "write"],
         },
-        {
-          id: "key_2",
-          name: "Development",
-          keyPreview: "rp_test_sk_5e6f...7g8h",
-          created: new Date("2024-01-10"),
-          lastUsed: null,
-          usageCount: 0,
-          status: "inactive",
-          permissions: ["read"],
-        },
-      ];
-      setApiKeys(mockKeys);
-    } catch (error) {
-      console.error("Error fetching API keys:", error);
-      toast.error("Failed to load API keys");
+      ]);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const fetchUsageStats = async () => {
+  async function fetchUsageStats() {
     try {
-      // Mock data - replace with actual API call
-      const mockUsage: ApiUsage = {
-        totalCalls: 15420,
-        monthlyLimit: 50000,
-        dailyCalls: 342,
-        dailyLimit: 2000,
-        errorRate: 0.5,
-        avgResponseTime: 245,
-      };
-      setUsage(mockUsage);
-    } catch (error) {
-      console.error("Error fetching usage stats:", error);
+      setUsage((u) => ({ ...u, totalCalls: 43100, dailyCalls: 220 }));
+    } finally {
+      // keep loading state managed by fetchApiKeys
     }
-  };
+  }
 
   const createApiKey = async () => {
     if (!newKeyName.trim()) {

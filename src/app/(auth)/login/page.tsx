@@ -15,6 +15,7 @@ import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { EnhancedAuthService } from "@/lib/services/enhanced-auth.service";
 import { Eye, EyeOff } from "lucide-react";
 import LoadingScreen from "@/components/ui/loading-screen";
+import { safeErrorMessage } from "@/lib/utils";
 const GoogleIcon = () => (
   <svg
     className="mr-2 h-4 w-4"
@@ -105,8 +106,8 @@ export default function LoginPage() {
       }
       
       // Redirection is handled by the useEffect hook after auth state updates
-    } catch (error: any) {
-      setErrors({ form: error?.message || "Login failed. Please try again." });
+    } catch (error: unknown) {
+      setErrors({ form: safeErrorMessage(error) || "Login failed. Please try again." });
     }
   };
 
@@ -127,9 +128,9 @@ export default function LoginPage() {
         });
       }
       // Redirection is handled by the useEffect hook after auth state updates
-    } catch (error: any) {
+    } catch (error: unknown) {
       setErrors({
-        form: error?.message || "Google sign-in failed. Please try again.",
+        form: safeErrorMessage(error) || "Google sign-in failed. Please try again.",
       });
     }
   };

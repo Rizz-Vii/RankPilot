@@ -601,7 +601,7 @@ export function MultiSectionDisclosure({
 
     return (
         <div className={className}>
-            {sections.map((section, index) => (
+            {sections.map((section) => (
                 <div key={section.id} className="border-b border-border last:border-b-0">
                     <div
                         onClick={() => toggleSection(section.id)}

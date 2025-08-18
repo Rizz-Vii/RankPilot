@@ -32,9 +32,9 @@ import "./sidebar.css";
 // --- Constants ---
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-const SIDEBAR_WIDTH = "18rem";
-const SIDEBAR_WIDTH_MOBILE = "20rem";
-const SIDEBAR_WIDTH_ICON = "4rem";
+
+
+
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
 // --- Context ---
@@ -198,7 +198,7 @@ const SidebarProvider = forwardRef<HTMLDivElement, SidebarProviderProps>(
         <TooltipProvider delayDuration={0}>
           <div
             className={cn("group/sidebar-wrapper sidebar-wrapper", className)}
-            ref={ref as any} // Cast ref to any
+            ref={ref}
             {...props}
           >
             {children}
@@ -257,7 +257,7 @@ const Sidebar = forwardRef<
             "sidebar-sheet-content-mobile"
           )}
           side={side}
-          ref={ref as any} // Cast ref to any
+          ref={ref}
         >
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
@@ -267,7 +267,7 @@ const Sidebar = forwardRef<
 
   return (
     <aside
-      ref={ref as any} // Cast ref to any
+      ref={ref}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className={cn(
@@ -295,7 +295,7 @@ const SidebarTrigger = forwardRef<
   if (isMobile) {
     return (
       <Button
-        ref={ref as any} // Cast ref to any
+        ref={ref}
         variant="ghost"
         size="icon"
         className={cn("md:hidden", className)}
@@ -310,7 +310,7 @@ const SidebarTrigger = forwardRef<
 
   return (
     <Button
-      ref={ref as any} // Cast ref to any
+      ref={ref}
       variant="ghost"
       size="icon"
       className={cn("hidden md:flex", className)}
@@ -334,7 +334,7 @@ const SidebarHeader = forwardRef<
   // Use ComponentPropsWithoutRef
   return (
     <div
-      ref={ref as any} // Cast ref to any
+      ref={ref}
       data-sidebar="header"
       className={cn("flex flex-col gap-2", className)}
       {...props}
@@ -350,7 +350,7 @@ const SidebarFooter = forwardRef<
   // Use ComponentPropsWithoutRef
   return (
     <div
-      ref={ref as any} // Cast ref to any
+      ref={ref}
       data-sidebar="footer"
       className={cn("flex flex-col gap-2", className)}
       {...props}
@@ -366,7 +366,7 @@ const SidebarContent = forwardRef<
   // Use ComponentPropsWithoutRef
   return (
     <div
-      ref={ref as any} // Cast ref to any
+      ref={ref}
       data-sidebar="content"
       className={cn(
         "flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden",
@@ -390,7 +390,7 @@ const SidebarMenu = forwardRef<HTMLUListElement, SidebarMenuProps>(
 
     return (
       <Comp
-        ref={ref as any}
+        ref={ref}
         data-sidebar="menu"
         className={cn("flex w-full min-w-0 flex-col gap-1", className)}
       >
@@ -466,7 +466,7 @@ const SidebarMenuButton = forwardRef<HTMLButtonElement, SidebarMenuButtonProps>(
 
     const button = (
       <Comp
-        ref={ref as any} // Cast ref to any
+        ref={ref}
         data-sidebar="menu-button"
         data-size={size}
         data-active={isActive}
@@ -531,7 +531,7 @@ const SidebarMenuLink = forwardRef<HTMLAnchorElement, SidebarMenuLinkProps>(
 
     const link = (
       <a
-        ref={ref as any} // Cast ref to any
+        ref={ref}
         data-sidebar="menu-button"
         data-size={size}
         data-active={isActive}

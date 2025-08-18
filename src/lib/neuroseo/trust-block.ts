@@ -37,12 +37,12 @@ export interface ContentCredibility {
 
 export interface TrustSignal {
   type:
-    | "author"
-    | "source"
-    | "publication"
-    | "citation"
-    | "review"
-    | "endorsement";
+  | "author"
+  | "source"
+  | "publication"
+  | "citation"
+  | "review"
+  | "endorsement";
   value: string;
   weight: number;
   confidence: number;
@@ -68,6 +68,13 @@ export interface ComplianceCheck {
   }>;
 }
 
+export interface DisclaimerEntry {
+  type: "medical" | "financial" | "legal" | "general";
+  required: boolean;
+  present: boolean;
+  suggestion?: string;
+}
+
 export interface TrustMetrics {
   expertiseScore: number;
   authoritativeness: number;
@@ -80,10 +87,10 @@ export interface TrustMetrics {
 
 export interface TrustImprovement {
   category:
-    | "expertise"
-    | "authoritativeness"
-    | "trustworthiness"
-    | "compliance";
+  | "expertise"
+  | "authoritativeness"
+  | "trustworthiness"
+  | "compliance";
   title: string;
   description: string;
   implementation: string;
@@ -155,11 +162,7 @@ export class TrustBlockEngine {
     );
 
     // Run compliance checks
-    const compliance = await this.runComplianceChecks(
-      url,
-      content,
-      contentType
-    );
+    const compliance = await this.runComplianceChecks(url, content, contentType);
 
     // Calculate trust metrics
     const metrics = this.calculateTrustMetrics(
@@ -177,10 +180,7 @@ export class TrustBlockEngine {
     );
 
     // Benchmark against competitors
-    const competitorBenchmark = await this.benchmarkCompetitors(
-      competitorUrls,
-      contentType
-    );
+    const competitorBenchmark = await this.benchmarkCompetitors(competitorUrls);
 
     return {
       url,
@@ -314,7 +314,7 @@ export class TrustBlockEngine {
         expertiseAlignment +
         freshness +
         comprehensiveness) /
-        5
+      5
     );
 
     return {
@@ -572,7 +572,7 @@ export class TrustBlockEngine {
   }
 
   private async runComplianceChecks(
-    url: string,
+    _url: string,
     content: string,
     contentType: string
   ): Promise<ComplianceCheck> {
@@ -589,7 +589,7 @@ export class TrustBlockEngine {
     const factCheckResults = await this.performFactChecking(content);
 
     // Required disclaimers
-    const disclaimers = this.checkRequiredDisclaimers(content, contentType);
+    const disclaimers = this.checkRequiredDisclaimers(content);
 
     return {
       gdprCompliant,
@@ -699,15 +699,8 @@ export class TrustBlockEngine {
   }
 
   private checkRequiredDisclaimers(
-    content: string,
-    contentType: string
-  ): Array<{
-    type: "medical" | "financial" | "legal" | "general";
-    required: boolean;
-    present: boolean;
-    suggestion?: string;
-  }> {
-    const disclaimers = [];
+    content: string): DisclaimerEntry[] {
+    const disclaimers: DisclaimerEntry[] = [];
 
     // Medical disclaimers
     const hasMedicalContent =
@@ -918,7 +911,7 @@ export class TrustBlockEngine {
 
   private generateTrustImprovements(
     metrics: TrustMetrics,
-    trustSignals: TrustSignal[],
+    _trustSignals: TrustSignal[],
     compliance: ComplianceCheck
   ): TrustImprovement[] {
     const improvements: TrustImprovement[] = [];
@@ -1015,9 +1008,7 @@ export class TrustBlockEngine {
   }
 
   private async benchmarkCompetitors(
-    competitorUrls: string[],
-    contentType: string
-  ): Promise<CompetitorTrustAnalysis> {
+    competitorUrls: string[]): Promise<CompetitorTrustAnalysis> {
     // Simulate competitor analysis
     const competitors = competitorUrls.map((url) => ({
       url,
@@ -1030,9 +1021,9 @@ export class TrustBlockEngine {
     const averageEATScore =
       competitors.length > 0
         ? Math.round(
-            competitors.reduce((sum, comp) => sum + comp.eatScore, 0) /
-              competitors.length
-          )
+          competitors.reduce((sum, comp) => sum + comp.eatScore, 0) /
+          competitors.length
+        )
         : 75;
 
     const industryBenchmark = {

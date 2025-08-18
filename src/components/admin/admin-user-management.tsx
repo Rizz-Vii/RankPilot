@@ -68,13 +68,16 @@ import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 
+interface TimestampLike { toDate: () => Date }
+const isTimestampLike = (v: unknown): v is TimestampLike => !!v && typeof v === 'object' && 'toDate' in v && typeof (v as any).toDate === 'function';
+
 interface User {
   id: string;
   email: string;
   displayName?: string;
   role: string;
-  createdAt: any;
-  lastSignIn?: any;
+  createdAt?: TimestampLike; // Firestore Timestamp
+  lastSignIn?: TimestampLike;
   subscriptionStatus?: string;
   subscriptionTier?: string;
   activityCount?: number;
@@ -96,45 +99,32 @@ export default function AdminUserManagement() {
     fetchUsers();
   }, []);
 
-  const fetchUsers = async () => {
+  async function fetchUsers() {
     try {
       setLoading(true);
-      const usersRef = collection(db, "users");
-      const q = query(usersRef, orderBy("createdAt", "desc"), limit(100));
-      const querySnapshot = await getDocs(q);
-
-      const usersList: User[] = [];
-      for (const doc of querySnapshot.docs) {
-        const userData = doc.data();
-
-        // Get activity count for each user
-        const activitiesRef = collection(db, "users", doc.id, "activities");
-        const activitiesSnapshot = await getDocs(activitiesRef);
-
-        usersList.push({
-          id: doc.id,
-          email: userData.email,
-          displayName: userData.displayName,
-          role: userData.role || "user",
-          createdAt: userData.createdAt,
-          lastSignIn: userData.lastSignIn,
-          subscriptionStatus: userData.subscriptionStatus,
-          subscriptionTier: userData.subscriptionTier,
-          activityCount: activitiesSnapshot.size,
-        });
-      }
-
-      setUsers(usersList);
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch users.",
+      const qy = query(collection(db, 'users'), orderBy('createdAt', 'desc'), limit(200));
+      const snap = await getDocs(qy);
+      const list: User[] = snap.docs.map(d => {
+        const data = d.data() as Record<string, any>;
+        return {
+          id: d.id,
+            email: typeof data.email === 'string' ? data.email : '',
+            displayName: typeof data.displayName === 'string' ? data.displayName : undefined,
+            role: typeof data.role === 'string' ? data.role : 'user',
+            createdAt: isTimestampLike(data.createdAt) ? data.createdAt : undefined,
+            lastSignIn: isTimestampLike(data.lastSignIn) ? data.lastSignIn : undefined,
+            subscriptionStatus: data.subscription?.status,
+            subscriptionTier: data.subscription?.tier,
+            activityCount: typeof data.activityCount === 'number' ? data.activityCount : undefined
+        };
       });
+      setUsers(list);
+    } catch (e) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to load users'});
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   const handleUserAction = async () => {
     if (!selectedUser) return;
@@ -398,19 +388,15 @@ export default function AdminUserManagement() {
                     <TableCell>
                       <div className="text-sm flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {user.createdAt
-                          ? formatDistanceToNow(user.createdAt.toDate(), {
-                              addSuffix: true,
-                            })
+                        {isTimestampLike(user.createdAt)
+                          ? formatDistanceToNow(user.createdAt.toDate(), { addSuffix: true })
                           : "Unknown"}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm text-muted-foreground">
-                        {user.lastSignIn
-                          ? formatDistanceToNow(user.lastSignIn.toDate(), {
-                              addSuffix: true,
-                            })
+                        {isTimestampLike(user.lastSignIn)
+                          ? formatDistanceToNow(user.lastSignIn.toDate(), { addSuffix: true })
                           : "Never"}
                       </div>
                     </TableCell>

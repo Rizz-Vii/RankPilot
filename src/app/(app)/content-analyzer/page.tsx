@@ -88,7 +88,8 @@ export default function ContentAnalyzerPage() {
   const resultRef = useRef<HTMLDivElement>(null);
 
   // Get user subscription tier for feature gating
-  const userTier = (user as any)?.subscriptionTier || "free";
+  // Derive a crude tier (profile likely supplies subscriptionTier elsewhere; fallback to free)
+  const userTier: string = (user as any)?.subscriptionTier || "free";
 
   // Scroll to results when analysis completes
   useEffect(() => {
@@ -182,7 +183,7 @@ export default function ContentAnalyzerPage() {
         return;
       }
 
-      const data = result as any;
+  const data = result as unknown; // retained for future real result typing
 
       // Only allow mock report when demo content is enabled
       if (!allowContentAnalyzerMocks()) {
@@ -271,14 +272,14 @@ export default function ContentAnalyzerPage() {
         const sanitize = (obj: any): any => {
           if (obj === null || typeof obj !== 'object') return obj;
           if (Array.isArray(obj)) return obj.map(sanitize);
-          const out: any = {};
-            Object.entries(obj).forEach(([k, v]) => {
-              if (v === undefined) return; // skip undefined
-              out[k] = sanitize(v);
-            });
+          const out: Record<string, any> = {};
+          Object.entries(obj).forEach(([k, v]) => {
+            if (v === undefined) return; // skip undefined
+            out[k] = sanitize(v);
+          });
           return out;
         };
-        const safeReport = sanitize(mockReport);
+        const safeReport: any = sanitize(mockReport);
         await addDoc(collection(db, "seoAudits"), {
           userId: user.uid,
           url: url,
@@ -508,7 +509,7 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
               />
               <XAxis dataKey="score" type="number" hide />
               <ChartTooltip
-                content={(props) => <ChartTooltipContent {...props} />}
+                content={(props: any) => <ChartTooltipContent {...(props as any)} />}
               />
               <Bar dataKey="score" radius={5} />
             </BarChart>
@@ -528,8 +529,8 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
             >
               <PieChart>
                 <ChartTooltip
-                  content={(props) => (
-                    <ChartTooltipContent {...props} nameKey="name" hideLabel />
+                  content={(props: any) => (
+                    <ChartTooltipContent {...(props as any)} nameKey="name" hideLabel />
                   )}
                 />
                 <Pie data={imageData} dataKey="value">
@@ -545,64 +546,5 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
   );
 };
 
-const AuditResults = ({ results }: { results: AuditUrlOutput; }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-  >
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-headline">Audit Results</CardTitle>
-        <div className="flex items-center gap-4 pt-2">
-          <span className="text-4xl font-bold text-primary">
-            {results.overallScore}
-          </span>
-          <div className="w-full">
-            <p className="font-semibold">Overall Score</p>
-            <Progress value={results.overallScore} className="mt-1" />
-          </div>
-        </div>
-        <CardDescription className="pt-2">{results.summary}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid md:grid-cols-2 gap-8">
-          <motion.div
-            className="space-y-4"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {results.items.map((item) => {
-              const Icon = statusIcons[item.status] || AlertCircle;
-              const color =
-                statusColors[item.status] || "text-muted-foreground";
-              return (
-                <motion.div
-                  key={item.id}
-                  className="flex items-start gap-4"
-                  variants={itemVariants}
-                >
-                  <Icon className={`mt-1 h-5 w-5 flex-shrink-0 ${color}`} />
-                  <div className="flex-1">
-                    <p className="font-semibold">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {item.details}
-                    </p>
-                  </div>
-                  <span className={`font-semibold text-sm ${color}`}>
-                    {item.score}/100
-                  </span>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-          <div>
-            <AuditCharts items={results.items} />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  </motion.div>
-);
+// (Removed orphaned JSX block that duplicated audit results outside component scope)
 

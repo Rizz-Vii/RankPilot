@@ -279,7 +279,7 @@ export function useToolAccess() {
  */
 export function filterNavBySubscription(
   navItems: NavItem[],
-  subscription: any
+  subscription: { tier?: string } | null | undefined
 ): NavItem[] {
   if (!subscription) return navItems.filter((item) => !item.requiredTier);
 
@@ -309,7 +309,7 @@ export function filterNavBySubscription(
     })
     .map((item) => {
       // Filter subitems based on tool access if they exist
-      const filteredItem = { ...item };
+      const filteredItem: NavItem & { children?: NavItem[] } = { ...(item as NavItem & { children?: NavItem[] }) };
 
       if ("children" in item && Array.isArray(item.children)) {
         const filteredChildren = item.children.filter((child) => {
@@ -325,7 +325,7 @@ export function filterNavBySubscription(
           return true;
         });
 
-        (filteredItem as any).children = filteredChildren;
+        filteredItem.children = filteredChildren as NavItem[];
       }
 
       return filteredItem;

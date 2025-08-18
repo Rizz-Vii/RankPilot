@@ -29,21 +29,25 @@ export async function runFirecrawl(targetUrl: string, opts: FirecrawlCrawlOption
         if (!resp.ok) { recordFallback('firecrawl:http_' + resp.status); return synthetic(targetUrl, 'http_' + resp.status); }
         const json = await resp.json();
         const raw: any[] = Array.isArray(json?.pages) ? json.pages : [];
-        const pages: FirecrawlPageResult[] = raw.slice(0, limit).map(p => ({
-            url: p.url || targetUrl,
-            content: p.markdown || p.html || '',
-            status: p.status || 200,
-            title: p.title || '',
-            links: Array.isArray(p.links) ? p.links.slice(0, 50) : [],
-            canonicalUrl: typeof p.canonicalUrl === 'string' ? p.canonicalUrl : undefined,
-            metaDescription: typeof (p.metaDescription || p.meta?.description) === 'string' ? (p.metaDescription || p.meta?.description) : undefined
-        }));
+        const pages: FirecrawlPageResult[] = raw.slice(0, limit).map(p => {
+            const links = Array.isArray(p.links) ? p.links.filter((l: any) => typeof l === 'string').slice(0, 50) : [];
+            const metaDescSource = typeof p.metaDescription === 'string' ? p.metaDescription : (p.meta && typeof p.meta.description === 'string' ? p.meta.description : undefined);
+            return {
+                url: typeof p.url === 'string' ? p.url : targetUrl,
+                content: typeof p.markdown === 'string' ? p.markdown : (typeof p.html === 'string' ? p.html : ''),
+                status: typeof p.status === 'number' ? p.status : 200,
+                title: typeof p.title === 'string' ? p.title : '',
+                links,
+                canonicalUrl: typeof p.canonicalUrl === 'string' ? p.canonicalUrl : undefined,
+                metaDescription: metaDescSource
+            };
+        });
         const validation = firecrawlCrawlResponseSchema.safeParse({ pages });
         const elapsedMs = Date.now() - start; recordRouteLatency('firecrawl/crawl', elapsedMs);
         if (!validation.success) { recordFallback('firecrawl:validation'); return { ...synthetic(targetUrl, 'validation'), elapsedMs }; }
         return { pages: validation.data.pages as FirecrawlPageResult[], elapsedMs };
-    } catch (e: any) {
-        const elapsedMs = Date.now() - start; if (e?.name === 'AbortError') { recordFallback('firecrawl:timeout'); return { ...synthetic(targetUrl, 'timeout'), elapsedMs }; }
+    } catch (e: unknown) {
+        const elapsedMs = Date.now() - start; if (e && typeof e === 'object' && 'name' in e && (e as any).name === 'AbortError') { recordFallback('firecrawl:timeout'); return { ...synthetic(targetUrl, 'timeout'), elapsedMs }; }
         recordError('firecrawl/crawl', '5xx_server'); recordFallback('firecrawl:exception'); return { ...synthetic(targetUrl, 'exception'), elapsedMs };
     }
     finally { clearTimeout(t); }

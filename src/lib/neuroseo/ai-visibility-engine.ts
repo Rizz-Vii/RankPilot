@@ -347,7 +347,7 @@ export class AIVisibilityEngine {
     }
 
     // Add content from top sources
-    sources.slice(0, 3).forEach((source, index) => {
+    sources.slice(0, 3).forEach((source) => {
       response += `According to ${new URL(source.url).hostname}, ${source.snippet} `;
     });
 
@@ -446,7 +446,7 @@ export class AIVisibilityEngine {
 
   private calculateVisibilityMetrics(
     queries: LLMQuery[],
-    responses: LLMResponse[],
+    _responses: LLMResponse[],
     citations: CitationAnalysis[]
   ): VisibilityMetrics {
     const citedQueries = citations.filter((c) => c.isCited);
@@ -464,7 +464,7 @@ export class AIVisibilityEngine {
     const topPerformingQueries = citedQueries
       .sort((a, b) => (a.citationPosition || 999) - (b.citationPosition || 999))
       .slice(0, 5)
-      .map((_, index) => queries[citations.indexOf(_)]?.query || "")
+      .map((_) => queries[citations.indexOf(_)]?.query || "")
       .filter(Boolean);
 
     const improvementOpportunities = citations

@@ -3,7 +3,8 @@
 // Only for temporary UI simulation—replace with real NeuroSEOSuite / backend results over time.
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const seedrandom: any = require('seedrandom');
+type SeedRandomFactory = (seed?: string) => (() => number);
+const seedrandom: SeedRandomFactory = require('seedrandom') as SeedRandomFactory;
 
 export type SyntheticProvenance = '__synthetic';
 

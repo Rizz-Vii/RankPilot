@@ -3,7 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { doc, getDoc } from "firebase/firestore";
 // Optional real-time subscription consolidation
 // We intentionally lazy-load onSnapshot only when realtime enabled to avoid bundling cost for static pages
-let _onSnapshot: any = null;
+let _onSnapshot: ((...args: any[]) => any) | null = null;
 import { db } from "@/lib/firebase";
 import { SubscriptionData } from "@/lib/subscription";
 import { STRIPE_PLANS, FREE_PLAN, PlanType } from "@/lib/stripe";
@@ -50,14 +50,14 @@ export function useSubscription(options: { realtime?: boolean } = {}) {
 
   useEffect(() => {
     let cancelled = false;
-    async function fetchSubscription(initial: boolean) {
+    async function fetchSubscription() {
       // Ultra-early test override (Playwright / E2E) via global variable to avoid auth & Firestore
       try {
-        if (typeof window !== 'undefined' && (window as any).__SUBSCRIPTION_OVERRIDE__) {
-          const ov = (window as any).__SUBSCRIPTION_OVERRIDE__ as { tier: SubscriptionTier; status?: string };
+        if (typeof window !== 'undefined' && (window as unknown as { __SUBSCRIPTION_OVERRIDE__?: { tier: SubscriptionTier; status?: string } }).__SUBSCRIPTION_OVERRIDE__) {
+          const ov = (window as unknown as { __SUBSCRIPTION_OVERRIDE__?: { tier: SubscriptionTier; status?: string } }).__SUBSCRIPTION_OVERRIDE__!;
           if (ov?.tier) {
             const forcedTier = ov.tier;
-            const defaultUserAccess: UserAccess = { role: 'user', tier: forcedTier, status: (ov.status as any) || 'active' };
+            const defaultUserAccess: UserAccess = { role: 'user', tier: forcedTier, status: (ov.status as SubscriptionInfo['status']) || 'active' };
             const planRef = forcedTier === 'free' ? FREE_PLAN : STRIPE_PLANS[forcedTier as PlanType] || FREE_PLAN;
             if (!cancelled) setSubscription({
               status: defaultUserAccess.status,
@@ -85,7 +85,7 @@ export function useSubscription(options: { realtime?: boolean } = {}) {
               const defaultUserAccess: UserAccess = {
                 role: 'user',
                 tier: forcedTier,
-                status: (ov.status as any) || 'active'
+                status: (ov.status as SubscriptionInfo['status']) || 'active'
               };
               if (!cancelled) setSubscription({
                 status: defaultUserAccess.status,
@@ -123,7 +123,7 @@ export function useSubscription(options: { realtime?: boolean } = {}) {
         const subData: SubscriptionData = userData
           ? {
             status: userData.subscriptionStatus || "free",
-            tier: (forcedTier as any) || userData.subscriptionTier || "free",
+            tier: (forcedTier as unknown) || userData.subscriptionTier || "free",
             customerId: userData.stripeCustomerId,
             subscriptionId: userData.stripeSubscriptionId,
             currentPeriodEnd: userData.nextBillingDate?.toDate(),
@@ -134,7 +134,7 @@ export function useSubscription(options: { realtime?: boolean } = {}) {
         let planInfo;
         if (subData.tier === "free") {
           planInfo = FREE_PLAN;
-        } else if (subData.tier === ("admin" as any)) {
+        } else if (subData.tier === ("admin" as unknown)) {
           // Treat admin as enterprise tier for plan benefits (avoid custom name that breaks PlanType types)
           planInfo = STRIPE_PLANS.enterprise;
         } else if (subData.tier && subData.tier in STRIPE_PLANS) {
@@ -189,7 +189,7 @@ export function useSubscription(options: { realtime?: boolean } = {}) {
       }
     }
     // Initial fetch
-    fetchSubscription(true);
+    fetchSubscription();
 
     // Optional realtime listener (single consolidated) only when enabled & user present
     if (realtime && user?.uid) {
@@ -199,9 +199,9 @@ export function useSubscription(options: { realtime?: boolean } = {}) {
           _onSnapshot = mod.onSnapshot;
         }
         const ref = doc(db, 'users', user.uid);
-        const unsub = _onSnapshot(ref, (snap: any) => {
+        const unsub = _onSnapshot(ref, (snap: { exists: () => boolean; data: () => any }) => {
           if (!snap.exists()) return;
-          const data = snap.data();
+          const data = snap.data() as Record<string, any>;
           const subData: SubscriptionData = {
             status: data.subscriptionStatus || 'free',
             tier: data.subscriptionTier || 'free',
@@ -209,9 +209,9 @@ export function useSubscription(options: { realtime?: boolean } = {}) {
             subscriptionId: data.stripeSubscriptionId,
             currentPeriodEnd: data.nextBillingDate?.toDate?.() || data.nextBillingDate,
             cancelAtPeriodEnd: data.cancelAtPeriodEnd || false,
-          } as any;
+          };
           let planInfo = subData.tier === 'free' ? FREE_PLAN : STRIPE_PLANS[subData.tier as PlanType] || FREE_PLAN;
-          if (subData.tier === ('admin' as any)) planInfo = STRIPE_PLANS.enterprise;
+          if (subData.tier === ('admin' as unknown)) planInfo = STRIPE_PLANS.enterprise;
           const userAccess = normalizeUserAccess({ role: profile?.role || 'user', subscriptionTier: subData.tier, subscriptionStatus: subData.status });
           const subscriptionInfo: SubscriptionInfo = {
             ...subData,
@@ -223,7 +223,7 @@ export function useSubscription(options: { realtime?: boolean } = {}) {
             accessibleFeatures: getAccessibleFeatures(userAccess)
           };
           if (!cancelled) setSubscription(subscriptionInfo);
-        }, (err: any) => console.error('[SubscriptionRealtime] snapshot error', err));
+        }, (err: unknown) => console.error('[SubscriptionRealtime] snapshot error', err));
         setUnsubRef(() => unsub);
       })();
     }

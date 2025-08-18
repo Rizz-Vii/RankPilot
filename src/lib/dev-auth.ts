@@ -72,34 +72,27 @@ export const loginAsDevUser = async (
   }
 };
 
-// Create mock user for fallback
-const createMockUser = (userType: "free" | "starter"): User => {
-  const userCreds = DEV_USERS[userType];
-  return {
-    uid: userCreds.uid,
-    email: userCreds.email,
-    displayName: userCreds.displayName,
-    emailVerified: true,
-    isAnonymous: false,
-    metadata: {
-      creationTime: new Date().toISOString(),
-      lastSignInTime: new Date().toISOString(),
-    },
-    providerData: [],
-    refreshToken: "",
-    tenantId: null,
-    delete: async () => {},
-    getIdToken: async () => "mock-token",
-    getIdTokenResult: async () => ({}) as any,
-    reload: async () => {},
-    toJSON: () => ({}),
-    phoneNumber: null,
-    photoURL: null,
-    providerId: "firebase",
-  } as User;
-};
-
 export const useMockAuth = () => {
   // This hook is now just for compatibility
   return { user: null };
 };
+
+function createMockUser(userType: keyof typeof DEV_USERS): User {
+  // Provide minimal subset of Firebase User interface used in app paths
+  return {
+    uid: DEV_USERS[userType].uid,
+    email: DEV_USERS[userType].email,
+    displayName: DEV_USERS[userType].displayName,
+    emailVerified: true,
+    isAnonymous: false,
+    providerData: [],
+    refreshToken: 'mock-refresh-token',
+    metadata: { creationTime: String(Date.now()), lastSignInTime: String(Date.now()) } as unknown as User['metadata'],
+    tenantId: null,
+    delete: async () => { /* noop */ },
+    getIdToken: async () => 'mock-id-token',
+    getIdTokenResult: async () => ({ token: 'mock-id-token' } as unknown),
+    reload: async () => { /* noop */ },
+    toJSON: () => ({ uid: DEV_USERS[userType].uid, email: DEV_USERS[userType].email })
+  } as unknown as User;
+}

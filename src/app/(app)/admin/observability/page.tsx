@@ -9,14 +9,50 @@ import { BarChart3, Activity, Zap, Gauge, Brain, LineChart as LineIcon } from 'l
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 
+interface KPIRecord {
+  date?: string;
+  provenanceCoveragePct?: number;
+  p95LatencyOverall?: number;
+  p90LatencyOverall?: number;
+  p99LatencyOverall?: number;
+  aiCostEstimate?: number;
+  aiDailyCostEstimate?: number; // optional enriched
+  aiDailyTokensIn?: number;
+  aiDailyTokensOut?: number;
+  crawlerAggregateAdoptionPct?: number;
+  semanticMapAggregateAdoptionPct?: number;
+  teamRateLimitUtilizationPct?: number;
+  fallbackRatePct?: number;
+  fallbackRate?: number;
+  cacheHitRatio?: number;
+  rateLimitRejectionRate?: number;
+  // Server precomputed MA7 fields (optional)
+  ma7Provenance?: number; ma7LatencyP95?: number; ma7CrawlerAdoption?: number; ma7SemanticAdoption?: number; ma7TeamRateLimitUtilizationPct?: number;
+  // Smoothed fields
+  smoothedProvenance?: number; smoothedLatencyP95?: number; smoothedCrawlerAdoption?: number; smoothedSemanticAdoption?: number;
+}
+
+interface AlertEntry { type: string; level: string; message: string; value: number | null; threshold: number | null; date?: string; [k: string]: unknown; }
+
 interface HealthPayload {
-  kpis?: any;
-  alerts?: Array<{ type: string; level: string; message: string; value: number | null; threshold: number }>;
+  kpis?: Record<string, unknown> & KPIRecord;
+  alerts?: AlertEntry[];
   p95?: Record<string, number | null>;
-  crawler?: any;
-  aiUsage24h?: any;
+  crawler?: { crawlP95?: number; analysisP95?: number };
+  aiUsagePerModel?: Record<string, { tokensIn: number; tokensOut: number; cost: number }>;
   timestamp?: string;
 }
+
+// Extract only MA7 & smoothed fields for alert history enrichment
+const pickMA7 = (r: KPIRecord) => {
+  const out: Partial<KPIRecord> = {};
+  const keys: (keyof KPIRecord)[] = [
+    'ma7Provenance','ma7LatencyP95','ma7CrawlerAdoption','ma7SemanticAdoption','ma7TeamRateLimitUtilizationPct',
+    'smoothedProvenance','smoothedLatencyP95','smoothedCrawlerAdoption','smoothedSemanticAdoption'
+  ];
+  keys.forEach(k=> { if (typeof r[k] === 'number') (out as any)[k] = r[k]; });
+  return out;
+};
 
 const classify = (pct: number | null | undefined) => pct == null ? '' : pct < 50 ? 'critical' : pct < 80 ? 'warn' : 'ok';
 const badgeClass = (state: string) => state === 'critical' ? 'text-red-600' : state === 'warn' ? 'text-amber-600' : 'text-green-600';
@@ -30,8 +66,8 @@ export const preferredMA = (computed: number[] | undefined, serverVal: number | 
 export default function ObservabilityDashboard() {
   const { user, loading, role } = useAdminRoute();
   const [data, setData] = useState<HealthPayload | null>(null);
-  const [history, setHistory] = useState<any[]>([]); // recent kpiDaily docs newest->oldest
-  const [alertHistory, setAlertHistory] = useState<any[]>([]); // placeholder persisted alert snapshots (future)
+  const [history, setHistory] = useState<KPIRecord[]>([]); // recent kpiDaily docs newest->oldest
+  const [alertHistory, setAlertHistory] = useState<AlertEntry[]>([]); // placeholder persisted alert snapshots (future)
   const [busy, setBusy] = useState(false);
   const load = async () => {
     setBusy(true);
@@ -44,7 +80,7 @@ export default function ObservabilityDashboard() {
       try {
         const qRef = query(collection(db, 'kpiDaily'), orderBy('date', 'desc'), limit(14));
         const snap = await getDocs(qRef);
-        const rows = snap.docs.map(d => d.data());
+  const rows = snap.docs.map(d => d.data() as KPIRecord);
         setHistory(rows);
       } catch { /* ignore */ }
     };
@@ -55,19 +91,19 @@ export default function ObservabilityDashboard() {
         if (res.ok) {
           const j = await res.json();
             if (j.rows) {
-              const flat: any[] = [];
-              j.rows.forEach((r: any) => (r.alerts || []).forEach((a: any) => flat.push({ date: r.date, ...a, ...pickMA7(r) })));
-              setAlertHistory(flat);
+      const flat: AlertEntry[] = [];
+      j.rows.forEach((r: KPIRecord & { alerts?: AlertEntry[] }) => (r.alerts || []).forEach((a: AlertEntry) => flat.push({ date: r.date, ...a, ...pickMA7(r) })));
+      setAlertHistory(flat);
               return;
             }
         }
         // Firestore fallback
         const qRef = query(collection(db, 'kpiAlertsDaily'), orderBy('date', 'desc'), limit(30));
         const snap = await getDocs(qRef);
-        const rows = snap.docs.map(d => d.data());
-        const flat: any[] = [];
-        rows.forEach((r: any) => (r.alerts || []).forEach((a: any) => flat.push({ date: r.date, ...a, ...pickMA7(r) })));
-        setAlertHistory(flat);
+    const rows = snap.docs.map(d => d.data() as KPIRecord & { alerts?: AlertEntry[] });
+    const flat: AlertEntry[] = [];
+    rows.forEach((r) => (r.alerts || []).forEach((a) => flat.push({ date: r.date, ...a, ...pickMA7(r) })));
+    setAlertHistory(flat);
       } catch { /* ignore */ }
     };
     fetchHistory();
@@ -79,13 +115,14 @@ export default function ObservabilityDashboard() {
   if (loading && !forceAdmin) return <LoadingScreen fullScreen text="Loading admin context..." />;
   if ((!user || role !== 'admin') && !forceAdmin) return <LoadingScreen fullScreen text="Redirecting..." />;
 
-  const k = data?.kpis || {};
+  const k = (data?.kpis as KPIRecord) || {} as KPIRecord;
   const crawler = data?.crawler || {};
-  const aiDailyCost = k.aiDailyCostEstimate ?? null;
+  // Align with stored KPI naming (cost estimate + token metrics may be absent)
+  const aiDailyCost = k.aiDailyCostEstimate ?? k.aiCostEstimate ?? null;
   const aiTokensIn = k.aiDailyTokensIn ?? null;
   const aiTokensOut = k.aiDailyTokensOut ?? null;
   const teamUtil = k.teamRateLimitUtilizationPct ?? null;
-  const perModel = (data as any)?.aiUsagePerModel || null;
+  const perModel = data?.aiUsagePerModel || null;
 
   // Cards array defined later after extra computed
   let provenanceExtra: React.ReactNode = null;
@@ -117,27 +154,18 @@ export default function ObservabilityDashboard() {
     );
   };
 
-  const pickMA7 = (r: any) => ({
-    ma7Provenance: r.ma7Provenance,
-    ma7CrawlerAdoption: r.ma7CrawlerAdoption,
-    ma7SemanticAdoption: r.ma7SemanticAdoption,
-    ma7FallbackRate: r.ma7FallbackRate,
-    ma7LatencyP95: r.ma7LatencyP95,
-    ma7CacheHitRatio: r.ma7CacheHitRatio,
-    ma7RateLimitRejectionRate: r.ma7RateLimitRejectionRate
-  });
-
   // If no history yet (e.g., first load or Firestore blocked in test), synthesize single-point series from live kpis
-  const histProvenance = history.length ? history.map(r => r.provenanceCoveragePct).filter((v: any) => typeof v === 'number') : (typeof (data?.kpis||{}).provenanceCoveragePct === 'number' ? [ (data!.kpis as any).provenanceCoveragePct ] : []);
-  const histP95 = history.length ? history.map(r => r.p95LatencyOverall).filter((v: any) => typeof v === 'number') : (typeof (data?.kpis||{}).p95LatencyOverall === 'number' ? [ (data!.kpis as any).p95LatencyOverall ] : []);
+  const kpiFallback = (data?.kpis as KPIRecord) || {} as KPIRecord;
+  const histProvenance = history.length ? history.map(r => r.provenanceCoveragePct).filter((v: unknown) => typeof v === 'number') : (typeof kpiFallback.provenanceCoveragePct === 'number' ? [ kpiFallback.provenanceCoveragePct ] : []);
+  const histP95 = history.length ? history.map(r => r.p95LatencyOverall).filter((v: unknown) => typeof v === 'number') : (typeof kpiFallback.p95LatencyOverall === 'number' ? [ kpiFallback.p95LatencyOverall ] : []);
   // Could extend to p90/p99 historical sparklines in future
-  const histCost = history.map(r => r.aiCostEstimate).filter((v: any) => typeof v === 'number');
-  const histCrawlerAdopt = history.length ? history.map(r => r.crawlerAggregateAdoptionPct).filter((v: any) => typeof v === 'number') : (typeof (data?.kpis||{}).crawlerAggregateAdoptionPct === 'number' ? [ (data!.kpis as any).crawlerAggregateAdoptionPct ] : []);
-  const histSemanticAdopt = history.length ? history.map(r => r.semanticMapAggregateAdoptionPct).filter((v: any) => typeof v === 'number') : (typeof (data?.kpis||{}).semanticMapAggregateAdoptionPct === 'number' ? [ (data!.kpis as any).semanticMapAggregateAdoptionPct ] : []);
-  const histTeamUtil = history.map(r => r.teamRateLimitUtilizationPct).filter((v: any) => typeof v === 'number');
-  const histFallback = history.map(r => r.fallbackRatePct ?? r.fallbackRate).filter((v: any) => typeof v === 'number');
-  const histCacheHit = history.map(r => r.cacheHitRatio).filter((v: any) => typeof v === 'number');
-  const histRateLimitReject = history.map(r => r.rateLimitRejectionRate).filter((v: any) => typeof v === 'number');
+  const histCost = history.map(r => r.aiCostEstimate).filter((v: unknown) => typeof v === 'number');
+  const histCrawlerAdopt = history.length ? history.map(r => r.crawlerAggregateAdoptionPct).filter((v: unknown) => typeof v === 'number') : (typeof kpiFallback.crawlerAggregateAdoptionPct === 'number' ? [ kpiFallback.crawlerAggregateAdoptionPct ] : []);
+  const histSemanticAdopt = history.length ? history.map(r => r.semanticMapAggregateAdoptionPct).filter((v: unknown) => typeof v === 'number') : (typeof kpiFallback.semanticMapAggregateAdoptionPct === 'number' ? [ kpiFallback.semanticMapAggregateAdoptionPct ] : []);
+  const histTeamUtil = history.map(r => r.teamRateLimitUtilizationPct).filter((v: unknown) => typeof v === 'number');
+  const histFallback = history.map(r => r.fallbackRatePct ?? r.fallbackRate).filter((v: unknown) => typeof v === 'number');
+  const histCacheHit = history.map(r => r.cacheHitRatio).filter((v: unknown) => typeof v === 'number');
+  const histRateLimitReject = history.map(r => r.rateLimitRejectionRate).filter((v: unknown) => typeof v === 'number');
 
   // Compute client-side MA7 overlays. Precedence order:
   // 1. Raw latest metric value always displayed
@@ -160,7 +188,7 @@ export default function ObservabilityDashboard() {
   };
   const maProvenance = useMemo(()=>computeMA7(histProvenance),[histProvenance]);
   // Prefer server precomputed MA7 fields (latest doc) when present to avoid client recompute drift.
-  const latestHistory: any | undefined = history[0]; // newest doc (already newest->oldest ordering)
+  const latestHistory: KPIRecord | undefined = history[0]; // newest doc (already newest->oldest ordering)
   // preferredMA helper imported from module scope (see export above)
   const maLatestProvenance = preferredMA(maProvenance, latestHistory?.ma7Provenance);
   const smoothedProv = latestHistory?.smoothedProvenance as number | undefined;
@@ -212,11 +240,11 @@ export default function ObservabilityDashboard() {
   const maLatestCrawler = preferredMA(maCrawler, latestHistory?.ma7CrawlerAdoption);
   const maLatestSemantic = preferredMA(maSemantic, latestHistory?.ma7SemanticAdoption);
   const maLatestTeamUtil = preferredMA(maTeamUtil, latestHistory?.ma7TeamRateLimitUtilizationPct); // (not persisted yet – fallback to computed)
-  const maLatestFallback = preferredMA(maFallback, latestHistory?.ma7FallbackRate);
-  const maLatestCacheHit = preferredMA(maCacheHit, latestHistory?.ma7CacheHitRatio);
-  const maLatestRateLimitReject = preferredMA(maRateLimitReject, latestHistory?.ma7RateLimitRejectionRate);
 
-  const cards: Array<{ title: string; value: any; unit?: string; help?: string; icon: any; variant?: 'percent' | 'ms' | 'raw'; extra?: React.ReactNode }> = [
+
+
+
+  const cards: Array<{ title: string; value: unknown; unit?: string; help?: string; icon: unknown; variant?: 'percent' | 'ms' | 'raw'; extra?: React.ReactNode }> = [
     { title: 'Provenance Coverage', value: k.provenanceCoveragePct, unit: '%', help: 'Target 100%. All responses wrapped with provenance metadata.', icon: Activity, variant: 'percent', extra: provenanceExtra || (
       <span className="flex flex-col gap-0.5"><span data-testid="prov-delta-smoothed" className="text-[10px] font-medium text-muted-foreground">— vs Smoothed</span></span>
     ) },
@@ -259,8 +287,9 @@ export default function ObservabilityDashboard() {
   const filteredAlertHistory = alertFilter==='all'? alertHistory : alertHistory.filter(a=> a.type===alertFilter);
   const uniqueAlertTypes = useMemo(()=> Array.from(new Set(alertHistory.map(a=> a.type))).sort(), [alertHistory]);
 
-  const renderCard = (c: any) => {
-    const state = c.variant === 'percent' ? classify(c.value) : '';
+  interface CardDef { title: string; value: unknown; unit?: string; help?: string; icon: any; variant?: 'percent' | 'ms' | 'raw'; extra?: React.ReactNode }
+  const renderCard = (c: CardDef) => {
+    const state = c.variant === 'percent' ? classify(c.value as number | null) : '';
     return (
       <Card key={c.title} className="overflow-hidden">
         <CardHeader className="pb-2">
@@ -272,7 +301,7 @@ export default function ObservabilityDashboard() {
         </CardHeader>
         <CardContent className="space-y-2">
           <div className={`text-lg font-semibold ${badgeClass(state)}`}>{c.value == null ? (busy ? '…' : '—') : (c.unit === '$' ? `$${c.value}` : `${c.value}${c.unit}`)}</div>
-          {c.variant === 'percent' && <Progress value={c.value || 0} className={state==='critical'? 'bg-red-200': state==='warn'? 'bg-amber-200':'bg-green-200'} />}
+          {c.variant === 'percent' && <Progress value={typeof c.value === 'number' ? c.value : 0} className={state==='critical'? 'bg-red-200': state==='warn'? 'bg-amber-200':'bg-green-200'} />}
         </CardContent>
       </Card>
     );
@@ -374,7 +403,7 @@ export default function ObservabilityDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {filteredAlertHistory.slice(0,30).map((h:any,i:number)=>{
+                {filteredAlertHistory.slice(0,30).map((h:AlertEntry,i:number)=>{
                   const ma = h.type==='provenanceCoverage'? h.ma7Provenance :
                     h.type==='crawlerAggregateAdoption'? h.ma7CrawlerAdoption :
                     h.type==='semanticMapAggregateAdoption'? h.ma7SemanticAdoption :
@@ -383,8 +412,8 @@ export default function ObservabilityDashboard() {
                     h.type==='cacheHitRatio'? h.ma7CacheHitRatio :
                     h.type==='rateLimitRejectionRate'? h.ma7RateLimitRejectionRate : null;
                   let maClass = '';
-                  if (ma!=null && typeof h.value === 'number') {
-                    const delta = (h.value - ma) / (ma||1);
+                  if (typeof ma === 'number' && typeof h.value === 'number') {
+                    const delta = (Number(h.value) - ma) / (ma || 1);
                     if (h.type==='latencyOverallP95' || h.type==='fallbackRate' || h.type==='rateLimitRejectionRate') {
                       if (delta > 0.15) maClass='text-red-600'; else if (delta > 0.05) maClass='text-amber-600'; else maClass='text-green-600';
                     } else { // higher is better metrics
@@ -393,11 +422,11 @@ export default function ObservabilityDashboard() {
                   }
                   return (
                     <tr key={i} className="border-b border-border/20 last:border-none">
-                      <td className="py-1 pr-3 font-mono text-[11px]">{h.date || h.ts || '—'}</td>
+                      <td className="py-1 pr-3 font-mono text-[11px]">{(h.date as string) || '—'}</td>
                       <td className="py-1 pr-3">{h.type}</td>
                       <td className="py-1 pr-3">{h.level}</td>
                       <td className="py-1 pr-3 truncate max-w-[280px]">{h.message}</td>
-                      <td className={`py-1 pr-3 ${maClass}`}>{ma!=null? ma: '—'}</td>
+                      <td className={`py-1 pr-3 ${maClass}`}>{typeof ma === 'number'? ma: '—'}</td>
                     </tr>
                   );
                 })}
@@ -456,7 +485,7 @@ export default function ObservabilityDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {Object.entries(perModel).map(([m, v]: any) => (
+                {Object.entries(perModel as Record<string,{tokensIn:number;tokensOut:number;cost:number}>).map(([m, v]) => (
                   <tr key={m} className="border-b border-border/20 last:border-none">
                     <td className="py-1 pr-3 font-mono text-[11px]">{m}</td>
                     <td className="py-1 pr-3">{v.tokensIn}</td>

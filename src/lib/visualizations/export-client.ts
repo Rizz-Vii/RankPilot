@@ -14,7 +14,7 @@ async function getIdToken(): Promise<string> {
 }
 
 async function blobToDataUrl(blob: Blob, fallbackMime?: string): Promise<string> {
-    const mime = (blob as any).type || fallbackMime || 'application/octet-stream';
+    const mime = blob.type || fallbackMime || 'application/octet-stream';
     // Prefer FileReader in browser
     try {
         if (typeof FileReader !== 'undefined') {

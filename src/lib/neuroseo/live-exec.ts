@@ -4,6 +4,7 @@
  * Provides provenance tagging: 'cache' | 'live' | 'synthetic'.
  */
 import { neuroSEOOrchestrator } from './enhanced-orchestrator';
+import type { } from './enhanced-orchestrator';
 import { createDeterministicRng, tagSynthetic } from '@/lib/synthetic/synthetic-utils';
 import { getLogger } from '@/lib/logging/app-logger';
 import { adminDb } from '@/lib/firebase-admin';
@@ -21,9 +22,21 @@ export interface LiveExecRequest {
     userId: string;
 }
 
+// Minimal subset of NeuroSEOReport we rely on here to avoid deep coupling
+interface LiveNeuroSEOReport {
+    analysisId: string;
+    urls: string[];
+    overallScore: number;
+    analysis: { seoScore: number; performance: number; accessibility: number; bestPractices: number; };
+    recommendations: Array<{ category: string; priority: 'high' | 'medium' | 'low'; description: string; implementation: string; }>;
+    trustMeta: { modelTag: string; generatedAt: number; dataIntegrity: string; deterministic: boolean; seedBasis: string; };
+    cached: boolean;
+    keywords?: Array<{ keyword: string; position?: number; volume?: number }>; // optional slice
+}
+
 export interface LiveExecResult {
     provenance: LiveProvenance;
-    report: any; // Phase 0 – orchestrator report shape
+    report: LiveNeuroSEOReport; // typed orchestrator report slice
     generatedAt: string;
     latencyMs: number;
 }
@@ -67,21 +80,22 @@ export async function executeNeuroLive(req: LiveExecRequest, opts?: { timeoutMs?
         recordWorkflowRun();
         const orchestratorPromise = neuroSEOOrchestrator.runAnalysis({
             urls: req.urls,
-            analysisType: (req.analysisType as any) || 'comprehensive',
+            analysisType: (req.analysisType as unknown) || 'comprehensive',
             userId: req.userId || 'anonymous'
-        } as any);
+        } as any).then(r => r as LiveNeuroSEOReport);
         const report = await Promise.race([orchestratorPromise, timeoutPromise]);
         const result: LiveExecResult = { provenance: 'live', report, generatedAt: new Date().toISOString(), latencyMs: Math.round(performance.now() - start) };
         cache.set(key, { ts: Date.now(), result });
         recordAnalysisRun();
-        logger.info('live.success', { key: key.slice(0, 24), latency: result.latencyMs, cached: (report as any)?.cached });
+        logger.info('live.success', { key: key.slice(0, 24), latency: result.latencyMs, cached: report.cached });
         // Fire and forget persistence (NEU-02)
         persistCompactAnalysis(req.userId, req.urls, req.analysisType || 'comprehensive', result).catch(err => {
             logger.warn('persist.degraded', { message: err?.message });
         });
         return result;
-    } catch (err: any) {
-        logger.warn('live.degraded', { reason: timedOut ? 'timeout' : 'error', message: err?.message });
+    } catch (err: unknown) {
+        const msg = (err && typeof err === 'object' && 'message' in err) ? (err as any).message : 'unknown';
+        logger.warn('live.degraded', { reason: timedOut ? 'timeout' : 'error', message: msg });
         recordWorkflowFailure();
         const rng = createDeterministicRng([req.urls.join('|'), req.analysisType, 'synthetic']);
         const synthetic = tagSynthetic({
@@ -126,16 +140,16 @@ async function persistCompactAnalysis(userId: string, urls: string[], analysisTy
     if (!userId) return; // require user context
     const hashKey = stableHashKey(urls, analysisType);
     const docId = hashKey; // deterministic idempotent upsert
-    const report: any = result.report || {};
+    const report: LiveNeuroSEOReport = result.report as LiveNeuroSEOReport;
     // Extract compact slice (avoid large arrays)
-    const topKeywords = Array.isArray(report.keywords) ? report.keywords.slice(0, 10).map((k: any) => ({
+    const topKeywords = Array.isArray(report.keywords) ? report.keywords.slice(0, 10).map(k => ({
         keyword: k.keyword,
         position: k.position,
         volume: k.volume
     })) : [];
     const payload = {
         userId,
-        overallScore: report.overallScore ?? report.analysis?.seoScore ?? 0,
+        overallScore: report.overallScore ?? report.analysis.seoScore ?? 0,
         createdAt: new Date(),
         urls: [...urls].slice(0, 10),
         hashKey,

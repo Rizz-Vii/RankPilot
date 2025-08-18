@@ -64,7 +64,7 @@ export interface ComplianceEvidence {
     title: string;
     description: string;
     filePath?: string;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
     collector: 'automated' | 'manual';
     timestamp: number;
     retention: number; // retention period in days
@@ -83,13 +83,13 @@ export interface ComplianceAuditTrail {
         name?: string;
     };
     details: {
-        before?: any;
-        after?: any;
+        before?: unknown;
+        after?: unknown;
         reason?: string;
         impact?: string;
     };
     outcome: 'success' | 'failure' | 'partial';
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
 }
 
 export interface ComplianceReport {
@@ -752,7 +752,7 @@ export class ComplianceAutomationEngine extends EventEmitter {
         return { score, findings, recommendations };
     }
 
-    private async assessRequirement(requirement: ComplianceRequirement, fullAssessment?: boolean): Promise<{
+    private async assessRequirement(requirement: ComplianceRequirement, _fullAssessment?: boolean): Promise<{
         score: number;
         findings: ComplianceFinding[];
         recommendations: ComplianceRecommendation[];

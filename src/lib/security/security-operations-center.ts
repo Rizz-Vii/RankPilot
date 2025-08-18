@@ -105,7 +105,7 @@ export interface SecurityAlert {
     event: {
         type: string;
         description: string;
-        rawData: Record<string, any>;
+        rawData: Record<string, unknown>;
     };
     enrichment: {
         threatIntelligence?: string[];
@@ -114,7 +114,7 @@ export interface SecurityAlert {
             score: number;
             source: string;
         };
-        context?: Record<string, any>;
+        context?: Record<string, unknown>;
     };
     disposition: {
         status: 'new' | 'acknowledged' | 'investigating' | 'resolved' | 'false-positive';
@@ -170,14 +170,14 @@ export interface SecurityPlaybook {
     description: string;
     triggers: Array<{
         type: 'alert' | 'incident' | 'manual' | 'scheduled';
-        conditions: Record<string, any>;
+        conditions: TriggerConditions;
     }>;
     steps: Array<{
         id: string;
         name: string;
         type: 'automated' | 'manual' | 'decision';
         action: string;
-        parameters: Record<string, any>;
+        parameters: Record<string, unknown>;
         timeout?: number;
         retries?: number;
         onSuccess?: string; // next step id
@@ -195,6 +195,37 @@ export interface SecurityPlaybook {
         lastModified: number;
         tags: string[];
     };
+}
+
+interface TriggerConditions {
+    category?: string[];
+    severity?: string[];
+    [key: string]: unknown;
+}
+
+interface PlaybookExecutionResult {
+    stepId: string;
+    status: 'success' | 'failure' | 'skipped';
+    output?: unknown;
+    error?: string;
+}
+
+interface PlaybookExecutionContext {
+    incidentId?: string;
+    alertId?: string;
+    parameters?: Record<string, unknown>;
+    executor?: string;
+}
+
+interface ActivePlaybookExecution {
+    id: string;
+    playbookId: string;
+    context: PlaybookExecutionContext;
+    status: 'running' | 'completed' | 'failed' | 'cancelled';
+    startTime: number;
+    endTime?: number;
+    results: PlaybookExecutionResult[];
+    currentStep: number;
 }
 
 export interface ThreatIntelligenceIndicator {
@@ -219,7 +250,7 @@ export interface ThreatIntelligenceIndicator {
         mitreTactics?: string[];
     };
     expires: number;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
 }
 
 export class SecurityOperationsCenter extends EventEmitter {
@@ -227,7 +258,7 @@ export class SecurityOperationsCenter extends EventEmitter {
     private alerts: Map<string, SecurityAlert> = new Map();
     private playbooks: Map<string, SecurityPlaybook> = new Map();
     private threatIntelligence: Map<string, ThreatIntelligenceIndicator> = new Map();
-    private activePlaybookExecutions: Map<string, any> = new Map();
+    private activePlaybookExecutions: Map<string, ActivePlaybookExecution> = new Map();
     private monitoringInterval: NodeJS.Timeout | null = null;
     private alertProcessingQueue: SecurityAlert[] = [];
     private isProcessingAlerts = false;
@@ -266,7 +297,7 @@ export class SecurityOperationsCenter extends EventEmitter {
         severity: SecurityAlert['severity'];
         source: SecurityAlert['source'];
         event: SecurityAlert['event'];
-        rawData?: Record<string, any>;
+        rawData?: Record<string, unknown>;
     }): Promise<SecurityAlert> {
         try {
             const alert: SecurityAlert = {
@@ -469,18 +500,13 @@ export class SecurityOperationsCenter extends EventEmitter {
     /**
      * Execute security playbook
      */
-    async executePlaybook(playbookId: string, context: {
-        incidentId?: string;
-        alertId?: string;
-        parameters?: Record<string, any>;
-        executor?: string;
-    }): Promise<{
+    async executePlaybook(playbookId: string, context: PlaybookExecutionContext): Promise<{
         executionId: string;
         status: 'running' | 'completed' | 'failed' | 'cancelled';
         results: Array<{
             stepId: string;
             status: 'success' | 'failure' | 'skipped';
-            output?: any;
+            output?: unknown;
             error?: string;
         }>;
     }> {
@@ -491,14 +517,14 @@ export class SecurityOperationsCenter extends EventEmitter {
             }
 
             const executionId = this.generateId();
-            const execution = {
+            const execution: ActivePlaybookExecution = {
                 id: executionId,
                 playbookId,
                 context,
                 status: 'running' as 'running' | 'completed' | 'failed' | 'cancelled',
                 startTime: Date.now(),
-                endTime: undefined as number | undefined,
-                results: [] as any[],
+                endTime: undefined,
+                results: [],
                 currentStep: 0
             };
 
@@ -587,7 +613,7 @@ export class SecurityOperationsCenter extends EventEmitter {
         const allIncidents = Array.from(this.incidents.values());
         const allAlerts = Array.from(this.alerts.values());
 
-        const recentIncidents = allIncidents.filter(i => i.timeline.detected >= last24h);
+
         const recentAlerts = allAlerts.filter(a => a.timestamp >= last24h);
 
         // Calculate incident metrics
@@ -666,7 +692,7 @@ export class SecurityOperationsCenter extends EventEmitter {
             description: 'Automated response to DDoS attacks',
             triggers: [{
                 type: 'alert',
-                conditions: { category: 'ddos', severity: ['high', 'critical'] }
+                conditions: { category: ['ddos'], severity: ['high', 'critical'] }
             }],
             steps: [
                 {
@@ -712,7 +738,7 @@ export class SecurityOperationsCenter extends EventEmitter {
             description: 'Comprehensive malware incident response',
             triggers: [{
                 type: 'alert',
-                conditions: { category: 'malware', severity: ['medium', 'high', 'critical'] }
+                conditions: { category: ['malware'], severity: ['medium', 'high', 'critical'] }
             }],
             steps: [
                 {
@@ -931,7 +957,7 @@ export class SecurityOperationsCenter extends EventEmitter {
         }
     }
 
-    private async executePlaybookStep(step: SecurityPlaybook['steps'][0], context: any): Promise<any> {
+    private async executePlaybookStep(step: SecurityPlaybook['steps'][0], context: PlaybookExecutionContext): Promise<unknown> {
         switch (step.action) {
             case 'analyze-ddos-traffic':
                 return { result: 'Traffic analyzed', pattern: 'volumetric-attack' };
@@ -943,7 +969,7 @@ export class SecurityOperationsCenter extends EventEmitter {
                 this.emit('notification-sent', {
                     channel: step.parameters.channel,
                     priority: step.parameters.priority,
-                    message: `Security incident requires attention: ${context.incidentId}`
+                    message: `Security incident requires attention: ${context.incidentId || 'unknown'}`
                 });
                 return { result: 'Notification sent' };
 
@@ -983,11 +1009,11 @@ export class SecurityOperationsCenter extends EventEmitter {
         }, timeout * 60 * 1000); // Convert to milliseconds
     }
 
-    private matchesTriggerConditions(incident: SecurityIncident, conditions: Record<string, any>): boolean {
-        if (conditions.category && !conditions.category.includes(incident.category)) {
+    private matchesTriggerConditions(incident: SecurityIncident, conditions: TriggerConditions): boolean {
+        if (conditions.category && Array.isArray(conditions.category) && !conditions.category.includes(incident.category)) {
             return false;
         }
-        if (conditions.severity && !conditions.severity.includes(incident.severity)) {
+        if (conditions.severity && Array.isArray(conditions.severity) && !conditions.severity.includes(incident.severity)) {
             return false;
         }
         return true;

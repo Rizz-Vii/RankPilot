@@ -119,15 +119,20 @@ export async function suggestSendTime(userId: string, teamId?: string) {
 export function generateSubjectVariants(base: string) { return generateVariants(base, 4); }
 
 // --- Platform Account Integration Stubs (extend with OAuth tokens in production) ---
-export interface SocialAccount { platform: 'instagram' | 'facebook' | 'x' | 'linkedin'; handle: string; connected: boolean; meta?: any }
+export interface SocialAccount { platform: 'instagram' | 'facebook' | 'x' | 'linkedin'; handle: string; connected: boolean; meta?: unknown }
 export async function connectSocialAccount(platform: SocialAccount['platform'], handle: string, userId: string, teamId?: string) {
     // Placeholder: store lightweight connection marker
     await addDoc(collection(db, 'socialAccounts'), { userId, teamId, platform, handle, connected: true, createdAt: Timestamp.now() });
     return { platform, handle, connected: true };
 }
-export async function listSocialAccounts(userId: string, teamId?: string) {
+export interface SocialAccountDoc extends SocialAccount { id: string; userId: string; teamId?: string; createdAt?: unknown }
+export async function listSocialAccounts(userId: string, teamId?: string): Promise<SocialAccountDoc[]> {
     const q = query(collection(db, 'socialAccounts'), where(teamId ? 'teamId' : 'userId', '==', teamId || userId), limit(20));
-    const snap = await getDocs(q); return snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => {
+        const data = d.data() as Omit<SocialAccountDoc, 'id'>;
+        return { id: d.id, ...data };
+    });
 }
 
 // Trend analysis placeholder – deterministic hashtags/angles

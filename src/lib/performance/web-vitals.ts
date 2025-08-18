@@ -89,15 +89,18 @@ export const performanceUtils = {
 
     // Send metric to analytics
     sendToAnalytics: (metric: WebVitalsMetric) => {
-        if (typeof window !== 'undefined' && 'gtag' in window && typeof (window as any).gtag === 'function') {
-            (window as any).gtag('event', metric.name, {
-                event_category: 'Web Vitals',
-                value: Math.round(metric.value),
-                metric_id: metric.id,
-                metric_value: metric.value,
-                metric_delta: metric.delta,
-                metric_rating: metric.rating,
-            });
+        if (typeof window !== 'undefined' && 'gtag' in window) {
+            const win = window as unknown as { gtag?: (...args: any[]) => void };
+            if (typeof win.gtag === 'function') {
+                win.gtag('event', metric.name, {
+                    event_category: 'Web Vitals',
+                    value: Math.round(metric.value),
+                    metric_id: metric.id,
+                    metric_value: metric.value,
+                    metric_delta: metric.delta,
+                    metric_rating: metric.rating,
+                });
+            }
         }
     },
 

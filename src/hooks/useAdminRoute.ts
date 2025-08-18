@@ -6,16 +6,29 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import LoadingScreen from "@/components/ui/loading-screen";
 
-export default function useAdminRoute() {
+// Explicit return contract so downstream destructuring is strongly typed instead of widening to unknown.
+interface AdminRouteResult {
+  user: ReturnType<typeof useAuth>["user"]; // User | null
+  loading: boolean;
+  role: string | null;
+}
+
+declare global {
+  // Augment Window with optional __E2E__ flag used in tests.
+  interface Window { __E2E__?: string; }
+}
+
+export default function useAdminRoute(): AdminRouteResult {
   const { user, loading, role } = useAuth();
   const router = useRouter();
 
   // Tightened test override: requires both localStorage flag AND E2E runtime/build flag
   if (typeof window !== 'undefined') {
     try {
-      const allowE2E = (process.env.NEXT_PUBLIC_E2E === '1') || (window as any).__E2E__ === '1';
+      const allowE2E = (process.env.NEXT_PUBLIC_E2E === '1') || window.__E2E__ === '1';
       if (allowE2E && localStorage.getItem('TEST_FORCE_ADMIN') === '1') {
-        return { user: user || { uid: 'test-admin-override' }, loading: false, role: 'admin' } as any;
+        // Provide deterministic admin override object; keep shape consistent with AdminRouteResult.
+        return { user: (user || { uid: 'test-admin-override' }) as typeof user, loading: false, role: 'admin' };
       }
     } catch { /* ignore */ }
   }

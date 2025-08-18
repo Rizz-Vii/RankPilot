@@ -38,7 +38,7 @@ export function EnhancedMetricCard({
     const determinedTrend = trend || (change !== undefined ? (change > 0 ? "up" : change < 0 ? "down" : "neutral") : "neutral");
 
     // Get tier-specific styling
-    const tierStyles = tier ? getTierBadgeColor(tier) : null;
+
 
     // Format change percentage
     const formatChange = (changeValue: number) => {

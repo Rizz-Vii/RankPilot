@@ -20,30 +20,35 @@ export interface SEOAuditUnifiedResponse {
     source?: 'live' | 'cache' | 'fallback';
 }
 
-export function adaptSEOAuditResponse(raw: any, meta: { fallback?: boolean; startedAt?: number } = {}): SEOAuditUnifiedResponse {
+export function adaptSEOAuditResponse(raw: unknown, meta: { fallback?: boolean; startedAt?: number } = {}): SEOAuditUnifiedResponse {
     const startedAt = meta.startedAt || Date.now();
     const end = Date.now();
 
     // Determine items
-    const items: SEOAuditItem[] = Array.isArray(raw?.items)
-        ? raw.items.map((it: any, i: number) => ({
-            id: String(it?.id || i),
-            name: String(it?.name || it?.title || 'Unknown Item'),
-            score: typeof it?.score === 'number' ? it.score : 0,
-            details: String(it?.details || it?.description || 'No details provided'),
-            status: (['good', 'warning', 'error'].includes(it?.status) ? it.status : 'warning') as 'good' | 'warning' | 'error',
-        }))
-        : [];
+    const r = (raw && typeof raw === 'object') ? raw as Record<string, unknown> : {};
+    const itemsRaw = Array.isArray((r as any).items) ? (r as any).items as unknown[] : [];
+    const items: SEOAuditItem[] = itemsRaw.map((it, i) => {
+        const o = (it && typeof it === 'object') ? it as Record<string, unknown> : {};
+        const statusRaw = o.status;
+        const status: 'good' | 'warning' | 'error' = (statusRaw === 'good' || statusRaw === 'warning' || statusRaw === 'error') ? statusRaw : 'warning';
+        return {
+            id: String(o.id ?? i),
+            name: String(o.name ?? o.title ?? 'Unknown Item'),
+            score: typeof o.score === 'number' ? o.score : 0,
+            details: String(o.details ?? o.description ?? 'No details provided'),
+            status,
+        };
+    });
 
     // Compute overall score if missing
-    let overallScore = typeof raw?.overallScore === 'number' ? raw.overallScore : 0;
+    let overallScore = typeof r.overallScore === 'number' ? (r.overallScore as number) : 0;
     if (!overallScore && items.length) {
         overallScore = Math.round(items.reduce((a, b) => a + (b.score || 0), 0) / items.length);
     }
 
-    const cacheHit: boolean = !!raw?.cacheHit;
+    const cacheHit: boolean = !!r.cacheHit;
     // Derive source priority: explicit > fallback flag > cacheHit inference
-    let source: 'live' | 'cache' | 'fallback' | undefined = raw?.source;
+    let source: 'live' | 'cache' | 'fallback' | undefined = (r.source as any);
     if (!source) {
         if (meta.fallback) source = 'fallback';
         else if (cacheHit) source = 'cache';
@@ -52,8 +57,8 @@ export function adaptSEOAuditResponse(raw: any, meta: { fallback?: boolean; star
 
     // Quota normalization
     let quota: SEOAuditUnifiedResponse['quota'];
-    if (raw?.quota && typeof raw.quota === 'object') {
-        const { limit, used, remaining } = raw.quota;
+    if (r.quota && typeof r.quota === 'object') {
+        const { limit, used, remaining } = r.quota as Record<string, unknown>;
         quota = {
             limit: typeof limit === 'number' ? limit : -1,
             used: typeof used === 'number' ? used : 0,
@@ -66,11 +71,11 @@ export function adaptSEOAuditResponse(raw: any, meta: { fallback?: boolean; star
     }
 
     return {
-        url: raw?.url,
+        url: typeof r.url === 'string' ? r.url : undefined,
         overallScore,
         items,
-        summary: String(raw?.summary || 'No summary provided.'),
-        totalProcessingTime: typeof raw?.totalProcessingTime === 'number' ? raw.totalProcessingTime : end - startedAt,
+        summary: String(r.summary || 'No summary provided.'),
+        totalProcessingTime: typeof r.totalProcessingTime === 'number' ? (r.totalProcessingTime as number) : end - startedAt,
         cacheHit,
         quota,
         source,

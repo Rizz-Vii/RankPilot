@@ -74,9 +74,12 @@ export class EnhancedDashboardService {
                 completedProjects: completedProjects.size,
                 totalAnalyses: analyses.size,
                 trackedKeywords: keywords.size,
-                lastAnalysis: analyses.docs[0]?.data()?.completedAt?.toDate(),
-                averageScore: this.calculateAverageScore(analyses.docs.map(doc => doc.data())),
-                projectSuccess: this.calculateProjectSuccessRate(completedProjects.docs.map(doc => doc.data()))
+                lastAnalysis: ((): Date | undefined => {
+                    const v = analyses.docs[0]?.data()?.completedAt as unknown;
+                    return toDateOptional(v);
+                })(),
+                averageScore: this.calculateAverageScore(analyses.docs.map(doc => doc.data() as Record<string, unknown>)),
+                projectSuccess: this.calculateProjectSuccessRate(completedProjects.docs.map(doc => doc.data() as Record<string, unknown>))
             };
 
         } catch (error) {
@@ -133,7 +136,7 @@ export class EnhancedDashboardService {
                 teams: teams.map(team => ({
                     id: team.id,
                     name: team.name,
-                    role: team.members.find((m: any) => m.userId === userId)?.role || 'member'
+                    role: team.members.find((m: any) => m && m.userId === userId)?.role || 'member'
                 }))
             };
         } catch (error) {
@@ -156,29 +159,29 @@ export class EnhancedDashboardService {
             );
 
             const snapshot = await getDocs(competitorQuery);
-            const analyses = snapshot.docs.map(doc => doc.data());
+            const analyses = snapshot.docs.map(doc => doc.data() as Record<string, unknown>);
 
             if (analyses.length === 0) {
                 return { totalCompetitors: 0, averageGap: 0, topOpportunity: null };
             }
 
             // Calculate insights
-            const uniqueCompetitors = new Set(analyses.map(a => a.competitorDomain)).size;
-            const gaps = analyses.map(a => a.gapScore || 0).filter(score => score > 0);
+            const uniqueCompetitors = new Set(analyses.map(a => String((a as Record<string, unknown>).competitorDomain || ''))).size;
+            const gaps = analyses.map(a => Number((a as Record<string, unknown>).gapScore || 0)).filter(score => score > 0);
             const averageGap = gaps.length > 0 ? gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length : 0;
 
             // Find top opportunity
             const topOpportunity = analyses
-                .filter(a => a.gapScore && a.opportunities)
-                .sort((a, b) => (b.gapScore || 0) - (a.gapScore || 0))[0];
+                .filter(a => (a as Record<string, unknown>).gapScore && (a as Record<string, unknown>).opportunities)
+                .sort((a, b) => (Number((b as Record<string, unknown>).gapScore || 0)) - (Number((a as Record<string, unknown>).gapScore || 0)))[0] as Record<string, unknown> | undefined;
 
             return {
                 totalCompetitors: uniqueCompetitors,
                 averageGap: Math.round(averageGap),
                 topOpportunity: topOpportunity ? {
-                    competitor: topOpportunity.competitorDomain,
-                    opportunity: topOpportunity.opportunities[0],
-                    gapScore: topOpportunity.gapScore
+                    competitor: String(topOpportunity.competitorDomain || ''),
+                    opportunity: Array.isArray(topOpportunity.opportunities) ? topOpportunity.opportunities[0] : undefined,
+                    gapScore: Number(topOpportunity.gapScore || 0)
                 } : null,
                 monthlyTrend: this.calculateCompetitorTrend(analyses)
             };
@@ -203,26 +206,26 @@ export class EnhancedDashboardService {
             );
 
             const snapshot = await getDocs(contentQuery);
-            const analyses = snapshot.docs.map(doc => doc.data());
+            const analyses = snapshot.docs.map(doc => doc.data() as Record<string, unknown>);
 
             if (analyses.length === 0) {
                 return { totalContent: 0, averageScore: 0, topPerformer: null };
             }
 
-            const scores = analyses.map(a => a.overallScore || 0).filter(score => score > 0);
+            const scores = analyses.map(a => Number((a as Record<string, unknown>).overallScore || 0)).filter(score => score > 0);
             const averageScore = scores.length > 0 ? scores.reduce((sum, score) => sum + score, 0) / scores.length : 0;
 
             const topPerformer = analyses
-                .filter(a => a.overallScore)
-                .sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0))[0];
+                .filter(a => (a as Record<string, unknown>).overallScore)
+                .sort((a, b) => (Number((b as Record<string, unknown>).overallScore || 0)) - (Number((a as Record<string, unknown>).overallScore || 0)))[0] as Record<string, unknown> | undefined;
 
             return {
                 totalContent: analyses.length,
                 averageScore: Math.round(averageScore),
                 topPerformer: topPerformer ? {
-                    url: topPerformer.url,
-                    score: topPerformer.overallScore,
-                    title: topPerformer.title || 'Untitled'
+                    url: String(topPerformer.url || ''),
+                    score: Number(topPerformer.overallScore || 0),
+                    title: String(topPerformer.title || 'Untitled')
                 } : null,
                 recentTrend: this.calculateContentTrend(analyses)
             };
@@ -234,26 +237,28 @@ export class EnhancedDashboardService {
     }
 
     // Helper methods
-    private static calculateAverageScore(analyses: any[]): number {
+    private static calculateAverageScore(analyses: Array<Record<string, unknown>>): number {
         if (analyses.length === 0) return 0;
-        const scores = analyses.map(a => a.summary?.overallScore || 0).filter(score => score > 0);
+        const scores = analyses.map(a => Number(((a.summary as Record<string, unknown> | undefined)?.overallScore) || 0)).filter(score => score > 0);
         return scores.length > 0 ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length) : 0;
     }
 
-    private static calculateProjectSuccessRate(projects: any[]): number {
+    private static calculateProjectSuccessRate(projects: Array<Record<string, unknown>>): number {
         if (projects.length === 0) return 0;
-        const successful = projects.filter(p => p.status === 'completed' && (p.successScore || 0) > 70).length;
+        const successful = projects.filter(p => p.status === 'completed' && (Number(p.successScore) || 0) > 70).length;
         return Math.round((successful / projects.length) * 100);
     }
 
-    private static calculateCompetitorTrend(analyses: any[]) {
+    private static calculateCompetitorTrend(analyses: Array<Record<string, unknown>>) {
         // Group by month and calculate trend
-        const monthly = analyses.reduce((acc, analysis) => {
-            const date = analysis.createdAt?.toDate() || new Date();
+        const isRec = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object';
+        const monthly: Record<string, number[]> = analyses.reduce((acc: Record<string, number[]>, analysis) => {
+            const date = toDateOptional(analysis.createdAt) || new Date();
             const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
             if (!acc[monthKey]) acc[monthKey] = [];
-            acc[monthKey].push(analysis.gapScore || 0);
+            const gap = isRec(analysis) ? Number(analysis.gapScore || 0) : 0;
+            acc[monthKey].push(gap);
 
             return acc;
         }, {} as Record<string, number[]>);
@@ -267,14 +272,16 @@ export class EnhancedDashboardService {
             .sort((a, b) => a.month.localeCompare(b.month));
     }
 
-    private static calculateContentTrend(analyses: any[]) {
+    private static calculateContentTrend(analyses: Array<Record<string, unknown>>) {
         // Similar trending calculation for content
-        const monthly = analyses.reduce((acc, analysis) => {
-            const date = analysis.createdAt?.toDate() || new Date();
+        const isRec2 = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object';
+        const monthly: Record<string, number[]> = analyses.reduce((acc: Record<string, number[]>, analysis) => {
+            const date = toDateOptional(analysis.createdAt) || new Date();
             const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
             if (!acc[monthKey]) acc[monthKey] = [];
-            acc[monthKey].push(analysis.overallScore || 0);
+            const score = isRec2(analysis) ? Number(analysis.overallScore || 0) : 0;
+            acc[monthKey].push(score);
 
             return acc;
         }, {} as Record<string, number[]>);
@@ -287,4 +294,11 @@ export class EnhancedDashboardService {
             }))
             .sort((a, b) => a.month.localeCompare(b.month));
     }
+}
+
+function toDateOptional(v: unknown): Date | undefined {
+    if (!v) return undefined;
+    if (v instanceof Date) return v;
+    const maybeTs = v as { toDate?: () => Date };
+    return typeof maybeTs.toDate === 'function' ? maybeTs.toDate() : undefined;
 }

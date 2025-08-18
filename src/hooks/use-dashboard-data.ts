@@ -60,7 +60,17 @@ export const useChartData = (
   chartType: "seoTrend" | "keywords" | "backlinks" | "traffic",
   userId: string | null
 ) => {
-  const [chartData, setChartData] = useState<any>(null);
+  type SEOTrendPoint = { date: string; score: number };
+  type KeywordVisibility = { score: number; top3: number; top10: number; top100: number };
+  type BacklinkHistoryEntry = { month: string; new: number; lost: number };
+  type TrafficSource = { name: string; value: number; fill: string };
+  type ChartDataMap = {
+    seoTrend: SEOTrendPoint[];
+    keywords: KeywordVisibility;
+    backlinks: BacklinkHistoryEntry[];
+    traffic: TrafficSource[];
+  };
+  const [chartData, setChartData] = useState<ChartDataMap[typeof chartType] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

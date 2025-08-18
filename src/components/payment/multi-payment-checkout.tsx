@@ -85,7 +85,7 @@ export default function MultiPaymentCheckout() {
         method: "stripe",
       });
 
-      const result = await createCheckoutSession({
+  const result = await createCheckoutSession({
         userId: user?.uid,
         priceId: plan?.priceId[billingInterval as "monthly" | "yearly"],
         plan: planId,
@@ -93,8 +93,9 @@ export default function MultiPaymentCheckout() {
         successUrl: `${window.location.origin}/payment-success?plan=${planId}&amount=${price}&cycle=${billingInterval}`,
         cancelUrl: `${window.location.origin}/pricing`,
       });
-
-      const { sessionId } = result.data as { sessionId: string };
+  const data = result.data as unknown;
+  const sessionId = (data && typeof data === 'object' && 'sessionId' in data) ? (data as { sessionId: string }).sessionId : undefined;
+  if (!sessionId) throw new Error('Missing sessionId');
 
       const stripe = await getStripe();
       if (!stripe) throw new Error("Stripe not loaded");
@@ -113,12 +114,13 @@ export default function MultiPaymentCheckout() {
         );
         toast.error("Payment failed. Please try again.");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const msg = (error as { message?: string })?.message || 'Unknown error';
       console.error("Checkout error:", error);
       trackPaymentEvents.abandonCheckout(
         planId,
         "checkout_session_creation",
-        error.message
+        msg
       );
       toast.error("Failed to process payment. Please try again.");
     } finally {
@@ -126,12 +128,13 @@ export default function MultiPaymentCheckout() {
     }
   };
 
-  const handlePayPalApprove = async (data: any, actions: any) => {
+  interface PayPalApproveData { orderID?: string }
+  const handlePayPalApprove = async (data: PayPalApproveData) => {
     try {
       setIsProcessing(true);
 
       // Track successful PayPal payment
-      trackPaymentEvents.purchase(planId, price || 0, data.orderID, "USD");
+      trackPaymentEvents.purchase(planId, price || 0, data?.orderID || 'unknown', "USD");
       conversionFunnel.step(5, "payment_completed", planId, {
         method: "paypal",
       });
@@ -390,20 +393,23 @@ export default function MultiPaymentCheckout() {
                                 interval: billingInterval,
                                 amount: price,
                               });
-                              return (result.data as any).orderID;
-                            } catch (error) {
-                              console.error(
-                                "PayPal order creation error:",
-                                error
-                              );
+                              const data = result.data as unknown;
+                              const orderID = (data && typeof data === 'object' && 'orderID' in data) ? (data as { orderID: string }).orderID : undefined;
+                              if (!orderID) throw new Error('Missing orderID');
+                              return orderID;
+                            } catch (error: unknown) {
+                              const msg = (error as { message?: string })?.message || 'PayPal order creation failed';
+                              console.error("PayPal order creation error:", error);
                               toast.error("Failed to create PayPal order");
-                              throw error;
+                              throw new Error(msg);
                             }
                           }}
-                          onApprove={handlePayPalApprove}
-                          onError={(error) => {
+                          onApprove={handlePayPalApprove as any}
+                          onError={(error: unknown) => {
+                            const msg = (error as { message?: string })?.message || 'PayPal error';
                             console.error("PayPal error:", error);
                             toast.error("PayPal payment failed");
+                            trackPaymentEvents.abandonCheckout(planId, 'paypal_error', msg);
                           }}
                           disabled={isProcessing}
                         />

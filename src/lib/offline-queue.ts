@@ -38,7 +38,7 @@ function openDB(): Promise<IDBDatabase> {
     });
 }
 
-function withStore<T>(db: IDBDatabase, store: string, mode: IDBTransactionMode, fn: (os: IDBObjectStore) => void, onComplete: (result: T) => void, onError: (err: any) => void) {
+function withStore<T>(db: IDBDatabase, store: string, mode: IDBTransactionMode, fn: (os: IDBObjectStore) => void, onComplete: (result: T) => void, onError: (err: unknown) => void) {
     try {
         const tx = db.transaction(store, mode);
         const os = tx.objectStore(store);
@@ -46,22 +46,23 @@ function withStore<T>(db: IDBDatabase, store: string, mode: IDBTransactionMode, 
         tx.oncomplete = () => onComplete(out as T);
         tx.onerror = () => onError(tx.error);
         // Let fn set out via request callbacks
-        fn(new Proxy(os, {
+        const proxy = new Proxy(os, {
             get(target, prop, receiver) {
                 const v = Reflect.get(target, prop, receiver);
                 if (typeof v === 'function') {
-                    return function (this: any, ...args: any[]) {
-                        const req = (v as any).apply(target, args);
-                        // Capture add/put keys
+                    return function (this: IDBObjectStore, ...args: any[]) {
+                        // Bind the original object store as context
+                        const req: IDBRequest = (v as Function).apply(target, args);
                         if (prop === 'add' || prop === 'put') {
-                            (req as IDBRequest).onsuccess = () => { out = (req as any).result as T; };
+                            req.onsuccess = () => { out = req.result as T; };
                         }
                         return req;
                     };
                 }
                 return v;
             }
-        }) as any);
+        });
+        fn(proxy);
     } catch (e) {
         onError(e);
     }
@@ -87,7 +88,7 @@ export type EnqueueResult = { id: number };
  * Queue a NeuroSEO analysis request payload for background sync.
  * Returns the auto-incremented ID assigned by IndexedDB.
  */
-export async function queueAnalysisRequest(data: any): Promise<EnqueueResult> {
+export async function queueAnalysisRequest(data: unknown): Promise<EnqueueResult> {
     const db = await openDB();
     return new Promise<EnqueueResult>((resolve, reject) => {
         withStore<number>(db, STORE_ANALYSIS, 'readwrite', (os) => {
@@ -103,7 +104,7 @@ export async function queueAnalysisRequest(data: any): Promise<EnqueueResult> {
  * Queue a user preference update payload for background sync.
  * Returns the auto-incremented ID assigned by IndexedDB.
  */
-export async function queuePreferenceUpdate(data: any): Promise<EnqueueResult> {
+export async function queuePreferenceUpdate(data: unknown): Promise<EnqueueResult> {
     const db = await openDB();
     return new Promise<EnqueueResult>((resolve, reject) => {
         withStore<number>(db, STORE_PREFS, 'readwrite', (os) => {

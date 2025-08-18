@@ -28,11 +28,11 @@ export async function loadEntitlements(force = false): Promise<EntitlementMap> {
         const docRef = (await import('firebase/firestore')).doc(db, 'planEntitlements', 'global');
         const snap = await (await import('firebase/firestore')).getDoc(docRef);
         if (snap.exists()) {
-            const data = snap.data() as any;
-            const ent = { ...DEFAULT_ENTITLEMENTS };
-            if (data && typeof data === 'object' && data.entitlements) {
-                for (const [k, v] of Object.entries<any>(data.entitlements)) {
-                    if (ent[k]) ent[k] = { ...ent[k], enabled: v.enabled !== false } as any; // placeholder for future toggle semantics
+            const data = snap.data() as { entitlements?: Record<string, { enabled?: boolean }> } | undefined;
+            const ent: EntitlementMap = { ...DEFAULT_ENTITLEMENTS };
+            if (data?.entitlements) {
+                for (const [k, v] of Object.entries(data.entitlements)) {
+                    if (ent[k]) ent[k] = { ...ent[k] }; // we currently ignore enabled flag beyond placeholder
                 }
             }
             cache = { map: ent, loadedAt: now, source: 'dynamic' };

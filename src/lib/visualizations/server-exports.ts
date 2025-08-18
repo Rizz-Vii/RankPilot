@@ -1,14 +1,15 @@
 import { adminStorage } from '@/lib/firebase-admin';
 import { generateServerArtifact } from '@/lib/visualizations/server-artifacts';
+import { ExportFormat, ServerChartArtifactData, ServerDashboardArtifactData } from '@/types/visualization-exports';
 
 // Persist client-provided export artifact (data URL or base64) to Firebase Storage and return a signed URL
 export async function persistExportArtifact(input: {
   userId: string;
   kind: 'chart' | 'dashboard';
   id: string;
-  format: string;
+  format: ExportFormat | string; // backward compatibility
   artifact: string; // data URL (data:mime;base64,...) or raw base64
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }): Promise<string> {
   let mime = 'application/octet-stream';
   let base64 = input.artifact;
@@ -53,7 +54,7 @@ export async function persistBufferToStorage(input: {
   ext: string;
   contentType: string;
   buffer: Buffer;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }): Promise<string> {
   const filePath = `exports/${input.userId}/${input.kind}s/${input.id}/${Date.now()}.${input.ext.replace(/^\./, '')}`;
   const bucket = adminStorage.bucket();
@@ -74,20 +75,34 @@ export async function persistBufferToStorage(input: {
   return signedUrl;
 }
 
-export async function generateChartExport(chartData: any, format: string, config: any): Promise<string> {
+type ChartExportConfigInput = Partial<{ title?: string; width?: number; height?: number }> | undefined;
+function coerceChartConfig(cfg: ChartExportConfigInput): { title?: string; width?: number; height?: number } {
+  if (!cfg) return {};
+  const out: { title?: string; width?: number; height?: number } = {};
+  if (typeof cfg.title === 'string') out.title = cfg.title;
+  if (typeof cfg.width === 'number') out.width = cfg.width;
+  if (typeof cfg.height === 'number') out.height = cfg.height;
+  return out;
+}
+
+export async function generateChartExport(chartData: ServerChartArtifactData, format: ExportFormat, config: ChartExportConfigInput): Promise<string> {
+  const supported: ExportFormat[] = ['pdf', 'excel', 'json', 'png', 'svg'];
+  if (!supported.includes(format)) throw new Error(`Unsupported export format: ${format}`);
   // If SVG requested but not available, synthesize minimal SVG as a fallback
-  let svgMarkup: string | undefined = chartData?.svg;
+  let svgMarkup: string | undefined = chartData.svg;
+  const coerced = coerceChartConfig(config);
   if ((format === 'svg' || format === 'png') && !svgMarkup) {
-    const w = Number(config?.width) || 800;
-    const h = Number(config?.height) || 600;
-    const title = (config?.title || chartData?.metadata?.title || 'Chart').toString();
+    const w = typeof coerced.width === 'number' ? coerced.width : 800;
+    const h = typeof coerced.height === 'number' ? coerced.height : 600;
+    const title = (coerced.title || chartData.metadata?.title || 'Chart').toString();
     svgMarkup = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">\n  <rect width="100%" height="100%" fill="white"/>\n  <text x="50%" y="50" text-anchor="middle" font-family="Helvetica, Arial" font-size="18">${title}</text>\n</svg>`;
   }
-  const { buffer, contentType, ext } = await generateServerArtifact(format as any, {
-    image: chartData?.previewImage || chartData?.image,
-    data: chartData?.data,
+  const { buffer, contentType, ext } = await generateServerArtifact(format, {
+    image: chartData.previewImage || chartData.image,
+    // If chartData.data is an array treat it as data[] else pass as-is (fits union via cast)
+    data: Array.isArray(chartData.data) ? chartData.data : undefined,
     svg: svgMarkup
-  }, config || {});
+  }, coerced);
   return persistBufferToStorage({
     userId: chartData.userId,
     kind: 'chart',
@@ -99,14 +114,22 @@ export async function generateChartExport(chartData: any, format: string, config
   });
 }
 
-export async function generateDashboardExport(dashboardData: any, format: string, config: any): Promise<string> {
+type DashboardExportConfigInput = Partial<{ title?: string }> | undefined;
+function coerceDashboardConfig(cfg: DashboardExportConfigInput): { title?: string } {
+  if (!cfg) return {};
+  return typeof cfg.title === 'string' ? { title: cfg.title } : {};
+}
+
+export async function generateDashboardExport(dashboardData: ServerDashboardArtifactData, format: ExportFormat, config: DashboardExportConfigInput): Promise<string> {
+  const supported: ExportFormat[] = ['pdf', 'excel', 'json', 'png', 'svg'];
+  if (!supported.includes(format)) throw new Error(`Unsupported export format: ${format}`);
   // Minimal server export: JSON of dashboard structure or server-rendered artifact
-  const material: any = {
-    svg: undefined,
-    image: undefined,
-    data: dashboardData.widgets?.map((w: any) => ({ id: w.id || 'widget', type: w.type || 'unknown' }))
+  const material = {
+    svg: undefined as string | undefined,
+    image: undefined as string | undefined,
+    data: dashboardData.widgets?.map(w => ({ id: w.id, type: w.type }))
   };
-  const { buffer, contentType, ext } = await generateServerArtifact(format as any, material, config || {});
+  const { buffer, contentType, ext } = await generateServerArtifact(format, material, coerceDashboardConfig(config));
   return persistBufferToStorage({
     userId: dashboardData.userId,
     kind: 'dashboard',
