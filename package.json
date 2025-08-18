@@ -238,6 +238,7 @@
     "seed:semantic-map-legacy": "tsx scripts/seed-semantic-map-legacy.ts",
     "test:backfill-dry-run": "ts-node scripts/test-backfill-dry-run.ts",
     "report:neuroseo-size": "ts-node scripts/report-neuroseo-size-reduction.ts",
+  "links:check": "ts-node scripts/check-links.ts",
     "report:neuroseo-size:ci": "node -e \"require('fs').mkdirSync('artifacts',{recursive:true})\" && OUTPUT_FILE=artifacts/size-reduction.json ts-node scripts/report-neuroseo-size-reduction.ts",
     "monitor:neuroseo-adoption": "ts-node scripts/monitor-neuroseo-adoption.ts",
     "prune:neuroseo-legacy": "ts-node scripts/prune-neuroseo-legacy-docs.ts",
