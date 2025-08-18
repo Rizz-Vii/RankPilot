@@ -12,7 +12,7 @@ interface QueueItem {
   endpoint: string;
   options: RequestInit;
   resolve: (value: unknown) => void;
-  reject: (reason?: any) => void;
+  reject: (reason?: unknown) => void;
 }
 
 
@@ -34,7 +34,7 @@ export const connectionPoolConfig: ConnectionPoolConfig = {
 
 export class ConnectionPoolManager {
   private static instance: ConnectionPoolManager;
-  private activeConnections: Map<string, any> = new Map();
+  private activeConnections: Map<string, unknown> = new Map();
   private connectionCounts: Map<string, number> = new Map();
 
   private constructor() { }

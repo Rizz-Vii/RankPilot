@@ -63,11 +63,7 @@ interface ContentAnalysisResponse {
 }
 
 // Mock analysis function - to be replaced with NeuroSEO integration
-async function analyzeContent(input: {
-    content: string;
-    targetKeywords: string[];
-    url?: string;
-}): Promise<ContentAnalysisResponse> {
+async function analyzeContent(): Promise<ContentAnalysisResponse> {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 2000));
 
@@ -114,7 +110,7 @@ export default function ContentAnalyzerPage() {
     const resultRef = useRef<HTMLDivElement>(null);
 
     // Get user subscription tier for feature gating
-    const userTier = (user as any)?.subscriptionTier || "free";
+    const userTier = (user as { subscriptionTier?: string } | null | undefined)?.subscriptionTier || "free";
 
     // Scroll to results when analysis completes
     useEffect(() => {
@@ -197,7 +193,7 @@ export default function ContentAnalyzerPage() {
                 throw new Error(`Analysis failed: ${response.statusText}`);
             }
 
-            const data = await response.json();
+
 
             // Enhanced mock report for content analysis
             const mockReport = {
@@ -213,7 +209,13 @@ export default function ContentAnalyzerPage() {
                         originalAnalysis: {
                             wordCount: content.length,
                             readabilityScore: 85,
-                            keywordDensity: keywords.split(',').reduce((acc: any, k: string) => ({ ...acc, [k.trim()]: 2.5 }), {}),
+                            keywordDensity: keywords
+                                .split(',')
+                                .reduce<Record<string, number>>((acc, k: string) => {
+                                    const key = k.trim();
+                                    if (key) acc[key] = 2.5;
+                                    return acc;
+                                }, {}),
                             sentimentScore: 68,
                             structureScore: 78,
                             seoScore: 82,

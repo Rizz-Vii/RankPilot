@@ -6,10 +6,7 @@ import { JournalEntry, JournalEntryLine, isBalanced } from '@/lib/accounting/acc
 export async function fetchJournalEntries(userId: string, teamId?: string | null): Promise<JournalEntry[]> {
     const q = query(collection(db, 'accountingJournalEntries'), where(teamId ? 'teamId' : 'userId', '==', teamId || userId));
     const snap = await getDocs(q);
-    return snap.docs.map(d => {
-        const data: any = d.data();
-        return { id: d.id, userId: data.userId, teamId: data.teamId, date: data.date, period: data.period, lines: data.lines, memo: data.memo, source: data.source, createdAt: data.createdAt?.toDate?.() || new Date(), updatedAt: data.updatedAt?.toDate?.() || new Date() };
-    });
+    return snap.docs.map(d => mapJournalEntryDoc(d.id, d.data()));
 }
 
 export interface SeedOptions { months?: number; revenuePerMonth?: number; }
@@ -41,4 +38,26 @@ async function addBalancedEntry(userId: string, teamId: string | null | undefine
     await guardedAdd(collection(db, 'accountingJournalEntries'), {
         userId, teamId: teamId || null, date: date.toISOString().slice(0, 10), period, lines, memo: memo || null, source: 'seed', createdAt: Timestamp.fromDate(new Date()), updatedAt: Timestamp.fromDate(new Date())
     }, { stripUndefined: true });
+}
+
+function toDate(v: unknown): Date {
+    if (v instanceof Date) return v;
+    const maybeTs = v as { toDate?: () => Date };
+    return typeof maybeTs.toDate === 'function' ? maybeTs.toDate() : new Date();
+}
+
+function mapJournalEntryDoc(id: string, raw: unknown): JournalEntry {
+    const r = (raw as Record<string, unknown>) || {};
+    return {
+        id,
+        userId: String(r.userId ?? ''),
+        teamId: (r.teamId as string | null | undefined) ?? null,
+        date: String(r.date ?? ''),
+        period: String(r.period ?? ''),
+        lines: (r.lines as JournalEntryLine[]) || [],
+        memo: r.memo as string | undefined,
+        source: r.source as string | undefined,
+        createdAt: toDate(r.createdAt),
+        updatedAt: toDate(r.updatedAt),
+    };
 }

@@ -15,9 +15,11 @@ interface StripeCardLike {
 interface StripePaymentMethodLike { id: string; type: string; card?: StripeCardLike; }
 
 interface StripeLike {
-    paymentMethods: { list(params: any): Promise<{ data: StripePaymentMethodLike[] }>; };
-    customers: { retrieve(id: string): Promise<any>; };
+    paymentMethods: { list(params: unknown): Promise<{ data: StripePaymentMethodLike[] }>; };
+    customers: { retrieve(id: string): Promise<unknown>; };
 }
+
+interface StripeCustomerLike { invoice_settings?: { default_payment_method?: string }; }
 
 /**
  * Fetch the default card for a Stripe customer (non-sensitive info only).
@@ -25,7 +27,7 @@ interface StripeLike {
 export async function fetchDefaultCard(stripe: StripeLike, customerId: string): Promise<PaymentMethodInfo | null> {
     const logger = getLogger('billing-payment-method');
     try {
-        const cust: any = await stripe.customers.retrieve(customerId);
+        const cust = await stripe.customers.retrieve(customerId) as StripeCustomerLike;
         let pm: StripePaymentMethodLike | undefined;
         const defaultPmId = cust?.invoice_settings?.default_payment_method;
         if (defaultPmId) {
@@ -43,8 +45,9 @@ export async function fetchDefaultCard(stripe: StripeLike, customerId: string): 
             expYear: pm.card.exp_year || 0,
             funding: pm.card.funding,
         };
-    } catch (e: any) {
-        logger.degraded('payment_method.fetch_failed', { customerId, error: e.message });
+    } catch (e: unknown) {
+        const message = (e && typeof e === 'object' && 'message' in e) ? String((e as { message?: unknown }).message) : 'unknown_error';
+        logger.degraded('payment_method.fetch_failed', { customerId, error: message });
         return null;
     }
 }

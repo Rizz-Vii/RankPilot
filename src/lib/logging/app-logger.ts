@@ -3,8 +3,19 @@
  * Provides a unified structured logging surface for both server and client runtime.
  */
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
-export interface LogContext { [key: string]: any }
-export interface LogEnvelope { timestamp: string; level: LogLevel; message: string; traceId?: string; spanId?: string; component?: string; context?: LogContext; elapsedMs?: number; audit?: boolean; degraded?: boolean; }
+export interface LogContext extends Record<string, unknown> { }
+export interface LogEnvelope {
+    timestamp: string;
+    level: LogLevel;
+    message: string;
+    traceId?: string;
+    spanId?: string;
+    component?: string;
+    context?: LogContext;
+    elapsedMs?: number;
+    audit?: boolean;
+    degraded?: boolean;
+}
 const isServer = typeof window === 'undefined';
 function genId(prefix: string) { return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`; }
 export interface LoggerOptions { component?: string; traceId?: string; startTime?: number }
@@ -19,7 +30,8 @@ class AppLoggerImpl {
         const env: LogEnvelope = { timestamp: new Date().toISOString(), level, message, traceId: this.traceId, component: this.component, elapsedMs: Math.round(now - this.startTime), audit: __audit || undefined, degraded: __degraded || undefined, ...(context ? { context: Object.keys(rest).length ? rest : undefined } : {}) };
         const line = JSON.stringify(env);
         // eslint-disable-next-line no-console
-        (console as any)[level === 'debug' ? 'debug' : level](line);
+        const consoleAny = console as unknown as Record<string, (...args: unknown[]) => void>;
+        (consoleAny[level === 'debug' ? 'debug' : level] || consoleAny.log)(line);
     }
     debug(m: string, c?: LogContext) { this.emit('debug', m, c); }
     info(m: string, c?: LogContext) { this.emit('info', m, c); }

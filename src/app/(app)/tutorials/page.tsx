@@ -122,348 +122,65 @@ export default function TutorialsPage() {
     null
   );
 
+  // Load tutorials (demo or placeholder)
   useEffect(() => {
-    fetchTutorials();
-  }, []);
-
-  useEffect(() => {
-    filterTutorials();
-  }, [
-    tutorials,
-    searchQuery,
-    selectedCategory,
-    selectedDifficulty,
-    selectedType,
-    tier,
-  ]);
-
-  const fetchTutorials = async () => {
-    try {
-      // If demo content is disabled, avoid loading mock tutorials and show empty state
-      if (!demoEnabled) {
-        setTutorials([]);
-        return;
+    async function fetchTutorials() {
+      try {
+        setLoading(true);
+        if (demoEnabled) {
+          const demo: Tutorial[] = [
+            {
+              id: 'demo-quickstart',
+              title: 'Getting Started with RankPilot',
+              description: 'A quick overview to get productive fast.',
+              category: 'getting-started',
+              difficulty: 'beginner',
+              duration: '8 min',
+              type: 'video',
+              requiredTier: 'free',
+              tags: ['setup','overview'],
+              popularity: 4,
+              lastUpdated: new Date(),
+            },
+            {
+              id: 'demo-keywords',
+              title: 'Keyword Research Workflow',
+              description: 'Use the built-in tools to discover opportunities.',
+              category: 'keyword-research',
+              difficulty: 'intermediate',
+              duration: '12 min',
+              type: 'article',
+              requiredTier: 'agency',
+              tags: ['keywords','strategy'],
+              popularity: 5,
+              lastUpdated: new Date(),
+            },
+          ];
+          setTutorials(demo);
+          setFilteredTutorials(demo);
+        } else {
+          setTutorials([]);
+          setFilteredTutorials([]);
+        }
+      } finally {
+        setLoading(false);
       }
-      // Mock tutorials data - replace with actual API call when backend is ready
-      const mockTutorials: Tutorial[] = [
-        // Getting Started
-        {
-          id: "gs-1",
-          title: "Getting Started with RankPilot",
-          description:
-            "Learn the basics of RankPilot and how to navigate the dashboard.",
-          category: "getting-started",
-          difficulty: "beginner",
-          duration: "5 min",
-          type: "video",
-          requiredTier: "free",
-          tags: ["basics", "dashboard", "overview"],
-          popularity: 5,
-          lastUpdated: new Date("2024-07-15"),
-          steps: [
-            {
-              id: "step-1",
-              title: "Creating Your Account",
-              content:
-                "Start by signing up for a RankPilot account and verifying your email.",
-            },
-            {
-              id: "step-2",
-              title: "Dashboard Overview",
-              content:
-                "Familiarize yourself with the main dashboard and navigation.",
-            },
-          ],
-        },
-        {
-          id: "gs-2",
-          title: "Understanding Your Dashboard",
-          description:
-            "Deep dive into dashboard features and analytics overview.",
-          category: "getting-started",
-          difficulty: "beginner",
-          duration: "8 min",
-          type: "article",
-          requiredTier: "free",
-          tags: ["dashboard", "analytics", "metrics"],
-          popularity: 4,
-          lastUpdated: new Date("2024-07-10"),
-        },
-
-        // SEO Analysis
-        {
-          id: "seo-1",
-          title: "Complete SEO Audit Tutorial",
-          description:
-            "Learn how to perform comprehensive SEO audits and interpret results.",
-          category: "seo-analysis",
-          difficulty: "intermediate",
-          duration: "15 min",
-          type: "video",
-          requiredTier: "free",
-          tags: ["audit", "analysis", "technical-seo"],
-          popularity: 5,
-          lastUpdated: new Date("2024-07-12"),
-        },
-        {
-          id: "seo-2",
-          title: "SERP Analysis Masterclass",
-          description:
-            "Master SERP analysis to understand your competition and opportunities.",
-          category: "seo-analysis",
-          difficulty: "intermediate",
-          duration: "20 min",
-          type: "video",
-          requiredTier: "agency",
-          feature: "serp_analysis",
-          tags: ["serp", "competition", "ranking"],
-          popularity: 5,
-          lastUpdated: new Date("2024-07-08"),
-        },
-
-        // Keyword Research
-        {
-          id: "kw-1",
-          title: "Keyword Research Fundamentals",
-          description:
-            "Master the art of finding profitable keywords for your content.",
-          category: "keyword-research",
-          difficulty: "beginner",
-          duration: "12 min",
-          type: "interactive",
-          requiredTier: "free",
-          tags: ["keywords", "research", "volume"],
-          popularity: 5,
-          lastUpdated: new Date("2024-07-14"),
-        },
-        {
-          id: "kw-2",
-          title: "Advanced Keyword Strategies",
-          description:
-            "Advanced techniques for keyword clustering and semantic analysis.",
-          category: "keyword-research",
-          difficulty: "advanced",
-          duration: "25 min",
-          type: "video",
-          requiredTier: "agency",
-          tags: ["advanced", "clustering", "semantic"],
-          popularity: 4,
-          lastUpdated: new Date("2024-07-05"),
-        },
-
-        // Content Optimization
-        {
-          id: "co-1",
-          title: "Content Analyzer Deep Dive",
-          description:
-            "Optimize your content for better search rankings using our analyzer.",
-          category: "content-optimization",
-          difficulty: "intermediate",
-          duration: "18 min",
-          type: "video",
-          requiredTier: "free",
-          tags: ["content", "optimization", "analyzer"],
-          popularity: 4,
-          lastUpdated: new Date("2024-07-11"),
-        },
-        {
-          id: "co-2",
-          title: "Content Brief Creation",
-          description:
-            "Create comprehensive content briefs that drive results.",
-          category: "content-optimization",
-          difficulty: "intermediate",
-          duration: "16 min",
-          type: "article",
-          requiredTier: "agency",
-          feature: "content_brief",
-          tags: ["brief", "planning", "strategy"],
-          popularity: 5,
-          lastUpdated: new Date("2024-07-09"),
-        },
-
-        // Competitor Analysis
-        {
-          id: "ca-1",
-          title: "Competitor Analysis Framework",
-          description:
-            "Analyze your competitors&apos; strategies and find opportunities.",
-          category: "competitor-analysis",
-          difficulty: "intermediate",
-          duration: "22 min",
-          type: "video",
-          requiredTier: "agency",
-          feature: "competitor_analysis",
-          tags: ["competitors", "analysis", "strategy"],
-          popularity: 5,
-          lastUpdated: new Date("2024-07-07"),
-        },
-
-        // Link Analysis
-        {
-          id: "la-1",
-          title: "Link Analysis & Building",
-          description:
-            "Master link analysis and develop effective link building strategies.",
-          category: "seo-analysis",
-          difficulty: "advanced",
-          duration: "30 min",
-          type: "video",
-          requiredTier: "agency",
-          feature: "link_view",
-          tags: ["links", "backlinks", "authority"],
-          popularity: 4,
-          lastUpdated: new Date("2024-07-06"),
-        },
-
-        // API Integration
-        {
-          id: "api-1",
-          title: "API Authentication & Setup",
-          description:
-            "Get started with RankPilot API integration and authentication.",
-          category: "api-integration",
-          difficulty: "advanced",
-          duration: "15 min",
-          type: "article",
-          requiredTier: "enterprise",
-          feature: "api_access",
-          tags: ["api", "authentication", "integration"],
-          popularity: 3,
-          lastUpdated: new Date("2024-07-04"),
-          prerequisites: ["Basic programming knowledge"],
-        },
-        {
-          id: "api-2",
-          title: "Building Custom Integrations",
-          description:
-            "Create custom integrations using webhooks and API endpoints.",
-          category: "api-integration",
-          difficulty: "advanced",
-          duration: "35 min",
-          type: "video",
-          requiredTier: "enterprise",
-          feature: "custom_integrations",
-          tags: ["webhooks", "custom", "automation"],
-          popularity: 4,
-          lastUpdated: new Date("2024-07-03"),
-          prerequisites: ["API Authentication tutorial"],
-        },
-
-        // Team Management
-        {
-          id: "tm-1",
-          title: "Team Setup & Management",
-          description:
-            "Set up your team, assign roles, and manage permissions.",
-          category: "team-management",
-          difficulty: "beginner",
-          duration: "12 min",
-          type: "video",
-          requiredTier: "enterprise",
-          feature: "team_management",
-          tags: ["team", "roles", "permissions"],
-          popularity: 4,
-          lastUpdated: new Date("2024-07-02"),
-        },
-
-        // Enterprise Features
-        {
-          id: "ef-1",
-          title: "White-Label Customization",
-          description:
-            "Customize RankPilot with your branding for client reports.",
-          category: "enterprise-features",
-          difficulty: "intermediate",
-          duration: "20 min",
-          type: "interactive",
-          requiredTier: "enterprise",
-          feature: "white_label",
-          tags: ["branding", "customization", "reports"],
-          popularity: 5,
-          lastUpdated: new Date("2024-07-01"),
-        },
-
-        // NeuroSEO
-        {
-          id: "ns-1",
-          title: "NeuroSEO™ AI Features",
-          description:
-            "Harness the power of AI for advanced SEO analysis and recommendations.",
-          category: "advanced-features",
-          difficulty: "intermediate",
-          duration: "25 min",
-          type: "video",
-          requiredTier: "agency",
-          feature: "neuroseo",
-          tags: ["ai", "neuroseo", "automation"],
-          popularity: 5,
-          lastUpdated: new Date("2024-06-30"),
-        },
-      ];
-
-      setTutorials(mockTutorials);
-    } catch (error) {
-      console.error("Error fetching tutorials:", error);
-  } finally {
-      setLoading(false);
     }
-  };
+    fetchTutorials();
+  }, [demoEnabled]);
 
-  const filterTutorials = () => {
-    let filtered = tutorials.filter((tutorial) => {
-      // Check tier access
-      const hasAccess = checkTutorialAccess(tutorial);
-      if (!hasAccess) return false;
-
-      // Search filter
-      if (
-        searchQuery &&
-        !tutorial.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !tutorial.description
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) &&
-        !tutorial.tags.some((tag) =>
-          tag.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      ) {
-        return false;
-      }
-
-      // Category filter
-      if (
-        selectedCategory !== "all" &&
-        tutorial.category !== selectedCategory
-      ) {
-        return false;
-      }
-
-      // Difficulty filter
-      if (
-        selectedDifficulty !== "all" &&
-        tutorial.difficulty !== selectedDifficulty
-      ) {
-        return false;
-      }
-
-      // Type filter
-      if (selectedType !== "all" && tutorial.type !== selectedType) {
-        return false;
-      }
-
-      return true;
+  // Apply filters to tutorials list
+  useEffect(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const next = tutorials.filter(t => {
+      const matchQuery = !q || t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q) || t.tags.some(tag => tag.toLowerCase().includes(q));
+      const matchCat = selectedCategory === 'all' || t.category === selectedCategory;
+      const matchDiff = selectedDifficulty === 'all' || t.difficulty === selectedDifficulty;
+      const matchType = selectedType === 'all' || t.type === selectedType;
+      return matchQuery && matchCat && matchDiff && matchType;
     });
-
-    // Sort by popularity and last updated
-    filtered.sort((a, b) => {
-      if (a.popularity !== b.popularity) {
-        return b.popularity - a.popularity;
-      }
-      return b.lastUpdated.getTime() - a.lastUpdated.getTime();
-    });
-
-    setFilteredTutorials(filtered);
-  };
+    setFilteredTutorials(next);
+  }, [tutorials, searchQuery, selectedCategory, selectedDifficulty, selectedType]);
 
   const checkTutorialAccess = (tutorial: Tutorial): boolean => {
     // Check tier requirement

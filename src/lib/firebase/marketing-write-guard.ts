@@ -3,7 +3,7 @@
 const DERIVED_FIELDS = ['ctr', 'roi'];
 
 // MKT-02: strict period normalization utility (YYYY-MM)
-export function normalizePeriod(value: any): string {
+export function normalizePeriod(value: unknown): string {
     if (typeof value !== 'string') throw new Error('period must be string');
     const trimmed = value.trim();
     if (!trimmed) throw new Error('period required');
@@ -13,8 +13,8 @@ export function normalizePeriod(value: any): string {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
-export function sanitizeMarketingCampaignDoc(raw: Record<string, any>) {
-    const out: Record<string, any> = {};
+export function sanitizeMarketingCampaignDoc(raw: Record<string, unknown>) {
+    const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(raw)) {
         if (DERIVED_FIELDS.includes(k)) continue;
         out[k] = v;
@@ -34,4 +34,7 @@ export function sanitizeMarketingCampaignDoc(raw: Record<string, any>) {
     return out;
 }
 
-export function stripDerivedInPlace(doc: any) { DERIVED_FIELDS.forEach(f => { if (f in doc) delete doc[f]; }); return doc; }
+export function stripDerivedInPlace(doc: Record<string, unknown>) {
+    DERIVED_FIELDS.forEach(f => { if (f in doc) delete (doc as Record<string, unknown>)[f]; });
+    return doc;
+}

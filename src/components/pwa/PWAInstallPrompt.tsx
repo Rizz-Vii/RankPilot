@@ -62,7 +62,10 @@ export function PWAInstallPrompt({ className, showInAppHeader = false }: PWAInst
     });
 
     const isIOS = typeof window !== 'undefined' && /iphone|ipad|ipod/i.test(window.navigator.userAgent);
-    const isStandalone = typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true);
+    const isStandalone = typeof window !== 'undefined' && (
+        window.matchMedia('(display-mode: standalone)').matches ||
+        (typeof (window.navigator as any) === 'object' && (window.navigator as any)?.standalone === true)
+    );
 
     useEffect(() => {
         if (!dismissed && !showInAppHeader) {

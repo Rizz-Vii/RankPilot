@@ -4,6 +4,15 @@
  */
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
+import { ExportFormat, ServerChartArtifactData } from '@/types/visualization-exports';
+
+// Helper to safely extract a 2D table from mixed chart data shapes
+function extractTable(input: ServerChartArtifactData | { table?: unknown[][]; data?: unknown[] }): unknown[][] {
+  const anyInput = input as any; // localized cast boundary
+  if (Array.isArray(anyInput?.table)) return anyInput.table as unknown[][];
+  if (Array.isArray(anyInput?.data)) return anyInput.data.map((d: unknown) => Array.isArray(d) ? d : [d]);
+  return [["Chart Export"], [new Date().toISOString()]];
+}
 
 export interface ServerArtifactConfig {
   title?: string;
@@ -13,8 +22,8 @@ export interface ServerArtifactConfig {
 }
 
 export async function generateServerArtifact(
-  format: 'pdf' | 'excel' | 'json' | 'png' | 'svg',
-  chartData: any,
+  format: ExportFormat,
+  chartData: ServerChartArtifactData | { table?: unknown[][]; data?: unknown[]; svg?: string; image?: string },
   config: Partial<ServerArtifactConfig> = {}
 ): Promise<{ buffer: Buffer; contentType: string; ext: string }> {
   if (format === 'pdf') {
@@ -27,13 +36,13 @@ export async function generateServerArtifact(
       pdf.text(config.title, pageWidth / 2, 20, { align: 'center' });
     }
     if (chartData?.image) {
-      const imgWidth = (config as any).width || pageWidth - 40;
-      const imgHeight = (config as any).height || imgWidth * 0.6;
+      const imgWidth = config.width || pageWidth - 40;
+      const imgHeight = config.height || imgWidth * 0.6;
       const x = (pageWidth - imgWidth) / 2;
       const y = config.title ? 35 : 20;
       try { pdf.addImage(chartData.image, 'PNG', x, y, imgWidth, imgHeight); } catch { /* ignore addImage failures */ }
     }
-    if ((config as any)?.watermark) {
+    if (config.watermark) {
       pdf.setFontSize(8);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(128, 128, 128);
@@ -46,11 +55,7 @@ export async function generateServerArtifact(
 
   if (format === 'excel') {
     const wb = XLSX.utils.book_new();
-    const table = Array.isArray(chartData?.table)
-      ? chartData.table
-      : Array.isArray(chartData?.data)
-        ? chartData.data
-        : [["Chart Export"], [new Date().toISOString()]];
+    const table = extractTable(chartData);
     const ws = XLSX.utils.aoa_to_sheet(table);
     XLSX.utils.book_append_sheet(wb, ws, 'Chart Data');
     const buffer: Buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' }) as unknown as Buffer;
@@ -73,8 +78,8 @@ export async function generateServerArtifact(
     }
     const svg: string | undefined = chartData?.svg;
     if (typeof svg === 'string' && svg.trim().length) {
-      const sharpMod = await import('sharp');
-      const sharp = (sharpMod as any).default || sharpMod;
+      const sharpMod: any = await import('sharp');
+      const sharp = sharpMod.default || sharpMod;
       const img = sharp(Buffer.from(svg, 'utf-8'), { density: 300 });
       const w = (config.width && Number(config.width)) || undefined;
       const h = (config.height && Number(config.height)) || undefined;

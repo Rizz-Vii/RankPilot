@@ -46,7 +46,8 @@ export default function BillingPage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const { canUseFeature } = useSubscription();
   const billingPortalEnabled = canUseFeature('billing_portal_access');
-  const [paymentMethodState, setPaymentMethodState] = useState<any>(null);
+  interface PaymentMethod { brand:string; last4:string; expMonth:number; expYear:number }
+  const [paymentMethodState, setPaymentMethodState] = useState<PaymentMethod|null>(null);
   const [isManagingPortal, setIsManagingPortal] = useState(false);
 
   useEffect(() => {
@@ -79,15 +80,16 @@ export default function BillingPage() {
     try {
       setIsManagingPortal(true);
       const createPortalSession = httpsCallable(functions, "createPortalSession");
-      const result: any = await createPortalSession({ userId: user?.uid });
-      const url = result?.data?.url;
+  const result: any = await createPortalSession({ userId: user?.uid });
+  const url = result?.data?.url;
       if (url) {
         if (typeof window !== 'undefined') window.open(url, '_blank');
       } else {
         toast.error('Failed to open billing portal');
       }
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to open billing portal');
+    } catch (e) {
+      const err = e as any;
+      toast.error(err?.message || 'Failed to open billing portal');
     } finally {
       setIsManagingPortal(false);
     }
@@ -160,15 +162,16 @@ export default function BillingPage() {
     if(!user?.uid) return;
     let cancelled = false;
     (async () => {
-      const logger = getLogger('billing-ui');
+      const _logger = getLogger('billing-ui');
       try {
   const data = await fetchBillingData(db, user.uid, { invoiceLimit: 10 });
         if(cancelled) return;
         setBilling(data);
-      } catch (e:any) {
+      } catch (e) {
         if(cancelled) return;
-        setFetchError(e.message || 'Failed to load billing data');
-        getLogger('billing-ui').error('billing-ui.client.fetch.error', { error: e?.message });
+        const err = e as any;
+        setFetchError(err?.message || 'Failed to load billing data');
+        getLogger('billing-ui').error('billing-ui.client.fetch.error', { error: err?.message });
       }
     })();
     return () => { cancelled = true; };
@@ -192,7 +195,8 @@ export default function BillingPage() {
 
   const subscription = billing?.subscription || null;
   const PAGE_SIZE = 10;
-  const [invoices, setInvoices] = useState<any[]>(billing?.invoices || []);
+  interface InvoiceLite { id:string; amount:number; period?:string; description?:string; date?:string; createdAt?:Date; issuedAt?:{ toDate:()=>Date }; [k:string]:any }
+  const [invoices, setInvoices] = useState<InvoiceLite[]>(billing?.invoices as InvoiceLite[] || []);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -200,11 +204,11 @@ export default function BillingPage() {
   useEffect(() => {
     if (billing?.invoices) {
       const normalized = (billing.invoices || []).map((inv: any) => {
-        const createdAt: Date = inv.createdAt?.toDate?.() || inv.issuedAt?.toDate?.() || (inv.date ? new Date(inv.date) : new Date(`${inv.period}-01T00:00:00Z`));
+        const createdAt: Date = inv?.createdAt?.toDate?.() || inv?.issuedAt?.toDate?.() || (inv?.date ? new Date(inv.date) : new Date(`${inv?.period || '1970-01'}-01T00:00:00Z`));
         return {
           ...inv,
-          description: inv.description || `Invoice ${inv.period}`,
-          date: inv.date || createdAt.toISOString(),
+          description: inv?.description || `Invoice ${inv?.period}`,
+          date: inv?.date || createdAt.toISOString(),
           createdAt,
         };
       });
@@ -226,7 +230,7 @@ export default function BillingPage() {
       const res = await fetch(`/api/billing/invoices?limit=${PAGE_SIZE}&cursor=${encodeURIComponent(cursor)}`, { headers: { authorization: `Bearer ${token}` } });
       if (res.ok) {
         const json = await res.json();
-        const newOnes = (json.invoices || []).filter((inv: any) => !invoices.some(i => i.id === inv.id));
+  const newOnes = (json.invoices || []).filter((inv: any) => !invoices.some(i => i.id === inv.id));
         // Attach composite cursor to each invoice for subsequent pagination
         if(json.nextCursor && newOnes.length) {
           // store on the last currently loaded invoice for retrieval
@@ -248,7 +252,7 @@ export default function BillingPage() {
     name: 'Free', price: 0, billingCycle: 'monthly', nextBillingDate: new Date().toISOString(), status: 'free'
   };
   // Align with server contract (expMonth/expYear)
-  const paymentMethod = paymentMethodState || { brand: '••••', last4: '----', expMonth: 0, expYear: 0 } as any;
+  const paymentMethod: PaymentMethod = paymentMethodState || { brand: '••••', last4: '----', expMonth: 0, expYear: 0 };
   const [usageMetrics, setUsageMetrics] = useState<NormalizedUsageMetrics | null>(null);
   useEffect(() => { if(!user?.uid) return; let cancelled=false; (async () => { const m = await fetchUsageMetrics(db, user.uid); if(!cancelled) setUsageMetrics(m); })(); return () => { cancelled = true; }; }, [user?.uid]);
   const usage = usageMetrics ? { keywordsTracked: usageMetrics.keywordsTracked, keywordsLimit: usageMetrics.keywordsLimit, competitorAnalysis: usageMetrics.competitorAnalysis, competitorLimit: usageMetrics.competitorLimit, reportsGenerated: usageMetrics.reportsGenerated, currentPeriodStart: usageMetrics.periodStart.toISOString(), currentPeriodEnd: usageMetrics.periodEnd.toISOString() } : { keywordsTracked: 0, keywordsLimit: 0, competitorAnalysis: 0, competitorLimit: 0, reportsGenerated: 0, currentPeriodStart: currentPlan.nextBillingDate, currentPeriodEnd: currentPlan.nextBillingDate };
@@ -424,7 +428,7 @@ export default function BillingPage() {
                         <div>
                           <p className="font-medium">{invoice.description}</p>
                           <p className="text-sm text-muted-foreground">
-                            {formatDate(invoice.date)}
+                            {formatDate(invoice.date || new Date().toISOString())}
                           </p>
                         </div>
                       </div>

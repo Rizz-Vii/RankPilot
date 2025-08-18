@@ -22,7 +22,7 @@ function getTransport() {
     }
     return {
         sendMail: async (opts: any) => {
-            getLogger('support-reply').warn('email.send.fallback', { to: opts.to, subject: opts.subject });
+            getLogger('support-reply').warn('email.send.fallback', { to: opts?.to, subject: opts?.subject });
             return { messageId: `dev-fallback-${Date.now()}` };
         },
     } as unknown as nodemailer.Transporter;
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: "Message not found" }, { status: 404 });
         }
         const data = docSnap.data() as any;
-        const toEmail = data.email;
+        const toEmail = data?.email;
         const from = process.env.CONTACT_FROM_EMAIL || process.env.SMTP_USER || "no-reply@rankpilot.com";
 
         const transporter = getTransport();
@@ -71,8 +71,8 @@ export async function POST(req: NextRequest) {
         });
 
         return NextResponse.json({ success: true, id: info.messageId });
-    } catch (err: any) {
-        getLogger('support-reply').error('reply.error', { error: err?.message });
-        return NextResponse.json({ message: err?.message || "Internal error" }, { status: 500 });
+    } catch (err: unknown) {
+        getLogger('support-reply').error('reply.error', { error: (err as any)?.message });
+        return NextResponse.json({ message: (err as any)?.message || "Internal error" }, { status: 500 });
     }
 }

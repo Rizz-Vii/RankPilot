@@ -12,7 +12,7 @@ export interface APMMetric {
     unit: string;
     timestamp: number;
     tags: Record<string, string>;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 
 export interface PerformanceEvent {
@@ -93,7 +93,7 @@ export interface DashboardWidget {
         chartType?: 'line' | 'bar' | 'pie' | 'area';
         aggregation?: 'sum' | 'avg' | 'min' | 'max' | 'count';
         groupBy?: string[];
-        filters?: Record<string, any>;
+        filters?: Record<string, unknown>;
     };
     position: { x: number; y: number; width: number; height: number; };
     refreshInterval?: number;
@@ -308,7 +308,7 @@ export class EnterpriseAPM extends EventEmitter {
     /**
      * Get dashboard data
      */
-    getDashboardData(dashboardId: string): any {
+    getDashboardData(dashboardId: string): unknown {
         const dashboard = this.dashboards.get(dashboardId);
         if (!dashboard) throw new Error(`Dashboard ${dashboardId} not found`);
 
@@ -334,8 +334,6 @@ export class EnterpriseAPM extends EventEmitter {
     }> {
         const events = this.getEvents({ timeRange });
         const metrics = this.getMetrics({ timeRange });
-
-        // Analyze performance patterns
         const insights = await this.analyzePerformancePatterns(events, metrics);
 
         return insights;
@@ -436,7 +434,7 @@ export class EnterpriseAPM extends EventEmitter {
     private startSystemResourceMonitoring(): void {
         const collector = setInterval(() => {
             if (typeof window !== 'undefined' && 'performance' in window) {
-                const memory = (performance as any).memory;
+                const memory = (performance as any)?.memory;
                 if (memory) {
                     this.recordMetric({
                         name: 'system.memory_usage',
@@ -568,7 +566,7 @@ export class EnterpriseAPM extends EventEmitter {
         return results;
     }
 
-    private executeWidgetQuery(widget: DashboardWidget): any {
+    private executeWidgetQuery(widget: DashboardWidget): unknown {
         // Simplified query execution
         return this.getMetrics({
             name: widget.query,
@@ -576,24 +574,15 @@ export class EnterpriseAPM extends EventEmitter {
         });
     }
 
-    private async analyzePerformancePatterns(events: PerformanceEvent[], metrics: APMMetric[]): Promise<any> {
-        // Simplified AI analysis - real implementation would use ML models
-        return {
-            summary: 'Performance analysis completed',
-            issues: [],
-            trends: [],
-            predictions: []
-        };
+    private async analyzePerformancePatterns(_events: PerformanceEvent[], _metrics: APMMetric[]): Promise<{ summary: string; issues: any[]; trends: any[]; predictions: any[]; }> {
+        return { summary: 'Performance analysis completed', issues: [], trends: [], predictions: [] };
     }
 
     private exportToCSV(metrics: APMMetric[], events: PerformanceEvent[]): string {
-        // Simplified CSV export
-        const headers = 'timestamp,type,name,value,unit,tags\n';
-        const rows = metrics.map(m =>
-            `${m.timestamp},metric,${m.name},${m.value},${m.unit},"${JSON.stringify(m.tags)}"`
-        ).join('\n');
-
-        return headers + rows;
+        const headers = 'timestamp,type,name,value,unit,tags\\n';
+        const metricRows = metrics.map(m => `${m.timestamp},metric,${m.name},${m.value},${m.unit},"${JSON.stringify(m.tags)}"`).join('\\n');
+        const eventRows = events.map(e => `${e.timestamp},event,${e.type}:${e.name},${e.duration},ms,"${JSON.stringify({ userTier: e.userTier })}"`).join('\\n');
+        return headers + metricRows + (eventRows ? '\\n' + eventRows : '');
     }
 
     private exportToPrometheus(metrics: APMMetric[]): string {
@@ -688,7 +677,7 @@ export class EnterpriseAPM extends EventEmitter {
             browser: navigator.userAgent,
             os: navigator.platform,
             screen: { width: window.screen.width, height: window.screen.height },
-            connection: (navigator as any).connection?.effectiveType || 'unknown'
+            connection: (navigator as any)?.connection?.effectiveType || 'unknown'
         };
     }
 

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface NeuroSeoStreamEvent {
     type: string;
-    data: any;
+    data: unknown;
     ts: number;
 }
 
@@ -11,14 +11,20 @@ export interface UseNeuroSeoStreamOptions {
     analysisType?: string;
     userId?: string;
     onEvent?: (evt: NeuroSeoStreamEvent) => void;
-    onComplete?: (summary: any) => void;
-    onError?: (err: any) => void;
+    onComplete?: (summary: unknown) => void;
+    onError?: (err: unknown) => void;
+}
+
+export interface NeuroSeoStreamSummary {
+    overallScore?: number;
+    duration?: number;
+    [key: string]: unknown; // keep extensible
 }
 
 interface StreamState {
     status: 'idle' | 'connecting' | 'streaming' | 'complete' | 'error';
     progress?: { completed: number; total: number };
-    summary?: any;
+    summary?: NeuroSeoStreamSummary;
     error?: string;
     events: NeuroSeoStreamEvent[];
     cached?: boolean;

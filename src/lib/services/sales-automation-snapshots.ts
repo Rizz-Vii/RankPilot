@@ -11,7 +11,7 @@ export interface SalesMetricsSnapshotDoc {
     pipeline: number;
     closedWon: number;
     totalDeals: number;
-    createdAt?: any; // Firestore TS
+    createdAt?: Date; // normalized
 }
 
 export interface SalesForecastSnapshotDoc {
@@ -21,7 +21,7 @@ export interface SalesForecastSnapshotDoc {
     period: string; // YYYY-MM-DD
     forecast: number;
     actual?: number | null;
-    createdAt?: any;
+    createdAt?: Date;
 }
 
 function scopeField(teamId?: string) { return teamId ? 'teamId' : 'userId'; }
@@ -34,7 +34,7 @@ export async function fetchRecentSalesMetricsSnapshots(userId: string, teamId?: 
         limit(max)
     );
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as SalesMetricsSnapshotDoc[];
+    return snap.docs.map(d => mapSalesMetricsSnapshotDoc(d.id, d.data()));
 }
 
 export async function fetchRecentSalesForecastSnapshots(userId: string, teamId?: string, max = 8): Promise<SalesForecastSnapshotDoc[]> {
@@ -45,5 +45,43 @@ export async function fetchRecentSalesForecastSnapshots(userId: string, teamId?:
         limit(max)
     );
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as SalesForecastSnapshotDoc[];
+    return snap.docs.map(d => mapSalesForecastSnapshotDoc(d.id, d.data()));
+}
+
+function num(v: unknown): number {
+    return typeof v === 'number' ? v : Number(v ?? 0) || 0;
+}
+
+function toDate(v: unknown): Date | undefined {
+    if (!v) return undefined;
+    if (v instanceof Date) return v;
+    const maybeTs = v as { toDate?: () => Date };
+    return typeof maybeTs.toDate === 'function' ? maybeTs.toDate() : undefined;
+}
+
+function mapSalesMetricsSnapshotDoc(id: string, raw: unknown): SalesMetricsSnapshotDoc {
+    const r = (raw as Record<string, unknown>) || {};
+    return {
+        id,
+        userId: String(r.userId ?? ''),
+        teamId: (r.teamId as string | null | undefined) ?? null,
+        range: (r.range as SalesMetricsSnapshotDoc['range']) ?? undefined,
+        pipeline: num(r.pipeline),
+        closedWon: num(r.closedWon),
+        totalDeals: num(r.totalDeals),
+        createdAt: toDate(r.createdAt),
+    };
+}
+
+function mapSalesForecastSnapshotDoc(id: string, raw: unknown): SalesForecastSnapshotDoc {
+    const r = (raw as Record<string, unknown>) || {};
+    return {
+        id,
+        userId: String(r.userId ?? ''),
+        teamId: (r.teamId as string | null | undefined) ?? null,
+        period: String(r.period ?? ''),
+        forecast: num(r.forecast),
+        actual: r.actual == null ? null : num(r.actual),
+        createdAt: toDate(r.createdAt),
+    };
 }

@@ -2,38 +2,40 @@ import { addDoc, setDoc, updateDoc, DocumentReference, CollectionReference, onSn
 
 export interface GuardOptions { requireTeamId?: boolean; stripUndefined?: boolean; }
 
-function sanitize(data: any): any {
+function sanitize(data: unknown): unknown {
     if (data == null || typeof data !== 'object') return data;
     if (Array.isArray(data)) return data.map(sanitize);
-    const out: any = {};
-    for (const [k, v] of Object.entries(data)) {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(data as Record<string, unknown>)) {
         if (v === undefined) continue;
         out[k] = sanitize(v);
     }
     return out;
 }
 
-function validateIds(payload: any, { requireTeamId }: GuardOptions) {
+function validateIds(payload: Record<string, unknown>, { requireTeamId }: GuardOptions) {
     if (!payload || typeof payload !== 'object') throw new Error('Invalid payload');
-    if (!payload.userId) throw new Error('Missing userId in write payload');
-    if (requireTeamId && !payload.teamId) throw new Error('Missing teamId in team-scoped write payload');
+    const userId = payload['userId'];
+    const teamId = payload['teamId'];
+    if (!userId) throw new Error('Missing userId in write payload');
+    if (requireTeamId && !teamId) throw new Error('Missing teamId in team-scoped write payload');
 }
 
-export async function guardedAdd<T = any>(colRef: CollectionReference, data: T, opts: GuardOptions = {}) {
-    const payload: any = opts.stripUndefined ? sanitize(data) : data;
+export async function guardedAdd<T = unknown>(colRef: CollectionReference, data: T, opts: GuardOptions = {}) {
+    const payload = (opts.stripUndefined ? sanitize(data) : data) as Record<string, unknown>;
     validateIds(payload, opts);
     return addDoc(colRef, { ...payload });
 }
 
-export async function guardedSet<T = any>(docRef: DocumentReference, data: T, opts: GuardOptions = {}) {
-    const payload: any = opts.stripUndefined ? sanitize(data) : data;
+export async function guardedSet<T = unknown>(docRef: DocumentReference, data: T, opts: GuardOptions = {}) {
+    const payload = (opts.stripUndefined ? sanitize(data) : data) as Record<string, unknown>;
     validateIds(payload, opts);
-    return setDoc(docRef, { ...payload }, { merge: true } as any);
+    return setDoc(docRef, { ...payload }, { merge: true });
 }
 
-export async function guardedUpdate<T = any>(docRef: DocumentReference, data: Partial<T>, opts: GuardOptions = {}) {
-    const payload: any = opts.stripUndefined ? sanitize(data) : data;
-    validateIds({ userId: (payload as any).userId }, { requireTeamId: false });
+export async function guardedUpdate<T = unknown>(docRef: DocumentReference, data: Partial<T>, opts: GuardOptions = {}) {
+    const payload = (opts.stripUndefined ? sanitize(data) : data) as Record<string, unknown>;
+    validateIds({ userId: payload['userId'] } as Record<string, unknown>, { requireTeamId: false });
     return updateDoc(docRef, { ...payload });
 }
 
@@ -42,7 +44,7 @@ export async function guardedUpdate<T = any>(docRef: DocumentReference, data: Pa
 type Unsub = () => void;
 const activeCounts: Record<string, number> = {};
 
-export function snapshotKey(parts: any[]): string {
+export function snapshotKey(parts: unknown[]): string {
     return parts.map(p => typeof p === 'string' ? p : JSON.stringify(p)).join('|');
 }
 
@@ -64,16 +66,16 @@ export function untrackListener(key: string) {
 
 export interface ManagedSnapshotOptions { debounceMs?: number; }
 
-export function managedOnSnapshot(q: any, onData: (snap: any) => void, onError?: (e: any) => void, opts: ManagedSnapshotOptions = {}): Unsub {
+export function managedOnSnapshot(q: unknown, onData: (snap: unknown) => void, onError?: (e: unknown) => void, opts: ManagedSnapshotOptions = {}): Unsub {
     const debounceMs = opts.debounceMs ?? 150;
     const key = deriveReadableKey(q);
     trackListener(key);
-    let timeout: any = null;
-    const unsub = onSnapshot(q, (snap: any) => {
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    const unsub = (onSnapshot as unknown as Function)(q as any, (snap: unknown) => {
         if (timeout) clearTimeout(timeout);
         timeout = setTimeout(() => onData(snap), debounceMs);
-    }, (err: any) => { if (onError) onError(err); });
-    return () => { clearTimeout(timeout); unsub(); untrackListener(key); };
+    }, (err: unknown) => { if (onError) onError(err); });
+    return () => { if (timeout) clearTimeout(timeout); (unsub as any)(); untrackListener(key); };
 }
 
 export function getActiveListenerSummary() {
@@ -81,10 +83,11 @@ export function getActiveListenerSummary() {
 }
 
 // Build a stable, human-readable key for any Firestore reference or query.
-function deriveReadableKey(q: any): string {
+function deriveReadableKey(q: unknown): string {
     try {
+        const anyQ = q as any;
         // Prefer public API first: DocumentReference/CollectionReference expose path
-        const path: string | undefined = typeof q?.path === 'string' ? q.path : undefined;
+        const path: string | undefined = typeof anyQ?.path === 'string' ? anyQ.path : undefined;
         if (path) {
             // Heuristic: document refs usually have an even number of segments and an id
             const segments = path.split('/');
@@ -93,16 +96,16 @@ function deriveReadableKey(q: any): string {
         }
 
         // Query: attempt a best-effort readable description from known internals without throwing
-        const qInternal = q?._query || q?._ref?._query || q?._delegate?._query;
-        const segs: string[] | undefined = qInternal?.path?.segments || q?._queryPath?.segments || q?._path?.segments;
+        const qInternal = anyQ?._query || anyQ?._ref?._query || anyQ?._delegate?._query;
+        const segs: string[] | undefined = qInternal?.path?.segments || anyQ?._queryPath?.segments || anyQ?._path?.segments;
         const basePath = Array.isArray(segs) && segs.length ? segs.join('/') : undefined;
 
         const constraints: string[] = [];
-        const filters = qInternal?.filters || qInternal?.filter || q?._queryOptions?.filters;
+        const filters = qInternal?.filters || qInternal?.filter || anyQ?._queryOptions?.filters;
         if (Array.isArray(filters)) constraints.push(`where:${filters.length}`);
-        const orderBy = qInternal?.orderBy || q?._queryOptions?.orderBy;
+        const orderBy = qInternal?.orderBy || anyQ?._queryOptions?.orderBy;
         if (Array.isArray(orderBy)) constraints.push(`orderBy:${orderBy.length}`);
-        const limit = qInternal?.limit || q?._queryOptions?.limit;
+        const limit = qInternal?.limit || anyQ?._queryOptions?.limit;
         if (typeof limit === 'number') constraints.push(`limit:${limit}`);
 
         if (basePath) {

@@ -73,7 +73,7 @@ export default function ToolGrid({
       animate="visible"
       className={cn("tool-grid", className)}
     >
-      {visibleNavItems.map((item, index) => (
+      {visibleNavItems.map((item) => (
         <motion.div key={item.href} variants={cardVariants}>
           <Link href={item.href} className="block">
             <Card className="tool-card hover:border-primary/50 transition-all duration-200 cursor-pointer group">

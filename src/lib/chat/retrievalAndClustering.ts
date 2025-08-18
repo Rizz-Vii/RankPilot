@@ -10,16 +10,24 @@ function cosine(a: number[], b: number[]): number {
     if (!na || !nb) return 0; return dot / (Math.sqrt(na) * Math.sqrt(nb));
 }
 
-export async function buildQueryEmbedding(apiKey: string, text: string): Promise<number[] | null> {
+export async function buildQueryEmbedding(_apiKey: string, text: string): Promise<number[] | null> {
     return openAIEmbeddingOrNull(text);
 }
 
+interface ChatMessageDoc { question?: string; response?: string; embedding?: { question?: number[] }; timestamp?: any; }
 export async function retrieveSimilarMessages(params: { uid: string; sessionId: string; queryEmbedding: number[]; limit?: number; topK?: number; }): Promise<RetrievedContextItem[]> {
     const { uid, sessionId, queryEmbedding, limit = 80, topK = 3 } = params;
     try {
         const snap = await adminDb.collection('chatLogs').doc(uid).collection('sessions').doc(sessionId).collection('messages').orderBy('timestamp', 'desc').limit(limit).get();
         const scored: RetrievedContextItem[] = [];
-        snap.forEach(doc => { const d = doc.data() as any; const vec: number[] | undefined = d.embedding?.question; if (Array.isArray(vec) && d.response && d.question) { const sim = cosine(queryEmbedding, vec); if (sim > 0.1) scored.push({ question: d.question, response: d.response, similarity: sim }); } });
+        snap.forEach(doc => {
+            const d = doc.data() as Partial<ChatMessageDoc>;
+            const vec = Array.isArray(d.embedding?.question) ? d.embedding!.question! : undefined;
+            if (vec && typeof d.response === 'string' && typeof d.question === 'string') {
+                const sim = cosine(queryEmbedding, vec);
+                if (sim > 0.1) scored.push({ question: d.question, response: d.response, similarity: sim });
+            }
+        });
         scored.sort((a, b) => b.similarity - a.similarity); return scored.slice(0, topK);
     } catch { return []; }
 }
@@ -43,12 +51,18 @@ export async function maybeClusterKeywords(params: { uid: string; sessionId: str
     try {
         const sessionRef = adminDb.collection('chatLogs').doc(uid).collection('sessions').doc(sessionId);
         const sessSnap = await sessionRef.get();
-        const data = sessSnap.data() as any || {};
-        const msgCount = data.messageCount || 0;
+        const data = (sessSnap.data() as any) || {};
+        const msgCount = typeof data.messageCount === 'number' ? data.messageCount : 0;
         if (msgCount < clusteringInterval || msgCount % clusteringInterval !== 0) return false;
         const msgsSnap = await sessionRef.collection('messages').orderBy('timestamp', 'desc').limit(120).get();
         const vectors: number[][] = []; const texts: string[] = [];
-        msgsSnap.forEach(doc => { const d = doc.data() as any; if (Array.isArray(d.embedding?.question) && d.question) { vectors.push(d.embedding.question); texts.push(d.question); } });
+        msgsSnap.forEach(doc => {
+            const d = doc.data() as Partial<ChatMessageDoc>;
+            if (Array.isArray(d.embedding?.question) && typeof d.question === 'string') {
+                vectors.push(d.embedding!.question!);
+                texts.push(d.question);
+            }
+        });
         if (vectors.length < 6) return false;
         const k = Math.max(2, Math.min(6, Math.round(Math.sqrt(vectors.length / 2))));
         const { assignments } = kMeans(vectors, k);

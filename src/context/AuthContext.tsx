@@ -2,6 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import type { DashboardData } from "@/lib/services/dashboard-data.service";
 import { User as FirebaseUser } from "firebase/auth"; // This line is unchanged
 import { auth, db } from "@/lib/firebase";
 import { useMockAuth } from "@/lib/dev-auth";
@@ -21,8 +22,8 @@ interface UserActivity {
   id: string;
   type: string;
   tool: string;
-  timestamp: any; // Firestore Timestamp
-  details?: any;
+  timestamp: unknown; // Firestore Timestamp
+  details?: unknown;
   resultsSummary?: string;
 }
 
@@ -31,11 +32,23 @@ export interface User extends FirebaseUser {
   teamId?: string;
 }
 
+export interface UserProfile {
+  role?: string;
+  subscriptionTier?: string;
+  teamId?: string;
+  dashboardCache?: {
+    data?: DashboardData;
+    lastUpdated?: unknown; // Firestore TS
+    version?: string;
+  };
+  [key: string]: unknown; // allow forward-compatible fields
+}
+
 export interface AuthContextType {
   user: User | null;
   loading: boolean;
   role: string | null;
-  profile: any;
+  profile: UserProfile | null;
   activities: UserActivity[];
 }
 
@@ -54,7 +67,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<string | null>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [activities, setActivities] = useState<UserActivity[]>([]);
 
   // Use mock auth in development
@@ -83,7 +96,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setProfile(userData || null);
         // Attach teamId from Firestore user doc if present without breaking User prototype methods
         try {
-          (currentUser as any).teamId = userData?.teamId;
+          (currentUser as any).teamId = (userData as any)?.teamId;
         } catch {}
         setUser(currentUser as User);
       } else {

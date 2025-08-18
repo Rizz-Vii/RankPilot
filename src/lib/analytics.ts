@@ -1,4 +1,4 @@
-import { logEvent, setUserProperties } from "firebase/analytics";
+import { logEvent, setUserProperties, type Analytics } from "firebase/analytics";
 import {
   doc,
   updateDoc,
@@ -6,28 +6,59 @@ import {
   serverTimestamp,
   getDoc,
 } from "firebase/firestore";
-import { analytics, db } from "@/lib/firebase";
+import { analytics as rawAnalytics, db } from "@/lib/firebase";
 
 // Resolve analytics instance (only set in production via firebase/index)
-const getAnalyticsInstance = () => (typeof window !== "undefined" ? analytics : null);
+function getAnalyticsInstance(): Analytics | null {
+  if (typeof window === "undefined") return null;
+  return rawAnalytics ?? null;
+}
+
+// Defensive helper – Firebase analytics types require a real instance
+function withAnalytics(cb: (a: Analytics) => void) {
+  const a = getAnalyticsInstance();
+  if (!a) return; // silently ignore when unavailable (dev / unsupported)
+  try { cb(a); } catch {/* swallow – non critical */ }
+}
+
+// Compute simple conversion rates – placeholder until richer analytics needed
+function calculateConversionRates(data: any) {
+  try {
+    const daily = data?.daily || {};
+    // naive aggregate: purchase / view_pricing etc.
+    let views = 0, purchases = 0, begins = 0;
+    Object.values(daily as Record<string, any>).forEach((d: any) => {
+      if (typeof d === 'object' && d) {
+        views += Number(d.view_pricing?.count || d.view_pricing || 0);
+        begins += Number(d.begin_checkout?.count || d.begin_checkout || 0);
+        purchases += Number(d.purchase?.count || d.purchase || 0);
+      }
+    });
+    return {
+      viewToBegin: views ? begins / views : 0,
+      beginToPurchase: begins ? purchases / begins : 0,
+      viewToPurchase: views ? purchases / views : 0,
+    };
+  } catch {
+    return { viewToBegin: 0, beginToPurchase: 0, viewToPurchase: 0 };
+  }
+}
 
 // Payment Analytics Events
 export const trackPaymentEvents = {
   // Track when user views pricing page
   viewPricing: (source?: string) => {
-    const analytics = getAnalyticsInstance();
-    if (analytics) {
+    withAnalytics(analytics => {
       logEvent(analytics, "view_pricing", {
         source: source || "direct",
         timestamp: new Date().toISOString(),
       });
-    }
+    });
   },
 
   // Track when user starts checkout process
   beginCheckout: (plan: string, amount: number, currency: string = "USD") => {
-    const analytics = getAnalyticsInstance();
-    if (analytics) {
+    withAnalytics(analytics => {
       logEvent(analytics, "begin_checkout", {
         currency,
         value: amount,
@@ -41,7 +72,7 @@ export const trackPaymentEvents = {
           },
         ],
       });
-    }
+    });
   },
 
   // Track successful purchases
@@ -51,8 +82,7 @@ export const trackPaymentEvents = {
     transactionId: string,
     currency: string = "USD"
   ) => {
-    const analytics = getAnalyticsInstance();
-    if (analytics) {
+    withAnalytics(analytics => {
       logEvent(analytics, "purchase", {
         transaction_id: transactionId,
         currency,
@@ -67,32 +97,30 @@ export const trackPaymentEvents = {
           },
         ],
       });
-    }
+    });
   },
 
   // Track payment method selection
   selectPaymentMethod: (method: string, plan: string) => {
-    const analytics = getAnalyticsInstance();
-    if (analytics) {
+    withAnalytics(analytics => {
       logEvent(analytics, "select_payment_method", {
         payment_method: method,
         plan: plan,
         timestamp: new Date().toISOString(),
       });
-    }
+    });
   },
 
   // Track checkout abandonment
   abandonCheckout: (plan: string, step: string, reason?: string) => {
-    const analytics = getAnalyticsInstance();
-    if (analytics) {
+    withAnalytics(analytics => {
       logEvent(analytics, "abandon_checkout", {
         plan,
         step,
         reason: reason || "unknown",
         timestamp: new Date().toISOString(),
       });
-    }
+    });
   },
 
   // Track subscription changes
@@ -101,28 +129,26 @@ export const trackPaymentEvents = {
     fromPlan: string,
     toPlan?: string
   ) => {
-    const analytics = getAnalyticsInstance();
-    if (analytics) {
+    withAnalytics(analytics => {
       logEvent(analytics, "subscription_change", {
         action,
         from_plan: fromPlan,
         to_plan: toPlan || null,
         timestamp: new Date().toISOString(),
       });
-    }
+    });
   },
 
   // Track refund requests
   refundRequest: (plan: string, amount: number, reason: string) => {
-    const analytics = getAnalyticsInstance();
-    if (analytics) {
+    withAnalytics(analytics => {
       logEvent(analytics, "refund_request", {
         plan,
         amount,
         reason,
         timestamp: new Date().toISOString(),
       });
-    }
+    });
   },
 };
 
@@ -138,8 +164,8 @@ export const trackUserEvents = {
       signup_date?: string;
     }
   ) => {
-    if (typeof window !== "undefined" && analytics) {
-      setUserProperties(analytics, {
+    if (typeof window !== "undefined" && rawAnalytics) {
+      setUserProperties(rawAnalytics as Analytics, {
         user_id: userId,
         ...properties,
       });
@@ -148,8 +174,8 @@ export const trackUserEvents = {
 
   // Track user engagement
   engagement: (action: string, category: string, label?: string) => {
-    if (typeof window !== "undefined" && analytics) {
-      logEvent(analytics, "engagement", {
+    if (typeof window !== "undefined" && rawAnalytics) {
+      logEvent(rawAnalytics as Analytics, "engagement", {
         action,
         category,
         label: label || null,
@@ -160,8 +186,8 @@ export const trackUserEvents = {
 
   // Track feature usage
   featureUsage: (feature: string, plan: string, usage_count?: number) => {
-    if (typeof window !== "undefined" && analytics) {
-      logEvent(analytics, "feature_usage", {
+    if (typeof window !== "undefined" && rawAnalytics) {
+      logEvent(rawAnalytics as Analytics, "feature_usage", {
         feature,
         plan,
         usage_count: usage_count || 1,
@@ -178,10 +204,10 @@ export const conversionFunnel = {
     step: number,
     stepName: string,
     plan?: string,
-    additionalData?: Record<string, any>
+    additionalData?: Record<string, unknown>
   ) => {
-    if (typeof window !== "undefined" && analytics) {
-      logEvent(analytics, "funnel_step", {
+    if (typeof window !== "undefined" && rawAnalytics) {
+      logEvent(rawAnalytics as Analytics, "funnel_step", {
         step_number: step,
         step_name: stepName,
         plan: plan || null,
@@ -248,64 +274,12 @@ export const getAnalyticsDashboard = async () => {
   }
 };
 
-// Helper function to calculate conversion rates
-const calculateConversionRates = (data: any) => {
-  const daily = data.daily || {};
-  const plans = data.plans || {};
-
-  // Calculate overall conversion rates
-  let totalViews = 0;
-  let totalCheckouts = 0;
-  let totalPurchases = 0;
-
-  Object.values(daily).forEach((day: any) => {
-    totalViews += day.view_pricing || 0;
-    totalCheckouts += day.begin_checkout || 0;
-    totalPurchases += day.purchase || 0;
-  });
-
-  const viewToCheckout =
-    totalViews > 0 ? (totalCheckouts / totalViews) * 100 : 0;
-  const checkoutToPurchase =
-    totalCheckouts > 0 ? (totalPurchases / totalCheckouts) * 100 : 0;
-  const overallConversion =
-    totalViews > 0 ? (totalPurchases / totalViews) * 100 : 0;
-
-  // Calculate plan-specific conversion rates
-  const planConversions = Object.entries(plans).map(
-    ([plan, metrics]: [string, any]) => ({
-      plan,
-      views: metrics.view_pricing || 0,
-      checkouts: metrics.begin_checkout || 0,
-      purchases: metrics.purchase || 0,
-      conversionRate:
-        metrics.view_pricing > 0
-          ? (metrics.purchase / metrics.view_pricing) * 100
-          : 0,
-    })
-  );
-
-  return {
-    overall: {
-      viewToCheckout: Number(viewToCheckout.toFixed(2)),
-      checkoutToPurchase: Number(checkoutToPurchase.toFixed(2)),
-      overallConversion: Number(overallConversion.toFixed(2)),
-    },
-    byPlan: planConversions,
-    totals: {
-      views: totalViews,
-      checkouts: totalCheckouts,
-      purchases: totalPurchases,
-    },
-  };
-};
-
 // A/B Testing Support
 export const abTesting = {
   // Track A/B test variant
   trackVariant: (testName: string, variant: string, plan?: string) => {
-    if (typeof window !== "undefined" && analytics) {
-      logEvent(analytics, "ab_test_variant", {
+    if (typeof window !== "undefined" && rawAnalytics) {
+      logEvent(rawAnalytics as Analytics, "ab_test_variant", {
         test_name: testName,
         variant,
         plan: plan || null,
@@ -321,8 +295,8 @@ export const abTesting = {
     conversionType: string,
     value?: number
   ) => {
-    if (typeof window !== "undefined" && analytics) {
-      logEvent(analytics, "ab_test_conversion", {
+    if (typeof window !== "undefined" && rawAnalytics) {
+      logEvent(rawAnalytics as Analytics, "ab_test_conversion", {
         test_name: testName,
         variant,
         conversion_type: conversionType,

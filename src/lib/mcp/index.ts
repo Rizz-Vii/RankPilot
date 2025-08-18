@@ -377,7 +377,7 @@ export class MCPServiceManager {
     /**
      * Generate mock output for different model types
      */
-    private generateMockOutput(model: string, inputs: string | string[]): any {
+    private generateMockOutput(model: string, inputs: string | string[]): unknown {
         const inputText = Array.isArray(inputs) ? inputs.join(' ') : inputs;
 
         if (model.includes('DialoGPT') || model.includes('blenderbot')) {

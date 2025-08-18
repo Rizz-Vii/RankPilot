@@ -24,7 +24,7 @@ export interface CrawlResult {
     headings: { [key: string]: string[] };
     images: Array<{ src: string; alt: string; title?: string }>;
     links: Array<{ href: string; text: string; isExternal: boolean }>;
-    schema: any[];
+    schema: unknown[];
     wordCount: number;
     titleLength: number;
     metaDescriptionLength: number;
@@ -43,6 +43,19 @@ export interface CrawlResult {
     keyEntities: string[];
     readingLevel: number;
     contentDepth: "surface" | "moderate" | "comprehensive";
+  };
+  /**
+   * Lightweight derived SEO metrics (Phase 0 heuristic) – populated client-side to avoid casts.
+   * Replaced prior (result as unknown).seoMetrics usages.
+   */
+  seoMetrics?: {
+    overallScore: number; // 0-100 composite
+    technicalScore: number; // 0-100
+    contentScore: number; // 0-100
+  };
+  /** Basic performance rollup (heuristic) */
+  performance?: {
+    overallScore: number; // 0-100 performance health
   };
   robotsAllowed?: boolean;
   fromCache?: boolean;
@@ -164,6 +177,8 @@ export class NeuralCrawler {
         technicalData,
         authorshipSignals,
         semanticClassification,
+        seoMetrics: deriveSeoMetrics(technicalData, content, headingsWordCount(content)),
+        performance: derivePerformanceMetrics(technicalData),
         robotsAllowed: true,
         fromCache: false,
       };
@@ -246,7 +261,7 @@ export class NeuralCrawler {
       const scripts = document.querySelectorAll(
         'script[type="application/ld+json"]'
       );
-      const schemaData: any[] = [];
+      const schemaData: unknown[] = [];
 
       scripts.forEach((script) => {
         try {
@@ -433,7 +448,6 @@ export class NeuralCrawler {
   private extractKeyEntities(content: string): string[] {
     // Simplified entity extraction (would use NER in production)
     const words = content.split(/\s+/);
-    const entities: string[] = [];
 
     // Look for capitalized words that might be entities
     const capitalizedWords = words.filter(
@@ -472,7 +486,40 @@ export class NeuralCrawler {
       this.browser = null;
     }
   }
+
 }
+
+// ---------------- Derived Heuristic Metric Helpers (Phase 0) ----------------
+function headingsWordCount(content: string): number {
+  return content.split(/\s+/).length;
+}
+
+function clampScore(v: number) { return Math.max(0, Math.min(100, Math.round(v))); }
+
+function deriveSeoMetrics(tech: CrawlResult['technicalData'], content: string, wc: number) {
+  // Simple heuristic blend: word count depth, title/meta lengths, heading richness
+  const depthScore = wc >= 1200 ? 100 : wc >= 800 ? 85 : wc >= 400 ? 65 : 40;
+  const titleScore = tech.titleLength > 15 && tech.titleLength < 65 ? 90 : 60;
+  const metaScore = tech.metaDescriptionLength > 70 && tech.metaDescriptionLength < 165 ? 90 : 55;
+  const headingVariety = Object.keys(tech.headings).length;
+  const headingScore = headingVariety >= 4 ? 90 : headingVariety >= 2 ? 70 : 45;
+  const technicalScore = clampScore((titleScore * 0.4 + metaScore * 0.4 + (tech.canonicalMismatch ? 40 : 85)) / 1.6);
+  const contentScore = clampScore((depthScore * 0.6 + headingScore * 0.4));
+  const overallScore = clampScore(technicalScore * 0.5 + contentScore * 0.5);
+  return { overallScore, technicalScore, contentScore };
+}
+
+function derivePerformanceMetrics(tech: CrawlResult['technicalData']) {
+  // Penalize high load time & large page size heuristically
+  const load = tech.loadTime; // ms
+  const sizeKb = tech.pageSize / 1024;
+  let score = 100;
+  if (load > 4000) score -= 35; else if (load > 2500) score -= 20; else if (load > 1500) score -= 10;
+  if (sizeKb > 3000) score -= 25; else if (sizeKb > 1500) score -= 15; else if (sizeKb > 800) score -= 5;
+  if (tech.canonicalMismatch) score -= 5;
+  return { overallScore: clampScore(score) };
+}
+
 
 // ---------------- Robots.txt Minimal Parser -----------------
 interface RobotsRules { disallow: string[]; allow: string[]; }

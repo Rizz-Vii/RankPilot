@@ -60,6 +60,7 @@ import { isDemoContentEnabled } from "@/lib/flags/demo";
 import { useCallback, useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
+import { safeErrorMessage } from "@/lib/utils";
 import { subscribeToTeamMembers, inviteTeamMember, updateTeamMemberRole as apiUpdateRole, removeTeamMember as apiRemoveMember, resendTeamInvite, transferTeamOwnership, TeamMember, canModifyMember, canRemoveMember } from "@/lib/services/team.service";
 // Old one-off Firestore fetch utilities removed now that realtime subscription is stable
 // TeamMember now imported from service layer
@@ -140,9 +141,9 @@ export default function TeamManagementPage() {
       toast.success("Invitation sent");
       setInviteForm({ email: "", role: "member", message: "" });
       setIsInviteDialogOpen(false);
-    } catch (e:any) {
+    } catch (e:unknown) {
       console.error(e);
-      toast.error(e.message || "Invite failed");
+      toast.error(safeErrorMessage(e));
     } finally { setIsInviting(false); }
   };
 
@@ -158,10 +159,10 @@ export default function TeamManagementPage() {
     try {
       await apiUpdateRole(memberId, newRole);
       toast.success("Role updated");
-    } catch (e:any) {
+    } catch (e:unknown) {
       // rollback
       setTeamMembers(teamMembers.map(m => m.id === memberId ? original : m));
-      toast.error(e.message || "Role update failed");
+      toast.error(safeErrorMessage(e));
     }
   };
 
@@ -177,15 +178,15 @@ export default function TeamManagementPage() {
     try {
       await apiRemoveMember(memberId);
       toast.success("Member removed");
-    } catch (e:any) {
+    } catch (e:unknown) {
       setTeamMembers(prev); // rollback
-      toast.error(e.message || "Remove failed");
+      toast.error(safeErrorMessage(e));
     }
   };
 
   const resendInvite = async (memberId: string) => {
     try { await resendTeamInvite(memberId); toast.success("Invitation resent"); }
-    catch (e:any) { toast.error(e.message || "Resend failed"); }
+    catch (e:unknown) { toast.error(safeErrorMessage(e)); }
   };
 
   const getStatusIcon = (status: TeamMember["status"]) => {
@@ -565,8 +566,8 @@ export default function TeamManagementPage() {
                               try {
                                 await transferTeamOwnership(member.id);
                                 toast.success("Ownership transferred");
-                              } catch (e:any) {
-                                toast.error(e.message || 'Transfer failed');
+                              } catch (e:unknown) {
+                                toast.error(safeErrorMessage(e));
                               } finally {
                                 setTransferLoadingId(null);
                               }

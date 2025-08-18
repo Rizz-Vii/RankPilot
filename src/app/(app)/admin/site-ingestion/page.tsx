@@ -8,19 +8,28 @@ export default function SiteIngestionAdminPage() {
   const [baseUrl, setBaseUrl] = useState('');
   const [maxPages, setMaxPages] = useState(8);
   const [status, setStatus] = useState('Idle');
-  const [result, setResult] = useState<any>(null);
-  const isAdmin = profile?.subscriptionTier === 'admin';
+  interface SiteIngestionResult {
+    baseUrl: string;
+    pagesCrawled: number;
+    errors?: Array<{ url?: string; message: string }>; // minimal shape
+    durationMs?: number;
+    startedAt?: string;
+    finishedAt?: string;
+    [key: string]: any; // allow extra diagnostic fields without casting elsewhere
+  }
+  const [result, setResult] = useState<SiteIngestionResult | null>(null);
+  const isAdmin = (profile as any)?.subscriptionTier === 'admin';
 
   async function runIngestion() {
     if (!isAdmin || !baseUrl) return;
     setStatus('Running');
     try {
-      const idToken = await (auth.currentUser as any)?.getIdToken?.();
+  const idToken = await (auth.currentUser as any)?.getIdToken?.();
       const res = await fetch('/api/admin/site/ingest', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` }, body: JSON.stringify({ baseUrl, maxPages }) });
       const json = await res.json();
       setResult(json);
       setStatus(res.ok ? 'Completed' : 'Failed');
-    } catch (e: any) {
+    } catch (e: unknown) {
       setStatus('Error');
     }
   }

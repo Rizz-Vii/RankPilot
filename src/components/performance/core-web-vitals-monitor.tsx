@@ -57,40 +57,21 @@ export function CoreWebVitalsMonitor() {
             try {
                 const { onCLS, onINP, onFCP, onLCP, onTTFB } = await import('web-vitals');
 
-                const vitalsData: Partial<WebVitalsData> = {};
+                type BasicMetric = { value: number };
+                const base: WebVitalsData = { lcp: 0, fid: 0, cls: 0, ttfb: 0, fcp: 0 };
+                const update = (patch: Partial<WebVitalsData>) => {
+                    setVitals(prev => ({ ...(prev || base), ...patch }));
+                };
 
-                onCLS((metric: any) => {
-                    vitalsData.cls = metric.value;
-                    updateVitals(vitalsData);
-                });
-
-                onINP((metric: any) => {
-                    vitalsData.fid = metric.value; // Using INP as FID replacement
-                    updateVitals(vitalsData);
-                });
-
-                onFCP((metric: any) => {
-                    vitalsData.fcp = metric.value;
-                    updateVitals(vitalsData);
-                });
-
-                onLCP((metric: any) => {
-                    vitalsData.lcp = metric.value;
-                    updateVitals(vitalsData);
-                });
-
-                onTTFB((metric: any) => {
-                    vitalsData.ttfb = metric.value;
-                    updateVitals(vitalsData);
-                });
+                onCLS((metric: BasicMetric) => { update({ cls: metric.value }); });
+                onINP((metric: BasicMetric) => { update({ fid: metric.value }); }); // INP used as FID proxy
+                onFCP((metric: BasicMetric) => { update({ fcp: metric.value }); });
+                onLCP((metric: BasicMetric) => { update({ lcp: metric.value }); });
+                onTTFB((metric: BasicMetric) => { update({ ttfb: metric.value }); });
 
             } catch (error) {
                 console.warn('Web Vitals not available:', error);
             }
-        };
-
-        const updateVitals = (data: Partial<WebVitalsData>) => {
-            setVitals(prev => ({ ...prev, ...data } as WebVitalsData));
         };
 
         initWebVitals();
@@ -237,7 +218,8 @@ export function CoreWebVitalsWidget() {
         const calculateScore = async () => {
             try {
                 const { onCLS, onINP, onLCP } = await import('web-vitals');
-                let metrics = { cls: 0, fid: 0, lcp: 0 };
+                type BasicMetric = { value: number };
+                let metrics: { cls: number; fid: number; lcp: number } = { cls: 0, fid: 0, lcp: 0 };
                 let count = 0;
 
                 const updateScore = () => {
@@ -253,9 +235,9 @@ export function CoreWebVitalsWidget() {
                     }
                 };
 
-                onCLS((metric: any) => { metrics.cls = metric.value; updateScore(); });
-                onINP((metric: any) => { metrics.fid = metric.value; updateScore(); }); // Using INP as FID replacement
-                onLCP((metric: any) => { metrics.lcp = metric.value; updateScore(); });
+                onCLS((metric: BasicMetric) => { metrics.cls = metric.value; updateScore(); });
+                onINP((metric: BasicMetric) => { metrics.fid = metric.value; updateScore(); }); // INP as FID
+                onLCP((metric: BasicMetric) => { metrics.lcp = metric.value; updateScore(); });
 
             } catch (error) {
                 console.warn('Web Vitals widget not available:', error);

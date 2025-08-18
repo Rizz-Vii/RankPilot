@@ -20,7 +20,8 @@ interface AdminDashboardProps {
 
 export function AdminAnalyticsDashboard({ className }: AdminDashboardProps) {
   const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
-  const [platformMetrics, setPlatformMetrics] = useState<any>(null);
+  interface PlatformMetrics { growth?: { new_subscriptions?: number }; [key:string]: any }
+  const [platformMetrics, setPlatformMetrics] = useState<PlatformMetrics | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

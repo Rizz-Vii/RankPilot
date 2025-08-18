@@ -32,6 +32,11 @@ import Link from "next/link";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import styles from "./insights.module.css";
 
+// Activity & preview interfaces (narrow, avoids unknown property accesses)
+interface ActivityDetails { keywords?: string[] | string; url?: string; urls?: string[]; [k: string]: any }
+interface UserActivity { type: string; tool: string; details: ActivityDetails; resultsSummary?: string }
+interface PreviewActivity { tool: string; type: string; [k: string]: unknown }
+
 export default function InsightsPage() {
   const { user, activities, loading: authLoading, profile } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
@@ -43,7 +48,7 @@ export default function InsightsPage() {
   const [streaming, setStreaming] = useState(false);
   const [streamSupported, setStreamSupported] = useState(true);
   // Streaming enhancement state
-  const [activityPreview, setActivityPreview] = useState<any[]>([]);
+  const [activityPreview, setActivityPreview] = useState<PreviewActivity[]>([]);
   const [totalActivities, setTotalActivities] = useState(0);
   const [streamedActivities, setStreamedActivities] = useState(0);
   const [streamedInsights, setStreamedInsights] = useState(0);
@@ -57,37 +62,37 @@ export default function InsightsPage() {
   const cacheKey = `insights-cache-${user?.uid}`;
   const cacheTTLms = 10 * 60 * 1000; // 10 min
 
-  const simplifiedActivities = useMemo(() => activities.map((a) => ({
-    type: a.type,
-    tool: a.tool,
-    details: a.details,
-    resultsSummary: a.resultsSummary,
+  const simplifiedActivities = useMemo<UserActivity[]>(() => activities.map((a: any) => ({
+    type: String(a?.type || ''),
+    tool: String(a?.tool || ''),
+    details: ((): ActivityDetails => { const d = a?.details; return d && typeof d === 'object' ? d as ActivityDetails : {}; })(),
+    resultsSummary: a?.resultsSummary ? String(a.resultsSummary) : undefined,
   })), [activities]);
 
-  const buildKeywords = () => {
+  const derivedKeywords = useMemo(() => {
     const kwSet = new Set<string>();
     simplifiedActivities.forEach(a => {
       if (a.details?.keywords) {
-        (Array.isArray(a.details.keywords) ? a.details.keywords : [a.details.keywords]).forEach((k: string) => kwSet.add(k.toLowerCase()));
+        (Array.isArray(a.details.keywords) ? a.details.keywords : [a.details.keywords]).forEach((k: string) => kwSet.add(String(k).toLowerCase()));
       }
       if (a.resultsSummary) {
         const matches = String(a.resultsSummary).match(/#[a-z0-9-]+/gi) || [];
         matches.forEach(m => kwSet.add(m.replace('#','')));
       }
     });
-    const arr = Array.from(kwSet).slice(0, 15);
-    return arr.length ? arr : ['seo','content','optimization'];
-  };
+    const list = Array.from(kwSet).slice(0, 15);
+    return list.length ? list : ['seo','content','optimization'];
+  }, [simplifiedActivities]);
 
-  const buildUrls = () => {
+  const derivedUrls = useMemo(() => {
     const urlSet = new Set<string>();
     simplifiedActivities.forEach(a => {
       if (a.details?.url) urlSet.add(a.details.url);
-      if (Array.isArray(a.details?.urls)) a.details.urls.forEach((u: string) => urlSet.add(u));
+      if (Array.isArray(a.details?.urls)) (a.details.urls as string[]).forEach(u => urlSet.add(u));
     });
-    const arr = Array.from(urlSet).slice(0, 5);
-    return arr.length ? arr : ['https://example.com'];
-  };
+    const list = Array.from(urlSet).slice(0, 5);
+    return list.length ? list : ['https://example.com'];
+  }, [simplifiedActivities]);
 
   const loadFromCache = () => {
     try {
@@ -120,15 +125,24 @@ export default function InsightsPage() {
       try {
         const aiResult = await generateInsightsFlow({ activities: simplifiedActivities });
         // Normalize to expected GenerateInsightsOutput shape (if flow returns partial)
-        const normalized = {
-          insights: (aiResult as any).insights?.map((i: any) => ({
-            ...i,
-            // Normalize priority casing if needed
-            priority: typeof i.priority === 'string' ? i.priority.toLowerCase() : i.priority,
-          })) || [],
-          summary: (aiResult as any).summary || `Generated ${(aiResult as any).insights?.length || 0} insights`,
-          score: (aiResult as any).score ?? 0,
-        } as GenerateInsightsOutput;
+        const raw: any = aiResult as any;
+        const normalizedInsights: GenerateInsightsOutput['insights'] = Array.isArray(raw?.insights) ? raw.insights.map((i: any) => ({
+          id: String(i.id || Math.random().toString(36).slice(2)),
+          title: String(i.title || 'Untitled Insight'),
+          description: String(i.description || ''),
+          category: String(i.category || 'general'),
+          priority: String(i.priority || 'low'),
+          estimatedImpact: typeof i.estimatedImpact === 'number' ? i.estimatedImpact : 0,
+          actionItems: Array.isArray(i.actionItems) ? i.actionItems.map((x: any) => String(x)) : [],
+          metrics: typeof i.metrics === 'object' && i.metrics ? i.metrics : undefined,
+          actionLink: typeof i.actionLink === 'string' ? i.actionLink : undefined,
+          actionText: typeof i.actionText === 'string' ? i.actionText : undefined,
+        })) : [];
+        const normalized: GenerateInsightsOutput = {
+          insights: normalizedInsights,
+          summary: typeof raw?.summary === 'string' ? raw.summary : `Generated ${normalizedInsights.length} insights`,
+          score: typeof raw?.score === 'number' ? raw.score : 0,
+        };
         result = normalized;
       } catch (e) {
         console.warn('AI flow failed', e);
@@ -142,7 +156,7 @@ export default function InsightsPage() {
       setInsights(result.insights.slice(0, maxInsights));
       setLastGenerated(new Date());
     } catch (e: any) {
-      setError(e.message || 'Failed to generate insights');
+      setError(typeof e?.message === 'string' ? e.message : 'Failed to generate insights');
     } finally {
       setIsLoading(false);
     }
@@ -184,7 +198,7 @@ export default function InsightsPage() {
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let buf = '';
-      const newInsights: any[] = [];
+  const newInsights: Insight[] = [];
       const push = () => setInsights([...newInsights].slice(0, maxInsights));
       while (true) {
         const { done, value } = await reader.read();
@@ -197,23 +211,23 @@ export default function InsightsPage() {
             const dataStr = raw.replace(/^data:\s*/, '');
             if (dataStr === '[DONE]') { break; }
             try {
-              const evt = JSON.parse(dataStr);
-              if (evt.type === 'init') {
-                setTotalActivities(evt.activityCount || 0);
-              } else if (evt.type === 'activity_batch' && Array.isArray(evt.batch)) {
+              const evt: any = JSON.parse(dataStr);
+              if (evt?.type === 'init') {
+                setTotalActivities(typeof evt.activityCount === 'number' ? evt.activityCount : 0);
+              } else if (evt?.type === 'activity_batch' && Array.isArray(evt.batch)) {
                 setStreamedActivities(prev => prev + evt.batch.length);
-                setActivityPreview(prev => [...prev, ...evt.batch].slice(0, 8));
-              } else if (evt.type === 'insight' && evt.insight) {
-                newInsights.push(evt.insight); push();
+                setActivityPreview(prev => [...prev, ...(evt.batch as PreviewActivity[])].slice(0, 8));
+              } else if (evt?.type === 'insight' && evt.insight) {
+                newInsights.push(evt.insight as Insight); push();
                 setStreamedInsights(prev => prev + 1);
-              } else if (evt.type === 'final') {
+              } else if (evt?.type === 'final') {
                 if (typeof evt.total === 'number') setExpectedInsights(evt.total);
-              } else if (evt.type === 'error') { setError(evt.message || 'Stream error'); }
+              } else if (evt?.type === 'error') { setError(typeof evt.message === 'string' ? evt.message : 'Stream error'); }
             } catch { /* ignore parse */ }
         }
       }
-    } catch (e: any) {
-      if (e?.name !== 'AbortError') { setError(e.message || 'Streaming failed'); setStreamSupported(false); }
+    } catch (e) {
+      const err: any = e; if (err?.name !== 'AbortError') { setError(err?.message || 'Streaming failed'); setStreamSupported(false); }
     } finally { setStreaming(false); }
   };
   const stopStream = () => { if (abortRef.current) abortRef.current.abort(); setStreaming(false); };

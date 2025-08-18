@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
         if (domain === 'crawler') recordCrawlerLegacyFallback(); else recordSemanticMapLegacyFallback();
     }
     const unified = getUnifiedMetricsSnapshot();
-    const counters = domain === 'crawler' ? (unified.crawler || { aggregateHits: 0, legacyFallbacks: 0 }) : (unified.semanticMap || { aggregateHits: 0, legacyFallbacks: 0 });
+    const counters: any = domain === 'crawler' ? ((unified as any).crawler || { aggregateHits: 0, legacyFallbacks: 0 }) : ((unified as any).semanticMap || { aggregateHits: 0, legacyFallbacks: 0 });
     const aHits = (counters as any).aggregateHits || 0;
     const lFallbacks = (counters as any).legacyFallbacks || 0;
     const denom = aHits + lFallbacks;

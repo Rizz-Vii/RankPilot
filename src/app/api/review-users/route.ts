@@ -3,8 +3,8 @@ import { db } from "@/lib/firebase/index";
 import { collection, getDocs } from "firebase/firestore";
 
 // Expected quotas for each tier
-function getExpectedQuotasForTier(tier: string) {
-  const quotaMap: Record<string, any> = {
+function getExpectedQuotasForTier(tier: string): Record<string, number> {
+  const quotaMap: Record<string, Record<string, number>> = {
     free: { monthlyAnalyses: 3, keywordTracking: 10, competitorTracking: 3 },
     starter: {
       monthlyAnalyses: 20,
@@ -124,12 +124,11 @@ export async function GET() {
 
       // Check if quotas match tier expectations
       const expectedQuotas = getExpectedQuotasForTier(subscriptionTier);
-      const actualQuotas = userData.quotas || {};
+      const actualQuotas: Record<string, number> = (userData.quotas as any) || {};
 
       Object.keys(expectedQuotas).forEach((quotaKey) => {
-        const actualValue = actualQuotas[quotaKey as keyof typeof actualQuotas];
-        const expectedValue =
-          expectedQuotas[quotaKey as keyof typeof expectedQuotas];
+        const actualValue = actualQuotas[quotaKey];
+        const expectedValue = expectedQuotas[quotaKey];
         if (actualValue !== expectedValue) {
           tierInconsistencies.push(
             `Quota mismatch: ${quotaKey} expected ${expectedValue}, got ${actualValue}`

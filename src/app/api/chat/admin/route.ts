@@ -26,11 +26,12 @@ interface ChatResponse {
     };
 }
 
-export const POST = withProvenance(async function POST(request: NextRequest) {
+export const POST = withProvenance(async function POST(request: Request) {
+    const nreq = request as NextRequest;
     const start = Date.now();
     try {
         // Parse request body
-        const body: AdminChatRequest = await request.json();
+        const body: AdminChatRequest = await nreq.json();
         const { message, sessionId } = body;
 
         // Validate input
@@ -42,7 +43,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         }
 
         // Get user from authentication header
-        const authHeader = request.headers.get('authorization');
+        const authHeader = nreq.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
                 { error: 'Authentication required: missing Bearer token' },
@@ -64,10 +65,11 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         // Optional team-aware rate limiting (when user has teamId)
         try {
             const userDoc = await adminDb.collection('users').doc(uid).get();
-            const teamId = userDoc.exists ? (userDoc.data() as any)?.teamId : undefined;
+            const udata = userDoc.exists ? userDoc.data() as any : undefined;
+            const teamId = typeof udata?.teamId === 'string' ? udata.teamId : undefined;
             if (teamId) {
-                try { await enforceTeamRateLimit(adminDb as any, teamId, { routeKey: 'chat/admin' }); }
-                catch (e: any) {
+                try { await enforceTeamRateLimit(adminDb, teamId, { routeKey: 'chat/admin' }); }
+                catch (e: unknown) {
                     if (e instanceof TeamRateLimitError) {
                         recordRateLimitRejection('chat/admin');
                         recordRateLimitRejection(`team:${teamId}`);
@@ -106,12 +108,13 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         }
 
         const rawText = await res.text();
-        let payload: any = null;
+        let payload: unknown = null;
         try {
             payload = rawText ? JSON.parse(rawText) : null;
         } catch { }
         if (!res.ok) {
-            const errMsg = payload?.error?.message || payload?.error || payload?.result?.error?.message || (rawText?.slice(0, 200) || 'Admin chat service unavailable');
+            const p: any = (payload as any) || {};
+            const errMsg = p?.error?.message || p?.error || p?.result?.error?.message || ((rawText || '').slice(0, 200) || 'Admin chat service unavailable');
             const code = res.status === 401 ? 401 : res.status === 403 ? 403 : res.status === 400 ? 400 : 503;
             const hint = code === 401
                 ? ' (auth failed: ensure you are signed in; token may be expired)'
@@ -123,7 +126,8 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
             return NextResponse.json(enforceProvenance({ error: `${errMsg}${hint}`, upstreamStatus: res.status, provenance: 'synthetic' }, { path: 'chat/admin' }), { status: code });
         }
 
-        const data: ChatResponse = payload?.result || payload?.data || payload;
+        const container: any = (payload as any) || {};
+        const data: ChatResponse = (container?.result || container?.data || payload) as any;
         if (!data) {
             recordError('chat/admin', '5xx_server');
             recordRouteLatency('chat/admin', Date.now() - start);
@@ -138,7 +142,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         console.error('Admin chat API error:', error);
 
         // Handle Firebase Function errors
-        if (error && typeof error === 'object' && 'code' in error) {
+        if (error && typeof error === 'object' && 'code' in (error as any)) {
             const firebaseError = error as any;
 
             switch (firebaseError.code) {
@@ -168,15 +172,16 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
 }, { path: 'chat/admin' });
 
 // GET endpoint for admin chat history
-export const GET = withProvenance(async function GET(request: NextRequest) {
+export const GET = withProvenance(async function GET(request: Request) {
+    const nreq = request as NextRequest;
     const start = Date.now();
     try {
-        const { searchParams } = new URL(request.url);
+        const { searchParams } = new URL(nreq.url);
         const sessionId = searchParams.get('sessionId');
         const limit = parseInt(searchParams.get('limit') || '20');
 
         // Get user from authentication
-        const authHeader = request.headers.get('authorization');
+        const authHeader = nreq.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             recordError('chat/admin', '4xx_user');
             recordRouteLatency('chat/admin', Date.now() - start);
@@ -217,11 +222,15 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
             .limit(limit)
             .get();
 
-        const messages: any[] = [];
+        interface RawMsg { question?: string; response?: string; timestamp?: { toDate?: () => Date } | Date; tokensUsed?: number; }
+        const messages: Array<{ id: string; message: string; response: string; timestamp: string; isUser: boolean; tokensUsed?: number; }> = [];
         messagesSnap.docs.forEach((doc) => {
-            const d = doc.data() as any;
-            const ts = d.timestamp?.toDate?.()?.toISOString?.() || new Date().toISOString();
-            if (d.question) {
+            const d = doc.data() as Partial<RawMsg> | undefined;
+            const tsRaw = d?.timestamp;
+            const ts = tsRaw && typeof tsRaw === 'object' && 'toDate' in tsRaw && typeof (tsRaw as any).toDate === 'function'
+                ? (tsRaw as any).toDate().toISOString()
+                : new Date().toISOString();
+            if (typeof d?.question === 'string') {
                 messages.push({
                     id: `${doc.id}_user`,
                     message: d.question,
@@ -233,10 +242,10 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
             messages.push({
                 id: `${doc.id}_ai`,
                 message: '',
-                response: d.response || '',
+                response: typeof d?.response === 'string' ? d.response : '',
                 timestamp: ts,
                 isUser: false,
-                tokensUsed: d.tokensUsed || 0,
+                tokensUsed: typeof d?.tokensUsed === 'number' ? d.tokensUsed : 0,
             });
         });
 

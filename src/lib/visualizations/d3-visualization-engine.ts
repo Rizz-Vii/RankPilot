@@ -14,15 +14,17 @@
 import * as d3 from 'd3';
 import jsPDF from 'jspdf';
 
+// Core data point used by visualizations. We deliberately keep x/y/value flexible
+// but concrete (no `unknown`) so downstream D3 helpers have usable types.
 export interface ChartDataPoint {
-    x: any;
-    y: any;
+    x: number | string | Date;
+    y: number | string | Date;
     value?: number;
     size?: number;
     series?: string;
-    category?: string;
+    category?: string | number;
     label?: string;
-    [key: string]: any;
+    [key: string]: any; // extension data (internal)
 }
 
 export interface ChartConfig {
@@ -96,8 +98,14 @@ export interface ChartExportConfig {
     }>;
 }
 
+type InternalChartRecord = {
+    svg: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
+    config: ChartConfig;
+    type: ChartConfig['type'];
+};
+
 export class D3VisualizationEngine {
-    private charts: Map<string, any> = new Map();
+    private charts: Map<string, InternalChartRecord> = new Map();
     private colorSchemes: Map<string, string[]> = new Map();
 
     constructor() {
@@ -141,18 +149,18 @@ export class D3VisualizationEngine {
 
         // Setup scales
         const xScale = d3.scaleTime()
-            .domain(d3.extent(config.data, d => new Date(d.x)) as [Date, Date])
+            .domain(this.computeDateExtent(config.data))
             .range([0, width]);
 
         const yScale = d3.scaleLinear()
-            .domain(d3.extent(config.data, d => d.y) as [number, number])
+            .domain(this.computeNumberExtent(config.data, 'y'))
             .nice()
             .range([height, 0]);
 
         // Create line generator
-        const line = d3.line<any>()
-            .x(d => xScale(new Date(d.x)))
-            .y(d => yScale(d.y))
+        const line = d3.line<ChartDataPoint>()
+            .x(d => xScale(this.toDate(d.x)))
+            .y(d => yScale(this.toNumber(d.y)))
             .curve(d3.curveMonotoneX);
 
         // Add axes
@@ -192,8 +200,8 @@ export class D3VisualizationEngine {
                     .data(seriesData)
                     .enter().append('circle')
                     .attr('class', 'dot-' + seriesName)
-                    .attr('cx', d => xScale(new Date(d.x)))
-                    .attr('cy', d => yScale(d.y))
+                    .attr('cx', d => xScale(this.toDate(d.x)))
+                    .attr('cy', d => yScale(this.toNumber(d.y)))
                     .attr('r', 4)
                     .attr('fill', colors[Array.from(series.keys()).indexOf(seriesName) % colors.length])
                     .on('mouseover', (event, d) => this.showTooltip(event, d, config))
@@ -222,13 +230,13 @@ export class D3VisualizationEngine {
         const colors = this.getColorScheme(config.styling.colorScheme || 'default');
 
         // Setup scales
-        const xScale = d3.scaleBand()
-            .domain(config.data.map(d => d.x))
+        const xScale = d3.scaleBand<string>()
+            .domain(config.data.map(d => String(d.x)))
             .range([0, width])
             .padding(0.1);
 
         const yScale = d3.scaleLinear()
-            .domain([0, d3.max(config.data, d => d.y) as number])
+            .domain([0, d3.max(config.data, d => this.toNumber(d.y)) || 0])
             .nice()
             .range([height, 0]);
 
@@ -245,21 +253,21 @@ export class D3VisualizationEngine {
             .data(config.data)
             .enter().append('rect')
             .attr('class', 'bar')
-            .attr('x', d => xScale(d.x)!)
+            .attr('x', d => xScale(String(d.x))!)
             .attr('width', xScale.bandwidth())
             .attr('y', height)
             .attr('height', 0)
-            .attr('fill', (d, i) => colors[i % colors.length]);
+            .attr('fill', (_d, i) => colors[i % colors.length]);
 
         if (config.options.animations) {
             bars.transition()
                 .duration(1000)
-                .attr('y', d => yScale(d.y))
-                .attr('height', d => height - yScale(d.y));
+                .attr('y', d => yScale(this.toNumber(d.y)))
+                .attr('height', d => height - yScale(this.toNumber(d.y)));
         } else {
             bars
-                .attr('y', d => yScale(d.y))
-                .attr('height', d => height - yScale(d.y));
+                .attr('y', d => yScale(this.toNumber(d.y)))
+                .attr('height', d => height - yScale(this.toNumber(d.y)));
         }
 
         if (config.options.interactive) {
@@ -291,16 +299,16 @@ export class D3VisualizationEngine {
             .attr('transform', `translate(${width / 2}, ${height / 2})`);
 
         // Create pie generator
-        const pie = d3.pie<any>()
-            .value(d => d.value)
+        const pie = d3.pie<ChartDataPoint>()
+            .value(d => (typeof d.value === 'number' ? d.value : this.toNumber(d.y)))
             .sort(null);
 
         // Create arc generator
-        const arc = d3.arc<any>()
+        const arc = d3.arc<d3.PieArcDatum<ChartDataPoint>>()
             .innerRadius(0)
             .outerRadius(radius);
 
-        const outerArc = d3.arc<any>()
+        const outerArc = d3.arc<d3.PieArcDatum<ChartDataPoint>>()
             .innerRadius(radius * 0.9)
             .outerRadius(radius * 0.9);
 
@@ -311,8 +319,9 @@ export class D3VisualizationEngine {
             .attr('class', 'slice');
 
         const paths = slices.append('path')
-            .attr('d', arc as any)
-            .attr('fill', (d, i) => colors[i % colors.length])
+            // cast limited to d3 path generator incompatibility in TS generics
+            .attr('d', arc as unknown as string)
+            .attr('fill', (_d, i) => colors[i % colors.length])
             .attr('stroke', '#fff')
             .attr('stroke-width', 2);
 
@@ -323,8 +332,9 @@ export class D3VisualizationEngine {
                 .attrTween('d', function (d) {
                     const i = d3.interpolate(d.startAngle, d.endAngle);
                     return (t: number) => {
-                        d.endAngle = i(t);
-                        return arc(d as any) as string;
+                        const mutable = d as d3.PieArcDatum<ChartDataPoint> & { endAngle?: number };
+                        mutable.endAngle = i(t);
+                        return arc(mutable) as string;
                     };
                 });
         }
@@ -338,11 +348,11 @@ export class D3VisualizationEngine {
         // Add labels
         if (config.options.legend) {
             const labels = slices.append('text')
-                .attr('transform', d => `translate(${outerArc.centroid(d as any)})`)
+                .attr('transform', d => `translate(${outerArc.centroid(d as d3.PieArcDatum<ChartDataPoint>).join(',')})`)
                 .attr('dy', '0.35em')
                 .style('text-anchor', 'middle')
                 .style('font-size', '12px')
-                .text(d => d.data.label);
+                .text(d => d.data.label || d.data.series || '');
 
             if (config.options.animations) {
                 labels
@@ -373,16 +383,16 @@ export class D3VisualizationEngine {
 
         // Setup scales
         const xScale = d3.scaleLinear()
-            .domain(d3.extent(config.data, d => d.x) as [number, number])
+            .domain(this.computeNumberExtent(config.data, 'x'))
             .nice()
             .range([0, width]);
 
         const yScale = d3.scaleLinear()
-            .domain(d3.extent(config.data, d => d.y) as [number, number])
+            .domain(this.computeNumberExtent(config.data, 'y'))
             .nice()
             .range([height, 0]);
 
-        const sizeScale = d3.scaleSqrt()
+        const sizeScale = d3.scaleSqrt<number>()
             .domain(d3.extent(config.data, d => d.size || 1) as [number, number])
             .range([3, 20]);
 
@@ -399,8 +409,8 @@ export class D3VisualizationEngine {
             .data(config.data)
             .enter().append('circle')
             .attr('class', 'point')
-            .attr('cx', d => xScale(d.x))
-            .attr('cy', d => yScale(d.y))
+            .attr('cx', d => xScale(this.toNumber(d.x)))
+            .attr('cy', d => yScale(this.toNumber(d.y)))
             .attr('r', d => sizeScale(d.size || 1))
             .attr('fill', (d: ChartDataPoint, i: number) => colors[((typeof d.category === 'number' ? d.category : i) % colors.length)])
             .attr('opacity', 0.7);
@@ -410,7 +420,7 @@ export class D3VisualizationEngine {
                 .attr('r', 0)
                 .transition()
                 .duration(1000)
-                .delay((d, i) => i * 50)
+                .delay((_d, i) => i * 50)
                 .attr('r', d => sizeScale(d.size || 1));
         }
 
@@ -437,17 +447,16 @@ export class D3VisualizationEngine {
         const { width, height } = this.getChartDimensions(config);
 
         // Get unique x and y values
-        const xValues = Array.from(new Set(config.data.map(d => d.x))).sort();
-        const yValues = Array.from(new Set(config.data.map(d => d.y))).sort();
+        const xValues = Array.from(new Set(config.data.map(d => String(d.x)))).sort();
+        const yValues = Array.from(new Set(config.data.map(d => String(d.y)))).sort();
 
         // Setup scales
-        const xScale = d3.scaleBand()
-            .domain(xValues)
+        const xScale = d3.scaleBand<string>()
+            .domain(xValues as string[])
             .range([0, width])
             .padding(0.1);
-
-        const yScale = d3.scaleBand()
-            .domain(yValues)
+        const yScale = d3.scaleBand<string>()
+            .domain(yValues as string[])
             .range([0, height])
             .padding(0.1);
 
@@ -459,8 +468,8 @@ export class D3VisualizationEngine {
             .data(config.data)
             .enter().append('rect')
             .attr('class', 'cell')
-            .attr('x', (d: ChartDataPoint) => xScale(d.x)!)
-            .attr('y', (d: ChartDataPoint) => yScale(d.y)!)
+            .attr('x', (d: ChartDataPoint) => xScale(String(d.x))!)
+            .attr('y', (d: ChartDataPoint) => yScale(String(d.y))!)
             .attr('width', xScale.bandwidth())
             .attr('height', yScale.bandwidth())
             .attr('fill', (d: ChartDataPoint) => colorScale(d.value || 0));
@@ -470,7 +479,7 @@ export class D3VisualizationEngine {
                 .attr('opacity', 0)
                 .transition()
                 .duration(1000)
-                .delay((d, i) => i * 10)
+                .delay((_d, i) => i * 10)
                 .attr('opacity', 1);
         }
 
@@ -496,19 +505,17 @@ export class D3VisualizationEngine {
      */
     async exportChart(chartId: string, exportConfig: ChartExportConfig): Promise<string> {
         const chart = this.charts.get(chartId);
-        if (!chart) {
-            throw new Error(`Chart ${chartId} not found`);
-        }
-
-        const svg = chart.svg.node();
-
+        if (!chart) throw new Error(`Chart ${chartId} not found`);
+        const group = chart.svg.node();
+        const root: SVGElement | null = (group?.ownerSVGElement as SVGElement) || (group as any);
+        if (!root) throw new Error('SVG root not found');
         switch (exportConfig.format) {
             case 'svg':
-                return this.exportAsSVG(svg, exportConfig);
+                return this.exportAsSVG(root, exportConfig);
             case 'png':
-                return await this.exportAsPNG(svg, exportConfig);
+                return await this.exportAsPNG(root, exportConfig);
             case 'pdf':
-                return await this.exportAsPDF(svg, exportConfig);
+                return await this.exportAsPDF(root, exportConfig);
             case 'json':
                 return this.exportAsJSON(chart, exportConfig);
             default:
@@ -521,39 +528,23 @@ export class D3VisualizationEngine {
      */
     updateChartData(chartId: string, newData: ChartDataPoint[]): void {
         const chart = this.charts.get(chartId);
-        if (!chart) {
-            throw new Error(`Chart ${chartId} not found`);
-        }
-
+        if (!chart) throw new Error(`Chart ${chartId} not found`);
         chart.config.data = newData;
-
-        // Recreate chart with new data based on type
         const containerId = chart.svg.node()?.parentElement?.id;
         if (!containerId) return;
-
         switch (chart.type) {
-            case 'line':
-                this.createLineChart(containerId, chart.config);
-                break;
-            case 'bar':
-                this.createBarChart(containerId, chart.config);
-                break;
-            case 'pie':
-                this.createPieChart(containerId, chart.config);
-                break;
-            case 'scatter':
-                this.createScatterPlot(containerId, chart.config);
-                break;
-            case 'heatmap':
-                this.createHeatmap(containerId, chart.config);
-                break;
+            case 'line': return this.createLineChart(containerId, chart.config);
+            case 'bar': return this.createBarChart(containerId, chart.config);
+            case 'pie': return this.createPieChart(containerId, chart.config);
+            case 'scatter': return this.createScatterPlot(containerId, chart.config);
+            case 'heatmap': return this.createHeatmap(containerId, chart.config);
         }
     }
 
     /**
      * Helper methods
      */
-    private createSVG(containerId: string, config: ChartConfig): d3.Selection<SVGGElement, unknown, HTMLElement, any> {
+    private createSVG(containerId: string, config: ChartConfig): d3.Selection<SVGGElement, unknown, HTMLElement, unknown> {
         const container = d3.select(`#${containerId}`);
 
         const svg = container.append('svg')
@@ -578,15 +569,16 @@ export class D3VisualizationEngine {
         d3.select(`#${containerId}`).selectAll('*').remove();
     }
 
-    private addXAxis(svg: any, scale: any, height: number, axisConfig?: AxisConfig): void {
-        const axis = d3.axisBottom(scale);
+    private addXAxis(svg: d3.Selection<SVGGElement, unknown, any, unknown>, scale: d3.AxisScale<any>, height: number, axisConfig?: AxisConfig): void {
+        const axis = d3.axisBottom(scale as any);
 
         if (axisConfig?.tickCount) {
             axis.ticks(axisConfig.tickCount);
         }
 
         if (axisConfig?.tickFormat) {
-            axis.tickFormat((d: any) => d3.format(axisConfig.tickFormat!)(d));
+            const fmt = d3.format(axisConfig.tickFormat);
+            axis.tickFormat((d: any) => fmt(typeof d === 'number' ? d : Number(d)) as any);
         }
 
         const xAxis = svg.append('g')
@@ -597,7 +589,7 @@ export class D3VisualizationEngine {
         if (axisConfig?.label) {
             xAxis.append('text')
                 .attr('class', 'axis-label')
-                .attr('x', scale.range()[1] / 2)
+                .attr('x', (scale as any).range()[1] / 2)
                 .attr('y', 40)
                 .style('text-anchor', 'middle')
                 .style('fill', 'black')
@@ -605,15 +597,16 @@ export class D3VisualizationEngine {
         }
     }
 
-    private addYAxis(svg: any, scale: any, axisConfig?: AxisConfig): void {
-        const axis = d3.axisLeft(scale);
+    private addYAxis(svg: d3.Selection<SVGGElement, unknown, any, unknown>, scale: d3.AxisScale<any>, axisConfig?: AxisConfig): void {
+        const axis = d3.axisLeft(scale as any);
 
         if (axisConfig?.tickCount) {
             axis.ticks(axisConfig.tickCount);
         }
 
         if (axisConfig?.tickFormat) {
-            axis.tickFormat((d: any) => d3.format(axisConfig.tickFormat!)(d));
+            const fmt = d3.format(axisConfig.tickFormat);
+            axis.tickFormat((d: any) => fmt(typeof d === 'number' ? d : Number(d)) as any);
         }
 
         const yAxis = svg.append('g')
@@ -625,17 +618,17 @@ export class D3VisualizationEngine {
                 .attr('class', 'axis-label')
                 .attr('transform', 'rotate(-90)')
                 .attr('y', -40)
-                .attr('x', -scale.range()[0] / 2)
+                .attr('x', -(scale as any).range()[0] / 2)
                 .style('text-anchor', 'middle')
                 .style('fill', 'black')
                 .text(axisConfig.label);
         }
-    } private addGrid(svg: any, xScale: any, yScale: any, width: number, height: number): void {
+    } private addGrid(svg: d3.Selection<SVGGElement, unknown, any, unknown>, xScale: d3.AxisScale<any>, yScale: d3.AxisScale<any>, width: number, height: number): void {
         // Add X grid lines
         svg.append('g')
             .attr('class', 'grid')
             .attr('transform', `translate(0, ${height})`)
-            .call(d3.axisBottom(xScale)
+            .call(d3.axisBottom(xScale as any)
                 .tickSize(-height)
                 .tickFormat(() => '')
             )
@@ -645,7 +638,7 @@ export class D3VisualizationEngine {
         // Add Y grid lines
         svg.append('g')
             .attr('class', 'grid')
-            .call(d3.axisLeft(yScale)
+            .call(d3.axisLeft(yScale as any)
                 .tickSize(-width)
                 .tickFormat(() => '')
             )
@@ -653,7 +646,7 @@ export class D3VisualizationEngine {
             .style('opacity', 0.3);
     }
 
-    private addTitle(svg: any, config: ChartConfig): void {
+    private addTitle(svg: d3.Selection<SVGGElement, unknown, any, unknown>, config: ChartConfig): void {
         if (config.options.title) {
             svg.append('text')
                 .attr('class', 'chart-title')
@@ -678,7 +671,7 @@ export class D3VisualizationEngine {
         }
     }
 
-    private addLegend(svg: any, series: string[], colors: string[], config: ChartConfig): void {
+    private addLegend(svg: d3.Selection<SVGGElement, unknown, any, unknown>, series: string[], colors: string[], config: ChartConfig): void {
         const legend = svg.append('g')
             .attr('class', 'legend')
             .attr('transform', `translate(${config.width - config.margin.right + 20}, 20)`);
@@ -687,22 +680,21 @@ export class D3VisualizationEngine {
             .data(series)
             .enter().append('g')
             .attr('class', 'legend-item')
-            .attr('transform', (_d: any, i: number) => `translate(0, ${i * 20})`);
+            .attr('transform', (_d: unknown, i: number) => `translate(0, ${i * 20})`);
 
         legendItems.append('rect')
             .attr('width', 12)
             .attr('height', 12)
-            .attr('fill', (_d: any, i: number) => colors[i % colors.length]);
+            .attr('fill', (_d: unknown, i: number) => colors[i % colors.length]);
 
         legendItems.append('text')
             .attr('x', 18)
             .attr('y', 6)
             .attr('dy', '0.35em')
             .style('font-size', '12px')
-            .text((d: string) => d);
+            .text(d => d);
     }
-
-    private showTooltip(event: any, data: any, config: ChartConfig): void {
+    private showTooltip(event: any, data: ChartDataPoint | any, config: ChartConfig): void {
         if (!config.options.tooltip) return;
 
         const tooltip = d3.select('body')
@@ -732,7 +724,7 @@ export class D3VisualizationEngine {
     }
 
     private formatTooltipContent(data: any): string {
-        const entries = Object.entries(data)
+        const entries = Object.entries(data || {})
             .filter(([key]) => !['series', 'category'].includes(key))
             .map(([key, value]) => `<strong>${key}:</strong> ${value}`)
             .join('<br>');
@@ -740,23 +732,21 @@ export class D3VisualizationEngine {
         return entries || JSON.stringify(data);
     }
 
-    private handleBarClick(event: any, data: any, config: ChartConfig): void {
+    private handleBarClick(event: any, data: ChartDataPoint, config: ChartConfig): void {
         // Emit custom event for bar click
         const customEvent = new CustomEvent('barClick', {
             detail: { data, config, element: event.target }
         });
-
-        event.target.dispatchEvent(customEvent);
+        try { event.target.dispatchEvent(customEvent); } catch { /* ignore */ }
     }
 
     private exportAsSVG(svg: SVGElement, config: ChartExportConfig): string {
         const serializer: XMLSerializer | { serializeToString: (n: Node) => string } =
-            (typeof (globalThis as any).XMLSerializer !== 'undefined')
-                ? new (globalThis as any).XMLSerializer()
-                : ((typeof window !== 'undefined' && (window as any).XMLSerializer)
-                    ? new (window as any).XMLSerializer()
-                    : { serializeToString: (n: Node) => (n as any).outerHTML || String(n) });
-        const originalRoot = (svg.parentElement as unknown as SVGElement) || svg;
+            typeof XMLSerializer !== 'undefined'
+                ? new XMLSerializer()
+                : { serializeToString: (n: Node) => (n as any).outerHTML || String(n) };
+        const parent = svg.parentElement;
+        const originalRoot: SVGElement = (parent && parent instanceof SVGElement ? parent : svg) as SVGElement;
 
         // Work on a deep clone to avoid mutating the on-screen chart
         const root = originalRoot.cloneNode(true) as SVGElement;
@@ -797,7 +787,7 @@ export class D3VisualizationEngine {
     // Robust base64 for Node/jsdom and browsers, preserving unicode
     private toBase64(input: string): string {
         try {
-            if (typeof window !== 'undefined' && (window as any).btoa) {
+            if (typeof window !== 'undefined' && typeof (window as any).btoa === 'function') {
                 try { return (window as any).btoa(input); } catch { /* fallthrough */ }
                 return (window as any).btoa(unescape(encodeURIComponent(input)));
             }
@@ -828,7 +818,7 @@ export class D3VisualizationEngine {
             const o = origAll[i] as Element;
             const c = cloneAll[i] as Element;
             let cs: CSSStyleDeclaration | undefined;
-            try { cs = window.getComputedStyle(o); } catch { cs = undefined as any; }
+            try { cs = typeof window !== 'undefined' ? window.getComputedStyle(o) : undefined; } catch { cs = undefined; }
             if (!cs) continue;
             const styleParts: string[] = [];
             for (const prop of PROPS) {
@@ -988,21 +978,20 @@ export class D3VisualizationEngine {
         return URL.createObjectURL(blob);
     }
 
-    private exportAsJSON(chart: any, config: ChartExportConfig): string {
+    private exportAsJSON(chart: InternalChartRecord, config: ChartExportConfig): string {
         const exportData = {
             type: chart.type,
             config: chart.config,
             exportConfig: config,
             timestamp: Date.now()
         };
-
         return `data:application/json;base64,${btoa(JSON.stringify(exportData, null, 2))}`;
     }
 
     /**
      * Get chart instance
      */
-    getChart(chartId: string): any {
+    getChart(chartId: string): InternalChartRecord | undefined {
         return this.charts.get(chartId);
     }
 
@@ -1023,3 +1012,37 @@ export class D3VisualizationEngine {
 
 // Export singleton instance
 export const d3VisualizationEngine = new D3VisualizationEngine();
+
+// ---------------- Internal helpers (added at end to avoid cluttering main logic) ----------------
+
+// Utility conversions & domain helpers
+// We keep them outside the class for simplicity / tree-shaking (unused ones drop).
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function isDateLike(v: any): v is Date | string | number { return v instanceof Date || typeof v === 'string' || typeof v === 'number'; }
+
+// Extend prototype with helper methods via declaration merging (not necessary now) or add to class:
+declare module './d3-visualization-engine' { interface D3VisualizationEngine { toDate(value: number | string | Date): Date; toNumber(value: number | string | Date | undefined): number; computeDateExtent(data: ChartDataPoint[]): [Date, Date]; computeNumberExtent(data: ChartDataPoint[], key: 'x' | 'y'): [number, number]; } }
+
+D3VisualizationEngine.prototype.toDate = function (value: number | string | Date): Date {
+    if (value instanceof Date) return value;
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? new Date() : d;
+};
+
+D3VisualizationEngine.prototype.toNumber = function (value: number | string | Date | undefined): number {
+    if (value == null) return 0;
+    if (typeof value === 'number') return value;
+    if (value instanceof Date) return value.getTime();
+    const n = Number(value);
+    return isNaN(n) ? 0 : n;
+};
+
+D3VisualizationEngine.prototype.computeDateExtent = function (data: ChartDataPoint[]): [Date, Date] {
+    const dates = data.map(d => this.toDate(d.x)).sort((a, b) => a.getTime() - b.getTime());
+    return [dates[0] ?? new Date(), dates[dates.length - 1] ?? new Date()];
+};
+
+D3VisualizationEngine.prototype.computeNumberExtent = function (data: ChartDataPoint[], key: 'x' | 'y'): [number, number] {
+    const nums = data.map(d => this.toNumber(d[key])).sort((a, b) => a - b);
+    return [nums[0] ?? 0, nums[nums.length - 1] ?? 0];
+};

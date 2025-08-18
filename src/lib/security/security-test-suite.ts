@@ -65,6 +65,23 @@ export interface SecurityFinding {
     cvssScore?: number;
 }
 
+interface SecurityTestReportSummary {
+    totalTests: number;
+    passedTests: number;
+    failedTests: number;
+    warningTests: number;
+    successRate: number;
+    totalFindings: number;
+    findingsBySeverity: Record<string, number>;
+    averageExecutionTime: number;
+}
+
+interface SecurityTestReport {
+    summary: SecurityTestReportSummary;
+    results: SecurityTestResult[];
+    recommendations: string[];
+}
+
 export class SecurityTestSuite {
     private config: SecurityTestConfig;
     private results: SecurityTestResult[] = [];
@@ -245,7 +262,7 @@ export class SecurityTestSuite {
     /**
      * Test account lockout mechanism
      */
-    private async testAccountLockout(testResult: SecurityTestResult): Promise<void> {
+    private async testAccountLockout(_testResult: SecurityTestResult): Promise<void> {
         // This would test if accounts get locked after multiple failed attempts
         // Implementation depends on specific application behavior
     }
@@ -279,7 +296,7 @@ export class SecurityTestSuite {
     /**
      * Test password reset security
      */
-    private async testPasswordResetSecurity(testResult: SecurityTestResult): Promise<void> {
+    private async testPasswordResetSecurity(_testResult: SecurityTestResult): Promise<void> {
         // Test password reset token security and expiration
     }
 
@@ -370,21 +387,21 @@ export class SecurityTestSuite {
     /**
      * Test horizontal privilege escalation
      */
-    private async testHorizontalPrivilegeEscalation(testResult: SecurityTestResult): Promise<void> {
+    private async testHorizontalPrivilegeEscalation(_testResult: SecurityTestResult): Promise<void> {
         // Test if user can access other users' data
     }
 
     /**
      * Test direct object references
      */
-    private async testDirectObjectReferences(testResult: SecurityTestResult): Promise<void> {
+    private async testDirectObjectReferences(_testResult: SecurityTestResult): Promise<void> {
         // Test for insecure direct object references (IDOR)
     }
 
     /**
      * Test role-based access control
      */
-    private async testRoleBasedAccessControl(testResult: SecurityTestResult): Promise<void> {
+    private async testRoleBasedAccessControl(_testResult: SecurityTestResult): Promise<void> {
         // Test RBAC implementation
     }
 
@@ -426,21 +443,21 @@ export class SecurityTestSuite {
     /**
      * Test sensitive data exposure
      */
-    private async testSensitiveDataExposure(testResult: SecurityTestResult): Promise<void> {
+    private async testSensitiveDataExposure(_testResult: SecurityTestResult): Promise<void> {
         // Test for sensitive data in responses, logs, etc.
     }
 
     /**
      * Test data encryption
      */
-    private async testDataEncryption(testResult: SecurityTestResult): Promise<void> {
+    private async testDataEncryption(_testResult: SecurityTestResult): Promise<void> {
         // Test encryption implementation
     }
 
     /**
      * Test PII protection
      */
-    private async testPIIProtection(testResult: SecurityTestResult): Promise<void> {
+    private async testPIIProtection(_testResult: SecurityTestResult): Promise<void> {
         // Test Personal Identifiable Information protection
     }
 
@@ -515,14 +532,14 @@ export class SecurityTestSuite {
     /**
      * Test API authentication
      */
-    private async testAPIAuthentication(testResult: SecurityTestResult): Promise<void> {
+    private async testAPIAuthentication(_testResult: SecurityTestResult): Promise<void> {
         // Test API authentication mechanisms
     }
 
     /**
      * Test API input validation
      */
-    private async testAPIInputValidation(testResult: SecurityTestResult): Promise<void> {
+    private async testAPIInputValidation(_testResult: SecurityTestResult): Promise<void> {
         // Test API input validation and sanitization
     }
 
@@ -564,21 +581,21 @@ export class SecurityTestSuite {
     /**
      * Test session timeout
      */
-    private async testSessionTimeout(testResult: SecurityTestResult): Promise<void> {
+    private async testSessionTimeout(_testResult: SecurityTestResult): Promise<void> {
         // Test session timeout implementation
     }
 
     /**
      * Test session fixation
      */
-    private async testSessionFixation(testResult: SecurityTestResult): Promise<void> {
+    private async testSessionFixation(_testResult: SecurityTestResult): Promise<void> {
         // Test for session fixation vulnerabilities
     }
 
     /**
      * Test secure cookie settings
      */
-    private async testSecureCookieSettings(testResult: SecurityTestResult): Promise<void> {
+    private async testSecureCookieSettings(_testResult: SecurityTestResult): Promise<void> {
         // Test cookie security attributes (HttpOnly, Secure, SameSite)
     }
 
@@ -617,14 +634,14 @@ export class SecurityTestSuite {
     /**
      * Test CSRF token implementation
      */
-    private async testCSRFTokenImplementation(testResult: SecurityTestResult): Promise<void> {
+    private async testCSRFTokenImplementation(_testResult: SecurityTestResult): Promise<void> {
         // Test CSRF token presence and validation
     }
 
     /**
      * Test SameSite cookie attribute
      */
-    private async testSameSiteCookieAttribute(testResult: SecurityTestResult): Promise<void> {
+    private async testSameSiteCookieAttribute(_testResult: SecurityTestResult): Promise<void> {
         // Test SameSite cookie attribute implementation
     }
 
@@ -713,7 +730,7 @@ export class SecurityTestSuite {
     /**
      * Test injection vulnerabilities
      */
-    private async testInjectionVulnerabilities(testResult: SecurityTestResult): Promise<void> {
+    private async testInjectionVulnerabilities(_testResult: SecurityTestResult): Promise<void> {
         // Test SQL injection, XSS, command injection, etc.
     }
 
@@ -752,21 +769,21 @@ export class SecurityTestSuite {
     /**
      * Test GDPR compliance
      */
-    private async testGDPRCompliance(testResult: SecurityTestResult): Promise<void> {
+    private async testGDPRCompliance(_testResult: SecurityTestResult): Promise<void> {
         // Test GDPR compliance requirements
     }
 
     /**
      * Test OWASP compliance
      */
-    private async testOWASPCompliance(testResult: SecurityTestResult): Promise<void> {
+    private async testOWASPCompliance(_testResult: SecurityTestResult): Promise<void> {
         // Test OWASP Top 10 compliance
     }
 
     /**
      * Generate security test report
      */
-    generateReport(): any {
+    generateReport(): SecurityTestReport {
         const totalTests = this.results.length;
         const passedTests = this.results.filter(r => r.status === 'passed').length;
         const failedTests = this.results.filter(r => r.status === 'failed').length;

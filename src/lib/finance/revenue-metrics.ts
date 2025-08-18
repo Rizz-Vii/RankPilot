@@ -21,7 +21,7 @@ export interface RevenueSnapshot {
 }
 
 export function computeRevenueMetrics(subs: SubscriptionEvent[], asOf: Date = new Date()): RevenueSnapshot {
-    const monthKey = asOf.getUTCFullYear() + '-' + String(asOf.getUTCMonth() + 1).padStart(2, '0');
+
     // Active = status active and (no cancel date or cancel date after period end)
     const active = subs.filter(s => s.status === 'active' && (!s.canceledAt || s.canceledAt.getTime() > asOf.getTime()));
     const activeCustomers = new Set(active.map(s => s.userId));

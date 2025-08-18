@@ -6,7 +6,7 @@ import type { SuggestKeywordsOutput } from "@/ai/flows/keyword-suggestions";
 import type { AuditUrlOutput } from "@/ai/flows/seo-audit";
 import type { CompetitorAnalysisOutput } from "@/ai/flows/competitor-analysis";
 
-export const demoKeywordData: SuggestKeywordsOutput & { suggestions?: any[] } = {
+export const demoKeywordData: SuggestKeywordsOutput & { suggestions?: unknown[] } = {
   keywords: [
     { keyword: "digital marketing", searchVolume: 12500, difficulty: 75 },
     { keyword: "SEO optimization", searchVolume: 8900, difficulty: 68 },
@@ -39,7 +39,7 @@ export const demoSeoAuditData = {
   ]
 };
 
-export function getDemoData(tool: string): any {
+export function getDemoData(tool: string): unknown {
   switch (tool) {
     case "keyword-tool": return demoKeywordData;
     case "seo-audit": return demoSeoAuditData;

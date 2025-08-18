@@ -12,81 +12,82 @@ interface EnforcementContext {
 }
 
 // Enforce provenance on a final (non-streaming) JSON response object.
-export function enforceProvenance<T extends Record<string, any>>(obj: T, ctx: EnforcementContext = {}): T & { __provenance: ProvenanceTag; provenance?: never } {
+interface ProvenanceObjectBase { [k: string]: unknown; provenance?: unknown; __provenance?: unknown; __prov_path?: string; __prov_note?: string; cached?: boolean; synthetic?: boolean; }
+
+export function enforceProvenance<T extends Record<string, unknown>>(obj: T, ctx: EnforcementContext = {}): T & { __provenance: ProvenanceTag; provenance?: never } {
     if (!obj || typeof obj !== 'object') {
-        return { __provenance: 'unknown' } as any;
+        return { __provenance: 'unknown' } as T & { __provenance: ProvenanceTag };
     }
 
-    const direct = (obj as any).provenance || (obj as any).__provenance;
+    const source = obj as ProvenanceObjectBase;
+    const direct = (source.provenance || source.__provenance) as unknown;
     let tag: ProvenanceTag = 'unknown';
-    if (direct && typeof direct === 'string' && ALLOWED.includes(direct as ProvenanceTag)) {
-        tag = direct as ProvenanceTag;
-    }
-    // Normalize common out-of-policy values to allowed set.
+    if (typeof direct === 'string' && ALLOWED.includes(direct as ProvenanceTag)) tag = direct as ProvenanceTag;
     if (direct === 'error') tag = 'synthetic';
 
-    const cloned: any = { ...obj };
+    const cloned: ProvenanceObjectBase = { ...source };
     delete cloned.provenance; // prevent dual-field confusion
     cloned.__provenance = tag;
     if (ctx.path) cloned.__prov_path = ctx.path;
     if (ctx.note) cloned.__prov_note = ctx.note;
     recordProvenanceObservation(true);
-    return cloned;
+    return cloned as T & { __provenance: ProvenanceTag; provenance?: never };
 }
 
 // Enforce provenance on a streaming chunk; keeps original shape but guarantees provenance tag (provenance or __provenance) present.
-export function enforceProvenanceOnChunk<T extends Record<string, any>>(chunk: T, ctx: EnforcementContext = {}): T {
+export function enforceProvenanceOnChunk<T extends Record<string, unknown>>(chunk: T, ctx: EnforcementContext = {}): T {
     if (!chunk || typeof chunk !== 'object') {
-        return { provenance: 'unknown' } as any;
+        return { provenance: 'unknown' } as unknown as T;
     }
+    const target = chunk as ProvenanceObjectBase;
     let tag: ProvenanceTag = 'unknown';
-    const existing = (chunk as any).provenance || (chunk as any).__provenance;
-    if (existing && ALLOWED.includes(existing)) tag = existing as ProvenanceTag;
+    const existing = target.provenance || target.__provenance;
+    if (typeof existing === 'string' && ALLOWED.includes(existing as ProvenanceTag)) tag = existing as ProvenanceTag;
     if (existing === 'error') tag = 'synthetic';
     if (!existing) {
-        // Heuristics: pass through cached/live detection if flags exist
-        if ((chunk as any).cached === true) tag = 'cache';
-        else if ((chunk as any).synthetic === true) tag = 'synthetic';
+        if (target.cached === true) tag = 'cache';
+        else if (target.synthetic === true) tag = 'synthetic';
     }
-    (chunk as any).provenance = tag; // for streaming we retain 'provenance'
-    if (ctx.path) (chunk as any).prov_path = ctx.path;
-    if (ctx.note) (chunk as any).prov_note = ctx.note;
+    (target as any).provenance = tag;
+    if (ctx.path) (target as any).prov_path = ctx.path;
+    if (ctx.note) (target as any).prov_note = ctx.note;
     recordProvenanceObservation(true);
     return chunk;
 }
 
 // Simple coverage helper – can be expanded later.
-export function hasProvenance(obj: any): boolean {
+export function hasProvenance(obj: unknown): boolean {
     return !!obj && (typeof obj === 'object') && (('__provenance' in obj) || ('provenance' in obj));
 }
 
-export function provenanceTag(obj: any): string | undefined {
+export function provenanceTag(obj: unknown): string | undefined {
     if (!obj || typeof obj !== 'object') return undefined;
-    return (obj as any).__provenance || (obj as any).provenance;
+    return (obj as Record<string, unknown>).__provenance as string | undefined
+        || (obj as Record<string, unknown>).provenance as string | undefined;
 }
 
 // Higher-order handler wrapper for Next.js route handlers returning JSON.
 // Usage: export const GET = withProvenance(async (req) => { return { data: ... , __provenance: 'live' } });
 // If handler forgets to set provenance, it will be injected as 'unknown' and counted.
-export function withProvenance<T extends (...args: any[]) => Promise<any>>(handler: T, ctx: EnforcementContext = {}) {
-    return (async (...args: Parameters<T>) => {
+export function withProvenance<R>(handler: (...args: any[]) => Promise<R>, ctx: EnforcementContext = {}) {
+    return (async (...args: any[]): Promise<R> => {
         try {
             const res = await handler(...args);
             // Pass through native Response/NextResponse instances unchanged
             try {
                 if (typeof Response !== 'undefined' && res instanceof Response) {
-                    return res as any;
+                    return res as unknown as R;
                 }
             } catch { }
             if (res && typeof res === 'object') {
                 if (!hasProvenance(res)) {
-                    return enforceProvenance(res, ctx);
+                    return enforceProvenance(res as Record<string, unknown>, ctx) as unknown as R;
                 }
             }
-            return res;
+            return res as R;
         } catch (e) {
             // Return a synthetic provenance for error paths (without leaking internal error)
-            return enforceProvenance({ error: 'internal', message: (e as any)?.message?.slice(0, 120) }, { ...ctx, note: 'error-path' });
+            return enforceProvenance({ error: 'internal', message: (e as any)?.message?.slice(0, 120) } as Record<string, unknown>, { ...ctx, note: 'error-path' }) as unknown as R;
         }
-    }) as T;
+    });
 }

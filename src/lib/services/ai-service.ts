@@ -94,16 +94,17 @@ export async function analyzeContent(request: ContentAnalysisRequest): Promise<C
  */
 export async function fetchKeywordSuggestions(request: KeywordSuggestionsRequest): Promise<KeywordSuggestionsResponse> {
     const maxAttempts = 2;
-    let lastError: any = null;
+    let lastError: unknown = null;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
             const result = await getKeywordSuggestionsFunction(request);
             return result.data as KeywordSuggestionsResponse;
-        } catch (error: any) {
+        } catch (error: unknown) {
             lastError = error;
-            const code: string | undefined = error?.code;
-            const rawMessage: string | undefined = error?.message;
+            const err = error as { code?: string; message?: string };
+            const code: string | undefined = err.code;
+            const rawMessage: string | undefined = err.message;
             console.warn(`Keyword suggestions attempt ${attempt} failed`, { code, rawMessage });
 
             // Retry only on transient errors
@@ -140,7 +141,10 @@ export async function fetchKeywordSuggestions(request: KeywordSuggestionsRequest
     }
 
     // Should not reach here, but safeguard
-    throw new Error(lastError?.message || "Failed to get keyword suggestions.");
+    {
+        const e = lastError as { message?: string } | undefined;
+        throw new Error(e?.message || "Failed to get keyword suggestions.");
+    }
 }
 
 /**
@@ -150,7 +154,7 @@ export async function fetchKeywordSuggestions(request: KeywordSuggestionsRequest
 export interface SEOAuditResponse {
     url?: string;
     overallScore: number;
-    items: any[]; // normalized later by adapter
+    items: unknown[]; // normalized later by adapter
     summary?: string;
     totalProcessingTime?: number;
     cacheHit?: boolean;
@@ -179,9 +183,10 @@ export async function runSEOAudit(request: SEOAuditRequest): Promise<SEOAuditRes
             }
             // Non-OK but not auth: fall through to callable
             return null;
-        } catch (e: any) {
+        } catch (e: unknown) {
             // Network / CORS / fetch errors => fallback to callable path
-            if (/(network|cors|failed|fetch)/i.test(e?.message || '')) return null;
+            const err = e as { message?: string };
+            if (/(network|cors|failed|fetch)/i.test(err.message || '')) return null;
             // Other errors propagate (e.g., auth)
             throw e;
         }
@@ -191,15 +196,16 @@ export async function runSEOAudit(request: SEOAuditRequest): Promise<SEOAuditRes
     if (proxyResult) return proxyResult;
 
     // Callable fallback with minimal retry
-    let lastError: any;
+    let lastError: unknown;
     for (let attempt = 1; attempt <= 2; attempt++) {
         try {
             const result = await runSeoAuditFunction(request);
             return result.data as SEOAuditResponse;
-        } catch (error: any) {
+        } catch (error: unknown) {
             lastError = error;
-            const code: string | undefined = error?.code;
-            const rawMessage: string | undefined = error?.message;
+            const err = error as { code?: string; message?: string };
+            const code: string | undefined = err.code;
+            const rawMessage: string | undefined = err.message;
             console.warn(`SEO audit callable attempt ${attempt} failed`, { code, rawMessage });
 
             if (code) {
@@ -224,7 +230,10 @@ export async function runSEOAudit(request: SEOAuditRequest): Promise<SEOAuditRes
             throw new Error('Failed to run SEO audit. Please try again.');
         }
     }
-    throw new Error(lastError?.message || 'Failed to run SEO audit. Please try again.');
+    {
+        const e = lastError as { message?: string } | undefined;
+        throw new Error(e?.message || 'Failed to run SEO audit. Please try again.');
+    }
 }
 
 /**

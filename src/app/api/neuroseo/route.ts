@@ -12,9 +12,10 @@ import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-export const POST = withProvenance(async function POST(request: NextRequest) {
+export const POST = withProvenance(async function POST(request: Request) {
+  const nreq = request as NextRequest;
   try {
-    const body = await request.json();
+    const body = await nreq.json();
     const { urls, targetKeywords, analysisType, userPlan, userId, competitorUrls } = body;
 
     // Validate required fields
@@ -41,17 +42,19 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Report schema validation failed', issues: validated.error.issues }, { status: 422 });
     }
     return NextResponse.json(enforceProvenance({ success: true, data: validated.data, provenance: 'live' }, { path: 'neuroseo', note: 'analysis' }));
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Surface error details for debugging (mask stack in production)
-    console.error('[NeuroSEO API] POST error', error);
-    return NextResponse.json(enforceProvenance({ success: false, error: error?.message || "Failed to process analysis request", details: process.env.NODE_ENV !== 'production' ? (error?.stack || String(error)) : undefined, provenance: 'synthetic' }, { path: 'neuroseo', note: 'exception' }), { status: 500 });
+    const err = error as { message?: string; stack?: string };
+    console.error('[NeuroSEO API] POST error', err);
+    return NextResponse.json(enforceProvenance({ success: false, error: err?.message || "Failed to process analysis request", details: process.env.NODE_ENV !== 'production' ? (err?.stack || String(err)) : undefined, provenance: 'synthetic' }, { path: 'neuroseo', note: 'exception' }), { status: 500 });
   }
 }, { path: 'neuroseo' });
 
-export const GET = withProvenance(async function GET(request: NextRequest) {
+export const GET = withProvenance(async function GET(request: Request) {
+  const nreq = request as NextRequest;
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId") || "anonymous";
+    const { searchParams } = new URL(nreq.url);
+    const _userId = searchParams.get("userId") || "anonymous";
 
     // Initialize suite (lazy import to prevent build-time side effects)
     const { NeuroSEOSuite } = await import("../../../lib/neuroseo");
@@ -80,7 +83,7 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
     };
 
     return NextResponse.json(enforceProvenance({ success: true, data: usageStats, provenance: 'live' }, { path: 'neuroseo', note: 'usage' }));
-  } catch (error) {
+  } catch (error: unknown) {
     return NextResponse.json(enforceProvenance({ success: false, error: "Failed to load usage statistics", provenance: 'synthetic' }, { path: 'neuroseo', note: 'usage_error' }), { status: 500 });
   }
 }, { path: 'neuroseo' });

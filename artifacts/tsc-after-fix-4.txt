@@ -1,0 +1,805 @@
+src/app/(app)/marketing/social-presence/page.tsx(111,101): error TS2345: Argument of type 'SocialAccountDoc[]' is not assignable to parameter of type 'SetStateAction<SocialAccount[]>'.
+  Type 'SocialAccountDoc[]' is not assignable to type 'SocialAccount[]'.
+    Type 'SocialAccountDoc' is not assignable to type 'SocialAccount'.
+      Index signature for type 'string' is missing in type 'SocialAccountDoc'.
+src/app/(app)/marketing/social-presence/page.tsx(118,294): error TS2345: Argument of type 'SocialAccountDoc[]' is not assignable to parameter of type 'SetStateAction<SocialAccount[]>'.
+  Type 'SocialAccountDoc[]' is not assignable to type 'SocialAccount[]'.
+    Type 'SocialAccountDoc' is not assignable to type 'SocialAccount'.
+      Index signature for type 'string' is missing in type 'SocialAccountDoc'.
+src/app/(app)/seo-audit/page.tsx(242,11): error TS2571: Object is of type 'unknown'.
+src/app/(app)/settings/page.tsx(67,30): error TS2339: Property 'highContrast' does not exist on type '{}'.
+src/app/(app)/settings/page.tsx(67,89): error TS2339: Property 'highContrast' does not exist on type '{}'.
+src/app/(app)/settings/page.tsx(68,30): error TS2339: Property 'reducedMotion' does not exist on type '{}'.
+src/app/(app)/settings/page.tsx(68,91): error TS2339: Property 'reducedMotion' does not exist on type '{}'.
+src/app/(app)/settings/page.tsx(69,30): error TS2339: Property 'fontSize' does not exist on type '{}'.
+src/app/(app)/settings/page.tsx(69,80): error TS2339: Property 'fontSize' does not exist on type '{}'.
+src/app/(app)/settings/page.tsx(70,30): error TS2339: Property 'colorBlindnessSupport' does not exist on type '{}'.
+src/app/(app)/settings/page.tsx(70,107): error TS2339: Property 'colorBlindnessSupport' does not exist on type '{}'.
+src/app/(app)/settings/page.tsx(71,23): error TS2339: Property 'customColors' does not exist on type '{}'.
+src/app/(app)/settings/page.tsx(71,68): error TS2339: Property 'customColors' does not exist on type '{}'.
+src/app/(app)/settings/page.tsx(73,30): error TS2339: Property 'mode' does not exist on type '{}'.
+src/app/(app)/settings/page.tsx(73,64): error TS2339: Property 'mode' does not exist on type '{}'.
+src/app/(app)/settings/page.tsx(74,30): error TS2339: Property 'voiceCommands' does not exist on type '{}'.
+src/app/(app)/settings/page.tsx(74,83): error TS2339: Property 'voiceCommands' does not exist on type '{}'.
+src/app/(app)/settings/page.tsx(341,29): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/(app)/settings/page.tsx(348,41): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/(app)/settings/page.tsx(352,78): error TS2769: No overload matches this call.
+  Overload 1 of 4, '(value: string | number | Date): Date', gave the following error.
+    Argument of type '{}' is not assignable to parameter of type 'string | number | Date'.
+  Overload 2 of 4, '(value: string | number): Date', gave the following error.
+    Argument of type '{}' is not assignable to parameter of type 'string | number'.
+src/app/(app)/settings/page.tsx(352,99): error TS2339: Property 'seconds' does not exist on type '{}'.
+src/app/(app)/settings/page.tsx(352,130): error TS2339: Property 'seconds' does not exist on type '{}'.
+src/app/(app)/settings/page.tsx(356,41): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/(app)/settings/page.tsx(360,84): error TS2769: No overload matches this call.
+  Overload 1 of 4, '(value: string | number | Date): Date', gave the following error.
+    Argument of type '{}' is not assignable to parameter of type 'string | number | Date'.
+  Overload 2 of 4, '(value: string | number): Date', gave the following error.
+    Argument of type '{}' is not assignable to parameter of type 'string | number'.
+src/app/(app)/settings/page.tsx(360,112): error TS2339: Property 'seconds' does not exist on type '{}'.
+src/app/(app)/settings/page.tsx(360,150): error TS2339: Property 'seconds' does not exist on type '{}'.
+src/app/(app)/settings/page.tsx(382,21): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/(app)/team/chat/page.tsx(198,63): error TS2339: Property 'teamId' does not exist on type '{}'.
+src/app/(app)/team/chat/page.tsx(198,91): error TS2339: Property 'teamId' does not exist on type '{}'.
+src/app/(app)/team/chat/page.tsx(259,5): error TS2304: Cannot find name 'updateUserPresence'.
+src/app/(app)/team/chat/page.tsx(262,7): error TS2304: Cannot find name 'updateUserPresence'.
+src/app/(app)/team/chat/page.tsx(313,27): error TS18046: 'messageData' is of type 'unknown'.
+src/app/(app)/team/chat/page.tsx(577,19): error TS2322: Type 'ChatMessage[]' is not assignable to type 'VirtualMessage[]'.
+  Type 'ChatMessage' is not assignable to type 'VirtualMessage'.
+    Index signature for type 'string' is missing in type 'ChatMessage'.
+src/app/(app)/team/chat/page.tsx(582,24): error TS18046: 'message.timestamp' is of type 'unknown'.
+src/app/(app)/team/chat/page.tsx(589,64): error TS2345: Argument of type 'string | number' is not assignable to parameter of type 'SetStateAction<string | null>'.
+  Type 'number' is not assignable to type 'SetStateAction<string | null>'.
+src/app/(app)/team/chat/page.tsx(595,44): error TS2322: Type 'unknown' is not assignable to type 'string | undefined'.
+src/app/(app)/team/chat/page.tsx(597,34): error TS18046: 'message.authorName' is of type 'unknown'.
+src/app/(app)/team/chat/page.tsx(604,71): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/(app)/team/chat/page.tsx(605,102): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | number | Date'.
+src/app/(app)/team/chat/page.tsx(606,33): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/(app)/team/chat/page.tsx(609,29): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/(app)/team/chat/page.tsx(617,90): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/app/(app)/team/chat/page.tsx(618,42): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(o: {}): string[]', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type '{}'.
+  Overload 2 of 2, '(o: object): string[]', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type 'object'.
+src/app/(app)/team/chat/page.tsx(620,49): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(o: ArrayLike<unknown> | { [s: string]: unknown; }): [string, unknown][]', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type 'ArrayLike<unknown> | { [s: string]: unknown; }'.
+  Overload 2 of 2, '(o: {}): [string, any][]', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type '{}'.
+src/app/(app)/team/chat/page.tsx(626,64): error TS2345: Argument of type 'string | number' is not assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 'string'.
+src/app/(app)/team/chat/page.tsx(628,46): error TS18046: 'userIds' is of type 'unknown'.
+src/app/(app)/team/chat/page.tsx(644,120): error TS2345: Argument of type 'VirtualMessage' is not assignable to parameter of type 'SetStateAction<ChatMessage | null>'.
+  Type 'VirtualMessage' is missing the following properties from type 'ChatMessage': content, authorId, authorName, channelId, and 3 more.
+src/app/(app)/team/page.tsx(145,19): error TS18046: 'e' is of type 'unknown'.
+src/app/(app)/team/page.tsx(164,19): error TS18046: 'e' is of type 'unknown'.
+src/app/(app)/team/page.tsx(182,19): error TS18046: 'e' is of type 'unknown'.
+src/app/(app)/team/page.tsx(188,37): error TS18046: 'e' is of type 'unknown'.
+src/app/(app)/team/page.tsx(569,45): error TS18046: 'e' is of type 'unknown'.
+src/app/(app)/team/projects/page.tsx(134,65): error TS2339: Property 'teamId' does not exist on type '{}'.
+src/app/(app)/team/projects/page.tsx(134,93): error TS2339: Property 'teamId' does not exist on type '{}'.
+src/app/(app)/team/projects/page.tsx(151,17): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/projects/page.tsx(152,24): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/projects/page.tsx(153,19): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/projects/page.tsx(154,21): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/projects/page.tsx(155,28): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/projects/page.tsx(156,21): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/projects/page.tsx(157,23): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/projects/page.tsx(158,22): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/projects/page.tsx(159,22): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/projects/page.tsx(160,21): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/projects/page.tsx(161,21): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/projects/page.tsx(162,20): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/reports/page.tsx(140,65): error TS2339: Property 'teamId' does not exist on type '{}'.
+src/app/(app)/team/reports/page.tsx(140,93): error TS2339: Property 'teamId' does not exist on type '{}'.
+src/app/(app)/team/reports/page.tsx(156,18): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/reports/page.tsx(157,24): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/reports/page.tsx(158,17): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/reports/page.tsx(159,19): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/reports/page.tsx(160,22): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/reports/page.tsx(161,22): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/reports/page.tsx(162,25): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/reports/page.tsx(163,26): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/reports/page.tsx(164,20): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/reports/page.tsx(165,20): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/reports/page.tsx(166,23): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/reports/page.tsx(167,17): error TS18046: 'data' is of type 'unknown'.
+src/app/(app)/team/reports/page.tsx(475,59): error TS2554: Expected 0 arguments, but got 1.
+src/app/(app)/team/settings/page.tsx(89,127): error TS18046: 'p' is of type 'unknown'.
+src/app/(app)/team/settings/page.tsx(206,30): error TS18046: 'm' is of type 'unknown'.
+src/app/(app)/team/settings/page.tsx(207,45): error TS18046: 'm' is of type 'unknown'.
+src/app/(app)/team/settings/page.tsx(208,28): error TS18046: 'm' is of type 'unknown'.
+src/app/(app)/team/settings/page.tsx(212,34): error TS18046: 'm' is of type 'unknown'.
+src/app/(app)/team/settings/page.tsx(213,67): error TS18046: 'm' is of type 'unknown'.
+src/app/(app)/team/settings/page.tsx(244,72): error TS18046: 'p' is of type 'unknown'.
+src/app/(app)/team/settings/page.tsx(302,27): error TS18046: 'integration' is of type 'unknown'.
+src/app/(app)/team/settings/page.tsx(303,50): error TS18046: 'integration' is of type 'unknown'.
+src/app/(app)/team/settings/page.tsx(304,20): error TS18046: 'integration' is of type 'unknown'.
+src/app/(app)/tutorials/page.tsx(126,5): error TS2304: Cannot find name 'fetchTutorials'.
+src/app/(app)/tutorials/page.tsx(130,5): error TS2304: Cannot find name 'filterTutorials'.
+src/app/(auth)/login/page.tsx(109,32): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/(auth)/login/page.tsx(132,22): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/(public)/page.tsx(256,41): error TS2571: Object is of type 'unknown'.
+src/app/(public)/pricing/page.tsx(435,17): error TS2571: Object is of type 'unknown'.
+src/app/api/admin/invites/index/route.ts(17,25): error TS18046: 'teamData' is of type 'unknown'.
+src/app/api/admin/invites/index/route.ts(17,70): error TS18046: 'm' is of type 'unknown'.
+src/app/api/admin/invites/index/route.ts(17,98): error TS18046: 'm' is of type 'unknown'.
+src/app/api/admin/invites/index/route.ts(17,122): error TS18046: 'm' is of type 'unknown'.
+src/app/api/admin/invites/index/route.ts(26,43): error TS18046: 'e' is of type 'unknown'.
+src/app/api/admin/site/ingest/route.ts(24,46): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/ai/conversational-seo/route.ts(19,46): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'Firestore'.
+src/app/api/ai/multi-model/route.ts(20,46): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'Firestore'.
+src/app/api/billing/invoices/route.ts(78,57): error TS18046: 'e' is of type 'unknown'.
+src/app/api/billing/payment-method/route.ts(10,52): error TS2322: Type 'unknown' is not assignable to type '"2025-07-30.basil" | undefined'.
+src/app/api/billing/payment-method/route.ts(26,38): error TS2339: Property 'stripeCustomerId' does not exist on type '{}'.
+src/app/api/billing/payment-method/route.ts(37,43): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'StripeLike'.
+src/app/api/billing/payment-method/route.ts(42,64): error TS18046: 'e' is of type 'unknown'.
+src/app/api/billing/portal/route.ts(7,64): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'StripeConfig | undefined'.
+src/app/api/billing/portal/route.ts(22,34): error TS2339: Property 'stripeCustomerId' does not exist on type '{}'.
+src/app/api/billing/portal/route.ts(33,24): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/chat/admin/route.ts(68,74): error TS2339: Property 'teamId' does not exist on type '{}'.
+src/app/api/chat/admin/route.ts(70,50): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'Firestore'.
+src/app/api/chat/admin/route.ts(115,37): error TS2339: Property 'error' does not exist on type '{}'.
+src/app/api/chat/admin/route.ts(115,64): error TS2339: Property 'error' does not exist on type '{}'.
+src/app/api/chat/admin/route.ts(115,82): error TS2339: Property 'result' does not exist on type '{}'.
+src/app/api/chat/admin/route.ts(127,45): error TS2339: Property 'result' does not exist on type '{}'.
+src/app/api/chat/admin/route.ts(127,64): error TS2339: Property 'data' does not exist on type '{}'.
+src/app/api/chat/admin/route.ts(145,21): error TS18046: 'firebaseError' is of type 'unknown'.
+src/app/api/chat/admin/route.ts(225,24): error TS18046: 'd' is of type 'unknown'.
+src/app/api/chat/admin/route.ts(226,17): error TS18046: 'd' is of type 'unknown'.
+src/app/api/chat/admin/route.ts(229,30): error TS18046: 'd' is of type 'unknown'.
+src/app/api/chat/admin/route.ts(238,27): error TS18046: 'd' is of type 'unknown'.
+src/app/api/chat/admin/route.ts(241,29): error TS18046: 'd' is of type 'unknown'.
+src/app/api/chat/admin/stream/route.ts(43,74): error TS2339: Property 'teamId' does not exist on type '{}'.
+src/app/api/chat/admin/stream/route.ts(45,50): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'Firestore'.
+src/app/api/chat/admin/stream/route.ts(104,54): error TS18046: 'stream' is of type 'unknown'.
+src/app/api/chat/admin/stream/route.ts(156,116): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/chat/admin/stream/route.ts(176,46): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/chat/customer/actions/route.ts(43,63): error TS2339: Property 'pendingActions' does not exist on type '{}'.
+src/app/api/chat/customer/actions/route.ts(43,87): error TS2339: Property 'pendingActions' does not exist on type '{}'.
+src/app/api/chat/customer/actions/route.ts(66,25): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/chat/customer/route.ts(62,13): error TS18046: 'data' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(63,66): error TS18046: 'data' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(75,14): error TS18046: 'data' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(76,44): error TS18046: 'data' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(127,167): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/chat/customer/route.ts(132,130): error TS2339: Property 'teamId' does not exist on type '{}'.
+src/app/api/chat/customer/route.ts(137,44): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'Firestore'.
+src/app/api/chat/customer/route.ts(226,127): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/chat/customer/route.ts(238,37): error TS2339: Property 'error' does not exist on type '{}'.
+src/app/api/chat/customer/route.ts(238,64): error TS2339: Property 'error' does not exist on type '{}'.
+src/app/api/chat/customer/route.ts(238,82): error TS2339: Property 'result' does not exist on type '{}'.
+src/app/api/chat/customer/route.ts(252,43): error TS2339: Property 'result' does not exist on type '{}'.
+src/app/api/chat/customer/route.ts(252,62): error TS2339: Property 'data' does not exist on type '{}'.
+src/app/api/chat/customer/route.ts(304,28): error TS18046: 'quotaErr' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(328,21): error TS18046: 'firebaseError' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(346,143): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/chat/customer/route.ts(420,24): error TS18046: 'd' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(421,17): error TS18046: 'd' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(424,30): error TS18046: 'd' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(424,48): error TS18046: 'd' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(428,27): error TS18046: 'd' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(429,31): error TS18046: 'd' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(433,17): error TS18046: 'd' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(436,30): error TS18046: 'd' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(445,27): error TS18046: 'd' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(448,29): error TS18046: 'd' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(459,34): error TS18046: 'sData' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(460,34): error TS18046: 'sData' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(461,28): error TS18046: 'sData' is of type 'unknown'.
+src/app/api/chat/customer/route.ts(462,36): error TS18046: 'sData' is of type 'unknown'.
+src/app/api/chat/customer/stream/route.ts(30,13): error TS18046: 'data' is of type 'unknown'.
+src/app/api/chat/customer/stream/route.ts(35,21): error TS18046: 'data' is of type 'unknown'.
+src/app/api/chat/customer/stream/route.ts(50,14): error TS18046: 'data' is of type 'unknown'.
+src/app/api/chat/customer/stream/route.ts(52,60): error TS18046: 'data' is of type 'unknown'.
+src/app/api/chat/customer/stream/route.ts(120,46): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'Firestore'.
+src/app/api/chat/customer/stream/route.ts(156,21): error TS18046: 'sData' is of type 'unknown'.
+src/app/api/chat/customer/stream/route.ts(156,93): error TS18046: 'sData' is of type 'unknown'.
+src/app/api/chat/customer/stream/route.ts(157,35): error TS18046: 'sData' is of type 'unknown'.
+src/app/api/chat/customer/stream/route.ts(157,60): error TS18046: 'sData' is of type 'unknown'.
+src/app/api/chat/customer/stream/route.ts(157,129): error TS18046: 'sData' is of type 'unknown'.
+src/app/api/chat/customer/stream/route.ts(158,35): error TS18046: 'sData' is of type 'unknown'.
+src/app/api/chat/customer/stream/route.ts(158,54): error TS18046: 'sData' is of type 'unknown'.
+src/app/api/chat/customer/stream/route.ts(158,113): error TS18046: 'sData' is of type 'unknown'.
+src/app/api/chat/customer/stream/route.ts(166,47): error TS18046: 'qErr' is of type 'unknown'.
+src/app/api/chat/customer/stream/route.ts(184,147): error TS18046: 'c' is of type 'unknown'.
+src/app/api/chat/customer/stream/route.ts(184,170): error TS18046: 'c' is of type 'unknown'.
+src/app/api/chat/customer/stream/route.ts(184,186): error TS18046: 'c' is of type 'unknown'.
+src/app/api/chat/customer/stream/route.ts(184,214): error TS18046: 'c' is of type 'unknown'.
+src/app/api/chat/customer/stream/route.ts(231,21): error TS2322: Type 'unknown' is not assignable to type 'AsyncIterable<unknown> | null'.
+src/app/api/chat/customer/stream/route.ts(275,64): error TS2339: Property 'choices' does not exist on type '{}'.
+src/app/api/chat/customer/stream/route.ts(337,116): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/chat/customer/stream/route.ts(357,46): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/cleanup-users/route.ts(175,13): error TS2571: Object is of type 'unknown'.
+src/app/api/contact/route.ts(34,68): error TS18046: 'opts' is of type 'unknown'.
+src/app/api/contact/route.ts(34,86): error TS18046: 'opts' is of type 'unknown'.
+src/app/api/contact/route.ts(65,24): error TS2571: Object is of type 'unknown'.
+src/app/api/contact/route.ts(66,24): error TS2571: Object is of type 'unknown'.
+src/app/api/contact/route.ts(96,24): error TS2571: Object is of type 'unknown'.
+src/app/api/contact/route.ts(101,67): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/contact/route.ts(106,50): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/dev/seed-kpi-daily/route.ts(40,57): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/diagnostics/firestore-permissions/route.ts(27,55): error TS2339: Property 'code' does not exist on type '{}'.
+src/app/api/diagnostics/firestore-permissions/route.ts(27,66): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/finance/metrics/route.ts(66,19): error TS18046: 'decoded' is of type 'unknown'.
+src/app/api/finance/metrics/route.ts(83,22): error TS2339: Property 'code' does not exist on type '{}'.
+src/app/api/finance/metrics/route.ts(83,69): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/finance/metrics/route.ts(92,9): error TS18046: 'payload' is of type 'unknown'.
+src/app/api/finance/metrics/route.ts(92,33): error TS18046: 'payload' is of type 'unknown'.
+src/app/api/finance/metrics/route.ts(93,69): error TS18046: 'payload' is of type 'unknown'.
+src/app/api/finance/metrics/route.ts(94,59): error TS2698: Spread types may only be created from object types.
+src/app/api/finance/metrics/route.ts(98,59): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/health/route.ts(26,22): error TS2571: Object is of type 'unknown'.
+src/app/api/health/route.ts(37,15): error TS2571: Object is of type 'unknown'.
+src/app/api/health/route.ts(38,18): error TS2571: Object is of type 'unknown'.
+src/app/api/health/route.ts(46,89): error TS18046: 'data' is of type 'unknown'.
+src/app/api/health/route.ts(46,120): error TS18046: 'data' is of type 'unknown'.
+src/app/api/health/route.ts(46,156): error TS18046: 'data' is of type 'unknown'.
+src/app/api/health/route.ts(52,108): error TS18046: 'data' is of type 'unknown'.
+src/app/api/health/route.ts(52,136): error TS18046: 'data' is of type 'unknown'.
+src/app/api/health/route.ts(52,166): error TS18046: 'data' is of type 'unknown'.
+src/app/api/health/route.ts(53,7): error TS2571: Object is of type 'unknown'.
+src/app/api/health/route.ts(53,48): error TS2571: Object is of type 'unknown'.
+src/app/api/health/route.ts(53,91): error TS2571: Object is of type 'unknown'.
+src/app/api/health/route.ts(76,20): error TS2571: Object is of type 'unknown'.
+src/app/api/health/route.ts(83,22): error TS2571: Object is of type 'unknown'.
+src/app/api/health/route.ts(92,60): error TS2339: Property 'providers' does not exist on type 'object'.
+src/app/api/health/route.ts(92,89): error TS2339: Property 'providers' does not exist on type 'object'.
+src/app/api/health/route.ts(94,38): error TS2339: Property 'providers' does not exist on type 'object'.
+src/app/api/health/route.ts(95,42): error TS18046: 'val' is of type 'unknown'.
+src/app/api/health/route.ts(95,72): error TS18046: 'val' is of type 'unknown'.
+src/app/api/health/route.ts(95,101): error TS18046: 'val' is of type 'unknown'.
+src/app/api/health/simple/route.ts(15,25): error TS2571: Object is of type 'unknown'.
+src/app/api/insights/stream/route.ts(16,62): error TS18046: 'data' is of type 'unknown'.
+src/app/api/insights/stream/route.ts(16,92): error TS18046: 'data' is of type 'unknown'.
+src/app/api/insights/stream/route.ts(16,125): error TS18046: 'data' is of type 'unknown'.
+src/app/api/insights/stream/route.ts(16,155): error TS18046: 'data' is of type 'unknown'.
+src/app/api/insights/stream/route.ts(39,123): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'Record<string, unknown>'.
+src/app/api/insights/stream/route.ts(67,55): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/insights/stream/route.ts(77,19): error TS2571: Object is of type 'unknown'.
+src/app/api/insights/stream/route.ts(81,81): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/intelligence/competitive/route.ts(81,25): error TS2322: Type 'unknown' is not assignable to type '{ crawlFrequency: "daily" | "weekly" | "monthly"; pages: string[]; metrics: CompetitorMetric[]; alertThresholds: Record<string, number>; } | undefined'.
+src/app/api/intelligence/competitive/route.ts(112,25): error TS2322: Type 'unknown' is not assignable to type '{ crawlFrequency: "daily" | "weekly" | "monthly"; pages: string[]; metrics: CompetitorMetric[]; alertThresholds: Record<string, number>; } | undefined'.
+src/app/api/internal/metrics/route.ts(16,53): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/neuroseo/ai-visibility/route.ts(34,27): error TS2571: Object is of type 'unknown'.
+src/app/api/neuroseo/ai-visibility/route.ts(35,27): error TS2571: Object is of type 'unknown'.
+src/app/api/neuroseo/ai-visibility/route.ts(36,26): error TS2571: Object is of type 'unknown'.
+src/app/api/neuroseo/ai-visibility/route.ts(37,29): error TS2571: Object is of type 'unknown'.
+src/app/api/neuroseo/ai-visibility/route.ts(38,22): error TS2571: Object is of type 'unknown'.
+src/app/api/neuroseo/ai-visibility/route.ts(41,34): error TS2571: Object is of type 'unknown'.
+src/app/api/neuroseo/ai-visibility/route.ts(41,86): error TS18046: 'r' is of type 'unknown'.
+src/app/api/neuroseo/ai-visibility/route.ts(68,61): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/neuroseo/live/route.ts(27,37): error TS2571: Object is of type 'unknown'.
+src/app/api/neuroseo/live/route.ts(27,78): error TS2571: Object is of type 'unknown'.
+src/app/api/neuroseo/live/route.ts(28,44): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'Firestore'.
+src/app/api/neuroseo/live/route.ts(31,48): error TS2571: Object is of type 'unknown'.
+src/app/api/neuroseo/live/route.ts(35,43): error TS2571: Object is of type 'unknown'.
+src/app/api/neuroseo/live/route.ts(41,58): error TS2345: Argument of type 'LiveExecResult' is not assignable to parameter of type 'Record<string, unknown>'.
+  Index signature for type 'string' is missing in type 'LiveExecResult'.
+src/app/api/neuroseo/live/route.ts(45,58): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/neuroseo/live/route.ts(48,66): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/neuroseo/stream/route.ts(41,81): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/neuroseo/stream/route.ts(71,51): error TS2571: Object is of type 'unknown'.
+src/app/api/neuroseo/stream/route.ts(71,92): error TS2571: Object is of type 'unknown'.
+src/app/api/neuroseo/stream/route.ts(72,48): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'Firestore'.
+src/app/api/neuroseo/stream/route.ts(74,52): error TS2571: Object is of type 'unknown'.
+src/app/api/neuroseo/stream/route.ts(76,78): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'NeuroSEOAnalysisRequest'.
+src/app/api/neuroseo/stream/route.ts(79,128): error TS2339: Property 'cached' does not exist on type '{ overallScore: number; duration: number; provenance: "live"; }'.
+src/app/api/neuroseo/stream/route.ts(93,117): error TS2571: Object is of type 'unknown'.
+src/app/api/neuroseo/stream/route.ts(98,63): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/neuroseo/stream/route.ts(99,87): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/review-users/route.ts(129,19): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(o: {}): string[]', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type '{}'.
+  Overload 2 of 2, '(o: object): string[]', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type 'object'.
+src/app/api/review-users/route.ts(132,11): error TS18046: 'expectedQuotas' is of type 'unknown'.
+src/app/api/seo-audit/firecrawl/route.ts(14,47): error TS2339: Property 'collection' does not exist on type '{}'.
+src/app/api/seo-audit/firecrawl/route.ts(22,25): error TS2571: Object is of type 'unknown'.
+src/app/api/seo-audit/firecrawl/route.ts(22,66): error TS2571: Object is of type 'unknown'.
+src/app/api/seo-audit/firecrawl/route.ts(26,24): error TS18046: 'adminDb' is of type 'unknown'.
+src/app/api/seo-audit/firecrawl/route.ts(29,27): error TS18046: 'adminDb' is of type 'unknown'.
+src/app/api/seo-audit/firecrawl/route.ts(30,32): error TS18046: 'tx' is of type 'unknown'.
+src/app/api/seo-audit/firecrawl/route.ts(31,86): error TS2571: Object is of type 'unknown'.
+src/app/api/seo-audit/firecrawl/route.ts(32,35): error TS18046: 'data' is of type 'unknown'.
+src/app/api/seo-audit/firecrawl/route.ts(32,64): error TS18046: 'data' is of type 'unknown'.
+src/app/api/seo-audit/firecrawl/route.ts(32,95): error TS18046: 'data' is of type 'unknown'.
+src/app/api/seo-audit/firecrawl/route.ts(32,123): error TS18046: 'data' is of type 'unknown'.
+src/app/api/seo-audit/firecrawl/route.ts(34,17): error TS18046: 'data' is of type 'unknown'.
+src/app/api/seo-audit/firecrawl/route.ts(34,33): error TS18046: 'data' is of type 'unknown'.
+src/app/api/seo-audit/firecrawl/route.ts(34,52): error TS2571: Object is of type 'unknown'.
+src/app/api/seo-audit/firecrawl/route.ts(36,17): error TS18046: 'data' is of type 'unknown'.
+src/app/api/seo-audit/firecrawl/route.ts(40,13): error TS18046: 'data' is of type 'unknown'.
+src/app/api/seo-audit/firecrawl/route.ts(41,13): error TS18046: 'tx' is of type 'unknown'.
+src/app/api/seo-audit/firecrawl/route.ts(42,68): error TS18046: 'data' is of type 'unknown'.
+src/app/api/seo-audit/firecrawl/route.ts(119,77): error TS18046: 'e' is of type 'unknown'.
+src/app/api/seo-audit/run/route.ts(27,37): error TS2571: Object is of type 'unknown'.
+src/app/api/seo-audit/run/route.ts(27,78): error TS2571: Object is of type 'unknown'.
+src/app/api/seo-audit/run/route.ts(31,44): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'Firestore'.
+src/app/api/seo-audit/run/route.ts(60,77): error TS18046: 'e' is of type 'unknown'.
+src/app/api/streaming/real-time/route.ts(52,30): error TS2339: Property 'uid' does not exist on type '{}'.
+src/app/api/streaming/real-time/route.ts(53,30): error TS2339: Property 'tier' does not exist on type '{}'.
+src/app/api/streaming/real-time/route.ts(102,51): error TS2339: Property 'type' does not exist on type '{}'.
+src/app/api/streaming/real-time/route.ts(103,38): error TS2339: Property 'uid' does not exist on type '{}'.
+src/app/api/streaming/real-time/route.ts(104,55): error TS2339: Property 'userName' does not exist on type '{}'.
+src/app/api/streaming/real-time/route.ts(105,58): error TS2339: Property 'dashboardId' does not exist on type '{}'.
+src/app/api/streaming/real-time/route.ts(106,51): error TS2339: Property 'data' does not exist on type '{}'.
+src/app/api/stripe/webhook/route.ts(6,28): error TS18046: 'invoice' is of type 'unknown'.
+src/app/api/stripe/webhook/route.ts(12,35): error TS18046: 'invoice' is of type 'unknown'.
+src/app/api/stripe/webhook/route.ts(12,57): error TS18046: 'invoice' is of type 'unknown'.
+src/app/api/stripe/webhook/route.ts(13,24): error TS18046: 'invoice' is of type 'unknown'.
+src/app/api/stripe/webhook/route.ts(14,25): error TS18046: 'invoice' is of type 'unknown'.
+src/app/api/stripe/webhook/route.ts(14,48): error TS18046: 'invoice' is of type 'unknown'.
+src/app/api/stripe/webhook/route.ts(15,35): error TS18046: 'invoice' is of type 'unknown'.
+src/app/api/stripe/webhook/route.ts(16,23): error TS18046: 'invoice' is of type 'unknown'.
+src/app/api/stripe/webhook/route.ts(16,51): error TS18046: 'invoice' is of type 'unknown'.
+src/app/api/stripe/webhook/route.ts(17,24): error TS18046: 'invoice' is of type 'unknown'.
+src/app/api/stripe/webhook/route.ts(17,53): error TS18046: 'invoice' is of type 'unknown'.
+src/app/api/stripe/webhook/route.ts(17,100): error TS18046: 'invoice' is of type 'unknown'.
+src/app/api/stripe/webhook/route.ts(18,36): error TS18046: 'invoice' is of type 'unknown'.
+src/app/api/stripe/webhook/route.ts(19,37): error TS2339: Property 'price' does not exist on type '{}'.
+src/app/api/stripe/webhook/route.ts(19,66): error TS18046: 'invoice' is of type 'unknown'.
+src/app/api/stripe/webhook/route.ts(20,48): error TS18046: 'invoice' is of type 'unknown'.
+src/app/api/stripe/webhook/route.ts(22,106): error TS18046: 'invoice' is of type 'unknown'.
+src/app/api/stripe/webhook/route.ts(24,91): error TS18046: 'invoice' is of type 'unknown'.
+src/app/api/support/reply/route.ts(25,74): error TS18046: 'opts' is of type 'unknown'.
+src/app/api/support/reply/route.ts(25,92): error TS18046: 'opts' is of type 'unknown'.
+src/app/api/support/reply/route.ts(46,25): error TS18046: 'data' is of type 'unknown'.
+src/app/api/support/reply/route.ts(60,26): error TS2571: Object is of type 'unknown'.
+src/app/api/support/reply/route.ts(63,24): error TS2571: Object is of type 'unknown'.
+src/app/api/support/reply/route.ts(70,24): error TS2571: Object is of type 'unknown'.
+src/app/api/support/reply/route.ts(75,71): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/support/reply/route.ts(76,50): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/team/transfer-ownership/route.ts(29,39): error TS18046: 'data' is of type 'unknown'.
+src/app/api/team/transfer-ownership/route.ts(29,59): error TS18046: 'data' is of type 'unknown'.
+src/app/api/team/transfer-ownership/route.ts(31,62): error TS18046: 'm' is of type 'unknown'.
+src/app/api/team/transfer-ownership/route.ts(31,85): error TS18046: 'm' is of type 'unknown'.
+src/app/api/team/transfer-ownership/route.ts(31,113): error TS18046: 'm' is of type 'unknown'.
+src/app/api/team/transfer-ownership/route.ts(31,137): error TS18046: 'm' is of type 'unknown'.
+src/app/api/team/transfer-ownership/route.ts(34,63): error TS18046: 'm' is of type 'unknown'.
+src/app/api/team/transfer-ownership/route.ts(34,94): error TS18046: 'm' is of type 'unknown'.
+src/app/api/team/transfer-ownership/route.ts(34,121): error TS18046: 'm' is of type 'unknown'.
+src/app/api/team/transfer-ownership/route.ts(57,43): error TS18046: 'e' is of type 'unknown'.
+src/app/api/test/auth/token/route.ts(12,26): error TS2571: Object is of type 'unknown'.
+src/app/api/test/auth/token/route.ts(15,60): error TS2571: Object is of type 'unknown'.
+src/app/api/test/auth/token/route.ts(17,91): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/test/finance/seed-invoice/route.ts(37,19): error TS18046: 'decoded' is of type 'unknown'.
+src/app/api/test/finance/seed-invoice/route.ts(58,46): error TS2339: Property 'teamId' does not exist on type '{}'.
+src/app/api/test/finance/seed-invoice/route.ts(59,34): error TS18046: 'doc' is of type 'unknown'.
+src/app/api/test/finance/seed-invoice/route.ts(60,32): error TS18046: 'doc' is of type 'unknown'.
+src/app/api/test/finance/seed-invoice/route.ts(61,57): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'WithFieldValue<DocumentData>'.
+src/app/api/test/finance/seed-invoice/route.ts(64,91): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/test/metrics/crawler/route.ts(36,19): error TS2571: Object is of type 'unknown'.
+src/app/api/test/metrics/crawler/route.ts(37,24): error TS2571: Object is of type 'unknown'.
+src/app/api/test/observability/seed-alert/route.ts(33,24): error TS18046: 'base' is of type 'unknown'.
+src/app/api/test/observability/seed-alert/route.ts(39,17): error TS18046: 'update' is of type 'unknown'.
+src/app/api/test/observability/seed-alert/route.ts(42,41): error TS2698: Spread types may only be created from object types.
+src/app/api/test/observability/seed-alert/route.ts(42,50): error TS2698: Spread types may only be created from object types.
+src/app/api/test/observability/seed-alert/route.ts(42,84): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{ [x: string]: any; } & AddPrefixToKeys<string, any>'.
+  Type 'unknown' is not assignable to type '{ [x: string]: any; }'.
+src/app/api/test/observability/seed-alert/route.ts(87,57): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/test/observability/seed-alert/route.ts(100,48): error TS18046: 'body' is of type 'unknown'.
+src/app/api/test/observability/seed-alert/route.ts(100,63): error TS18046: 'body' is of type 'unknown'.
+src/app/api/test/observability/seed-alert/route.ts(102,15): error TS18046: 'a' is of type 'unknown'.
+src/app/api/test/observability/seed-alert/route.ts(103,17): error TS18046: 'a' is of type 'unknown'.
+src/app/api/test/observability/seed-alert/route.ts(104,18): error TS18046: 'a' is of type 'unknown'.
+src/app/api/test/observability/seed-alert/route.ts(104,34): error TS18046: 'a' is of type 'unknown'.
+src/app/api/test/observability/seed-alert/route.ts(105,23): error TS18046: 'a' is of type 'unknown'.
+src/app/api/test/observability/seed-alert/route.ts(105,46): error TS18046: 'a' is of type 'unknown'.
+src/app/api/test/observability/seed-alert/route.ts(105,57): error TS18046: 'a' is of type 'unknown'.
+src/app/api/test/observability/seed-alert/route.ts(111,56): error TS18046: 'body' is of type 'unknown'.
+src/app/api/test/observability/seed-alert/route.ts(113,27): error TS2339: Property 'ma7' does not exist on type '{}'.
+src/app/api/test/observability/seed-alert/route.ts(114,37): error TS2339: Property 'type' does not exist on type '{}'.
+src/app/api/test/observability/seed-alert/route.ts(115,48): error TS2339: Property 'ma7' does not exist on type '{}'.
+src/app/api/test/observability/seed-alert/route.ts(122,57): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/user/preferences/route.ts(38,76): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/verify-captcha/route.ts(11,93): error TS2339: Property 'message' does not exist on type '{}'.
+src/app/api/visualizations/route.ts(141,13): error TS18046: 'chartData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(143,17): error TS18046: 'chartData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(144,15): error TS18046: 'chartData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(146,20): error TS18046: 'chartData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(147,26): error TS18046: 'chartData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(148,19): error TS18046: 'chartData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(154,21): error TS18046: 'chartData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(155,28): error TS18046: 'chartData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(156,30): error TS18046: 'chartData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(166,13): error TS2339: Property 'chartId' does not exist on type 'unknown'.
+src/app/api/visualizations/route.ts(166,25): error TS2700: Rest types may only be created from object types.
+src/app/api/visualizations/route.ts(200,13): error TS2339: Property 'chartId' does not exist on type 'unknown'.
+src/app/api/visualizations/route.ts(200,22): error TS2339: Property 'format' does not exist on type 'unknown'.
+src/app/api/visualizations/route.ts(200,30): error TS2339: Property 'config' does not exist on type 'unknown'.
+src/app/api/visualizations/route.ts(200,38): error TS2339: Property 'artifact' does not exist on type 'unknown'.
+src/app/api/visualizations/route.ts(220,37): error TS2345: Argument of type 'DocumentData' is not assignable to parameter of type 'ServerChartArtifactData'.
+  Type 'DocumentData' is missing the following properties from type 'ServerChartArtifactData': userId, id
+src/app/api/visualizations/route.ts(287,13): error TS18046: 'dashboardData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(289,15): error TS18046: 'dashboardData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(290,22): error TS18046: 'dashboardData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(291,18): error TS18046: 'dashboardData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(293,20): error TS18046: 'dashboardData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(294,30): error TS18046: 'dashboardData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(295,23): error TS18046: 'dashboardData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(296,21): error TS18046: 'dashboardData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(297,28): error TS18046: 'dashboardData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(303,19): error TS18046: 'dashboardData' is of type 'unknown'.
+src/app/api/visualizations/route.ts(313,13): error TS2339: Property 'dashboardId' does not exist on type 'unknown'.
+src/app/api/visualizations/route.ts(313,29): error TS2700: Rest types may only be created from object types.
+src/app/api/visualizations/route.ts(347,13): error TS2339: Property 'dashboardId' does not exist on type 'unknown'.
+src/app/api/visualizations/route.ts(347,26): error TS2339: Property 'format' does not exist on type 'unknown'.
+src/app/api/visualizations/route.ts(347,34): error TS2339: Property 'config' does not exist on type 'unknown'.
+src/app/api/visualizations/route.ts(347,42): error TS2339: Property 'artifact' does not exist on type 'unknown'.
+src/app/api/visualizations/route.ts(367,41): error TS2345: Argument of type 'DocumentData' is not assignable to parameter of type 'ServerDashboardArtifactData'.
+  Type 'DocumentData' is missing the following properties from type 'ServerDashboardArtifactData': userId, id
+src/components/NeuroSEODashboard.tsx(151,21): error TS2304: Cannot find name 'k'.
+src/components/NeuroSEODashboard.tsx(182,38): error TS2339: Property 'subscriptionTier' does not exist on type '{}'.
+src/components/NeuroSEODashboard.tsx(242,17): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'SetStateAction<NeuroSEOReport | null>'.
+src/components/NeuroSEODashboard.tsx(414,68): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'SetStateAction<"comprehensive" | "seo-focused" | "content-focused" | "competitive">'.
+src/components/NeuroSEODashboard.tsx(585,107): error TS2339: Property 'seoMetrics' does not exist on type '{}'.
+src/components/NeuroSEODashboard.tsx(587,61): error TS2339: Property 'seoMetrics' does not exist on type '{}'.
+src/components/NeuroSEODashboard.tsx(634,70): error TS2571: Object is of type 'unknown'.
+src/components/NeuroSEODashboard.tsx(636,24): error TS2571: Object is of type 'unknown'.
+src/components/NeuroSEODashboard.tsx(687,73): error TS2571: Object is of type 'unknown'.
+src/components/NeuroSEODashboard.tsx(689,28): error TS2571: Object is of type 'unknown'.
+src/components/NeuroSEODashboard.tsx(695,73): error TS2571: Object is of type 'unknown'.
+src/components/NeuroSEODashboard.tsx(697,28): error TS2571: Object is of type 'unknown'.
+src/components/NeuroSEODashboard.tsx(703,73): error TS2571: Object is of type 'unknown'.
+src/components/NeuroSEODashboard.tsx(705,28): error TS2571: Object is of type 'unknown'.
+src/components/NeuroSEODashboard.tsx(711,73): error TS2571: Object is of type 'unknown'.
+src/components/NeuroSEODashboard.tsx(713,28): error TS2571: Object is of type 'unknown'.
+src/components/NeuroSEODashboard.tsx(717,23): error TS2571: Object is of type 'unknown'.
+src/components/NeuroSEODashboard.tsx(722,59): error TS2571: Object is of type 'unknown'.
+src/components/NeuroSEODashboard.tsx(726,59): error TS2571: Object is of type 'unknown'.
+src/components/NeuroSEODashboard.tsx(730,59): error TS2571: Object is of type 'unknown'.
+src/components/NeuroSEODashboard.tsx(734,59): error TS2571: Object is of type 'unknown'.
+src/components/NeuroSEODashboard.tsx(737,30): error TS2571: Object is of type 'unknown'.
+src/components/admin/AdminUserSubscriptionManager.tsx(212,60): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'SetStateAction<"free" | "starter" | "agency" | "enterprise">'.
+src/components/admin/AdminUserSubscriptionManager.tsx(234,62): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'SetStateAction<"free" | "active" | "canceled" | "past_due">'.
+src/components/admin/admin-analytics.tsx(51,5): error TS2552: Cannot find name 'fetchAnalytics'. Did you mean 'setAnalytics'?
+src/components/admin/admin-analytics.tsx(199,55): error TS18046: 'entry' is of type 'unknown'.
+src/components/admin/admin-analytics.tsx(277,51): error TS18046: 'b' is of type 'unknown'.
+src/components/admin/admin-analytics.tsx(277,61): error TS18046: 'a' is of type 'unknown'.
+src/components/admin/admin-analytics.tsx(277,74): error TS2339: Property 'name' does not exist on type '{}'.
+src/components/admin/admin-support.tsx(79,74): error TS2698: Spread types may only be created from object types.
+src/components/admin/admin-support.tsx(111,22): error TS2339: Property 'message' does not exist on type '{}'.
+src/components/admin/admin-support.tsx(125,22): error TS2339: Property 'message' does not exist on type '{}'.
+src/components/admin/admin-support.tsx(152,22): error TS2339: Property 'message' does not exist on type '{}'.
+src/components/admin/admin-support.tsx(226,37): error TS2339: Property 'toDate' does not exist on type '{}'.
+src/components/admin/admin-support.tsx(227,59): error TS2339: Property 'toDate' does not exist on type '{}'.
+src/components/admin/admin-user-management.tsx(96,5): error TS2552: Cannot find name 'fetchUsers'. Did you mean 'setUsers'?
+src/components/admin/admin-user-management.tsx(362,64): error TS2339: Property 'toDate' does not exist on type '{}'.
+src/components/admin/admin-user-management.tsx(371,65): error TS2339: Property 'toDate' does not exist on type '{}'.
+src/components/admin/subscription-management.tsx(128,18): error TS18046: 'userData' is of type 'unknown'.
+src/components/admin/subscription-management.tsx(129,24): error TS18046: 'userData' is of type 'unknown'.
+src/components/admin/subscription-management.tsx(130,25): error TS18046: 'userData' is of type 'unknown'.
+src/components/admin/subscription-management.tsx(134,22): error TS18046: 'userData' is of type 'unknown'.
+src/components/admin/subscription-management.tsx(135,24): error TS18046: 'userData' is of type 'unknown'.
+src/components/ai/ai-lazy-wrapper.tsx(115,32): error TS2571: Object is of type 'unknown'.
+src/components/ai/ai-lazy-wrapper.tsx(167,13): error TS2571: Object is of type 'unknown'.
+src/components/chat/AdminChatBot.tsx(157,38): error TS2339: Property 'getIdToken' does not exist on type '{}'.
+src/components/chat/AdminChatBot.tsx(160,38): error TS2339: Property 'getIdToken' does not exist on type '{}'.
+src/components/chat/AdminChatBot.tsx(226,55): error TS2339: Property 'isComposing' does not exist on type '{}'.
+src/components/chat/CustomerChatBot.tsx(246,78): error TS2339: Property 'getIdToken' does not exist on type '{}'.
+src/components/chat/CustomerChatBot.tsx(254,21): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(255,26): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(255,37): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(256,28): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(256,39): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(257,28): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(258,25): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(259,29): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(260,23): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(261,27): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(365,17): error TS2571: Object is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(382,13): error TS2571: Object is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(438,38): error TS2339: Property 'getIdToken' does not exist on type '{}'.
+src/components/chat/CustomerChatBot.tsx(441,38): error TS2339: Property 'getIdToken' does not exist on type '{}'.
+src/components/chat/CustomerChatBot.tsx(558,104): error TS2339: Property 'getIdToken' does not exist on type '{}'.
+src/components/chat/CustomerChatBot.tsx(642,74): error TS2339: Property 'getIdToken' does not exist on type '{}'.
+src/components/chat/CustomerChatBot.tsx(700,28): error TS2339: Property 'name' does not exist on type '{}'.
+src/components/chat/CustomerChatBot.tsx(702,22): error TS2339: Property 'message' does not exist on type '{}'.
+src/components/chat/CustomerChatBot.tsx(741,78): error TS2339: Property 'getIdToken' does not exist on type '{}'.
+src/components/chat/CustomerChatBot.tsx(770,78): error TS2339: Property 'getIdToken' does not exist on type '{}'.
+src/components/chat/CustomerChatBot.tsx(778,33): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(779,38): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(779,49): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(780,40): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(780,51): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(781,40): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(782,37): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(783,41): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(784,35): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(785,39): error TS18046: 'm' is of type 'unknown'.
+src/components/chat/CustomerChatBot.tsx(814,55): error TS2339: Property 'isComposing' does not exist on type '{}'.
+src/components/chat/CustomerChatBot.tsx(923,126): error TS2339: Property 'getIdToken' does not exist on type '{}'.
+src/components/chat/utils.ts(94,16): error TS2339: Property 'message' does not exist on type '{}'.
+src/components/chat/utils.ts(94,38): error TS2339: Property 'message' does not exist on type '{}'.
+src/components/chat/utils.ts(95,16): error TS2339: Property 'error' does not exist on type '{}'.
+src/components/chat/utils.ts(95,36): error TS2339: Property 'error' does not exist on type '{}'.
+src/components/chat/utils.ts(251,46): error TS2571: Object is of type 'unknown'.
+src/components/chat/utils.ts(252,13): error TS2571: Object is of type 'unknown'.
+src/components/command-palette.tsx(55,14): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'ThemeMode'.
+src/components/dashboard/usage-analytics.tsx(74,7): error TS2304: Cannot find name 'fetchUsageData'.
+src/components/debug/UserSubscriptionDebugger.tsx(62,30): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/components/debug/UserSubscriptionDebugger.tsx(69,24): error TS2322: Type '{}' is not assignable to type 'ReactNode'.
+src/components/debug/UserSubscriptionDebugger.tsx(75,15): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/components/debug/UserSubscriptionDebugger.tsx(77,45): error TS2322: Type '{}' is not assignable to type 'ReactNode'.
+src/components/debug/UserSubscriptionDebugger.tsx(80,15): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/components/debug/UserSubscriptionDebugger.tsx(85,47): error TS2339: Property 'seconds' does not exist on type '{}'.
+src/components/enhanced-app-nav.tsx(196,45): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '"starter" | "agency" | "enterprise"'.
+src/components/forms/seo-audit-form.tsx(41,28): error TS2339: Property 'message' does not exist on type '{}'.
+src/components/layout/DashboardSurface.tsx(34,3): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type 'string | FunctionComponent<{ id?: string | undefined; role?: string | undefined; className: string; 'aria-label': string | undefined; }> | ComponentClass<{ id?: string | undefined; role?: string | undefined; className: string; 'aria-label': string | undefined; }, any>'.
+src/components/metrics/LazyDataTable.tsx(47,136): error TS2571: Object is of type 'unknown'.
+src/components/neuroseo/NeuroSEOEnhancedComponents.tsx(100,9): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/components/neuroseo/NeuroSEOEnhancedComponents.tsx(102,74): error TS2339: Property 'overallScore' does not exist on type '{}'.
+src/components/neuroseo/NeuroSEOEnhancedComponents.tsx(103,37): error TS2339: Property 'duration' does not exist on type '{}'.
+src/components/neuroseo/NeuroSEOEnhancedComponents.tsx(375,34): error TS2322: Type 'unknown' is not assignable to type '"default" | "success" | "warning" | "outline" | "secondary" | "destructive" | null | undefined'.
+src/components/neuroseo/NeuroSEOEnhancedComponents.tsx(472,30): error TS2322: Type 'unknown' is not assignable to type '"default" | "success" | "warning" | "outline" | "secondary" | "destructive" | null | undefined'.
+src/components/payment/multi-payment-checkout.tsx(121,9): error TS18046: 'error' is of type 'unknown'.
+src/components/payment/multi-payment-checkout.tsx(134,55): error TS18046: 'data' is of type 'unknown'.
+src/components/payment/multi-payment-checkout.tsx(393,38): error TS2571: Object is of type 'unknown'.
+src/components/payment/payment-success.tsx(53,7): error TS2304: Cannot find name 'updateUserSubscription'.
+src/components/payment/payment-success.tsx(57,5): error TS2304: Cannot find name 'sendConfirmationEmail'.
+src/components/performance-dashboard.tsx(31,43): error TS2345: Argument of type '() => Promise<React.FC<LatencySparklineProps> | React.ComponentClass<unknown, any> | React.FunctionComponent<unknown> | ComponentModule<unknown>>' is not assignable to parameter of type 'DynamicOptions<unknown> | Loader<unknown>'.
+  Type '() => Promise<React.FC<LatencySparklineProps> | React.ComponentClass<unknown, any> | React.FunctionComponent<unknown> | ComponentModule<unknown>>' is not assignable to type '() => LoaderComponent<unknown>'.
+    Type 'Promise<FC<LatencySparklineProps> | ComponentClass<unknown, any> | FunctionComponent<unknown> | ComponentModule<unknown>>' is not assignable to type 'LoaderComponent<unknown>'.
+      Type 'FC<LatencySparklineProps> | ComponentClass<unknown, any> | FunctionComponent<unknown> | ComponentModule<unknown>' is not assignable to type 'ComponentType<unknown> | ComponentModule<unknown>'.
+        Type 'FC<LatencySparklineProps>' is not assignable to type 'ComponentType<unknown> | ComponentModule<unknown>'.
+          Type 'FunctionComponent<LatencySparklineProps>' is not assignable to type 'FunctionComponent<unknown>'.
+            Types of parameters 'props' and 'props' are incompatible.
+              Type 'unknown' is not assignable to type 'LatencySparklineProps'.
+src/components/performance-dashboard.tsx(119,47): error TS18046: 'stat' is of type 'unknown'.
+src/components/performance-dashboard.tsx(123,48): error TS18046: 'stat' is of type 'unknown'.
+src/components/performance-dashboard.tsx(123,63): error TS18046: 'stat' is of type 'unknown'.
+src/components/performance-dashboard.tsx(209,90): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'SetStateAction<"5m" | "1h" | "24h">'.
+src/components/performance-dashboard.tsx(355,33): error TS2322: Type '{ samples: number[]; id: string; describedBy: string; }' is not assignable to type 'IntrinsicAttributes'.
+  Property 'samples' does not exist on type 'IntrinsicAttributes'.
+src/components/performance/core-web-vitals-monitor.tsx(63,38): error TS18046: 'metric' is of type 'unknown'.
+src/components/performance/core-web-vitals-monitor.tsx(64,21): error TS2304: Cannot find name 'updateVitals'.
+src/components/performance/core-web-vitals-monitor.tsx(68,38): error TS18046: 'metric' is of type 'unknown'.
+src/components/performance/core-web-vitals-monitor.tsx(69,21): error TS2304: Cannot find name 'updateVitals'.
+src/components/performance/core-web-vitals-monitor.tsx(73,38): error TS18046: 'metric' is of type 'unknown'.
+src/components/performance/core-web-vitals-monitor.tsx(74,21): error TS2304: Cannot find name 'updateVitals'.
+src/components/performance/core-web-vitals-monitor.tsx(78,38): error TS18046: 'metric' is of type 'unknown'.
+src/components/performance/core-web-vitals-monitor.tsx(79,21): error TS2304: Cannot find name 'updateVitals'.
+src/components/performance/core-web-vitals-monitor.tsx(83,39): error TS18046: 'metric' is of type 'unknown'.
+src/components/performance/core-web-vitals-monitor.tsx(84,21): error TS2304: Cannot find name 'updateVitals'.
+src/components/performance/core-web-vitals-monitor.tsx(252,60): error TS18046: 'metric' is of type 'unknown'.
+src/components/performance/core-web-vitals-monitor.tsx(253,60): error TS18046: 'metric' is of type 'unknown'.
+src/components/performance/core-web-vitals-monitor.tsx(254,60): error TS18046: 'metric' is of type 'unknown'.
+src/components/profile-form.tsx(72,29): error TS2339: Property 'displayName' does not exist on type '{}'.
+src/components/profile-form.tsx(73,35): error TS2339: Property 'professionalTitle' does not exist on type '{}'.
+src/components/profile-form.tsx(74,21): error TS2339: Property 'bio' does not exist on type '{}'.
+src/components/profile-form.tsx(75,33): error TS2339: Property 'primaryKeywords' does not exist on type '{}'.
+src/components/profile-form.tsx(76,33): error TS2339: Property 'specializations' does not exist on type '{}'.
+src/components/profile-form.tsx(77,25): error TS2339: Property 'website' does not exist on type '{}'.
+src/components/profile-form.tsx(78,26): error TS2339: Property 'linkedIn' does not exist on type '{}'.
+src/components/profile-form.tsx(79,25): error TS2339: Property 'twitter' does not exist on type '{}'.
+src/components/profile/seo-achievements-badges.tsx(82,13): error TS2571: Object is of type 'unknown'.
+src/components/profile/seo-achievements-badges.tsx(147,18): error TS2339: Property 'displayName' does not exist on type '{}'.
+src/components/profile/seo-achievements-badges.tsx(148,18): error TS2339: Property 'bio' does not exist on type '{}'.
+src/components/profile/seo-achievements-badges.tsx(149,18): error TS2339: Property 'primaryKeywords' does not exist on type '{}'.
+src/components/profile/seo-achievements-badges.tsx(152,18): error TS2339: Property 'displayName' does not exist on type '{}'.
+src/components/profile/seo-achievements-badges.tsx(153,18): error TS2339: Property 'bio' does not exist on type '{}'.
+src/components/profile/seo-achievements-badges.tsx(154,18): error TS2339: Property 'primaryKeywords' does not exist on type '{}'.
+src/components/profile/seo-activities-timeline.tsx(144,42): error TS18046: 'activity.timestamp' is of type 'unknown'.
+src/components/pwa/PWAInstallPrompt.tsx(65,119): error TS2571: Object is of type 'unknown'.
+src/components/settings/account-settings-form.tsx(63,27): error TS2339: Property 'firstName' does not exist on type '{}'.
+src/components/settings/account-settings-form.tsx(64,26): error TS2339: Property 'lastName' does not exist on type '{}'.
+src/components/settings/account-settings-form.tsx(65,25): error TS2339: Property 'company' does not exist on type '{}'.
+src/components/settings/account-settings-form.tsx(67,18): error TS2339: Property 'timezone' does not exist on type '{}'.
+src/components/settings/account-settings-form.tsx(99,11): error TS18046: 'error' is of type 'unknown'.
+src/components/settings/notification-settings-form.tsx(59,36): error TS2339: Property 'notifications' does not exist on type '{}'.
+src/components/settings/notification-settings-form.tsx(60,27): error TS2339: Property 'notifications' does not exist on type '{}'.
+src/components/settings/notification-settings-form.tsx(61,31): error TS2339: Property 'notifications' does not exist on type '{}'.
+src/components/settings/notification-settings-form.tsx(62,33): error TS2339: Property 'notifications' does not exist on type '{}'.
+src/components/settings/notification-settings-form.tsx(63,32): error TS2339: Property 'notifications' does not exist on type '{}'.
+src/components/settings/notification-settings-form.tsx(64,34): error TS2339: Property 'notifications' does not exist on type '{}'.
+src/components/settings/notification-settings-form.tsx(65,33): error TS2339: Property 'notifications' does not exist on type '{}'.
+src/components/settings/privacy-settings-card.tsx(44,14): error TS2339: Property 'privacy' does not exist on type '{}'.
+src/components/settings/privacy-settings-card.tsx(47,14): error TS2339: Property 'privacy' does not exist on type '{}'.
+src/components/settings/privacy-settings-card.tsx(50,14): error TS2339: Property 'privacy' does not exist on type '{}'.
+src/components/settings/privacy-settings-card.tsx(91,45): error TS18046: 'res' is of type 'unknown'.
+src/components/settings/privacy-settings-card.tsx(102,76): error TS18046: 'e' is of type 'unknown'.
+src/components/settings/privacy-settings-card.tsx(123,78): error TS18046: 'e' is of type 'unknown'.
+src/components/settings/security-settings-form.tsx(109,11): error TS18046: 'error' is of type 'unknown'.
+src/components/settings/security-settings-form.tsx(111,18): error TS18046: 'error' is of type 'unknown'.
+src/components/site-header.tsx(46,11): error TS2339: Property 'theme' does not exist on type 'unknown'.
+src/components/site-header.tsx(46,18): error TS2339: Property 'setTheme' does not exist on type 'unknown'.
+src/components/site-header.tsx(46,28): error TS2339: Property 'isDark' does not exist on type 'unknown'.
+src/components/site-header.tsx(46,36): error TS2339: Property 'isHighContrast' does not exist on type 'unknown'.
+src/components/subscription/FeatureGate.tsx(38,40): error TS2571: Object is of type 'unknown'.
+src/components/subscription/FeatureGate.tsx(232,46): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'SubscriptionTier'.
+src/components/subscription/FeatureGate.tsx(233,50): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'SubscriptionTier'.
+src/components/ui/ExportButton.tsx(26,52): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'ChartExportConfig'.
+src/components/ui/ExportButton.tsx(32,22): error TS2339: Property 'message' does not exist on type '{}'.
+src/components/ui/ExportButton.tsx(35,21): error TS2339: Property 'captureException' does not exist on type '{}'.
+src/components/ui/button.tsx(48,9): error TS2322: Type 'unknown' is not assignable to type 'LegacyRef<HTMLButtonElement> | undefined'.
+src/components/ui/chart-components.tsx(27,29): error TS2322: Type 'unknown' is not assignable to type 'ContentType<ValueType, NameType> | undefined'.
+src/components/ui/chart-components.tsx(33,14): error TS18046: 'props' is of type 'unknown'.
+src/components/ui/chart-components.tsx(33,29): error TS18046: 'props' is of type 'unknown'.
+src/components/ui/enhanced-button.tsx(103,83): error TS2339: Property 'type' does not exist on type '{}'.
+src/components/ui/enhanced-form.tsx(175,22): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'FormEvent<Element>'.
+src/components/ui/enhanced-form.tsx(384,9): error TS2322: Type '{}' is not assignable to type 'string | number | readonly string[] | undefined'.
+src/components/ui/feature-gate.tsx(88,26): error TS18046: 'featureConfig' is of type 'unknown'.
+src/components/ui/feature-gate.tsx(89,53): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'SubscriptionTier'.
+src/components/ui/feature-gate.tsx(114,22): error TS18046: 'featureConfig' is of type 'unknown'.
+src/components/ui/form.tsx(115,7): error TS2322: Type 'unknown' is not assignable to type 'LegacyRef<HTMLElement> | undefined'.
+src/components/ui/polymorphic-card.tsx(130,14): error TS2322: Type '{ children: string | number | bigint | boolean | Element | Iterable<ReactNode> | Promise<AwaitedReactNode> | null | undefined; ... 277 more ...; className: string; }' is not assignable to type 'Omit<HTMLMotionProps<"div">, "ref">'.
+  Types of property 'onDrag' are incompatible.
+    Type 'DragEventHandler<HTMLDivElement> | undefined' is not assignable to type '((event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+      Type 'DragEventHandler<HTMLDivElement>' is not assignable to type '(event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void'.
+        Types of parameters 'event' and 'event' are incompatible.
+          Type 'MouseEvent | PointerEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLDivElement>'.
+            Type 'MouseEvent' is missing the following properties from type 'DragEvent<HTMLDivElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+src/components/ui/polymorphic-card.tsx(133,21): error TS2698: Spread types may only be created from object types.
+src/components/ui/sidebar.tsx(201,13): error TS2322: Type 'unknown' is not assignable to type 'LegacyRef<HTMLDivElement> | undefined'.
+src/components/ui/sidebar.tsx(260,11): error TS2322: Type 'unknown' is not assignable to type 'LegacyRef<HTMLDivElement> | undefined'.
+src/components/ui/sidebar.tsx(270,7): error TS2322: Type 'unknown' is not assignable to type 'LegacyRef<HTMLElement> | undefined'.
+src/components/ui/sidebar.tsx(298,9): error TS2322: Type 'unknown' is not assignable to type 'LegacyRef<HTMLButtonElement> | undefined'.
+src/components/ui/sidebar.tsx(313,7): error TS2322: Type 'unknown' is not assignable to type 'LegacyRef<HTMLButtonElement> | undefined'.
+src/components/ui/sidebar.tsx(337,7): error TS2322: Type 'unknown' is not assignable to type 'LegacyRef<HTMLDivElement> | undefined'.
+src/components/ui/sidebar.tsx(353,7): error TS2322: Type 'unknown' is not assignable to type 'LegacyRef<HTMLDivElement> | undefined'.
+src/components/ui/sidebar.tsx(369,7): error TS2322: Type 'unknown' is not assignable to type 'LegacyRef<HTMLDivElement> | undefined'.
+src/components/ui/sidebar.tsx(393,9): error TS2322: Type 'unknown' is not assignable to type 'LegacyRef<HTMLUListElement> | undefined'.
+src/components/ui/sidebar.tsx(469,9): error TS2322: Type 'unknown' is not assignable to type 'LegacyRef<HTMLButtonElement> | undefined'.
+src/components/ui/sidebar.tsx(534,9): error TS2322: Type 'unknown' is not assignable to type 'LegacyRef<HTMLAnchorElement> | undefined'.
+src/constants/enhanced-nav.ts(581,52): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'SubscriptionTier'.
+src/constants/enhanced-nav.ts(583,13): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'SubscriptionTier'.
+src/constants/enhanced-nav.ts(610,48): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'SubscriptionTier'.
+src/constants/enhanced-nav.ts(611,52): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'SubscriptionTier'.
+src/constants/enhanced-nav.ts(675,40): error TS2571: Object is of type 'unknown'.
+src/constants/enhanced-nav.ts(676,5): error TS2571: Object is of type 'unknown'.
+src/hooks/useAutomationTrigger.ts(52,51): error TS18046: 'e' is of type 'unknown'.
+src/hooks/useSafeAsyncData.ts(214,9): error TS2322: Type '{} | T' is not assignable to type 'T'.
+  'T' could be instantiated with an arbitrary type which could be unrelated to '{} | T'.
+src/hooks/useSafeAsyncData.ts(214,54): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/hooks/useSalesDealsMetrics.ts(20,13): error TS2339: Property 'user' does not exist on type 'unknown'.
+src/hooks/useSalesDealsMetrics.ts(20,42): error TS2345: Argument of type 'Context<AuthContextType>' is not assignable to parameter of type 'Context<unknown>'.
+  Types of property 'Provider' are incompatible.
+    Type 'Provider<AuthContextType>' is not assignable to type 'Provider<unknown>'.
+      Types of parameters 'props' and 'props' are incompatible.
+        Type 'ProviderProps<unknown>' is not assignable to type 'ProviderProps<AuthContextType>'.
+          Type 'unknown' is not assignable to type 'AuthContextType'.
+src/hooks/useSalesDealsMetrics.ts(36,63): error TS2698: Spread types may only be created from object types.
+src/hooks/useSalesDealsMetrics.ts(39,52): error TS18046: 'd' is of type 'unknown'.
+src/hooks/useSalesDealsMetrics.ts(43,103): error TS18046: 's' is of type 'unknown'.
+src/hooks/useSalesDealsMetrics.ts(46,59): error TS18046: 'd' is of type 'unknown'.
+src/hooks/useSalesDealsMetrics.ts(47,58): error TS18046: 'd' is of type 'unknown'.
+src/hooks/useSalesDealsMetrics.ts(48,57): error TS18046: 'd' is of type 'unknown'.
+src/hooks/useSalesDealsMetrics.ts(50,55): error TS18046: 'd' is of type 'unknown'.
+src/hooks/useSalesDealsMetrics.ts(50,106): error TS18046: 'd' is of type 'unknown'.
+src/hooks/useSalesDealsMetrics.ts(53,65): error TS2322: Type 'unknown' is not assignable to type 'number'.
+src/hooks/useSalesDealsMetrics.ts(53,96): error TS18046: 'pipelineValue' is of type 'unknown'.
+src/hooks/useSalesDealsMetrics.ts(53,112): error TS2363: The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+src/hooks/useSalesDealsMetrics.ts(53,128): error TS2363: The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+src/hooks/useSalesDealsMetrics.ts(53,149): error TS2322: Type 'unknown[]' is not assignable to type 'number[]'.
+  Type 'unknown' is not assignable to type 'number'.
+src/hooks/useSalesDealsMetrics.ts(53,195): error TS18046: 'd' is of type 'unknown'.
+src/hooks/useSalesDealsMetrics.ts(54,180): error TS18046: 'd' is of type 'unknown'.
+src/hooks/useSalesDealsMetrics.ts(55,189): error TS18046: 'd' is of type 'unknown'.
+src/hooks/useSalesDealsMetrics.ts(55,240): error TS18046: 'd' is of type 'unknown'.
+src/hooks/useSalesDealsMetrics.ts(60,63): error TS18046: 'e' is of type 'unknown'.
+src/hooks/useSerpKeywordMetrics.ts(21,74): error TS2339: Property 'some' does not exist on type '{}'.
+src/hooks/useSerpKeywordMetrics.ts(21,95): error TS18046: 'r' is of type 'unknown'.
+src/hooks/useSerpKeywordMetrics.ts(21,132): error TS18046: 'r' is of type 'unknown'.
+src/hooks/useSerpKeywordMetrics.ts(22,69): error TS2339: Property 'slice' does not exist on type '{}'.
+src/hooks/useSerpKeywordMetrics.ts(22,118): error TS18046: 'r' is of type 'unknown'.
+src/hooks/useSerpKeywordMetrics.ts(23,73): error TS2339: Property 'some' does not exist on type '{}'.
+src/hooks/useSerpKeywordMetrics.ts(23,94): error TS18046: 'r' is of type 'unknown'.
+src/hooks/useSubscription.ts(56,46): error TS2571: Object is of type 'unknown'.
+src/hooks/useSubscription.ts(57,22): error TS2571: Object is of type 'unknown'.
+src/hooks/useSubscription.ts(60,85): error TS2322: Type '{}' is not assignable to type '"free" | "active" | "canceled" | "past_due"'.
+src/hooks/useSubscription.ts(88,17): error TS2322: Type '{}' is not assignable to type '"free" | "active" | "canceled" | "past_due"'.
+src/hooks/useSubscription.ts(192,23): error TS2554: Expected 0 arguments, but got 1.
+src/hooks/useSubscription.ts(202,23): error TS18046: '_onSnapshot' is of type 'unknown'.
+src/hooks/useSubscription.ts(203,16): error TS18046: 'snap' is of type 'unknown'.
+src/hooks/useSubscription.ts(204,24): error TS18046: 'snap' is of type 'unknown'.
+src/hooks/useSubscription.ts(205,17): error TS2322: Type 'unknown' is not assignable to type 'SubscriptionData'.
+src/lib/access-control.ts(360,7): error TS2571: Object is of type 'unknown'.
+src/lib/access-control.ts(495,3): error TS2322: Type 'unknown' is not assignable to type 'boolean'.
+src/lib/access-control.ts(497,23): error TS2339: Property 'role' does not exist on type '{}'.
+src/lib/access-control.ts(498,43): error TS2339: Property 'role' does not exist on type '{}'.
+src/lib/access-control.ts(499,23): error TS2339: Property 'tier' does not exist on type '{}'.
+src/lib/access-control.ts(500,40): error TS2339: Property 'tier' does not exist on type '{}'.
+src/lib/access-control.ts(501,23): error TS2339: Property 'status' does not exist on type '{}'.
+src/lib/access-control.ts(502,68): error TS2339: Property 'status' does not exist on type '{}'.
+src/lib/access-control.ts(514,7): error TS18046: 'dbUser' is of type 'unknown'.
+src/lib/access-control.ts(514,46): error TS18046: 'dbUser' is of type 'unknown'.
+src/lib/access-control.ts(518,19): error TS18046: 'dbUser' is of type 'unknown'.
+src/lib/access-control.ts(519,43): error TS18046: 'dbUser' is of type 'unknown'.
+src/lib/access-control.ts(520,9): error TS18046: 'dbUser' is of type 'unknown'.
+src/lib/access-control.ts(527,13): error TS18046: 'dbUser' is of type 'unknown'.
+src/lib/access-control.ts(546,15): error TS2571: Object is of type 'unknown'.
+src/lib/access-control.ts(557,7): error TS2571: Object is of type 'unknown'.
+src/lib/access/entitlements.ts(33,58): error TS2339: Property 'entitlements' does not exist on type 'object'.
+src/lib/access/entitlements.ts(34,67): error TS2339: Property 'entitlements' does not exist on type 'object'.
+src/lib/access/entitlements.ts(35,33): error TS2322: Type 'unknown' is not assignable to type 'EntitlementDef'.
+src/lib/access/entitlements.ts(35,64): error TS18046: 'v' is of type 'unknown'.
+src/lib/accessibility/accessibility-system.ts(317,63): error TS2571: Object is of type 'unknown'.
+src/lib/accessibility/accessibility-system.ts(321,9): error TS2571: Object is of type 'unknown'.
+src/lib/accessibility/accessibility-system.ts(322,9): error TS2571: Object is of type 'unknown'.
+src/lib/accessibility/accessibility-system.ts(323,9): error TS2571: Object is of type 'unknown'.
+src/lib/accessibility/accessibility-system.ts(325,9): error TS2571: Object is of type 'unknown'.
+src/lib/accessibility/accessibility-system.ts(326,32): error TS18046: 'event' is of type 'unknown'.
+src/lib/accessibility/accessibility-system.ts(326,46): error TS18046: 'event' is of type 'unknown'.
+src/lib/accessibility/accessibility-system.ts(330,9): error TS2571: Object is of type 'unknown'.
+src/lib/accessibility/accessibility-system.ts(331,56): error TS18046: 'event' is of type 'unknown'.
+src/lib/accessibility/accessibility-system.ts(332,60): error TS18046: 'event' is of type 'unknown'.
+src/lib/accessibility/accessibility-system.ts(340,30): error TS2339: Property 'start' does not exist on type '{}'.
+src/lib/accessibility/accessibility-system.ts(348,30): error TS2339: Property 'stop' does not exist on type '{}'.
+src/lib/accessibility/accessibility-system.ts(432,47): error TS2571: Object is of type 'unknown'.
+src/lib/adapters/seo-audit-adapter.ts(28,54): error TS2339: Property 'items' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(29,15): error TS2339: Property 'items' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(30,28): error TS2339: Property 'id' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(31,30): error TS2339: Property 'name' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(31,42): error TS2339: Property 'title' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(32,31): error TS2339: Property 'score' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(32,55): error TS2339: Property 'score' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(33,33): error TS2339: Property 'details' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(33,48): error TS2339: Property 'description' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(34,64): error TS2339: Property 'status' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(34,74): error TS18046: 'it' is of type 'unknown'.
+src/lib/adapters/seo-audit-adapter.ts(39,36): error TS2339: Property 'overallScore' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(39,68): error TS2339: Property 'overallScore' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(44,38): error TS2339: Property 'cacheHit' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(46,66): error TS2339: Property 'source' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(55,14): error TS2339: Property 'quota' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(55,34): error TS2339: Property 'quota' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(56,48): error TS2339: Property 'quota' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(69,19): error TS2339: Property 'url' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(72,30): error TS2339: Property 'summary' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(73,42): error TS2339: Property 'totalProcessingTime' does not exist on type '{}'.
+src/lib/adapters/seo-audit-adapter.ts(73,81): error TS2339: Property 'totalProcessingTime' does not exist on type '{}'.
+src/lib/admin-user-management.ts(73,7): error TS18046: 'updateData' is of type 'unknown'.
+src/lib/admin-user-management.ts(74,7): error TS18046: 'updateData' is of type 'unknown'.
+src/lib/admin-user-management.ts(75,7): error TS18046: 'updateData' is of type 'unknown'.
+src/lib/admin-user-management.ts(76,7): error TS18046: 'updateData' is of type 'unknown'.
+src/lib/admin-user-management.ts(77,7): error TS18046: 'updateData' is of type 'unknown'.
+src/lib/admin-user-management.ts(82,7): error TS18046: 'updateData' is of type 'unknown'.
+src/lib/admin-user-management.ts(86,5): error TS18046: 'updateData' is of type 'unknown'.
+src/lib/admin-user-management.ts(102,47): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{ [x: string]: any; } & AddPrefixToKeys<string, any>'.
+  Type 'unknown' is not assignable to type '{ [x: string]: any; }'.
+src/lib/agents/AgentImplementation.ts(107,70): error TS2345: Argument of type '{ customerId: string; customerEmail: string; subject: string; description: string; category: string; priority: "low" | "medium" | "high" | "critical"; tier: unknown; }' is not assignable to parameter of type 'Partial<SupportTicket>'.
+  Types of property 'tier' are incompatible.
+    Type 'unknown' is not assignable to type '"free" | "starter" | "agency" | "enterprise" | undefined'.
+src/lib/agents/technical-operations/build-system.ts(369,28): error TS18046: 'error' is of type 'unknown'.
+src/lib/agents/technical-operations/build-system.ts(369,43): error TS18046: 'error' is of type 'unknown'.
+src/lib/agents/technical-operations/typescript-guardian.ts(121,64): error TS2554: Expected 0 arguments, but got 1.
+src/lib/agents/technical-operations/typescript-guardian.ts(186,28): error TS18046: 'error' is of type 'unknown'.
+src/lib/agents/technical-operations/typescript-guardian.ts(186,44): error TS18046: 'error' is of type 'unknown'.
+src/lib/agents/technical-operations/typescript-guardian.ts(437,28): error TS18046: 'error' is of type 'unknown'.
+src/lib/agents/technical-operations/typescript-guardian.ts(437,44): error TS18046: 'error' is of type 'unknown'.
+src/lib/ai/aiClient.ts(12,26): error TS2339: Property '__OPENAI_SHIM__' does not exist on type '{}'.
+src/lib/ai/aiClient.ts(60,36): error TS2339: Property 'candidates' does not exist on type '{}'.
+src/lib/ai/aiClient.ts(60,89): error TS18046: 'p' is of type 'unknown'.
+src/lib/ai/aiClient.ts(105,22): error TS2339: Property 'candidates' does not exist on type '{}'.
+src/lib/ai/aiClient.ts(105,75): error TS18046: 'p' is of type 'unknown'.
+src/lib/ai/enhanced-neuroseo-orchestrator.ts(284,24): error TS2339: Property 'summary' does not exist on type '{}'.
+src/lib/ai/enhanced-neuroseo-orchestrator.ts(286,21): error TS2698: Spread types may only be created from object types.
+src/lib/ai/enhanced-neuroseo-orchestrator.ts(287,37): error TS18046: 'merged' is of type 'unknown'.
+src/lib/ai/enhanced-neuroseo-orchestrator.ts(287,73): error TS2339: Property 'summary' does not exist on type '{}'.
+src/lib/ai/enhanced-neuroseo-orchestrator.ts(288,65): error TS18046: 'merged' is of type 'unknown'.
+src/lib/ai/enhanced-neuroseo-orchestrator.ts(288,92): error TS2339: Property 'summary' does not exist on type '{}'.
+src/lib/ai/enhanced-neuroseo-orchestrator.ts(289,36): error TS18046: 'merged' is of type 'unknown'.
+src/lib/ai/enhanced-neuroseo-orchestrator.ts(289,70): error TS2339: Property 'summary' does not exist on type '{}'.
+src/lib/ai/enhanced-neuroseo-orchestrator.ts(304,24): error TS2339: Property 'engines' does not exist on type '{}'.
+src/lib/ai/enhanced-neuroseo-orchestrator.ts(305,35): error TS2339: Property 'engines' does not exist on type '{}'.
+src/lib/ai/enhanced-neuroseo-orchestrator.ts(309,58): error TS2339: Property 'engines' does not exist on type '{}'.
+src/lib/ai/enhanced-neuroseo-orchestrator.ts(331,28): error TS2571: Object is of type 'unknown'.
+src/lib/ai/enhanced-neuroseo-orchestrator.ts(344,21): error TS2571: Object is of type 'unknown'.
+src/lib/ai/enhanced-neuroseo-orchestrator.ts(380,13): error TS2571: Object is of type 'unknown'.
+src/lib/neuroseo/mcp-enhanced.ts(188,32): error TS18046: 'analysisResults' is of type 'unknown'.
+src/lib/neuroseo/mcp-enhanced.ts(189,30): error TS18046: 'analysisResults' is of type 'unknown'.
+src/lib/neuroseo/mcp-enhanced.ts(190,28): error TS18046: 'analysisResults' is of type 'unknown'.
+src/lib/neuroseo/mcp-enhanced.ts(191,35): error TS18046: 'analysisResults' is of type 'unknown'.
+src/lib/server-telemetry.ts(172,11): error TS18046: 'sdkInstance' is of type 'unknown'.
+src/lib/server-telemetry.ts(195,7): error TS18046: 'sdkInstance' is of type 'unknown'.
+src/lib/server-telemetry.ts(211,29): error TS2339: Property 'shutdown' does not exist on type '{}'.
+src/lib/services/accounting-automation-snapshots.ts(26,48): error TS2698: Spread types may only be created from object types.
+src/lib/services/enhanced-dashboard.service.ts(139,61): error TS18046: 'm' is of type 'unknown'.
+src/lib/services/enhanced-dashboard.service.ts(259,13): error TS2571: Object is of type 'unknown'.
+src/lib/services/enhanced-dashboard.service.ts(280,13): error TS2571: Object is of type 'unknown'.
+src/lib/site-ingestion/crawler-ingest.ts(29,133): error TS2322: Type '{}' is not assignable to type 'number'.

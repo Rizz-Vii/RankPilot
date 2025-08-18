@@ -40,10 +40,11 @@ export async function POST(req: NextRequest) {
         // Optional team-aware rate limiting
         try {
             const userDoc = await adminDb.collection('users').doc(uid).get();
-            const teamId = userDoc.exists ? (userDoc.data() as any)?.teamId : undefined;
+            const udata = userDoc.exists ? userDoc.data() as any : undefined;
+            const teamId = typeof udata?.teamId === 'string' ? udata.teamId : undefined;
             if (teamId) {
-                try { await enforceTeamRateLimit(adminDb as any, teamId, { routeKey: 'chat/admin/stream' }); }
-                catch (e: any) {
+                try { await enforceTeamRateLimit(adminDb, teamId, { routeKey: 'chat/admin/stream' }); }
+                catch (e: unknown) {
                     if (e instanceof TeamRateLimitError) {
                         recordRateLimitRejection('chat/admin/stream');
                         recordRateLimitRejection(`team:${teamId}`);
@@ -74,9 +75,9 @@ export async function POST(req: NextRequest) {
         // Minimal circuit breaker (separate for admin stream)
         const now = Date.now();
         // @ts-ignore
-        if (!(global as any).__adminOpenAICB) { (global as any).__adminOpenAICB = { fail: 0, until: 0 }; }
+        if (!(global as unknown).__adminOpenAICB) { (global as unknown).__adminOpenAICB = { fail: 0, until: 0 }; }
         // @ts-ignore
-        const cb = (global as any).__adminOpenAICB as { fail: number; until: number };
+        const cb = (global as unknown).__adminOpenAICB as { fail: number; until: number };
         const circuitOpen = now < cb.until;
         if (provider === 'openai' && circuitOpen) { provider = 'synthetic'; recordFallback('admin_stream:circuit_open'); }
 
@@ -100,7 +101,7 @@ export async function POST(req: NextRequest) {
                                 temperature: 0.2,
                                 max_tokens: 600,
                                 stream: true,
-                            }) as any;
+                            }) as AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>;
                             for await (const part of stream) {
                                 const token = part?.choices?.[0]?.delta?.content;
                                 if (token) {
@@ -151,9 +152,9 @@ export async function POST(req: NextRequest) {
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ final: true, sessionId: currentSessionId, timestamp: new Date().toISOString(), tokensUsed: estimateTokens(fullResponse), provider, provenance: provider === 'openai' ? 'live' : 'synthetic' }, { path: 'chat/admin/stream' }))}\n\n`));
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
-                } catch (e: any) {
+                } catch (e: unknown) {
                     recordError('chat/admin/stream', '5xx_server');
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ error: e?.message || 'stream_error', provenance: 'synthetic' }, { path: 'chat/admin/stream' }))}\n\n`));
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ error: (e as any)?.message || 'stream_error', provenance: 'synthetic' }, { path: 'chat/admin/stream' }))}\n\n`));
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
                 }
@@ -170,9 +171,9 @@ export async function POST(req: NextRequest) {
         });
         recordRouteLatency('chat/admin/stream', Date.now() - start);
         return response;
-    } catch (e: any) {
+    } catch (e: unknown) {
         recordError('chat/admin/stream', '5xx_server');
         recordRouteLatency('chat/admin/stream', Date.now() - start);
-        return NextResponse.json({ error: e?.message || 'Stream init failed' }, { status: 500 });
+        return NextResponse.json({ error: (e as any)?.message || 'Stream init failed' }, { status: 500 });
     }
 }

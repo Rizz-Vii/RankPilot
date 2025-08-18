@@ -26,7 +26,7 @@ async function checkAndIncrementMessageQuota(uid: string, tier: string) {
     const docRef = adminDb.collection('usageCounters').doc(`${uid}_${dateKey}`);
     await adminDb.runTransaction(async (tx) => {
         const snap = await tx.get(docRef);
-        const data = snap.exists ? snap.data() as any : { messages: 0, tokens: 0, tier, date: dateKey };
+        const data = snap.exists ? (snap.data() as any) : { messages: 0, tokens: 0, tier, date: dateKey };
         if (data.messages >= limits.messages) {
             throw new Error('Daily message quota reached');
         }
@@ -46,7 +46,7 @@ async function incrementTokenUsage(uid: string, tier: string, tokens: number) {
     const limits = QUOTA_LIMITS[tier] || QUOTA_LIMITS.free;
     await adminDb.runTransaction(async (tx) => {
         const snap = await tx.get(docRef);
-        const data = snap.exists ? snap.data() as any : { messages: 0, tokens: 0, tier, date: dateKey };
+        const data = snap.exists ? (snap.data() as any) : { messages: 0, tokens: 0, tier, date: dateKey };
         if ((data.tokens || 0) + tokens > limits.tokens) {
             // Mark as capped; still increment up to limit
             const remaining = Math.max(0, limits.tokens - (data.tokens || 0));
@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
         const body = await req.json().catch(() => ({}));
         const { message, sessionId, url, teamId } = body as { message?: string; sessionId?: string; url?: string; teamId?: string };
         if (teamId) {
-            try { await enforceTeamRateLimit(adminDb as any, teamId, { routeKey: 'chat/customer/stream' }); } catch (e: any) {
+            try { await enforceTeamRateLimit(adminDb as any, teamId, { routeKey: 'chat/customer/stream' }); } catch (e: unknown) {
                 if (e instanceof TeamRateLimitError) {
                     recordRateLimitRejection('chat/customer/stream');
                     recordRateLimitRejection(`team:${teamId}`);
@@ -160,10 +160,10 @@ export async function POST(req: NextRequest) {
         } catch { /* ignore */ }
 
         // Enforce daily message quota prior to token spend
-        try { await checkAndIncrementMessageQuota(uid, tier); } catch (qErr: any) {
+        try { await checkAndIncrementMessageQuota(uid, tier); } catch (qErr: unknown) {
             recordError('chat/customer/stream', '4xx_user');
             recordRouteLatency('chat/customer/stream', Date.now() - start);
-            return NextResponse.json({ error: qErr.message || 'Quota exceeded' }, { status: 429 });
+            return NextResponse.json({ error: (qErr as any)?.message || 'Quota exceeded' }, { status: 429 });
         }
 
         // Retrieval augmentation (if embeddings enabled)
@@ -221,14 +221,14 @@ export async function POST(req: NextRequest) {
             ? `${systemPrompt}${combined}\nIntegrate memory + site knowledge + prior dialog context. Avoid redundancy; cite site snippets when used.`
             : systemPrompt;
 
-        let openAIStream: AsyncIterable<any> | null = null;
+        let openAIStream: AsyncIterable<unknown> | null = null;
         let provider: 'openai' | 'gemini' = 'gemini';
         if (openaiKey && !openAICircuitOpen()) {
             const maxAttempts = 3;
             for (let attempt = 0; attempt < maxAttempts; attempt++) {
                 try {
                     const openai = new OpenAI({ apiKey: openaiKey });
-                    openAIStream = await openai.chat.completions.create({
+                    openAIStream = (await openai.chat.completions.create({
                         model: 'gpt-4o-mini',
                         messages: [
                             { role: 'system', content: finalSystemPrompt },
@@ -237,7 +237,7 @@ export async function POST(req: NextRequest) {
                         temperature: 0.2,
                         max_tokens: 800,
                         stream: true,
-                    }) as any;
+                    })) as any;
                     provider = 'openai';
                     recordOpenAISuccess();
                     break;
@@ -271,7 +271,7 @@ export async function POST(req: NextRequest) {
                     // Emit provider info early
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ info: 'provider_selected', provider, openaiCircuitOpen: openAICircuitOpen(), provenance: provider === 'openai' ? 'live' : 'synthetic' }, { path: 'chat/customer/stream' }))}\n\n`));
                     if (openAIStream) {
-                        for await (const part of openAIStream) {
+                        for await (const part of openAIStream as any) {
                             const content = (part as any)?.choices?.[0]?.delta?.content;
                             if (content) {
                                 fullResponse += content;
@@ -332,9 +332,9 @@ export async function POST(req: NextRequest) {
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ final: true, sessionId: currentSessionId, timestamp: new Date().toISOString(), tokensUsed, provider, fallback: provider !== 'openai', openaiCircuitOpen: openAICircuitOpen(), provenance: provider === 'openai' ? 'live' : 'synthetic' }, { path: 'chat/customer/stream' }))}\n\n`));
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
-                } catch (e: any) {
+                } catch (e: unknown) {
                     recordError('chat/customer/stream', '5xx_server');
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ error: e?.message || 'stream_error', providerTried: provider, openaiCircuitOpen: openAICircuitOpen(), provenance: 'synthetic' }, { path: 'chat/customer/stream' }))}\n\n`));
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ error: (e as any)?.message || 'stream_error', providerTried: provider, openaiCircuitOpen: openAICircuitOpen(), provenance: 'synthetic' }, { path: 'chat/customer/stream' }))}\n\n`));
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
                 }
@@ -351,9 +351,9 @@ export async function POST(req: NextRequest) {
         });
         recordRouteLatency('chat/customer/stream', Date.now() - start);
         return response;
-    } catch (e: any) {
+    } catch (e: unknown) {
         recordError('chat/customer/stream', '5xx_server');
         recordRouteLatency('chat/customer/stream', Date.now() - start);
-        return NextResponse.json({ error: e?.message || 'Stream init failed' }, { status: 500 });
+        return NextResponse.json({ error: (e as any)?.message || 'Stream init failed' }, { status: 500 });
     }
 }

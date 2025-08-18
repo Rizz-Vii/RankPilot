@@ -60,7 +60,7 @@ import {
   ResponsiveContainer,
   Tooltip
 } from "recharts";
-import { useNeuroSeoStream } from '@/lib/neuroseo/useNeuroSeoStream';
+import { useNeuroSeoStream, type NeuroSeoStreamSummary } from '@/lib/neuroseo/useNeuroSeoStream';
 import { XCircle, Play } from 'lucide-react';
 
 // Streaming wrapper component (NEU-01 UI)
@@ -99,8 +99,12 @@ export function NeuroSEOStreamingRunner({ urls, analysisType = 'comprehensive' }
   {error && <div className="text-xs text-destructive">Error: {error}</div>}
         {summary && (
           <div className="text-xs bg-muted p-2 rounded border">
-            <div>Overall Score: <span className="font-semibold">{summary.overallScore}</span></div>
-            <div>Duration: {summary.duration}ms</div>
+            {'overallScore' in summary && (
+              <div>Overall Score: <span className="font-semibold">{(summary as NeuroSeoStreamSummary).overallScore}</span></div>
+            )}
+            {'duration' in summary && (
+              <div>Duration: {(summary as NeuroSeoStreamSummary).duration}ms</div>
+            )}
           </div>
         )}
         <div className="max-h-40 overflow-auto text-[10px] font-mono bg-slate-50 border rounded p-2">
@@ -328,12 +332,13 @@ export function NeuroSEOEngineOverview({ report }: { report: NeuroSEOReport; }) 
 
 // Enhanced insights visualization
 export function NeuroSEOInsightsPanel({ insights }: { insights: KeyInsight[]; }) {
-  const impactColors = {
-    critical: "destructive",
-    high: "orange",
-    medium: "yellow",
-    low: "secondary",
-  };
+  // Map impacts to existing badge variants (warning/success/destructive/secondary/outline)
+  const impactColors: Record<KeyInsight['impact'], import('../ui/badge').BadgeProps['variant']> = {
+    critical: 'destructive',
+    high: 'warning',
+    medium: 'secondary',
+    low: 'outline'
+  } as const;
 
   const categoryIcons = {
     seo: Search,
@@ -372,7 +377,7 @@ export function NeuroSEOInsightsPanel({ insights }: { insights: KeyInsight[]; })
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <h4 className="font-semibold">{insight.title}</h4>
-                          <Badge variant={impactColors[insight.impact] as any}>
+                          <Badge variant={impactColors[insight.impact] ?? 'secondary'}>
                             {insight.impact}
                           </Badge>
                           <Badge variant="outline" className="text-xs">
@@ -422,12 +427,12 @@ export function NeuroSEOInsightsPanel({ insights }: { insights: KeyInsight[]; })
 export function NeuroSEOActionableTasks({ tasks }: { tasks: ActionableTask[]; }) {
   const [filter, setFilter] = useState<string>("all");
 
-  const priorityColors = {
-    urgent: "destructive",
-    high: "orange",
-    medium: "yellow",
-    low: "secondary",
-  };
+  const priorityColors: Record<ActionableTask['priority'], import('../ui/badge').BadgeProps['variant']> = {
+    urgent: 'destructive',
+    high: 'warning',
+    medium: 'secondary',
+    low: 'outline'
+  } as const;
 
   const filteredTasks = filter === "all"
     ? tasks
@@ -469,7 +474,7 @@ export function NeuroSEOActionableTasks({ tasks }: { tasks: ActionableTask[]; })
                 <CardContent className="pt-4">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <Badge variant={priorityColors[task.priority] as any}>
+                      <Badge variant={priorityColors[task.priority] ?? 'secondary'}>
                         {task.priority}
                       </Badge>
                       <Badge variant="outline">{task.category}</Badge>

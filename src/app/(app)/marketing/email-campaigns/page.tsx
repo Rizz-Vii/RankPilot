@@ -61,12 +61,15 @@ export default function EmailCampaignsPage() {
   const [months, setMonths] = useState(6);
   const live = useMarketingCampaignMetrics(months);
   const mock = getMockMetrics('marketing');
-  const data = (live.kpis.length ? live : { kpis: mock.kpis, rows: [], loading: false }) as any;
+  interface MarketingMetric { key: string; label: string; value: number; delta: number; trend: number[]; intent?: string }
+  interface MarketingQuota { key: string; label: string; used: number; limit: number }
+  interface MarketingLive { kpis: MarketingMetric[]; rows: any[]; loading: boolean; addOptimistic: (row: any)=>void; quotas?: MarketingQuota[] }
+  const data: MarketingLive = (live.kpis.length ? live : { kpis: mock.kpis, rows: [], loading: false, addOptimistic: live.addOptimistic }) as MarketingLive;
   useEffect(() => { trackDashboardView('marketing'); }, []);
   const { toast } = useToast();
   const { user } = useAuth();
   const userId = user?.uid || 'dev-user';
-  const teamId = (user as any)?.teamId;
+  const teamId = (user as any)?.teamId as string | undefined;
   const [campOpen,setCampOpen]=useState(false);
   const [varOpen,setVarOpen]=useState(false);
   const [busy,setBusy]=useState<string|null>(null);
@@ -75,9 +78,26 @@ export default function EmailCampaignsPage() {
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(() => { if(live.loading) return; if(live.kpis.length) markLive(); else markFallback(); }, [live.loading, live.kpis, markLive, markFallback]);
 
-  async function handleCreate(subject:string,audience:number,body:string,when?:Date){
-  try{ setBusy('create'); live.addOptimistic({ id:'temp-'+Date.now(), name: subject.slice(0,60), channel:'email', impressions:0, clicks:0, leads:0, __provenance:'optimistic' }); const res= await createEmailCampaign({ subject, audience, userId, teamId, sendAt: when }); toast({ title:'Campaign created', description:`Impr: ${res.impressions} Leads:${res.leads}`}); setLastSubject(subject); setCampOpen(false);}catch(e:any){ toast({ title:'Create failed', description:e.message||'Unknown error', variant:'destructive'});} finally{ setBusy(null);} }
-  async function handleOptimize(){ try{ setBusy('opt'); const rec = await suggestSendTime(userId, teamId); setSendTime(`${rec.hour}:00`); toast({ title:'Optimal time', description:`Recommend ${rec.hour}:00`}); }catch(e:any){ toast({ title:'Optimization failed', description:e.message||'Unknown error', variant:'destructive'});} finally{ setBusy(null);} }
+  async function handleCreate(subject:string,audience:number,_body:string,when?:Date){
+    try {
+      setBusy('create');
+      live.addOptimistic({ id:'temp-'+Date.now(), period: new Date().toISOString().slice(0,7), name: subject.slice(0,60), channel:'email', impressions:0, clicks:0, leads:0, __provenance:'optimistic' } as any);
+      const res= await createEmailCampaign({ subject, audience, userId, teamId, sendAt: when });
+      toast({ title:'Campaign created', description:`Impr: ${res.impressions} Leads:${res.leads}`});
+      setLastSubject(subject); setCampOpen(false);
+    } catch(e: unknown) {
+      const err = (e as any);
+      toast({ title:'Create failed', description: err?.message || 'Unknown error', variant:'destructive'});
+    } finally { setBusy(null);} }
+  async function handleOptimize(){
+    try { setBusy('opt');
+      const rec = await suggestSendTime(userId, teamId);
+      setSendTime(`${rec.hour}:00`);
+      toast({ title:'Optimal time', description:`Recommend ${rec.hour}:00`});
+    } catch(e: unknown) {
+      const err = (e as any);
+      toast({ title:'Optimization failed', description: err?.message || 'Unknown error', variant:'destructive'});
+    } finally { setBusy(null);} }
   function openVariants(){ setVarOpen(true); }
   return (
     <FeatureGate feature="marketing_email_campaigns" requiredTier="enterprise" showUpgrade>
@@ -89,8 +109,8 @@ export default function EmailCampaignsPage() {
         </header>
   <ProvenanceLegend />
         <section className="grid gap-4 md:grid-cols-4">
-          {data.kpis.map((k:any) => (
-            <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
+          {data.kpis.map((k) => (
+            <MetricCard key={k.key} label={k.label} value={Number(k.value).toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={(k.intent ?? 'neutral') as 'neutral' | 'success' | 'warning' | 'danger' | 'accent'} />
           ))}
         </section>
         <section className="space-y-3">
@@ -106,7 +126,7 @@ export default function EmailCampaignsPage() {
           <section className="space-y-4">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Usage & Quotas</h2>
             <div className="grid gap-4 md:grid-cols-3">
-              {data.quotas.map((q: any) => (
+              {data.quotas.map((q) => (
                 <div key={q.key} className="rounded-xl border p-4 space-y-3">
                   <div className="flex items-center justify-between text-sm font-medium">
                     <span>{q.label}</span>

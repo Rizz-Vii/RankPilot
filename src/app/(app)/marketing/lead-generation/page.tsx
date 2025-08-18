@@ -40,7 +40,9 @@ export default function LeadGenerationPage() {
   const [months, setMonths] = useState(6);
   const live = useMarketingCampaignMetrics(months);
   const mock = getMockMetrics('marketing');
-  const data = (live.kpis.length ? live : { kpis: mock.kpis, rows: [], loading:false }) as any;
+  interface MarketingMetric { key: string; label: string; value: number; delta: number; trend: number[]; intent?: string }
+  interface MarketingLive { kpis: MarketingMetric[]; rows: any[]; loading: boolean; addOptimistic?: (row: any)=>void }
+  const data: MarketingLive = (live.kpis.length ? live : { kpis: mock.kpis, rows: [], loading:false, addOptimistic: live.addOptimistic }) as MarketingLive;
   useEffect(() => { trackDashboardView('marketing'); }, []);
   const { toast } = useToast();
   // Auth scoping placeholder – assume hook exists globally. Fallback to anon if not present.
@@ -58,26 +60,26 @@ export default function LeadGenerationPage() {
       // optimistic synthetic row (approx leads count estimated by lines)
       const est = raw.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).length;
       if(est){
-  live.addOptimistic({ name: `Lead Import (${est})`, channel:'lead-gen', impressions:0, clicks:0, leads: est, spend:0, revenue:0, __provenance:'optimistic' });
+        live.addOptimistic({ id: `tmp-${Date.now()}`, period: new Date().toISOString().slice(0,7), name: `Lead Import (${est})`, channel:'lead-gen', impressions:0, clicks:0, leads: est, spend:0, revenue:0, __provenance:'optimistic' } as any);
       }
       await countPromise;
       toast({ title:'Leads imported', description:'Your leads were added and will appear in metrics shortly.' });
       setImportOpen(false);
-    }catch(e:any){ toast({ title:'Import failed', description:e.message || 'Unknown error', variant:'destructive' }); }
+    }catch(e:unknown){ toast({ title:'Import failed', description:(e instanceof Error ? e.message : String(e)) || 'Unknown error', variant:'destructive' }); }
     finally{ setBusy(null); }
   }
   async function handleScore(){
     try{ setBusy('score');
-  live.addOptimistic({ name: 'Lead Score', channel:'lead-gen', impressions:0, clicks:0, leads:0, spend:0, revenue:0, __provenance:'optimistic' });
+      live.addOptimistic({ id: `tmp-${Date.now()}`, period: new Date().toISOString().slice(0,7), name: 'Lead Score', channel:'lead-gen', impressions:0, clicks:0, leads:0, spend:0, revenue:0, __provenance:'optimistic' } as any);
       const res = await scoreLeads(userId, teamId); toast({ title:'Scoring complete', description:`Updated ${res.updated} leads.` }); }
-    catch(e:any){ toast({ title:'Scoring failed', description:e.message || 'Unknown error', variant:'destructive' }); }
+    catch(e:unknown){ toast({ title:'Scoring failed', description:(e instanceof Error ? e.message : String(e)) || 'Unknown error', variant:'destructive' }); }
     finally{ setBusy(null); }
   }
   async function handleRoute(){
     try{ setBusy('route');
-  live.addOptimistic({ name: 'Lead Route', channel:'lead-gen', impressions:0, clicks:0, leads:0, spend:0, revenue:0, __provenance:'optimistic' });
+      live.addOptimistic({ id: `tmp-${Date.now()}`, period: new Date().toISOString().slice(0,7), name: 'Lead Route', channel:'lead-gen', impressions:0, clicks:0, leads:0, spend:0, revenue:0, __provenance:'optimistic' } as any);
       const res = await routeLeads(userId, teamId); toast({ title:'Routing complete', description:`Routed ${res.routed} leads.` }); }
-    catch(e:any){ toast({ title:'Routing failed', description:e.message || 'Unknown error', variant:'destructive' }); }
+    catch(e:unknown){ toast({ title:'Routing failed', description:(e instanceof Error ? e.message : String(e)) || 'Unknown error', variant:'destructive' }); }
     finally{ setBusy(null); }
   }
   return (
@@ -90,8 +92,16 @@ export default function LeadGenerationPage() {
         </header>
   <ProvenanceLegend />
         <section className="grid gap-4 md:grid-cols-4">
-          {data.kpis.map((k:any) => (
-            <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
+          {data.kpis.map((k) => (
+            <MetricCard
+              key={k.key}
+              label={k.label}
+              value={k.value.toLocaleString()}
+              delta={k.delta}
+              deltaLabel="vs last period"
+              trend={<TrendSparkline data={k.trend} />}
+              intent={(k.intent ?? 'neutral') as 'neutral'|'success'|'warning'|'danger'|'accent'}
+            />
           ))}
         </section>
         <section className="space-y-3">

@@ -431,7 +431,8 @@ class DashboardDataService {
         }
       },
       (err) => {
-        if ((err as any)?.code === 'permission-denied') {
+        const e = err as { code?: string };
+        if (e.code === 'permission-denied') {
           console.warn('[DashboardData] permission-denied for neuroSeoAnalyses subscription; providing fallback data');
           callback(this.getFallbackData());
         } else {

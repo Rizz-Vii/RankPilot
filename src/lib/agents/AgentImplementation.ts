@@ -5,6 +5,7 @@
 import { businessOperationsOrchestrator } from './business-operations/BusinessOperationsOrchestrator';
 import { AgentSystemBootstrap } from './core/AgentFramework';
 import { customerSupportOrchestrator } from './customer-support/CustomerSupportOrchestrator';
+import type { SupportTicket } from './customer-support/CustomerSupportOrchestrator';
 import { technicalOperationsOrchestrator } from './technical-operations/TechnicalOperationsOrchestrator';
 
 /**
@@ -101,7 +102,7 @@ export class RankPilotAgentSystem {
         description: string;
         category: string;
         priority: 'critical' | 'high' | 'medium' | 'low';
-        tier: any;
+        tier: SupportTicket['tier'];
     }): Promise<string> {
         console.log('📋 Creating support ticket through Customer Support Orchestrator...');
         return await customerSupportOrchestrator.createSupportTicket(ticketData);
@@ -171,7 +172,7 @@ export async function activateRankPilotAgents(): Promise<boolean> {
 export const AGENT_USAGE_EXAMPLES = {
     customerSupport: {
         createTicket: `
-      const ticketId = await rankPilotAgentSystem.createSupportTicket({
+
         customerId: 'user_123',
         customerEmail: 'user@example.com',
         subject: 'SEO Analysis Not Working',

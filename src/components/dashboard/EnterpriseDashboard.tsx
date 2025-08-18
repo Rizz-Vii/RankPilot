@@ -73,7 +73,7 @@ interface DashboardMetrics {
 }
 
 // Use design token driven chart colors instead of hardcoded hex values
-const CHART_COLORS = [
+const chartColors = [
     'hsl(var(--chart-1))',
     'hsl(var(--chart-2))',
     'hsl(var(--chart-3))',

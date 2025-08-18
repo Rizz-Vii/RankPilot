@@ -24,16 +24,22 @@ if (!getApps().length) {
     }
 }
 
+import type { DashboardWidget } from '@/lib/dashboard/custom-dashboard-builder';
+import { sanitizeWidgetCreate, sanitizeWidgetMutation, type WidgetCreateInput, type WidgetMutation } from '@/types/dashboard-widget-mutation';
+
+type WidgetPosition = { x: number; y: number; width: number; height: number; };
+interface WidgetUpdateInput extends WidgetMutation { widgetId: string; }
+
 interface DashboardRequestBody {
     action: 'create' | 'update' | 'delete' | 'export' | 'share' | 'duplicate';
     dashboardId?: string;
     name?: string;
     templateId?: string;
-    widgetConfig?: any;
-    position?: { x: number; y: number; width: number; height: number; };
-    updates?: any;
+    widgetConfig?: WidgetCreateInput;
+    position?: WidgetPosition;
+    updates?: WidgetUpdateInput;
     exportFormat?: 'pdf' | 'excel' | 'json';
-    exportOptions?: any;
+    exportOptions?: { includeData?: boolean; dateRange?: { start: string; end: string }; branding?: Record<string, unknown> };
     collaborators?: Array<{ userId: string; role: 'viewer' | 'editor'; }>;
     isPublic?: boolean;
 }
@@ -69,10 +75,13 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
                     return NextResponse.json(enforceProvenance({ error: 'Dashboard ID is required' }, { path: 'dashboard/custom', note: 'validation' }), { status: 400 });
                 }
                 if (body.widgetConfig && body.position) {
-                    const widget = await customDashboardBuilder.addWidget(body.dashboardId, body.widgetConfig, body.position);
+                    const sanitized = sanitizeWidgetCreate(body.widgetConfig);
+                    const widget = await customDashboardBuilder.addWidget(body.dashboardId, sanitized as any, body.position);
                     return NextResponse.json(enforceProvenance({ success: true, widget, message: 'Widget added successfully' }, { path: 'dashboard/custom', note: 'add_widget' }));
-                } else if (body.updates) {
-                    const result = await customDashboardBuilder.updateWidget(body.dashboardId, body.updates.widgetId, body.updates);
+                } else if (body.updates?.widgetId) {
+                    const { widgetId, ...rest } = body.updates;
+                    const sanitized = sanitizeWidgetMutation(rest);
+                    const result = await customDashboardBuilder.updateWidget(body.dashboardId, widgetId, sanitized as any);
                     return NextResponse.json(enforceProvenance({ success: true, widget: result, message: 'Widget updated successfully' }, { path: 'dashboard/custom', note: 'update_widget' }));
                 }
                 return NextResponse.json(enforceProvenance({ error: 'Invalid update request' }, { path: 'dashboard/custom', note: 'invalid_update' }), { status: 400 });

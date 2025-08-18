@@ -131,7 +131,8 @@ export default function TeamProjectsPage() {
       if (!tSnap.empty) setTeamId(tSnap.docs[0].id);
       else {
         const uSnap = await getDoc(doc(db, 'users', user.uid));
-        const tId = uSnap.exists() ? (uSnap.data() as any)?.teamId : (user as any)?.teamId;
+        const uData = uSnap.exists() ? (uSnap.data() as any) : undefined;
+        const tId = typeof uData?.teamId === 'string' ? uData.teamId : (user as any)?.teamId;
         if (typeof tId === 'string') setTeamId(tId);
       }
     })();

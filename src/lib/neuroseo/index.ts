@@ -22,6 +22,11 @@ import { SemanticMap, type SemanticAnalysisResult } from "./semantic-map";
 import { TrustBlockEngine, type TrustReport } from "./trust-block";
 import { recordSubtoolRun } from "@/lib/metrics/ai-usage";
 
+// Canonical collections & sampling constants (colocated for clarity)
+const CANONICAL_COLLECTION = 'neuroSeoAnalyses';
+const LEGACY_COLLECTIONS = ['neuroseo-analyses'];
+const AGGREGATION_SAMPLE_LIMIT = 50; // bounded for performance
+
 export interface NeuroSEOAnalysisRequest {
   urls: string[];
   targetKeywords: string[];
@@ -173,7 +178,7 @@ export class NeuroSEOSuite {
     this.visibilityEngine = new AIVisibilityEngine();
     this.trustEngine = new TrustBlockEngine();
     this.rewriteEngine = new RewriteGenEngine();
-    this.quotaManager = quotaManagerFactory() as any;
+    this.quotaManager = quotaManagerFactory();
   }
 
   async runAnalysis(request: NeuroSEOAnalysisRequest): Promise<NeuroSEOReport> {
@@ -194,7 +199,7 @@ export class NeuroSEOSuite {
     // Graceful degradation: if quota cannot be verified (e.g., server-side Firestore client SDK issues), proceed with a permissive stub
     if (!quotaCheck.allowed && /Unable to verify usage quota/i.test(quotaCheck.reason || '')) {
       logger.degraded('quota.verification.degraded', { reason: quotaCheck.reason });
-      quotaCheck = { ...quotaCheck, allowed: true, remainingQuota: quotaCheck.remainingQuota ?? 1, remaining: quotaCheck.remaining ?? 1, limit: quotaCheck.limit || 0 } as any;
+      quotaCheck = { ...quotaCheck, allowed: true, remainingQuota: quotaCheck.remainingQuota ?? 1, remaining: quotaCheck.remaining ?? 1, limit: quotaCheck.limit || 0 } as UsageCheck;
     } else if (!quotaCheck.allowed) {
       throw new Error(`Quota exceeded: ${quotaCheck.reason}`);
     }
@@ -313,20 +318,25 @@ export class NeuroSEOSuite {
           overallScore: append(historical.overallScore, report.overallScore)
         };
       } catch (e) {
-        logger.degraded('trend.assembly.degraded', { error: (e as any)?.message });
+        const trendErr = (e as any && typeof (e as any).message === 'string') ? (e as any).message : 'trend-assembly-failed';
+        logger.degraded('trend.assembly.degraded', { error: trendErr });
       }
 
       // Attach schema version for downstream validation & migrations
       (report as any).schemaVersion = SCHEMA_VERSION;
 
       // Persist report (best-effort, non-blocking failure)
-      this.persistReport(report).catch(e => logger.degraded('persistence.failed', { error: (e as any)?.message }));
+      this.persistReport(report).catch(e => {
+        const msg = (e as any && typeof (e as any).message === 'string') ? (e as any).message : 'persist-failed';
+        logger.degraded('persistence.failed', { error: msg });
+      });
       logger.info('analysis.complete', { overallScore: report.overallScore, crawlResults: report.crawlResults.length });
       NeuroSEOSuite.analysisCache.set(cacheKey, { timestamp: Date.now(), report });
       return report;
     } catch (error) {
-      logger.error('analysis.failed', { error: (error as any)?.message });
-      throw error;
+      const msg = (error as any && typeof (error as any).message === 'string') ? (error as any).message : 'analysis-failed';
+      logger.error('analysis.failed', { error: msg });
+      throw error as Error;
     }
   }
 
@@ -344,7 +354,7 @@ export class NeuroSEOSuite {
         });
         crawlResults.push(crawlReport);
       } catch (error) {
-        getLogger('neuroseo-suite').warn('phase.crawl.item.failed', { url, error: (error as any)?.message });
+        getLogger('neuroseo-suite').warn('phase.crawl.item.failed', { url, error: (error as Error)?.message });
       }
     }
 
@@ -364,20 +374,20 @@ export class NeuroSEOSuite {
         competitorData = await this.fetchCompetitorContents(competitorUrls.slice(0, 5)); // limit to 5 for performance
         this.lastCompetitorContents = competitorData;
       } catch (e) {
-        getLogger('neuroseo-suite').warn('phase.semantic.competitor.fetch.failed', { error: (e as any)?.message });
+        getLogger('neuroseo-suite').warn('phase.semantic.competitor.fetch.failed', { error: (e as Error)?.message });
       }
     }
     for (const crawlResult of crawlResults) {
       try {
         const semanticReport = await this.semanticEngine.analyzeContent(
-          (crawlResult as any).content || '',
+          crawlResult.content || '',
           crawlResult.title || 'Untitled',
           targetKeywords,
           competitorData
         );
         semanticResults.push(semanticReport);
       } catch (error) {
-        getLogger('neuroseo-suite').warn('phase.semantic.item.failed', { url: crawlResult.url, error: (error as any)?.message });
+        getLogger('neuroseo-suite').warn('phase.semantic.item.failed', { url: crawlResult.url, error: (error as Error)?.message });
       }
     }
     return semanticResults;
@@ -399,7 +409,7 @@ export class NeuroSEOSuite {
         );
         visibilityResults.push(visibilityReport);
       } catch (error) {
-        getLogger('neuroseo-suite').warn('phase.visibility.item.failed', { url, error: (error as any)?.message });
+        getLogger('neuroseo-suite').warn('phase.visibility.item.failed', { url, error: (error as Error)?.message });
       }
     }
 
@@ -422,7 +432,7 @@ export class NeuroSEOSuite {
         );
         trustResults.push(trustReport);
       } catch (error) {
-        getLogger('neuroseo-suite').warn('phase.trust.item.failed', { url: crawlResult.url, error: (error as any)?.message });
+        getLogger('neuroseo-suite').warn('phase.trust.item.failed', { url: crawlResult.url, error: (error as Error)?.message });
       }
     }
 
@@ -480,7 +490,7 @@ export class NeuroSEOSuite {
           await this.rewriteEngine.generateRewrites(rewriteRequest);
         rewriteResults.push(rewriteAnalysis);
       } catch (error) {
-        getLogger('neuroseo-suite').warn('phase.rewrite.item.failed', { url: crawlResult.url, error: (error as any)?.message });
+        getLogger('neuroseo-suite').warn('phase.rewrite.item.failed', { url: crawlResult.url, error: (error as Error)?.message });
       }
     }
 
@@ -526,7 +536,7 @@ export class NeuroSEOSuite {
         positioning.keywordGap = this.computeKeywordGap(report, this.lastCompetitorContents);
       }
     } catch (e) {
-      getLogger('neuroseo-suite').degraded('phase.competitive.keywordGap.failed', { error: (e as any)?.message });
+      getLogger('neuroseo-suite').degraded('phase.competitive.keywordGap.failed', { error: (e as Error)?.message });
     }
 
     return positioning;
@@ -537,7 +547,7 @@ export class NeuroSEOSuite {
     competitorContents: Array<{ url: string; content: string; }>
   ): CompetitivePositioning['keywordGap'] {
     const tokenize = (txt: string) => (txt.toLowerCase().match(/[a-z]{4,18}/g) || []);
-    const ourText = report.crawlResults.map(r => (r as any).content || '').join(' ');
+    const ourText = report.crawlResults.map(r => r.content || '').join(' ');
     const ourTokens = tokenize(ourText);
     const ourSet = new Set(ourTokens);
 
@@ -603,7 +613,7 @@ export class NeuroSEOSuite {
     if (report.crawlResults.length === 0) return 0;
     return Math.round(
       report.crawlResults.reduce(
-        (sum, result) => sum + ((result as any).seoMetrics?.overallScore || 0),
+        (sum, result) => sum + (result.seoMetrics?.overallScore || 0),
         0
       ) / report.crawlResults.length
     );
@@ -630,16 +640,16 @@ export class NeuroSEOSuite {
   }
 
   private calculateAverageSemanticScore(report: NeuroSEOReport): number {
-    if ((report as any).semanticAnalysis?.length === 0) return 0;
+    if (!report.semanticAnalysis.length) return 0;
     return Math.round(
-      (report as any).semanticAnalysis?.reduce(
-        (sum: number, result: any) => sum + result.overallRelevanceScore,
+      report.semanticAnalysis.reduce(
+        (sum, result) => sum + (result.overallRelevanceScore || 0),
         0
-      ) / (report as any).semanticAnalysis?.length || 0
+      ) / report.semanticAnalysis.length
     );
   }
 
-  private identifyStrengths(ourScores: any, competitorScores: any[]): string[] {
+  private identifyStrengths(ourScores: { seo: number; visibility: number; trust: number; semantic: number; }, competitorScores: Array<{ seo: number; visibility: number; trust: number; semantic: number; }>): string[] {
     const strengths: string[] = [];
     const avgCompetitorSEO =
       competitorScores.reduce((sum, comp) => sum + comp.seo, 0) /
@@ -663,8 +673,8 @@ export class NeuroSEOSuite {
   }
 
   private identifyWeaknesses(
-    ourScores: any,
-    competitorScores: any[]
+    ourScores: { seo: number; visibility: number; trust: number; semantic: number; },
+    competitorScores: Array<{ seo: number; visibility: number; trust: number; semantic: number; }>
   ): string[] {
     const weaknesses: string[] = [];
     const avgCompetitorSEO =
@@ -719,7 +729,7 @@ export class NeuroSEOSuite {
     return opportunities;
   }
 
-  private identifyThreats(competitorScores: any[]): string[] {
+  private identifyThreats(competitorScores: Array<{ seo: number; visibility: number; trust: number; semantic: number; }>): string[] {
     const threats: string[] = [];
 
     const strongCompetitors = competitorScores.filter(
@@ -741,8 +751,8 @@ export class NeuroSEOSuite {
   }
 
   private generateCompetitiveRecommendations(
-    ourScores: any,
-    competitorScores: any[]
+    ourScores: { seo: number; visibility: number; trust: number; semantic: number; },
+    competitorScores: Array<{ seo: number; visibility: number; trust: number; semantic: number; }>
   ): string[] {
     const recommendations: string[] = [];
 
@@ -990,9 +1000,10 @@ export class NeuroSEOSuite {
     // Phase 2 measured adjustments: penalize canonical mismatch & very low word count pages
     let technicalPenalty = 0;
     try {
+      interface CrawlResultLike { technicalData?: { canonicalMismatch?: boolean; wordCount?: number }; }
       const crawlCount = report.crawlResults.length || 1;
-      const mismatches = report.crawlResults.filter(r => (r as any).technicalData?.canonicalMismatch).length;
-      const avgWordCount = report.crawlResults.reduce((s, r) => s + ((r as any).technicalData?.wordCount || 0), 0) / crawlCount;
+      const mismatches = report.crawlResults.filter(r => (r as CrawlResultLike).technicalData?.canonicalMismatch).length;
+      const avgWordCount = report.crawlResults.reduce((s, r) => s + (((r as CrawlResultLike).technicalData?.wordCount) || 0), 0) / crawlCount;
       if (mismatches > 0) technicalPenalty += Math.min(10, mismatches * 2); // up to -10
       if (avgWordCount < 400) technicalPenalty += 8; // thin content penalty
       else if (avgWordCount < 700) technicalPenalty += 4;
@@ -1011,7 +1022,7 @@ export class NeuroSEOSuite {
   }
 
   // Public method to get usage statistics
-  async getUsageStats(userId: string): Promise<any> {
+  async getUsageStats(userId: string): Promise<unknown> {
     return await this.quotaManager.getUsageStats(userId);
   }
 
@@ -1032,8 +1043,8 @@ export class NeuroSEOSuite {
   private computeEngagementAnalysis(crawlResults: CrawlResult[]): NeuroSEOReport['engagementAnalysis'] {
     const analysis: Required<NonNullable<NeuroSEOReport['engagementAnalysis']>> = [];
     for (const c of crawlResults) {
-      const tech: any = (c as any).technicalData || {};
-      const authorship: any = (c as any).authorshipSignals || {};
+      const tech = ((c as any).technicalData || {}) as { loadTime?: number; wordCount?: number; canonicalMismatch?: boolean };
+      const authorship = ((c as any).authorshipSignals || {}) as { hasAuthorBio?: boolean; socialLinks?: unknown[] };
       const factors: string[] = [];
       // Engagement heuristics
       const wordCount = tech.wordCount || 0;
@@ -1051,7 +1062,7 @@ export class NeuroSEOSuite {
       if (tech.canonicalMismatch) { score -= 4; factors.push('CanonicalMismatch'); }
       score = Math.max(0, Math.min(100, score));
       // Lead potential: rely on authorship + depth + entity count if available
-      const entityCount = ((c as any).semanticClassification?.keyEntities || []).length;
+      const entityCount = (((c as any).semanticClassification?.keyEntities) || []).length;
       let leadPotential = 50 + Math.min(25, Math.floor(entityCount * 2.5));
       if (wordCount > 1200) leadPotential += 10;
       if (authorship.hasAuthorBio) leadPotential += 5;
@@ -1125,7 +1136,7 @@ export class NeuroSEOSuite {
         avgSemantic: Math.round(semTotal / count),
       };
     } catch (e) {
-      getLogger('neuroseo-suite').degraded('corpus.stats.fallback', { error: (e as any)?.message });
+      getLogger('neuroseo-suite').degraded('corpus.stats.fallback', { error: (e as Error)?.message });
       return { avgSeo: 72, avgVisibility: 55, avgTrust: 78, avgSemantic: 64 };
     }
   }
@@ -1133,7 +1144,7 @@ export class NeuroSEOSuite {
   // --- Persistence & Aggregation Helpers -------------------------------------------------
   private async persistReport(report: NeuroSEOReport): Promise<void> {
     try {
-      const doc: any = {
+      const doc: unknown = {
         userId: report.request.userId,
         createdAt: FieldValue.serverTimestamp(),
         urls: report.request.urls,
@@ -1146,9 +1157,9 @@ export class NeuroSEOSuite {
         trustAvg: this.calculateAverageTrustScore(report),
         semanticAvg: this.calculateAverageSemanticScore(report),
         engagementAvg: this.calculateAverageEngagementScore(report),
-        avgLoadTime: Math.round((report.crawlResults.reduce((s, r) => s + ((r as any).technicalData?.loadTime || 0), 0) / (report.crawlResults.length || 1)) || 0),
-        avgWordCount: Math.round((report.crawlResults.reduce((s, r) => s + ((r as any).technicalData?.wordCount || 0), 0) / (report.crawlResults.length || 1)) || 0),
-        canonicalMismatchCount: report.crawlResults.filter(r => (r as any).technicalData?.canonicalMismatch).length,
+        avgLoadTime: Math.round((report.crawlResults.reduce((s, r) => s + (r.technicalData?.loadTime || 0), 0) / (report.crawlResults.length || 1)) || 0),
+        avgWordCount: Math.round((report.crawlResults.reduce((s, r) => s + (r.technicalData?.wordCount || 0), 0) / (report.crawlResults.length || 1)) || 0),
+        canonicalMismatchCount: report.crawlResults.filter(r => r.technicalData?.canonicalMismatch).length,
         keyInsights: report.keyInsights.slice(0, 25),
         actionableTasks: report.actionableTasks.slice(0, 50),
         competitive: report.competitivePositioning || null,
@@ -1160,10 +1171,11 @@ export class NeuroSEOSuite {
         semanticResultCount: report.semanticAnalysis.length,
         trends: report.trends || null,
       };
-      await adminDb.collection(CANONICAL_COLLECTION).doc(report.id).set(doc, { merge: true });
+      await adminDb.collection(CANONICAL_COLLECTION).doc(report.id).set(doc as any, { merge: true });
       // Optional: legacy mirror (omit for now to reduce writes) -> can be enabled if needed
     } catch (e) {
-      getLogger('neuroseo-suite').degraded('persistence.report.failed', { error: (e as any)?.message });
+      const msg = (e as any && typeof (e as any).message === 'string') ? (e as any).message : 'persist-failed';
+      getLogger('neuroseo-suite').degraded('persistence.report.failed', { error: msg });
     }
   }
 
@@ -1177,11 +1189,11 @@ export class NeuroSEOSuite {
       const seoAvg: number[] = [], visibilityAvg: number[] = [], trustAvg: number[] = [], engagementAvg: number[] = [], overallScore: number[] = [];
       snap.forEach(d => {
         const data: any = d.data();
-        if (typeof data.seoAvg === 'number') seoAvg.push(data.seoAvg);
-        if (typeof data.visibilityAvg === 'number') visibilityAvg.push(data.visibilityAvg);
-        if (typeof data.trustAvg === 'number') trustAvg.push(data.trustAvg);
-        if (typeof data.engagementAvg === 'number') engagementAvg.push(data.engagementAvg);
-        if (typeof data.overallScore === 'number') overallScore.push(data.overallScore);
+        if (typeof data?.seoAvg === 'number') seoAvg.push(data.seoAvg);
+        if (typeof data?.visibilityAvg === 'number') visibilityAvg.push(data.visibilityAvg);
+        if (typeof data?.trustAvg === 'number') trustAvg.push(data.trustAvg);
+        if (typeof data?.engagementAvg === 'number') engagementAvg.push(data.engagementAvg);
+        if (typeof data?.overallScore === 'number') overallScore.push(data.overallScore);
       });
       return { seoAvg: seoAvg.reverse(), visibilityAvg: visibilityAvg.reverse(), trustAvg: trustAvg.reverse(), engagementAvg: engagementAvg.reverse(), overallScore: overallScore.reverse() };
     } catch (e) {
@@ -1198,9 +1210,10 @@ export class NeuroSEOSuite {
         const current = urls[index++];
         try {
           const crawl = await this.neuralCrawler.crawl(current, { includeImages: false, followRedirects: true, extractSchema: false, analyzeAuthorship: false, timeout: 20000 });
-          results.push({ url: current, content: (crawl as any).content || '' });
+          results.push({ url: current, content: crawl.content || '' });
         } catch (e) {
-          getLogger('neuroseo-suite').warn('phase.semantic.competitor.single.failed', { url: current, error: (e as any)?.message });
+          const msg = (e as any && typeof (e as any).message === 'string') ? (e as any).message : 'crawl-failed';
+          getLogger('neuroseo-suite').warn('phase.semantic.competitor.single.failed', { url: current, error: msg });
         }
       }
     };
@@ -1264,8 +1277,3 @@ export const NeuroSEOReportSchema = z.object({
     overallScore: z.array(z.number()).optional(),
   }).optional(),
 });
-
-// ---------------- Constants ----------------------------------------------
-const CANONICAL_COLLECTION = 'neuroSeoAnalyses';
-const LEGACY_COLLECTIONS = ['neuroseo-analyses', 'neuroSeoAnalysis'];
-const AGGREGATION_SAMPLE_LIMIT = 200;

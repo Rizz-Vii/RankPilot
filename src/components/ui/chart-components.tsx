@@ -2,7 +2,7 @@
 // Re-export from recharts for consistent usage
 
 import React from 'react';
-import { Tooltip as RechartsTooltip } from 'recharts';
+import { Tooltip as RechartsTooltip, type TooltipProps } from 'recharts';
 
 export {
     Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis,
@@ -16,21 +16,23 @@ export function ChartContainer({
     className = ""
 }: {
     children: React.ReactNode;
-    config: any;
+    config: unknown;
     className?: string;
 }) {
     return <div className={`chart-container ${className}`}>{children}</div>;
 }
 
-export function ChartTooltip({ content, className = "" }: { content: (props: any) => React.ReactNode; className?: string; }) {
-    // Wrap Recharts Tooltip with minimal typing to avoid generic friction
-    return <RechartsTooltip content={content as any} wrapperClassName={className} />;
+export interface SimpleTooltipPayload { label?: string; value?: string | number }
+export function ChartTooltip({ content, className = "" }: { content: (props: TooltipProps<any, any>) => React.ReactNode; className?: string; }) {
+    return <RechartsTooltip content={content} wrapperClassName={className} />;
 }
 
-export function ChartTooltipContent(props: any) {
+export function ChartTooltipContent(raw: unknown) {
+    const props = raw as { payload?: any[]; label?: React.ReactNode };
+    const first = Array.isArray(props.payload) ? props.payload[0] : undefined;
     return (
-        <div className="chart-tooltip">
-            {props.label}: {props.value}
+        <div className="chart-tooltip text-xs">
+            {props.label}: {first && (first.value as any)}
         </div>
     );
 }

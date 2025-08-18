@@ -137,7 +137,8 @@ export default function TeamReportsPage() {
       if (!tSnap.empty) setTeamId(tSnap.docs[0].id);
       else {
         const uSnap = await getDoc(doc(db, 'users', user.uid));
-        const tId = uSnap.exists() ? (uSnap.data() as any)?.teamId : (user as any)?.teamId;
+        const uData = uSnap.exists() ? (uSnap.data() as any) : undefined;
+        const tId = typeof uData?.teamId === 'string' ? uData.teamId : (user as any)?.teamId;
         if (typeof tId === 'string') setTeamId(tId);
       }
     })();
@@ -234,7 +235,7 @@ export default function TeamReportsPage() {
     }
   };
 
-  const handleDownloadReport = async (reportId: string) => {
+  const handleDownloadReport = async () => {
     try {
       toast.success("Report download started");
       // Simulate download
@@ -472,7 +473,7 @@ export default function TeamReportsPage() {
                       View
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleDownloadReport(report.id)}
+                      onClick={() => handleDownloadReport()}
                     >
                       <Download className="h-4 w-4 mr-2" />
                       Download

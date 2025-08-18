@@ -9,7 +9,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 
 export default function CheckoutCancelPage() {
-  const router = useRouter();
+
 
   return (
   <div className="min-h-screen bg-gradient-to-br from-destructive/10 via-background to-warning/10 flex items-center justify-center p-4">

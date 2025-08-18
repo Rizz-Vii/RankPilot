@@ -31,7 +31,7 @@ function getTransport() {
     // Development fallback: log emails to console
     return {
         sendMail: async (opts: any) => {
-            getLogger('contact').warn('email.send.fallback', { to: opts.to, subject: opts.subject });
+            getLogger('contact').warn('email.send.fallback', { to: opts?.to, subject: opts?.subject });
             return { messageId: `dev-fallback-${Date.now()}` };
         },
     } as unknown as nodemailer.Transporter;
@@ -97,12 +97,12 @@ export async function POST(req: NextRequest) {
         });
 
         return NextResponse.json({ success: true, id: info.messageId, docId: docRef.id });
-    } catch (err: any) {
-        getLogger('contact').error('contact.error', { error: err?.message });
+    } catch (err: unknown) {
+        getLogger('contact').error('contact.error', { error: (err as any)?.message });
         try {
             // Best-effort: mark latest doc as failed if available from context (not tracked here)
             // No-op: Without docRef, we can't update; in a more advanced setup, we'd correlate by timestamp
         } catch { }
-        return NextResponse.json({ message: err?.message || "Internal error" }, { status: 500 });
+        return NextResponse.json({ message: (err as any)?.message || "Internal error" }, { status: 500 });
     }
 }

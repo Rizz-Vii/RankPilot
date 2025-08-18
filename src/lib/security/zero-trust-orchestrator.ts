@@ -77,7 +77,7 @@ export interface ThreatIntelligence {
     source: string;
     confidence: number; // 0-100
     expires: number;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
 }
 
 export interface SecurityMetrics {
@@ -95,7 +95,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
     private sessions: Map<string, ZeroTrustSession> = new Map();
     private policies: Map<string, ZeroTrustPolicy> = new Map();
     private threatIntelligence: Map<string, ThreatIntelligence> = new Map();
-    private behaviorModels: Map<string, any> = new Map();
+    private behaviorModels: Map<string, unknown> = new Map();
     private riskEvaluationCache: Map<string, { score: number; timestamp: number; }> = new Map();
     private monitoringInterval: NodeJS.Timeout | null = null;
 
@@ -173,7 +173,9 @@ export class ZeroTrustOrchestrator extends EventEmitter {
                     activityPattern: []
                 },
                 verification: {
-                    factors: request.authenticationFactors as any[],
+                    factors: request.authenticationFactors.filter((f): f is ('password' | 'mfa' | 'biometric' | 'device' | 'location') => (
+                        ['password', 'mfa', 'biometric', 'device', 'location'] as const).includes(f as any)
+                    ),
                     strength: this.calculateAuthStrength(request.authenticationFactors),
                     lastVerification: Date.now()
                 },
@@ -215,7 +217,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
     async validateAccess(sessionId: string, request: {
         resource: string;
         action: string;
-        context?: Record<string, any>;
+        context?: Record<string, unknown>;
     }): Promise<{
         allowed: boolean;
         reason?: string;
@@ -326,7 +328,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
     async updateSessionRisk(sessionId: string, newIntelligence: {
         type: 'threat-detected' | 'behavior-change' | 'location-change' | 'device-change';
         severity: 'low' | 'medium' | 'high' | 'critical';
-        details: Record<string, any>;
+        details: Record<string, unknown>;
     }): Promise<void> {
         const session = this.sessions.get(sessionId);
         if (!session) return;
@@ -510,8 +512,8 @@ export class ZeroTrustOrchestrator extends EventEmitter {
             }
 
             // Behavioral history (if available)
-            const userBehavior = this.behaviorModels.get(context.userId);
-            if (userBehavior && userBehavior.anomalyScore > 0.7) {
+            const userBehavior = this.behaviorModels.get(context.userId) as { anomalyScore?: number } | undefined;
+            if (userBehavior?.anomalyScore && userBehavior.anomalyScore > 0.7) {
                 riskScore += 30;
             }
 
@@ -546,7 +548,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
         return 'verified';
     }
 
-    private async getUserPermissions(userId: string, trustLevel: ZeroTrustSession['trustLevel']): Promise<string[]> {
+    private async getUserPermissions(_userId: string, trustLevel: ZeroTrustSession['trustLevel']): Promise<string[]> {
         // In production, this would query user management system
         const basePermissions = ['read-basic', 'update-profile'];
 
@@ -564,7 +566,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
         }
     }
 
-    private async getAllowedResources(userId: string, trustLevel: ZeroTrustSession['trustLevel']): Promise<string[]> {
+    private async getAllowedResources(_userId: string, trustLevel: ZeroTrustSession['trustLevel']): Promise<string[]> {
         const publicResources = ['dashboard', 'public-content', 'help'];
 
         switch (trustLevel) {
@@ -584,7 +586,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
     private async analyzeBehavior(session: ZeroTrustSession, request: {
         resource: string;
         action: string;
-        context?: Record<string, any>;
+        context?: Record<string, unknown>;
     }): Promise<{ anomalyScore: number; reasons: string[]; }> {
         const reasons: string[] = [];
         let anomalyScore = 0;
@@ -617,7 +619,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
     private async evaluatePolicies(session: ZeroTrustSession, request: {
         resource: string;
         action: string;
-        context?: Record<string, any>;
+        context?: Record<string, unknown>;
     }): Promise<{ violations: string[]; requiredActions: string[]; }> {
         const violations: string[] = [];
         const requiredActions: string[] = [];
@@ -669,7 +671,7 @@ export class ZeroTrustOrchestrator extends EventEmitter {
     private calculateRiskAdjustment(intelligence: {
         type: string;
         severity: string;
-        details: Record<string, any>;
+        details: Record<string, unknown>;
     }): number {
         const severityWeights = { low: 5, medium: 15, high: 30, critical: 50 };
         const typeWeights = {

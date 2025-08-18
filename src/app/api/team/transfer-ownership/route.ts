@@ -26,18 +26,18 @@ export async function POST(req: NextRequest) {
         const team = await getTeam(decoded.uid);
         if (!team) return NextResponse.json({ error: "Team not found" }, { status: 404 });
         const data: any = team.data || {};
-        const members = Array.isArray(data.members) ? [...data.members] : [];
+        const members: any[] = Array.isArray(data.members) ? [...data.members] : [];
 
-        const ownerIndex = members.findIndex((m: any) => m.role === 'owner' && (m.userId === decoded.uid || m.id === decoded.uid || m.email === decoded.email));
+        const ownerIndex = members.findIndex((m: any) => m?.role === 'owner' && (m?.userId === decoded.uid || m?.id === decoded.uid || m?.email === decoded.email));
         if (ownerIndex === -1) return NextResponse.json({ error: "Only current owner can transfer" }, { status: 403 });
 
-        const targetIndex = members.findIndex((m: any) => m.userId === targetMemberId || m.id === targetMemberId || m.email === targetMemberId);
+        const targetIndex = members.findIndex((m: any) => m?.userId === targetMemberId || m?.id === targetMemberId || m?.email === targetMemberId);
         if (targetIndex === -1) return NextResponse.json({ error: "Target member not found" }, { status: 404 });
-        if (members[targetIndex].role === 'owner') return NextResponse.json({ error: "Target already owner" }, { status: 400 });
+        if (members[targetIndex]?.role === 'owner') return NextResponse.json({ error: "Target already owner" }, { status: 400 });
 
         // Perform transfer (retain traceability)
-        const prevOwnerId = members[ownerIndex].userId || members[ownerIndex].id;
-        const newOwnerId = members[targetIndex].userId || members[targetIndex].id;
+        const prevOwnerId = members[ownerIndex]?.userId || members[ownerIndex]?.id;
+        const newOwnerId = members[targetIndex]?.userId || members[targetIndex]?.id;
         members[ownerIndex] = { ...members[ownerIndex], role: 'admin', ownershipTransferredAt: new Date(), transferredTo: newOwnerId };
         members[targetIndex] = { ...members[targetIndex], role: 'owner', ownershipReceivedAt: new Date(), transferredFrom: prevOwnerId };
 
@@ -52,8 +52,8 @@ export async function POST(req: NextRequest) {
         });
 
         return NextResponse.json({ success: true });
-    } catch (e: any) {
+    } catch (e: unknown) {
         console.error("Transfer ownership error", e);
-        return NextResponse.json({ error: e.message || 'Internal error' }, { status: 500 });
+        return NextResponse.json({ error: (e as any)?.message || 'Internal error' }, { status: 500 });
     }
 }

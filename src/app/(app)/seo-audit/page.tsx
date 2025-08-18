@@ -119,7 +119,7 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
               />
               <XAxis dataKey="score" type="number" hide />
               <ChartTooltip
-                content={(props) => <ChartTooltipContent {...props} />}
+                content={(props: any) => <ChartTooltipContent {...props} />}
               />
               <Bar dataKey="score" radius={5} />
             </BarChart>
@@ -139,7 +139,7 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
             >
               <PieChart>
                 <ChartTooltip
-                  content={(props) => (
+                  content={(props: any) => (
                     <ChartTooltipContent {...props} nameKey="name" hideLabel />
                   )}
                 />
@@ -239,7 +239,7 @@ function mapUnifiedToLegacy(r: SEOAuditUnifiedResponse): AuditUrlOutput {
       details: it.details,
   status: it.status === 'good' ? 'pass' : it.status === 'error' ? 'fail' : 'warning',
   score: it.score,
-  impact: (it as any).impact || (it.status === 'error' ? 'high' : it.status === 'warning' ? 'medium' : 'low'),
+  impact: (it as any)?.impact || (it.status === 'error' ? 'high' : it.status === 'warning' ? 'medium' : 'low'),
       recommendation: ''
     })),
     performance: { lcp: 0, fid: 0, cls: 0, ttfb: 0 },
@@ -461,18 +461,18 @@ export default function SeoAuditPage() {
           resultsSummary: `Audited ${values.url}. Overall Score: ${unified.overallScore}/100 (${unified.source}).`,
         });
       }
-    } catch (e: any) {
-      const msg = e?.message || '';
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
       const shouldDemo = e instanceof TimeoutError || /(internal|cors|network|failed)/i.test(msg);
       if (shouldDemo) {
         console.warn("SEO audit using demo fallback due to:", msg);
-        const demoData = getDemoData("seo-audit");
-        if (demoData) {
-          setResults(demoData);
-          setProvenance('fallback');
-        } else {
-          setError("Audit failed and no demo data available.");
-        }
+          const demoData = getDemoData("seo-audit");
+          if (demoData) {
+            setResults(demoData as any as AuditUrlOutput);
+            setProvenance('fallback');
+          } else {
+            setError("Audit failed and no demo data available.");
+          }
       } else {
         setError(msg || "An unexpected error occurred during the audit.");
       }

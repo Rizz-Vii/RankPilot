@@ -18,9 +18,9 @@ export interface CacheConfig {
     persistToDisk: boolean;
 }
 
-export interface CacheEntry<T = any> {
+export interface CacheEntry<T = unknown> {
     key: string;
-    value: any; // Allow any type for flexibility with serialization
+    value: T | string; // Stored raw (string) if serialized/compressed/encrypted
     timestamp: number;
     ttl: number;
     hits: number;
@@ -101,7 +101,7 @@ export class AdvancedCacheManager {
     /**
      * Get cached data with intelligent multi-layer lookup
      */
-    async get<T = any>(key: string, userTier: string = 'free'): Promise<T | null> {
+    async get<T = unknown>(key: string, userTier: string = 'free'): Promise<T | null> {
         const startTime = Date.now();
 
         try {
@@ -110,7 +110,7 @@ export class AdvancedCacheManager {
             if (entry && this.isValidEntry(entry)) {
                 this.recordCacheHit(key, 'memory', Date.now() - startTime);
                 entry.hits++;
-                return this.deserializeValue(entry.value);
+                return this.deserializeValue<T>(entry.value as string | T);
             }
 
             // 2. Check distributed cache (Redis-like)
@@ -119,7 +119,7 @@ export class AdvancedCacheManager {
                 // Promote to memory cache for faster future access
                 this.memoryCache.set(key, { ...entry, hits: entry.hits + 1 });
                 this.recordCacheHit(key, 'distributed', Date.now() - startTime);
-                return this.deserializeValue(entry.value);
+                return this.deserializeValue<T>(entry.value as string | T);
             }
 
             // 3. Cache miss
@@ -135,7 +135,7 @@ export class AdvancedCacheManager {
     /**
      * Set cached data with intelligent distribution across layers
      */
-    async set<T = any>(
+    async set<T = unknown>(
         key: string,
         value: T,
         userTier: string = 'free',
@@ -156,7 +156,7 @@ export class AdvancedCacheManager {
             const size = this.calculateSize(compressedValue);
             const ttl = options?.ttl || config.ttl;
 
-            const entry: CacheEntry = {
+            const entry: CacheEntry<string> = {
                 key,
                 value: compressedValue,
                 timestamp: Date.now(),
@@ -171,7 +171,7 @@ export class AdvancedCacheManager {
 
             // Encrypt sensitive data if required
             if (entry.encrypted) {
-                entry.value = this.encryptValue(entry.value as string);
+                entry.value = this.encryptValue(entry.value);
             }
 
             // Check tier quota before setting
@@ -203,7 +203,7 @@ export class AdvancedCacheManager {
     /**
      * Batch get operation for enterprise clients
      */
-    async getBatch<T = any>(keys: string[], userTier: string = 'free'): Promise<Record<string, T | null>> {
+    async getBatch<T = unknown>(keys: string[], userTier: string = 'free'): Promise<Record<string, T | null>> {
         const results: Record<string, T | null> = {};
 
         // Process in parallel for performance
@@ -219,8 +219,8 @@ export class AdvancedCacheManager {
     /**
      * Batch set operation for enterprise clients
      */
-    async setBatch<T = any>(
-        entries: Array<{ key: string; value: T; options?: any; }>,
+    async setBatch<T = unknown>(
+        entries: Array<{ key: string; value: T; options?: { ttl?: number; tags?: string[]; forceDistributed?: boolean; skipCompression?: boolean; }; }>,
         userTier: string = 'free'
     ): Promise<boolean[]> {
         const promises = entries.map(({ key, value, options }) =>
@@ -257,7 +257,7 @@ export class AdvancedCacheManager {
      */
     async warmCache(warmingPlan: Array<{
         key: string;
-        generator: () => Promise<any>;
+        generator: () => Promise<unknown>;
         userTier: string;
         tags?: string[];
     }>): Promise<void> {
@@ -352,15 +352,21 @@ export class AdvancedCacheManager {
         return Date.now() - entry.timestamp < entry.ttl;
     }
 
-    private serializeValue(value: any): string {
-        return JSON.stringify(value);
+    private serializeValue(value: unknown): string {
+        if (typeof value === 'string') return value; // Already a string
+        try {
+            return JSON.stringify(value);
+        } catch {
+            return String(value);
+        }
     }
 
-    private deserializeValue(value: string): any {
+    private deserializeValue<T>(value: string | T): T {
+        if (typeof value !== 'string') return value as T;
         try {
-            return JSON.parse(value);
+            return JSON.parse(value) as T;
         } catch {
-            return value;
+            return value as unknown as T;
         }
     }
 
@@ -387,7 +393,7 @@ export class AdvancedCacheManager {
         return Buffer.byteLength(value, 'utf8');
     }
 
-    private isSensitiveData(value: any): boolean {
+    private isSensitiveData(value: unknown): boolean {
         const stringValue = JSON.stringify(value).toLowerCase();
         const sensitivePatterns = ['password', 'token', 'key', 'secret', 'private'];
         return sensitivePatterns.some(pattern => stringValue.includes(pattern));
@@ -416,12 +422,12 @@ export class AdvancedCacheManager {
         }
     }
 
-    private recordCacheHit(key: string, layer: 'memory' | 'distributed', responseTime: number): void {
+    private recordCacheHit(_key: string, _layer: 'memory' | 'distributed', responseTime: number): void {
         this.cacheStats.set('hits', (this.cacheStats.get('hits') || 0) + 1);
         this.updateAvgResponseTime(responseTime);
     }
 
-    private recordCacheMiss(key: string, responseTime: number): void {
+    private recordCacheMiss(_key: string, responseTime: number): void {
         this.cacheStats.set('misses', (this.cacheStats.get('misses') || 0) + 1);
         this.updateAvgResponseTime(responseTime);
     }
@@ -519,9 +525,10 @@ export class AdvancedCacheManager {
         // Compress entries larger than 100KB if not already compressed
         for (const [key, entry] of this.distributedCache.entries()) {
             if (entry.size > 100 * 1024 && !entry.compressed) {
-                const compressed = this.compressValue(entry.value);
-                if (compressed.length < entry.value.length) {
-                    entry.value = compressed;
+                const existing = typeof entry.value === 'string' ? entry.value : this.serializeValue(entry.value);
+                const compressed = this.compressValue(existing);
+                if (compressed.length < existing.length) {
+                    entry.value = compressed as any;
                     entry.compressed = true;
                     entry.size = this.calculateSize(compressed);
                 }

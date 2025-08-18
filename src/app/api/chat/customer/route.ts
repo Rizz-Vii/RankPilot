@@ -9,6 +9,7 @@ import { buildQueryEmbedding, retrieveSimilarMessages } from '@/lib/chat/retriev
 import { maybeEmbedMessage } from '@/lib/chat/embedding';
 import { maybeSummarizeSession } from '@/lib/chat/sessionSummarizer';
 import { NextRequest, NextResponse } from 'next/server';
+import { safeErrorMessage } from '@/lib/utils';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { recordRouteLatency, recordError, recordRateLimitRejection } from '@/lib/metrics/unified-metrics';
 import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
@@ -58,7 +59,7 @@ async function checkAndIncrementMessageQuota(uid: string, tier: string) {
     const ref = adminDb.collection('usageCounters').doc(`${uid}_${dateKey}`);
     await adminDb.runTransaction(async tx => {
         const snap = await tx.get(ref);
-        const data = snap.exists ? snap.data() as any : { messages: 0, tokens: 0, tier, date: dateKey };
+        const data = snap.exists ? (snap.data() as any) : { messages: 0, tokens: 0, tier, date: dateKey };
         if (data.messages >= limits.messages) throw new Error('Daily message quota reached');
         tx.set(ref, { messages: FieldValue.increment(1), tokens: data.tokens || 0, tier, date: dateKey, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
     });
@@ -71,7 +72,7 @@ async function incrementTokenUsage(uid: string, tier: string, tokens: number) {
     const limits = QUOTA_LIMITS[tier] || QUOTA_LIMITS.free;
     await adminDb.runTransaction(async tx => {
         const snap = await tx.get(ref);
-        const data = snap.exists ? snap.data() as any : { messages: 0, tokens: 0, tier, date: dateKey };
+        const data = snap.exists ? (snap.data() as any) : { messages: 0, tokens: 0, tier, date: dateKey };
         if ((data.tokens || 0) >= limits.tokens) return; // already capped
         const remaining = limits.tokens - (data.tokens || 0);
         const toAdd = Math.min(remaining, tokens);
@@ -86,13 +87,14 @@ function estimateTokens(text: string): number {
     return Math.ceil(words * 1.3);
 }
 
-export const POST = withProvenance(async function POST(request: NextRequest) {
+export const POST = withProvenance(async function POST(request: Request) {
+    const nreq = request as NextRequest;
     const start = Date.now();
     try {
         // Parse request body (defensive)
         let body: ChatRequest;
         try {
-            body = await request.json();
+            body = await nreq.json();
         } catch {
             return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
         }
@@ -104,7 +106,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         }
 
         // Get user from authentication header
-        const authHeader = request.headers.get('authorization');
+        const authHeader = nreq.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
                 { error: 'Authentication required: missing Bearer token' },
@@ -122,8 +124,8 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         try {
             const decoded = await adminAuth.verifyIdToken(idToken);
             uid = decoded.uid;
-        } catch (e: any) {
-            return NextResponse.json({ error: 'Invalid or expired token. Try reloading to refresh your session.', details: process.env.NODE_ENV !== 'production' ? e?.message : undefined }, { status: 401 });
+        } catch (e: unknown) {
+            return NextResponse.json({ error: 'Invalid or expired token. Try reloading to refresh your session.', details: process.env.NODE_ENV !== 'production' ? safeErrorMessage(e) : undefined }, { status: 401 });
         }
 
         // Load user doc (for teamId before any limiting)
@@ -134,7 +136,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         if (teamId) {
             try {
                 await enforceTeamRateLimit(adminDb as any, teamId, { routeKey: 'chat/customer' });
-            } catch (e: any) {
+            } catch (e: unknown) {
                 if (e instanceof TeamRateLimitError) {
                     recordRateLimitRejection('chat/customer');
                     recordRateLimitRejection(`team:${teamId}`);
@@ -221,12 +223,12 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
                     data: { uid, message, url, sessionId, chatType: 'customer' }
                 }),
             });
-        } catch (e: any) {
-            return NextResponse.json({ error: 'Chat service unreachable', details: process.env.NODE_ENV !== 'production' ? e?.message : undefined }, { status: 503 });
+        } catch (e: unknown) {
+            return NextResponse.json({ error: 'Chat service unreachable', details: process.env.NODE_ENV !== 'production' ? safeErrorMessage(e) : undefined }, { status: 503 });
         }
 
         const rawText = await res.text();
-        let payload: any = null;
+        let payload: unknown = null;
         try {
             payload = rawText ? JSON.parse(rawText) : null;
         } catch {
@@ -234,7 +236,8 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         }
 
         if (!res.ok) {
-            const errMsg = payload?.error?.message || payload?.error || payload?.result?.error?.message || (rawText?.slice(0, 200) || 'Chat service unavailable');
+            const p: any = payload as any;
+            const errMsg = p?.error?.message || p?.error || p?.result?.error?.message || ((rawText || '').slice(0, 200) || 'Chat service unavailable');
             const code = res.status === 401 ? 401 : res.status === 403 ? 403 : res.status === 400 ? 400 : 503;
             // Provide helpful hints for common 401/403 causes during local dev
             const hint = code === 401
@@ -248,7 +251,8 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
             return resp;
         }
 
-        let data: ChatResponse = payload?.result || payload?.data || payload;
+        const anyPayload: any = payload as any;
+        let data: ChatResponse = anyPayload?.result || anyPayload?.data || anyPayload;
         if (!data) {
             recordError('chat/customer', '5xx_server');
             recordRouteLatency('chat/customer', Date.now() - start);
@@ -299,8 +303,8 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
             await checkAndIncrementMessageQuota(uid, tier);
             const estTokens = data.tokensUsed || estimateTokens(data.response);
             await incrementTokenUsage(uid, tier, estTokens);
-        } catch (quotaErr: any) {
-            quotaWarning = quotaErr.message;
+        } catch (quotaErr: unknown) {
+            quotaWarning = safeErrorMessage(quotaErr);
         }
 
         if (data.sessionId) {
@@ -317,7 +321,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         recordRouteLatency('chat/customer', Date.now() - start);
         return resp;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Customer chat API error:', error);
 
         // Handle Firebase Function errors
@@ -342,7 +346,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
 
         recordError('chat/customer', '5xx_server');
         recordRouteLatency('chat/customer', Date.now() - start);
-        return NextResponse.json(enforceProvenance({ error: 'Internal server error', details: process.env.NODE_ENV !== 'production' ? (error?.message || String(error)) : undefined, provenance: 'synthetic' }, { path: 'chat/customer' }), { status: 500 });
+        return NextResponse.json(enforceProvenance({ error: 'Internal server error', details: process.env.NODE_ENV !== 'production' ? safeErrorMessage(error) : undefined, provenance: 'synthetic' }, { path: 'chat/customer' }), { status: 500 });
     }
 }, { path: 'chat/customer' });
 
@@ -411,7 +415,7 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
             workingDocs = messagesSnap.docs.slice(0, limit);
         }
 
-        const messages: any[] = [];
+        const messages: unknown[] = [];
         // Reverse to chronological ascending (oldest first within this page)
         const orderedDocs = [...workingDocs].reverse();
         orderedDocs.forEach((doc) => {

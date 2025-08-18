@@ -8,13 +8,21 @@ import type { EventType } from './event-types';
 import { isEventType } from './event-types';
 
 // Keep as type-only to avoid bundling when unused in tests without Firebase.
-export type Firestore = unknown; // accept injected db of any compatible shape
+// Minimal Firestore interfaces (subset) to support create-only writes without pulling full types
+export interface FirestoreLegacyCollectionRef {
+  doc(id: string): { get?: () => Promise<any>; create?: (data: any) => Promise<any>; set?: (data: any, opts?: any) => Promise<any> };
+}
+export interface FirestoreLegacyLike {
+  collection(path: string): FirestoreLegacyCollectionRef;
+}
+export interface FirestoreModularLike { /* marker – runtime checked via function presence */ }
+export type Firestore = FirestoreLegacyLike | FirestoreModularLike;
 
 export interface PublishEventInput {
   orgId: string;
   type: EventType;
   source: string;
-  attrs?: Record<string, any>;
+  attrs?: Record<string, unknown>;
   userId?: string;
   teamId?: string;
   provenance?: 'live' | 'synthetic' | 'derived';
@@ -31,7 +39,7 @@ const FORBIDDEN_RATIO_ATTR_KEYS = new Set([
   'arpu',
 ]);
 
-function ensureValidAttrs(attrs?: Record<string, any>) {
+function ensureValidAttrs(attrs?: Record<string, unknown>) {
   if (attrs == null) return;
   if (typeof attrs !== 'object' || Array.isArray(attrs)) {
     throw new Error('INVALID_ATTRS_SHAPE');
@@ -50,7 +58,7 @@ function ensureValidAttrs(attrs?: Record<string, any>) {
     if (FORBIDDEN_RATIO_ATTR_KEYS.has(k)) {
       throw new Error('FORBIDDEN_ATTR_KEY');
     }
-    const v = (attrs as any)[k];
+    const v = (attrs as Record<string, unknown>)[k];
     if (
       v === null ||
       typeof v === 'string' ||
@@ -73,8 +81,8 @@ function ensureValidAttrs(attrs?: Record<string, any>) {
 
 async function sha256Hex(input: string): Promise<string> {
   // Prefer Web Crypto subtle if available; fallback to Node crypto.
-  const g: any = globalThis as any;
-  if (g.crypto && g.crypto.subtle && typeof g.crypto.subtle.digest === 'function') {
+  const g = globalThis as any;
+  if (g?.crypto?.subtle && typeof g.crypto.subtle.digest === 'function') {
     const enc = new TextEncoder();
     const data = enc.encode(input);
     const hashBuf = await g.crypto.subtle.digest('SHA-256', data);
@@ -87,15 +95,15 @@ async function sha256Hex(input: string): Promise<string> {
   return nodeCrypto.createHash('sha256').update(input).digest('hex');
 }
 
-function hasLegacyCollection(db: any): boolean {
-  return db && typeof db.collection === 'function';
+function hasLegacyCollection(db: Firestore | undefined | null): db is FirestoreLegacyLike {
+  return !!db && typeof (db as any).collection === 'function';
 }
 
 async function writeCreateOnlyViaLegacy(
-  db: any,
+  db: FirestoreLegacyLike,
   path: string,
   id: string,
-  data: Record<string, any>
+  data: Record<string, unknown>
 ) {
   const col = db.collection(path);
   const ref = col.doc(id);
@@ -117,14 +125,14 @@ async function writeCreateOnlyViaLegacy(
 }
 
 async function writeCreateOnlyViaModular(
-  db: any,
+  db: FirestoreModularLike,
   docPath: string,
-  data: Record<string, any>
+  data: Record<string, unknown>
 ) {
   // Lazy import to avoid adding weight when unused in tests
   const mod = await import('firebase/firestore');
-  const { doc, getDoc, setDoc } = mod as any;
-  const ref = doc(db, docPath);
+  const { doc, getDoc, setDoc } = mod;
+  const ref = doc(db as any, docPath);
   const snap = await getDoc(ref);
   if (snap.exists()) {
     throw new Error('DOC_EXISTS');
@@ -147,7 +155,7 @@ export async function publishEvent(
 
   // Attempt twice in case of extremely unlikely ID collision
   let attempt = 0;
-  let lastError: any = null;
+  let lastError: unknown = null;
 
   while (attempt < 2) {
     const ts = new Date(attempt === 0 ? Date.now() : Date.now());
@@ -167,7 +175,7 @@ export async function publishEvent(
     const shortHash = hash.slice(0, 8);
     const eventId = `${ts.getTime()}-${shortHash}`;
 
-    const docData: Record<string, any> = {
+    const docData: Record<string, unknown> = {
       orgId,
       teamId: input.teamId ?? null,
       userId: input.userId ?? null,
@@ -183,7 +191,7 @@ export async function publishEvent(
 
     const pathBase = `/orgs/${orgId}/events`;
     try {
-      const db: any = input.db as any;
+      const db = input.db as Firestore | undefined;
       if (!db) {
         // If a central Firestore initializer exists later, wire it here.
         // TODO(T28): Auto-detect and lazily import client Firestore instance.
@@ -192,16 +200,16 @@ export async function publishEvent(
         );
       }
 
-      if (hasLegacyCollection(db)) {
-        await writeCreateOnlyViaLegacy(db, pathBase, eventId, docData);
+      if (hasLegacyCollection(db)) { // legacy style
+        await writeCreateOnlyViaLegacy(db as FirestoreLegacyLike, pathBase, eventId, docData);
       } else {
         const fullPath = `${pathBase}/${eventId}`;
-        await writeCreateOnlyViaModular(db, fullPath, docData);
+        await writeCreateOnlyViaModular(db as FirestoreModularLike, fullPath, docData);
       }
       return { eventId };
-    } catch (e: any) {
+    } catch (e: unknown) {
       // On existing doc collision only, retry once with a new timestamp
-      if (e && typeof e.message === 'string' && e.message.includes('DOC_EXISTS')) {
+      if (e && typeof (e as any).message === 'string' && (e as any).message.includes('DOC_EXISTS')) {
         lastError = e;
         attempt += 1;
         continue;

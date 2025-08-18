@@ -45,10 +45,10 @@ type DomainAuthorityChartProps = { data: { history: Array<{ date: string; score:
 // Dynamically imported chart components with lightweight skeleton placeholders referencing JS re-export stubs for NodeNext compatibility
 // Direct TSX dynamic imports (JS stubs removed)
 // SeoScoreTrend is small enough; import directly to avoid dynamic promise element edge case
-const TrafficSourcesChartDyn = dynamic<TrafficSourcesChartProps>(() => import("@/components/dashboard/traffic-sources-chart").then(m => m.default as any), { ssr: false, loading: () => <Skeleton shimmer className="h-[240px] w-full" /> });
-const KeywordVisibilityChartDyn = dynamic<KeywordVisibilityChartProps>(() => import("@/components/dashboard/keyword-visibility-chart").then(m => m.default as any), { ssr: false, loading: () => <Skeleton shimmer className="h-[240px] w-full" /> });
-const BacklinksChartDyn = dynamic<BacklinksChartProps>(() => import("@/components/dashboard/backlinks-chart").then(m => m.default as any), { ssr: false, loading: () => <Skeleton shimmer className="h-[240px] w-full" /> });
-const DomainAuthorityChartDyn = dynamic<DomainAuthorityChartProps>(() => import("@/components/dashboard/domain-authority-chart").then(m => m.default as any), { ssr: false, loading: () => <Skeleton shimmer className="h-[240px] w-full" /> });
+const TrafficSourcesChartDyn = dynamic<TrafficSourcesChartProps>(() => import("@/components/dashboard/traffic-sources-chart").then(m => m.default as React.ComponentType<TrafficSourcesChartProps>), { ssr: false, loading: () => <Skeleton shimmer className="h-[240px] w-full" /> });
+const KeywordVisibilityChartDyn = dynamic<KeywordVisibilityChartProps>(() => import("@/components/dashboard/keyword-visibility-chart").then(m => m.default as React.ComponentType<KeywordVisibilityChartProps>), { ssr: false, loading: () => <Skeleton shimmer className="h-[240px] w-full" /> });
+const BacklinksChartDyn = dynamic<BacklinksChartProps>(() => import("@/components/dashboard/backlinks-chart").then(m => m.default as React.ComponentType<BacklinksChartProps>), { ssr: false, loading: () => <Skeleton shimmer className="h-[240px] w-full" /> });
+const DomainAuthorityChartDyn = dynamic<DomainAuthorityChartProps>(() => import("@/components/dashboard/domain-authority-chart").then(m => m.default as React.ComponentType<DomainAuthorityChartProps>), { ssr: false, loading: () => <Skeleton shimmer className="h-[240px] w-full" /> });
 
 // Chart configs now encapsulated inside modular chart components
 

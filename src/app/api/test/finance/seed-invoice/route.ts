@@ -34,7 +34,7 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         } else {
             const idToken = authHeader.replace('Bearer ', '');
             decoded = await adminAuth.verifyIdToken(idToken);
-            uid = decoded.uid;
+            uid = (decoded as any).uid;
         }
         const url = new URL(req.url);
         const amountParam = url.searchParams.get('amount');
@@ -56,11 +56,11 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
             planTier: 'starter'
         };
         const teamId = (decoded as any)?.teamId;
-        if (useTeam && teamId) { doc.teamId = teamId; }
-        if (status === 'paid') doc.paidAt = now;
+        if (useTeam && teamId) { (doc as any).teamId = teamId; }
+        if (status === 'paid') (doc as any).paidAt = now;
         await adminDb.collection('financeInvoices').add(doc);
         return NextResponse.json(enforceProvenance({ ok: true, period, status, amount }, { path: 'test/finance/seed-invoice', note: 'seeded' }));
-    } catch (e: any) {
-        return NextResponse.json(enforceProvenance({ error: 'internal_error', message: e?.message }, { path: 'test/finance/seed-invoice', note: 'exception' }), { status: 500 });
+    } catch (e: unknown) {
+        return NextResponse.json(enforceProvenance({ error: 'internal_error', message: (e as any)?.message }, { path: 'test/finance/seed-invoice', note: 'exception' }), { status: 500 });
     }
 }, { path: 'test/finance/seed-invoice' });

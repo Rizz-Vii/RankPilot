@@ -13,10 +13,26 @@
 import { useEffect, useState } from 'react';
 
 // Web Speech API type definitions
+// Minimal Speech Recognition types (only what we use)
+interface MinimalSpeechRecognition {
+    continuous: boolean;
+    interimResults: boolean;
+    lang: string;
+    start: () => void;
+    stop: () => void;
+    onresult: ((event: MinimalSpeechRecognitionEvent) => void) | null;
+    onerror: ((event: { error: string }) => void) | null;
+}
+
+interface MinimalSpeechRecognitionAlternative { transcript: string }
+interface MinimalSpeechRecognitionResult { [index: number]: MinimalSpeechRecognitionAlternative; length: number }
+interface MinimalSpeechRecognitionResultList { [index: number]: MinimalSpeechRecognitionResult; length: number }
+interface MinimalSpeechRecognitionEvent { results: MinimalSpeechRecognitionResultList }
+
 declare global {
     interface Window {
-        SpeechRecognition: any;
-        webkitSpeechRecognition: any;
+        SpeechRecognition?: { new(): MinimalSpeechRecognition };
+        webkitSpeechRecognition?: { new(): MinimalSpeechRecognition };
     }
 }
 
@@ -60,7 +76,7 @@ export class AccessibilityManager {
     private focusHistory: HTMLElement[] = [];
     private shortcuts: Map<string, KeyboardShortcut> = new Map();
     private voiceCommands: VoiceCommand[] = [];
-    private recognition: any = null;
+    private recognition: MinimalSpeechRecognition | null = null;
     private isListening = false;
     private listeners: Set<(announcement: AccessibilityAnnouncement) => void> = new Set();
 
@@ -314,23 +330,32 @@ export class AccessibilityManager {
     private initializeVoiceRecognition() {
         if (typeof window === 'undefined') return;
 
-        const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) return;
 
-        this.recognition = new SpeechRecognition();
-        this.recognition.continuous = true;
-        this.recognition.interimResults = false;
-        this.recognition.lang = 'en-US';
+        const recog = new SpeechRecognition();
+        recog.continuous = true;
+        recog.interimResults = false;
+        recog.lang = 'en-US';
 
-        this.recognition.onresult = (event: any) => {
-            const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
-            this.processVoiceCommand(transcript);
+        recog.onresult = (event: MinimalSpeechRecognitionEvent) => {
+            try {
+                const last = event.results[event.results.length - 1];
+                const alt = last && last[0];
+                const transcript = (alt?.transcript || '').toLowerCase().trim();
+                if (transcript) this.processVoiceCommand(transcript);
+            } catch (err) {
+                // Swallow unexpected parsing errors but surface minimal diagnostics
+                console.warn('Voice recognition parse error');
+            }
         };
 
-        this.recognition.onerror = (event: any) => {
+        recog.onerror = (event: { error: string }) => {
             console.error('Speech recognition error:', event.error);
             this.announceError(`Voice recognition error: ${event.error}`);
         };
+
+        this.recognition = recog;
 
         this.setupDefaultVoiceCommands();
     }
@@ -429,7 +454,7 @@ export class AccessibilityManager {
     }
 
     isVoiceSupported(): boolean {
-        return !!(window.SpeechRecognition || (window as any).webkitSpeechRecognition);
+        return !!(typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition));
     }
 
     isListeningToVoice(): boolean {

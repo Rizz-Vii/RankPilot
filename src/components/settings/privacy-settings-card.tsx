@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Lock, Download, Trash2, AlertTriangle } from "lucide-react";
 import type { User } from "firebase/auth";
+import { asUserProfile, type UserProfile } from "../../../types/user-profile";
 import { useState } from "react";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { useToast } from "@/hooks/use-toast";
@@ -31,7 +32,7 @@ import {
 
 export interface PrivacySettingsCardProps {
   user: User;
-  profile: any;
+  profile: unknown;
 }
 
 export default function PrivacySettingsCard({
@@ -40,14 +41,15 @@ export default function PrivacySettingsCard({
 }: PrivacySettingsCardProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const prof: UserProfile | undefined = asUserProfile(profile);
   const [profileVisibility, setProfileVisibility] = useState(
-    profile?.privacy?.profileVisibility ?? false
+    prof?.privacy?.profileVisibility ?? false
   );
   const [dataCollection, setDataCollection] = useState(
-    profile?.privacy?.dataCollection ?? true
+    prof?.privacy?.dataCollection ?? true
   );
   const [activityTracking, setActivityTracking] = useState(
-    profile?.privacy?.activityTracking ?? true
+    prof?.privacy?.activityTracking ?? true
   );
 
   const handlePrivacyUpdate = async (setting: string, value: boolean) => {
@@ -79,7 +81,7 @@ export default function PrivacySettingsCard({
       setIsLoading(true);
       const functions = getFunctions();
       const exportFn = httpsCallable(functions, "exportUserData");
-      const res: any = await exportFn({ userId: user.uid });
+  const res: unknown = await exportFn({ userId: user.uid });
       // Record export timestamp for audit trail
       try {
         const userDocRef = doc(db, 'users', user.uid);
@@ -88,7 +90,8 @@ export default function PrivacySettingsCard({
         console.warn('Failed to record lastExportAt', e);
       }
       // Trigger download locally
-      const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
+  const data = (res && typeof res === 'object' && 'data' in res) ? (res as any).data : res;
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -98,8 +101,9 @@ export default function PrivacySettingsCard({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       toast({ title: 'Export Ready', description: 'Your data export has downloaded.' });
-    } catch (e: any) {
-      toast({ variant: 'destructive', title: 'Export Failed', description: e.message || 'Unable to export data.' });
+    } catch (e: unknown) {
+      const msg = (e && typeof e === 'object' && 'message' in e) ? (e as any).message : undefined;
+      toast({ variant: 'destructive', title: 'Export Failed', description: msg || 'Unable to export data.' });
     } finally {
       setIsLoading(false);
     }
@@ -119,8 +123,9 @@ export default function PrivacySettingsCard({
         console.warn('Failed to record deletionRequestedAt', e);
       }
       toast({ variant: 'destructive', title: 'Deletion Scheduled', description: 'Your account has been scheduled for deletion.' });
-    } catch (e: any) {
-      toast({ variant: 'destructive', title: 'Deletion Failed', description: e.message || 'Unable to schedule deletion.' });
+    } catch (e: unknown) {
+      const msg = (e && typeof e === 'object' && 'message' in e) ? (e as any).message : undefined;
+      toast({ variant: 'destructive', title: 'Deletion Failed', description: msg || 'Unable to schedule deletion.' });
     } finally {
       setIsLoading(false);
     }

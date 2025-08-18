@@ -14,13 +14,22 @@
 
 import { EventEmitter } from 'events';
 
+// Utility to extract a message from unknown errors without unsafe casts
+function safeErrorMessage(err: unknown): string {
+    if (typeof err === 'string') return err;
+    if (err && typeof err === 'object' && 'message' in err && typeof (err as any).message === 'string') {
+        return (err as any).message as string;
+    }
+    return 'Unexpected error';
+}
+
 export interface StreamingDataPoint {
     id: string;
     type: 'seo-metrics' | 'keyword-ranking' | 'performance' | 'competitor' | 'user-action';
     userId: string;
     dashboardId?: string;
     widgetId?: string;
-    data: any;
+    data: unknown;
     timestamp: number;
     metadata?: {
         source?: string;
@@ -51,7 +60,7 @@ export interface CollaborationEvent {
     userId: string;
     userName: string;
     dashboardId: string;
-    data: any;
+    data: unknown;
     timestamp: number;
 }
 
@@ -71,9 +80,9 @@ export interface StreamingMetrics {
  */
 export class RealTimeDataStreamer extends EventEmitter {
     private clients: Map<string, StreamingClient> = new Map();
-    private dataStreams: Map<string, any> = new Map();
-    private compressionCache: Map<string, any> = new Map();
-    private deltaCache: Map<string, any> = new Map();
+    private dataStreams: Map<string, NodeJS.Timeout> = new Map();
+    private compressionCache: Map<string, unknown> = new Map();
+    private deltaCache: Map<string, unknown> = new Map();
     private heartbeatInterval: NodeJS.Timeout | null = null;
     private metricsInterval: NodeJS.Timeout | null = null;
     private metrics: StreamingMetrics;
@@ -155,10 +164,10 @@ export class RealTimeDataStreamer extends EventEmitter {
             return { success: true, client };
 
         } catch (error) {
-            console.error('[RealTimeStreamer] Client registration error:', error);
+            console.error('[RealTimeStreamer] Client registration error:', safeErrorMessage(error));
             return {
                 success: false,
-                error: error instanceof Error ? error.message : 'Registration failed'
+                error: safeErrorMessage(error)
             };
         }
     }
@@ -211,7 +220,7 @@ export class RealTimeDataStreamer extends EventEmitter {
             try {
                 await this.sendToClient(client, dataPoint);
             } catch (error) {
-                console.error(`[RealTimeStreamer] Failed to send data to client ${client.id}:`, error);
+                console.error(`[RealTimeStreamer] Failed to send data to client ${client.id}:`, safeErrorMessage(error));
                 this.handleClientError(client.id);
             }
         }
@@ -246,7 +255,7 @@ export class RealTimeDataStreamer extends EventEmitter {
             try {
                 await this.sendToClient(client, collaborationData);
             } catch (error) {
-                console.error(`[RealTimeStreamer] Collaboration broadcast failed for ${client.id}:`, error);
+                console.error(`[RealTimeStreamer] Collaboration broadcast failed for ${client.id}:`, safeErrorMessage(error));
             }
         }
 
@@ -276,7 +285,7 @@ export class RealTimeDataStreamer extends EventEmitter {
                 }
                 // SSE connections close automatically when response ends
             } catch (error) {
-                console.error(`[RealTimeStreamer] Error closing connection for ${clientId}:`, error);
+                console.error(`[RealTimeStreamer] Error closing connection for ${clientId}:`, safeErrorMessage(error));
             }
         }
 
@@ -370,18 +379,24 @@ export class RealTimeDataStreamer extends EventEmitter {
         };
     }
 
-    private calculateDelta(oldData: any, newData: any): any {
-        // Simplified delta calculation
+    private calculateDelta(oldData: unknown, newData: unknown): unknown {
         if (typeof newData !== 'object' || newData === null) {
             return newData !== oldData ? newData : null;
         }
 
-        const delta: any = {};
+        if (typeof oldData !== 'object' || oldData === null) {
+            return newData;
+        }
+
+        type AnyObj = Record<string, unknown>;
+        const prev = oldData as AnyObj;
+        const curr = newData as AnyObj;
+        const delta: AnyObj = {};
         let hasChanges = false;
 
-        for (const key in newData) {
-            if (newData[key] !== oldData?.[key]) {
-                delta[key] = newData[key];
+        for (const key of Object.keys(curr)) {
+            if (!Object.is(curr[key], prev[key])) {
+                delta[key] = curr[key];
                 hasChanges = true;
             }
         }
@@ -445,11 +460,17 @@ export class RealTimeDataStreamer extends EventEmitter {
         }
 
         const interval = setInterval(async () => {
-            const data = await this.generateMockData(streamType);
+            let data: unknown;
+            try {
+                data = await this.generateMockData(streamType);
+            } catch (e) {
+                console.error('[RealTimeStreamer] Mock data generation failed:', safeErrorMessage(e));
+                return; // skip emit this cycle
+            }
 
             const dataPoint: StreamingDataPoint = {
                 id: `${streamType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                type: streamType as any,
+                type: streamType as StreamingDataPoint['type'],
                 userId: 'system',
                 data,
                 timestamp: Date.now(),
@@ -480,7 +501,7 @@ export class RealTimeDataStreamer extends EventEmitter {
         }
     }
 
-    private async generateMockData(streamType: string): Promise<any> {
+    private async generateMockData(streamType: string): Promise<unknown> {
         switch (streamType) {
             case 'seo-metrics':
                 return {

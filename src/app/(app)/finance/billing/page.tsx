@@ -20,7 +20,43 @@ export default function BillingOverviewPage() {
   const [months, setMonths] = useState(6);
   const live = useFinanceInvoiceMetrics(months);
   const mock = getMockMetrics('finance');
-  const data = (live.kpis.length ? live : { kpis: allowFinanceMocks()? mock.kpis : [], quotas: allowFinanceMocks()? mock.quotas : [], rows: [], loading:false }) as any;
+  interface FinanceKPI { key: string; label: string; value: number; delta?: number; trend?: number[]; intent?: 'success' | 'neutral' | 'warning' | 'danger' | 'accent'; }
+  interface FinanceQuota { key: string; label: string; used: number; limit: number; }
+  interface InvoiceLike { period: string; planTier: string; amount: number; status: string; issuedAt?: { toDate?: () => Date }; paidAt?: { toDate?: () => Date } | null }
+  interface FinanceDataShape { kpis: FinanceKPI[]; quotas: FinanceQuota[]; rows: InvoiceLike[]; loading: boolean }
+  const adaptInvoice = (r: Record<string, any>): InvoiceLike | null => {
+    if (!r) return null;
+    if (typeof r.period !== 'string' || typeof r.planTier !== 'string') return null;
+    return {
+      period: r.period,
+      planTier: r.planTier,
+      amount: typeof r.amount === 'number' ? r.amount : 0,
+      status: typeof r.status === 'string' ? r.status : 'pending',
+      issuedAt: r.issuedAt && typeof r.issuedAt === 'object' ? r.issuedAt : undefined,
+      paidAt: r.paidAt && typeof r.paidAt === 'object' ? r.paidAt : undefined
+    };
+  };
+  const normalizeLive = (): FinanceDataShape => {
+    const kpis: FinanceKPI[] = (live.kpis || []).map(k => ({
+      key: String((k as any).key || 'kpi'),
+      label: String((k as any).label || (k as any).key || 'Metric'),
+      value: Number((k as any).value || 0),
+      delta: typeof (k as any).delta === 'number' ? (k as any).delta : undefined,
+      trend: Array.isArray((k as any).trend) ? (k as any).trend.filter((n: any) => typeof n === 'number') : undefined,
+      intent: ((): FinanceKPI['intent'] => {
+        const v = (k as any).intent; return v === 'success'||v==='neutral'||v==='warning'||v==='danger'||v==='accent'? v : undefined;
+      })()
+    }));
+    const quotas: FinanceQuota[] = ((live as any).quotas || []).map((q: any) => ({
+      key: String(q.key || 'quota'),
+      label: String(q.label || q.key || 'Quota'),
+      used: Number(q.used || 0),
+      limit: Number(q.limit || 0)
+    }));
+    const rows: InvoiceLike[] = ((live as any).rows || []).map(adaptInvoice).filter(Boolean) as InvoiceLike[];
+    return { kpis, quotas, rows, loading: !!live.loading };
+  };
+  const data: FinanceDataShape = live.kpis.length ? normalizeLive() : { kpis: allowFinanceMocks()? mock.kpis as FinanceKPI[] : [], quotas: allowFinanceMocks()? mock.quotas as FinanceQuota[] : [], rows: [], loading:false };
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(() => { trackDashboardView('finance'); }, []);
   useEffect(()=> { if(live.kpis.length) markLive(); else markFallback(); }, [live.kpis.length, markLive, markFallback]);
@@ -45,16 +81,23 @@ export default function BillingOverviewPage() {
           </Alert>
         )}
         <section className="grid gap-4 md:grid-cols-3">
-          {data.kpis.map((k:any) => (
-            <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
+          {data.kpis.map((k) => (
+            <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend || []} />} intent={k.intent || 'neutral'} />
           ))}
         </section>
         <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Invoices</h2>
           <LazyDataTable
-            columns={[{ key:'period', header:'Period'}, { key:'planTier', header:'Tier'}, { key:'amount', header:'Amount'}, { key:'status', header:'Status'}, { key:'issuedAt', header:'Issued', render:(r:any)=> r.issuedAt?.toDate?.()?.toISOString().slice(0,10)}, { key:'paidAt', header:'Paid', render:(r:any)=> r.paidAt? r.paidAt.toDate().toISOString().slice(0,10): '-' }]}
-            rows={live.rows}
-            loading={live.loading}
+            columns={[
+              { key:'period', header:'Period'},
+              { key:'planTier', header:'Tier'},
+              { key:'amount', header:'Amount'},
+              { key:'status', header:'Status'},
+              { key:'issuedAt', header:'Issued', render:(r:InvoiceLike)=> r.issuedAt?.toDate ? r.issuedAt.toDate().toISOString().slice(0,10) : '-' },
+              { key:'paidAt', header:'Paid', render:(r:InvoiceLike)=> r.paidAt?.toDate ? r.paidAt.toDate().toISOString().slice(0,10) : '-' }
+            ]}
+            rows={data.rows}
+            loading={data.loading}
             empty="No invoice data"
           />
         </section>
@@ -62,7 +105,7 @@ export default function BillingOverviewPage() {
           <section className="space-y-4">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Usage & Quotas</h2>
             <div className="grid gap-4 md:grid-cols-3">
-              {data.quotas.map((q: any) => (
+              {data.quotas.map((q) => (
                 <div key={q.key} className="rounded-xl border p-4 space-y-3">
                   <div className="flex items-center justify-between text-sm font-medium">
                     <span>{q.label}</span>

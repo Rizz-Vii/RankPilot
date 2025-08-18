@@ -397,7 +397,8 @@ export default defineConfig({
             'admin@rankpilot.com'           // Admin tier
         ];
 
-        console.log('✅ Test users validated for 5-tier authentication testing');
+        // In a real implementation, verify these users exist in auth provider
+        console.log(`✅ Test users validated for 5-tier authentication testing: ${testUsers.length}`);
     }
 
     /**

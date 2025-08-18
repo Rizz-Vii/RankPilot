@@ -19,7 +19,9 @@ export default function ContentBriefsPage() {
   const isMobile = useIsMobile();
   // Fallback to marketing mock metrics until dedicated content mocks are added
   const mock = getMockMetrics('marketing');
-  const data = (live.kpis.length ? live : { kpis: mock.kpis, rows: [], loading: live.loading }) as any;
+  interface BriefMetric { key: string; label: string; value: number; delta: number; trend: number[]; intent?: string }
+  interface BriefLive { kpis: BriefMetric[]; rows: any[]; loading: boolean }
+  const data: BriefLive = (live.kpis.length ? (live as unknown as BriefLive) : { kpis: mock.kpis as BriefMetric[], rows: [], loading: live.loading });
   // Track under marketing grouping for now (extend analytics taxonomy later)
   useEffect(() => { trackDashboardView('marketing'); }, []);
 
@@ -41,7 +43,7 @@ export default function ContentBriefsPage() {
             <div className="h-2 w-1/3 bg-muted rounded" />
           </div>
         }>
-          {data.kpis.map((k: any) => (
+          {data.kpis.map((k: BriefMetric) => (
             <MetricCard
               key={k.key}
               label={k.label}
@@ -49,7 +51,7 @@ export default function ContentBriefsPage() {
               delta={k.delta}
               deltaLabel="vs prev"
               trend={<TrendSparkline data={k.trend} />}
-              intent={k.intent || 'neutral'}
+              intent={(k.intent ?? 'neutral') as 'neutral' | 'success' | 'warning' | 'danger' | 'accent'}
               size={isMobile ? 'sm' : 'md'}
             />
           ))}
@@ -58,10 +60,10 @@ export default function ContentBriefsPage() {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Briefs</h2>
           <LazyDataTable
             columns={[
-              { key: 'title', header: 'Title', render: (r: any) => r.brief?.title || r.title || '(Untitled)' },
-              { key: 'keyword', header: 'Primary Keyword', render: (r: any) => r.brief?.primaryKeyword || r.primaryKeyword || '-' },
-              { key: 'target', header: 'Word Target', render: (r: any) => r.brief?.seoGuidelines?.targetWordCount || r.brief?.targetWordCount || '-' },
-              { key: 'period', header: 'Period', render: (r: any) => r.period || '-' },
+              { key: 'title', header: 'Title', render: (r: any) => r?.brief?.title || r?.title || '(Untitled)' },
+              { key: 'keyword', header: 'Primary Keyword', render: (r: any) => r?.brief?.primaryKeyword || r?.primaryKeyword || '-' },
+              { key: 'target', header: 'Word Target', render: (r: any) => r?.brief?.seoGuidelines?.targetWordCount || r?.brief?.targetWordCount || '-' },
+              { key: 'period', header: 'Period', render: (r: any) => r?.period || '-' },
             ]}
             rows={live.rows}
             loading={live.loading}

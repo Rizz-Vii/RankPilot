@@ -53,9 +53,10 @@ export async function GET(req: NextRequest) {
             .orderBy('date', 'asc')
             .limit(500)
             .get();
-        const rows = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+        const rows = snap.docs.map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) } as Record<string, unknown>));
         return NextResponse.json({ range: { start: startDate, end: endDate }, count: rows.length, rows });
-    } catch (e: any) {
-        return NextResponse.json({ error: 'query_failed', message: e?.message || 'Unknown error' }, { status: 500 });
+    } catch (e: unknown) {
+        const err = e as { message?: string };
+        return NextResponse.json({ error: 'query_failed', message: err.message || 'Unknown error' }, { status: 500 });
     }
 }

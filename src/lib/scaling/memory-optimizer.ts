@@ -54,7 +54,7 @@ export class MemoryOptimizer {
    * Get optimal memory configuration based on analysis type and user tier
    */
   static getOptimalConfig(
-    analysisType: string,
+    _analysisType: string,
     userTier: 'free' | 'starter' | 'agency' | 'enterprise' | 'admin',
     complexity: 'low' | 'medium' | 'high' = 'medium'
   ): MemoryConfig {

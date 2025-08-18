@@ -17,6 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Activity, Award, TrendingUp, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { toJsDate } from "@/lib/utils";
 import { ToolPageHeader } from "@/components/tool-page-header";
 
 export default function ProfilePage() {
@@ -50,6 +51,19 @@ export default function ProfilePage() {
   if (!user || !profile) {
     return null;
   }
+
+  // Normalize activities to expected Activity shape for downstream components
+  const normalizedActivities = (activities || []).map((a: any) => {
+    const ts = a?.timestamp;
+    // Accept number (assumed seconds), Date, or Firestore-like { seconds, toDate }
+    let timestamp: any = ts;
+    if (typeof ts === 'number' && ts > 1e12) { // likely ms -> convert to Date
+      timestamp = new Date(ts);
+    } else if (typeof ts === 'number' && ts < 1e12) { // likely seconds
+      timestamp = { seconds: ts };
+    }
+    return { ...a, timestamp };
+  });
 
   return (
     <main className="container mx-auto py-6 space-y-8">
@@ -92,7 +106,7 @@ export default function ProfilePage() {
           <SEOAchievementsBadges
             user={user}
             profile={profile}
-            activities={activities || []}
+            activities={normalizedActivities as any}
           />
         </TabsContent>
 
@@ -110,10 +124,7 @@ export default function ProfilePage() {
                 <p className="text-sm text-muted-foreground">
                   This month:{" "}
                   {activities?.filter(
-                    (a) =>
-                      a.type === "audit" &&
-                      new Date(a.timestamp.toDate()).getMonth() ===
-                      new Date().getMonth()
+                    (a) => a.type === "audit" && toJsDate((a as any).timestamp).getMonth() === new Date().getMonth()
                   ).length || 0}
                 </p>
               </CardContent>
@@ -132,10 +143,7 @@ export default function ProfilePage() {
                 <p className="text-sm text-muted-foreground">
                   This month:{" "}
                   {activities?.filter(
-                    (a) =>
-                      a.type === "keyword-research" &&
-                      new Date(a.timestamp.toDate()).getMonth() ===
-                      new Date().getMonth()
+                    (a) => a.type === "keyword-research" && toJsDate((a as any).timestamp).getMonth() === new Date().getMonth()
                   ).length || 0}
                 </p>
               </CardContent>
@@ -154,10 +162,7 @@ export default function ProfilePage() {
                 <p className="text-sm text-muted-foreground">
                   This month:{" "}
                   {activities?.filter(
-                    (a) =>
-                      a.type === "serp-analysis" &&
-                      new Date(a.timestamp.toDate()).getMonth() ===
-                      new Date().getMonth()
+                    (a) => a.type === "serp-analysis" && toJsDate((a as any).timestamp).getMonth() === new Date().getMonth()
                   ).length || 0}
                 </p>
               </CardContent>

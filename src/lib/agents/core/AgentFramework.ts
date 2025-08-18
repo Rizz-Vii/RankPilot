@@ -9,7 +9,7 @@ export interface RankPilotAgent {
     safetyConstraints: SafetyConstraint;
     execute(): Promise<boolean>;
     rollback(): Promise<boolean>;
-    validateFix?(error: any): Promise<boolean>;
+    validateFix?(error: unknown): Promise<boolean>;
 }
 
 export interface AgentCapability {

@@ -32,6 +32,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { tagSynthetic } from '@/lib/synthetic/synthetic-utils';
+import { toJsDate, safeErrorMessage } from '@/lib/utils';
 import { db } from "@/lib/firebase";
 import { collection, addDoc, query, where, orderBy, limit, getDocs, getDoc, doc } from "firebase/firestore";
 import { dualWriteNeuralCrawlerAggregate } from '@/lib/neural-crawler/aggregate';
@@ -129,6 +130,10 @@ export default function NeuralCrawlerPage() {
     }
   }, [user]);
 
+  // lightweight counters for aggregate vs legacy resolution (dev telemetry only)
+  let aggHits = 0;
+  let legacyFallbacks = 0;
+
   // When a currentResult is not yet set but we have history and read-cutover flag on, attempt to hydrate
   useEffect(() => {
     const run = async () => {
@@ -141,7 +146,7 @@ export default function NeuralCrawlerPage() {
           const aggRef = doc(db, 'neuralCrawlerResultsAgg', latest.id); // attempt direct id match first
           const aggSnap = await getDoc(aggRef);
             if (aggSnap.exists()) {
-              const data: any = aggSnap.data();
+              const data: unknown = aggSnap.data();
               aggHits++;
               recordCrawlerAggregateHit();
               console.info('[neuralCrawler] aggregate hit', { historyId: latest.id });
@@ -163,60 +168,58 @@ export default function NeuralCrawlerPage() {
               legacyFallbacks++;
               recordCrawlerLegacyFallback();
               console.warn('[neuralCrawler] legacy fallback (aggregate miss)', { url: latest.url });
-              const docData: any = legacySnap.docs[0].data();
-              setCurrentResult(docData);
+              const docData: unknown = legacySnap.docs[0].data();
+              setCurrentResult((docData as any) as CrawlResult);
             }
         }
       } catch (e) {
-        console.warn('[neuralCrawler] hydrate failed', (e as any)?.message);
+        console.warn('[neuralCrawler] hydrate failed', safeErrorMessage(e));
       }
     };
     run();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [crawlHistory, aggReadFlag]);
 
-  function legacyFromAggregate(a: any): CrawlResult {
+  function legacyFromAggregate(a: unknown): CrawlResult {
     // Reconstruct a minimal pseudo-legacy object (omitting heavy arrays) for UI components already tolerant to partial data.
+    const x = a as any;
     return {
-      id: a.historyId || a.id || `agg_${a.url}`,
-      url: a.url,
-      title: a.title || a.url,
-      metaDescription: a.metaDescription || '',
+      id: x?.historyId || x?.id || `agg_${x?.url}`,
+      url: x?.url || '',
+      title: x?.title || x?.url || '',
+      metaDescription: x?.metaDescription || '',
       content: '',
-      wordCount: a.wordCount || 0,
-      readingTime: a.readingTime || 0,
-      headings: normalizeHeadingCounts(a.headings),
-      images: new Array(a.imagesCount || 0).fill(0).map((_, i) => ({ src: '', alt: `Image ${i+1}` })),
-      links: buildLinkPlaceholders(a.linksInternal, a.linksExternal),
+      wordCount: x?.wordCount || 0,
+      readingTime: x?.readingTime || 0,
+      headings: normalizeHeadingCounts(x?.headings),
+      images: new Array(x?.imagesCount || 0).fill(0).map((_: unknown, i: number) => ({ src: '', alt: `Image ${i+1}` })),
+      links: buildLinkPlaceholders(x?.linksInternal, x?.linksExternal),
       technicalData: { loadTime: 0, pageSize: 0, statusCode: 200, contentType: 'text/html' },
-      seoAnalysis: { titleLength: a.titleLength || 0, metaDescriptionLength: a.metaDescriptionLength || 0, headingStructure: 'Unknown', imageOptimization: 0, internalLinks: a.linksInternal || 0, externalLinks: a.linksExternal || 0 },
-      issues: new Array(a.issuesCount || 0).fill(0).map((_, i) => ({ type: 'info', message: `Issue ${i+1}`, recommendation: '' })),
-      entities: new Array(a.entitiesCount || 0).fill(0).map((_, i) => ({ text: `Entity ${i+1}`, type: 'concept', confidence: 0 })),
-      createdAt: a.createdAt?.toDate?.() || new Date()
+      seoAnalysis: { titleLength: x?.titleLength || 0, metaDescriptionLength: x?.metaDescriptionLength || 0, headingStructure: 'Unknown', imageOptimization: 0, internalLinks: x?.linksInternal || 0, externalLinks: x?.linksExternal || 0 },
+      issues: new Array(x?.issuesCount || 0).fill(0).map((_: unknown, i: number) => ({ type: 'info', message: `Issue ${i+1}`, recommendation: '' })),
+      entities: new Array(x?.entitiesCount || 0).fill(0).map((_: unknown, i: number) => ({ text: `Entity ${i+1}`, type: 'concept', confidence: 0 })),
+      createdAt: toJsDate(x?.createdAt)
     };
   }
 
-  function normalizeHeadingCounts(h: any): CrawlResult['headings'] {
-    const slots = { h1: [], h2: [], h3: [], h4: [], h5: [], h6: [] } as Record<string,string[]>;
+  function normalizeHeadingCounts(h: unknown): CrawlResult['headings'] {
+    const base: CrawlResult['headings'] = { h1: [], h2: [], h3: [], h4: [], h5: [], h6: [] };
     if (h && typeof h === 'object') {
-      Object.entries(h).forEach(([k,v]) => {
+      const obj = h as Record<string, unknown>;
+      (['h1','h2','h3','h4','h5','h6'] as const).forEach((k) => {
+        const v = obj[k];
         const n = typeof v === 'number' ? v : 0;
-        slots[k] = Array(n).fill('').map((_,i)=>`${k.toUpperCase()} heading ${i+1}`);
+        base[k] = Array(n).fill('').map((_,i)=>`${k.toUpperCase()} heading ${i+1}`);
       });
     }
-    return slots as any;
+    return base;
   }
-  function buildLinkPlaceholders(internal=0, external=0) {
-    const arr: any[] = [];
+  function buildLinkPlaceholders(internal=0, external=0): CrawlResult['links'] {
+    const arr: CrawlResult['links'] = [];
     for (let i=0;i<internal;i++) arr.push({ href: '#', text: `Internal ${i+1}`, type: 'internal' });
     for (let i=0;i<external;i++) arr.push({ href: '#', text: `External ${i+1}`, type: 'external' });
     return arr;
   }
-
-  // Simple in-memory counters for aggregate vs legacy read fallbacks (reset on HMR)
-  // Using function-scope (not state) so we don't trigger rerenders; export via console for observability.
-  let aggHits = 0;
-  let legacyFallbacks = 0;
 
   const loadCrawlHistory = async () => {
     if (!user) return;

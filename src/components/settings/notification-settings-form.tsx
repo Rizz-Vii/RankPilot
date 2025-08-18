@@ -28,6 +28,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "firebase/auth";
+import { asUserProfile, type UserProfile } from "../../../types/user-profile";
 
 const notificationSchema = z.object({
   emailNotifications: z.boolean(),
@@ -43,7 +44,7 @@ type NotificationFormValues = z.infer<typeof notificationSchema>;
 
 export interface NotificationSettingsFormProps {
   user: User;
-  profile: any;
+  profile: unknown;
 }
 
 export default function NotificationSettingsForm({
@@ -52,17 +53,18 @@ export default function NotificationSettingsForm({
 }: NotificationSettingsFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const prof: UserProfile | undefined = asUserProfile(profile);
 
   const form = useForm<NotificationFormValues>({
     resolver: zodResolver(notificationSchema),
     defaultValues: {
-      emailNotifications: profile?.notifications?.emailNotifications ?? true,
-      seoAlerts: profile?.notifications?.seoAlerts ?? true,
-      weeklyReports: profile?.notifications?.weeklyReports ?? true,
-      marketingEmails: profile?.notifications?.marketingEmails ?? false,
-      securityAlerts: profile?.notifications?.securityAlerts ?? true,
-      auditCompletions: profile?.notifications?.auditCompletions ?? true,
-      keywordRankings: profile?.notifications?.keywordRankings ?? true,
+  emailNotifications: prof?.notifications?.emailNotifications ?? true,
+  seoAlerts: prof?.notifications?.seoAlerts ?? true,
+  weeklyReports: prof?.notifications?.weeklyReports ?? true,
+  marketingEmails: prof?.notifications?.marketingEmails ?? false,
+  securityAlerts: prof?.notifications?.securityAlerts ?? true,
+  auditCompletions: prof?.notifications?.auditCompletions ?? true,
+  keywordRankings: prof?.notifications?.keywordRankings ?? true,
     },
   });
 
@@ -79,7 +81,7 @@ export default function NotificationSettingsForm({
         title: "Notifications Updated",
         description: "Your notification preferences have been saved.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Update Failed",

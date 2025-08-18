@@ -434,7 +434,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
 
     try {
             // Get fresh user token to avoid 401 from stale tokens
-            const curr = auth.currentUser || user as any;
+            const curr = (auth.currentUser || (user as any)) as any;
             if (!curr || typeof curr.getIdToken !== 'function') {
                 throw new Error('Authentication failed. Please sign in again and retry.');
             }
@@ -695,11 +695,17 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
             recorder.start();
             audioRecorderRef.current = recorder;
             setAnnouncements(a => [...a.slice(-3), 'Recording started']);
-        } catch (e: any) {
+        } catch (e: unknown) {
             setMicBlocked(true);
-            const msg = e?.name === 'NotAllowedError'
-                ? 'Microphone access denied by browser or site permissions policy.'
-                : e?.message || 'Unable to access microphone';
+            let msg = 'Unable to access microphone';
+            if (typeof e === 'object' && e !== null) {
+                const anyErr = e as { name?: unknown; message?: unknown };
+                if (anyErr.name === 'NotAllowedError') {
+                    msg = 'Microphone access denied by browser or site permissions policy.';
+                } else if (typeof anyErr.message === 'string') {
+                    msg = anyErr.message;
+                }
+            }
             setError(msg);
             setAnnouncements(a => [...a.slice(-3), 'Microphone blocked']);
         }
@@ -971,7 +977,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                                 {loadingMore && (
                                     <div className="text-center text-xs text-muted-foreground">Loading…</div>
                                 )}
-                                {messages.map((msg, index) => (
+                                {messages.map((msg) => (
                                     <div
                                         key={msg.id}
                                         className={cn('flex gap-3 group', msg.isUser ? 'justify-end' : 'justify-start')}

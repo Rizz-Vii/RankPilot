@@ -41,19 +41,19 @@ const navigationItems = [
 export default function SiteHeader() {
   const { user } = useAuth();
   const hydrated = useHydration();
-  const isMobile = useIsMobile();
+
   const [scrolled, setScrolled] = useState(false);
-  const { theme, setTheme, isDark, isHighContrast } = useTheme() as any; // cast for added method usage
+  const { theme, setTheme, isDark, isHighContrast } = useTheme();
   const { translate } = useI18n();
   const [a11yMessage, setA11yMessage] = useState("");
   const { toast } = useToast();
 
   const toggleTheme = () => {
     // cycle light -> dark -> high-contrast -> auto -> light
-    const order: any[] = ["light", "dark", "high-contrast", "auto"];
-    const idx = order.indexOf(theme);
-    const next = order[(idx + 1) % order.length];
-    setTheme(next);
+  const order: Array<typeof theme> = ["light", "dark", "high-contrast", "auto"];
+  const idx = order.indexOf(theme as typeof theme);
+  const next = order[(idx + 1) % order.length] as any;
+  setTheme(next);
   const msg = translate('feedback.theme.cycled');
   setA11yMessage(msg);
   toast({ title: msg });

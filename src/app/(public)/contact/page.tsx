@@ -73,7 +73,7 @@ const supportChannels = [
   },
 ];
 
-const faqItems = [
+const faqs = [
   {
     question: "How do I cancel my subscription?",
     answer:
@@ -137,9 +137,10 @@ export default function ContactPage() {
 
       toast.success("Message sent successfully! We'll get back to you soon.");
       reset();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Contact form error:", error);
-      toast.error(error?.message || "Failed to send message. Please try again.");
+      const msg = error instanceof Error ? error.message : 'Failed to send message. Please try again.';
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }

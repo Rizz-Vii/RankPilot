@@ -69,12 +69,14 @@ export default function MarketingContentGenerationPage() {
   const [months, setMonths] = useState(6);
   const live = useMarketingCampaignMetrics(months);
   const mock = getMockMetrics('marketing');
-  const data = (live.kpis.length ? live : { kpis: mock.kpis, rows: [], loading:false }) as any;
+  interface MarketingMetric { key: string; label: string; value: number; delta: number; trend: number[]; intent?: string }
+  interface MarketingLive { kpis: MarketingMetric[]; rows: any[]; loading: boolean; addOptimistic: (row: any)=>void; }
+  const data: MarketingLive = (live.kpis.length ? live : { kpis: mock.kpis, rows: [], loading:false, addOptimistic: live.addOptimistic }) as MarketingLive;
   useEffect(() => { trackDashboardView('marketing'); }, []);
   const { toast } = useToast();
   const { user } = useAuth();
   const userId = user?.uid || 'dev-user';
-  const teamId = (user as any)?.teamId;
+  const teamId = (user as any)?.teamId as string | undefined;
   const [genOpen,setGenOpen]=useState(false);
   const [varOpen,setVarOpen]=useState(false);
   const [toneOpen,setToneOpen]=useState(false);
@@ -86,9 +88,17 @@ export default function MarketingContentGenerationPage() {
   useEffect(() => { if(live.loading) return; if(live.kpis.length) markLive(); else markFallback(); }, [live.loading, live.kpis, markLive, markFallback]);
 
   async function handleGenerate(type:string, topic:string){
-    try{ setBusy('generate');
-  live.addOptimistic({ name: `${type}:${topic.slice(0,40)}`, channel:'content', impressions:0, clicks:0, leads:0, spend:0, revenue:0, __provenance:'optimistic' });
-      const res= await generateContentAsset(type, topic, userId, teamId); toast({ title:'Asset generated', description: res.id }); setLastContent(topic + ' ' + res.body.slice(0,80)+'...'); setGenOpen(false);}catch(e:any){ toast({ title:'Generation failed', description:e.message||'Unknown error', variant:'destructive'});} finally{ setBusy(null);} }
+    try {
+      setBusy('generate');
+      live.addOptimistic({ id: `tmp-${Date.now()}`, period: new Date().toISOString().slice(0,7), name: `${type}:${topic.slice(0,40)}`, channel:'content', impressions:0, clicks:0, leads:0, spend:0, revenue:0, __provenance:'optimistic' } as any);
+      const res = await generateContentAsset(type, topic, userId, teamId);
+      toast({ title:'Asset generated', description: res.id });
+      setLastContent(topic + ' ' + res.body.slice(0,80)+'...');
+      setGenOpen(false);
+    } catch(e: unknown) {
+      const err = (e as any);
+      toast({ title:'Generation failed', description: err?.message || 'Unknown error', variant:'destructive'});
+    } finally { setBusy(null);} }
   function openVariants(){ setVarOpen(true); }
   function openTone(){ setToneOpen(true); }
   return (
@@ -101,8 +111,16 @@ export default function MarketingContentGenerationPage() {
         </header>
   <ProvenanceLegend />
         <section className="grid gap-4 md:grid-cols-4">
-          {data.kpis.map((k:any) => (
-            <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
+          {data.kpis.map((k) => (
+            <MetricCard
+              key={k.key}
+              label={k.label}
+              value={Number(k.value).toLocaleString()}
+              delta={k.delta}
+              deltaLabel="vs last period"
+              trend={<TrendSparkline data={k.trend} />}
+              intent={(k.intent ?? 'neutral') as 'neutral' | 'success' | 'warning' | 'danger' | 'accent'}
+            />
           ))}
         </section>
         <section className="space-y-3">

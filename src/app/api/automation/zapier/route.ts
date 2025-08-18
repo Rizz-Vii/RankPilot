@@ -27,7 +27,7 @@ interface WorkflowRequestBody {
     workflowId?: string;
     templateId?: string;
     name?: string;
-    customizations?: Record<string, any>;
+    customizations?: Record<string, unknown>;
     status?: 'active' | 'paused' | 'disabled';
 }
 

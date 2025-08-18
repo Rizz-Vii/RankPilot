@@ -3,11 +3,16 @@
 
 const globalKey = '__RP_MODULE_LOAD_COUNTS__';
 interface CounterMap { [k: string]: { count: number; first: number } }
+declare global {
+    // eslint-disable-next-line no-var
+    var __RP_MODULE_LOAD_COUNTS__: CounterMap | undefined;
+}
 
 function getStore(): CounterMap {
-    if (typeof globalThis === 'undefined') return {} as any;
-    if (!(globalKey in globalThis)) (globalThis as any)[globalKey] = {};
-    return (globalThis as any)[globalKey] as CounterMap;
+    if (typeof globalThis === 'undefined') return {} as CounterMap;
+    const g = globalThis as typeof globalThis & { [k: string]: unknown };
+    if (!g[globalKey]) g[globalKey] = {} as CounterMap;
+    return g[globalKey] as CounterMap;
 }
 
 export function registerModuleLoad(rawId: string | undefined, opts: { threshold?: number; label?: string } = {}) {

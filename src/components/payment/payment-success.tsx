@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,15 +20,14 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { toast } from "sonner";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { updateUserSubscription } from "@/lib/subscription";
 import confetti from "canvas-confetti";
 
 export default function PaymentSuccess() {
   const [emailSent, setEmailSent] = useState(false);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
 
-  const router = useRouter();
+
   const searchParams = useSearchParams();
   const { user } = useAuth();
 
@@ -37,6 +36,16 @@ export default function PaymentSuccess() {
   const cycle = searchParams?.get("cycle") || "monthly";
   const method = searchParams?.get("method") || "stripe";
   const sessionId = searchParams?.get("session_id");
+
+  const sendConfirmationEmail = useCallback(async () => {
+    try {
+      // Placeholder – in real implementation call backend/email service
+      await new Promise(r => setTimeout(r, 400));
+      setEmailSent(true);
+    } catch {
+      // silent – non‑critical
+    }
+  }, []);
 
   useEffect(() => {
     // Trigger confetti animation
@@ -50,49 +59,18 @@ export default function PaymentSuccess() {
 
     // Update user subscription status in Firestore
     if (user?.uid) {
-      updateUserSubscription();
+      // Minimal optimistic subscription update; real values handled by webhook
+      updateUserSubscription(user.uid, {
+        status: "active",
+        tier: (plan as any) || "agency",
+      }).catch(() => {/* ignore – webhook will reconcile */});
     }
 
     // Send confirmation email
-    sendConfirmationEmail();
+    if (!emailSent) sendConfirmationEmail();
 
     return () => clearTimeout(timer);
-  }, [user]);
-
-  const updateUserSubscription = async () => {
-    if (!user?.uid) return;
-
-    try {
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, {
-        subscription: {
-          plan,
-          status: "active",
-          billingCycle: cycle,
-          amount: parseFloat(amount),
-          paymentMethod: method,
-          subscribedAt: new Date(),
-          nextBillingDate: new Date(
-            Date.now() + (cycle === "yearly" ? 365 : 30) * 24 * 60 * 60 * 1000
-          ),
-          sessionId,
-        },
-        updatedAt: new Date(),
-      });
-    } catch (error) {
-      console.error("Error updating subscription:", error);
-    }
-  };
-
-  const sendConfirmationEmail = async () => {
-    try {
-      // This would call your email service
-      setEmailSent(true);
-      toast.success("Confirmation email sent!");
-    } catch (error) {
-      console.error("Error sending email:", error);
-    }
-  };
+  }, [user, plan, emailSent, sendConfirmationEmail]);
 
   const downloadInvoice = async () => {
     try {

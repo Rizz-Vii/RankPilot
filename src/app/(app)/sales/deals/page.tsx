@@ -22,23 +22,27 @@ export default function SalesDealsPage() {
   const fallback = getMockMetrics('sales');
   const metrics = useSalesDealsMetrics();
   const { user } = useAuth(); const userId = user?.uid; const teamId = (user as any)?.teamId as string|undefined;
-  const [snapMetrics, setSnapMetrics] = useState<any|null>(null);
-  const [history, setHistory] = useState<any[]>([]);
+  interface SalesMetricsSnapshot { pipeline: number; deals: number; won: number; ts: Date; }
+  interface RawMetricsSnapshot { pipeline: number; totalDeals: number; closedWon: number; createdAt?: { toDate?: ()=> Date }; }
+  interface NewDeal { amount?: number }
+  interface SalesPipelineHistory { pipeline: number; ts: Date }
+  const [snapMetrics, setSnapMetrics] = useState<SalesMetricsSnapshot|null>(null);
+  const [history, setHistory] = useState<SalesPipelineHistory[]>([]);
   const { toast } = useToast();
   const { trigger, running } = useAutomationTrigger();
   const [addOpen, setAddOpen] = useState(false);
   const [loadingSnap, setLoadingSnap] = useState(false);
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(() => { trackDashboardView('sales'); }, []);
-  useEffect(()=> { if(!userId) return; setLoadingSnap(true); let active=true; (async()=> { try { const m = await fetchRecentSalesMetricsSnapshots(userId, teamId,6); if(active){ if(m.length){ setSnapMetrics({ pipeline: m[0].pipeline, deals: m[0].totalDeals, won: m[0].closedWon, ts: m[0].createdAt?.toDate?.()||new Date() }); setHistory(m.map(s=> ({ pipeline: s.pipeline, ts: s.createdAt?.toDate?.()||new Date() }))); markLive(); } else { markFallback(); } } } finally { if(active) setLoadingSnap(false);} })(); return ()=> {active=false;}; }, [userId, teamId]);
+  useEffect(()=> { if(!userId) return; setLoadingSnap(true); let active=true; (async()=> { try { const m = await fetchRecentSalesMetricsSnapshots(userId, teamId,6) as RawMetricsSnapshot[]; if(active){ if(m.length){ const first = m[0]; const ts = first.createdAt?.toDate?.() || new Date(); setSnapMetrics({ pipeline: first.pipeline, deals: first.totalDeals, won: first.closedWon, ts }); setHistory(m.map(s=> ({ pipeline: s.pipeline, ts: s.createdAt?.toDate?.()|| new Date() }))); markLive(); } else { markFallback(); } } } finally { if(active) setLoadingSnap(false);} })(); return ()=> {active=false;}; }, [userId, teamId]);
 
   function run(action: 'salesForecastSnapshot'|'salesRefreshMetrics') {
-    trigger(action, { optimistic: action==='salesRefreshMetrics'? ()=> setSnapMetrics((s: any) => s? { ...s, ts:new Date() }: s): undefined, label: action });
+  trigger(action, { optimistic: action==='salesRefreshMetrics'? ()=> setSnapMetrics((s) => s? { ...s, ts:new Date() }: s): undefined, label: action });
   }
   return (
     <FeatureGate feature="sales_deals" requiredTier="agency" showUpgrade>
       <div className="p-6 space-y-10">
-  <AddDealModal open={addOpen} onOpenChange={setAddOpen} onCreated={(d)=> setSnapMetrics((s: any) => s? { ...s, deals: (s.deals||0)+1, pipeline: s.pipeline + (d.amount||0) }: s)} />
+  <AddDealModal open={addOpen} onOpenChange={setAddOpen} onCreated={(d: any)=> setSnapMetrics((s) => s? { ...s, deals: (s.deals||0)+1, pipeline: s.pipeline + (d?.amount||0) }: s)} />
   <ToolPageHeader
           title="Deals"
           description="Active opportunity mix, probability distribution & cycle velocity for precision forecasting."

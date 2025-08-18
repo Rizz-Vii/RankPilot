@@ -55,8 +55,8 @@ export async function suggestKeywords(
       const cacheKey = `${input.topic.toLowerCase().trim()}-${input.includeLongTailKeywords}`;
 
       return optimizeOpenAI(
-        (prompt: string) =>
-          suggestKeywordsFlow({
+        () =>
+          _suggestKeywordsFlow({
             topic: input.topic,
             includeLongTailKeywords: input.includeLongTailKeywords,
           }),
@@ -96,7 +96,7 @@ For each keyword, provide:
 Return a JSON object containing an array of these keyword objects.`,
 });
 
-const suggestKeywordsFlow = ai.defineFlow(
+const _suggestKeywordsFlow = ai.defineFlow(
   {
     name: "suggestKeywordsFlow",
     inputSchema: SuggestKeywordsInputSchema,
@@ -107,3 +107,5 @@ const suggestKeywordsFlow = ai.defineFlow(
     return output!;
   }
 );
+
+export const suggestKeywordsFlow = _suggestKeywordsFlow;

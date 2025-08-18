@@ -46,14 +46,16 @@ export interface SemanticAnalysisResult {
   recommendations: SemanticRecommendation[];
   competitiveInsights: CompetitiveInsight[];
   visualizationData: VisualizationData;
+  /** Composite semantic relevance score (0-100) derived from density, topical authority, entity coverage. */
+  overallRelevanceScore: number;
 }
 
 export interface SemanticRecommendation {
   type:
-    | "topic_expansion"
-    | "keyword_optimization"
-    | "entity_enhancement"
-    | "content_depth";
+  | "topic_expansion"
+  | "keyword_optimization"
+  | "entity_enhancement"
+  | "content_depth";
   title: string;
   description: string;
   priority: "high" | "medium" | "low";
@@ -87,7 +89,7 @@ export interface VisualizationData {
 export class SemanticMap {
   async analyzeContent(
     content: string,
-    title: string,
+    _title: string,
     targetKeywords: string[] = [],
     competitorData?: Array<{ url: string; content: string }>
   ): Promise<SemanticAnalysisResult> {
@@ -138,7 +140,16 @@ export class SemanticMap {
       recommendations,
       competitiveInsights,
       visualizationData,
+      overallRelevanceScore: this.computeOverallRelevance(fingerprint),
     };
+  }
+
+  private computeOverallRelevance(f: SemanticFingerprint): number {
+    // Heuristic: 40% topicalAuthority, 35% semanticDensity, 25% entity richness
+    const entityRichness = Object.keys(f.entityCoverage).length;
+    const entityScore = Math.min(100, entityRichness * 6); // 0..100 scaled
+    const score = f.topicalAuthority * 0.4 + f.semanticDensity * 0.35 + entityScore * 0.25;
+    return Math.max(0, Math.min(100, Math.round(score)));
   }
 
   private async extractTopicClusters(
@@ -349,7 +360,7 @@ export class SemanticMap {
     const sortedKeywords = keywords.sort((a, b) => b.length - a.length);
     return (
       sortedKeywords[0]?.charAt(0).toUpperCase() +
-        sortedKeywords[0]?.slice(1) || "Subtopic"
+      sortedKeywords[0]?.slice(1) || "Subtopic"
     );
   }
 

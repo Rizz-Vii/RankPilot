@@ -50,6 +50,13 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ExportButton } from '@/components/ui/ExportButton';
+// NOTE: Server-side canonical dashboard types live in lib/dashboard/custom-dashboard-builder.
+// We intentionally alias them to avoid clashing with the legacy builder shapes below.
+// Follow-up: unify these (client) widget shapes with server `DashboardWidget` subset (dataSource, visualization, styling, permissions) via a thin mapper.
+import type { DashboardWidget as ServerDashboardWidget, DashboardLayout as ServerDashboardLayout } from '@/lib/dashboard/custom-dashboard-builder';
+// Shared safe error message extractor (mirrors server util pattern)
+const errMsg = (e: unknown): string => (typeof e === 'string' ? e : (e && typeof e === 'object' && 'message' in e && typeof (e as any).message === 'string') ? (e as any).message : 'Unknown error');
+import { toServerCreate, toServerMutation, mergeServerWidget, serverToClientWidget } from '@/lib/dashboard/widget-mapping';
 import { toast as sonnerToast } from 'sonner';
 import {
     Table,
@@ -60,8 +67,11 @@ import {
     TableRow,
 } from '@/components/ui/table';
 
+// Legacy client widget (will be converged into server shape). Kept minimal for current UI interactions.
 export interface DashboardWidget {
     id: string;
+    // server authoritative id (set when persisted/hydrated)
+    serverId?: string;
     type: 'chart' | 'metric' | 'text' | 'table';
     title: string;
     chartConfig?: ChartConfig;
@@ -80,6 +90,7 @@ export interface DashboardWidget {
     };
 }
 
+// Legacy client layout (distinct from server layout until convergence work lands)
 export interface DashboardLayout {
     id: string;
     name: string;
@@ -98,7 +109,7 @@ export interface DashboardLayout {
 interface VisualizationDashboardBuilderProps {
     initialLayout?: DashboardLayout;
     onSave?: (layout: DashboardLayout) => void;
-    onExport?: (format: string, data: any) => void;
+    onExport?: (format: string, data: unknown) => void;
     readOnly?: boolean;
 }
 
@@ -111,6 +122,41 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
     const [layout, setLayout] = useState<DashboardLayout>(
         initialLayout || createDefaultLayout()
     );
+    // remote dashboard id (set after first successful server create)
+    const [serverDashboardId, setServerDashboardId] = useState<string | null>(null);
+    const [persisting, setPersisting] = useState(false);
+    // Initialize server dashboard id from localStorage if present
+    useEffect(() => {
+        try {
+            const cached = (typeof window !== 'undefined') ? localStorage.getItem('serverDashboardId') : null;
+            if (cached) setServerDashboardId(cached);
+        } catch {}
+    }, []);
+    // Hydrate server dashboard widgets when id available
+    useEffect(() => {
+        if (!serverDashboardId) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const token = (typeof window !== 'undefined') ? localStorage.getItem('authToken') : null;
+                if (!token) return;
+                const res = await fetch('/api/dashboard/custom?action=dashboards', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) return;
+                const json = await res.json();
+                const dashboards: any[] = json?.dashboards || [];
+                const serverDash = dashboards.find(d => d.id === serverDashboardId);
+                if (!serverDash || cancelled) return;
+                const serverWidgets: ServerDashboardWidget[] = serverDash.widgets || [];
+                setLayout(prev => {
+                    const existing = new Set(prev.widgets.map(w => w.serverId || w.id));
+                    const additions = serverWidgets.filter(sw => !existing.has(sw.id)).map(sw => serverToClientWidget(sw));
+                    if (additions.length === 0) return prev;
+                    return { ...prev, widgets: [...prev.widgets, ...additions], updated: new Date() };
+                });
+            } catch {/* silent */}
+        })();
+        return () => { cancelled = true; };
+    }, [serverDashboardId]);
     const [selectedWidget, setSelectedWidget] = useState<string | null>(null);
     const [isPreviewMode, setIsPreviewMode] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
@@ -223,7 +269,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
             }
         } catch (error) {
             console.error('Failed to render chart:', error);
-            try { sonnerToast.error('Render failed', { description: (error as any)?.message || String(error) }); } catch {}
+            try { sonnerToast.error('Render failed', { description: errMsg(error) }); } catch {}
             chartElement.innerHTML = `<div class=\"p-4 text-destructive-foreground\">Error rendering chart: ${String(error)}</div>`;
         }
     }, [sampleData]);
@@ -278,12 +324,40 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
         }));
 
         setSelectedWidget(newWidget.id);
+
+        // Fire-and-forget remote persistence (best-effort) after state update
+    void (async () => {
+            try {
+                // Acquire auth token (heuristic); if absent skip persistence silently.
+                const token = (typeof window !== 'undefined') ? localStorage.getItem('authToken') : null;
+                if (!token) return;
+                // Ensure dashboard exists server-side
+        const dashId = await ensureServerDashboard(token);
+        if (dashId && !serverDashboardId) setServerDashboardId(dashId);
+                if (!dashId) return;
+                const serverInput = toServerCreate(newWidget);
+                const pos = newWidget.position;
+                await fetch('/api/dashboard/custom', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ action: 'update', dashboardId: dashId, widgetConfig: serverInput, position: { x: pos.x, y: pos.y, width: pos.width, height: pos.height } })
+                }).then(r => r.json()).then(json => {
+                    if (json?.widget?.id) {
+                        // Optionally merge back server authoritative fields
+                        setLayout(prev => ({
+                            ...prev,
+                            widgets: prev.widgets.map(w => w.id === newWidget.id ? mergeServerWidget(w, json.widget) : w)
+                        }));
+                    }
+                }).catch(() => { /* silent degrade */ });
+            } catch { /* ignore */ }
+        })();
     };
 
     // Table helpers
     const getDefaultTableState = (): { sortBy: TableSortBy; direction: TableDirection; page: number; pageSize: number } => ({ sortBy: 'metric', direction: 'asc', page: 0, pageSize: 5 });
 
-    const getTableRows = (widgetId: string) => {
+    const getTableRows = (widgetId: string): TableRowType[] => {
         // Sample rows; in a real app, rows would come from widget.data
         return [
             { metric: 'Revenue', value: '$200,000', change: '+12%' },
@@ -297,7 +371,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
         ];
     };
 
-    const parseNumeric = (val: string) => {
+    const parseNumericValue = (val: string): number => {
         if (val.endsWith('%')) return parseFloat(val.replace(/%/g, ''));
         return parseFloat(val.replace(/[$,]/g, ''));
     };
@@ -372,11 +446,11 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                 .catch(err => {
                     if (controller.signal.aborted) return;
                     console.error('Table data fetch error', err);
-                    try { sonnerToast.error('Failed to load table data', { description: (err as any)?.message || 'Unknown error' }); } catch {}
+                    try { sonnerToast.error('Failed to load table data', { description: errMsg(err) }); } catch {}
                     setTableData(prev => {
                         const next = new Map(prev);
                         const curr = next.get(w.id);
-                        next.set(w.id, { rows: curr?.rows || [], total: curr?.total || 0, loading: false, error: (err as any)?.message || 'error' });
+                        next.set(w.id, { rows: curr?.rows || [], total: curr?.total || 0, loading: false, error: errMsg(err) });
                         return next;
                     });
                 });
@@ -393,6 +467,24 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
             ),
             updated: new Date()
         }));
+
+        // Remote mutation best-effort
+    void (async () => {
+            try {
+                const token = (typeof window !== 'undefined') ? localStorage.getItem('authToken') : null;
+                if (!token) return;
+                if (!serverDashboardId) return; // only persist if dashboard created
+                const current = layout.widgets.find(w => w.id === widgetId);
+                if (!current) return;
+                const serverMutation = toServerMutation(current, updates);
+                if (Object.keys(serverMutation).length === 0) return;
+                await fetch('/api/dashboard/custom', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ action: 'update', dashboardId: serverDashboardId, updates: { widgetId, ...serverMutation } })
+                });
+            } catch { /* ignore */ }
+        })();
     };
 
     const deleteWidget = (widgetId: string) => {
@@ -408,6 +500,19 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
 
         // Remove chart from D3 engine
         d3VisualizationEngine.removeChart(widgetId);
+
+        // Remote deletion best-effort
+        void (async () => {
+            try {
+                const token = (typeof window !== 'undefined') ? localStorage.getItem('authToken') : null;
+                if (!token || !serverDashboardId) return;
+                await fetch('/api/dashboard/custom', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ action: 'delete', dashboardId: serverDashboardId, updates: { widgetId } })
+                });
+            } catch { /* ignore */ }
+        })();
     };
 
     const exportDashboard = async (format: 'pdf' | 'excel' | 'json') => {
@@ -469,7 +574,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
 
         } catch (error) {
             console.error('Export failed:', error);
-            try { sonnerToast.error('Dashboard export failed', { description: (error as any)?.message || 'Unknown error' }); } catch {}
+            try { sonnerToast.error('Dashboard export failed', { description: errMsg(error) }); } catch {}
         } finally {
             setIsExporting(false);
         }
@@ -479,6 +584,15 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
         if (onSave) {
             onSave(layout);
         }
+        // Attempt server create if not yet persisted
+    void (async () => {
+            try {
+                const token = (typeof window !== 'undefined') ? localStorage.getItem('authToken') : null;
+                if (!token || serverDashboardId) return;
+        const id = await ensureServerDashboard(token);
+        if (id) setServerDashboardId(id);
+            } catch {/* ignore */}
+        })();
     };
 
     const getChartIcon = (type: string) => {
@@ -919,126 +1033,41 @@ interface WidgetPropertiesPanelProps {
     onUpdate: (updates: Partial<DashboardWidget>) => void;
 }
 
+// Minimal inline properties panel (placeholder until unified with server types)
 const WidgetPropertiesPanel: React.FC<WidgetPropertiesPanelProps> = ({ widget, onUpdate }) => {
     return (
-        <div className="space-y-3 mt-2">
+        <div className="mt-2 space-y-3">
             <div>
-                <Label className="text-xs text-muted-foreground">Title</Label>
-                <Input
-                    value={widget.title}
-                    onChange={(e) => onUpdate({ title: e.target.value })}
-                    className="mt-1 text-sm"
-                />
+                <Label className="text-xs uppercase tracking-wide">Title</Label>
+                <Input value={widget.title} onChange={e => onUpdate({ title: e.target.value })} className="mt-1 h-8 text-sm" />
             </div>
-
-            {widget.type === 'chart' && widget.chartConfig && (
-                <>
-                    <div>
-                        <Label className="text-xs text-muted-foreground">Chart Type</Label>
-                        <Select
-                            value={widget.chartConfig.type}
-                            onValueChange={(value: any) =>
-                                onUpdate({
-                                    chartConfig: { ...widget.chartConfig!, type: value }
-                                })
-                            }
-                        >
-                            <SelectTrigger className="mt-1">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="line">Line Chart</SelectItem>
-                                <SelectItem value="bar">Bar Chart</SelectItem>
-                                <SelectItem value="pie">Pie Chart</SelectItem>
-                                <SelectItem value="scatter">Scatter Plot</SelectItem>
-                                <SelectItem value="heatmap">Heatmap</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div>
-                        <Label className="text-xs text-muted-foreground">Color Scheme</Label>
-                        <Select
-                            value={widget.chartConfig.styling.colorScheme || 'default'}
-                            onValueChange={(value: any) =>
-                                onUpdate({
-                                    chartConfig: {
-                                        ...widget.chartConfig!,
-                                        styling: { ...widget.chartConfig!.styling, colorScheme: value }
-                                    }
-                                })
-                            }
-                        >
-                            <SelectTrigger className="mt-1">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="default">Default</SelectItem>
-                                <SelectItem value="brand">Brand</SelectItem>
-                                <SelectItem value="dark">Dark</SelectItem>
-                                <SelectItem value="colorblind">Colorblind Friendly</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                        <Label className="text-xs text-muted-foreground">Animations</Label>
-                        <Switch
-                            checked={widget.chartConfig.options.animations || false}
-                            onCheckedChange={(checked) =>
-                                onUpdate({
-                                    chartConfig: {
-                                        ...widget.chartConfig!,
-                                        options: { ...widget.chartConfig!.options, animations: checked }
-                                    }
-                                })
-                            }
-                        />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                        <Label className="text-xs text-muted-foreground">Interactive</Label>
-                        <Switch
-                            checked={widget.chartConfig.options.interactive || false}
-                            onCheckedChange={(checked) =>
-                                onUpdate({
-                                    chartConfig: {
-                                        ...widget.chartConfig!,
-                                        options: { ...widget.chartConfig!.options, interactive: checked }
-                                    }
-                                })
-                            }
-                        />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                        <Label className="text-xs text-muted-foreground">Grid</Label>
-                        <Switch
-                            checked={widget.chartConfig.options.grid || false}
-                            onCheckedChange={(checked) =>
-                                onUpdate({
-                                    chartConfig: {
-                                        ...widget.chartConfig!,
-                                        options: { ...widget.chartConfig!.options, grid: checked }
-                                    }
-                                })
-                            }
-                        />
-                    </div>
-                </>
+            <div>
+                <Label className="text-xs uppercase tracking-wide">Type</Label>
+                <Select value={widget.type} onValueChange={val => onUpdate({ type: val as DashboardWidget['type'] })}>
+                    <SelectTrigger className="h-8 text-sm" />
+                    <SelectContent>
+                        <SelectItem value="chart">Chart</SelectItem>
+                        <SelectItem value="metric">Metric</SelectItem>
+                        <SelectItem value="text">Text</SelectItem>
+                        <SelectItem value="table">Table</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+            {widget.type === 'chart' && (
+                <div>
+                    <Label className="text-xs uppercase tracking-wide">Chart Type</Label>
+                    <Select value={widget.chartConfig?.type || 'line'} onValueChange={val => onUpdate({ chartConfig: { id: widget.chartConfig?.id || `chart_${widget.id}`, width: widget.chartConfig?.width || 400, height: widget.chartConfig?.height || 300, margin: widget.chartConfig?.margin || { top: 10, right: 10, bottom: 30, left: 40 }, data: widget.chartConfig?.data || [], options: widget.chartConfig?.options || {}, styling: widget.chartConfig?.styling || {}, type: val as any } })}>
+                        <SelectTrigger className="h-8 text-sm" />
+                        <SelectContent>
+                            <SelectItem value="line">Line</SelectItem>
+                            <SelectItem value="bar">Bar</SelectItem>
+                            <SelectItem value="pie">Pie</SelectItem>
+                            <SelectItem value="scatter">Scatter</SelectItem>
+                            <SelectItem value="heatmap">Heatmap</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
             )}
-
-            <div className="flex items-center justify-between">
-                <Label className="text-xs text-muted-foreground">Auto Update</Label>
-                <Switch
-                    checked={widget.config.autoUpdate || false}
-                    onCheckedChange={(checked) =>
-                        onUpdate({
-                            config: { ...widget.config, autoUpdate: checked }
-                        })
-                    }
-                />
-            </div>
         </div>
     );
 };
@@ -1064,6 +1093,28 @@ function createDefaultLayout(): DashboardLayout {
         created: new Date(),
         updated: new Date()
     };
+}
+
+// Ensure dashboard exists server-side; creates once and caches id.
+async function ensureServerDashboard(token: string): Promise<string | null> {
+    try {
+        // Simple in-memory cache (closure-level variable could be used; relying on localStorage for simplicity)
+        const cached = (typeof window !== 'undefined') ? localStorage.getItem('serverDashboardId') : null;
+        if (cached) return cached;
+        const name = 'My Dashboard';
+        const res = await fetch('/api/dashboard/custom', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ action: 'create', name })
+        });
+        if (!res.ok) return null;
+        const json = await res.json();
+        const id = json?.dashboard?.id;
+        if (id && typeof window !== 'undefined') localStorage.setItem('serverDashboardId', id);
+        return id || null;
+    } catch {
+        return null;
+    }
 }
 
 export default VisualizationDashboardBuilder;

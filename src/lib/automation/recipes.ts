@@ -27,8 +27,8 @@ export interface AutomationRecipe {
         atHourUTC?: number; // when using daily semantics
     };
     actions: AutomationActionType[]; // enabled action types
-    actionConfigs?: Record<string, any>; // keyed by action type
-    config?: Record<string, any>; // action-specific future config
+    actionConfigs?: Record<string, unknown>; // keyed by action type
+    config?: Record<string, unknown>; // action-specific future config
     lastRun?: Date | null;
     nextRun?: Date | null;
     createdAt: Date;
@@ -59,8 +59,8 @@ function computeNextFromCron(now: Date, expr: string): Date | null {
     if (parts.length !== 5) return null;
     const [minRaw, hourRaw, day, month, dow] = parts;
     if (day !== '*' || month !== '*' || dow !== '*') return null; // unsupported granularity
-    const minutes: number[] = minRaw === '*' ? Array.from({ length: 60 }, (_, i) => i) : [Number(minRaw)];
-    const hours: number[] = hourRaw === '*' ? Array.from({ length: 24 }, (_, i) => i) : [Number(hourRaw)];
+    const minutes: number[] = minRaw === '*' ? Array.from({ length: 60 }, (_, idx) => idx) : [Number(minRaw)];
+    const hours: number[] = hourRaw === '*' ? Array.from({ length: 24 }, (_, idx) => idx) : [Number(hourRaw)];
     if (minutes.some(m => isNaN(m) || m < 0 || m > 59)) return null;
     if (hours.some(h => isNaN(h) || h < 0 || h > 23)) return null;
     // Search next occurrence within next 48h window
@@ -117,7 +117,7 @@ export async function updateAutomationRecipe(id: string, patch: Partial<Automati
     const ref = doc(db, 'automationRecipes', id);
     const snap = await getDoc(ref);
     if (!snap.exists()) throw new Error('Recipe not found');
-    const existing = deserializeRecipe({ id: snap.id, ...(snap.data() as any) });
+    const existing = deserializeRecipe({ id: snap.id, ...(snap.data() as Record<string, unknown>) });
     const merged: AutomationRecipe = { ...existing, ...patch, updatedAt: new Date() };
     if (merged.schedule?.cron && merged.schedule?.intervalMinutes) {
         throw new Error('Specify either cron or intervalMinutes, not both');
@@ -137,7 +137,7 @@ export async function listAutomationRecipes(userId: string, teamId?: string) {
         limit(100)
     );
     const snap = await getDocs(q);
-    return snap.docs.map(d => deserializeRecipe({ id: d.id, ...(d.data() as any) }));
+    return snap.docs.map(d => deserializeRecipe({ id: d.id, ...(d.data() as Record<string, unknown>) }));
 }
 
 // Execute due recipes (simple client/server callable – not scheduled automatically yet)
@@ -148,14 +148,14 @@ export async function listRecentAutomationRuns(recipeId: string, max = 5): Promi
     const q = query(collection(db, 'automationRuns'), where('recipeId', '==', recipeId), orderBy('startedAt', 'desc'), limit(max));
     const snap = await getDocs(q);
     return snap.docs.map(d => {
-        const data = d.data() as any;
+        const data = d.data() as Record<string, any>;
         return {
             id: d.id,
             recipeId,
             startedAt: data.startedAt?.toDate?.() || new Date(),
             finishedAt: data.finishedAt?.toDate?.() || new Date(),
-            actions: data.actions || [],
-            status: data.status || 'ok',
+            actions: Array.isArray(data.actions) ? data.actions : [],
+            status: (data.status === 'ok' || data.status === 'partial' || data.status === 'error') ? data.status : 'ok',
             createdAt: data.createdAt?.toDate?.() || new Date(),
         } as AutomationRunLog;
     });
@@ -186,17 +186,17 @@ function serializeRecipe(r: AutomationRecipe) {
     };
 }
 
-function deserializeRecipe(data: any): AutomationRecipe {
+function deserializeRecipe(data: Record<string, any>): AutomationRecipe {
     return {
-        id: data.id,
-        userId: data.userId,
-        teamId: data.teamId || undefined,
-        name: data.name,
-        active: data.active,
-        schedule: data.schedule || {},
-        actions: data.actions || [],
-        actionConfigs: data.actionConfigs || {},
-        config: data.config || {},
+        id: data.id as string | undefined,
+        userId: String(data.userId),
+        teamId: data.teamId ? String(data.teamId) : undefined,
+        name: String(data.name || 'Untitled'),
+        active: Boolean(data.active),
+        schedule: (typeof data.schedule === 'object' && data.schedule) ? data.schedule : {},
+        actions: Array.isArray(data.actions) ? data.actions.filter(a => typeof a === 'string') as AutomationActionType[] : [],
+        actionConfigs: (typeof data.actionConfigs === 'object' && data.actionConfigs) ? data.actionConfigs : {},
+        config: (typeof data.config === 'object' && data.config) ? data.config : {},
         lastRun: data.lastRun?.toDate?.() || null,
         nextRun: data.nextRun?.toDate?.() || null,
         createdAt: data.createdAt?.toDate?.() || new Date(),

@@ -3,25 +3,25 @@ import { doc, updateDoc, addDoc, collection, getDocs, query, where, getDoc, setD
 // NOTE: Functions env centralizes invoice persistence. For ISR / local dev parity we duplicate minimal upsert using client Firestore.
 async function upsertFinanceInvoiceClient(invoice: any) {
     try {
-        const customerId = invoice.customer as string | undefined;
+        const customerId = invoice?.customer as string | undefined;
         if (!customerId) return;
         const usersQ = query(collection(db, 'users'), where('stripeCustomerId', '==', customerId));
         const snap = await getDocs(usersQ);
         if (snap.empty) return;
         const userId = snap.docs[0].id;
-        const period = new Date(((invoice.period_end || invoice.created) * 1000)).toISOString().slice(0, 7);
-        const status = invoice.status || 'open';
-        const amount = (invoice.amount_paid || invoice.amount_due || 0) / 100;
-        const issuedAt = new Date(invoice.created * 1000);
-        const dueAt = invoice.due_date ? new Date(invoice.due_date * 1000) : null;
-        const paidAt = invoice.status === 'paid' && invoice.status_transitions?.paid_at ? new Date(invoice.status_transitions.paid_at * 1000) : null;
-        const firstLine: any = invoice.lines?.data?.[0];
-        const planTier = firstLine?.price?.metadata?.planTier || invoice.metadata?.planTier || null;
-        const ref = doc(db, 'financeInvoices', invoice.id);
+        const period = new Date((((invoice?.period_end ?? invoice?.created) as number) * 1000)).toISOString().slice(0, 7);
+        const status = (invoice?.status as string) || 'open';
+        const amount = ((invoice?.amount_paid || invoice?.amount_due || 0) as number) / 100;
+        const issuedAt = new Date((invoice?.created as number) * 1000);
+        const dueAt = invoice?.due_date ? new Date((invoice?.due_date as number) * 1000) : null;
+        const paidAt = invoice?.status === 'paid' && invoice?.status_transitions?.paid_at ? new Date((invoice?.status_transitions?.paid_at as number) * 1000) : null;
+        const firstLine: any = invoice?.lines?.data?.[0];
+        const planTier = firstLine?.price?.metadata?.planTier || invoice?.metadata?.planTier || null;
+        const ref = doc(db, 'financeInvoices', invoice?.id as string);
         // merge keeps createdAt if exists
-        await setDoc(ref, { userId, period, amount, status, issuedAt, dueAt, paidAt, planTier, currency: invoice.currency, updatedAt: new Date(), createdAt: new Date() }, { merge: true });
+        await setDoc(ref, { userId, period, amount, status, issuedAt, dueAt, paidAt, planTier, currency: invoice?.currency, updatedAt: new Date(), createdAt: new Date() }, { merge: true });
     } catch (e) {
-        getLogger('stripe-webhook').degraded('invoice.upsert.client_failed', { invoiceId: invoice.id, error: (e as Error).message });
+        getLogger('stripe-webhook').degraded('invoice.upsert.client_failed', { invoiceId: (invoice as any)?.id, error: (e as Error).message });
     }
 }
 import { headers } from 'next/headers';
@@ -29,13 +29,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getLogger } from '@/lib/logging/app-logger';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2025-07-30.basil',
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
     const body = await request.text();
     const headersList = await headers();
     const signature = headersList.get('stripe-signature')!;

@@ -134,7 +134,7 @@ export default function RewriteGenPage() {
       id: `rewrite_${Date.now()}`,
       url: inputUrl,
       originalContent: content,
-      analysisType: type as any,
+  analysisType: type as typeof analysisType,
       contentSuggestions: sampleSections.map((section, index) => ({
         section,
         originalText: `Original ${section.toLowerCase()} text that could be improved for better SEO performance and user engagement.`,
@@ -253,7 +253,7 @@ export default function RewriteGenPage() {
     setCurrentResult(null);
 
     try {
-      const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k);
+  const keywords = targetKeywords.split(',').map(k => k.trim()).filter(Boolean);
       const content = contentText || `Content from ${inputUrl}`;
       
       const result = await simulateRewriteAnalysis(content, keywords, analysisType);
@@ -369,7 +369,7 @@ export default function RewriteGenPage() {
             </div>
             <div>
               <Label htmlFor="analysis-type">Analysis Type</Label>
-              <Select value={analysisType} onValueChange={(value: any) => setAnalysisType(value)}>
+              <Select value={analysisType} onValueChange={(value: typeof analysisType) => setAnalysisType(value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select analysis type" />
                 </SelectTrigger>

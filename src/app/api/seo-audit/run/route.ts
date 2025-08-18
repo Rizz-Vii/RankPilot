@@ -11,9 +11,10 @@ const PROJECT = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'rankpilot-h3jpc'
 const FUNCTION_NAME = 'runSeoAudit';
 const FUNCTION_URL = `https://${REGION}-${PROJECT}.cloudfunctions.net/${FUNCTION_NAME}`;
 
-export const POST = withProvenance(async function POST(req: NextRequest) {
+export const POST = withProvenance(async function POST(req: Request) {
+    const nreq = req as NextRequest;
     try {
-        const body = await req.json();
+        const body = await nreq.json();
 
         // Basic validation
         if (!body || typeof body.url !== 'string') {
@@ -21,14 +22,14 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         }
 
         // TEAM-01: Apply team rate limit if teamId provided (lightweight - before upstream call)
-        if (body.teamId) {
+        if (typeof (body as any).teamId === 'string') {
             try {
                 const { adminDb } = (global as any).adminDb ? { adminDb: (global as any).adminDb } : await import('@/lib/firebase-admin');
                 // Allow test override via header for deterministic integration test
-                const testLimitHeader = req.headers.get('x-test-team-limit');
+                const testLimitHeader = nreq.headers.get('x-test-team-limit');
                 const overrideLimit = testLimitHeader ? Number(testLimitHeader) : undefined;
-                await enforceTeamRateLimit(adminDb as any, body.teamId, { routeKey: 'seo-audit/run', ...(Number.isFinite(overrideLimit as number) ? { limit: overrideLimit as number } : {}) });
-            } catch (e: any) {
+                await enforceTeamRateLimit(adminDb, (body as any).teamId, { routeKey: 'seo-audit/run', ...(Number.isFinite(overrideLimit as number) ? { limit: overrideLimit as number } : {}) });
+            } catch (e: unknown) {
                 if (e instanceof TeamRateLimitError) {
                     return NextResponse.json(enforceProvenance({ success: false, error: 'rate_limited', retryAfter: e.retryAfterSeconds, provenance: 'synthetic' }, { path: 'seo-audit/run', note: 'rate_limit' }), { status: 429, headers: { 'Retry-After': String(e.retryAfterSeconds) } });
                 }
@@ -36,7 +37,7 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
             }
         }
         // Forward request in callable format ({data: {...}})
-        const token = req.headers.get('authorization');
+        const token = nreq.headers.get('authorization');
         const cfResp = await fetch(FUNCTION_URL, {
             method: 'POST',
             headers: {
@@ -55,7 +56,7 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         const json = await cfResp.json();
         const data = json?.result || json;
         return NextResponse.json(enforceProvenance({ success: true, data, provenance: 'live' }, { path: 'seo-audit/run' }), { status: 200 });
-    } catch (e: any) {
-        return NextResponse.json(enforceProvenance({ success: false, error: e.message || 'Proxy error', provenance: 'synthetic' }, { path: 'seo-audit/run', note: 'exception' }), { status: 500 });
+    } catch (e: unknown) {
+        return NextResponse.json(enforceProvenance({ success: false, error: (e as any)?.message || 'Proxy error', provenance: 'synthetic' }, { path: 'seo-audit/run', note: 'exception' }), { status: 500 });
     }
 }, { path: 'seo-audit/run' });

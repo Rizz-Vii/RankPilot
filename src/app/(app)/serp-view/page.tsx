@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import LoadingScreen from "@/components/ui/loading-screen";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { cn } from "@/lib/utils";
+import { cn, safeErrorMessage } from "@/lib/utils";
 import { getSerpData } from "@/lib/utils/content-functions";
 import type {
   SerpViewInput,
@@ -79,8 +79,8 @@ export default function SerpViewPage() {
           resultsSummary: `Viewed SERP for keyword: "${values.keyword}".`,
         });
       }
-    } catch (e: any) {
-      setError(e.message || "An unexpected error occurred.");
+    } catch (e: unknown) {
+      setError(safeErrorMessage(e) || "An unexpected error occurred.");
       if (!results) markFallback();
     } finally {
       setIsLoading(false);
@@ -110,7 +110,7 @@ export default function SerpViewPage() {
       </div>
       <LazyDataTable
         columns={[{ key:'keyword', header:'Keyword'}, { key:'topUrl', header:'Top URL', render: (r:any)=> (r.results?.[0]?.url||'') }, { key:'top3', header:'Top3', render:(r:any)=> (r.results?.some((x:any)=> x.position<=3)? 'Yes':'No') }]}
-        rows={serpMetrics.rows.map(r=> ({ ...r, top3: r.results?.some((x:any)=> x.position<=3) }))}
+        rows={serpMetrics.rows.map((r:any)=> ({ ...r, top3: r.results?.some((x:any)=> x.position<=3) }))}
         loading={serpMetrics.loading}
         empty="No SERP snapshots"
       />

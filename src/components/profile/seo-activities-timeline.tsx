@@ -19,6 +19,9 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
+interface TimestampLike { toDate: () => Date }
+function isTimestampLike(v: unknown): v is TimestampLike { return typeof v === 'object' && v !== null && typeof (v as any).toDate === 'function'; }
+
 interface Activity {
   id: string;
   type: string;
@@ -26,8 +29,8 @@ interface Activity {
   url?: string;
   keywords?: string[];
   score?: number;
-  timestamp: any; // Firestore Timestamp
-  metadata?: any;
+  timestamp: unknown; // Firestore Timestamp or Date
+  metadata?: unknown;
 }
 
 interface SEOActivitiesTimelineProps {
@@ -124,7 +127,7 @@ export default function SEOActivitiesTimeline({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {activities.slice(0, 20).map((activity, index) => (
+          {activities.slice(0, 20).map((activity) => (
             <div
               key={activity.id}
               className="flex items-start space-x-4 pb-4 border-b last:border-b-0"
@@ -141,7 +144,8 @@ export default function SEOActivitiesTimeline({
                     {getActivityTitle(activity)}
                   </h4>
                   <time className="text-xs text-muted-foreground flex-shrink-0 ml-2">
-                    {formatDistanceToNow(activity.timestamp.toDate(), {
+                    {formatDistanceToNow(
+                      isTimestampLike(activity.timestamp) ? activity.timestamp.toDate() : new Date(activity.timestamp as any), {
                       addSuffix: true,
                     })}
                   </time>

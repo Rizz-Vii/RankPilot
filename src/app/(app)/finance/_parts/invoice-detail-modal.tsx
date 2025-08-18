@@ -8,6 +8,12 @@ interface Props { open: boolean; onOpenChange: (open:boolean)=>void; filter: 'un
 export function InvoiceDetailModal({ open, onOpenChange, filter }: Props){
   const { data } = useFinanceContext();
   const rows = (data?.invoices||[]).filter(i => filter==='all' ? true : i.status !== 'paid');
+  const toDate = (v: unknown): Date | undefined => {
+    if (!v) return undefined;
+    if (v instanceof Date) return v;
+    const maybe = v as { toDate?: () => Date };
+    return typeof maybe.toDate === 'function' ? maybe.toDate() : undefined;
+  };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
@@ -34,8 +40,8 @@ export function InvoiceDetailModal({ open, onOpenChange, filter }: Props){
                   <td className="py-1 text-left">{r.planTier||'-'}</td>
                   <td className="py-1 text-right tabular-nums">{(r.amount||0).toLocaleString()}</td>
                   <td className="py-1 text-center text-xs">{r.status}</td>
-                  <td className="py-1 text-center text-xs">{r.issuedAt?.toDate?.()?.toISOString().slice(0,10)||'-'}</td>
-                  <td className="py-1 text-center text-xs">{r.paidAt? r.paidAt.toDate().toISOString().slice(0,10): '-'}</td>
+                  <td className="py-1 text-center text-xs">{toDate((r as unknown as { issuedAt?: unknown }).issuedAt)?.toISOString().slice(0,10)||'-'}</td>
+                  <td className="py-1 text-center text-xs">{toDate((r as unknown as { paidAt?: unknown }).paidAt)?.toISOString().slice(0,10) || '-'}</td>
                 </tr>
               ))}
               {!rows.length && <tr><td colSpan={6} className="py-4 text-center text-xs text-muted-foreground">No invoices</td></tr>}

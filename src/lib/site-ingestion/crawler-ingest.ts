@@ -19,14 +19,15 @@ export async function ingestSiteContentForOrg(uid: string, config: CrawlIngestio
         if (exclude.some(r => r.test(url))) { skipped++; continue; }
         if (include.length && !include.some(r => r.test(url))) { skipped++; continue; }
         try {
-            const result = await crawler.crawl(url, { includeImages: false, analyzeAuthorship: false, extractSchema: false, timeout: 20000 });
+            const result = await crawler.crawl(url, { includeImages: false, analyzeAuthorship: false, extractSchema: false, timeout: 20000 } as Record<string, unknown> as any);
             const chunks: SiteContentChunk[] = makeChunks({ url: result.url, title: result.title, text: result.content, chunkSize: config.chunkSize, overlap: config.overlap });
             for (const chunk of chunks) {
                 const docRef = adminDb.collection('siteContent').doc(uid).collection('default').doc(chunk.meta.hash);
                 const snap = await docRef.get();
                 if (snap.exists) {
-                    const prevMeta = snap.data()?.meta || {};
-                    await embedAndStoreChunk(uid, { ...chunk, meta: { ...chunk.meta, lastHash: prevMeta.hash, createdAt: prevMeta.createdAt || chunk.meta.createdAt, updatedAt: Date.now() } }, 'default');
+                    const prevMeta = (snap.data()?.meta as Record<string, unknown>) || {};
+                    const createdAt = typeof (prevMeta as any).createdAt === 'number' ? (prevMeta as any).createdAt : chunk.meta.createdAt;
+                    await embedAndStoreChunk(uid, { ...chunk, meta: { ...chunk.meta, lastHash: prevMeta.hash as string | undefined, createdAt, updatedAt: Date.now() } }, 'default');
                     updated++;
                 } else {
                     await embedAndStoreChunk(uid, chunk, 'default');
@@ -35,15 +36,20 @@ export async function ingestSiteContentForOrg(uid: string, config: CrawlIngestio
             }
             // Basic link discovery (same host only)
             const host = new URL(config.baseUrl).host;
-            result.technicalData.links
-                .filter((l: any) => l.href.startsWith('http') && new URL(l.href).host === host)
+            const linksArr: unknown = (result as unknown as { technicalData?: { links?: unknown } }).technicalData?.links;
+            const links = Array.isArray(linksArr) ? linksArr : [];
+            const isLink = (v: unknown): v is { href: string } => !!v && typeof (v as { href?: unknown }).href === 'string';
+            links
+                .filter(isLink)
+                .filter(l => l.href.startsWith('http') && new URL(l.href).host === host)
                 .slice(0, 50)
-                .forEach((l: any) => { if (!visited.has(l.href)) queue.push(l.href); });
-        } catch (e: any) {
+                .forEach(l => { if (!visited.has(l.href)) queue.push(l.href); });
+        } catch (e: unknown) {
             errors++;
             if (process.env.RANKPILOT_INGEST_DEBUG === '1') {
                 // eslint-disable-next-line no-console
-                console.error('[INGEST][ERROR]', url, e?.message || e);
+                const err = e as { message?: string };
+                console.error('[INGEST][ERROR]', url, err.message || e);
             }
         }
     }

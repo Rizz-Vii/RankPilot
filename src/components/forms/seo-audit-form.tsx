@@ -37,8 +37,11 @@ export default function SeoAuditForm({ onSubmit, isLoading }: SeoAuditFormProps)
             const payload: AuditUrlInput = { url, checkMobile, analysisDepth: 'standard' } as AuditUrlInput;
             await onSubmit(payload);
             toast.success('Audit requested', { description: url });
-        } catch (e: any) {
-            const msg = e?.message || 'Failed to start audit';
+        } catch (e: unknown) {
+            let msg = 'Failed to start audit';
+            if (typeof e === 'object' && e && 'message' in e && typeof (e as any).message === 'string') {
+                msg = (e as any).message;
+            }
             setError(msg);
             toast.error('Audit failed', { description: msg });
         }

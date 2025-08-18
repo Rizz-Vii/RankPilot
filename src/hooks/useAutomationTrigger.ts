@@ -48,8 +48,9 @@ export function useAutomationTrigger(config: UseAutomationTriggerConfig = {}): T
             if (!options?.suppressToast) {
                 toast({ title: 'Automation triggered', description: options?.label || action });
             }
-        } catch (e: any) {
-            toast({ title: 'Failed', description: e.message || ('Could not trigger ' + action), variant: 'destructive' });
+        } catch (e: unknown) {
+            const msg = (e && typeof e === 'object' && 'message' in e) ? (e as { message?: string }).message : undefined;
+            toast({ title: 'Failed', description: msg || ('Could not trigger ' + action), variant: 'destructive' });
         } finally {
             setRunning(r => ({ ...r, [action]: false }));
         }

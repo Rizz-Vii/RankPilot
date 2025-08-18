@@ -58,7 +58,7 @@ class FirestoreConnectionManager {
                 this.app = initializeApp(firebaseConfig);
                 // Only log once per process (or dev multi-worker session) using a global sentinel
                 try {
-                    const g: any = globalThis as any;
+                    const g = globalThis as Record<string, unknown>;
                     if (!g[CLIENT_INIT_SENTINEL]) {
                         console.log('🔥 Firebase app initialized');
                         g[CLIENT_INIT_SENTINEL] = true;
@@ -73,7 +73,7 @@ class FirestoreConnectionManager {
             }
 
             // Initialize Firestore with robust browser settings (before any Firestore use)
-            const settings: Record<string, any> = { ignoreUndefinedProperties: true };
+            const settings: Record<string, unknown> = { ignoreUndefinedProperties: true };
             if (typeof window !== 'undefined') {
                 // Auto-detect long polling by default for proxy/firewall environments
                 if (process.env.NEXT_PUBLIC_FIRESTORE_AUTODETECT_LONG_POLLING !== 'false') {

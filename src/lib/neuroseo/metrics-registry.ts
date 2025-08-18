@@ -7,8 +7,9 @@ export function persistMetricsSnapshot(): { ok: boolean; path?: string; error?: 
         const file = path.join(process.cwd(), 'metrics-snapshots.log');
         fs.appendFileSync(file, line + '\n');
         return { ok: true, path: file };
-    } catch (e: any) {
-        return { ok: false, error: e?.message };
+    } catch (e: unknown) {
+        const message = (e && typeof e === 'object' && 'message' in e) ? String((e as { message?: unknown }).message) : 'persist_failed';
+        return { ok: false, error: message };
     }
 }
 /**

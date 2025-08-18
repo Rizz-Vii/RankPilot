@@ -6,7 +6,7 @@
 import OpenAI from 'openai';
 // Test hook + small infra helpers
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const global: any;
+declare const global: { __OPENAI_SHIM__?: new (args: { apiKey: string }) => OpenAI } | undefined;
 
 function createOpenAI(apiKey: string) {
     const Shim = global?.__OPENAI_SHIM__;
@@ -57,7 +57,9 @@ export async function chatComplete(opts: { messages: ChatMessage[]; maxTokens?: 
                 });
                 if (!res.ok) throw new Error('Gemini HTTP ' + res.status);
                 const json: any = await res.json();
-                const text = json?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('') || '';
+                const text = Array.isArray(json?.candidates)
+                    ? (json.candidates[0]?.content?.parts || []).map((p: any) => p?.text || '').join('')
+                    : '';
                 if (text) return text;
             } catch {/* ignore */ }
         }
@@ -102,6 +104,8 @@ export async function fallbackOneShot(systemPrompt: string, userMessage: string,
         });
         if (!res.ok) throw new Error('Gemini HTTP ' + res.status);
         const json: any = await res.json();
-        return json?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('') || 'AI response unavailable.';
+        return Array.isArray(json?.candidates)
+            ? (json.candidates[0]?.content?.parts || []).map((p: any) => p?.text || '').join('') || 'AI response unavailable.'
+            : 'AI response unavailable.';
     } catch { return 'AI fallback failed.'; }
 }

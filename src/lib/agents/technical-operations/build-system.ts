@@ -364,9 +364,11 @@ exit 1
             // Try the emergency build script first (safer)
             const { stdout, stderr } = await execAsync('npm run build:memory-safe', { timeout: 300000 });
             return { success: true, output: stdout + stderr };
-        } catch (error: any) {
+        } catch (error: unknown) {
             // Build might fail due to Firebase, but that's expected
-            const output = error.stdout + error.stderr;
+            const stdout = (error && typeof error === 'object' && 'stdout' in error) ? String((error as any).stdout || '') : '';
+            const stderr = (error && typeof error === 'object' && 'stderr' in error) ? String((error as any).stderr || '') : '';
+            const output = stdout + stderr;
             if (output.includes('✓ Compiled successfully')) {
                 return { success: true, output };
             }

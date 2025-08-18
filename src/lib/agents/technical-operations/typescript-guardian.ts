@@ -117,8 +117,7 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
                     if (success) {
                         fixCount++;
 
-                        // Validate fix immediately
-                        const isValid = await this.validateFix(error);
+                        const isValid = await this.validateFix();
                         if (!isValid) {
                             console.warn(`⚠️  Fix validation failed for ${error.file}, rolling back...`);
                             await this.rollbackFile(error.file);
@@ -182,8 +181,10 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
             const { stdout, stderr } = await execAsync('npm run typecheck');
             // If typecheck passes, no errors to fix
             return [];
-        } catch (error: any) {
-            const output = error.stdout || error.stderr || '';
+        } catch (error: unknown) {
+            const stdout = (error && typeof error === 'object' && 'stdout' in error) ? String((error as any).stdout || '') : '';
+            const stderr = (error && typeof error === 'object' && 'stderr' in error) ? String((error as any).stderr || '') : '';
+            const output = stdout || stderr;
             return this.parseTypeScriptErrors(output);
         }
     }
@@ -417,7 +418,7 @@ class DataCorruptionError extends Error {
     /**
      * Validate fix by running TypeScript check
      */
-    async validateFix(error: TypeScriptError): Promise<boolean> {
+    async validateFix(): Promise<boolean> {
         try {
             const result = await this.runTypeScriptCheck();
             return result.success || result.errorCount < result.previousErrorCount;
@@ -433,8 +434,10 @@ class DataCorruptionError extends Error {
         try {
             await execAsync('npm run typecheck');
             return { success: true, errorCount: 0, previousErrorCount: 11 };
-        } catch (error: any) {
-            const output = error.stdout || error.stderr || '';
+        } catch (error: unknown) {
+            const stdout = (error && typeof error === 'object' && 'stdout' in error) ? String((error as any).stdout || '') : '';
+            const stderr = (error && typeof error === 'object' && 'stderr' in error) ? String((error as any).stderr || '') : '';
+            const output = stdout || stderr;
             const errors = this.parseTypeScriptErrors(output);
             return { success: false, errorCount: errors.length, previousErrorCount: 11 };
         }

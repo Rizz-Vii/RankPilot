@@ -59,6 +59,17 @@ interface NeuroSEOReport {
     };
 }
 
+// Internal per-URL analysis result shape (Phase 0 deterministic mock)
+interface UrlAnalysisResult {
+    url: string;
+    seoScore: number;
+    performance: number;
+    accessibility: number;
+    bestPractices: number;
+    keywords: Array<{ keyword: string; position: number; volume: number; difficulty: number; }>;
+    backlinks: { total: number };
+}
+
 interface CacheEntry {
     data: NeuroSEOReport;
     timestamp: number;
@@ -159,7 +170,18 @@ export class EnhancedNeuroSEOOrchestrator {
     }
 
     // NEU-01: Streaming analysis with incremental progress events
-    async *runAnalysisStream(request: NeuroSEOAnalysisRequest): AsyncGenerator<any, NeuroSEOReport, void> {
+    async *runAnalysisStream(request: NeuroSEOAnalysisRequest): AsyncGenerator<
+        | { type: 'cached'; data: { overallScore: number; provenance: 'cache' } }
+        | { type: 'queued'; data: { position: number } }
+        | { type: 'start'; data: { analysisId: string; chunks: number } }
+        | { type: 'chunk.start'; data: { index: number; size: number } }
+        | { type: 'chunk.complete'; data: { index: number; processed: number } }
+        | { type: 'progress'; data: { completed: number; total: number } }
+        | { type: 'complete'; data: { overallScore: number; duration: number; provenance: 'live' } }
+        | { type: 'error'; data: { message: string } },
+        NeuroSEOReport,
+        void
+    > {
         const startTime = performance.now();
         const cacheKey = this.generateCacheKey(request);
         logger.info('NeuroSEO Stream Request', { urls: request.urls.length, type: request.analysisType });
@@ -179,7 +201,7 @@ export class EnhancedNeuroSEOOrchestrator {
 
         const analysisId = this.generateAnalysisId();
         const urlChunks = this.chunkArray(request.urls, 3);
-        const analysisResults: any[] = [];
+        const analysisResults: UrlAnalysisResult[] = [];
         this.activeRequests++;
         try {
             yield { type: 'start', data: { analysisId, chunks: urlChunks.length } };
@@ -196,9 +218,10 @@ export class EnhancedNeuroSEOOrchestrator {
             const duration = Math.round(performance.now() - startTime);
             yield { type: 'complete', data: { overallScore: report.overallScore, duration, provenance: 'live' } };
             return { ...report, cached: false };
-        } catch (error: any) {
-            logger.error('NeuroSEO Stream Failed', { error: error?.message });
-            yield { type: 'error', data: { message: error?.message || 'unknown' } };
+        } catch (error: unknown) {
+            const errMsg = (error && typeof error === 'object' && 'message' in error) ? (error as any).message : 'unknown';
+            logger.error('NeuroSEO Stream Failed', { error: errMsg });
+            yield { type: 'error', data: { message: errMsg } };
             throw error;
         } finally {
             this.activeRequests--;
@@ -210,7 +233,7 @@ export class EnhancedNeuroSEOOrchestrator {
 
         // Memory-optimized processing with chunking
         const urlChunks = this.chunkArray(request.urls, 3); // Process 3 URLs at a time
-        const analysisResults = [];
+        const analysisResults: UrlAnalysisResult[] = [];
 
         for (let i = 0; i < urlChunks.length; i++) {
             const chunk = urlChunks[i];
@@ -231,9 +254,9 @@ export class EnhancedNeuroSEOOrchestrator {
         return this.generateComprehensiveReport(analysisResults, request, analysisId);
     }
 
-    private async processUrlChunk(urls: string[], request: NeuroSEOAnalysisRequest) {
+    private async processUrlChunk(urls: string[], request: NeuroSEOAnalysisRequest): Promise<UrlAnalysisResult[]> {
         // Simulate AI analysis processing with realistic delays
-        const promises = urls.map(async (url) => {
+        const promises: Promise<UrlAnalysisResult>[] = urls.map(async (url) => {
             // Replace non-deterministic delay & values with seeded pseudo-random (still simulate latency)
             const seed = this.hashSeed(`${url}|${request.analysisType}`);
             const rng = this.seededRng(seed);
@@ -243,13 +266,14 @@ export class EnhancedNeuroSEOOrchestrator {
                 const n = base + rng() * spread;
                 return Math.max(min, Math.min(max, Math.round(n)));
             };
+            const keywords = this.generateMockKeywords(url, request.analysisType) as UrlAnalysisResult['keywords'];
             return {
                 url,
                 seoScore: val(82, 14, 60, 100),
                 performance: val(78, 18, 55, 100),
                 accessibility: val(84, 12, 60, 100),
                 bestPractices: val(88, 10, 65, 100),
-                keywords: this.generateMockKeywords(url, request.analysisType),
+                keywords,
                 backlinks: this.generateMockBacklinks(url, request.analysisType)
             };
         });
@@ -258,11 +282,11 @@ export class EnhancedNeuroSEOOrchestrator {
     }
 
     private generateComprehensiveReport(
-        analysisResults: any[],
+        analysisResults: UrlAnalysisResult[],
         request: NeuroSEOAnalysisRequest,
         analysisId: string
     ): NeuroSEOReport {
-        const avgScore = (field: string) =>
+        const avgScore = (field: keyof Pick<UrlAnalysisResult, 'seoScore' | 'performance' | 'accessibility' | 'bestPractices'>) =>
             analysisResults.reduce((sum, result) => sum + result[field], 0) / analysisResults.length;
 
         const overallScore = Math.round(
@@ -313,7 +337,7 @@ export class EnhancedNeuroSEOOrchestrator {
         const rng = this.seededRng(this.hashSeed(`${url || ''}|${analysisType || ''}`));
         // Pick 3-5 keywords deterministically
         const count = 3 + Math.floor(rng() * 3); // 3..5
-        const chosen: any[] = [];
+        const chosen: unknown[] = [];
         const usedIdx = new Set<number>();
         while (chosen.length < count && usedIdx.size < baseKeywords.length) {
             const idx = Math.floor(rng() * baseKeywords.length);

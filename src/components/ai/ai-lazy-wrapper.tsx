@@ -111,14 +111,11 @@ export function MemoryOptimizedAI({
 
     useEffect(() => {
         const checkMemory = () => {
-            if ('memory' in performance) {
-                const memory = (performance as any).memory;
-                const usage = memory.usedJSHeapSize;
+            const perf: any = performance as any;
+            if (perf && perf.memory && typeof perf.memory.usedJSHeapSize === 'number') {
+                const usage = perf.memory.usedJSHeapSize as number;
                 setMemoryUsage(usage);
-
-                if (usage > maxMemory && onMemoryWarning) {
-                    onMemoryWarning();
-                }
+                if (usage > maxMemory && onMemoryWarning) onMemoryWarning();
             }
         };
 
@@ -163,8 +160,9 @@ export class AIErrorBoundary extends React.Component<
         console.error('AI Component Error:', error, errorInfo);
 
         // Send to monitoring service
-        if (typeof window !== 'undefined' && 'gtag' in window) {
-            (window as any).gtag('event', 'exception', {
+        const w = typeof window !== 'undefined' ? (window as any) : undefined;
+        if (w && typeof w.gtag === 'function') {
+            w.gtag('event', 'exception', {
                 description: `AI Component Error: ${error.message}`,
                 fatal: false,
             });

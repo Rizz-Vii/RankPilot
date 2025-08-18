@@ -1,12 +1,12 @@
 // Simplified analytics that won&apos;t break the app
-export const trackEvent = (eventName: string, eventParams?: any) => {
+export const trackEvent = (eventName: string, eventParams?: unknown) => {
   // For now, just log to console. Can be enhanced later when Firebase issues are resolved
   if (process.env.NODE_ENV === "development") {
     console.log(`Analytics Event: ${eventName}`, eventParams);
   }
 };
 
-export const setUserProperties = (userId: string, properties: any) => {
+export const setUserProperties = (userId: string, properties: unknown) => {
   if (process.env.NODE_ENV === "development") {
     console.log(`User Properties for ${userId}:`, properties);
   }

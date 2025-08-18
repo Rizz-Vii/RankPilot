@@ -13,7 +13,7 @@ export async function POST(_req: NextRequest) {
         await adminDb.runTransaction(async tx => {
             const snap = await tx.get(ref);
             if (snap.exists) return; // no-op if already seeded
-            const doc = {
+            const doc: any = {
                 date: today,
                 provenanceCoveragePct: 95,
                 p95LatencyOverall: 450,
@@ -36,7 +36,7 @@ export async function POST(_req: NextRequest) {
             tx.set(ref, doc);
         });
         return NextResponse.json({ ok: true, seeded: true, date: today });
-    } catch (e: any) {
-        return NextResponse.json({ ok: false, error: e?.message || 'seed_failed' }, { status: 500 });
+    } catch (e: unknown) {
+        return NextResponse.json({ ok: false, error: (e as any)?.message || 'seed_failed' }, { status: 500 });
     }
 }

@@ -53,12 +53,11 @@ export function AdminUserSubscriptionManager() {
 
   // Form state
   const [email, setEmail] = useState("");
-  const [tier, setTier] = useState<
-  "free" | "starter" | "agency" | "enterprise"
-  >("starter");
-  const [status, setStatus] = useState<
-    "free" | "active" | "canceled" | "past_due"
-  >("active");
+  type SubscriptionTier = "free" | "starter" | "agency" | "enterprise";
+  type SubscriptionStatus = "free" | "active" | "canceled" | "past_due";
+
+  const [tier, setTier] = useState<SubscriptionTier>("starter");
+  const [status, setStatus] = useState<SubscriptionStatus>("active");
   const [monthsToAdd, setMonthsToAdd] = useState("3");
   const [paymentHistoryMonths, setPaymentHistoryMonths] = useState("3");
 
@@ -209,7 +208,7 @@ export function AdminUserSubscriptionManager() {
               <Label htmlFor="tier">Subscription Tier</Label>
               <Select
                 value={tier}
-                onValueChange={(value: any) => setTier(value)}
+                onValueChange={(value: SubscriptionTier) => setTier(value)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -231,7 +230,7 @@ export function AdminUserSubscriptionManager() {
               <Label htmlFor="status">Subscription Status</Label>
               <Select
                 value={status}
-                onValueChange={(value: any) => setStatus(value)}
+                onValueChange={(value: SubscriptionStatus) => setStatus(value)}
               >
                 <SelectTrigger>
                   <SelectValue />

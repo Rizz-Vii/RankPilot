@@ -28,10 +28,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { severityButtonClasses, severityClasses } from '@/lib/ui/status-colors';
 
 // Map severity to semantic token-based classes (success|warning|destructive)
+type SeverityLevel = 'critical' | 'high' | 'medium' | 'low';
 const getSeverityColor = (severity: string): string => {
-  const level = severity.toLowerCase();
+  const level = severity.toLowerCase() as SeverityLevel;
   if (["critical","high","medium","low"].includes(level)) {
-    return severityButtonClasses(level as any);
+    return severityButtonClasses(level);
   }
   return "bg-muted text-foreground hover:bg-muted/80";
 };
@@ -119,8 +120,12 @@ export function PerformanceFeedback({
         description: "Thank you for helping us improve!",
       });
 
-      setIsVisible(false);
-      resetForm();
+  setIsVisible(false);
+  // Reset form state
+  setRating(0);
+  setFeedback("");
+  setCategory('performance');
+  setSeverity('medium');
     } catch (error) {
       toast({
         variant: "destructive",
@@ -130,13 +135,6 @@ export function PerformanceFeedback({
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const resetForm = () => {
-    setRating(0);
-    setFeedback("");
-    setCategory("performance");
-    setSeverity("medium");
   };
 
   const renderStars = () => {
@@ -371,10 +369,9 @@ export function FeedbackSummary() {
     }
   }, []);
 
-  const averageRating =
-    feedbackData.length > 0
-      ? feedbackData.reduce((sum, f) => sum + f.rating, 0) / feedbackData.length
-      : 0;
+  const averageRating = feedbackData.length > 0
+    ? feedbackData.reduce((sum, f) => sum + f.rating, 0) / feedbackData.length
+    : 0;
 
   const categoryBreakdown = feedbackData.reduce(
     (acc, f) => {

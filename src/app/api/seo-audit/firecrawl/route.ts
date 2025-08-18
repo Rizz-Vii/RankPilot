@@ -19,25 +19,25 @@ export function __resetFirecrawlQuotaTestOnly() {
 async function enforceFirecrawlQuota(limit: number, scopeKey: string) {
     try {
         if (!cachedAdminDb) {
-            const mod = (global as any).adminDb ? { adminDb: (global as any).adminDb } : await import('@/lib/firebase-admin').catch(() => import('../../../../lib/firebase-admin'));
+            const mod: any = (global as any).adminDb ? { adminDb: (global as any).adminDb } : await import('@/lib/firebase-admin').catch(() => import('../../../../lib/firebase-admin'));
             cachedAdminDb = mod.adminDb;
         }
-        const adminDb = cachedAdminDb;
+        const adminDb: any = cachedAdminDb as any;
         const docRef = adminDb.collection('firecrawlQuota').doc(scopeKey);
         const now = Date.now();
         let retryAfterSeconds = 0;
         const res = await adminDb.runTransaction(async (tx: any) => {
             const snap = await tx.get(docRef);
-            let data: any = snap.exists ? snap.data() : { count: 0, windowStart: (global as any).Timestamp?.fromMillis(now) || new Date(now) };
-            const windowStartMs = data.windowStart?.toMillis ? data.windowStart.toMillis() : (data.windowStart?.seconds ? data.windowStart.seconds * 1000 : now);
+            let data: any = snap.exists ? (snap.data() as any) : { count: 0, windowStart: (global as any).Timestamp?.fromMillis(now) || new Date(now) };
+            const windowStartMs = data?.windowStart?.toMillis ? data.windowStart.toMillis() : (data?.windowStart?.seconds ? data.windowStart.seconds * 1000 : now);
             if (now - windowStartMs >= FIRECRAWL_WINDOW_MS) {
                 data.count = 0; data.windowStart = (global as any).Timestamp?.fromMillis(now) || new Date(now);
             }
-            if (data.count + 1 > limit) {
+            if ((data.count || 0) + 1 > limit) {
                 retryAfterSeconds = Math.max(1, Math.ceil((FIRECRAWL_WINDOW_MS - (now - windowStartMs)) / 1000));
                 return { allowed: false, remaining: 0, resetAt: new Date(windowStartMs + FIRECRAWL_WINDOW_MS), retryAfterSeconds };
             }
-            data.count += 1;
+            data.count = (data.count || 0) + 1;
             tx.set(docRef, data, { merge: true });
             return { allowed: true, remaining: Math.max(0, limit - data.count), resetAt: new Date(windowStartMs + FIRECRAWL_WINDOW_MS), retryAfterSeconds: 0 };
         });
@@ -53,10 +53,11 @@ async function enforceFirecrawlQuota(limit: number, scopeKey: string) {
 }
 
 // GET /api/seo-audit/firecrawl?url=...&depth=1&limit=5
-export const GET = withProvenance(async function GET(req: NextRequest) {
+export const GET = withProvenance(async function GET(req: Request) {
+    const nreq = req as NextRequest;
     const started = Date.now();
     try {
-        const urlObj = new URL(req.url);
+        const urlObj = new URL(nreq.url);
         const target = urlObj.searchParams.get('url');
         const depth = Number(urlObj.searchParams.get('depth') || '1');
         const limit = Number(urlObj.searchParams.get('limit') || '5');
@@ -69,8 +70,8 @@ export const GET = withProvenance(async function GET(req: NextRequest) {
         // Quota enforcement (env override FIRECRAWL_HOURLY_LIMIT default 100). Scope: global (future: team/user scope keys)
         const quotaLimit = parseInt(process.env.FIRECRAWL_HOURLY_LIMIT || '100', 10) || 100;
         // Derive scope (team preferred > user > global) – expecting optional headers for now
-        const teamId = req.headers.get('x-team-id') || undefined;
-        const userId = req.headers.get('x-user-id') || undefined;
+        const teamId = nreq.headers.get('x-team-id') || undefined;
+        const userId = nreq.headers.get('x-user-id') || undefined;
         const scopeKey = teamId ? `team:${teamId}` : (userId ? `user:${userId}` : 'global');
         const quota = await enforceFirecrawlQuota(quotaLimit, scopeKey);
         const quotaTimeMs = Date.now() - phaseStart.quota;
@@ -114,7 +115,7 @@ export const GET = withProvenance(async function GET(req: NextRequest) {
         res.headers.set('X-Quota-Remaining', String(quota.remaining));
         res.headers.set('X-Quota-Reset', quota.resetAt.toISOString());
         return res;
-    } catch (e: any) {
-        return NextResponse.json(enforceProvenance({ success: false, error: e.message || 'crawl_error', provenance: 'synthetic' }, { path: 'seo-audit/firecrawl', note: 'exception' }), { status: 500 });
+    } catch (e: unknown) {
+        return NextResponse.json(enforceProvenance({ success: false, error: (e as any)?.message || 'crawl_error', provenance: 'synthetic' }, { path: 'seo-audit/firecrawl', note: 'exception' }), { status: 500 });
     }
 }, { path: 'seo-audit/firecrawl' });

@@ -3,9 +3,12 @@
 
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2025-07-30.basil',
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
+type StripeSubLike = {
+    current_period_end?: number;
+    trial_end?: number;
+    cancel_at_period_end?: boolean;
+};
 
 // RankPilot Subscription Tiers Configuration
 export const RANKPILOT_TIERS = {
@@ -118,10 +121,12 @@ export async function handleSubscriptionSuccess(sessionId: string) {
         subscriptionId: subscription.id,
         customerId: customer.id,
         status: subscription.status,
-        currentPeriodEnd: (subscription as any).current_period_end * 1000, // Stripe API compatibility
+        currentPeriodEnd: ((subscription as unknown as StripeSubLike).current_period_end ?? 0) * 1000,
         userId: session.client_reference_id,
         tier: session.metadata?.tier,
-        trialEnd: (subscription as any).trial_end ? (subscription as any).trial_end * 1000 : null
+        trialEnd: (subscription as unknown as StripeSubLike).trial_end
+            ? (subscription as unknown as StripeSubLike).trial_end! * 1000
+            : null
     };
 }
 

@@ -44,7 +44,7 @@ export function LazyDataTable<T>({ columns, rows, loading, empty = 'No records',
             const idx = range.start + i; const top = idx * 40;
             return (
               <div key={rowKey ? rowKey(r, idx) : idx} style={{ transform: `translateY(${top}px)` }} className="absolute inset-x-0 flex border-b last:border-b-0 hover:bg-muted/30">
-                {columns.map(c => <div key={c.key} className={"px-2 py-2 flex-1 truncate " + (c.className||"")}>{c.render?c.render(r): (r as any)[c.key]}</div>)}
+                {columns.map(c => <div key={c.key} className={"px-2 py-2 flex-1 truncate " + (c.className||"")}>{c.render?c.render(r): String((r as any)[c.key])}</div>)}
               </div>
             );
           })}

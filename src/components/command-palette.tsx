@@ -50,9 +50,10 @@ function CommandPalette({ onClose }: CommandPaletteProps) {
   const { translate } = useI18n();
   const tr = (k: string, fb: string) => { const v = translate(k); return v === k ? fb : v; };
   const cycleTheme = () => {
-    const order: any[] = ['light','dark','high-contrast','auto'];
-    const idx = order.indexOf(theme);
-    setTheme(order[(idx+1)%order.length]);
+    const order: Array<typeof theme> = ['light','dark','high-contrast','auto'];
+    const idx = order.indexOf(theme as typeof theme);
+    const next = order[(idx+1)%order.length] as any;
+    setTheme(next);
     try { window.dispatchEvent(new CustomEvent('rp_theme_cycle', { detail: { from: theme, to: order[(idx+1)%order.length], at: Date.now() } })); } catch {}
   };
 

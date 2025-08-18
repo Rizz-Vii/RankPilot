@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
         if (!baseUrl) return NextResponse.json({ error: 'baseUrl required' }, { status: 400 });
         const result = await ingestSiteContentForOrg(decoded.uid, { baseUrl, maxPages });
         return NextResponse.json({ success: true, ...result });
-    } catch (e: any) {
-        return NextResponse.json({ error: e?.message || 'Ingestion failed' }, { status: 500 });
+    } catch (e: unknown) {
+        return NextResponse.json({ error: (e as any)?.message || 'Ingestion failed' }, { status: 500 });
     }
 }

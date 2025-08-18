@@ -23,28 +23,28 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         }
         // PERF-01 / TEAM-01: Prefer team-aware limiter when teamId supplied; otherwise fallback to legacy per-user neuroseo limiter for backward compatibility during transition.
         try {
-            if (teamId) {
+            if (typeof teamId === 'string' && teamId) {
                 const { adminDb } = (global as any).adminDb ? { adminDb: (global as any).adminDb } : await import('@/lib/firebase-admin');
-                await enforceTeamRateLimit(adminDb as any, teamId, { routeKey: 'neuroseo/live' });
+                await enforceTeamRateLimit(adminDb, teamId, { routeKey: 'neuroseo/live' });
             } else {
                 const scopeId = userId || 'anonymous';
                 await enforceNeuroSeoRateLimit((global as any).adminDb || (await import('@/lib/firebase-admin')).adminDb, scopeId, {});
             }
-        } catch (e: any) {
+        } catch (e: unknown) {
             if (e instanceof TeamRateLimitError || e instanceof NeuroSeoRateLimitError) {
-                const retryAfterSeconds = (e as any).retryAfterSeconds || 60;
+                const retryAfterSeconds = (e as any)?.retryAfterSeconds || 60;
                 return NextResponse.json(enforceProvenance({ success: false, error: 'rate_limited', retryAfter: retryAfterSeconds, provenance: 'synthetic' }, { path: 'neuroseo/live', note: 'rate_limit' }), { status: 429, headers: { 'Retry-After': String(retryAfterSeconds) } });
             }
             throw e;
         }
         const result = await executeNeuroLive({ urls, analysisType, userId: userId || 'anonymous' }, { forceRefresh });
-        const resp = NextResponse.json(enforceProvenance(result, { path: 'neuroseo/live' }), { status: 200 });
+        const resp = NextResponse.json(enforceProvenance({ ...result }, { path: 'neuroseo/live' }), { status: 200 });
         recordRouteLatency('neuroseo/live', Date.now() - start);
         return resp;
-    } catch (err: any) {
-        logger.error('live.route.error', { message: err?.message });
+    } catch (err: unknown) {
+        logger.error('live.route.error', { message: (err as any)?.message });
         recordRouteLatency('neuroseo/live', Date.now() - start);
         recordError('neuroseo/live', '5xx_server');
-        return NextResponse.json(enforceProvenance({ error: err?.message || 'analysis failed', provenance: 'synthetic' }, { path: 'neuroseo/live' }), { status: 500 });
+        return NextResponse.json(enforceProvenance({ error: (err as any)?.message || 'analysis failed', provenance: 'synthetic' }, { path: 'neuroseo/live' }), { status: 500 });
     }
 }, { path: 'neuroseo/live' });

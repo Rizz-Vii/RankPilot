@@ -277,7 +277,7 @@ export class GamificationEngine {
   static trackAction(
     userId: string,
     action: string,
-    metadata: Record<string, any> = {}
+    metadata: Record<string, unknown> = {}
   ): {
     newAchievements: Achievement[];
     updatedStats: UserStats;
@@ -339,7 +339,7 @@ export class GamificationEngine {
   private static checkAchievementCriteria(
     achievement: Achievement,
     stats: UserStats,
-    metadata: Record<string, any>
+    metadata: Record<string, unknown>
   ): boolean {
     const { criteria } = achievement;
 
@@ -355,7 +355,7 @@ export class GamificationEngine {
 
       case "insights_shared":
         // Would track this separately in real implementation
-        return metadata.totalShares >= criteria.threshold;
+        return ((metadata as { totalShares?: number }).totalShares || 0) >= criteria.threshold;
 
       default:
         return false;
@@ -426,7 +426,7 @@ export class GamificationEngine {
 export const useGamification = (userId: string) => {
   const stats = GamificationEngine.getUserStats(userId);
 
-  const trackAction = (action: string, metadata: Record<string, any> = {}) => {
+  const trackAction = (action: string, metadata: Record<string, unknown> = {}) => {
     return GamificationEngine.trackAction(userId, action, metadata);
   };
 

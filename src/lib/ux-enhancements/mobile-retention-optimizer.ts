@@ -345,7 +345,7 @@ export class MobileRetentionOptimizer {
   }
 
   private static measurePerformanceMetrics() {
-    const navigation = performance.getEntriesByType(
+    const _navigation = performance.getEntriesByType(
       "navigation"
     )[0] as PerformanceNavigationTiming;
 
@@ -424,7 +424,7 @@ export class MobileRetentionOptimizer {
 
   private static generateRecommendations(
     touchTargets: TouchTarget[],
-    metrics: any,
+    metrics: { largestContentfulPaint: number; cumulativeLayoutShift: number; mobileFriendlyScore: number },
     accessibilityScore: number
   ): string[] {
     const recommendations: string[] = [];

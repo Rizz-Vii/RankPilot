@@ -211,7 +211,7 @@ export default function SemanticMapPage() {
     setProvenance(null);
 
     try {
-      const keywords = targetKeywords.split(',').map(k => k.trim()).filter(k => k);
+  const keywords = targetKeywords.split(',').map(k => k.trim()).filter(Boolean);
       let result: SemanticMapResult | null = null;
       try {
         // Prefer live orchestrator path
@@ -234,19 +234,19 @@ export default function SemanticMapPage() {
             result = {
               id: data.report?.analysisId || `semantic_${Date.now()}`,
               url: analysisUrl,
-              topicClusters: (semantic.fingerprint?.topicClusters || []).map((c: any, index: number) => ({
-                id: c.id || `cluster_${index}`,
-                topic: c.name,
-                keywords: c.keywords || [],
-                semanticScore: Math.round(c.relevanceScore || 0),
-                contentGaps: (semantic.fingerprint?.contentGaps || []).filter((g: any) => g.topic === c.name).map((g: any) => g.description),
-                relatedTopics: (c.subTopics || []).map((s: any) => s.name).slice(0, 2),
+              topicClusters: (semantic.fingerprint?.topicClusters || []).map((c: unknown, index: number) => ({
+                id: (c as any).id || `cluster_${index}`,
+                topic: (c as any).name,
+                keywords: (c as any).keywords || [],
+                semanticScore: Math.round((c as any).relevanceScore || 0),
+                contentGaps: (semantic.fingerprint?.contentGaps || []).filter((g: any) => g.topic === (c as any).name).map((g: any) => g.description),
+                relatedTopics: ((c as any).subTopics || []).map((s: any) => s.name).slice(0, 2),
                 searchVolume: randomInt(rng, 5000, 55000),
                 difficulty: randomInt(rng, 30, 70),
                 opportunity: pickOpportunity()
               })),
-              keywordAnalysis: (data.report?.keywords || []).map((k: any) => ({
-                keyword: k.keyword,
+              keywordAnalysis: (data.report?.keywords || []).map((k: unknown) => ({
+                keyword: (k as any).keyword,
                 density: randomFloat(rng, 0.5, 3.5),
                 prominence: randomFloat(rng, 0, 100),
                 semanticRelevance: randomFloat(rng, 60, 100),
@@ -263,12 +263,12 @@ export default function SemanticMapPage() {
                 nodes: (semantic.visualizationData?.nodes || []).map((n: any) => ({ id: n.id, label: n.label, type: n.type, score: n.size })),
                 edges: (semantic.visualizationData?.edges || []).map((e: any) => ({ source: e.source, target: e.target, weight: e.weight }))
               },
-              recommendations: (semantic.recommendations || []).map((r: any) => ({
-                type: r.type && r.type.includes('keyword') ? 'keyword' : r.type && r.type.includes('semantic') ? 'semantic' : 'content',
-                priority: r.priority,
-                title: r.title,
-                description: r.description,
-                impact: `Estimated impact: ${r.estimatedImpact}`
+              recommendations: (semantic.recommendations || []).map((r: unknown) => ({
+                type: (r as any).type && (r as any).type.includes('keyword') ? 'keyword' : (r as any).type && (r as any).type.includes('semantic') ? 'semantic' : 'content',
+                priority: (r as any).priority,
+                title: (r as any).title,
+                description: (r as any).description,
+                impact: `Estimated impact: ${(r as any).estimatedImpact}`
               })),
               overallScore: data.report?.overallScore || 0,
               createdAt: new Date()
@@ -338,7 +338,7 @@ export default function SemanticMapPage() {
     fill: COLORS[index % COLORS.length]
   })) || [];
 
-  const trendData = currentResult?.keywordAnalysis.map((keyword, index) => ({
+  const trendData = currentResult?.keywordAnalysis.map((keyword) => ({
     keyword: keyword.keyword,
     density: keyword.density,
     relevance: keyword.semanticRelevance,

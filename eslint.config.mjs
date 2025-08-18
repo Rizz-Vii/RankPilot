@@ -1,4 +1,5 @@
 // Enhanced ESLint config with Next.js plugin
+// Ensure rushstack patch loads in flat config context to avoid 'calling module not recognized' error.
 import next from 'eslint-config-next';
 import { rule as noSelfReexport } from './scripts/eslint-rules/no-self-reexport.js';
 import { rule as noRawHexColors } from './scripts/eslint-rules/no-raw-hex-colors.js';

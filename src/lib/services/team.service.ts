@@ -10,7 +10,7 @@
  * which perform server-side auth (verifyIdToken) and enforce role rules.
  */
 import {
-    collection, doc, query, where, getDoc, getDocs, DocumentData, getDocs as clientGetDocs, onSnapshot
+    collection, doc, query, where, getDoc, getDocs, DocumentData, getDocs as clientGetDocs, onSnapshot, DocumentSnapshot
 } from "firebase/firestore";
 import { managedOnSnapshot } from '@/lib/firebase/write-guard';
 import { db, auth } from "@/lib/firebase";
@@ -33,27 +33,52 @@ export interface TeamMember {
 export interface SubscribeOptions {
     userId: string;
     onData: (members: TeamMember[]) => void;
-    onError?: (err: any) => void;
+    onError?: (err: unknown) => void;
 }
 
-// Utility to map raw Firestore member object
-function mapMember(raw: any): TeamMember {
-    const joined = raw.joinedAt?.toDate?.() || new Date(raw.joinedAt || Date.now());
-    const lastActive = raw.lastActive?.toDate?.() || new Date(raw.lastActive || Date.now());
+// Firestore raw member (subcollection doc or embedded array element)
+interface RawTeamMemberFirestore {
+    id?: string;
+    userId?: string;
+    email?: string;
+    name?: string;
+    role?: TeamRole;
+    status?: TeamStatus;
+    avatar?: string;
+    joinedAt?: Date | number | { toDate?: () => Date };
+    lastActive?: Date | number | { toDate?: () => Date };
+}
+
+function toJsDate(v: RawTeamMemberFirestore['joinedAt']): Date {
+    if (!v && v !== 0) return new Date();
+    if (v instanceof Date) return v;
+    if (typeof v === 'number') return new Date(v);
+    if (typeof v === 'object' && v && typeof (v as any).toDate === 'function') {
+        const d = (v as any).toDate();
+        if (d instanceof Date) return d;
+    }
+    return new Date();
+}
+
+// Utility to map raw Firestore member object (now typed)
+function mapMember(raw: RawTeamMemberFirestore): TeamMember {
+    const joined = toJsDate(raw.joinedAt);
+    const lastActive = toJsDate(raw.lastActive);
+    const email = raw.email || '';
     return {
-        id: raw.userId || raw.id || raw.email || crypto.randomUUID(),
+        id: raw.userId || raw.id || email || crypto.randomUUID(),
         userId: raw.userId,
-        email: raw.email || "",
-        name: raw.name || (raw.email ? raw.email.split("@")[0] : "Member"),
-        role: (raw.role || "member") as TeamRole,
-        status: (raw.status || "active") as TeamStatus,
+        email,
+        name: raw.name || (email ? email.split("@")[0] : "Member"),
+        role: raw.role || 'member',
+        status: raw.status || 'active',
         avatar: raw.avatar,
         joinedAt: joined,
         lastActive
     };
 }
 
-async function resolveTeamDoc(userId: string): Promise<DocumentData | null> {
+async function resolveTeamDoc(userId: string): Promise<(DocumentData & { id: string }) | null> {
     // Strategy: check teams collection for membership, then user's teamId field
     const q = query(collection(db, "teams"), where("memberIds", "array-contains", userId));
     const snap = await getDocs(q);
@@ -61,10 +86,10 @@ async function resolveTeamDoc(userId: string): Promise<DocumentData | null> {
 
     const userDoc = await getDoc(doc(db, "users", userId));
     if (userDoc.exists()) {
-        const teamId = (userDoc.data() as any)?.teamId;
+        const teamId = (userDoc.data() as DocumentData)?.teamId;
         if (teamId) {
             const t = await getDoc(doc(db, "teams", teamId));
-            if (t.exists()) return { id: t.id, ...t.data() } as any;
+            if (t.exists()) return { id: t.id, ...t.data() } as (DocumentData & { id: string });
         }
     }
     return null;
@@ -82,7 +107,7 @@ export async function subscribeToTeamMembers({ userId, onData, onError }: Subscr
         let lastEmit = Date.now();
         const refreshIntervalMs = 60_000; // 1 minute fallback refresh
         const membersCol = collection(db, 'teams', team.id, 'members');
-        let intervalHandle: any;
+        let intervalHandle: ReturnType<typeof setInterval> | undefined;
         try {
             const initial = await clientGetDocs(query(membersCol));
             if (!initial.empty) {
@@ -114,15 +139,16 @@ export async function subscribeToTeamMembers({ userId, onData, onError }: Subscr
         } catch { /* fallback to embedded logic below */ }
 
         const teamRef = doc(db, 'teams', team.id);
-        const unsub = managedOnSnapshot(teamRef, (snapshot: any) => {
-            if (!snapshot.exists()) {
+        const unsub = managedOnSnapshot(teamRef, (snapshot: unknown) => {
+            const snap = snapshot as DocumentSnapshot<DocumentData>;
+            if (!snap.exists()) {
                 onData([]);
                 return;
             }
-            const data: any = snapshot.data();
-            const membersArr = Array.isArray(data.members) ? data.members : [];
-            onData(membersArr.map(mapMember));
-        }, (err: any) => onError?.(err), { debounceMs: 120 });
+            const data = snap.data() as DocumentData | undefined;
+            const membersArr = Array.isArray(data?.members) ? (data!.members as RawTeamMemberFirestore[]) : [];
+            onData(membersArr.map(m => mapMember(m)));
+        }, (err: unknown) => onError?.(err), { debounceMs: 120 });
         return () => { unsub(); if (intervalHandle) clearInterval(intervalHandle); };
     } catch (e) {
         onError?.(e);

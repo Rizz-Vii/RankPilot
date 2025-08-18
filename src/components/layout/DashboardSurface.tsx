@@ -17,12 +17,12 @@ export interface DashboardSurfaceProps {
   ariaLabel?: string;
   variant?: SurfaceVariant;
   suite?: SuiteAccent;
-  [key: string]: any; // allow passing arbitrary DOM props
+  [key: string]: unknown; // allow passing arbitrary DOM props
 }
 
 export function DashboardSurface({ as:Tag='div', className, children, fullHeight, bleed, ariaLabel, variant='default', suite, ...rest }: DashboardSurfaceProps){
-  const ambient = useSuiteAccent?.() ?? 'none';
-  const effectiveSuite = suite || ambient || 'none';
+
+
   const variantClasses = variant === 'subtle'
     ? 'bg-background/50'
     : variant === 'elevated'

@@ -1,5 +1,6 @@
 import type { firestore as AdminFirestore } from 'firebase-admin';
 import { getLogger } from '@/lib/logging/app-logger';
+import { coerceWindowStart, windowStartToMs, TimestampLike } from '@/lib/firestore/typed-snapshot';
 
 const WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
@@ -13,10 +14,7 @@ export class NeuroSeoRateLimitError extends Error {
     }
 }
 
-interface RateDoc {
-    count: number;
-    windowStart: AdminFirestore.Timestamp | any;
-}
+interface RateDoc { count: number; windowStart: TimestampLike | Date; }
 
 /**
  * Enforce per-scope (user or team) NeuroSEO live analysis rate limit over a rolling 1h window.
@@ -30,11 +28,15 @@ export async function enforceNeuroSeoRateLimit(db: AdminFirestore.Firestore, sco
     let retryAfterSeconds = 0;
     const res = await db.runTransaction(async (tx: AdminFirestore.Transaction) => {
         const snap = await tx.get(docRef);
-        let data: RateDoc = snap.exists ? (snap.data() as any) : { count: 0, windowStart: (global as any).Timestamp?.fromMillis(now) || new Date(now) };
-        const windowStartMs = data.windowStart?.toMillis ? data.windowStart.toMillis() : (data.windowStart?.seconds ? data.windowStart.seconds * 1000 : now);
+        const raw = snap.exists ? (snap.data() as Partial<RateDoc>) : undefined;
+        const data: RateDoc = {
+            count: typeof raw?.count === 'number' ? raw.count : 0,
+            windowStart: raw?.windowStart ? coerceWindowStart(raw.windowStart, now) : new Date(now)
+        };
+        const windowStartMs = windowStartToMs(data.windowStart, now);
         if (now - windowStartMs >= WINDOW_MS) {
             data.count = 0;
-            data.windowStart = (global as any).Timestamp?.fromMillis(now) || new Date(now);
+            data.windowStart = new Date(now);
         }
         if (data.count + 1 > limit) {
             retryAfterSeconds = Math.max(1, Math.ceil((WINDOW_MS - (now - windowStartMs)) / 1000));

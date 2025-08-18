@@ -234,7 +234,7 @@ export function optimizeByGeography(request: NextRequest): NextResponse {
 /**
  * Performance monitoring and analytics
  */
-export function addPerformanceMonitoring(request: NextRequest, response: NextResponse): NextResponse {
+export function addPerformanceMonitoring(_request: NextRequest, response: NextResponse): NextResponse {
     const startTime = Date.now();
 
     // Add performance timing headers

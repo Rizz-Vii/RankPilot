@@ -7,10 +7,13 @@ import { fetchDefaultCard } from '@/lib/billing/payment-method';
 
 const logger = getLogger('billing-payment-method');
 const stripeKey = process.env.STRIPE_SECRET_KEY;
-const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: '2025-07-30.basil' as any }) : null;
+// Stripe types expect a specific literal; reuse existing pinned version in codebase if enforced.
+const STRIPE_API_VERSION = '2025-07-30.basil' as const;
+const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: STRIPE_API_VERSION }) : null;
 
-export const GET = withProvenance(async function GET(req: NextRequest) {
-    const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
+export const GET = withProvenance(async function GET(req: Request) {
+    const nreq = req as NextRequest;
+    const authHeader = nreq.headers.get('authorization') || nreq.headers.get('Authorization');
     if (!authHeader) {
         const res = NextResponse.json(enforceProvenance({ error: 'auth_required' }, { path: 'billing/payment-method', note: 'auth' }), { status: 401 });
         res.headers.set('x-billing-diagnostics', 'auth=missing');
@@ -21,8 +24,8 @@ export const GET = withProvenance(async function GET(req: NextRequest) {
         const decoded = await adminAuth.verifyIdToken(token);
         const uid = decoded.uid;
         const userSnap = await adminDb.collection('users').doc(uid).get();
-        const userData: any = userSnap.exists ? userSnap.data() : null;
-        const customerId = userData?.stripeCustomerId;
+        const userData: any = userSnap.exists ? (userSnap.data() as any) : null;
+        const customerId = userData?.stripeCustomerId as string | undefined;
         if (!customerId) {
             const res = NextResponse.json(enforceProvenance({ paymentMethod: null, reason: 'no_customer' }, { path: 'billing/payment-method', note: 'no_customer' }), { status: 200 });
             res.headers.set('x-billing-diagnostics', 'auth=ok; customer=missing');
@@ -37,8 +40,8 @@ export const GET = withProvenance(async function GET(req: NextRequest) {
         const res = NextResponse.json(enforceProvenance({ paymentMethod: pm }, { path: 'billing/payment-method', note: 'ok' }), { status: 200 });
         res.headers.set('x-billing-diagnostics', `auth=ok; method=${pm ? 'present' : 'none'}`);
         return res;
-    } catch (e: any) {
-        logger.error('payment_method.endpoint_error', { error: e.message });
+    } catch (e: unknown) {
+        logger.error('payment_method.endpoint_error', { error: (e as any)?.message });
         const res = NextResponse.json(enforceProvenance({ error: 'internal_error' }, { path: 'billing/payment-method', note: 'exception' }), { status: 500 });
         res.headers.set('x-billing-diagnostics', 'auth=unknown; error=exception');
         return res;

@@ -1,10 +1,10 @@
 // Firebase error handling utilities
 import { FirebaseError } from "firebase/app";
 import { analytics } from "./firebase";
-import { logEvent } from "firebase/analytics";
+import { logEvent, type Analytics } from "firebase/analytics";
 
 export class FirebaseErrorHandler {
-  static isNetworkError(error: any): boolean {
+  static isNetworkError(error: unknown): boolean {
     return (
       (error instanceof TypeError &&
         error.message.includes("Failed to fetch")) ||
@@ -13,7 +13,7 @@ export class FirebaseErrorHandler {
     );
   }
 
-  static handleFirebaseError(error: any, operation: string): void {
+  static handleFirebaseError(error: unknown, operation: string): void {
     if (this.isNetworkError(error)) {
       console.warn(
         `Firebase ${operation} failed due to network issues. This is non-critical.`,
@@ -64,12 +64,12 @@ export class FirebaseErrorHandler {
 }
 
 // Wrapper for analytics events that won&apos;t throw errors
-export function safeAnalyticsEvent(eventName: string, eventParams?: any): void {
+export function safeAnalyticsEvent(eventName: string, eventParams?: unknown): void {
   if (typeof window === "undefined") return;
 
   try {
     if (analytics) {
-      logEvent(analytics, eventName, eventParams);
+      logEvent(analytics as Analytics, eventName, eventParams as any);
     }
   } catch (error) {
     FirebaseErrorHandler.handleFirebaseError(error, "analytics event");

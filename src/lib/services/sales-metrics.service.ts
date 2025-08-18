@@ -1,12 +1,14 @@
 // Sales Metrics Service - Firestore aggregation with graceful mock fallback
 // NOTE: Collections assumed: salesDeals, salesForecastSnapshots. Adjust to real schema.
-import { collection, getDocs, query, where, Timestamp, Unsubscribe } from 'firebase/firestore';
+import { collection, getDocs, query, where, Timestamp, Unsubscribe, DocumentData, QuerySnapshot, QueryConstraint } from 'firebase/firestore';
 import { managedOnSnapshot } from '@/lib/firebase/write-guard';
 import { db } from '@/lib/firebase/connection-manager';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
+import { SalesDealFirestore, ForecastSnapshotFirestore, mapSalesDeal, mapForecastSnapshot } from '@/types/firestore-docs';
+import { mapDocs } from '@/lib/firebase/snapshot-map';
 
-export interface SalesDealDoc { stage: string; amount: number; probability?: number; createdAt?: any; updatedAt?: any; status?: string; cycleDays?: number; userId?: string; teamId?: string; }
-export interface ForecastSnapshotDoc { period: string; forecast: number; actual?: number; createdAt?: any; userId?: string; teamId?: string; }
+export interface SalesDealDoc { stage: string; amount: number; probability?: number; createdAt?: unknown; updatedAt?: unknown; status?: string; cycleDays?: number; userId?: string; teamId?: string; }
+export interface ForecastSnapshotDoc { period: string; forecast: number; actual?: number; createdAt?: unknown; userId?: string; teamId?: string; }
 
 export interface AggregatedSalesMetrics {
     kpis: { key: string; label: string; value: number; delta: number; trend: number[]; intent?: 'neutral' | 'success' | 'warning' | 'danger' | 'accent'; target?: number; invertTarget?: boolean }[];
@@ -61,15 +63,15 @@ export async function fetchSalesMetrics(userId: string, range: '30d' | '90d' | '
         const start = new Date(now);
         if (range === '30d') start.setDate(start.getDate() - 30); else if (range === '90d') start.setDate(start.getDate() - 90); else start.setMonth(0, 1);
         const startTs = Timestamp.fromDate(start);
-        const dealsConditions = [where('createdAt', '>=', startTs)];
+        const dealsConditions: QueryConstraint[] = [where('createdAt', '>=', startTs)];
         if (teamId) dealsConditions.push(where('teamId', '==', teamId)); else dealsConditions.push(where('userId', '==', userId));
-        const dealsQ = query(collection(db, 'salesDeals'), ...dealsConditions as any);
+        const dealsQ = query(collection(db, 'salesDeals'), ...dealsConditions);
         const dealsSnap = await getDocs(dealsQ);
-        const deals: SalesDealDoc[] = dealsSnap.docs.map(d => ({ ...(d.data() as any) }));
-        const fcConditions = teamId ? [where('teamId', '==', teamId)] : [where('userId', '==', userId)];
-        const fcQ = query(collection(db, 'salesForecastSnapshots'), ...(fcConditions as any));
+        const deals: SalesDealDoc[] = mapDocs(dealsSnap as QuerySnapshot<DocumentData>, (_id, data) => mapSalesDeal(data as SalesDealFirestore));
+        const fcConditions: QueryConstraint[] = teamId ? [where('teamId', '==', teamId)] : [where('userId', '==', userId)];
+        const fcQ = query(collection(db, 'salesForecastSnapshots'), ...fcConditions);
         const fcSnap = await getDocs(fcQ);
-        const forecast: ForecastSnapshotDoc[] = fcSnap.docs.map(d => ({ ...(d.data() as any) }));
+        const forecast: ForecastSnapshotDoc[] = mapDocs(fcSnap as QuerySnapshot<DocumentData>, (_id, data) => mapForecastSnapshot(data as ForecastSnapshotFirestore));
         if (!deals.length) throw new Error('No deals');
         return aggregate(deals, forecast);
     } catch (e) {
@@ -102,11 +104,11 @@ export function subscribeSalesMetrics(userId: string, range: '30d' | '90d' | 'yt
     const start = new Date(now);
     if (range === '30d') start.setDate(start.getDate() - 30); else if (range === '90d') start.setDate(start.getDate() - 90); else start.setMonth(0, 1);
     const startTs = Timestamp.fromDate(start);
-    const dealsConditions = [where('createdAt', '>=', startTs)];
+    const dealsConditions: QueryConstraint[] = [where('createdAt', '>=', startTs)];
     if (teamId) dealsConditions.push(where('teamId', '==', teamId)); else dealsConditions.push(where('userId', '==', userId));
-    const dealsQ = query(collection(db, 'salesDeals'), ...dealsConditions as any);
-    const fcConditions = teamId ? [where('teamId', '==', teamId)] : [where('userId', '==', userId)];
-    const fcQ = query(collection(db, 'salesForecastSnapshots'), ...(fcConditions as any));
+    const dealsQ = query(collection(db, 'salesDeals'), ...dealsConditions);
+    const fcConditions: QueryConstraint[] = teamId ? [where('teamId', '==', teamId)] : [where('userId', '==', userId)];
+    const fcQ = query(collection(db, 'salesForecastSnapshots'), ...fcConditions);
     let deals: SalesDealDoc[] = [];
     let forecast: ForecastSnapshotDoc[] = [];
     const emit = () => {
@@ -115,7 +117,23 @@ export function subscribeSalesMetrics(userId: string, range: '30d' | '90d' | 'yt
         }
     };
     const unsubs: Unsubscribe[] = [];
-    unsubs.push(managedOnSnapshot(dealsQ, snap => { deals = snap.docs.map((d: any) => ({ ...(d.data() as any) })); emit(); }, err => console.error('[SalesMetrics] deals snapshot error', err), { debounceMs: 120 }));
-    unsubs.push(managedOnSnapshot(fcQ, snap => { forecast = snap.docs.map((d: any) => ({ ...(d.data() as any) })); emit(); }, err => console.error('[SalesMetrics] forecast snapshot error', err), { debounceMs: 120 }));
+    unsubs.push(managedOnSnapshot(
+        dealsQ,
+        (snap) => {
+            deals = mapDocs(snap as QuerySnapshot<DocumentData>, (_id, data) => mapSalesDeal(data as SalesDealFirestore));
+            emit();
+        },
+        err => console.error('[SalesMetrics] deals snapshot error', err),
+        { debounceMs: 120 }
+    ));
+    unsubs.push(managedOnSnapshot(
+        fcQ,
+        (snap) => {
+            forecast = mapDocs(snap as QuerySnapshot<DocumentData>, (_id, data) => mapForecastSnapshot(data as ForecastSnapshotFirestore));
+            emit();
+        },
+        err => console.error('[SalesMetrics] forecast snapshot error', err),
+        { debounceMs: 120 }
+    ));
     return () => { unsubs.forEach(u => u()); };
 }

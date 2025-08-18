@@ -43,7 +43,7 @@ export default function AutomationRecipesPage() {
   const [range, setRange] = useState<'30d' | '90d' | 'ytd'>('30d');
   const [cronExpr, setCronExpr] = useState<string>('');
   const [validationError, setValidationError] = useState<string>('');
-  const [runLogs, setRunLogs] = useState<Record<string, any[]>>({});
+  const [runLogs, setRunLogs] = useState<Record<string, import('@/lib/automation/recipes').AutomationRunLog[]>>({});
   const [pendingEmails, setPendingEmails] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -51,10 +51,10 @@ export default function AutomationRecipesPage() {
     (async () => {
       setLoading(true);
       try {
-        const list = await listAutomationRecipes(user.uid, (user as any).teamId);
+  const list = await listAutomationRecipes(user.uid, (user as any)?.teamId);
         setRecipes(list);
         // Fetch run logs & pending emails for each recipe sequentially (small N expected)
-        const logsMap: Record<string, any[]> = {};
+        const logsMap: Record<string, import('@/lib/automation/recipes').AutomationRunLog[]> = {};
         const emailMap: Record<string, number> = {};
         for (const r of list) {
           try {
@@ -64,7 +64,7 @@ export default function AutomationRecipesPage() {
         }
         setRunLogs(logsMap);
         setPendingEmails(emailMap);
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error(e);
       } finally {
         setLoading(false);
@@ -81,14 +81,14 @@ export default function AutomationRecipesPage() {
         setValidationError('Use either interval OR cron, not both.');
         return;
       }
-      const tpl = defaultRecipeTemplate(user.uid, (user as any).teamId);
+  const tpl = defaultRecipeTemplate(user.uid, (user as any)?.teamId);
       tpl.name = newName || 'Automation Recipe';
       if (cronExpr.trim()) {
-        tpl.schedule = { cron: cronExpr.trim() } as any;
+        tpl.schedule = { cron: cronExpr.trim() } as import('@/lib/automation/recipes').AutomationRecipe['schedule'];
       } else {
         tpl.schedule.intervalMinutes = interval;
       }
-      tpl.actions = selectedActions as any;
+      tpl.actions = selectedActions as import('@/lib/automation/recipes').AutomationActionType[];
       tpl.actionConfigs = {
         runNeuroSEOAnalysis: {
           urls: analysisUrls.split('\n').map(l=>l.trim()).filter(Boolean).slice(0,5),
@@ -114,8 +114,9 @@ export default function AutomationRecipesPage() {
       setRecipes(r => [created, ...r]);
       setNewName('');
       toast({ title: 'Recipe created', description: created.name });
-    } catch (e: any) {
-      toast({ title: 'Create failed', description: e.message || 'Unknown error', variant: 'destructive' });
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      toast({ title: 'Create failed', description: err.message || 'Unknown error', variant: 'destructive' });
     } finally { setCreating(false); }
   };
 
@@ -123,8 +124,9 @@ export default function AutomationRecipesPage() {
     try {
       const updated = await updateAutomationRecipe(r.id!, { active: !r.active });
       setRecipes(list => list.map(x => x.id === r.id ? updated : x));
-    } catch (e: any) {
-      toast({ title: 'Update failed', description: e.message || 'Unknown error', variant: 'destructive' });
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      toast({ title: 'Update failed', description: err.message || 'Unknown error', variant: 'destructive' });
     }
   };
 
@@ -198,7 +200,7 @@ export default function AutomationRecipesPage() {
               {(selectedActions.includes('salesRefreshMetrics') || selectedActions.includes('salesPipelineDigest')) && (
                 <div className="space-y-2">
                   <Label>Sales Range</Label>
-                  <select className="border rounded px-2 py-1 text-sm" value={range} disabled={hydrationDisabled} onChange={e => setRange(e.target.value as any)}>
+                  <select className="border rounded px-2 py-1 text-sm" value={range} disabled={hydrationDisabled} onChange={e => setRange(e.target.value as '30d'|'90d'|'ytd')}>
                     <option value="30d">Last 30d</option>
                     <option value="90d">Last 90d</option>
                     <option value="ytd">Year to Date</option>
@@ -249,7 +251,7 @@ export default function AutomationRecipesPage() {
                         {logs.map(l => (
                           <div key={l.id} className="flex flex-col border rounded p-1 bg-muted/30">
                             <div className="flex justify-between"><span>{new Date(l.startedAt).toLocaleTimeString()}</span><span className={l.status==='ok' ? 'text-success-foreground' : l.status==='partial' ? 'text-warning-foreground' : 'text-destructive-foreground'}>{l.status}</span></div>
-                            <div className="truncate">{l.actions.map((a:any)=>`${a.type}:${a.status}`).join(' | ')}</div>
+                            <div className="truncate">{l.actions.map((a)=>`${a.type}:${a.status}`).join(' | ')}</div>
                           </div>
                         ))}
                       </div>

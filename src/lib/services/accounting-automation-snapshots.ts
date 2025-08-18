@@ -10,7 +10,7 @@ export interface AccountingReportSnapshotDoc {
     type: 'pnl' | 'balance_sheet' | 'reconciliation';
     period: string; // YYYY-MM
     figures: Record<string, number>;
-    createdAt?: any;
+    createdAt?: unknown;
 }
 
 function scopeField(teamId?: string) { return teamId ? 'teamId' : 'userId'; }
@@ -23,7 +23,10 @@ export async function fetchRecentAccountingSnapshots(userId: string, teamId?: st
         limit(max)
     );
     const snap = await getDocs(q);
-    let rows = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as AccountingReportSnapshotDoc[];
+    let rows = snap.docs.map(d => {
+        const data = d.data() as Omit<AccountingReportSnapshotDoc, 'id'>;
+        return { id: d.id, ...data };
+    });
     if (types && types.length) rows = rows.filter(r => types.includes(r.type));
     return rows;
 }

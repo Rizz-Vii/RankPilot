@@ -9,12 +9,12 @@ export interface RewriteRequest {
   tone: "professional" | "casual" | "academic" | "conversational" | "technical";
   audience: "beginner" | "intermediate" | "expert" | "general";
   contentType:
-    | "blog"
-    | "article"
-    | "product"
-    | "landing"
-    | "technical"
-    | "news";
+  | "blog"
+  | "article"
+  | "product"
+  | "landing"
+  | "technical"
+  | "news";
   goals: RewriteGoal[];
   constraints: RewriteConstraint[];
   seoRequirements: SEORequirements;
@@ -22,13 +22,13 @@ export interface RewriteRequest {
 
 export interface RewriteGoal {
   type:
-    | "readability"
-    | "keyword_density"
-    | "length"
-    | "engagement"
-    | "conversion"
-    | "authority"
-    | "freshness";
+  | "readability"
+  | "keyword_density"
+  | "length"
+  | "engagement"
+  | "conversion"
+  | "authority"
+  | "freshness";
   target: number | string;
   priority: "high" | "medium" | "low";
   description: string;
@@ -36,12 +36,12 @@ export interface RewriteGoal {
 
 export interface RewriteConstraint {
   type:
-    | "preserve_facts"
-    | "maintain_structure"
-    | "keep_quotes"
-    | "preserve_links"
-    | "brand_voice"
-    | "legal_compliance";
+  | "preserve_facts"
+  | "maintain_structure"
+  | "keep_quotes"
+  | "preserve_links"
+  | "brand_voice"
+  | "legal_compliance";
   value: boolean | string;
   importance: "critical" | "high" | "medium" | "low";
 }
@@ -110,11 +110,11 @@ export interface ContentAnalysis {
 
 export interface ContentIssue {
   type:
-    | "keyword_stuffing"
-    | "low_readability"
-    | "poor_structure"
-    | "missing_keywords"
-    | "compliance_risk";
+  | "keyword_stuffing"
+  | "low_readability"
+  | "poor_structure"
+  | "missing_keywords"
+  | "compliance_risk";
   severity: "critical" | "high" | "medium" | "low";
   description: string;
   location: string;
@@ -227,7 +227,7 @@ export class RewriteGenEngine {
   }
 
   private calculateReadabilityScore(
-    content: string,
+    _content: string,
     words: string[],
     sentences: string[]
   ): number {
@@ -438,7 +438,7 @@ export class RewriteGenEngine {
   }
 
   private identifyContentIssues(
-    content: string,
+    _content: string,
     analysis: ContentAnalysis,
     seoRequirements: SEORequirements
   ): ContentIssue[] {
@@ -517,7 +517,7 @@ export class RewriteGenEngine {
 
   private async createVariant(
     request: RewriteRequest,
-    originalAnalysis: ContentAnalysis,
+    _originalAnalysis: ContentAnalysis,
     version: number
   ): Promise<Partial<RewriteVariant>> {
     const variantId = `variant-${version}`;
@@ -614,9 +614,7 @@ export class RewriteGenEngine {
       conversational: ["You know", "By the way", "Also", "Plus"],
       technical: ["Subsequently", "Therefore", "Additionally", "Moreover"],
     };
-
-    const toneTransitions =
-      transitions[tone as keyof typeof transitions] || transitions.professional;
+    const _chosenTransitions = transitions[tone as keyof typeof transitions] || transitions.professional; // reserved for future insertion logic
 
     // Simplify complex words (basic example)
     const simplifications = {
@@ -721,7 +719,7 @@ export class RewriteGenEngine {
       const keywordDensity = analysis.keywordDensity;
 
       // Generate improvements
-      const improvements = this.generateVariantImprovements(analysis, request);
+      const improvements = this.generateVariantImprovements(analysis);
 
       // Calculate compliance score
       const complianceScore = this.calculateComplianceScore(
@@ -730,7 +728,7 @@ export class RewriteGenEngine {
       );
 
       // Estimate performance
-      const estimatedPerformance = this.estimatePerformance(analysis, request);
+      const estimatedPerformance = this.estimatePerformance(analysis);
 
       analyzedVariants.push({
         id: variant.id,
@@ -750,9 +748,7 @@ export class RewriteGenEngine {
   }
 
   private generateVariantImprovements(
-    analysis: ContentAnalysis,
-    request: RewriteRequest
-  ): RewriteImprovement[] {
+    analysis: ContentAnalysis): RewriteImprovement[] {
     const improvements: RewriteImprovement[] = [];
 
     // SEO improvements
@@ -797,7 +793,7 @@ export class RewriteGenEngine {
   }
 
   private calculateComplianceScore(
-    content: string,
+    _content: string,
     request: RewriteRequest
   ): number {
     let score = 80; // Base score
@@ -824,9 +820,7 @@ export class RewriteGenEngine {
   }
 
   private estimatePerformance(
-    analysis: ContentAnalysis,
-    request: RewriteRequest
-  ): PerformanceMetrics {
+    analysis: ContentAnalysis): PerformanceMetrics {
     // Estimate various performance metrics based on content analysis
 
     const searchVisibility = Math.round(
@@ -837,8 +831,8 @@ export class RewriteGenEngine {
     );
     const conversionPotential = Math.round(
       analysis.seoScore * 0.3 +
-        analysis.readabilityScore * 0.4 +
-        analysis.sentimentScore * 0.3
+      analysis.readabilityScore * 0.4 +
+      analysis.sentimentScore * 0.3
     );
     const shareability = Math.round(
       (analysis.sentimentScore + analysis.readabilityScore) / 2
@@ -853,7 +847,7 @@ export class RewriteGenEngine {
         conversionPotential +
         shareability +
         trustScore) /
-        5
+      5
     );
 
     return {
@@ -875,7 +869,7 @@ export class RewriteGenEngine {
     // Find best performing variant
     const bestVariant = variants.reduce((best, current) =>
       current.estimatedPerformance.overallScore >
-      best.estimatedPerformance.overallScore
+        best.estimatedPerformance.overallScore
         ? current
         : best
     );

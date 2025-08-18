@@ -23,12 +23,12 @@ export class InMemoryCache<V> implements ICache<V> {
 }
 
 // Redis cache adapter (uses fetch-based Upstash REST or ioredis-like client if provided)
-type RedisLike = {
+interface RedisLike {
     get(key: string): Promise<string | null> | string | null;
-    set(key: string, value: string): Promise<any> | any;
-    del(key: string): Promise<any> | any;
+    set(key: string, value: string): Promise<unknown> | unknown;
+    del(key: string): Promise<number | unknown> | unknown;
     keys?(pattern: string): Promise<string[]> | string[];
-};
+}
 
 export class RedisCache<V> implements ICache<V> {
     private client: RedisLike | null = null;
@@ -46,7 +46,8 @@ export class RedisCache<V> implements ICache<V> {
                 get: async (key: string) => {
                     const res = await fetch(`${base}/get/${encodeURIComponent(this.prefix + key)}`, { headers: { Authorization: `Bearer ${token}` } });
                     if (!res.ok) return null;
-                    const data = await res.json().catch(() => null) as any;
+                    type UpstashGet = { result?: string | null };
+                    const data: UpstashGet | null = await res.json().catch(() => null);
                     return data?.result ?? null;
                 },
                 set: async (key: string, value: string) => {
@@ -70,8 +71,8 @@ export class RedisCache<V> implements ICache<V> {
 
     get(key: string): CacheEntry<V> | undefined {
         if (!this.client) return undefined;
-        const out = (this.client.get as any)(key);
-        if (out && typeof (out as Promise<any>).then === 'function') {
+        const out = this.client.get(key as string);
+        if (out && typeof (out as any).then === 'function') {
             // Note: callers expecting sync ICache will not await; to keep contract, return undefined when async
             // Prefer using factory below to choose sync in-memory in environments without async support
             console.warn('RedisCache.get is async; returning undefined synchronously');
@@ -82,10 +83,10 @@ export class RedisCache<V> implements ICache<V> {
     set(key: string, value: V): void {
         if (!this.client) return;
         const payload = this.serialize({ value, ts: Date.now() });
-        const out = (this.client.set as any)(key, payload);
-        if (out && typeof out.then === 'function') {
+        const out = this.client.set(key, payload);
+        if (out && typeof (out as any).then === 'function') {
             // fire and forget
-            (out as Promise<any>).catch(() => { /* ignore */ });
+            (out as Promise<unknown>).catch(() => { /* ignore */ });
         }
     }
     has(key: string): boolean {
@@ -97,8 +98,8 @@ export class RedisCache<V> implements ICache<V> {
     }
     delete(key: string): void {
         if (!this.client) return;
-        const out = (this.client.del as any)(key);
-        if (out && typeof out.then === 'function') (out as Promise<any>).catch(() => { /* ignore */ });
+        const out = this.client.del(key);
+        if (out && typeof (out as any).then === 'function') (out as Promise<unknown>).catch(() => { /* ignore */ });
     }
     keys(): string[] { return []; }
 }

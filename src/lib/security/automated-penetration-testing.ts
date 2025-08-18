@@ -146,8 +146,20 @@ export interface TestModule {
     description: string;
     category: string;
     enabled: boolean;
-    configuration: Record<string, any>;
-    execute(target: any, config: any): Promise<Vulnerability[]>;
+    configuration: Record<string, unknown>;
+    execute(target: any): Promise<Vulnerability[]>;
+}
+
+type PenTestTarget = PenetrationTest['target'];
+
+interface PenTestMetrics {
+    totalTests: number;
+    completedTests: number;
+    runningTests: number;
+    scheduledTests: number;
+    totalVulnerabilities: number;
+    averageTestDuration: number;
+    vulnerabilityDistribution: Record<string, number>;
 }
 
 export class AutomatedPentestingFramework extends EventEmitter {
@@ -179,7 +191,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 timeout: 30000,
                 maxAttempts: 50
             },
-            execute: async (target, config) => this.executeInjectionTests(target, config)
+            execute: async (target) => this.executeInjectionTests(target)
         });
 
         this.registerModule({
@@ -193,7 +205,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 sessionTimeout: 300000,
                 passwordComplexity: true
             },
-            execute: async (target, config) => this.executeAuthTests(target, config)
+            execute: async (target) => this.executeAuthTests(target)
         });
 
         this.registerModule({
@@ -206,7 +218,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 dataTypes: ['pii', 'credentials', 'financial', 'medical'],
                 regexPatterns: true
             },
-            execute: async (target, config) => this.executeSensitiveDataTests(target, config)
+            execute: async (target) => this.executeSensitiveDataTests(target)
         });
 
         this.registerModule({
@@ -219,7 +231,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 xmlPayloads: ['local-file', 'remote-file', 'internal-entity'],
                 parseTimeout: 15000
             },
-            execute: async (target, config) => this.executeXXETests(target, config)
+            execute: async (target) => this.executeXXETests(target)
         });
 
         this.registerModule({
@@ -233,7 +245,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 directObjectReferences: true,
                 methodTampering: true
             },
-            execute: async (target, config) => this.executeAccessControlTests(target, config)
+            execute: async (target) => this.executeAccessControlTests(target)
         });
 
         this.registerModule({
@@ -247,7 +259,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 errorHandling: true,
                 defaultCredentials: true
             },
-            execute: async (target, config) => this.executeSecurityMisconfigTests(target, config)
+            execute: async (target) => this.executeSecurityMisconfigTests(target)
         });
 
         this.registerModule({
@@ -261,7 +273,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 encodingTests: true,
                 filterBypass: true
             },
-            execute: async (target, config) => this.executeXSSTests(target, config)
+            execute: async (target) => this.executeXSSTests(target)
         });
 
         this.registerModule({
@@ -274,7 +286,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 serialFormats: ['json', 'xml', 'binary'],
                 gadgetChains: true
             },
-            execute: async (target, config) => this.executeDeserializationTests(target, config)
+            execute: async (target) => this.executeDeserializationTests(target)
         });
 
         this.registerModule({
@@ -288,7 +300,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 cveDatabase: true,
                 libraryScanning: true
             },
-            execute: async (target, config) => this.executeComponentTests(target, config)
+            execute: async (target) => this.executeComponentTests(target)
         });
 
         this.registerModule({
@@ -302,7 +314,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 alertTesting: true,
                 auditTrails: true
             },
-            execute: async (target, config) => this.executeLoggingTests(target, config)
+            execute: async (target) => this.executeLoggingTests(target)
         });
 
         // API Security Testing Modules
@@ -316,7 +328,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 authTypes: ['jwt', 'oauth', 'api-key', 'basic'],
                 tokenManipulation: true
             },
-            execute: async (target, config) => this.executeAPIAuthTests(target, config)
+            execute: async (target) => this.executeAPIAuthTests(target)
         });
 
         this.registerModule({
@@ -330,7 +342,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 burstTesting: true,
                 bypassAttempts: true
             },
-            execute: async (target, config) => this.executeRateLimitTests(target, config)
+            execute: async (target) => this.executeRateLimitTests(target)
         });
 
         this.registerModule({
@@ -344,7 +356,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 boundaryTesting: true,
                 typeConfusion: true
             },
-            execute: async (target, config) => this.executeAPIInputTests(target, config)
+            execute: async (target) => this.executeAPIInputTests(target)
         });
 
         // Network Security Testing Modules
@@ -359,7 +371,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 scanType: 'syn',
                 timeout: 5000
             },
-            execute: async (target, config) => this.executePortScan(target, config)
+            execute: async (target) => this.executePortScan(target)
         });
 
         this.registerModule({
@@ -373,7 +385,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 cipherSuites: true,
                 certificateValidation: true
             },
-            execute: async (target, config) => this.executeSSLTLSTests(target, config)
+            execute: async (target) => this.executeSSLTLSTests(target)
         });
     }
 
@@ -509,7 +521,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
             for (const module of modules) {
                 try {
                     const vulnerabilities = await Promise.race([
-                        module.execute(test.target, { ...module.configuration, ...test.configuration }),
+                        module.execute(test.target),
                         new Promise<Vulnerability[]>((_, reject) =>
                             setTimeout(() => reject(new Error('Module timeout')), test.configuration.timeLimit / modules.length)
                         )
@@ -549,8 +561,9 @@ export class AutomatedPentestingFramework extends EventEmitter {
     /**
      * Execute injection tests
      */
-    private async executeInjectionTests(target: any, config: any): Promise<Vulnerability[]> {
+    private async executeInjectionTests(target: PenTestTarget): Promise<Vulnerability[]> {
         const vulnerabilities: Vulnerability[] = [];
+        const targetUrl = (target as any)?.url || 'https://example.com';
 
         // SQL Injection payloads
         const sqlPayloads = [
@@ -588,7 +601,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                     title: `${payload.includes('$') ? 'NoSQL' : payload.includes(';') ? 'Command' : 'SQL'} Injection Vulnerability`,
                     description: `Injection vulnerability detected with payload: ${payload}`,
                     location: {
-                        url: target.url || 'https://example.com',
+                        url: targetUrl,
                         parameter: 'user_input'
                     },
                     evidence: {
@@ -640,12 +653,13 @@ export class AutomatedPentestingFramework extends EventEmitter {
     /**
      * Execute authentication tests
      */
-    private async executeAuthTests(target: any, config: any): Promise<Vulnerability[]> {
+    private async executeAuthTests(target: PenTestTarget): Promise<Vulnerability[]> {
         const vulnerabilities: Vulnerability[] = [];
+        const targetUrl = (target as any)?.url || 'https://example.com';
 
         // Common weak passwords
         const weakPasswords = [
-            'password', '123456', 'admin', 'password123', 'qwerty',
+            'password', '1234', 'admin', 'password123', 'qwerty',
             'letmein', 'welcome', 'monkey', '1234567890'
         ];
 
@@ -659,7 +673,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 title: 'Weak Password Policy',
                 description: 'Application accepts weak passwords that can be easily brute-forced',
                 location: {
-                    url: target.url || 'https://example.com',
+                    url: targetUrl,
                     endpoint: '/auth/login'
                 },
                 evidence: {
@@ -708,8 +722,9 @@ export class AutomatedPentestingFramework extends EventEmitter {
     /**
      * Execute sensitive data exposure tests
      */
-    private async executeSensitiveDataTests(target: any, config: any): Promise<Vulnerability[]> {
+    private async executeSensitiveDataTests(target: PenTestTarget): Promise<Vulnerability[]> {
         const vulnerabilities: Vulnerability[] = [];
+        const targetUrl = (target as any)?.url || 'https://example.com';
 
         // Test for sensitive data exposure
         if (Math.random() < 0.15) {
@@ -721,7 +736,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 title: 'Sensitive Data in Response',
                 description: 'Sensitive information is exposed in API responses',
                 location: {
-                    url: target.url || 'https://example.com',
+                    url: targetUrl,
                     endpoint: '/api/users/profile'
                 },
                 evidence: {
@@ -769,18 +784,18 @@ export class AutomatedPentestingFramework extends EventEmitter {
     /**
      * Execute remaining test methods (stubs for brevity)
      */
-    private async executeXXETests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeAccessControlTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeSecurityMisconfigTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeXSSTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeDeserializationTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeComponentTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeLoggingTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeAPIAuthTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeRateLimitTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeAPIInputTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executePortScan(target: any, config: any): Promise<Vulnerability[]> { return []; }
-    private async executeSSLTLSTests(target: any, config: any): Promise<Vulnerability[]> { return []; }
+    private async executeXXETests(_target: PenTestTarget): Promise<Vulnerability[]> { return []; }
+    private async executeAccessControlTests(_target: PenTestTarget): Promise<Vulnerability[]> { return []; }
+    private async executeSecurityMisconfigTests(_target: PenTestTarget): Promise<Vulnerability[]> { return []; }
+    private async executeXSSTests(_target: PenTestTarget): Promise<Vulnerability[]> { return []; }
+    private async executeDeserializationTests(_target: PenTestTarget): Promise<Vulnerability[]> { return []; }
+    private async executeComponentTests(_target: PenTestTarget): Promise<Vulnerability[]> { return []; }
+    private async executeLoggingTests(_target: PenTestTarget): Promise<Vulnerability[]> { return []; }
+    private async executeAPIAuthTests(_target: PenTestTarget): Promise<Vulnerability[]> { return []; }
+    private async executeRateLimitTests(_target: PenTestTarget): Promise<Vulnerability[]> { return []; }
+    private async executeAPIInputTests(_target: PenTestTarget): Promise<Vulnerability[]> { return []; }
+    private async executePortScan(_target: PenTestTarget): Promise<Vulnerability[]> { return []; }
+    private async executeSSLTLSTests(_target: PenTestTarget): Promise<Vulnerability[]> { return []; }
 
     /**
      * Generate test summary
@@ -917,7 +932,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
     /**
      * Get penetration testing metrics
      */
-    getMetrics(): any {
+    getMetrics(): PenTestMetrics {
         const tests = Array.from(this.tests.values());
         const completedTests = tests.filter(t => t.status === 'completed');
 

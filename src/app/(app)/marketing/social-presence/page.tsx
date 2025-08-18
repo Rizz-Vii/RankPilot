@@ -62,7 +62,8 @@ function OptimizeDialog({ open, original, channel, onClose }: OptimizeDialogProp
   </div>;
 }
 
-interface AccountsPanelProps { accounts:any[]; onConnect:(p:string,h:string)=>Promise<void>; connecting:boolean; }
+interface SocialAccount { id:string; platform:string; handle:string }
+interface AccountsPanelProps { accounts:SocialAccount[]; onConnect:(p:string,h:string)=>Promise<void>; connecting:boolean; }
 function AccountsPanel({ accounts, onConnect, connecting }: AccountsPanelProps){
   const [platform,setPlatform] = useState('linkedin'); const [handle,setHandle] = useState('');
   return <div className="rounded-xl border p-4 space-y-3">
@@ -89,7 +90,8 @@ export default function SocialPresencePage() {
   const [months, setMonths] = useState(6);
   const live = useMarketingCampaignMetrics(months);
   const mock = getMockMetrics('marketing');
-  const data = (live.kpis.length ? live : { kpis: mock.kpis, quotas: mock.quotas, rows: [], loading:false }) as any;
+  type CampaignMetrics = typeof live;
+  const data: CampaignMetrics | { kpis: typeof mock.kpis; quotas: typeof mock.quotas; rows: any[]; loading:boolean } = (live.kpis.length ? live : { kpis: mock.kpis, quotas: mock.quotas, rows: [], loading:false });
   useEffect(() => { trackDashboardView('marketing'); }, []);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -100,22 +102,21 @@ export default function SocialPresencePage() {
   const [optChannel,setOptChannel]=useState('linkedin');
   const [optOriginal,setOptOriginal]=useState('We are launching a new feature.');
   const [busy,setBusy]=useState<string|null>(null);
-  const [accounts,setAccounts]=useState<any[]>([]);
+  const [accounts,setAccounts]=useState<SocialAccount[]>([]);
   const [connecting,setConnecting]=useState(false);
-  const [trends,setTrends]=useState<any|null>(null);
+  interface PlatformTrends { platform:string; hashtags:string[]; updatedAt:Date }
+  const [trends,setTrends]=useState<PlatformTrends|null>(null);
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(() => { if(live.loading) return; if(live.kpis.length) markLive(); else markFallback(); }, [live.loading, live.kpis, markLive, markFallback]);
   useEffect(()=> { (async ()=> { const list = await listSocialAccounts(userId, teamId); setAccounts(list); })(); }, [userId, teamId]);
 
   async function handleSchedule(content:string, channel:string, when:Date){
     try{ setBusy('schedule');
-      // optimistic row (minimal fields)
-      live.addOptimistic({ id:'temp-'+Date.now(), name: content.slice(0,40), channel, impressions:0, clicks:0, leads:0, // derived metrics (ctr/roi) purposely excluded; compute client-side
-        __provenance:'optimistic' });
-      await schedulePost({ content, channel, scheduledAt: when, userId, teamId }); toast({ title:'Post scheduled', description:`${channel} post queued.` }); setPostOpen(false);}catch(e:any){ toast({ title:'Schedule failed', description:e.message||'Unknown error', variant:'destructive'});} finally{ setBusy(null);} }
+      live.addOptimistic({ id:'temp-'+Date.now(), period: new Date().toISOString().slice(0,7), name: content.slice(0,40), channel, impressions:0, clicks:0, leads:0, __provenance:'optimistic' } as any);
+      await schedulePost({ content, channel, scheduledAt: when, userId, teamId }); toast({ title:'Post scheduled', description:`${channel} post queued.` }); setPostOpen(false);}catch(e){ const err = e as any; toast({ title:'Schedule failed', description:err?.message||'Unknown error', variant:'destructive'});} finally{ setBusy(null);} }
   function handleOptimize(){ setOptOpen(true); }
-  async function handleConnect(p:string,h:string){ try{ setConnecting(true); const res= await connectSocialAccount(p as any, h, userId, teamId); toast({ title:'Account connected', description:`${res.platform}:${res.handle}`}); const list= await listSocialAccounts(userId, teamId); setAccounts(list);}catch(e:any){ toast({ title:'Connect failed', description:e.message||'Unknown error', variant:'destructive' }); } finally{ setConnecting(false); } }
-  async function handleAnalyze(){ try{ setBusy('analyze'); const t = await fetchPlatformTrends('linkedin'); setTrends(t); toast({ title:'Trends fetched', description:t.hashtags.slice(0,3).join(' ') }); } catch(e:any){ toast({ title:'Trend fetch failed', description:e.message||'Unknown error', variant:'destructive' }); } finally{ setBusy(null); } }
+  async function handleConnect(p:string,h:string){ try{ setConnecting(true); const res= await connectSocialAccount(p as any, h, userId, teamId); toast({ title:'Account connected', description:`${res.platform}:${res.handle}`}); const list= await listSocialAccounts(userId, teamId); setAccounts(list);}catch(e){ const err = e as any; toast({ title:'Connect failed', description:err?.message||'Unknown error', variant:'destructive' }); } finally{ setConnecting(false); } }
+  async function handleAnalyze(){ try{ setBusy('analyze'); const t = await fetchPlatformTrends('linkedin'); setTrends(t); toast({ title:'Trends fetched', description:t.hashtags.slice(0,3).join(' ') }); } catch(e){ const err = e as any; toast({ title:'Trend fetch failed', description:err?.message||'Unknown error', variant:'destructive' }); } finally{ setBusy(null); } }
   return (
     <FeatureGate feature="marketing_social_presence" requiredTier="enterprise" showUpgrade>
       <div className="space-y-8 p-6">
@@ -127,8 +128,8 @@ export default function SocialPresencePage() {
   <ProvenanceLegend />
         <AccountsPanel accounts={accounts} onConnect={handleConnect} connecting={connecting} />
         <section className="grid gap-4 md:grid-cols-4">
-          {data.kpis.map((k:any) => (
-            <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
+          {data.kpis.map(k => (
+            <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={(k.intent ?? 'neutral') as 'neutral' | 'success' | 'warning' | 'danger' | 'accent'} />
           ))}
         </section>
         <section className="space-y-3">
@@ -140,11 +141,11 @@ export default function SocialPresencePage() {
             empty="No campaign data"
           />
         </section>
-        {data.quotas && (
+  {'quotas' in data && data.quotas && (
           <section className="space-y-4">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Usage & Quotas</h2>
             <div className="grid gap-4 md:grid-cols-3">
-              {data.quotas.map((q: any) => (
+              {data.quotas.map(q => (
                 <div key={q.key} className="rounded-xl border p-4 space-y-3">
                   <div className="flex items-center justify-between text-sm font-medium">
                     <span>{q.label}</span>
@@ -163,7 +164,7 @@ export default function SocialPresencePage() {
             <ActionCard title="Optimize Copy" desc="AI adjust for channel tone." action={handleOptimize} label="Optimize" disabled={!!busy} />
             <ActionCard title="Analyze Trends" desc="Fetch latest engagement trend." action={handleAnalyze} label={busy==='analyze'? 'Analyzing…':'Analyze'} disabled={!!busy} />
           </div>
-          {trends && <div className="text-xs rounded-md border p-3 bg-background/40 flex flex-wrap gap-2" aria-live="polite">{trends.hashtags.map((h:string)=> <span key={h} className="px-1.5 py-0.5 rounded bg-primary/10 text-primary">{h}</span>)}</div>}
+          {trends && <div className="text-xs rounded-md border p-3 bg-background/40 flex flex-wrap gap-2" aria-live="polite">{trends.hashtags.map(h=> <span key={h} className="px-1.5 py-0.5 rounded bg-primary/10 text-primary">{h}</span>)}</div>}
         </section>
         <PostDialog open={postOpen} onClose={()=> setPostOpen(false)} onSchedule={handleSchedule} loading={busy==='schedule'} />
         <OptimizeDialog open={optOpen} original={optOriginal} channel={optChannel} onClose={()=> setOptOpen(false)} />

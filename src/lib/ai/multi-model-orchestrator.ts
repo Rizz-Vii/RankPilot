@@ -13,6 +13,16 @@
 
 import { MCPServiceManager } from '../mcp';
 
+// ---- Core DTOs / Helper Types -------------------------------------------------
+// Lightweight inference result DTO so downstream aggregation logic has stable fields
+export interface InferenceResult {
+    model: string;
+    output: any; // Upstream library returns heterogeneous shapes; narrowed by task in aggregators
+    confidence?: number;
+    processingTime: number;
+    tokensUsed: number;
+}
+
 export interface MultiModelRequest {
     task: 'text-generation' | 'text-classification' | 'summarization' | 'question-answering' | 'sentiment-analysis';
     input: string | string[];
@@ -31,12 +41,12 @@ export interface MultiModelResponse {
     success: boolean;
     results: Array<{
         model: string;
-        output: any;
+        output: unknown;
         confidence?: number;
         processingTime: number;
         tokensUsed: number;
     }>;
-    aggregatedResult?: any;
+    aggregatedResult?: unknown;
     totalProcessingTime: number;
     totalTokensUsed: number;
     cacheHits: number;
@@ -59,7 +69,7 @@ interface ModelConfig {
  */
 export class MultiModelOrchestrator {
     private mcpManager: MCPServiceManager;
-    private distributedCache: Map<string, any> = new Map();
+    private distributedCache: Map<string, MultiModelResponse> = new Map();
     private quotaManager: Map<string, number> = new Map();
     private batchQueue: Map<string, MultiModelRequest[]> = new Map();
     private performanceMetrics: Map<string, number[]> = new Map();
@@ -135,7 +145,7 @@ export class MultiModelOrchestrator {
      */
     async processRequest(request: MultiModelRequest): Promise<MultiModelResponse> {
         const startTime = Date.now();
-        const requestId = this.generateRequestId();
+
 
         try {
             // 1. Validate quota
@@ -157,7 +167,7 @@ export class MultiModelOrchestrator {
             if (cachedResult) {
                 return {
                     ...cachedResult,
-                    cacheHits: 1,
+                    cacheHits: cachedResult.cacheHits + 1,
                     quotaRemaining: this.getQuotaRemaining(request.userId, request.userTier)
                 };
             }
@@ -249,7 +259,7 @@ export class MultiModelOrchestrator {
     private async executeParallelInference(
         request: MultiModelRequest,
         models: ModelConfig[]
-    ): Promise<Array<{ model: string; output: any; confidence?: number; processingTime: number; tokensUsed: number; }>> {
+    ): Promise<InferenceResult[]> {
         const promises = models.map(async (model) => {
             const modelStartTime = Date.now();
 
@@ -266,11 +276,11 @@ export class MultiModelOrchestrator {
 
                 return {
                     model: model.name,
-                    output: result.data,
-                    confidence: this.calculateConfidence(result.data, model),
+                    output: (result as any)?.data,
+                    confidence: this.calculateConfidence((result as any)?.data),
                     processingTime: Date.now() - modelStartTime,
-                    tokensUsed: this.estimateTokenUsage(request.input, result.data)
-                };
+                    tokensUsed: this.estimateTokenUsage(request.input, (result as any)?.data)
+                } as InferenceResult;
             } catch (error) {
                 console.error(`[MultiModelOrchestrator] Model ${model.name} failed:`, error);
                 return {
@@ -278,7 +288,7 @@ export class MultiModelOrchestrator {
                     output: null,
                     processingTime: Date.now() - modelStartTime,
                     tokensUsed: 0
-                };
+                } as InferenceResult;
             }
         });
 
@@ -326,7 +336,7 @@ export class MultiModelOrchestrator {
     /**
      * Aggregate results from multiple models
      */
-    private aggregateResults(results: any[], task: string): any {
+    private aggregateResults(results: InferenceResult[], task: string): unknown {
         if (results.length === 0) return null;
 
         switch (task) {
@@ -343,8 +353,8 @@ export class MultiModelOrchestrator {
         }
     }
 
-    private aggregateSentimentResults(results: any[]): any {
-        const sentiments = results.map(r => r.output?.[0]);
+    private aggregateSentimentResults(results: InferenceResult[]): unknown {
+        const sentiments = results.map(r => (r.output?.[0] ?? r.output));
         const avgScore = sentiments.reduce((sum, s) => sum + (s?.score || 0), 0) / sentiments.length;
         const dominantLabel = sentiments.sort((a, b) => (b?.score || 0) - (a?.score || 0))[0]?.label;
 
@@ -355,11 +365,11 @@ export class MultiModelOrchestrator {
         };
     }
 
-    private aggregateClassificationResults(results: any[]): any {
+    private aggregateClassificationResults(results: InferenceResult[]): unknown {
         // Implement voting mechanism for classification
         const votes = new Map<string, number>();
         results.forEach(result => {
-            const label = result.output?.[0]?.label;
+            const label = result.output?.[0]?.label ?? result.output?.label;
             if (label) {
                 votes.set(label, (votes.get(label) || 0) + 1);
             }
@@ -373,16 +383,18 @@ export class MultiModelOrchestrator {
         };
     }
 
-    private aggregateSummarizationResults(results: any[]): any {
+    private aggregateSummarizationResults(results: InferenceResult[]): unknown {
         // Select best summary based on length and coherence
-        const summaries = results.map(r => r.output?.[0]?.summary_text).filter(Boolean);
+        const summaries = results
+            .map(r => r.output?.[0]?.summary_text ?? r.output?.summary_text ?? (Array.isArray(r.output) ? r.output[0]?.summary_text : null))
+            .filter(Boolean);
         return summaries.length > 0 ? summaries[0] : null;
     }
 
-    private aggregateQAResults(results: any[]): any {
+    private aggregateQAResults(results: InferenceResult[]): unknown {
         // Select answer with highest confidence
-        const answers = results.map(r => r.output).filter(Boolean);
-        return answers.sort((a, b) => (b.score || 0) - (a.score || 0))[0];
+        const answers = results.map(r => r.output).filter(Boolean) as any[];
+        return answers.sort((a, b) => ((b?.score || 0) - (a?.score || 0)))[0];
     }
 
     /**
@@ -424,17 +436,17 @@ export class MultiModelOrchestrator {
         return `${request.task}-${inputStr}-${JSON.stringify(request.options)}`;
     }
 
-    private calculateConfidence(output: any, model: ModelConfig): number {
+    private calculateConfidence(output: any): number {
         // Implement confidence calculation based on model type and output
-        if (output?.[0]?.score) return output[0].score;
+        if (Array.isArray(output) && output[0]?.score) return output[0].score;
         if (output?.score) return output.score;
         return 0.8; // Default confidence
     }
 
-    private estimateTokenUsage(input: any, output: any): number {
-        const inputStr = Array.isArray(input) ? input.join(' ') : input;
+    private estimateTokenUsage(input: unknown, output: unknown): number {
+        const inputStrRaw = Array.isArray(input) ? input.join(' ') : String(input ?? '');
         const outputStr = typeof output === 'string' ? output : JSON.stringify(output);
-        return Math.ceil((inputStr.length + outputStr.length) / 4); // Rough token estimation
+        return Math.ceil((inputStrRaw.length + outputStr.length) / 4); // Rough token estimation
     }
 
     private setupBatchProcessing(): void {
@@ -462,7 +474,7 @@ export class MultiModelOrchestrator {
         }
     }
 
-    private updatePerformanceMetrics(models: ModelConfig[], results: any[]): void {
+    private updatePerformanceMetrics(models: ModelConfig[], results: InferenceResult[]): void {
         models.forEach((model, index) => {
             const result = results[index];
             if (result) {
@@ -502,14 +514,14 @@ export class MultiModelOrchestrator {
     }
 }
 
-// Export singleton instance with hot-reload guard to prevent accumulating intervals in dev
-declare const globalThis: any; // ensure TS doesn't complain in varied runtimes
-if (!globalThis.__multiModelOrchestrator) {
-    globalThis.__multiModelOrchestrator = new MultiModelOrchestrator();
-} else {
-    // On HMR, make sure old timers are cleared before replacing (optional safety)
-    if (globalThis.__multiModelOrchestrator.dispose) {
-        // no dispose call here to retain state; uncomment if needed
-    }
+// ---- Global singleton (HMR safe) ---------------------------------------------
+declare global {
+    // eslint-disable-next-line no-var
+    var __multiModelOrchestrator: MultiModelOrchestrator | undefined;
 }
-export const multiModelOrchestrator: MultiModelOrchestrator = globalThis.__multiModelOrchestrator;
+
+const g = globalThis as typeof globalThis & { __multiModelOrchestrator?: MultiModelOrchestrator };
+if (!g.__multiModelOrchestrator) {
+    g.__multiModelOrchestrator = new MultiModelOrchestrator();
+}
+export const multiModelOrchestrator: MultiModelOrchestrator = g.__multiModelOrchestrator;

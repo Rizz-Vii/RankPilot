@@ -57,7 +57,7 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
         setTheme(newTheme);
     };
 
-    const handlePreferenceChange = (key: keyof ThemePreferences, value: any) => {
+    const handlePreferenceChange = (key: keyof ThemePreferences, value: unknown) => {
         setPreferences({ [key]: value });
     };
 

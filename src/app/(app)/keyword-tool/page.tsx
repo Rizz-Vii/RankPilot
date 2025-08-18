@@ -33,7 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getDemoData } from "@/lib/demo-data";
 import { db } from "@/lib/firebase";
 import { TimeoutError, withTimeout } from "@/lib/timeout";
-import { cn } from "@/lib/utils";
+import { cn, copyToClipboard, safeErrorMessage, asError } from "@/lib/utils";
 // Use production AI service (with caching, quota, persistence)
 import { fetchKeywordSuggestions, KeywordSuggestionsResponse } from "@/lib/services/ai-service";
 import { Badge } from "@/components/ui/badge";
@@ -119,13 +119,6 @@ const DesktopSkeletonTable = () => (
 const KeywordResults = ({ results }: { results: { suggestions: EnhancedKeywordData[]; relatedQueries?: string[] } }) => {
   const { toast } = useToast();
   const copyAll = () => copyToClipboard(results.suggestions.map(k => k.keyword).join(", "));
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      toast({ title: "Copied!", description: "Keywords copied to clipboard." });
-    }).catch(() => {
-      toast({ variant: "destructive", title: "Copy Failed", description: "Could not copy to clipboard." });
-    });
-  };
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
       {/* Mobile */}
@@ -247,6 +240,20 @@ export default function KeywordToolPage() {
 
   const { provenance, setProvenance } = useProvenance();
 
+  // Narrow raw service / legacy demo shapes into canonical KeywordSuggestionsResponse
+  function adaptKeywordSuggestions(raw: unknown): KeywordSuggestionsResponse {
+    const r: any = raw || {};
+    return {
+      suggestions: Array.isArray(r.suggestions) ? r.suggestions : (Array.isArray(r.keywords) ? r.keywords : []),
+      relatedQueries: Array.isArray(r.relatedQueries) ? r.relatedQueries : [],
+      totalProcessingTime: typeof r.totalProcessingTime === 'number' ? r.totalProcessingTime : 0,
+      cacheHit: !!r.cacheHit,
+      plan: r.plan,
+      quota: r.quota,
+      source: typeof r.source === 'string' ? r.source : undefined,
+    };
+  }
+
   const handleSubmit = async (values: { topic: string; includeLongTailKeywords: boolean; }) => {
     setIsLoading(true);
     setSubmitted(true);
@@ -271,19 +278,10 @@ export default function KeywordToolPage() {
         "Keyword analysis is taking longer than expected. Using demo data instead."
       );
 
-  // Adapter compatibility (older demo shape uses keywords[])
-      const adapted: KeywordSuggestionsResponse = {
-        suggestions: (result as any)?.suggestions || (result as any)?.keywords || [],
-        relatedQueries: (result as any)?.relatedQueries || [],
-        totalProcessingTime: (result as any)?.totalProcessingTime || 0,
-        cacheHit: (result as any)?.cacheHit || false,
-        plan: (result as any)?.plan,
-        quota: (result as any)?.quota,
-        source: (result as any)?.source, // live | cache | fallback
-      };
-  setResults(adapted);
-  setUsedFallback(adapted.source === 'fallback');
-  setProvenance(adapted.source as any);
+      const adapted = adaptKeywordSuggestions(result);
+      setResults(adapted);
+      setUsedFallback(adapted.source === 'fallback');
+      setProvenance(adapted.source || null);
 
       // End performance monitoring with success
       endOperation(false);
@@ -303,11 +301,11 @@ export default function KeywordToolPage() {
       resultsSummary: `Searched for keywords related to "${values.topic}". Found ${(adapted?.suggestions?.length || 0)} suggestions.`,
         });
       }
-    } catch (error) {
+  } catch (error) {
       // End performance monitoring with error
       endOperation(true); // Force show feedback on error
 
-      const message = (error as any)?.message || "Unknown error";
+      const message = safeErrorMessage(error);
       const isTimeout = error instanceof TimeoutError;
       const isServiceUnavailable = /temporarily unavailable|internal|unavailable/i.test(message);
       const isGenericFailure = /Failed to get keyword suggestions/i.test(message);
@@ -318,13 +316,7 @@ export default function KeywordToolPage() {
         console.warn("Keyword suggestions fallback engaged:", message);
         const demoData = getDemoData("keyword-tool");
         if (demoData) {
-          const adapted: KeywordSuggestionsResponse = {
-            suggestions: (demoData as any).keywords || [],
-            relatedQueries: [],
-            totalProcessingTime: 0,
-            cacheHit: false,
-            source: 'fallback'
-          };
+          const adapted = adaptKeywordSuggestions({ suggestions: (demoData as any).keywords || [], source: 'fallback' });
           setResults(adapted);
           setUsedFallback(true);
           setProvenance('fallback');
@@ -335,7 +327,7 @@ export default function KeywordToolPage() {
         } else {
           setErrorMessage(message);
         }
-      } else if (isQuota || isRateLimited) {
+  } else if (isQuota || isRateLimited) {
         setErrorMessage(message);
         // structured error telemetry (fire and forget)
         try {
@@ -351,7 +343,7 @@ export default function KeywordToolPage() {
           });
         } catch {}
       } else {
-  console.error("Error fetching keyword suggestions:", error);
+        console.error("Error fetching keyword suggestions:", error);
         setErrorMessage(message || "Unexpected error fetching keywords");
         try {
           await addDoc(collection(db, "telemetry", "keywordTool", "errors"), {
@@ -465,4 +457,3 @@ export default function KeywordToolPage() {
     </main>
   );
 }
-

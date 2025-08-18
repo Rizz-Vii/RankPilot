@@ -4,7 +4,7 @@ import React from 'react';
 import { toast as sonnerToast } from 'sonner';
 import { exportChartClient } from '@/lib/visualizations/export-client';
 // Optional Sentry: only import if available in runtime to avoid SSR issues
-let Sentry: any = null;
+let Sentry: { captureException?: (...args: any[]) => void } | null = null;
 try { Sentry = require('@sentry/nextjs'); } catch {}
 
 type Props = {
@@ -23,13 +23,14 @@ export function ExportButton({ chartId, format, label, config, onDone }: Props) 
     setLoading(true);
     setError(null);
     try {
-      const res = await exportChartClient(chartId, { format, ...(config || {}) } as any, { openInNewTab: false });
+  const res = await exportChartClient(chartId, { format, ...(config || {}) }, { openInNewTab: false });
       sonnerToast.success('Export ready', { description: `${format.toUpperCase()} generated` });
       onDone?.(res.exportUrl);
       // Fallback: open in new tab if no handler
       if (!onDone) window.open(res.exportUrl, '_blank', 'noopener,noreferrer');
-    } catch (e: any) {
-      const msg = e?.message || 'Export failed';
+    } catch (e: unknown) {
+      let msg = 'Export failed';
+      if (typeof e === 'object' && e && 'message' in e && typeof (e as any).message === 'string') msg = (e as any).message;
       setError(msg);
       sonnerToast.error('Export failed', { description: msg });
       try { Sentry?.captureException?.(e, { level: 'error', tags: { feature: 'visualizations-export', format } }); } catch {}
