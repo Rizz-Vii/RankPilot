@@ -45,6 +45,10 @@ test-snapshots/
 testing/results/
 testing/reports/
 artifacts/brain/*.json
+# TypeScript snapshot / metrics artifacts (prevent re-adding cleaned large files)
+artifacts/tsc-*.txt
+artifacts/lint-heatmap.json
+artifacts/metrics-summary.json
 coverage/
 .nyc_output/
 *.spec.js.map
