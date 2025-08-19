@@ -30,14 +30,16 @@ async function seed(dateKey: string, alertsIn: Array<unknown>, ma7Override?: Rec
     const ref = adminDb.collection('kpiAlertsDaily').doc(dateKey);
     await adminDb.runTransaction(async tx => {
         const snap = await tx.get(ref);
-        const base: any = snap.exists ? (snap.data() as any) : { date: dateKey, alerts: [], createdAt: new Date() };
-        const alerts: any[] = (base.alerts || []) as any[];
-        alertsIn.forEach(a => alerts.push(a as any));
-        const update: any = { alerts, updatedAt: new Date() };
+        const base: { date: string; alerts?: unknown[]; createdAt?: Date } = snap.exists
+            ? (snap.data() as { date: string; alerts?: unknown[]; createdAt?: Date })
+            : { date: dateKey, alerts: [], createdAt: new Date() };
+        const alerts: unknown[] = (base.alerts || []) as unknown[];
+        alertsIn.forEach(a => alerts.push(a));
+        const update: Record<string, unknown> = { alerts, updatedAt: new Date() };
         if (ma7Override) {
             for (const [k, v] of Object.entries(ma7Override)) {
                 if (v == null) continue;
-                (update as any)[k] = v;
+                update[k] = v;
             }
         }
         if (!snap.exists) tx.set(ref, { ...base, ...update }); else tx.update(ref, update);
@@ -95,33 +97,36 @@ export async function POST(req: NextRequest) {
     if (process.env.NODE_ENV === 'production' || process.env.CI_PRODUCTION === '1') {
         return NextResponse.json({ ok: false, reason: 'disabled' }, { status: 404 });
     }
-    let body: any = {};
+    let body: unknown = {};
     try { body = await req.json(); } catch { /* ignore */ }
     const now = new Date();
     const dateKey = now.toISOString().slice(0, 10);
-    const alertsReq: any[] = Array.isArray(body?.alerts) ? body.alerts : [];
-    const alerts = alertsReq.map((a: any) => ({
-        type: a?.type || 'provenanceCoverage',
-        level: (a?.level === 'critical' ? 'critical' : 'warn') as 'warn' | 'critical',
-        message: a?.message || `${a?.type || 'provenanceCoverage'} seeded (batch)`,
-        value: typeof a?.value === 'number' ? a.value : (a?.type === 'provenanceCoverage' ? 95 : 60),
-        threshold: 0
-    }));
+    const maybeBody = (body as Record<string, unknown> | null);
+    const alertsReq: unknown[] = Array.isArray(maybeBody?.alerts as unknown) ? (maybeBody!.alerts as unknown[]) : [];
+    const alerts = alertsReq.map((a: unknown) => {
+        const ai = a as Record<string, unknown> | null;
+        const typ = typeof ai?.type === 'string' ? (ai!.type as string) : 'provenanceCoverage';
+        const lvl = (ai?.level === 'critical' ? 'critical' : 'warn') as 'warn' | 'critical';
+        const msg = typeof ai?.message === 'string' ? (ai!.message as string) : `${typ} seeded (batch)`;
+        const val = typeof ai?.value === 'number' ? (ai!.value as number) : (typ === 'provenanceCoverage' ? 95 : 60);
+        return { type: typ, level: lvl, message: msg, value: val, threshold: 0 };
+    });
     // If no alerts provided, seed a default provenance coverage alert to simplify usage.
     if (!alerts.length) alerts.push({ type: 'provenanceCoverage', level: 'warn', message: 'provenanceCoverage seeded (default)', value: 95, threshold: 0 });
     // Apply per-alert ma7 override if provided
-    const ma7Overrides: Record<string, number> = { ...((body as any)?.ma7 || {}) };
-    alertsReq.forEach((a: any) => {
-        if (a && typeof a?.ma7 === 'number') {
-            const field = MA7_MAP[a.type as string];
-            if (field) ma7Overrides[field] = a.ma7 as number;
+    const ma7Overrides: Record<string, number> = { ...((maybeBody?.ma7 as Record<string, number>) || {}) };
+    alertsReq.forEach((a: unknown) => {
+        const ai = a as Record<string, unknown> | null;
+        if (ai && typeof ai?.ma7 === 'number') {
+            const field = MA7_MAP[String(ai.type)];
+            if (field) ma7Overrides[field] = ai.ma7 as number;
         }
     });
     try {
         await seed(dateKey, alerts, ma7Overrides);
         return NextResponse.json({ ok: true, date: dateKey, count: alerts.length, ma7Override: ma7Overrides });
     } catch (e: unknown) {
-        const msg = (e as any)?.message || 'seed_failed';
+        const msg = e instanceof Error ? e.message : 'seed_failed';
         return NextResponse.json({ ok: false, error: msg }, { status: 500 });
     }
 }
