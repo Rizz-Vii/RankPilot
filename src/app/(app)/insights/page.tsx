@@ -169,7 +169,7 @@ export default function InsightsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [authLoading, user, simplifiedActivities, maxInsights]);
+  }, [authLoading, user, simplifiedActivities, maxInsights, cacheTTLms, generateInsightsFlow]);
 
   useEffect(() => { fetchInsights(); }, [fetchInsights]);
 
