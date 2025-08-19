@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { Button } from "@/components/ui/button";
@@ -20,23 +20,18 @@ import {
   Brain,
   Download,
   RefreshCw,
-  Zap,
   User,
-  Building,
-  ExternalLink,
-  Calendar,
-  Star,
   TrendingUp
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { createDeterministicRng, randomInt, randomFloat, tagSynthetic } from '@/lib/synthetic/synthetic-utils';
+import { createDeterministicRng, randomInt, tagSynthetic } from '@/lib/synthetic/synthetic-utils';
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import { useAuth } from "@/context/AuthContext";
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { db } from "@/lib/firebase";
-import { collection, addDoc, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { toast } from "sonner";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { useProvenance } from "@/hooks/useProvenance";
 
 interface AuthorCredentials {
@@ -108,7 +103,7 @@ interface TrustBlockResult {
 
 export default function TrustBlockPage() {
   const { user } = useAuth();
-  const { provenance, markLive, markFallback, setProvenance } = useProvenance();
+  const { provenance, markLive, setProvenance } = useProvenance();
   const [analysisUrl, setAnalysisUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
