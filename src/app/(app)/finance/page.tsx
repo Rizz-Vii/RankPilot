@@ -63,7 +63,7 @@ export default function FinanceDashboardRoot() {
     if(!userId) return;
     setRefreshing(true);
     let unsub: (()=>void)|undefined; let active = true;
-    (async ()=> {
+    void (async ()=> {
       try {
         // Prefer server API when available for consistent aggregation
         const token = await user!.getIdToken?.();
@@ -98,7 +98,7 @@ export default function FinanceDashboardRoot() {
   // Load latest automation snapshots (finance)
   useEffect(()=> {
     if(!userId) return;
-    (async () => {
+    void (async () => {
       try {
         const [rev, aging] = await Promise.all([
           fetchRecentFinanceRevenueSnapshots(userId, teamId, 1) as Promise<RevenueSnapshotDoc[]>,

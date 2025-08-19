@@ -28,7 +28,7 @@ export default function InvoicesPage() {
   const [revSnap, setRevSnap] = useState<RevenueSnapshotLite|null>(null);
   const [loadingSnap, setLoadingSnap] = useState(false);
   const { trigger, running } = useAutomationTrigger();
-  useEffect(()=> { if(!userId) return; setLoadingSnap(true); (async()=> { try { const r = await fetchRecentFinanceRevenueSnapshots(userId, teamId,1); if(r.length){ const first:any = r[0]; setRevSnap({ mrr:first.mrr, onTime:first.onTimePct, outstanding:first.outstanding, ts:first.createdAt?.toDate?.()||new Date(), period:first.period }); } } finally { setLoadingSnap(false);} })(); }, [userId, teamId]);
+  useEffect(()=> { if(!userId) return; setLoadingSnap(true); void (async()=> { try { const r = await fetchRecentFinanceRevenueSnapshots(userId, teamId,1); if(r.length){ const first:any = r[0]; setRevSnap({ mrr:first.mrr, onTime:first.onTimePct, outstanding:first.outstanding, ts:first.createdAt?.toDate?.()||new Date(), period:first.period }); } } finally { setLoadingSnap(false);} })(); }, [userId, teamId]);
   const { data: mock } = useMockDomainMetrics('finance', allowFinanceMocks());
   const data = (live.kpis.length ? live : { kpis: allowFinanceMocks()? (mock?.kpis || []) : [], rows: [], loading: false });
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
