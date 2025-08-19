@@ -29,6 +29,8 @@ export function loadPlugins(): LoadedPlugins {
                 names.push(f.replace(/\.(plugin\.ts|plugin\.js)$/, ''));
             } catch (e) {
                 names.push('error:' + f);
+                // Log the underlying error so unused-catch-variable linting is satisfied
+                console.error('[plugins] failed to load module', f, e);
             }
         }
     } catch { }

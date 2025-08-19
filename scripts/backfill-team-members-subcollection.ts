@@ -12,7 +12,7 @@ function init() {
         initializeApp({ credential: cert(sa) });
         appInited = true;
     } catch (e) {
-        console.error('Failed to initialize Firebase Admin (missing serviceAccount.json)');
+        console.error('Failed to initialize Firebase Admin (missing serviceAccount.json)', e);
         process.exit(1);
     }
 }
