@@ -4,7 +4,7 @@
  */
 
 import { expect } from "chai";
-import { describe, it, beforeEach } from "mocha";
+import { describe, it } from "mocha";
 import { StructuredLogger } from "../lib/structured-logger";
 import { MetricsCollector } from "../lib/metrics-collector";
 import { AIResponseCache } from "../lib/ai-response-cache";
