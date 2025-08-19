@@ -413,7 +413,7 @@ export default function IntegrationsPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => testWebhook(webhook.id)}
+                          onClick={() => void testWebhook(webhook.id)}
                         >
                           Test
                         </Button>
@@ -427,13 +427,13 @@ export default function IntegrationsPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => deleteWebhook(webhook.id)}
+                          onClick={() => void deleteWebhook(webhook.id)}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
                         <Switch
                           checked={webhook.active}
-                          onCheckedChange={() => toggleWebhook(webhook.id)}
+                          onCheckedChange={() => void toggleWebhook(webhook.id)}
                         />
                       </div>
                     </div>
@@ -601,9 +601,7 @@ export default function IntegrationsPage() {
                           </Badge>
                           <Switch
                             checked={integration.active}
-                            onCheckedChange={() =>
-                              toggleIntegration(integration.id)
-                            }
+                            onCheckedChange={() => void toggleIntegration(integration.id)}
                           />
                         </div>
                       </div>
@@ -627,7 +625,7 @@ export default function IntegrationsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => deleteIntegration(integration.id)}
+                            onClick={() => void deleteIntegration(integration.id)}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -750,7 +748,7 @@ export default function IntegrationsPage() {
               >
                 Cancel
               </Button>
-              <Button onClick={handleWebhookSubmit}>
+              <Button onClick={() => void handleWebhookSubmit()}>
                 {editingWebhook ? "Update Webhook" : "Create Webhook"}
               </Button>
             </DialogFooter>
@@ -843,7 +841,7 @@ export default function IntegrationsPage() {
               >
                 Cancel
               </Button>
-              <Button onClick={handleIntegrationSubmit}>
+              <Button onClick={() => void handleIntegrationSubmit()}>
                 {editingIntegration
                   ? "Update Integration"
                   : "Create Integration"}
