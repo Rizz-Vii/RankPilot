@@ -9,7 +9,7 @@
  */
 
 import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getFirestore, Timestamp, FieldValue } from "firebase-admin/firestore";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import * as dotenv from "dotenv";
 
 // Load environment variables
