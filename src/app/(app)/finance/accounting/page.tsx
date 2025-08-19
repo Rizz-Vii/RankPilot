@@ -30,7 +30,7 @@ export default function AccountingPage(){
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(()=> { trackDashboardView('finance'); }, []);
 
-  useEffect(()=> { if(!userId) return; setLoading(true); (async()=> { try {
+  useEffect(()=> { if(!userId) return; setLoading(true); void (async()=> { try {
   const rawSnaps = await fetchRecentAccountingSnapshots(userId, teamId, undefined, 8) as any[];
   // Narrow by presence of expected figure keys
   const pnl = rawSnaps.find(s=> s.type==='pnl' && s.figures && 'grossProfit' in s.figures);
@@ -42,7 +42,7 @@ export default function AccountingPage(){
   } finally { setLoading(false); } })(); }, [userId, teamId, markLive, markFallback]);
 
   function run(action: 'financeAccountingSeedSampleJournals'|'financeAccountingGeneratePnL'|'financeAccountingGenerateBalanceSheet'|'financeAccountingReconcile') {
-  trigger(action, { optimistic: ()=> { if(action==='financeAccountingGeneratePnL'){ setPnlSnap((s)=> s? { ...s, createdAt:{ toDate:()=> new Date() } } : s); } if(action==='financeAccountingGenerateBalanceSheet'){ setBsSnap((s)=> s? { ...s, createdAt:{ toDate:()=> new Date() } } : s); } }, label: action });
+  void trigger(action, { optimistic: ()=> { if(action==='financeAccountingGeneratePnL'){ setPnlSnap((s)=> s? { ...s, createdAt:{ toDate:()=> new Date() } } : s); } if(action==='financeAccountingGenerateBalanceSheet'){ setBsSnap((s)=> s? { ...s, createdAt:{ toDate:()=> new Date() } } : s); } }, label: action });
   }
 
   const kpis = useMemo(()=> {

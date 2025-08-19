@@ -162,7 +162,7 @@ export default function BillingPage() {
   useEffect(() => {
     if(!user?.uid) return;
     let cancelled = false;
-    (async () => {
+    void (async () => {
       const _logger = getLogger('billing-ui');
       try {
   const data = await fetchBillingData(db, user.uid, { invoiceLimit: 10 });
@@ -181,7 +181,7 @@ export default function BillingPage() {
   // Payment method fetch (server API)
   useEffect(() => {
     if(!user?.uid) return; let cancelled=false;
-    (async () => {
+    void (async () => {
       try {
         const res = await fetch('/api/billing/payment-method', { headers: { 'authorization': `Bearer ${await user.getIdToken?.()}` }});
         if(!res.ok) return; const json = await res.json(); if(cancelled) return; setPaymentMethodState(json.paymentMethod || null);
@@ -255,7 +255,7 @@ export default function BillingPage() {
   // Align with server contract (expMonth/expYear)
   const paymentMethod: PaymentMethod = paymentMethodState || { brand: '••••', last4: '----', expMonth: 0, expYear: 0 };
   const [usageMetrics, setUsageMetrics] = useState<NormalizedUsageMetrics | null>(null);
-  useEffect(() => { if(!user?.uid) return; let cancelled=false; (async () => { const m = await fetchUsageMetrics(db, user.uid); if(!cancelled) setUsageMetrics(m); })(); return () => { cancelled = true; }; }, [user?.uid]);
+  useEffect(() => { if(!user?.uid) return; let cancelled=false; void (async () => { const m = await fetchUsageMetrics(db, user.uid); if(!cancelled) setUsageMetrics(m); })(); return () => { cancelled = true; }; }, [user?.uid]);
   const usage = usageMetrics ? { keywordsTracked: usageMetrics.keywordsTracked, keywordsLimit: usageMetrics.keywordsLimit, competitorAnalysis: usageMetrics.competitorAnalysis, competitorLimit: usageMetrics.competitorLimit, reportsGenerated: usageMetrics.reportsGenerated, currentPeriodStart: usageMetrics.periodStart.toISOString(), currentPeriodEnd: usageMetrics.periodEnd.toISOString() } : { keywordsTracked: 0, keywordsLimit: 0, competitorAnalysis: 0, competitorLimit: 0, reportsGenerated: 0, currentPeriodStart: currentPlan.nextBillingDate, currentPeriodEnd: currentPlan.nextBillingDate };
 
   if(fetchError) {
