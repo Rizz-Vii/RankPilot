@@ -3,14 +3,11 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { AppLogo, AppName } from "@/constants/nav";
-import { Button } from "@/components/ui/button";
 import { EnhancedButton } from "@/components/ui/enhanced-button";
 import { useAuth } from "@/context/AuthContext";
 import { useHydration } from "@/components/HydrationContext";
-import { useIsMobile } from "@/lib/mobile-responsive-utils";
-import { Menu, X, User, LogOut, Sun, Moon, Search as SearchIcon } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { User, LogOut, Sun, Moon } from "lucide-react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -43,7 +40,7 @@ export default function SiteHeader() {
   const hydrated = useHydration();
 
   const [scrolled, setScrolled] = useState(false);
-  const { theme, setTheme, isDark, isHighContrast } = useTheme();
+  const { theme, setTheme, isDark } = useTheme();
   const { translate } = useI18n();
   const [a11yMessage, setA11yMessage] = useState("");
   const { toast } = useToast();
