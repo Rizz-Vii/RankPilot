@@ -151,7 +151,7 @@ export default function ContentAnalyzerPage() {
         }
     }, [isAnalyzing]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!content.trim() && !url.trim()) {
@@ -164,6 +164,12 @@ export default function ContentAnalyzerPage() {
             return;
         }
 
+        // Call the async worker and intentionally ignore the returned Promise to satisfy
+        // @typescript-eslint/no-misused-promises (event handlers must not be async).
+        void handleSubmitAsync();
+    };
+
+    const handleSubmitAsync = async () => {
         setIsAnalyzing(true);
         setError(null);
         setReport(null);
@@ -174,7 +180,7 @@ export default function ContentAnalyzerPage() {
                 targetKeywords: keywords.split(',').map(k => k.trim()).filter(Boolean),
                 analysisType: "content-focused",
                 userPlan: userTier,
-                userId: user.uid,
+                userId: user!.uid,
             };
 
             // Call NeuroSEO™ API
