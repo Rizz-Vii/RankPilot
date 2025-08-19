@@ -27,7 +27,7 @@ if (!getApps().length) {
 }
 
 const db = getFirestore();
-const auth = getAuth();
+const _auth = getAuth();
 
 // Test users from our test configuration
 const TEST_USERS = {
