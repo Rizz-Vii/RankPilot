@@ -14,10 +14,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, CreditCard, Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import getStripe, {
-  STRIPE_PLANS,
+import type {
   PlanType,
-  BillingInterval,
+  BillingInterval} from "@/lib/stripe";
+import getStripe, {
+  STRIPE_PLANS
 } from "@/lib/stripe";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
