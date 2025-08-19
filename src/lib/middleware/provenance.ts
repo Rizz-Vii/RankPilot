@@ -1,6 +1,6 @@
 // Lightweight provenance enforcement helpers.
 // Ensures every AI-related payload includes an allowed provenance tag.
-import { recordProvenanceObservation } from '@/lib/metrics/unified-metrics';
+import { recordProvenanceInjection, recordProvenanceObservation } from '@/lib/metrics/unified-metrics';
 
 export type ProvenanceTag = 'live' | 'cache' | 'synthetic' | 'hybrid' | 'mixed' | 'unknown' | 'error'; // 'error' treated internally and normalized to 'synthetic'
 
@@ -91,6 +91,7 @@ export function withProvenance<R, A extends unknown[]>(handler: (...args: A) => 
             } catch { }
             if (res && typeof res === 'object') {
                 if (!hasProvenance(res)) {
+                    recordProvenanceInjection();
                     return enforceProvenance(res as Record<string, unknown>, ctx) as unknown as R;
                 }
             }

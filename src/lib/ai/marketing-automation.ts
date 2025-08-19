@@ -1,6 +1,7 @@
 // Marketing Automation AI Utility (deterministic pseudo-AI for offline/dev use)
-import { addDoc, collection, doc, getDocs, limit, query, Timestamp, updateDoc, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase/connection-manager';
+import { stripForbiddenDerivedFields } from '@/lib/guards/forbidden-derived-fields';
+import { addDoc, collection, doc, getDocs, limit, query, Timestamp, updateDoc, where } from 'firebase/firestore';
 
 function periodFromDate(d = new Date()) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }
 
@@ -20,7 +21,9 @@ export async function importLeads(raw: string, userId: string, teamId?: string) 
     }
     // synthetic summary campaign entry feeds KPI aggregation
     if (results.length) {
-        await addDoc(collection(db, 'marketingCampaigns'), { userId, teamId, name: `Lead Import (${results.length})`, channel: 'lead-gen', impressions: 0, clicks: 0, leads: results.length, spend: 0, revenue: 0, period: periodFromDate() });
+        const campaign = { userId, teamId, name: `Lead Import (${results.length})`, channel: 'lead-gen', impressions: 0, clicks: 0, leads: results.length, spend: 0, revenue: 0, period: periodFromDate() };
+        stripForbiddenDerivedFields(campaign);
+        await addDoc(collection(db, 'marketingCampaigns'), campaign);
     }
     return { count: results.length, results };
 }
@@ -37,7 +40,9 @@ export async function scoreLeads(userId: string, teamId?: string) {
         updates.push(d.id);
     }
     if (updates.length) {
-        await addDoc(collection(db, 'marketingCampaigns'), { userId, teamId, name: `Lead Score (${updates.length})`, channel: 'lead-gen', impressions: 0, clicks: 0, leads: 0, spend: 0, revenue: 0, period: periodFromDate() });
+        const campaign = { userId, teamId, name: `Lead Score (${updates.length})`, channel: 'lead-gen', impressions: 0, clicks: 0, leads: 0, spend: 0, revenue: 0, period: periodFromDate() };
+        stripForbiddenDerivedFields(campaign);
+        await addDoc(collection(db, 'marketingCampaigns'), campaign);
     }
     return { updated: updates.length };
 }
@@ -47,7 +52,9 @@ export async function routeLeads(userId: string, teamId?: string) {
     const snap = await getDocs(q); let routed = 0;
     for (const d of snap.docs) { await updateDoc(doc(db, 'leads', d.id), { routedTo: 'sales_team_default', routedAt: Timestamp.now() }); routed++; }
     if (routed) {
-        await addDoc(collection(db, 'marketingCampaigns'), { userId, teamId, name: `Lead Route (${routed})`, channel: 'lead-gen', impressions: 0, clicks: 0, leads: 0, spend: 0, revenue: 0, period: periodFromDate() });
+        const campaign = { userId, teamId, name: `Lead Route (${routed})`, channel: 'lead-gen', impressions: 0, clicks: 0, leads: 0, spend: 0, revenue: 0, period: periodFromDate() };
+        stripForbiddenDerivedFields(campaign);
+        await addDoc(collection(db, 'marketingCampaigns'), campaign);
     }
     return { routed };
 }
@@ -60,7 +67,9 @@ export async function schedulePost(input: ScheduledPostInput) {
     await addDoc(collection(db, 'socialPosts'), { userId, teamId, content, channel, scheduledAt: Timestamp.fromDate(scheduledAt), metrics: { impressions, clicks, leads }, createdAt: Timestamp.now() });
     // Also feed marketingCampaigns for unified metrics
     // Store only raw counters; omit derived ratios & avoid heuristic revenue to prevent data pollution
-    await addDoc(collection(db, 'marketingCampaigns'), { userId, teamId, name: content.slice(0, 40) || 'Post', channel, impressions, clicks, leads, spend: 0, revenue: 0, period: periodFromDate(scheduledAt), __provenance: 'synthetic' });
+    const campaign = { userId, teamId, name: content.slice(0, 40) || 'Post', channel, impressions, clicks, leads, spend: 0, revenue: 0, period: periodFromDate(scheduledAt), __provenance: 'synthetic' };
+    stripForbiddenDerivedFields(campaign);
+    await addDoc(collection(db, 'marketingCampaigns'), campaign);
     return { impressions, clicks, leads };
 }
 
@@ -86,7 +95,9 @@ export async function generateContentAsset(type: string, topic: string, userId: 
     const paragraphs = r(2, 5);
     const body = Array.from({ length: paragraphs }).map((_, i) => `${type.toUpperCase()} ${i + 1}. ${topic} insight ${hash(topic + i).toString(36)} generated for conversion.`).join('\n\n');
     const docRef = await addDoc(collection(db, 'contentAssets'), { userId, teamId, type, topic, body, createdAt: Timestamp.now() });
-    await addDoc(collection(db, 'marketingCampaigns'), { userId, teamId, name: `${type}:${topic.slice(0, 40)}`, channel: 'content', impressions: 0, clicks: 0, leads: 0, spend: 0, revenue: 0, period: periodFromDate(), __provenance: 'synthetic' });
+    const campaign = { userId, teamId, name: `${type}:${topic.slice(0, 40)}`, channel: 'content', impressions: 0, clicks: 0, leads: 0, spend: 0, revenue: 0, period: periodFromDate(), __provenance: 'synthetic' };
+    stripForbiddenDerivedFields(campaign);
+    await addDoc(collection(db, 'marketingCampaigns'), campaign);
     return { id: docRef.id, body };
 }
 
@@ -103,7 +114,9 @@ export async function createEmailCampaign(input: EmailCampaignInput) {
     const sendAt = input.sendAt || new Date(); const seed = hash(input.subject + sendAt.toISOString()); const r = randFrom(seed);
     const impressions = input.audience; const clicks = r(Math.round(impressions * 0.05), Math.round(impressions * 0.25)); const leads = r(Math.round(clicks * 0.05), Math.round(clicks * 0.25));
     await addDoc(collection(db, 'emailCampaigns'), { ...input, sendAt: Timestamp.fromDate(sendAt), metrics: { impressions, clicks, leads }, createdAt: Timestamp.now() });
-    await addDoc(collection(db, 'marketingCampaigns'), { userId: input.userId, teamId: input.teamId, name: input.subject.slice(0, 60), channel: 'email', impressions, clicks, leads, spend: 0, revenue: 0, period: periodFromDate(sendAt), __provenance: 'synthetic' });
+    const campaign = { userId: input.userId, teamId: input.teamId, name: input.subject.slice(0, 60), channel: 'email', impressions, clicks, leads, spend: 0, revenue: 0, period: periodFromDate(sendAt), __provenance: 'synthetic' };
+    stripForbiddenDerivedFields(campaign);
+    await addDoc(collection(db, 'marketingCampaigns'), campaign);
     return { impressions, clicks, leads };
 }
 

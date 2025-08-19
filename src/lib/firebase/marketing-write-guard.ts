@@ -1,6 +1,7 @@
-// Firestore marketingCampaigns write guard: strips forbidden derived fields (ctr, roi) and normalizes schema.
+// Firestore marketingCampaigns write guard: strips forbidden derived fields and normalizes schema.
+// Delegates forbidden field stripping to central guard util (FORBIDDEN_DERIVED_FIELDS list) to keep list authoritative.
 // Integrate in server-side create/update flows to enforce raw-only storage.
-const DERIVED_FIELDS = ['ctr', 'roi'];
+import { stripForbiddenDerivedFields } from '@/lib/guards/forbidden-derived-fields';
 
 // MKT-02: strict period normalization utility (YYYY-MM)
 export function normalizePeriod(value: unknown): string {
@@ -14,11 +15,9 @@ export function normalizePeriod(value: unknown): string {
 }
 
 export function sanitizeMarketingCampaignDoc(raw: Record<string, unknown>) {
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(raw)) {
-        if (DERIVED_FIELDS.includes(k)) continue;
-        out[k] = v;
-    }
+    const out: Record<string, unknown> = { ...raw };
+    // Strip forbidden derived marketing KPI fields (roi, ctr, conversion, winRate, ltv ...)
+    stripForbiddenDerivedFields(out);
     for (const numKey of ['impressions', 'clicks', 'leads', 'spend', 'revenue']) {
         if (out[numKey] != null && typeof out[numKey] !== 'number') {
             const parsed = Number(out[numKey]);
@@ -34,7 +33,4 @@ export function sanitizeMarketingCampaignDoc(raw: Record<string, unknown>) {
     return out;
 }
 
-export function stripDerivedInPlace(doc: Record<string, unknown>) {
-    DERIVED_FIELDS.forEach(f => { if (f in doc) delete (doc as Record<string, unknown>)[f]; });
-    return doc;
-}
+export function stripDerivedInPlace(doc: Record<string, unknown>) { return stripForbiddenDerivedFields(doc).doc; }

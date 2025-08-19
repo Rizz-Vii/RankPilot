@@ -1,6 +1,8 @@
-# RankPilot Studio
+# RankPilot
 
 A focused AI SEO/marketing SaaS built with Next.js + Firebase.
+
+> NOTE: Project previously branded as "RankPilot Studio". Historical logs & session transcripts retain the legacy name for provenance.
 
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)

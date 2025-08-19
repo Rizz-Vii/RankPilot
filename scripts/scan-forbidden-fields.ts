@@ -7,7 +7,8 @@
 import fs from 'fs';
 import path from 'path';
 
-const FORBIDDEN_FIELDS = ['ctr', 'roi'];
+// Sync with FORBIDDEN_DERIVED_FIELDS in src/lib/guards/forbidden-derived-fields.ts
+const FORBIDDEN_FIELDS = ['roi', 'ctr', 'conversion', 'winRate', 'ltv'];
 
 // Heuristic: Only flag if forbidden field appears on an object literal being persisted (set/add/update) to marketingCampaigns or similar collections.
 const WRITE_KEYWORDS = ['add(', 'set(', 'update(', 'batch.set', 'batch.update'];
@@ -27,7 +28,8 @@ async function scanCodebase(root: string): Promise<string[]> {
         FORBIDDEN_FIELDS.forEach(f => {
             const re = new RegExp(`\\b${f}\\b`, 'g');
             if (re.test(text)) {
-                if (p.includes('marketing-write-guard')) return; // allow guard definition
+                if (p.includes('marketing-write-guard')) return; // allow legacy guard definition
+                if (p.includes('forbidden-derived-fields')) return; // allow central guard definition
                 if (!writeLikely) return; // ignore if not part of a likely write context
                 // Exempt aggregation/read-only service modules (heuristic: 'metrics.service')
                 if (/marketing-metrics\.service/.test(p)) return;

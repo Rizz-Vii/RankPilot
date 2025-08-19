@@ -159,6 +159,7 @@
     "test:neuro-persist": "tsx scripts/test-neuro-persist.ts",
     "test:provenance": "tsx scripts/test-provenance.ts",
     "test:provenance-coverage": "tsx scripts/test-provenance-coverage.ts",
+  "test:provenance-wrapper": "ts-node scripts/test-provenance-wrapper.ts",
     "test:logger": "tsx scripts/test-logger.ts",
     "test:neuroseo-rate-limit": "tsx scripts/test-neuroseo-rate-limit.ts",
     "test:feature-keys": "tsx scripts/audit-feature-keys.ts",

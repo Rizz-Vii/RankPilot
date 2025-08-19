@@ -23,6 +23,7 @@ export interface UnifiedMetricsSnapshot {
     inviteMaintenance?: { markedExpired: number; deletedAccepted: number; deletedExpired: number; orphanIndexes: number };
     crawler?: { success: number; errors: number; totalCrawlMs: number; totalAnalysisMs: number; crawlP95?: number | null; analysisP95?: number | null; crawlP99?: number | null; analysisP99?: number | null };
     semanticMap?: { aggregateHits: number; legacyFallbacks: number };
+    governance?: { provenanceInjected: number; forbiddenFieldStrips: number }; // Phase 1 governance counters
 }
 
 const provenanceCounters = {
@@ -41,10 +42,20 @@ const inviteMaintenanceCounters = { markedExpired: 0, deletedAccepted: 0, delete
 const crawlerCounters = { success: 0, errors: 0, totalCrawlMs: 0, totalAnalysisMs: 0, aggregateHits: 0, legacyFallbacks: 0, quotaLimit: 0, quotaRemaining: 0, crawlSamples: [] as number[], analysisSamples: [] as number[] };
 // Semantic Map aggregate adoption counters (T14 extension)
 const semanticMapCounters = { aggregateHits: 0, legacyFallbacks: 0 };
+// Governance counters (Phase 1 – PROV-01 / MKT-01)
+const governanceCounters = { provenanceInjected: 0, forbiddenFieldStrips: 0 };
 
 export function recordProvenanceObservation(hasProvenance: boolean) {
     provenanceCounters.total += 1;
     if (hasProvenance) provenanceCounters.withProvenance += 1;
+}
+
+export function recordProvenanceInjection() {
+    governanceCounters.provenanceInjected += 1;
+}
+
+export function recordForbiddenFieldStrip(count = 1) {
+    governanceCounters.forbiddenFieldStrips += count;
 }
 
 export function recordRouteLatency(routeKey: string, ms: number) {
@@ -110,6 +121,7 @@ export function getUnifiedMetricsSnapshot(): UnifiedMetricsSnapshot {
         , inviteMaintenance: { ...inviteMaintenanceCounters }
         , crawler: { ...crawlerCounters, crawlP95: computeSimpleP95(crawlerCounters.crawlSamples), analysisP95: computeSimpleP95(crawlerCounters.analysisSamples), crawlP99: computeSimpleP99(crawlerCounters.crawlSamples), analysisP99: computeSimpleP99(crawlerCounters.analysisSamples) }
         , semanticMap: { ...semanticMapCounters }
+        , governance: { ...governanceCounters }
     };
 }
 

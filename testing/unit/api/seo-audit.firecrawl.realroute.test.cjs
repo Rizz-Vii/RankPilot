@@ -76,7 +76,6 @@ describe('REAL firecrawl route (Next.js) contract', () => {
 
   it('enforces rate limit (second call over limit=1)', async () => {
     process.env.FIRECRAWL_HOURLY_LIMIT = '1';
-    if (routeMod.__resetFirecrawlQuotaTestOnly) routeMod.__resetFirecrawlQuotaTestOnly();
     global.fetch = async ()=> ({ ok: true, text: async ()=> 'User-agent: *' });
     const first = await realGET(new NextRequestMock('http://localhost/api/seo-audit/firecrawl?url=https://ratelimit.com'));
     expect(first.status).to.equal(200);

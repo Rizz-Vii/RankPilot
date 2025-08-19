@@ -1,7 +1,7 @@
 /**
  * Zapier MCP Workflow Automation Builder
  * Implements Priority 2 Enterprise Features from DevReady Phase 3
- * 
+ *
  * Features:
  * - 5000+ app automations for enterprise workflows
  * - Visual workflow designer for SEO processes
@@ -118,10 +118,15 @@ export class ZapierWorkflowBuilder extends EventEmitter {
         super();
         this.initializeTemplates();
         this.setupRateLimiting();
-        void this.syncTemplatesFromFirestore();
-        void this.persistLocalTemplates();
-        // Lazy load persisted workflows (silent degrade)
-        void this.loadPersistedWorkflows();
+        // Skip Firestore interactions in non-browser or explicitly disabled environments to avoid noisy permission warnings
+        const disable = typeof process !== 'undefined' && (process.env.ZAPIER_DISABLE_FIRESTORE === '1' || process.env.NEXT_RUNTIME === 'edge');
+        const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+        if (!disable && isBrowser) {
+            void this.syncTemplatesFromFirestore();
+            void this.persistLocalTemplates();
+            // Lazy load persisted workflows (silent degrade)
+            void this.loadPersistedWorkflows();
+        }
     }
 
     /**
@@ -269,6 +274,10 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /** Persist predefined templates to Firestore if missing */
     private async persistLocalTemplates(): Promise<void> {
         try {
+            if (typeof window === 'undefined') return; // only run client-side with user auth context
+            const authMod = await import('firebase/auth').catch(() => null);
+            const currentUser = authMod?.getAuth?.()?.currentUser;
+            if (!currentUser) return; // no user => skip silently
             const { db } = await import('../firebase');
             const { doc, setDoc, getDoc, collection } = await import('firebase/firestore');
             const colRef = collection(db, 'workflowTemplates');
@@ -303,6 +312,10 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     private async syncTemplatesFromFirestore(force = false): Promise<void> {
         if (!force && Date.now() - this.lastTemplateSync < ZapierWorkflowBuilder.TEMPLATE_SYNC_TTL) return;
         try {
+            if (typeof window === 'undefined') return;
+            const authMod = await import('firebase/auth').catch(() => null);
+            const currentUser = authMod?.getAuth?.()?.currentUser;
+            if (!currentUser) return;
             const { db } = await import('../firebase');
             const { collection, getDocs } = await import('firebase/firestore');
             const snapshot = await getDocs(collection(db, 'workflowTemplates'));
@@ -326,7 +339,10 @@ export class ZapierWorkflowBuilder extends EventEmitter {
             this.lastTemplateSync = Date.now();
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
-            console.warn('[ZapierWorkflowBuilder] Template sync failed:', msg);
+            // Quiet common permission noise when unauthenticated
+            if (!/Missing or insufficient permissions/i.test(msg)) {
+                console.warn('[ZapierWorkflowBuilder] Template sync failed:', msg);
+            }
         }
     }
 

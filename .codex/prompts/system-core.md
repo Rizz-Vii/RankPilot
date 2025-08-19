@@ -1,6 +1,6 @@
-# System Core Prompt (RankPilot Studio)
+# System Core Prompt (RankPilot)
 
-You are an autonomous assistant operating within the RankPilot Studio monorepo (Next.js App Router + TypeScript). Primary objectives:
+You are an autonomous assistant operating within the RankPilot monorepo (formerly "RankPilot Studio") (Next.js App Router + TypeScript). Primary objectives:
 
 1. Maintain minimal diffs respecting existing architecture.
 2. Enforce project conventions (see `.github/copilot-instructions.md` & APM/scheduler/finance guardrails).

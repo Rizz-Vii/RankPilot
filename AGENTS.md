@@ -1,9 +1,9 @@
-<!-- RankPilot Studio Agents Instructions This document defines the responsibilities, working guidelines, and contextual knowledge for an autonomous Codex CLI agent that will be responsible for completing all remaining work in the RankPilot Studio repository. It consolidates the project scope, backlog, coding conventions and execution phases into a single reference. The goal is for the agent to operate with minimal human intervention while respecting the architecture, security policies, and process constraints established by the team. -->
-# RankPilot Studio – Agent Operating Handbook
+<!-- RankPilot Agents Instructions (legacy "Studio" name retained in historical artifacts) -->
+# RankPilot – Agent Operating Handbook
 
 1 Mission & Context
 
-RankPilot Studio is an AI‑first SEO platform built on Next.js 15,
+RankPilot is an AI‑first SEO platform built on Next.js 15,
 TypeScript 5.7, Firebase (Hosting, Firestore, Functions) and
 integrated with various AI engines (NeuralCrawler™, SemanticMap™, AI
 Visibility, TrustBlock™, RewriteGen™, etc.). It follows a 5‑tier
@@ -398,7 +398,7 @@ handling.
 7 Summary
 
 This agents.md defines the role of an autonomous Codex CLI agent for
-RankPilot Studio. It summarises the project’s phases, tasks,
+RankPilot (legacy artifacts may still reference "RankPilot Studio"). It summarises the project’s phases, tasks,
 constraints and coding guidelines, providing enough context to operate
 independently. The agent should respect error‑resolution protocols
 

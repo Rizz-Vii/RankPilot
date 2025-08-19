@@ -1,6 +1,6 @@
 /**
  * NeuroSEO™ Suite - Main orchestrator for all NeuroSEO™ components
- * Part of RankPilot Studio
+ * Part of RankPilot Platform (formerly RankPilot Studio)
  */
 
 import { adminDb } from '@/lib/firebase-admin';

@@ -585,6 +585,10 @@ export class CustomDashboardBuilder {
      */
     private async persistLocalTemplates(): Promise<void> {
         try {
+            if (typeof window === 'undefined') return; // client-only
+            const authMod = await import('firebase/auth').catch(() => null);
+            const currentUser = authMod?.getAuth?.()?.currentUser;
+            if (!currentUser) return;
             // Dynamic import to avoid bundling Firestore in non-browser contexts unnecessarily
             const { db } = await import('../firebase');
             const { doc, setDoc, getDoc, collection } = await import('firebase/firestore');
@@ -622,6 +626,10 @@ export class CustomDashboardBuilder {
     private async syncTemplatesFromFirestore(force = false): Promise<void> {
         if (!force && Date.now() - this.lastTemplateSync < CustomDashboardBuilder.TEMPLATE_SYNC_TTL) return;
         try {
+            if (typeof window === 'undefined') return;
+            const authMod = await import('firebase/auth').catch(() => null);
+            const currentUser = authMod?.getAuth?.()?.currentUser;
+            if (!currentUser) return;
             const { db } = await import('../firebase');
             const { collection, getDocs } = await import('firebase/firestore');
             const snapshot = await getDocs(collection(db, 'dashboardTemplates'));
@@ -653,7 +661,9 @@ export class CustomDashboardBuilder {
             this.lastTemplateSync = Date.now();
         } catch (err) {
             const msg = err instanceof Error ? err.message : '';
-            console.warn('[DashboardBuilder] Template sync failed:', msg);
+            if (!/Missing or insufficient permissions/i.test(msg)) {
+                console.warn('[DashboardBuilder] Template sync failed:', msg);
+            }
         }
     }
 

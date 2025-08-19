@@ -2,9 +2,9 @@
  * AI Response Optimization - Caching, Batching, and Smart Retry
  */
 
+import { performanceMonitor, withPerformanceMonitoring } from "./performance-monitor";
 import type { TimeoutResult } from "./timeout";
 import { withAITimeout } from "./timeout";
-import { performanceMonitor, withPerformanceMonitoring } from "./performance-monitor";
 
 export interface CacheOptions {
   ttlMs?: number;
@@ -158,14 +158,14 @@ class RequestBatcher<T> {
 
       // Process immediately if batch is full
       if (requests.length >= this.maxBatchSize) {
-        this.processBatch(batchKey, batchProcessor);
+        void this.processBatch(batchKey, batchProcessor);
         return;
       }
 
       // Set timeout for processing if this is the first request
       if (requests.length === 1) {
         const timeoutId = setTimeout(() => {
-          this.processBatch(batchKey, batchProcessor);
+          void this.processBatch(batchKey, batchProcessor);
         }, this.batchTimeoutMs);
 
         this.batchTimeouts.set(batchKey, timeoutId);
@@ -177,7 +177,7 @@ class RequestBatcher<T> {
         (r) => now - r.timestamp > this.maxWaitMs
       );
       if (expiredIndex !== -1) {
-        this.processBatch(batchKey, batchProcessor);
+        void this.processBatch(batchKey, batchProcessor);
       }
     });
   }
@@ -221,20 +221,20 @@ class RequestBatcher<T> {
 }
 
 class AIResponseOptimizer {
-  // Store caches/batchers as unknown internally to allow per-call generic casting safely
-  private caches = new Map<string, ResponseCache<any>>();
-  private batchers = new Map<string, RequestBatcher<any>>();
+  // Internal generic maps (value stored as ResponseCache<unknown>/RequestBatcher<unknown>)
+  private caches: Map<string, ResponseCache<unknown>> = new Map();
+  private batchers: Map<string, RequestBatcher<unknown>> = new Map();
 
   private getCache<T>(operationType: string, options: CacheOptions): ResponseCache<T> {
     if (!this.caches.has(operationType)) {
-      this.caches.set(operationType, new ResponseCache<any>(options));
+      this.caches.set(operationType, new ResponseCache<unknown>(options));
     }
     return this.caches.get(operationType)! as ResponseCache<T>;
   }
 
   private getBatcher<T>(operationType: string, options: BatchOptions): RequestBatcher<T> {
     if (!this.batchers.has(operationType)) {
-      this.batchers.set(operationType, new RequestBatcher<any>(options));
+      this.batchers.set(operationType, new RequestBatcher<unknown>(options));
     }
     return this.batchers.get(operationType)! as RequestBatcher<T>;
   }
@@ -250,7 +250,6 @@ class AIResponseOptimizer {
       enableBatching = false,
       keyGenerator = (...args) => JSON.stringify(args),
       operationType: timeoutOperationType = "simple",
-      ...restOptions
     } = options;
 
     return withPerformanceMonitoring(operationType, async () => {

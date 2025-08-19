@@ -1,6 +1,6 @@
-import type { NextRequest} from "next/server";
-import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 interface TeamMember { userId?: string; id?: string; email?: string; role?: string; status?: string; invitedAt?: any; lastActive?: any; }
 interface TeamDoc { memberIds?: string[]; members?: TeamMember[];[k: string]: unknown; }
@@ -17,9 +17,8 @@ async function getTeam(uid: string) {
     return null;
 }
 
-interface RouteContext { params: { memberId: string } }
-export async function POST(req: NextRequest, context: RouteContext) {
-    const { params } = context;
+export const POST: (req: NextRequest, context: { params: Promise<{ memberId: string }> }) => Promise<NextResponse> = async (req, context) => {
+    const params = await context.params;
     try {
         const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
         if (!authHeader) return NextResponse.json({ error: "Missing auth" }, { status: 401 });
@@ -61,4 +60,4 @@ export async function POST(req: NextRequest, context: RouteContext) {
         const msg = typeof e === 'object' && e && 'message' in e ? (e as any).message : 'Internal error';
         return NextResponse.json({ error: msg }, { status: 500 });
     }
-}
+};

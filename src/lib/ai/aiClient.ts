@@ -4,8 +4,14 @@
  * Embeddings: OpenAI only (to preserve a single consistent vector space for similarity search).
  */
 import OpenAI from 'openai';
+
+// Gemini response typings
+interface GeminiPart { text?: string }
+interface GeminiContent { parts?: GeminiPart[] }
+interface GeminiCandidate { content?: GeminiContent }
+interface GeminiResponse { candidates?: GeminiCandidate[] }
 // Test hook + small infra helpers
- 
+
 declare const global: { __OPENAI_SHIM__?: new (args: { apiKey: string }) => OpenAI } | undefined;
 
 function createOpenAI(apiKey: string) {
@@ -56,10 +62,10 @@ export async function chatComplete(opts: { messages: ChatMessage[]; maxTokens?: 
                     })
                 });
                 if (!res.ok) throw new Error('Gemini HTTP ' + res.status);
-                const json: any = await res.json();
-                const text = Array.isArray(json?.candidates)
-                    ? (json.candidates[0]?.content?.parts || []).map((p: any) => p?.text || '').join('')
-                    : '';
+                const json: GeminiResponse = await res.json() as GeminiResponse;
+                const first = json.candidates && json.candidates[0];
+                const parts = first?.content?.parts || [];
+                const text = parts.map(p => p?.text || '').join('');
                 if (text) return text;
             } catch {/* ignore */ }
         }
@@ -103,9 +109,10 @@ export async function fallbackOneShot(systemPrompt: string, userMessage: string,
             body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: maxTokens, temperature: 0.2 } })
         });
         if (!res.ok) throw new Error('Gemini HTTP ' + res.status);
-        const json: any = await res.json();
-        return Array.isArray(json?.candidates)
-            ? (json.candidates[0]?.content?.parts || []).map((p: any) => p?.text || '').join('') || 'AI response unavailable.'
-            : 'AI response unavailable.';
+        const json: GeminiResponse = await res.json() as GeminiResponse;
+        const first = json.candidates && json.candidates[0];
+        const parts = first?.content?.parts || [];
+        const text = parts.map(p => p?.text || '').join('');
+        return text || 'AI response unavailable.';
     } catch { return 'AI fallback failed.'; }
 }

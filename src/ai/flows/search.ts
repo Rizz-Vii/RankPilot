@@ -61,8 +61,8 @@ Use the following API keys for enhanced analysis:
  - **Features Overview**: href="/features", description="Marketing overview of platform capabilities."
  - **Pricing**: href="/#pricing", description="Plans and pricing details."
  - **FAQ**: href="/#faq", description="Frequently asked questions."
- - **Accounting**: href="/finance/accounting", description="Ledger-based financial & accounting metrics." 
- - **NeuroSEO™ Suite**: href="/neuroseo", description="Run advanced NeuroSEO analyses and orchestrations." 
+ - **Accounting**: href="/finance/accounting", description="Ledger-based financial & accounting metrics."
+ - **NeuroSEO™ Suite**: href="/neuroseo", description="Run advanced NeuroSEO analyses and orchestrations."
 
 **User Query:** {{{query}}}
 

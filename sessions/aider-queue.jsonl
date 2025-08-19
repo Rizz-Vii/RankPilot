@@ -1,5 +1,5 @@
 {"meta":"delegation queue (JSON Lines). Each line: pending task."}
-{"taskId":"LINT-@typescript-eslint_no-explicit-any-S1","summary":"Fix ESLint rule @typescript-eslint/no-explicit-any (lines 1-900) segment 1","files":["/workspaces/studio/scripts/comprehensive-database-schema.ts"],"status":"running","estLoc":180,"createdAt":"2025-08-19T04:52:39.239Z","updatedAt":"2025-08-19T04:53:43.203Z"}
+{"taskId":"LINT-@typescript-eslint_no-explicit-any-S1","summary":"Fix ESLint rule @typescript-eslint/no-explicit-any (lines 1-900) segment 1","files":["/workspaces/studio/scripts/comprehensive-database-schema.ts"],"status":"failed","estLoc":180,"createdAt":"2025-08-19T04:52:39.239Z","updatedAt":"2025-08-19T15:21:32.931Z"}
 {"taskId":"LINT-@typescript-eslint_no-explicit-any-S2","summary":"Fix ESLint rule @typescript-eslint/no-explicit-any (lines 901-1800) segment 2","files":["/workspaces/studio/scripts/comprehensive-database-schema.ts"],"status":"done","estLoc":180,"createdAt":"2025-08-19T04:52:39.239Z","updatedAt":"2025-08-19T04:54:42.988Z"}
 {"taskId":"LINT-@typescript-eslint_no-explicit-any-S3","summary":"Fix ESLint rule @typescript-eslint/no-explicit-any (lines 1801-2172) segment 3","files":["/workspaces/studio/scripts/comprehensive-database-schema.ts"],"status":"done","estLoc":180,"createdAt":"2025-08-19T04:52:39.239Z","updatedAt":"2025-08-19T04:55:10.779Z"}
 {"taskId":"LINT-@typescript-eslint_no-unused-vars-S1","summary":"Fix ESLint rule @typescript-eslint/no-unused-vars (lines 1-900) segment 1","files":["/workspaces/studio/scripts/comprehensive-database-schema.ts"],"status":"done","estLoc":180,"createdAt":"2025-08-19T04:52:39.241Z","updatedAt":"2025-08-19T04:55:29.578Z"}
@@ -10,45 +10,45 @@
 {"taskId":"LINT-@typescript-eslint_no-misused-promises-P3","summary":"Fix ESLint rule @typescript-eslint/no-misused-promises (part 3)","files":["/workspaces/studio/src/app/(app)/insights/page.tsx"],"status":"done","estLoc":12,"createdAt":"2025-08-19T04:52:39.241Z","updatedAt":"2025-08-19T04:58:28.127Z"}
 {"taskId":"LINT-@typescript-eslint_no-misused-promises-P4","summary":"Fix ESLint rule @typescript-eslint/no-misused-promises (part 4)","files":["/workspaces/studio/src/app/(app)/integrations/page.tsx"],"status":"done","estLoc":12,"createdAt":"2025-08-19T04:52:39.241Z","updatedAt":"2025-08-19T04:59:04.117Z"}
 {"taskId":"BRAIN-cli-1755582930770-S1","summary":"Brain planned step 1 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:55:36.460Z"}
-{"taskId":"BRAIN-cli-1755582930770-S2","summary":"Brain planned step 2 (do-task)","status":"running","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:55:36.412Z"}
+{"taskId":"BRAIN-cli-1755582930770-S2","summary":"Brain planned step 2 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T15:21:32.931Z"}
 {"taskId":"BRAIN-cli-1755582930770-S3","summary":"Brain planned step 3 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:55:41.500Z"}
-{"taskId":"BRAIN-cli-1755582930770-S4","summary":"Brain planned step 4 (do-task)","status":"running","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:55:41.457Z"}
+{"taskId":"BRAIN-cli-1755582930770-S4","summary":"Brain planned step 4 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T15:21:32.932Z"}
 {"taskId":"BRAIN-cli-1755582930770-S5","summary":"Brain planned step 5 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:55:46.545Z"}
-{"taskId":"BRAIN-cli-1755582930770-S6","summary":"Brain planned step 6 (do-task)","status":"running","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:55:46.498Z"}
+{"taskId":"BRAIN-cli-1755582930770-S6","summary":"Brain planned step 6 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T15:21:32.932Z"}
 {"taskId":"BRAIN-cli-1755582930770-S7","summary":"Brain planned step 7 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:55:51.493Z"}
-{"taskId":"BRAIN-cli-1755582930770-S8","summary":"Brain planned step 8 (do-task)","status":"running","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:55:51.447Z"}
+{"taskId":"BRAIN-cli-1755582930770-S8","summary":"Brain planned step 8 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T15:21:32.932Z"}
 {"taskId":"BRAIN-cli-1755582930770-S9","summary":"Brain planned step 9 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:55:56.461Z"}
-{"taskId":"BRAIN-cli-1755582930770-S10","summary":"Brain planned step 10 (do-task)","status":"running","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:55:56.415Z"}
+{"taskId":"BRAIN-cli-1755582930770-S10","summary":"Brain planned step 10 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T15:21:32.933Z"}
 {"taskId":"BRAIN-cli-1755582930770-S11","summary":"Brain planned step 11 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:56:01.476Z"}
-{"taskId":"BRAIN-cli-1755582930770-S12","summary":"Brain planned step 12 (do-task)","status":"running","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:56:01.431Z"}
+{"taskId":"BRAIN-cli-1755582930770-S12","summary":"Brain planned step 12 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T15:21:32.933Z"}
 {"taskId":"BRAIN-cli-1755582930770-S13","summary":"Brain planned step 13 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:56:06.456Z"}
-{"taskId":"BRAIN-cli-1755582930770-S14","summary":"Brain planned step 14 (do-task)","status":"running","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:56:06.408Z"}
+{"taskId":"BRAIN-cli-1755582930770-S14","summary":"Brain planned step 14 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T15:21:32.933Z"}
 {"taskId":"BRAIN-cli-1755582930770-S15","summary":"Brain planned step 15 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:56:11.444Z"}
-{"taskId":"BRAIN-cli-1755582930770-S16","summary":"Brain planned step 16 (do-task)","status":"running","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:56:11.396Z"}
+{"taskId":"BRAIN-cli-1755582930770-S16","summary":"Brain planned step 16 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T15:21:32.934Z"}
 {"taskId":"BRAIN-cli-1755582930770-S17","summary":"Brain planned step 17 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:56:16.472Z"}
-{"taskId":"BRAIN-cli-1755582930770-S18","summary":"Brain planned step 18 (do-task)","status":"running","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:56:16.424Z"}
+{"taskId":"BRAIN-cli-1755582930770-S18","summary":"Brain planned step 18 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T15:21:32.934Z"}
 {"taskId":"BRAIN-cli-1755582930770-S19","summary":"Brain planned step 19 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:56:21.478Z"}
-{"taskId":"BRAIN-cli-1755582930770-S20","summary":"Brain planned step 20 (do-task)","status":"running","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T05:56:21.431Z"}
+{"taskId":"BRAIN-cli-1755582930770-S20","summary":"Brain planned step 20 (do-task)","status":"failed","createdAt":"2025-08-19T05:55:30.771Z","updatedAt":"2025-08-19T15:21:32.935Z"}
 {"taskId":"BRAIN-cli-1755583408990-S1","summary":"Brain planned step 1 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:03:32.046Z"}
-{"taskId":"BRAIN-cli-1755583408990-S2","summary":"Brain planned step 2 (do-task)","status":"running","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:03:31.956Z"}
+{"taskId":"BRAIN-cli-1755583408990-S2","summary":"Brain planned step 2 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T15:21:32.935Z"}
 {"taskId":"BRAIN-cli-1755583408990-S3","summary":"Brain planned step 3 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:03:36.986Z"}
-{"taskId":"BRAIN-cli-1755583408990-S4","summary":"Brain planned step 4 (do-task)","status":"running","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:03:36.940Z"}
+{"taskId":"BRAIN-cli-1755583408990-S4","summary":"Brain planned step 4 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T15:21:32.935Z"}
 {"taskId":"BRAIN-cli-1755583408990-S5","summary":"Brain planned step 5 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:03:41.974Z"}
-{"taskId":"BRAIN-cli-1755583408990-S6","summary":"Brain planned step 6 (do-task)","status":"running","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:03:41.927Z"}
+{"taskId":"BRAIN-cli-1755583408990-S6","summary":"Brain planned step 6 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T15:21:32.936Z"}
 {"taskId":"BRAIN-cli-1755583408990-S7","summary":"Brain planned step 7 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:03:47.039Z"}
-{"taskId":"BRAIN-cli-1755583408990-S8","summary":"Brain planned step 8 (do-task)","status":"running","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:03:46.993Z"}
+{"taskId":"BRAIN-cli-1755583408990-S8","summary":"Brain planned step 8 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T15:21:32.936Z"}
 {"taskId":"BRAIN-cli-1755583408990-S9","summary":"Brain planned step 9 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:03:52.022Z"}
-{"taskId":"BRAIN-cli-1755583408990-S10","summary":"Brain planned step 10 (do-task)","status":"running","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:03:51.963Z"}
+{"taskId":"BRAIN-cli-1755583408990-S10","summary":"Brain planned step 10 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T15:21:32.936Z"}
 {"taskId":"BRAIN-cli-1755583408990-S11","summary":"Brain planned step 11 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:03:56.911Z"}
-{"taskId":"BRAIN-cli-1755583408990-S12","summary":"Brain planned step 12 (do-task)","status":"running","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:03:56.858Z"}
+{"taskId":"BRAIN-cli-1755583408990-S12","summary":"Brain planned step 12 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T15:21:32.937Z"}
 {"taskId":"BRAIN-cli-1755583408990-S13","summary":"Brain planned step 13 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:04:01.889Z"}
-{"taskId":"BRAIN-cli-1755583408990-S14","summary":"Brain planned step 14 (do-task)","status":"running","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:04:01.840Z"}
+{"taskId":"BRAIN-cli-1755583408990-S14","summary":"Brain planned step 14 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T15:21:32.937Z"}
 {"taskId":"BRAIN-cli-1755583408990-S15","summary":"Brain planned step 15 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:04:06.905Z"}
-{"taskId":"BRAIN-cli-1755583408990-S16","summary":"Brain planned step 16 (do-task)","status":"running","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:04:06.856Z"}
+{"taskId":"BRAIN-cli-1755583408990-S16","summary":"Brain planned step 16 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T15:21:32.937Z"}
 {"taskId":"BRAIN-cli-1755583408990-S17","summary":"Brain planned step 17 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:04:11.921Z"}
-{"taskId":"BRAIN-cli-1755583408990-S18","summary":"Brain planned step 18 (do-task)","status":"running","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:04:11.873Z"}
+{"taskId":"BRAIN-cli-1755583408990-S18","summary":"Brain planned step 18 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T15:21:32.938Z"}
 {"taskId":"BRAIN-cli-1755583408990-S19","summary":"Brain planned step 19 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:04:16.943Z"}
-{"taskId":"BRAIN-cli-1755583408990-S20","summary":"Brain planned step 20 (do-task)","status":"running","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T06:04:16.895Z"}
+{"taskId":"BRAIN-cli-1755583408990-S20","summary":"Brain planned step 20 (do-task)","status":"failed","createdAt":"2025-08-19T06:03:28.990Z","updatedAt":"2025-08-19T15:21:32.938Z"}
 {"taskId":"MISSION-1755589087365-S1","summary":"[Mission] Resolve top TypeScript errors","files":[],"status":"done","createdAt":"2025-08-19T07:38:07.365Z","updatedAt":"2025-08-19T07:38:12.461Z","lineage":{"missionTs":1755589087365,"missionSummary":"Remediation required","stepId":"fix-types"}}
 {"taskId":"MISSION-1755589087365-S2","summary":"[Mission] Run ESLint autofix for safe rules","files":[],"status":"done","createdAt":"2025-08-19T07:38:07.365Z","updatedAt":"2025-08-19T07:38:17.471Z","lineage":{"missionTs":1755589087365,"missionSummary":"Remediation required","stepId":"lint-autofix"}}
 {"taskId":"MISSION-1755589087365-S3","summary":"[Mission] Triage remaining lint warnings","files":[],"status":"done","createdAt":"2025-08-19T07:38:07.365Z","updatedAt":"2025-08-19T07:38:22.468Z","lineage":{"missionTs":1755589087365,"missionSummary":"Remediation required","stepId":"lint-triage"}}

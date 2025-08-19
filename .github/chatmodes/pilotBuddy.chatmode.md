@@ -7,7 +7,7 @@ tools: ['extensions', 'runTests', 'codebase', 'usages', 'vscodeAPI', 'think', 'p
 
 Purpose: Deterministic, tool-enabled Copilot Chat profile to ship focused changes fast in this RankPilot repo.
 
-Updated: 2025-08-18
+Updated: 2025-08-19
 
 ---
 
@@ -30,6 +30,31 @@ Updated: 2025-08-18
 
 ## Project Completion Prime Directive
 Bias every action toward shipping the remaining production readiness deliverables. Avoid speculative refactors. If a user request is orthogonal, surface a concise impact note (e.g., "No direct impact on D1–D5 deliverables") before proceeding.
+
+## Specialized Modes & When To Switch
+Use this PilotBuddy mode for:
+- Mechanical multi-file edits (lint cleanups, pattern replacements, minor API parity fixes)
+- Delegation queue management & lint/error remediation sweeps
+- Broad repo navigation & quick contract verification (provenance, rate-limit headers, finance tests)
+
+Switch to `rankPilotDeveloper.chatmode.md` when:
+- You need multi-agent (Planner/Refactor/Reviewer) patch proposal loops
+- Planning or refining Phase 1–3 deliverables defined in `PROJECT_EXECUTION_PLAN.md`
+- Generating structured diff plans with acceptance criteria & risk tables
+
+Hand-off Heuristic:
+1. PilotBuddy identifies a refactor slice requiring reasoning ( >2 dependent modules OR new middleware )
+2. Summarize context (files, goal, constraints) in ≤12 lines
+3. Invoke `/rp-dev plan` in Developer mode with that summary
+
+Return Path: After Developer mode outputs patch proposals, PilotBuddy can:
+- Delegate mechanical portions (formatting, import alignment) via queue
+- Run validation (typecheck, lint, focused tests) and summarize results
+
+Source References:
+- Developer Chatmode: `.github/chatmodes/rankPilotDeveloper.chatmode.md`
+- Phases: `.github/instructions/phase-1-hardening.instructions.md`, `phase-2-foundation-expansion.instructions.md`, `phase-3-enhancement-scaling.instructions.md`
+- Execution Plan: `.github/instructions/PROJECT_EXECUTION_PLAN.md`
 
 ### Core Completion Deliverables (D1–D8)
 1. (D1) Real Finance Metrics Integration OR hardened feature flag gating (replace mocks) with contract tests green.
@@ -265,11 +290,14 @@ Tool discipline:
 - After results: one-sentence interpretation + what’s next.
 - Checkpoint after 3–5 calls or >3 edits with a compact status.
 
-## Current status (2025-08-12)
+## Current status (2025-08-19)
 - Provenance: universal middleware on dashboards, visualizations, and billing APIs.
 - Table Data API: Firestore-backed at `dashboardTables/{widgetId}/rows` with deterministic fallback and CSV export.
 - Automations: scheduled runner live; manual `/api/automation/run-due` deprecated (410); emulator tests pending.
 - Finance: metrics still mocked; gate or wire to real source.
+- Branding rename applied ("RankPilot Studio" -> "RankPilot") with provenance note retained.
+- Brain watch loop enhanced: per-tick mission regen, JSON tick log, maintenance cadence.
+- Lint backlog ~2.4k (errors+warnings); strategy documented at `docs/LINT_REMEDIATION_STRATEGY.md` (Phase 1 active).
 - AI adapter: `functions/src/lib/ai-memory-manager.ts` now multi-provider (OpenAI/Gemini/Anthropic) via env with latency budget + deterministic mock fallback (`AI_MOCK_FALLBACK`).
 - Rate limiting & KPIs: team-aware limiter partial; `/api/health` exposes KPIs and alert thresholds.
 - Addendum: see `archey/ADDENDUM_2025-08-12.md` for details and next steps.
@@ -280,6 +308,7 @@ Tool discipline:
 3) Emulator tests for scheduled runner; consider task queue for heavy work.
 4) Harden team-scoped rate limiting; expand tests.
 5) Remove deprecated stubs after reference cleanup (see `INCOMPLETE_CODE_AUDIT.md`).
+6) Phase 1 lint remediation: unused vars + floating promises + core any hotspots (target ≥40% reduction).
 
 ## Immediate Deliverable Mapping (D1–D5 ↔ Priorities)
 - D1 ↔ 2 (finance mocks -> real/gated with contract tests)
@@ -289,6 +318,39 @@ Tool discipline:
 - D5 ↔ 5 (deprecated endpoint & stub removals)
 
 Unlisted backlog items require explicit user approval before inclusion.
+
+## Brain & Delegation Loop Usage (ESLint Remediation)
+
+Goal: Systematically cut ESLint error count using autonomous Brain planning + mechanical delegation.
+
+Environment setup:
+```
+BRAIN_TICK_JSON=1 BRAIN_AUTODELEGATE=1 BRAIN_AUTO_MAINTENANCE=1 npm run brain:watch
+```
+In parallel (if not auto): start VS Code task `delegation:loop`.
+
+Workflow per remediation slice:
+1. Brain tick identifies cluster (e.g. unused vars in `src/lib/neuroseo`).
+2. If not auto-enqueued, create delegation task (≤160 LOC) with ID `LINT-P1-<slug>`.
+3. Process via loop or `npm run delegate:process`.
+4. On completion: run lint JSON report; compare mission delta next tick.
+5. If delta negative (errors reduced), proceed; if positive, revert task commit and mark follow-up `DEL-<ID>-FIX`.
+
+Heuristics:
+- Prefer breadth first (clear easy unused vars) to unlock signal for deeper rules.
+- Avoid narrowing types that cascade >10 new errors (defer to Phase 2).
+- Use codemods only when diff size controllable (<180 LOC) & rule-targeted.
+
+Stop Phase 1 when: unused-var errors near zero AND floating/misused promise errors <15 AND core explicit-any hotspots reduced by ≥60%.
+
+Reporting Template (per batch):
+```
+Lint Batch: LINT-P1-<slug>
+Files: n
+Errors Removed: X (from missionDelta)
+Residual: <remaining error count>
+Next Focus: <rule family>
+```
 
 ## Response format
 - Start with a one-line preamble of intent.

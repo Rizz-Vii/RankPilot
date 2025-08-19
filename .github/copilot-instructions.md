@@ -1,4 +1,4 @@
-# Copilot Instructions (RankPilot Studio)
+# Copilot Instructions (RankPilot)
 
 Concise operational context for AI coding agents to be instantly productive. Focus on THIS repo's architecture, workflows, conventions, and guardrails.
 
@@ -101,6 +101,40 @@ Concise operational context for AI coding agents to be instantly productive. Foc
 4. Implement minimal diff; run typecheck + lint + targeted tests.
 5. Summarize changes (deltas only) referencing deliverables (D1–D8) if applicable.
 
+### Brain + Delegation Loop (Lint Remediation Acceleration)
+
+Use the Brain watch loop + delegation loop to systematically eliminate remaining ESLint errors (~2.4k baseline).
+
+Phased approach (aligns with `docs/LINT_REMEDIATION_STRATEGY.md`):
+
+1. Phase 1 focus: unused vars, floating/misused promises, core `any` hotspots in `src/lib/neuroseo`, `src/lib/ai`, orchestration scripts.
+2. Enqueue mechanical batches (≤160 LOC) via delegation loop using task IDs `LINT-P1-*`.
+3. After each batch: run `npm run lint:report:json` and append snapshot delta (future automation hook) — for now, Brain mission delta captures error count drift.
+4. Brain Loop: set env `BRAIN_TICK_JSON=1 BRAIN_ENQUEUE_TS=0 BRAIN_AUTODELEGATE=1` to auto-spawn delegation when urgent remediation step appears.
+
+Standard cycle:
+
+```
+BRAIN_MODE=ask BRAIN_VERBOSE=1 BRAIN_TICK_JSON=1 BRAIN_AUTODELEGATE=1 npm run brain:watch &
+task start: delegation:loop
+```
+
+When Brain surfaces a lint remediation file cluster, manually enqueue if not auto-delegated:
+
+```
+npm run delegate:enqueue -- --taskId=LINT-P1-unused-vars-A --files=path1.ts,path2.ts --summary="Remove unused vars in core engines"
+```
+
+Then process (if loop not already active):
+
+```
+npm run delegate:process
+```
+
+Stop criteria per phase: see Exit Criteria in strategy doc.
+
+Safety: If error count increases in a tick (`missionDelta.lintErrors > 0`), pause delegation, review diff, and revert if necessary before resuming.
+
 ## 11. Rollback & Safety
 
 - If unintended side effects or failing unrelated tests: revert last commit (manual) or isolate fix in ≤50 LOC patch.
@@ -114,15 +148,18 @@ Feedback welcome: clarify unclear domain areas (finance live integration plan, d
 Goal: Safely maximize parallel progress (editor + background automation) without race conditions or duplicate processors.
 
 Baseline Always-On (background):
+
 - `dev-server` (hot reload UI) OPTIONAL if working on pure library code.
 - `delegation:loop` (exactly one) — promotes pending mechanical tasks; DO NOT also run `delegation:auto` concurrently (loop internally spawns `delegate:process`).
 
 Interactive Foreground Tasks (run on-demand, can overlap with loop):
+
 - `typecheck` / `lint` / focused test scripts.
 - `refactor:lint-sweep` (ensure queue idle first to avoid interleaved formatting diffs).
 - Brain tasks (`codex:brain:*`) – keep isolated; they do not modify same files as delegation by design. If a brain task will emit code, pause delegation to prevent merge conflicts.
 
 Concurrency Rules:
+
 1. Single Writer Principle: Only one automated writer at a time (delegation loop OR a manual `delegate:process`). If you must run a one-off `delegate:process`, temporarily stop the loop task.
 2. Human + Loop Safe: Manual edits + loop are fine; loop only touches queued file list. Re-run typecheck after both if touching same domain.
 3. Sweep Isolation: Before running `eslint:autofix-all` or `refactor:lint-sweep`, ensure no pending/running queue items (otherwise queue patch context may drift). If busy, mark future tasks hold or wait for idle snapshot.
@@ -131,17 +168,20 @@ Concurrency Rules:
 6. LOC Guard: Delegation tasks exceeding ~160 LOC estimated should be pre-split (avoid runtime rejection & rollback costs).
 
 Quick Operational Pattern:
+
 - Open: Start `dev-server` + `delegation:loop`.
 - Implement feature slice manually; meanwhile loop clears mechanical backlog.
 - Before broad formatting / lint sweep: stop loop, run sweep, restart loop.
 - After adding new scripts impacting automation: restart loop to reload environment.
 
 Detection & Recovery:
+
 - Duplicate Loop: If two snapshots print overlapping times, stop the newer one (only first needed).
 - Stalled Task: Status `running` > 5m -> mark failed manually (edit JSON line to `failed`) then resume; enqueue a `DEL-<TASK>-FIX` follow-up.
 - Conflict (merge error in delegation): Remove task line, create a narrower replacement block.
 
 Minimal Commands Cheat Sheet (sequential safe use):
+
 1. Start loop: VS Code Task `delegation:loop`.
 2. Pause loop: Stop task (Task Panel) before mass edits.
 3. One-off process (while loop stopped): run `delegation:process` task.
@@ -149,3 +189,27 @@ Minimal Commands Cheat Sheet (sequential safe use):
 
 Safety Heuristic: If uncertain whether an automated edit may touch the same region you're modifying, pause loop (cost ≤15s) and resume after commit.
 
+## 13. Chatmodes & Phase Index
+
+Chatmodes:
+- PilotBuddy (`.github/chatmodes/pilotBuddy.chatmode.md`): Mechanical edits, delegation orchestration, broad contract enforcement.
+- Developer Acceleration (`.github/chatmodes/rankPilotDeveloper.chatmode.md`): Multi-agent planner/refactor/reviewer loop, structured diff planning.
+
+Phase Documents:
+- Phase 1 Hardening: `.github/instructions/phase-1-hardening.instructions.md`
+- Phase 2 Foundation Expansion: `.github/instructions/phase-2-foundation-expansion.instructions.md`
+- Phase 3 Enhancement & Scaling: `.github/instructions/phase-3-enhancement-scaling.instructions.md`
+- Execution Plan (canonical source of goals / acceptance): `.github/instructions/PROJECT_EXECUTION_PLAN.md`
+
+Quick Phase Snapshot:
+| Phase | Focus | Key Artifacts |
+|-------|-------|---------------|
+| 1 | Provenance, rate limiting, forbidden-field guard, logger coverage | middleware, scan scripts |
+| 2 | Dev multi-agent loop, BI Hub, metrics breadth, event bus scaffold | supervisor, adapter, events enum |
+| 3 | Adaptive planning, predictive KPIs, reporting, provenance reason codes | feedback store, forecast module |
+
+Mode Switch Guidance:
+- Use Developer mode when reasoning about multi-step refactors or generating patch proposals.
+- Stay in PilotBuddy for lint sweeps, delegation queue ops, and quick contract validation.
+
+Canonical Source Rule: Update execution plan first; then adjust phase instruction & chatmode files referencing the change (prevents drift).
