@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
-import { createAutomationRecipe, listAutomationRecipes, updateAutomationRecipe, AutomationRecipe, defaultRecipeTemplate, listRecentAutomationRuns, countPendingEmails } from '@/lib/automation/recipes';
+import type { AutomationRecipe} from '@/lib/automation/recipes';
+import { createAutomationRecipe, listAutomationRecipes, updateAutomationRecipe, defaultRecipeTemplate, listRecentAutomationRuns, countPendingEmails } from '@/lib/automation/recipes';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
