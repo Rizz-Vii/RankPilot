@@ -5,7 +5,8 @@ if (!process.env.FIRESTORE_EMULATOR_HOST) {
     process.exit(0);
 }
 
-import { initializeTestEnvironment, RulesTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
+import type { RulesTestEnvironment} from '@firebase/rules-unit-testing';
+import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
 import { setLogLevel } from 'firebase/firestore';
 
 (async () => {

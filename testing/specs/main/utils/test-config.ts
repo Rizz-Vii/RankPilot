@@ -3,7 +3,7 @@
  * Provides backwards compatibility for older test files
  */
 
-import { UnifiedTestUser } from "../../../utils/enhanced-auth";
+import type { UnifiedTestUser } from "../../../utils/enhanced-auth";
 
 // Legacy TestUser interface for backwards compatibility
 export interface LegacyTestUser {

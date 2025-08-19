@@ -1,7 +1,8 @@
 import { collection, Timestamp, query, where, getDocs } from 'firebase/firestore';
 import { guardedAdd } from '@/lib/firebase/write-guard';
 import { db } from '@/lib/firebase';
-import { JournalEntry, JournalEntryLine, isBalanced } from '@/lib/accounting/accounts';
+import type { JournalEntry, JournalEntryLine} from '@/lib/accounting/accounts';
+import { isBalanced } from '@/lib/accounting/accounts';
 
 export async function fetchJournalEntries(userId: string, teamId?: string | null): Promise<JournalEntry[]> {
     const q = query(collection(db, 'accountingJournalEntries'), where(teamId ? 'teamId' : 'userId', '==', teamId || userId));

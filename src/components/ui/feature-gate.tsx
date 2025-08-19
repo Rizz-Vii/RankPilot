@@ -1,3 +1,4 @@
+"use client";
 
 /**
  * Feature Gate Component - Robust Tier-Based Access Control

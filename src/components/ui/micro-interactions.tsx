@@ -10,8 +10,10 @@
  */
 
 import { useTheme } from '@/lib/themes/theme-system';
-import { AnimatePresence, motion, MotionProps, Variants } from 'framer-motion';
-import { ReactNode, useState } from 'react';
+import type { MotionProps, Variants } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import type { ReactNode} from 'react';
+import { useState } from 'react';
 
 // Animation variants for different interaction types
 export const ANIMATION_VARIANTS: Record<string, Variants> = {

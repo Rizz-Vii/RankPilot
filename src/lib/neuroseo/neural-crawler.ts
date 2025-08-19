@@ -3,8 +3,10 @@
  * Part of the NeuroSEO™ Suite for RankPilot
  */
 
-import { chromium, Browser, Page } from "playwright";
-import * as urlMod from 'url';
+import type { Browser, Page } from "playwright";
+import { chromium } from "playwright";
+import * as urlMod from "url";
+import type { CrawlerTask } from './types';
 
 export interface CrawlResult {
   url: string;
@@ -61,6 +63,16 @@ export interface CrawlResult {
   fromCache?: boolean;
 }
 
+// Local diagnostics and error stats (in-module only)
+const crawlerDiagnostics: { urlLib?: boolean } = {};
+const crawlerErrorStats: { count: number; lastMessage: string | null } = {
+  count: 0,
+  lastMessage: null,
+};
+
+// Verify URL library presence for environment diagnostics
+crawlerDiagnostics.urlLib = !!urlMod;
+
 export interface CrawlOptions {
   includeImages?: boolean;
   followRedirects?: boolean;
@@ -75,11 +87,10 @@ export interface CrawlOptions {
 export class NeuralCrawler {
   private browser: Browser | null = null;
   private cache: Map<string, { timestamp: number; result: CrawlResult; ttl: number; }> = new Map();
-  private robotsCache: Map<string, { fetched: number; rules: RobotsRules; }> = new Map();
+  // made public (was private) so prototype augmentation / interface merge can reference it safely
+  public robotsCache: Map<string, { fetched: number; rules: RobotsRules; }> = new Map();
   private static DEFAULT_CACHE_TTL = 10 * 60 * 1000; // 10 min
   static ROBOTS_TTL = 60 * 60 * 1000; // 1 hour (public for helper access)
-  // Declaration for dynamically attached method (prototype augmentation below)
-  private isAllowedByRobots!: (url: string, ua: string) => Promise<boolean>;
 
   async initialize(): Promise<void> {
     if (!this.browser) {
@@ -123,7 +134,12 @@ export class NeuralCrawler {
           return placeholder;
         }
       } catch (e) {
-        // Silent degradation
+        // Silent degradation; track error stats locally
+        const msg = typeof e === "object" && e && "message" in (e as Record<string, unknown>) && typeof (e as { message?: unknown }).message === "string"
+          ? (e as { message: string }).message
+          : String(e);
+        crawlerErrorStats.count++;
+        crawlerErrorStats.lastMessage = msg;
       }
     }
 
@@ -268,7 +284,14 @@ export class NeuralCrawler {
           const data = JSON.parse(script.textContent || "");
           schemaData.push(data);
         } catch (e) {
-          // Ignore invalid JSON
+          // Ignore invalid JSON; record local error count (narrow unknown safely)
+          const msg = (e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string')
+            ? (e as { message: string }).message
+            : String(e);
+          (window as unknown as { __crawlerErrorStats?: { count: number; lastMessage: string | null } }).__crawlerErrorStats =
+            (window as unknown as { __crawlerErrorStats?: { count: number; lastMessage: string | null } }).__crawlerErrorStats || { count: 0, lastMessage: null };
+          (window as unknown as { __crawlerErrorStats: { count: number; lastMessage: string | null } }).__crawlerErrorStats.count++;
+          (window as unknown as { __crawlerErrorStats: { count: number; lastMessage: string | null } }).__crawlerErrorStats.lastMessage = msg;
         }
       });
 
@@ -487,6 +510,9 @@ export class NeuralCrawler {
     }
   }
 
+  scheduleTask(task: CrawlerTask): void {
+  }
+
 }
 
 // ---------------- Derived Heuristic Metric Helpers (Phase 0) ----------------
@@ -562,8 +588,10 @@ async function fetchRobots(domain: string): Promise<string | null> {
   } catch { return null; }
 }
 
-// Add method to class via prototype augmentation to keep file cohesive
-(NeuralCrawler as any).prototype.isAllowedByRobots = async function (url: string, ua: string): Promise<boolean> {
+// Augment instance type for the dynamically attached method (declaration merging approach)
+export interface NeuralCrawler { isAllowedByRobots(url: string, ua: string): Promise<boolean>; }
+// Define the method on the prototype (no any / safe typing)
+NeuralCrawler.prototype.isAllowedByRobots = async function (this: NeuralCrawler, url: string, ua: string): Promise<boolean> {
   try {
     const parsed = new URL(url);
     const origin = parsed.origin;

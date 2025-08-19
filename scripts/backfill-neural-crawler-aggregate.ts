@@ -8,7 +8,8 @@
  *   BATCH_SIZE=200 npm run backfill:neural-crawler-agg
  */
 import { initializeApp, getApps } from 'firebase-admin/app';
-import { getFirestore, QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 
 interface LegacyDoc {
     userId: string;

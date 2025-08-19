@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { TIER_HIERARCHY } from "@/lib/access-control";
 import {

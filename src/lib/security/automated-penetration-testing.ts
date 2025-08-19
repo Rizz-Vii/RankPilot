@@ -1,7 +1,7 @@
 /**
  * Automated Penetration Testing Framework
  * DevNext Part III Step 3: Advanced Security Hardening
- * 
+ *
  * Comprehensive automated penetration testing:
  * - OWASP Top 10 vulnerability testing
  * - API security testing and fuzzing
@@ -14,6 +14,9 @@
 
 import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
+
+// In-module security metrics enrichment
+const securityMetrics: { weakPasswordStats?: { count: number; minLen: number; maxLen: number; avgLen: number } } = {};
 
 export interface PenetrationTest {
     id: string;
@@ -147,7 +150,7 @@ export interface TestModule {
     category: string;
     enabled: boolean;
     configuration: Record<string, unknown>;
-    execute(target: any): Promise<Vulnerability[]>;
+    execute(target: PenTestTarget): Promise<Vulnerability[]>;
 }
 
 type PenTestTarget = PenetrationTest['target'];
@@ -563,7 +566,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
      */
     private async executeInjectionTests(target: PenTestTarget): Promise<Vulnerability[]> {
         const vulnerabilities: Vulnerability[] = [];
-        const targetUrl = (target as any)?.url || 'https://example.com';
+        const targetUrl = target?.url || 'https://example.com';
 
         // SQL Injection payloads
         const sqlPayloads = [
@@ -655,13 +658,22 @@ export class AutomatedPentestingFramework extends EventEmitter {
      */
     private async executeAuthTests(target: PenTestTarget): Promise<Vulnerability[]> {
         const vulnerabilities: Vulnerability[] = [];
-        const targetUrl = (target as any)?.url || 'https://example.com';
+        const targetUrl = target?.url || 'https://example.com';
 
         // Common weak passwords
         const weakPasswords = [
             'password', '1234', 'admin', 'password123', 'qwerty',
             'letmein', 'welcome', 'monkey', '1234567890'
         ];
+        // Summarize weak password characteristics
+        {
+            const lengths = weakPasswords.map(p => p.length);
+            const count = lengths.length;
+            const minLen = Math.min(...lengths);
+            const maxLen = Math.max(...lengths);
+            const avgLen = count ? Math.round((lengths.reduce((a, b) => a + b, 0) / count) * 100) / 100 : 0;
+            securityMetrics.weakPasswordStats = { count, minLen, maxLen, avgLen };
+        }
 
         // Test for weak authentication
         if (Math.random() < 0.2) {
@@ -724,7 +736,7 @@ export class AutomatedPentestingFramework extends EventEmitter {
      */
     private async executeSensitiveDataTests(target: PenTestTarget): Promise<Vulnerability[]> {
         const vulnerabilities: Vulnerability[] = [];
-        const targetUrl = (target as any)?.url || 'https://example.com';
+        const targetUrl = target?.url || 'https://example.com';
 
         // Test for sensitive data exposure
         if (Math.random() < 0.15) {

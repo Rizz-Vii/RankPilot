@@ -18,7 +18,8 @@ import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ThemeMode, ThemePreferences, useTheme } from '@/lib/themes/theme-system';
+import type { ThemeMode, ThemePreferences} from '@/lib/themes/theme-system';
+import { useTheme } from '@/lib/themes/theme-system';
 import {
     Accessibility,
     Eye,
@@ -48,9 +49,10 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
     } = useTheme();
 
     const [customColors, setCustomColors] = useState({
-        primary: '#3B82F6',
-        secondary: '#6B7280',
-        accent: '#10B981',
+        // Using CSS var fallbacks; actual tokens are defined in design system
+        primary: 'var(--color-primary-500, #3B82F6)',
+        secondary: 'var(--color-gray-500, #6B7280)',
+        accent: 'var(--color-success-500, #10B981)',
     });
 
     const handleThemeChange = (newTheme: ThemeMode) => {
@@ -78,7 +80,11 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
             colorBlindnessSupport: false,
             highContrast: false,
         });
-    setCustomColors({ primary: '#3B82F6', secondary: '#6B7280', accent: '#10B981' });
+    setCustomColors({
+        primary: 'var(--color-primary-500, #3B82F6)',
+        secondary: 'var(--color-gray-500, #6B7280)',
+        accent: 'var(--color-success-500, #10B981)'
+    });
     };
 
     return (
@@ -177,7 +183,7 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
                                             <Input
                                                 value={customColors.primary}
                                                 onChange={(e) => handleCustomColorChange('primary', e.target.value)}
-                                                placeholder="#3B82F6"
+                                                placeholder="#3B82F6" /* token primary-500 */
                                                 className="flex-1"
                                             />
                                         </div>
@@ -196,7 +202,7 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
                                             <Input
                                                 value={customColors.secondary}
                                                 onChange={(e) => handleCustomColorChange('secondary', e.target.value)}
-                                                placeholder="#6B7280"
+                                                placeholder="#6B7280" /* token gray-500 */
                                                 className="flex-1"
                                             />
                                         </div>
@@ -215,7 +221,7 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
                                             <Input
                                                 value={customColors.accent}
                                                 onChange={(e) => handleCustomColorChange('accent', e.target.value)}
-                                                placeholder="#10B981"
+                                                placeholder="#10B981" /* token success-500 */
                                                 className="flex-1"
                                             />
                                         </div>

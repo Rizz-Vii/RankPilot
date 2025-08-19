@@ -3,7 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { AlertCircle, FileX, LucideIcon, RefreshCw, Search } from "lucide-react";
+import type { LucideIcon} from "lucide-react";
+import { AlertCircle, FileX, RefreshCw, Search } from "lucide-react";
 
 interface FallbackStateProps {
     title?: string;

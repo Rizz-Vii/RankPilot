@@ -283,9 +283,7 @@ export class TrustBlockEngine {
     contentType: string
   ): Promise<ContentCredibility> {
     const words = content.split(/\s+/);
-    const sentences = content
-      .split(/[.!?]+/)
-      .filter((s) => s.trim().length > 0);
+    // sentences previously computed but unused; removed to satisfy no-unused-vars
 
     // Factual accuracy assessment (simplified)
     const factualAccuracy = this.assessFactualAccuracy(content);

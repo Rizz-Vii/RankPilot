@@ -1,4 +1,4 @@
-import { Page, Locator } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { BasePage } from "./base-page";
 
 export class LinkViewPage extends BasePage {
@@ -33,7 +33,7 @@ export class LinkViewPage extends BasePage {
     this.errorMessage = page.locator('[data-testid="error-message"]');
   }
 
-  async navigateTo(path?: string) {
+  override async navigateTo(path?: string) {
     await this.page.goto(path || "/link-view");
   }
 
@@ -99,7 +99,7 @@ export class LinkViewPage extends BasePage {
     return this.errorMessage;
   }
 
-  public async waitForLoadingComplete() {
+  public override async waitForLoadingComplete() {
     await this.page.waitForSelector('[data-testid="loading-indicator"]', {
       state: "hidden",
     });

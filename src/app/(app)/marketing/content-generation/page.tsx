@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
-import { getMockMetrics } from '@/lib/domain/mockMetrics';
+import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -68,10 +68,10 @@ function ToneDialog({ open, content, onClose }: ToneDialogProps){
 export default function MarketingContentGenerationPage() {
   const [months, setMonths] = useState(6);
   const live = useMarketingCampaignMetrics(months);
-  const mock = getMockMetrics('marketing');
+  const { data: mock } = useMockDomainMetrics('marketing', true);
   interface MarketingMetric { key: string; label: string; value: number; delta: number; trend: number[]; intent?: string }
   interface MarketingLive { kpis: MarketingMetric[]; rows: any[]; loading: boolean; addOptimistic: (row: any)=>void; }
-  const data: MarketingLive = (live.kpis.length ? live : { kpis: mock.kpis, rows: [], loading:false, addOptimistic: live.addOptimistic }) as MarketingLive;
+  const data: MarketingLive = (live.kpis.length ? live : { kpis: (mock?.kpis || []), rows: [], loading:false, addOptimistic: live.addOptimistic }) as MarketingLive;
   useEffect(() => { trackDashboardView('marketing'); }, []);
   const { toast } = useToast();
   const { user } = useAuth();

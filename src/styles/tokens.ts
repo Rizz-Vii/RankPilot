@@ -25,6 +25,11 @@ export const colors = {
         600: '#dc2626',
     },
 
+    // Warning / Caution States
+    warning: {
+        500: '#eab308', // Amber (used for medium relevance / caution)
+    },
+
     // Neutral Colors
     gray: {
         50: '#f9fafb',

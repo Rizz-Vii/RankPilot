@@ -16,7 +16,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LANGUAGE_CONFIGS, SupportedLanguage, useI18n } from '@/lib/i18n/internationalization-system';
+import type { SupportedLanguage} from '@/lib/i18n/internationalization-system';
+import { LANGUAGE_CONFIGS, useI18n } from '@/lib/i18n/internationalization-system';
 import { useToast } from '@/hooks/use-toast';
 import { Check, Globe } from 'lucide-react';
 

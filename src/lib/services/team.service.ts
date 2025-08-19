@@ -9,11 +9,21 @@
  * All write operations are funneled through Next.js API routes /api/team/*
  * which perform server-side auth (verifyIdToken) and enforce role rules.
  */
-import {
-    collection, doc, query, where, getDoc, getDocs, DocumentData, getDocs as clientGetDocs, onSnapshot, DocumentSnapshot
-} from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 import { managedOnSnapshot } from '@/lib/firebase/write-guard';
-import { db, auth } from "@/lib/firebase";
+import type {
+    DocumentData, DocumentSnapshot
+} from "firebase/firestore";
+import {
+    getDocs as clientGetDocs,
+    collection, doc,
+    getDoc, getDocs,
+    onSnapshot,
+    query, where
+} from "firebase/firestore";
+
+// Local team service diagnostics
+const teamServiceMetrics: { errorCount: number; lastErrorMessage?: string } = { errorCount: 0 };
 
 export type TeamRole = "owner" | "admin" | "member" | "viewer";
 export type TeamStatus = "active" | "pending" | "inactive";
@@ -49,13 +59,18 @@ interface RawTeamMemberFirestore {
     lastActive?: Date | number | { toDate?: () => Date };
 }
 
+interface FirestoreTimestampLike { toDate?: () => Date }
+
 function toJsDate(v: RawTeamMemberFirestore['joinedAt']): Date {
     if (!v && v !== 0) return new Date();
     if (v instanceof Date) return v;
     if (typeof v === 'number') return new Date(v);
-    if (typeof v === 'object' && v && typeof (v as any).toDate === 'function') {
-        const d = (v as any).toDate();
-        if (d instanceof Date) return d;
+    if (typeof v === 'object' && v !== null && 'toDate' in (v as FirestoreTimestampLike)) {
+        const fn = (v as FirestoreTimestampLike).toDate;
+        if (typeof fn === 'function') {
+            const d = fn();
+            if (d instanceof Date) return d;
+        }
     }
     return new Date();
 }
@@ -99,13 +114,12 @@ export async function subscribeToTeamMembers({ userId, onData, onError }: Subscr
     try {
         const team = await resolveTeamDoc(userId);
         if (!team) {
-            onData([]); // emit empty
+            onData([]);
             return () => { };
         }
 
-        // Phase 2 Enhanced: Live subcollection snapshot (primary) with periodic refresh fallback
         let lastEmit = Date.now();
-        const refreshIntervalMs = 60_000; // 1 minute fallback refresh
+        const refreshIntervalMs = 60_000;
         const membersCol = collection(db, 'teams', team.id, 'members');
         let intervalHandle: ReturnType<typeof setInterval> | undefined;
         try {
@@ -118,25 +132,28 @@ export async function subscribeToTeamMembers({ userId, onData, onError }: Subscr
                     const updated = snap.docs.map(d => mapMember({ id: d.id, ...d.data() }));
                     onData(updated);
                     lastEmit = Date.now();
-                }, (err) => {
-                    onError?.(err);
-                });
-                intervalHandle = setInterval(async () => {
-                    // If no updates for a while, perform a soft refresh to guard against missed events
+                        }, (err) => { onError?.(err); });
+                intervalHandle = setInterval(() => {
                     if (Date.now() - lastEmit > refreshIntervalMs * 2) {
-                        try {
-                            const refetch = await clientGetDocs(query(membersCol));
-                            const updated = refetch.docs.map(d => mapMember({ id: d.id, ...d.data() }));
-                            onData(updated);
-                            lastEmit = Date.now();
-                        } catch (e) {
-                            // swallow refresh errors
-                        }
-                    }
-                }, refreshIntervalMs);
+                                        void (async () => {
+                                            try {
+                                                const refetch = await clientGetDocs(query(membersCol));
+                                                const updated = refetch.docs.map(d => mapMember({ id: d.id, ...d.data() }));
+                                                onData(updated);
+                                                lastEmit = Date.now();
+                                            } catch (e) {
+                                                const msg = typeof e === 'object' && e && 'message' in (e as Record<string, unknown>) && typeof (e as { message?: unknown }).message === 'string'
+                                                    ? (e as { message: string }).message
+                                                    : String(e);
+                                                teamServiceMetrics.errorCount++;
+                                                teamServiceMetrics.lastErrorMessage = msg;
+                                            }
+                                        })();
+                                    }
+                                }, refreshIntervalMs);
                 return () => { membersUnsub(); if (intervalHandle) clearInterval(intervalHandle); };
             }
-        } catch { /* fallback to embedded logic below */ }
+        } catch { /* fall back */ }
 
         const teamRef = doc(db, 'teams', team.id);
         const unsub = managedOnSnapshot(teamRef, (snapshot: unknown) => {

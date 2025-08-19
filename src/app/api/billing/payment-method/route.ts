@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 import { withProvenance, enforceProvenance } from '@/lib/middleware/provenance';
 import Stripe from 'stripe';
 import { getLogger } from '@/lib/logging/app-logger';

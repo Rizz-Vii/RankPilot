@@ -3,8 +3,8 @@
  */
 
 import type { SuggestKeywordsOutput } from "@/ai/flows/keyword-suggestions";
-import type { AuditUrlOutput } from "@/ai/flows/seo-audit";
-import type { CompetitorAnalysisOutput } from "@/ai/flows/competitor-analysis";
+// Removed unused AuditUrlOutput import (no usage in this file)
+// import type { CompetitorAnalysisOutput } from "@/ai/flows/competitor-analysis";
 
 export const demoKeywordData: SuggestKeywordsOutput & { suggestions?: unknown[] } = {
   keywords: [

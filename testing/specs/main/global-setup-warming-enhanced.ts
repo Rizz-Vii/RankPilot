@@ -3,7 +3,8 @@
  * Saves warming state and provides enhanced memory management for AI-heavy pages
  */
 
-import { chromium, FullConfig } from "@playwright/test";
+import type { FullConfig } from "@playwright/test";
+import { chromium } from "@playwright/test";
 import fs from 'fs';
 import path from 'path';
 

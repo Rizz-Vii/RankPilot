@@ -5,8 +5,9 @@ import CompetitorAnalysisForm from "@/components/competitor-analysis-form";
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToolPageHeader } from "@/components/tool-page-header";
+import type {
+  ChartConfig} from "@/components/ui/chart";
 import {
-  ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,

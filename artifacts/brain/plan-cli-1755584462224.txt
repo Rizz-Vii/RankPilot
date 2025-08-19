@@ -1,0 +1,140 @@
+{
+  "steps": [
+    {
+      "kind": "do-task",
+      "taskId": "CLF-1",
+      "domain": "docs",
+      "runnerHint": [
+        "codex"
+      ],
+      "reason": "Prioritized execution checklist refreshed."
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-2",
+      "domain": "docs",
+      "runnerHint": [
+        "codex"
+      ],
+      "reason": "Translate legacy audit list into phased, testable, low-risk increment."
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-9",
+      "domain": "docs",
+      "runnerHint": [
+        "codex"
+      ],
+      "reason": "Initiate Phase 1 - Hardening & Correct Gating."
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-10",
+      "domain": "docs",
+      "runnerHint": [
+        "codex"
+      ],
+      "reason": "Align gating."
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-20",
+      "domain": "docs",
+      "runnerHint": [
+        "codex"
+      ],
+      "reason": "Update documentation with CHANGE_LOG entry for Phase 1 Gating Hardening."
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-22",
+      "domain": "docs",
+      "runnerHint": [
+        "codex"
+      ],
+      "reason": "Conduct acceptance audit for navigation gates."
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-24",
+      "domain": "docs",
+      "runnerHint": [
+        "codex"
+      ],
+      "reason": "Initiate Phase 2 - Foundational Data & Metrics."
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-25",
+      "domain": "data",
+      "runnerHint": [
+        "codex"
+      ],
+      "reason": "Develop Revenue Analytics MVP."
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-27",
+      "domain": "docs",
+      "runnerHint": [
+        "codex"
+      ],
+      "reason": "Implement AI Usage & Cost tracking."
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-30",
+      "domain": "docs",
+      "runnerHint": [
+        "codex"
+      ],
+      "reason": "Add Subtool Usage Telemetry."
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-38",
+      "domain": "docs",
+      "runnerHint": [
+        "codex"
+      ],
+      "reason": "Initiate Phase 3 - Audit & Crawler Enhancement."
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-39",
+      "domain": "docs",
+      "runnerHint": [
+        "codex"
+      ],
+      "reason": "Modernize audit.ts."
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-43",
+      "domain": "docs",
+      "runnerHint": [
+        "codex"
+      ],
+      "reason": "Implement Quota & Rate Controls."
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-45",
+      "domain": "docs",
+      "runnerHint": [
+        "codex"
+      ],
+      "reason": "Conduct Load & Contract Tests."
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-49",
+      "domain": "ops",
+      "runnerHint": [
+        "codex"
+      ],
+      "reason": "Initiate Phase 4 - Data Minimization & Observability."
+    }
+  ],
+  "strategy": "openai"
+}

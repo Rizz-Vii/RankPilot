@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import { FeatureGate as BaseFeatureGate, withFeatureGate, useFeatureAccess } from "./ui/feature-gate";
 

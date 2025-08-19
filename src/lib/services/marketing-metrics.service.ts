@@ -1,9 +1,11 @@
 // Marketing Metrics Service - aggregates campaign data with realtime subscription
-import { collection, getDocs, orderBy, query, where, Unsubscribe, limit, DocumentData, QuerySnapshot } from 'firebase/firestore';
+import type { Unsubscribe, DocumentData, QuerySnapshot } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, where, limit } from 'firebase/firestore';
 import { managedOnSnapshot } from '@/lib/firebase/write-guard';
 import { db } from '@/lib/firebase/connection-manager';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
-import { MarketingCampaignFirestore, mapMarketingCampaignDoc } from '@/types/firestore-docs';
+import type { MarketingCampaignFirestore} from '@/types/firestore-docs';
+import { mapMarketingCampaignDoc } from '@/types/firestore-docs';
 import { mapDocs } from '@/lib/firebase/snapshot-map';
 
 export interface MarketingCampaignDoc { id?: string; userId?: string; teamId?: string; period: string; name?: string; channel?: string; impressions?: number; clicks?: number; leads?: number; spend?: number; revenue?: number; status?: string; createdAt?: unknown; }
@@ -17,8 +19,9 @@ export interface AggregatedMarketingMetrics {
 
 function aggregateCampaigns(campaigns: MarketingCampaignDoc[], months: number): AggregatedMarketingMetrics {
     if (!campaigns.length) {
-        const mock = getMockMetrics('marketing');
-        return { kpis: mock.kpis, campaigns: [], channelPerformance: [], trendSeries: [] };
+        // When there is no data to aggregate, return empty metrics.
+        // Mock fallback should be handled by the async fetch layer where awaiting is possible.
+        return { kpis: [], campaigns: [], channelPerformance: [], trendSeries: [] };
     }
     const periods = Array.from(new Set(campaigns.map(c => c.period))).sort();
     const recent = periods.slice(-months);
@@ -73,7 +76,7 @@ export async function fetchMarketingMetrics(userId: string, months: number, team
         if (!campaigns.length) throw new Error('empty');
         return aggregateCampaigns(campaigns, months);
     } catch {
-        const mock = getMockMetrics('marketing');
+        const mock = await getMockMetrics('marketing');
         return { kpis: mock.kpis, campaigns: [], channelPerformance: [], trendSeries: [] };
     }
 }

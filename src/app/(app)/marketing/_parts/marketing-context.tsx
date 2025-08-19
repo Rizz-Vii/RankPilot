@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext } from 'react';
-import { AggregatedMarketingMetrics } from '@/lib/services/marketing-metrics.service';
+import type { AggregatedMarketingMetrics } from '@/lib/services/marketing-metrics.service';
 
 interface MarketingContextValue { data: AggregatedMarketingMetrics | null; months: number; refreshing: boolean; }
 const MarketingContext = createContext<MarketingContextValue>({ data: null, months: 6, refreshing: false });

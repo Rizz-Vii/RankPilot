@@ -1,4 +1,4 @@
-import { Page, Locator } from "@playwright/test";
+import type { Page, Locator } from "@playwright/test";
 import { randomDelay } from "../utils/test-utils";
 
 export class BasePage {

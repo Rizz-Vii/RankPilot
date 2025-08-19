@@ -1,6 +1,6 @@
 import { adminStorage } from '@/lib/firebase-admin';
 import { generateServerArtifact } from '@/lib/visualizations/server-artifacts';
-import { ExportFormat, ServerChartArtifactData, ServerDashboardArtifactData } from '@/types/visualization-exports';
+import type { ExportFormat, ServerChartArtifactData, ServerDashboardArtifactData } from '@/types/visualization-exports';
 
 // Persist client-provided export artifact (data URL or base64) to Firebase Storage and return a signed URL
 export async function persistExportArtifact(input: {

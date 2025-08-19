@@ -1,11 +1,12 @@
 "use client";
 
-import React, { Component, ErrorInfo, ReactNode } from "react";
-import { motion } from "framer-motion";
-import { AlertTriangle, RefreshCw, Home, Bug } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import { AlertTriangle, Bug, Home, RefreshCw } from "lucide-react";
+import type { ErrorInfo, ReactNode } from "react";
+import React, { Component } from "react";
 
 interface Props {
   children: ReactNode;
@@ -43,7 +44,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     const eventId = `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     this.setState({
@@ -68,7 +69,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
     }
   }
 
-  componentDidUpdate(prevProps: Props) {
+  override componentDidUpdate(prevProps: Props) {
     const { resetKeys, resetOnPropsChange } = this.props;
     const { hasError } = this.state;
 
@@ -134,7 +135,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
     );
   };
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;

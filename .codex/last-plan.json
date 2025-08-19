@@ -1,0 +1,65 @@
+{
+  "generatedAt": "2025-08-19T04:53:43.202Z",
+  "tasks": [
+    {
+      "id": "LINT-@typescript-eslint_no-explicit-any-S1",
+      "status": "pending",
+      "files": 1,
+      "estLoc": 180
+    },
+    {
+      "id": "LINT-@typescript-eslint_no-explicit-any-S2",
+      "status": "pending",
+      "files": 1,
+      "estLoc": 180
+    },
+    {
+      "id": "LINT-@typescript-eslint_no-explicit-any-S3",
+      "status": "pending",
+      "files": 1,
+      "estLoc": 180
+    },
+    {
+      "id": "LINT-@typescript-eslint_no-unused-vars-S1",
+      "status": "pending",
+      "files": 1,
+      "estLoc": 180
+    },
+    {
+      "id": "LINT-@typescript-eslint_no-unused-vars-S2",
+      "status": "pending",
+      "files": 1,
+      "estLoc": 180
+    },
+    {
+      "id": "LINT-@typescript-eslint_no-unused-vars-S3",
+      "status": "pending",
+      "files": 1,
+      "estLoc": 180
+    },
+    {
+      "id": "LINT-@typescript-eslint_no-misused-promises-P1",
+      "status": "pending",
+      "files": 2,
+      "estLoc": 24
+    },
+    {
+      "id": "LINT-@typescript-eslint_no-misused-promises-P2",
+      "status": "pending",
+      "files": 2,
+      "estLoc": 24
+    },
+    {
+      "id": "LINT-@typescript-eslint_no-misused-promises-P3",
+      "status": "pending",
+      "files": 1,
+      "estLoc": 12
+    },
+    {
+      "id": "LINT-@typescript-eslint_no-misused-promises-P4",
+      "status": "pending",
+      "files": 1,
+      "estLoc": 12
+    }
+  ]
+}

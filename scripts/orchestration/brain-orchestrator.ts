@@ -145,12 +145,12 @@ async function main() {
 }
 
 // Polyfill fetch if needed
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+ 
 // @ts-ignore
 if (typeof fetch === 'undefined') {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const https = require('https');
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+     
     // @ts-ignore
     global.fetch = function (url: string, opts: any) {
         return new Promise((resolve, reject) => {

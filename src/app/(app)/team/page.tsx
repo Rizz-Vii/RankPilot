@@ -61,7 +61,8 @@ import { useCallback, useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
 import { safeErrorMessage } from "@/lib/utils";
-import { subscribeToTeamMembers, inviteTeamMember, updateTeamMemberRole as apiUpdateRole, removeTeamMember as apiRemoveMember, resendTeamInvite, transferTeamOwnership, TeamMember, canModifyMember, canRemoveMember } from "@/lib/services/team.service";
+import type { TeamMember} from "@/lib/services/team.service";
+import { subscribeToTeamMembers, inviteTeamMember, updateTeamMemberRole as apiUpdateRole, removeTeamMember as apiRemoveMember, resendTeamInvite, transferTeamOwnership, canModifyMember, canRemoveMember } from "@/lib/services/team.service";
 // Old one-off Firestore fetch utilities removed now that realtime subscription is stable
 // TeamMember now imported from service layer
 

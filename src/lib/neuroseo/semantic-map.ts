@@ -86,6 +86,9 @@ export interface VisualizationData {
   }>;
 }
 
+// Design token usage (replaced prior hardcoded legacy slate hex)
+const SEMANTIC_EDGE_COLOR = 'var(--color-slate-400)';
+
 export class SemanticMap {
   async analyzeContent(
     content: string,
@@ -691,7 +694,7 @@ export class SemanticMap {
           label: keyword,
           type: "keyword",
           size: 30,
-          color: "#94a3b8",
+          color: SEMANTIC_EDGE_COLOR,
         });
 
         // Connect keyword to topic
@@ -722,9 +725,11 @@ export class SemanticMap {
   }
 
   private getTopicColor(relevanceScore: number): string {
-    if (relevanceScore >= 80) return "#22c55e"; // Green
-    if (relevanceScore >= 60) return "#eab308"; // Yellow
-    return "#ef4444"; // Red
+    // Use design tokens instead of raw hex colors
+    // Green -> success.500, Yellow -> colors.warning.500, Red -> destructive.500
+    if (relevanceScore >= 80) return 'var(--color-success-500)';
+    if (relevanceScore >= 60) return 'var(--color-warning-500)';
+    return 'var(--color-destructive-500)';
   }
 
   private getSentimentColor(
@@ -732,11 +737,11 @@ export class SemanticMap {
   ): string {
     switch (sentiment) {
       case "positive":
-        return "#22c55e";
+        return 'var(--color-success-500)';
       case "negative":
-        return "#ef4444";
+        return 'var(--color-destructive-500)';
       default:
-        return "#6b7280";
+        return 'var(--color-gray-500)';
     }
   }
 }

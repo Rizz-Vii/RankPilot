@@ -35,7 +35,8 @@ import { db } from "@/lib/firebase";
 import { TimeoutError, withTimeout } from "@/lib/timeout";
 import { cn, copyToClipboard, safeErrorMessage, asError } from "@/lib/utils";
 // Use production AI service (with caching, quota, persistence)
-import { fetchKeywordSuggestions, KeywordSuggestionsResponse } from "@/lib/services/ai-service";
+import type { KeywordSuggestionsResponse } from "@/lib/services/ai-service";
+import { fetchKeywordSuggestions } from "@/lib/services/ai-service";
 import { Badge } from "@/components/ui/badge";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import { useProvenance } from "@/hooks/useProvenance";

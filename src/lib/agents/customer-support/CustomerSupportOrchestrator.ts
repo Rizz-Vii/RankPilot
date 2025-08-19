@@ -2,8 +2,8 @@
 // Implementation Date: July 30, 2025
 // Priority: HIGH - Customer Experience Excellence
 
-import { PlanType } from '../../stripe';
-import { RankPilotAgent } from '../core/AgentFramework';
+import type { PlanType } from '../../stripe';
+import type { RankPilotAgent } from '../core/AgentFramework';
 
 export interface SupportCategory {
     name: string;

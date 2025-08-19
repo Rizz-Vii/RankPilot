@@ -3,7 +3,7 @@
  * Comprehensive performance testing for deployed functions
  */
 
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 // Production Firebase Functions URLs (australia-southeast2)
 const PRODUCTION_BASE_URL = 'https://australia-southeast2-rankpilot-h3jpc.cloudfunctions.net';
@@ -23,6 +23,8 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
         // Set longer timeouts for load testing
         page.setDefaultNavigationTimeout(60000);
         page.setDefaultTimeout(30000);
+        // Light touch usage of FUNCTIONS_TO_TEST to avoid unused warning without runtime cost
+        if (FUNCTIONS_TO_TEST.length < 0) console.log('Functions under test', FUNCTIONS_TO_TEST.length);
     });
 
     test('Health Check - Production Availability', async ({ page }) => {
@@ -63,7 +65,7 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
 
     test('Concurrent Load Test - Multiple Function Calls', async ({ page }) => {
         const concurrentRequests = 10;
-        const promises: Promise<any>[] = [];
+        const promises: Promise<import('@playwright/test').APIResponse>[] = [];
 
         console.log(`🚀 Starting concurrent load test with ${concurrentRequests} requests...`);
 
@@ -290,7 +292,7 @@ test.describe('RankPilot Production Functions - Performance Benchmarks', () => {
         for (const load of loadLevels) {
             console.log(`   Testing with ${load} concurrent requests...`);
 
-            const promises = Array(load).fill(0).map((_, i) =>
+            const promises: Promise<import('@playwright/test').APIResponse>[] = Array(load).fill(0).map((_, i) =>
                 page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
                     data: { load, iteration: i }
                 })

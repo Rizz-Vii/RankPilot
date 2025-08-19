@@ -1,4 +1,4 @@
-import { CallableRequest } from "firebase-functions/v2/https";
+import type { CallableRequest } from "firebase-functions/v2/https";
 import { HttpsError } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
 import { validateAuth } from "./validate-auth";

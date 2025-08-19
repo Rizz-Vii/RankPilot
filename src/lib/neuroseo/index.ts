@@ -3,11 +3,12 @@
  * Part of RankPilot Studio
  */
 
-import { UsageQuotaManager as ClientUsageQuotaManager, type UsageCheck } from "../usage-quota";
+import { adminDb } from '@/lib/firebase-admin';
 import { getLogger } from '@/lib/logging/app-logger';
-import { adminDb } from "../firebase-admin"; // Server-side Firestore (lazy in API route runtime)
+import { recordSubtoolRun } from "@/lib/metrics/ai-usage";
 import { FieldValue } from "firebase-admin/firestore";
-import { z } from "zod";
+import { z } from 'zod';
+import { UsageQuotaManager as ClientUsageQuotaManager, type UsageCheck } from "../usage-quota";
 import {
   AIVisibilityEngine,
   type VisibilityReport,
@@ -20,7 +21,6 @@ import {
 } from "./rewrite-gen";
 import { SemanticMap, type SemanticAnalysisResult } from "./semantic-map";
 import { TrustBlockEngine, type TrustReport } from "./trust-block";
-import { recordSubtoolRun } from "@/lib/metrics/ai-usage";
 
 // Canonical collections & sampling constants (colocated for clarity)
 const CANONICAL_COLLECTION = 'neuroSeoAnalyses';
@@ -318,24 +318,21 @@ export class NeuroSEOSuite {
           overallScore: append(historical.overallScore, report.overallScore)
         };
       } catch (e) {
-        const trendErr = (e as any && typeof (e as any).message === 'string') ? (e as any).message : 'trend-assembly-failed';
-        logger.degraded('trend.assembly.degraded', { error: trendErr });
+        logger.degraded('trend.assembly.degraded', { error: extractErrorMessage(e, 'trend-assembly-failed') });
       }
 
       // Attach schema version for downstream validation & migrations
-      (report as any).schemaVersion = SCHEMA_VERSION;
+      (report as { schemaVersion?: number }).schemaVersion = SCHEMA_VERSION;
 
       // Persist report (best-effort, non-blocking failure)
       this.persistReport(report).catch(e => {
-        const msg = (e as any && typeof (e as any).message === 'string') ? (e as any).message : 'persist-failed';
-        logger.degraded('persistence.failed', { error: msg });
+        logger.degraded('persistence.failed', { error: extractErrorMessage(e, 'persist-failed') });
       });
       logger.info('analysis.complete', { overallScore: report.overallScore, crawlResults: report.crawlResults.length });
       NeuroSEOSuite.analysisCache.set(cacheKey, { timestamp: Date.now(), report });
       return report;
     } catch (error) {
-      const msg = (error as any && typeof (error as any).message === 'string') ? (error as any).message : 'analysis-failed';
-      logger.error('analysis.failed', { error: msg });
+      logger.error('analysis.failed', { error: extractErrorMessage(error, 'analysis-failed') });
       throw error as Error;
     }
   }
@@ -1042,9 +1039,14 @@ export class NeuroSEOSuite {
 
   private computeEngagementAnalysis(crawlResults: CrawlResult[]): NeuroSEOReport['engagementAnalysis'] {
     const analysis: Required<NonNullable<NeuroSEOReport['engagementAnalysis']>> = [];
+    interface TechnicalData { loadTime?: number; wordCount?: number; canonicalMismatch?: boolean }
+    interface AuthorshipSignals { hasAuthorBio?: boolean; socialLinks?: unknown[] }
+    interface SemanticClassification { keyEntities?: unknown[] }
+    type CrawlResultAug = CrawlResult & { technicalData?: TechnicalData; authorshipSignals?: AuthorshipSignals; semanticClassification?: SemanticClassification };
     for (const c of crawlResults) {
-      const tech = ((c as any).technicalData || {}) as { loadTime?: number; wordCount?: number; canonicalMismatch?: boolean };
-      const authorship = ((c as any).authorshipSignals || {}) as { hasAuthorBio?: boolean; socialLinks?: unknown[] };
+      const cr = c as CrawlResultAug; // narrowing augmentation (safe optional fields)
+      const tech: TechnicalData = cr.technicalData || {};
+      const authorship: AuthorshipSignals = cr.authorshipSignals || {};
       const factors: string[] = [];
       // Engagement heuristics
       const wordCount = tech.wordCount || 0;
@@ -1062,7 +1064,7 @@ export class NeuroSEOSuite {
       if (tech.canonicalMismatch) { score -= 4; factors.push('CanonicalMismatch'); }
       score = Math.max(0, Math.min(100, score));
       // Lead potential: rely on authorship + depth + entity count if available
-      const entityCount = (((c as any).semanticClassification?.keyEntities) || []).length;
+      const entityCount = (cr.semanticClassification?.keyEntities || []).length;
       let leadPotential = 50 + Math.min(25, Math.floor(entityCount * 2.5));
       if (wordCount > 1200) leadPotential += 10;
       if (authorship.hasAuthorBio) leadPotential += 5;
@@ -1090,8 +1092,8 @@ export class NeuroSEOSuite {
         .orderBy('createdAt', 'desc')
         .limit(AGGREGATION_SAMPLE_LIMIT)
         .get();
-      const docs: any[] = [];
-      snap.forEach(d => docs.push(d.data()));
+      const docs: Array<Record<string, unknown>> = [];
+      snap.forEach(d => docs.push(d.data() as Record<string, unknown>));
       if (docs.length === 0) {
         // Attempt legacy fallbacks
         for (const legacy of LEGACY_COLLECTIONS) {
@@ -1100,7 +1102,7 @@ export class NeuroSEOSuite {
             .limit(AGGREGATION_SAMPLE_LIMIT)
             .get();
           if (!lsnap.empty) {
-            lsnap.forEach(d => docs.push(d.data()));
+            lsnap.forEach(d => docs.push(d.data() as Record<string, unknown>));
             break;
           }
         }
@@ -1122,10 +1124,11 @@ export class NeuroSEOSuite {
       // Compute averages from persisted docs (pre-computed fields if present; else derive heuristics)
       let seoTotal = 0, visTotal = 0, trustTotal = 0, semTotal = 0, count = 0;
       for (const d of docs) {
-        seoTotal += d.seoAvg || d.overallScore || 0;
-        visTotal += d.visibilityAvg || d.avgVisibilityScore || d.overallScore || 0;
-        trustTotal += d.trustAvg || d.avgTrustScore || d.overallScore || 0;
-        semTotal += d.semanticAvg || d.avgSemanticScore || Math.round((d.overallScore || 0) * 0.6);
+        const num = (v: unknown): number => (typeof v === 'number' ? v : 0);
+        seoTotal += num(d.seoAvg) || num(d.overallScore);
+        visTotal += num(d.visibilityAvg) || num(d.avgVisibilityScore) || num(d.overallScore);
+        trustTotal += num(d.trustAvg) || num(d.avgTrustScore) || num(d.overallScore);
+        semTotal += num(d.semanticAvg) || num(d.avgSemanticScore) || Math.round(num(d.overallScore) * 0.6);
         count++;
       }
       if (!count) return { avgSeo: 72, avgVisibility: 55, avgTrust: 78, avgSemantic: 64 };
@@ -1171,11 +1174,10 @@ export class NeuroSEOSuite {
         semanticResultCount: report.semanticAnalysis.length,
         trends: report.trends || null,
       };
-      await adminDb.collection(CANONICAL_COLLECTION).doc(report.id).set(doc as any, { merge: true });
+      await adminDb.collection(CANONICAL_COLLECTION).doc(report.id).set(doc as Record<string, unknown>, { merge: true });
       // Optional: legacy mirror (omit for now to reduce writes) -> can be enabled if needed
     } catch (e) {
-      const msg = (e as any && typeof (e as any).message === 'string') ? (e as any).message : 'persist-failed';
-      getLogger('neuroseo-suite').degraded('persistence.report.failed', { error: msg });
+      getLogger('neuroseo-suite').degraded('persistence.report.failed', { error: extractErrorMessage(e, 'persist-failed') });
     }
   }
 
@@ -1188,15 +1190,17 @@ export class NeuroSEOSuite {
         .get();
       const seoAvg: number[] = [], visibilityAvg: number[] = [], trustAvg: number[] = [], engagementAvg: number[] = [], overallScore: number[] = [];
       snap.forEach(d => {
-        const data: any = d.data();
-        if (typeof data?.seoAvg === 'number') seoAvg.push(data.seoAvg);
-        if (typeof data?.visibilityAvg === 'number') visibilityAvg.push(data.visibilityAvg);
-        if (typeof data?.trustAvg === 'number') trustAvg.push(data.trustAvg);
-        if (typeof data?.engagementAvg === 'number') engagementAvg.push(data.engagementAvg);
-        if (typeof data?.overallScore === 'number') overallScore.push(data.overallScore);
+        const data = d.data() as Record<string, unknown>;
+        const n = (k: string) => typeof data[k] === 'number' ? data[k] as number : undefined;
+        const pushMaybe = (val: number | undefined, arr: number[]) => { if (typeof val === 'number') arr.push(val); };
+        pushMaybe(n('seoAvg'), seoAvg);
+        pushMaybe(n('visibilityAvg'), visibilityAvg);
+        pushMaybe(n('trustAvg'), trustAvg);
+        pushMaybe(n('engagementAvg'), engagementAvg);
+        pushMaybe(n('overallScore'), overallScore);
       });
       return { seoAvg: seoAvg.reverse(), visibilityAvg: visibilityAvg.reverse(), trustAvg: trustAvg.reverse(), engagementAvg: engagementAvg.reverse(), overallScore: overallScore.reverse() };
-    } catch (e) {
+    } catch {
       return { seoAvg: [], visibilityAvg: [], trustAvg: [], engagementAvg: [], overallScore: [] };
     }
   }
@@ -1212,8 +1216,7 @@ export class NeuroSEOSuite {
           const crawl = await this.neuralCrawler.crawl(current, { includeImages: false, followRedirects: true, extractSchema: false, analyzeAuthorship: false, timeout: 20000 });
           results.push({ url: current, content: crawl.content || '' });
         } catch (e) {
-          const msg = (e as any && typeof (e as any).message === 'string') ? (e as any).message : 'crawl-failed';
-          getLogger('neuroseo-suite').warn('phase.semantic.competitor.single.failed', { url: current, error: msg });
+          getLogger('neuroseo-suite').warn('phase.semantic.competitor.single.failed', { url: current, error: extractErrorMessage(e, 'crawl-failed') });
         }
       }
     };
@@ -1237,8 +1240,124 @@ export class NeuroSEOSuite {
   }
 }
 
+// Local utility for consistent error message extraction without using 'any'
+function extractErrorMessage(err: unknown, fallback: string): string {
+  if (typeof err === 'string') return err;
+  if (err && typeof err === 'object') {
+    const maybeMsg = (err as { message?: unknown }).message;
+    if (typeof maybeMsg === 'string') return maybeMsg;
+  }
+  return fallback;
+}
+
 // ---------------- Schema Definition & Validation -------------------------
 export const SCHEMA_VERSION = 1;
+
+// ---- Fine-grained schemas (incrementally introduced; remaining broad domains marked TODO for future tightening) ----
+const CrawlResultSchema = z.object({
+  url: z.string(),
+  title: z.string(),
+  content: z.string(),
+  metadata: z.object({
+    description: z.string().optional(),
+    keywords: z.string().optional(),
+    author: z.string().optional(),
+    publishedTime: z.string().optional(),
+    modifiedTime: z.string().optional(),
+    canonical: z.string().optional(),
+  }),
+  technicalData: z.object({
+    loadTime: z.number(),
+    pageSize: z.number(),
+    headings: z.record(z.array(z.string())),
+    images: z.array(z.object({ src: z.string(), alt: z.string(), title: z.string().optional() })),
+    links: z.array(z.object({ href: z.string(), text: z.string(), isExternal: z.boolean() })),
+    schema: z.array(z.unknown()),
+    wordCount: z.number(),
+    titleLength: z.number(),
+    metaDescriptionLength: z.number(),
+    canonicalMismatch: z.boolean(),
+  }),
+  authorshipSignals: z.object({
+    hasAuthorBio: z.boolean(),
+    hasContactInfo: z.boolean(),
+    hasAboutPage: z.boolean(),
+    socialLinks: z.array(z.string()),
+    expertiseSignals: z.array(z.string()),
+  }),
+  semanticClassification: z.object({
+    contentType: z.string(),
+    topicCategories: z.array(z.string()),
+    keyEntities: z.array(z.string()),
+    readingLevel: z.number(),
+    contentDepth: z.enum(['surface', 'moderate', 'comprehensive']),
+  }),
+  seoMetrics: z.object({
+    overallScore: z.number(),
+    technicalScore: z.number(),
+    contentScore: z.number(),
+  }).optional(),
+  performance: z.object({
+    overallScore: z.number(),
+  }).optional(),
+  robotsAllowed: z.boolean().optional(),
+  fromCache: z.boolean().optional(),
+});
+
+const KeyInsightSchema = z.object({
+  category: z.enum(["seo", "content", "technical", "competitive", "trust"]),
+  title: z.string(),
+  description: z.string(),
+  impact: z.enum(["critical", "high", "medium", "low"]),
+  confidence: z.number(),
+  evidence: z.array(z.string()),
+  recommendation: z.string(),
+});
+
+const TaskResourceSchema = z.object({
+  type: z.enum(["article", "tool", "template", "guide"]),
+  title: z.string(),
+  url: z.string().optional(),
+  description: z.string(),
+});
+
+const ActionableTaskSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  category: z.enum(["content", "technical", "seo", "competitive"]),
+  priority: z.enum(["urgent", "high", "medium", "low"]),
+  estimatedEffort: z.enum(["low", "medium", "high"]),
+  estimatedImpact: z.number(),
+  timeframe: z.string(),
+  dependencies: z.array(z.string()),
+  resources: z.array(TaskResourceSchema),
+});
+
+const CompetitivePositioningSchema = z.object({
+  overallRanking: z.number(),
+  totalCompetitors: z.number(),
+  strengths: z.array(z.string()),
+  weaknesses: z.array(z.string()),
+  opportunities: z.array(z.string()),
+  threats: z.array(z.string()),
+  recommendations: z.array(z.string()),
+  keywordGap: z.object({
+    missingKeywords: z.array(z.string()),
+    overlapKeywords: z.array(z.string()),
+    competitorExclusiveKeywords: z.array(z.string()),
+    opportunities: z.array(z.object({
+      term: z.string(),
+      opportunityScore: z.number(),
+      competitorsUsing: z.number(),
+      category: z.enum(['core', 'emerging', 'niche']),
+    })).optional(),
+  }).optional(),
+}).optional();
+
+// TODO:TRACKD-DEFER:typing Tighten schemas for semanticAnalysis / visibilityAnalysis / trustAnalysis / rewriteRecommendations
+// after upstream engines have full exported zod schemas to reference (avoid duplicating logic here).
+
 export const NeuroSEOReportSchema = z.object({
   id: z.string(),
   timestamp: z.string(),
@@ -1250,17 +1369,29 @@ export const NeuroSEOReportSchema = z.object({
     userPlan: z.string(),
     userId: z.string(),
   }),
-  crawlResults: z.array(z.any()),
-  semanticAnalysis: z.array(z.any()),
-  visibilityAnalysis: z.array(z.any()),
-  trustAnalysis: z.array(z.any()),
-  engagementAnalysis: z.array(z.any()).optional(),
-  rewriteRecommendations: z.array(z.any()).optional(),
+  crawlResults: z.array(CrawlResultSchema),
+  semanticAnalysis: z.array(z.unknown()),
+  visibilityAnalysis: z.array(z.unknown()),
+  trustAnalysis: z.array(z.unknown()),
+  engagementAnalysis: z.array(z.object({
+    url: z.string(),
+    engagementScore: z.number(),
+    leadPotentialScore: z.number(),
+    factors: z.array(z.string()),
+  })).optional(),
+  rewriteRecommendations: z.array(z.unknown()).optional(),
   overallScore: z.number().min(0).max(100),
-  keyInsights: z.array(z.any()),
-  actionableTasks: z.array(z.any()),
-  competitivePositioning: z.any().optional(),
-  quotaUsage: z.any(),
+  keyInsights: z.array(KeyInsightSchema),
+  actionableTasks: z.array(ActionableTaskSchema),
+  competitivePositioning: CompetitivePositioningSchema,
+  quotaUsage: z.object({
+    allowed: z.boolean(),
+    remainingQuota: z.number().optional(),
+    remaining: z.number().optional(),
+    limit: z.number().optional(),
+    resetDate: z.date().or(z.string()).optional(),
+    reason: z.string().optional(),
+  }).passthrough(),
   schemaVersion: z.number().optional(),
   trustMeta: z.object({
     modelTag: z.string(),

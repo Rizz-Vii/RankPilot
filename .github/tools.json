@@ -1,0 +1,92 @@
+{
+    "version": "1.0",
+    "description": "GitHub Actions tools configuration for project automation and development workflows.",
+    "tools": [
+        {
+            "name": "Run ESLint Fix",
+            "description": "Auto-fix all lint and formatting issues in TypeScript/JS/TSX/JSX files across the project using project’s ESLint config.",
+            "command": "npx eslint --fix . --cache --cache-location .eslintcache --cache-strategy=content"
+        },
+        {
+            "name": "Check Lint (Fast, Cached)",
+            "description": "Run fast, incremental ESLint with caching for developer feedback.",
+            "command": "npx eslint . --cache --cache-location .eslintcache --cache-strategy=content"
+        },
+        {
+            "name": "Prettier Format All",
+            "description": "Format all supported source and markdown files using Prettier, respecting project settings.",
+            "command": "npx prettier --write ."
+        },
+        {
+            "name": "TypeScript Typecheck (All)",
+            "description": "Run TypeScript type checking (no emit) across the entire monorepo.",
+            "command": "npx tsc --noEmit --incremental"
+        },
+        {
+            "name": "Next.js Build (Production)",
+            "description": "Build the Next.js application for production with strict ESLint settings and optimal Node memory.",
+            "command": "cross-env NODE_OPTIONS='--max-old-space-size=3072' ESLINT_NO_DEV_ERRORS=true next build"
+        },
+        {
+            "name": "Next.js Dev (TurboPack)",
+            "description": "Start the Next.js dev server with TurboPack and optimized memory.",
+            "command": "cross-env NODE_OPTIONS='--max-old-space-size=3072' next dev --turbopack"
+        },
+        {
+            "name": "Run Playwright Tests",
+            "description": "Run all Playwright tests for E2E, API, accessibility, and performance coverage.",
+            "command": "cross-env NODE_OPTIONS='--max-old-space-size=2048' npx playwright test"
+        },
+        {
+            "name": "Run Mocha Unit Tests",
+            "description": "Run Mocha for unit test suites with TypeScript support.",
+            "command": "npx mocha -r ts-node/register 'testing/unit/**/*.test.ts' --timeout 10000"
+        },
+        {
+            "name": "Firebase Emulators (Functions)",
+            "description": "Start Firebase emulators for local testing and development of cloud functions.",
+            "command": "(cd functions && npm run serve)"
+        },
+        {
+            "name": "Firebase Deploy Functions",
+            "description": "Deploy all Firebase cloud functions to production environment.",
+            "command": "(cd functions && npm run deploy)"
+        },
+        {
+            "name": "Audit Dependencies",
+            "description": "Run an npm audit (prod only), flagging vulnerabilities and missing peer deps.",
+            "command": "npm audit --omit=dev"
+        },
+        {
+            "name": "Scan for Unused Vars (Codemod)",
+            "description": "Remove unused variables using codemod for a clean codebase.",
+            "command": "node scripts/codemods/prune-unused-vars.js"
+        },
+        {
+            "name": "Normalize Any Types (Codemod)",
+            "description": "Scan and codemod simple `any` types to more specific types project-wide.",
+            "command": "node scripts/codemods/normalize-simple-any.js"
+        },
+        {
+            "name": "Cycle Detection (Madge)",
+            "description": "Detect and visualize dependency cycles using Madge.",
+            "command": "madge --circular --extensions ts,tsx,js,jsx ./src"
+        },
+        {
+            "name": "Aggregate and Validate Snapshots",
+            "description": "Purge, update, and validate all lint/test snapshots and metrics artifacts.",
+            "command": "npm run snapshot:purge && npm run lint:snapshot && npm run lint:metrics:update"
+        },
+        {
+            "name": "Optimize Project",
+            "description": "Run all project-level optimization scripts (memory, vendor, sharding, etc).",
+            "command": "ts-node scripts/optimize-project.ts"
+        },
+        {
+            "name": "DevReady/Production Audit",
+            "description": "Run project dev-readiness audit or full production checklist script.",
+            "command": "bash scripts/devready-validation.sh all false true"
+        }
+    ],
+    "defaultTool": "Run ESLint Fix"
+}

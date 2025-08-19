@@ -1,7 +1,7 @@
 /**
  * Real-Time Data Streaming System
  * Implements Priority 2 Enterprise Features from DevReady Phase 3
- * 
+ *
  * Features:
  * - WebSocket-based real-time updates for dashboards
  * - Server-Sent Events (SSE) for continuous data streams
@@ -17,11 +17,19 @@ import { EventEmitter } from 'events';
 // Utility to extract a message from unknown errors without unsafe casts
 function safeErrorMessage(err: unknown): string {
     if (typeof err === 'string') return err;
-    if (err && typeof err === 'object' && 'message' in err && typeof (err as any).message === 'string') {
-        return (err as any).message as string;
+    if (err && typeof err === 'object' && 'message' in err) {
+        const msg = (err as { message?: unknown }).message;
+        if (typeof msg === 'string') return msg;
     }
     return 'Unexpected error';
 }
+
+// Local stream diagnostics
+const allowedStreamTypes = new Set<string>(['seo-metrics', 'keyword-ranking', 'performance', 'competitor']);
+const streamMetrics: { typeCounts: Record<string, number>; unknownTypes: Set<string> } = {
+    typeCounts: Object.create(null) as Record<string, number>,
+    unknownTypes: new Set<string>(),
+};
 
 export interface StreamingDataPoint {
     id: string;
@@ -563,6 +571,11 @@ export class RealTimeDataStreamer extends EventEmitter {
 
         // Stop all data streams
         for (const [streamType, interval] of this.dataStreams.entries()) {
+            if (allowedStreamTypes.has(streamType)) {
+                streamMetrics.typeCounts[streamType] = (streamMetrics.typeCounts[streamType] || 0) + 1;
+            } else {
+                streamMetrics.unknownTypes.add(streamType);
+            }
             clearInterval(interval);
         }
 

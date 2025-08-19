@@ -1,6 +1,6 @@
-import { test, expect, Page } from "@playwright/test";
-import { TestOrchestrator, UserFlow } from "../../../utils/test-orchestrator";
+import { expect, test } from "@playwright/test";
 import { GracefulTestUtils } from "../../../utils/graceful-test-utils";
+import { TestOrchestrator } from "../../../utils/test-orchestrator";
 
 /**
  * Keyword Tool - Comprehensive Test Suite
@@ -14,7 +14,7 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
   test.beforeEach(async ({ page }) => {
     orchestrator = new TestOrchestrator(page);
     gracefulUtils = new GracefulTestUtils(page);
-    
+
     // Set extended timeouts for AI processing
     page.setDefaultNavigationTimeout(30000);
     page.setDefaultTimeout(25000);
@@ -78,7 +78,7 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       // Check for seed keyword input
       await expect(page.locator("input[placeholder*='Enter your seed keyword']")).toBeVisible();
-      
+
       // Check for location/language selectors
       await expect(page.locator("select, [role=combobox]")).toBeVisible();
 
@@ -112,7 +112,7 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       // Fill valid seed keyword
       await page.fill("input[placeholder*='Enter your seed keyword']", "digital marketing");
-      
+
       // Verify input is accepted
       await expect(page.locator("input[placeholder*='Enter your seed keyword']")).toHaveValue("digital marketing");
 
@@ -151,7 +151,7 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       // Submit keyword research
       await page.fill("input[placeholder*='Enter your seed keyword']", "content marketing");
-      
+
       const submitButton = page.locator("button", { hasText: "Generate Keywords" });
       await submitButton.click();
 
@@ -176,14 +176,14 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       // Submit keyword research
       await page.fill("input[placeholder*='Enter your seed keyword']", "local SEO");
-      
+
       await page.locator("button", { hasText: "Generate Keywords" }).click();
       await expect(page.locator("text=Keyword Suggestions")).toBeVisible({ timeout: 30000 });
 
       // Check for keyword metrics
       await expect(page.locator("text=/\\d+/")).toBeVisible(); // Numbers for search volume
       await expect(page.locator("text=/Low|Medium|High/")).toBeVisible(); // Competition levels
-      
+
       // Check for table rows with data
       const tableRows = page.locator("table tr");
       const rowCount = await tableRows.count();
@@ -200,13 +200,13 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       // Submit analysis
       await page.fill("input[placeholder*='Enter your seed keyword']", "organic search");
-      
+
       await page.locator("button", { hasText: "Generate Keywords" }).click();
       await expect(page.locator("text=Keyword Suggestions")).toBeVisible({ timeout: 30000 });
 
       // Check for difficulty indicators
       await expect(page.locator("text=Difficulty")).toBeVisible();
-      
+
       // Look for difficulty badges or scores
       const difficultyElements = page.locator("text=/Easy|Medium|Hard|\\d+%/");
       const difficultyCount = await difficultyElements.count();
@@ -223,13 +223,13 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       // Submit analysis
       await page.fill("input[placeholder*='Enter your seed keyword']", "keyword research");
-      
+
       await page.locator("button", { hasText: "Generate Keywords" }).click();
       await expect(page.locator("text=Keyword Suggestions")).toBeVisible({ timeout: 30000 });
 
       // Check for search volume column and data
       await expect(page.locator("text=Search Volume")).toBeVisible();
-      
+
       // Look for volume numbers
       const volumeElements = page.locator("text=/\\d+[KkMm]?/");
       const volumeCount = await volumeElements.count();
@@ -302,10 +302,10 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
       // Submit to get results
       await page.fill("input[placeholder*='Enter your seed keyword']", "responsive design");
       await page.locator("button", { hasText: "Generate Keywords" }).click();
-      
+
       try {
         await expect(page.locator("text=Keyword Suggestions")).toBeVisible({ timeout: 30000 });
-        
+
         // Check if table is responsive or converts to cards on mobile
         const table = page.locator("table");
         if (await table.count() > 0) {
@@ -331,7 +331,7 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       // Submit form to trigger potential API error
       await page.fill("input[placeholder*='Enter your seed keyword']", "test keyword");
-      
+
       await page.locator("button", { hasText: "Generate Keywords" }).click();
 
       // Look for error handling (either success or graceful error)
@@ -362,13 +362,13 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       // Submit form
       await page.fill("input[placeholder*='Enter your seed keyword']", "loading test keywords");
-      
+
       const submitButton = page.locator("button", { hasText: "Generate Keywords" });
       await submitButton.click();
 
       // Should show loading immediately
       await expect(page.locator("text=Generating")).toBeVisible();
-      
+
       // Button should be disabled during loading
       await expect(submitButton).toBeDisabled();
 
@@ -383,9 +383,9 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       // Test very long keyword input
       const longKeyword = "this is a very long keyword phrase that might exceed reasonable limits for keyword research tools and should be validated appropriately";
-      
+
       await page.fill("input[placeholder*='Enter your seed keyword']", longKeyword);
-      
+
       const submitButton = page.locator("button", { hasText: "Generate Keywords" });
       await submitButton.click();
 
@@ -430,16 +430,16 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       // Submit keyword research
       await page.fill("input[placeholder*='Enter your seed keyword']", "performance test");
-      
+
       const startTime = Date.now();
       await page.locator("button", { hasText: "Generate Keywords" }).click();
-      
+
       // Track processing time
       try {
         await expect(page.locator("text=Keyword Suggestions")).toBeVisible({ timeout: 30000 });
         const processingTime = Date.now() - startTime;
         console.log(`✅ Keywords processed in ${processingTime}ms`);
-        
+
         // Should complete within reasonable time (30 seconds)
         expect(processingTime).toBeLessThan(30000);
       } catch {
@@ -459,9 +459,9 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       // Submit keyword research
       await page.fill("input[placeholder*='Enter your seed keyword']", "Firebase integration test");
-      
+
       await page.locator("button", { hasText: "Generate Keywords" }).click();
-      
+
       // Wait for completion
       try {
         await expect(page.locator("text=Keyword Suggestions")).toBeVisible({ timeout: 30000 });
@@ -483,10 +483,10 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
       // Free tier should have access to basic functionality
       const form = page.locator("form");
       await expect(form).toBeVisible();
-      
+
       await page.fill("input[placeholder*='Enter your seed keyword']", "free tier test");
       await page.locator("button", { hasText: "Generate Keywords" }).click();
-      
+
       // Should allow research for free tier
       await expect(page.locator("text=Generating")).toBeVisible();
 
@@ -501,12 +501,12 @@ test.describe("Keyword Tool - Comprehensive Suite", () => {
 
       // Submit to test AI flow integration
       await page.fill("input[placeholder*='Enter your seed keyword']", "AI keyword suggestions");
-      
+
       await page.locator("button", { hasText: "Generate Keywords" }).click();
-      
+
       // Should show loading and eventually results
       await expect(page.locator("text=Generating")).toBeVisible();
-      
+
       try {
         await expect(page.locator("text=Keyword Suggestions")).toBeVisible({ timeout: 30000 });
         console.log("✅ AI flows integration successful");

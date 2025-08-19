@@ -4,7 +4,7 @@
 const globalKey = '__RP_MODULE_LOAD_COUNTS__';
 interface CounterMap { [k: string]: { count: number; first: number } }
 declare global {
-    // eslint-disable-next-line no-var
+     
     var __RP_MODULE_LOAD_COUNTS__: CounterMap | undefined;
 }
 
@@ -26,7 +26,7 @@ export function registerModuleLoad(rawId: string | undefined, opts: { threshold?
         store[id] = rec;
         const threshold = opts.threshold ?? 12;
         if (rec.count === threshold) {
-            // eslint-disable-next-line no-console
+             
             console.warn(`[ModuleLoadGuard] Module '${opts.label || id}' loaded ${rec.count} times. Potential circular re-export or dynamic import loop.`);
         }
     } catch { /* swallow */ }

@@ -10,7 +10,8 @@
  * - Real-time conversation state management
  */
 
-import { multiModelOrchestrator, MultiModelResponse } from '../ai/multi-model-orchestrator';
+import type { MultiModelResponse } from '../ai/multi-model-orchestrator';
+import { multiModelOrchestrator } from '../ai/multi-model-orchestrator';
 import { advancedCacheManager } from '../cache/advanced-cache-manager';
 
 // ---- Domain Types ---------------------------------------------------------

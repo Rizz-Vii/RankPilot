@@ -1,6 +1,6 @@
-import { test, expect, Page } from "@playwright/test";
-import { TestOrchestrator, UserFlow } from "../../../utils/test-orchestrator";
+import { expect, test } from "@playwright/test";
 import { GracefulTestUtils } from "../../../utils/graceful-test-utils";
+import { TestOrchestrator } from "../../../utils/test-orchestrator";
 
 /**
  * Team Chat - Comprehensive Test Suite
@@ -14,7 +14,7 @@ test.describe("Team Chat - Comprehensive Suite", () => {
   test.beforeEach(async ({ page }) => {
     orchestrator = new TestOrchestrator(page);
     gracefulUtils = new GracefulTestUtils(page);
-    
+
     // Set extended timeouts for real-time interactions
     page.setDefaultNavigationTimeout(30000);
     page.setDefaultTimeout(20000);
@@ -156,13 +156,13 @@ test.describe("Team Chat - Comprehensive Suite", () => {
       // Send a message
       const messageInput = page.locator("input[placeholder*='Type a message']");
       await messageInput.fill("Test message with metadata");
-      
+
       const sendButton = page.locator("button").filter({ has: page.locator("svg[title='Send']") });
       await sendButton.click();
 
       // Verify message appears with metadata
       await expect(page.locator("text=Test message with metadata")).toBeVisible();
-      
+
       // Check for timestamp (should be "now" or similar)
       await expect(page.locator("text=now")).toBeVisible();
 
@@ -210,7 +210,7 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       // Check direct messages section
       await expect(page.locator("text=Direct Messages")).toBeVisible();
-      
+
       // Should show online team members
       await expect(page.locator("text=Sarah Wilson")).toBeVisible();
       await expect(page.locator("text=Mike Johnson")).toBeVisible();
@@ -250,11 +250,11 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       // Check online section
       await expect(page.locator("text=Online")).toBeVisible();
-      
+
       // Check for team members with online status
       await expect(page.locator("text=Sarah Wilson")).toBeVisible();
       await expect(page.locator("text=Mike Johnson")).toBeVisible();
-      
+
       // Check online indicators (green dots)
       const onlineIndicators = page.locator(".bg-green-500");
       const indicatorCount = await onlineIndicators.count();
@@ -292,14 +292,14 @@ test.describe("Team Chat - Comprehensive Suite", () => {
       // Send a message first to test actions
       const messageInput = page.locator("input[placeholder*='Type a message']");
       await messageInput.fill("Test message for actions");
-      
+
       const sendButton = page.locator("button").filter({ has: page.locator("svg[title='Send']") });
       await sendButton.click();
 
       // Check for attachment and emoji buttons
       const attachButton = page.locator("button").filter({ has: page.locator("svg[title='Paperclip']") });
       const emojiButton = page.locator("button").filter({ has: page.locator("svg[title='Smile']") });
-      
+
       await expect(attachButton).toBeVisible();
       await expect(emojiButton).toBeVisible();
 
@@ -408,7 +408,7 @@ test.describe("Team Chat - Comprehensive Suite", () => {
       // For now, verify basic functionality is maintained
       const messageInput = page.locator("input[placeholder*='Type a message']");
       await messageInput.fill("Connection test message");
-      
+
       const sendButton = page.locator("button").filter({ has: page.locator("svg[title='Send']") });
       await sendButton.click();
 
@@ -446,7 +446,7 @@ test.describe("Team Chat - Comprehensive Suite", () => {
 
       // Verify message history loads quickly
       await expect(page.locator("text=Hey everyone! Welcome to the team chat")).toBeVisible();
-      
+
       // Check scroll area is functional
       const scrollArea = page.locator("[data-testid*='scroll'], .scroll-area");
       if (await scrollArea.count() > 0) {

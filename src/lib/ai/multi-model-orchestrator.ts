@@ -516,7 +516,7 @@ export class MultiModelOrchestrator {
 
 // ---- Global singleton (HMR safe) ---------------------------------------------
 declare global {
-    // eslint-disable-next-line no-var
+     
     var __multiModelOrchestrator: MultiModelOrchestrator | undefined;
 }
 

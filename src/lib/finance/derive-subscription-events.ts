@@ -1,4 +1,4 @@
-import { SubscriptionEvent } from './revenue-metrics';
+import type { SubscriptionEvent } from './revenue-metrics';
 
 // Minimal invoice DTO (only required fields retained; no derived ratios persisted).
 export interface InvoiceRecord {
@@ -20,7 +20,7 @@ export function deriveSubscriptionEvents(invoices: unknown[]): SubscriptionEvent
         return {
             userId: typeof rec.userId === 'string' ? rec.userId : 'unknown',
             period: typeof rec.period === 'string' ? rec.period : '1970-01',
-            status: (rec.status as any) || 'unknown',
+            status: typeof rec.status === 'string' ? rec.status : 'unknown',
             amount: typeof rec.amount === 'number' ? rec.amount : 0
         };
     }).filter(r => r.userId !== 'unknown');

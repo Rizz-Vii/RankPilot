@@ -1,6 +1,7 @@
 import { functions } from '@/lib/firebase';
 import { httpsCallable } from 'firebase/functions';
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
 const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');

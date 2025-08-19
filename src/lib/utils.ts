@@ -25,13 +25,16 @@ export function safeErrorMessage(err: unknown): string {
 // Convert Firestore Timestamp or various inputs to a JS Date
 export function toJsDate(value: unknown): Date {
   if (!value) return new Date();
-  // Firestore Timestamp-like
-  const anyVal: any = value as any;
-  if (typeof anyVal?.toDate === "function") {
+  // Firestore Timestamp-like (deferred precise timestamp interface modeling)
+  // TODO:TRACKD-DEFER:typing define narrow interface { toDate(): Date }
+  const maybeTs = value as { toDate?: () => unknown };
+  if (typeof maybeTs?.toDate === "function") {
     try {
-      const d = anyVal.toDate();
+      const d = maybeTs.toDate();
       if (d instanceof Date) return d;
-    } catch {}
+    } catch {
+      // swallow and continue fallback
+    }
   }
   if (value instanceof Date) return value;
   const maybe = new Date(String(value));

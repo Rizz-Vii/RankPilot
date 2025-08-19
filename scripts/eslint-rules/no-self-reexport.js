@@ -14,12 +14,15 @@ export const rule = {
   create(context) {
     const filename = context.getFilename();
     if (filename === '<input>' || filename.includes('node_modules')) return {};
-    const path = require('path');
-    const stem = path.basename(filename).replace(/\.[^.]+$/, '');
+    // Use dynamic import to avoid require in ESM context
+  let pathModule;
+  try { pathModule = require('path'); } catch { pathModule = { basename: (p)=>p }; }
+  const pathLike = pathModule;
+    const stem = pathLike.basename(filename).replace(/\.[^.]+$/, '');
     function check(sourceValue, node){
       if (!sourceValue) return;
       if (!sourceValue.startsWith('./') && !sourceValue.startsWith('../')) return;
-      const importedStem = path.basename(sourceValue).replace(/\.[^.]+$/, '');
+  const importedStem = pathLike.basename(sourceValue).replace(/\.[^.]+$/, '');
       if (importedStem === stem) {
         context.report({ node, messageId: 'selfReexport', data: { specifier: sourceValue } });
       }

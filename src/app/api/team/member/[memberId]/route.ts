@@ -1,5 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { enforceProvenance } from '@/lib/middleware/provenance';
 
 interface TeamMember { userId?: string; id?: string; email?: string; role?: string; status?: string; invitedAt?: any; lastActive?: any; }
 interface TeamDoc { memberIds?: string[]; members?: TeamMember[];[k: string]: unknown; }
@@ -21,41 +23,55 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     const { params } = context;
     try {
         const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
-        if (!authHeader) return NextResponse.json({ error: "Missing auth" }, { status: 401 });
+        if (!authHeader) {
+            const missingAuthBody = enforceProvenance({ error: "Missing auth" }, { path: 'team/member', note: 'auth' });
+            return NextResponse.json(missingAuthBody, { status: 401 });
+        }
         const token = authHeader.replace("Bearer ", "");
         const decoded = await adminAuth.verifyIdToken(token);
 
         const team = await getTeam(decoded.uid);
-        if (!team) return NextResponse.json({ error: "Team not found" }, { status: 404 });
+        if (!team) {
+            const notFoundBody = enforceProvenance({ error: "Team not found" }, { path: 'team/member', note: 'not_found' });
+            return NextResponse.json(notFoundBody, { status: 404 });
+        }
 
         const data: TeamDoc = (team.data as TeamDoc) || {};
         const members: TeamMember[] = Array.isArray(data.members) ? [...data.members] : [];
         const acting = members.find((m) => m.userId === decoded.uid || m.id === decoded.uid || m.email === decoded.email);
         if (!acting || !['owner', 'admin'].includes(acting.role || '')) {
-            return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+            const permBody = enforceProvenance({ error: "Insufficient permissions" }, { path: 'team/member', note: 'perm' });
+            return NextResponse.json(permBody, { status: 403 });
         }
 
         const targetIndex = members.findIndex((m) => m.userId === params.memberId || m.id === params.memberId || m.email === params.memberId);
-        if (targetIndex === -1) return NextResponse.json({ error: "Member not found" }, { status: 404 });
+        if (targetIndex === -1) {
+            const memNotFoundBody = enforceProvenance({ error: "Member not found" }, { path: 'team/member', note: 'member_not_found' });
+            return NextResponse.json(memNotFoundBody, { status: 404 });
+        }
         const target = members[targetIndex];
 
         if (target.role === 'owner') {
-            return NextResponse.json({ error: "Cannot remove owner" }, { status: 400 });
+            const ownerBody = enforceProvenance({ error: "Cannot remove owner" }, { path: 'team/member', note: 'owner' });
+            return NextResponse.json(ownerBody, { status: 400 });
         }
 
         if (target.role === 'admin') {
             const adminCount = members.filter((m) => m.role === 'admin').length;
             if (adminCount <= 1) {
-                return NextResponse.json({ error: "Cannot remove last admin" }, { status: 400 });
+                const lastAdminBody = enforceProvenance({ error: "Cannot remove last admin" }, { path: 'team/member', note: 'last_admin' });
+                return NextResponse.json(lastAdminBody, { status: 400 });
             }
         }
 
         members.splice(targetIndex, 1);
         await adminDb.collection("teams").doc(team.id).update({ members });
-        return NextResponse.json({ success: true });
+        const okBody = enforceProvenance({ success: true }, { path: 'team/member', note: 'removed' });
+        return NextResponse.json(okBody);
     } catch (e: unknown) {
         console.error("Remove member error", e);
         const msg = typeof e === 'object' && e && 'message' in e ? (e as any).message : 'Internal error';
-        return NextResponse.json({ error: msg }, { status: 500 });
+        const errBody = enforceProvenance({ error: msg }, { path: 'team/member', note: 'exception' });
+        return NextResponse.json(errBody, { status: 500 });
     }
 }

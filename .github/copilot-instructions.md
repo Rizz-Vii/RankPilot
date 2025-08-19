@@ -1,181 +1,151 @@
-## RankPilot (Studio) – Concise AI Agent Guide
+# Copilot Instructions (RankPilot Studio)
 
-Prime Objective: Complete the project end‑to‑end by making fast, correct, minimal edits that advance shipped functionality and tests.
+Concise operational context for AI coding agents to be instantly productive. Focus on THIS repo's architecture, workflows, conventions, and guardrails.
 
-Operating Mode: Deterministic. Extract requirements → make small diffs → validate (lint/build/tests) → checkpoint. Prefer edits over advice; avoid reformat churn.
+## 1. Architecture Snapshot
 
-Purpose: Enable fast, correct edits aligned with project patterns. Be terse, path-aware, deterministic.
+- Framework: Next.js (App Router) in `src/app`, React + TypeScript.
+- Domains:
+  - NeuroSEO engine & analyses: `src/lib/neuroseo/`
+  - Observability/APM: `src/lib/monitoring/`
+  - Finance metrics (currently gated/mocked): `src/lib/finance/`
+  - Scheduling (deterministic subset cron): `src/lib/scheduler/`
+  - Feature / access / entitlement logic: `src/lib/access*`, related scripts.
+  - Brain (automation planner + validators): source -> build with `build:brain` into `dist/brain`.
+  - Firebase Functions code: `functions/src` (keep server/runtime concerns isolated there).
+- Shared utilities: `src/lib/*`, UI components under `src/components/`, tests under `testing/` (Playwright + Mocha) and `tests/brain`.
+- Data layer: Firestore (queries should be centralized—prefer existing query builders / shared utilities rather than ad‑hoc `where` chains in React components).
 
-Capability Routing & Fallbacks
-- Route tasks needing first‑party Copilot features (PR review, repo graph, slash‑commands, code actions) to the default model/feature.
-- For custom-model tasks, prefer local tools (workspace.read/edit, search, usages) and keep diffs minimal.
-- Respect latency/error budgets; if degraded (429/5xx/timeout), fall back to default Copilot or the local mock adapter.
+## 2. Critical Workflows
 
-Note: For latest production status updates after July 31, 2025, see `archey/ADDENDUM_2025-08-12.md`.
+| Goal                       | Command(s) / Notes                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------------- | ------- | ------- | -------------------------- |
+| Dev server                 | `npm run dev-no-turbopack` (stable) or `npm run dev` (turbopack)                            |
+| Type safety                | `npm run typecheck` (no emit)                                                               |
+| Lint (flat + next)         | `npm run lint:flat:all` (avoid wide `--fix` unless mechanical)                              |
+| Autofix sweep + report     | VS Code task `refactor:lint-sweep` (sequence: autofix -> JSON report -> quality:fast)       |
+| Unit tests (domain)        | e.g. `npm run test:unit:ai-adapter`, `test:unit:semantic-map-kpi`                           |
+| E2E lean / perf            | `npm run test:lean`, `test:performance`                                                     |
+| Provenance audit           | `npm run test:provenance-audit` (+ negative)                                                |
+| Finance contracts          | `npm run test:revenue-metrics` / `test:revenue-kpi-contract` / `test:revenue-derive-events` |
+| Brain operations           | `npm run brain:plan-only                                                                    | dry-run | execute | auto` (always build:brain) |
+| Delegation loop            | VS Code task `delegation:loop` (autonomous mechanical queue)                                |
+| Generate lint any baseline | `npm run lint:any-baseline` then guard via `npm run lint:any-guard`                         |
 
-Current status (2025-08-12)
+## 3. Project-Specific Conventions
 
-- Provenance enforcement is universal on dashboards, visualizations, and billing APIs; provenance audit exists.
-- Table Data API reads Firestore `dashboardTables/{widgetId}/rows` with deterministic fallback and CSV export.
-- Automation scheduling added (scheduled function); manual `/api/automation/run-due` deprecated (410); emulator tests pending.
-- Finance pages still use mock metrics; should be gated or wired to real data.
-- AI memory/adapter implemented with env-driven provider selection in `functions/src/lib/ai-memory-manager.ts` (OpenAI/Gemini/Anthropic) and retains a deterministic mock fallback via `AI_MOCK_FALLBACK` and latency budget.
-- Team-aware rate limit partial; `/api/health` exposes KPIs and alerts.
+- Keep diffs minimal; never refactor broadly inside a functional change.
+- Replace `any` only when locally obvious (avoid cross-file cascade); safe pattern: use `unknown` + narrow.
+- Memory limits are explicit on scripts (`--max-old-space-size`); preserve them in new scripts.
+- Cron / scheduling: only `@daily`, `@hourly`, or `m h * * *` with the rest `*`; compute next run within 48h (`computeNextRun`). Do not introduce richer cron parsing.
+- Finance metrics: mock vs live gating honored—do not hardcode; maintain header flags (`X-Finance-Metrics-*`).
+- Rate limiting: extend centralized limiter (search `rate-limit`); do NOT duplicate per-route throttles.
+- Provenance: API JSON responses should already use middleware / enforce helpers—when adding new route ensure provenance wrapper not duplicated.
+- Design tokens: avoid raw hex colors; use existing CSS vars (lint rule enforces). Replace only targeted violations.
 
-### 1. Core Architecture & Domains
-Next.js App Router: `/src/app` ( `(auth)`, `(public)`, `(app)` protected ). API routes co-locate under `/src/app/api/*`.
-Firestore realtime (client) + Cloud Functions (`/functions`) for heavy / scheduled / Stripe / performance dashboards.
-AI: Primary SEO analyses via `NeuroSEOSuite` (`/src/lib/neuroseo/index.ts`). The legacy cost-optimized singleton (`enhanced-orchestrator.ts`) is an internal experimental engine—do NOT introduce new entrypoints; reuse one of these.
-Access & tiers: `src/lib/access-control.ts` (FEATURE_ACCESS, TIER_HIERARCHY). Admin role maps to enterprise + adminOnly gates.
+## 4. Delegation & Automation (Mechanical Tasks)
 
-### 2. Data & Persistence Conventions
-Every mutable doc: `{ userId, teamId?, createdAt, updatedAt, ...minimalFields }` (client adds optimistic doc where UX requires).
-Marketing metrics collection: `marketingCampaigns` only raw counters `{ name, channel, impressions, clicks, leads, spend, revenue, period }` (derive `period` = `YYYY-MM` client-side). Never store ROI/CTR.
-NeuroSEO persistence: canonical collection `neuroSeoAnalyses` stores compact aggregates (overallScore + *_Avg metrics, insight/task slices, counts). Do NOT duplicate large arrays unless migrating; rely on in-memory cache (10‑min TTL) for immediacy.
-Audits & historical SEO: follow same minimal aggregate pattern; avoid redundant derived fields.
+- Use queue file `sessions/aider-queue.jsonl` lines with fields `{ taskId, summary, files, status }`.
+- Mechanical edit threshold: ≤180 LOC (hard 220). Split into `-A/-B` if bigger.
+- Background processor: task `delegation:loop` promotes first `pending` to `running` and invokes `delegate:process`.
+- After delegated change: run lint + targeted tests referenced in summary; if failing, enqueue FIX follow-up.
 
-### 3. Firestore & Realtime Rules-of-Thumb
-No derived ratios in storage (compute in UI). Deterministic field ordering improves test stability.
-Optimistic inserts must emit immediately (e.g., marketing metrics) to keep hooks responsive.
+## 5. Safe Edit Patterns
 
-### 4. UI / Hydration / Mobile
-Never conditionally omit inputs pre-hydration; render then disable with `useHydration()` or a loading flag. Maintain ≥48px targets (`src/lib/mobile-responsive-utils.ts`). Use CSS tokens in `src/styles/globals.css`; never inline hex—extend tokens first (chart colors = `--chart-1..5`, sidebar = `--sidebar-*`). Reuse existing `accordion-up/down` animations before adding new keyframes.
+| Scenario                                | Pattern                                                                                                                                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Error handling w/out any                | `const msg = (e && typeof e === 'object' && 'message' in e && typeof (e as any).message==='string') ? (e as Error).message : String(e)` then avoid broad casts elsewhere |
+| Performance / navigator optional fields | Narrow via `as unknown as { connection?: { effectiveType?: string } }` then fallback `'unknown'`                                                                         |
+| System resource memory                  | `(performance as unknown as { memory?: { usedJSHeapSize: number } }).memory` guard before use                                                                            |
+| Aggregation metrics                     | Keep tag structure stable (`tags: { aggregation, groupKey }`) to avoid breaking dashboards                                                                               |
+| Export formats                          | Preserve existing shape of JSON/CSV/Prometheus outputs; additive fields need tests                                                                                       |
 
-### 5. Navigation & Feature Gating
-Add pages under `(app)` and NavItems in the correct group (`src/constants/enhanced-nav.ts`). Provide `requiredTier` or `adminOnly`; add missing feature key to `FEATURE_ACCESS` to avoid "Unknown feature" console warnings. Wrap gated page export with `<FeatureGate requiredTier="tier" feature="key"/>` when feature-specific. Locked items remain visible (upsell) via `getVisibleNavGroups({ includeLocked: true })`.
+## 6. Tests & Validation Strategy
 
-### 6. AI Orchestrator & Determinism
-Use `new NeuroSEOSuite().runAnalysis({ urls, targetKeywords, analysisType, userPlan, userId })`. Preserve seeded hashing & stable ordering (sort URL & keyword arrays before hashing). Silent degrade on partial engine failures (skip component, continue). Do not throw on competitor crawl failures—log warn.
-Caching: 10‑minute in‑process map (purge with `NeuroSEOSuite.purgeCache()`). Enhanced orchestrator variant also LRU caches (30‑min) and throttles concurrency—reuse rather than cloning logic.
+- Add / adjust smallest focused test under existing family (organized Playwright for user flows; Mocha for logic units). Avoid introducing a new framework.
+- Scheduler acceptance: ensure no change breaks emulator tests (search `Scheduler Emulator`).
+- Finance modifications: always run the three finance contract scripts.
+- Observability / AI adapter changes: run `test:unit:ai-adapter` & observability specs.
 
-### 7. Build / Dev / Functions
-Primary dev: `npm run dev-no-turbopack` (stable) or `npm run dev` (Turbopack). Emergency type-skip: `node scripts/build-skip-typecheck.js` (record rationale in `CHANGE_LOG.md`). If ESLint crashes, switch to `eslint.config.emergency.mjs`.
-Cloud Functions (Node 20): in `/functions` use `npm run build` then `npm run serve` (emulators) or `npm run deploy`. Performance subset deploy: `npm run deploy:performance` (only key metrics functions). Keep removed stub artifacts out (`functions/lib/api/performance-functions.js` cleaned by build script).
+## 7. Introducing New Scripts
 
-### 8. Testing Strategy
-Playwright role-based configs dominate. Fast gate: `npm run test:critical` (auth + accessibility + performance). Place new organized specs under `testing/specs/organized/`. For nav additions add (a) locked vs unlocked visibility test (b) basic success flow. Update warming manifests if page affects performance warm caches (grep "warming").
+- Prefix logically: `scan:`, `report:`, `test:`, `brain:`, `delegate:`, `lint:`, `codemod:`.
+- Include memory flag if performing heavy build or analysis.
+- Avoid overlapping semantics with existing scripts; reuse patterns.
 
-### 9. Recent Structural Rules (CHANGE_LOG.md Driven)
-Removed JS self re-export stubs in dashboard—prefer direct dynamic import of `.tsx` (temporary `allowImportingTsExtensions` set in tsconfig). If rollback needed follow steps in current CHANGE_LOG entry. Adding any exceptional build/tooling workaround requires a succinct dated log entry + rollback plan.
+## 8. Anti-Patterns (Do NOT)
 
-Additions since Aug 11–12:
+- Broad import reorder or formatting sweeps in feature PRs.
+- Embedding Firestore query chains directly in components (factor to existing helpers or add a builder util first if missing).
+- Parallel delegation processes (single loop only).
+- Editing security/auth, payment, or Firestore schema logic via delegation.
 
-- Universal provenance middleware enforcement across dashboards/visualizations/billing APIs.
-- `/api/table-data` is Firestore-backed with deterministic fallback and CSV export; supports optional `teamId/userId` scoping.
-- Scheduled runner for due automations; manual `/api/automation/run-due` deprecated (410).
+## 9. Key Files (Jump Points)
 
-### 10. Security & Secrets
-No committed secrets. `serviceAccount.json` guarded—use example template path under `docs/security/`. Add placeholder env var + rotate per `/docs/SECURITY_ROTATION.md` when introducing new external integration.
+| Purpose                   | Path                                                  |
+| ------------------------- | ----------------------------------------------------- |
+| APM / performance metrics | `src/lib/monitoring/enterprise-apm.ts`                |
+| NeuroSEO orchestrator     | `src/lib/neuroseo/enhanced-orchestrator.ts`           |
+| Scheduler core            | `src/lib/scheduler/next-run.ts` & `types.ts`          |
+| Finance metrics source    | `src/lib/finance/metrics.ts`                          |
+| AI memory / provider      | `functions/src/lib/ai-memory-manager.ts`              |
+| Delegation scripts        | `scripts/delegation/*.ts`                             |
+| Brain planner build       | `brain.config.json`, `dist/brain/**` (generated)      |
+| Lint flat config          | `eslint.flat.mjs` (plus `eslint.config.mjs` for next) |
 
-### 11. Error / Degradation Policy
-Silent downgrade for non-critical: AI engine partial failure, competitor fetch miss, navigation analytics, mobile detection. User-facing toasts only on explicit action failure (e.g., content generation attempt). Keep deterministic fallbacks (seeded pseudo values) when real metrics absent.
+## 10. Quick Operational Checklist (Agent Turn Start)
 
-### 12. Quick Feature Checklist
-1) Page + NavItem. 2) Add/align `FEATURE_ACCESS` key. 3) Wrap with `FeatureGate`. 4) Minimal Firestore doc (no ratios). 5) Optimistic emit if user expects immediate UI update. 6) Tests (access + happy path). 7) If build exception: document in CHANGE_LOG.
+1. Sync context: scan queue + open tasks; read only impacted files.
+2. Derive explicit checklist from user request.
+3. If mechanical multi-file >5 but simple: prepare delegation block.
+4. Implement minimal diff; run typecheck + lint + targeted tests.
+5. Summarize changes (deltas only) referencing deliverables (D1–D8) if applicable.
 
-### Fast References
-Access control: `src/lib/access-control.ts`
-AI suite: `src/lib/neuroseo/`
-Navigation: `src/constants/enhanced-nav.ts`
-Mobile utils: `src/lib/mobile-responsive-utils.ts`
-Functions deploy scripts: `functions/package.json`
-Emergency ESLint: `eslint.config.emergency.mjs`
-Change log rationale: `CHANGE_LOG.md`
+## 11. Rollback & Safety
 
-Clarify ambiguities before large refactors; keep edits scoped & deterministic.
+- If unintended side effects or failing unrelated tests: revert last commit (manual) or isolate fix in ≤50 LOC patch.
+- Never downgrade TypeScript or library versions in automation.
+- Use `lint:any-guard` to detect any regressions after type changes.
 
-### Acceptance Criteria for Changes
-- Builds, typechecks, and lints pass (or emergency path logged in `CHANGE_LOG.md`).
-- Tests for new/changed behavior exist or are updated; fast gates remain green.
-- No unrelated file churn or formatting diffs.
-- Provenance, rate limits, and data contract rules are preserved.
+Feedback welcome: clarify unclear domain areas (finance live integration plan, deeper NeuroSEO engine contracts, scheduler expansion) before large edits.
 
-### 13. Division of Labor (Copilot vs Aider)
-Use Copilot (this agent) for: architecture, data contracts, security-sensitive paths, flaky test root-cause, multi-step orchestration, KPI snapshot logic, Firestore schema changes.
-Use Aider CLI for: mechanical multi-file edits (≥5 files) with stable patterns (FeatureGate insertions, smoothing extensions, token renames, test ID alignment, doc touch-ups, scaffold duplication) when NO new runtime logic or security implications.
+## 12. Concurrency & Task Orchestration
 
-#### 13.1 Autonomous Aider Loop (Experimental)
-You may orchestrate limited background mechanical work via the delegation queue while continuing interactive tasks:
+Goal: Safely maximize parallel progress (editor + background automation) without race conditions or duplicate processors.
 
-Workflow (manual vs autorun):
-1. Prepare a Delegation Block in chat (see section 15) and get user confirmation if ambiguous.
-2. Enqueue: `npm run delegate:enqueue -- --taskId=DEL-XYZ --files=path1,path2 --summary="Short description"`.
-3. Process (manual): `npm run delegate:process` – prints aider command for operator to run (non-destructive).
-4. Process (autorun): `AIDER_AUTORUN=1 npm run delegate:process` – spawns aider automatically per pending task.
-5. On completion, ensure a log line in `sessions/aider-log.jsonl` (append if process script didn’t). Validate lint + targeted tests.
+Baseline Always-On (background):
+- `dev-server` (hot reload UI) OPTIONAL if working on pure library code.
+- `delegation:loop` (exactly one) — promotes pending mechanical tasks; DO NOT also run `delegation:auto` concurrently (loop internally spawns `delegate:process`).
 
-Hard Safety Rules:
-- One task at a time (no parallel aider instances).
-- Diff size estimate ≤180 LOC (abort >220 LOC).
-- NO security/auth/Firestore schema/KPI logic.
-- If tests or lint fail: mark task failed and enqueue `DEL-<ID>-FIX` with narrowed scope.
-- Timeouts (>30m running) → mark failed with `timeout` note.
+Interactive Foreground Tasks (run on-demand, can overlap with loop):
+- `typecheck` / `lint` / focused test scripts.
+- `refactor:lint-sweep` (ensure queue idle first to avoid interleaved formatting diffs).
+- Brain tasks (`codex:brain:*`) – keep isolated; they do not modify same files as delegation by design. If a brain task will emit code, pause delegation to prevent merge conflicts.
 
-Queue File (`sessions/aider-queue.jsonl`) States: `pending`, `running`, `done`, `failed`.
-Log File (`sessions/aider-log.jsonl`) Records: `{ taskId, filesChanged, locAdded, locRemoved, status, ts, notes? }` (rotate >200KB).
+Concurrency Rules:
+1. Single Writer Principle: Only one automated writer at a time (delegation loop OR a manual `delegate:process`). If you must run a one-off `delegate:process`, temporarily stop the loop task.
+2. Human + Loop Safe: Manual edits + loop are fine; loop only touches queued file list. Re-run typecheck after both if touching same domain.
+3. Sweep Isolation: Before running `eslint:autofix-all` or `refactor:lint-sweep`, ensure no pending/running queue items (otherwise queue patch context may drift). If busy, mark future tasks hold or wait for idle snapshot.
+4. High-Risk Domains (finance, auth, Firestore rules): NEVER queued mechanically; edit manually with loop still allowed (loop ignores them) but prefer stopping loop if large refactor.
+5. Queue Backpressure: If >3 failed tasks accumulate, pause loop and triage (avoid churn). Fix root cause then resume.
+6. LOC Guard: Delegation tasks exceeding ~160 LOC estimated should be pre-split (avoid runtime rejection & rollback costs).
 
-User Intents (phrases to honor):
-- “show delegation status” → summarize queue + recent logs.
-- “flush delegation” → process all pending sequentially (if none running).
-- “stop auto delegation” → halt autonomous loop.
+Quick Operational Pattern:
+- Open: Start `dev-server` + `delegation:loop`.
+- Implement feature slice manually; meanwhile loop clears mechanical backlog.
+- Before broad formatting / lint sweep: stop loop, run sweep, restart loop.
+- After adding new scripts impacting automation: restart loop to reload environment.
 
-Do NOT auto-enqueue new tasks without explicit prior user approval.
+Detection & Recovery:
+- Duplicate Loop: If two snapshots print overlapping times, stop the newer one (only first needed).
+- Stalled Task: Status `running` > 5m -> mark failed manually (edit JSON line to `failed`) then resume; enqueue a `DEL-<TASK>-FIX` follow-up.
+- Conflict (merge error in delegation): Remove task line, create a narrower replacement block.
 
-### 14. Delegation Heuristic
-Delegate if ALL apply:
-1. Patterned edit (clear find/replace or templated insertion) OR test scaffolding after first exemplar.
-2. Expected total diff < 180 LOC (soft). Split if >180; hard stop 220 LOC.
-3. No secrets / env / serviceAccount exposure.
-4. Rollback is trivial (single commit revert).
-Else: keep in Copilot scope.
+Minimal Commands Cheat Sheet (sequential safe use):
+1. Start loop: VS Code Task `delegation:loop`.
+2. Pause loop: Stop task (Task Panel) before mass edits.
+3. One-off process (while loop stopped): run `delegation:process` task.
+4. Resume loop: restart task; confirm snapshot line prints.
 
-### 15. Delegation Block Format
-When delegating, emit (instead of immediate edits):
-```
-/delegate
-TaskID: DEL-<SHORT>
-Summary: <What & Why>
-Files: <explicit relative paths | NEW: path>
-Constraints:
-	- MaxDiffLines: 180 (hard 220)
-	- Preserve style; no reformat churn
-	- Keep test IDs stable
-ExitCriteria:
-	- Tests: <npm script(s)>
-	- Lint & type check pass
-Rollback: git revert HEAD
-Observability: append JSON line to sessions/aider-log.jsonl
-```
-If aide exceeds limits: split into DEL-<SHORT>-A / -B.
+Safety Heuristic: If uncertain whether an automated edit may touch the same region you're modifying, pause loop (cost ≤15s) and resume after commit.
 
-### 16. Aider Session Guardrails
-Pre-flight: clean tree (`git diff --quiet`), optional `npm run ai:aider:prep` if defined, scope add files only. Post-flight: run targeted tests + lint/type. If failing, produce `/delegate:fix` block with narrowed file list.
-
-### 17. Observability Precedence (Authoritative)
-Badge / value source order: Smoothed > Server MA7 > Client MA7 > Raw. Never silently downgrade without adjusting badge label. Tests asserting `[data-testid="prov-delta-smoothed"]` must not rely on synthetic injections.
-
-### 18. Logging (sessions/aider-log.jsonl)
-Each delegation may append JSON line:
-`{"taskId":"DEL-OBS-PREC","filesChanged":3,"locAdded":54,"locRemoved":12,"status":"pass","ts":"<ISO>"}`
-File kept small (<200KB); rotate or prune when large. Pure tooling artifact—no CHANGE_LOG entry needed unless behavior changed.
-
-### 19. Slash Commands (Internal Guidance)
-`/delegate` emit block; `/abort-delegate` cancel queued; `/refine <TaskID>` create narrowed follow-up; `/metrics aide` summarize recent delegation stats (lines changed, pass/fail).
-
-### 20. Diff Safety Checklist (Quick)
-Before accepting a mechanical aide diff: related? size < cap? tests updated? no secrets? rollback simple? If any NO → revise.
-
-## Canonical Docs
-
-- Implementation Workflow: `docs/COMPREHENSIVE_DEVELOPMENT_WORKFLOW.md`
-- Testing Strategy: `docs/COMPREHENSIVE_TESTING_INFRASTRUCTURE.md`
-- Performance & Mobile: `docs/COMPREHENSIVE_MOBILE_PERFORMANCE.md`
-- System Architecture: `docs/COMPREHENSIVE_SYSTEM_ARCHITECTURE.md`
-- Security & Secrets: `docs/COMPREHENSIVE_SECURITY_PROTOCOLS.md`
-- Configuration Hub: `docs/CONFIGURATION_COMPREHENSIVE.md`
-- Firestore Schemas: `docs/FIRESTORE_SCHEMAS.md`
-- Change Log (governance): `docs/CHANGE_LOG.md`
-- Incomplete Code Audit (open gaps): `docs/INCOMPLETE_CODE_AUDIT.md`
-- PilotBuddy Intelligence (agent design): `docs/COMPREHENSIVE_PILOTBUDDY_INTELLIGENCE.md`
-- Canonical Agent Profile: `.github/chatmodes/pilotBuddy.chatmode.md`
-- Latest Production Addendum: `archey/ADDENDUM_2025-08-12.md`

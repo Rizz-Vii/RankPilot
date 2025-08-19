@@ -1,6 +1,7 @@
 "use client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart";
+import type { ChartConfig } from "@/components/ui/chart";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Activity } from "lucide-react";
 import { Pie, PieChart, Cell, Legend } from "recharts";
 import styles from "@/app/(app)/dashboard/dashboard.module.css";

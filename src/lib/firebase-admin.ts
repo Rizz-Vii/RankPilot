@@ -10,6 +10,9 @@ dotenv.config({ path: ".env.local" });
 // Enhanced Firebase Admin initialization with fallbacks (named app)
 let app: admin.app.App;
 
+// Lightweight in-module diagnostics for initialization errors
+const firebaseAdminDiagnostics: { errors: Array<{ message: string; code?: string }> } = { errors: [] };
+
 try {
   // Reuse or initialize a named app to avoid stale default app credentials on HMR
   app = admin.app('rankpilot-admin');
@@ -125,7 +128,18 @@ try {
     (global as unknown)[SETTINGS_KEY] = true;
   }
 } catch (e) {
-  // Silently ignore (will not impact critical functionality)
+  // Capture diagnostics without throwing
+  const msg = typeof e === "object" && e && "message" in (e as Record<string, unknown>
+    ) && typeof (e as { message?: unknown }).message === "string"
+      ? (e as { message: string }).message
+      : String(e);
+  const code = typeof e === "object" && e && "code" in (e as Record<string, unknown>) && typeof (e as { code?: unknown }).code === "string"
+      ? (e as { code: string }).code
+      : undefined;
+  firebaseAdminDiagnostics.errors.push({ message: msg, code });
+  if (firebaseAdminDiagnostics.errors.length > 50) {
+    firebaseAdminDiagnostics.errors.shift();
+  }
 }
 export const adminAuth = app.auth();
 export { app as adminApp };

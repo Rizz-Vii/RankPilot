@@ -1,0 +1,299 @@
+{
+  "steps": [
+    {
+      "kind": "do-task",
+      "taskId": "CLF-0",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-1",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-2",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-3",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-5",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-6",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-7",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-8",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-9",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-10",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-11",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-12",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-13",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-14",
+      "domain": "frontend",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-15",
+      "domain": "frontend",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-16",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-17",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-18",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-19",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-20",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-21",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-22",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-23",
+      "domain": "frontend",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-24",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-25",
+      "domain": "data",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-26",
+      "domain": "data",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-27",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-28",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-29",
+      "domain": "backend",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-30",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-31",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-32",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-33",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-34",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-35",
+      "domain": "frontend",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-36",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-37",
+      "domain": "data",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-38",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-39",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-40",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-41",
+      "domain": "data",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-42",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-43",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-44",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-45",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-46",
+      "domain": "backend",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-47",
+      "domain": "docs",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-48",
+      "domain": "data",
+      "contextNote": "files:6"
+    },
+    {
+      "kind": "do-task",
+      "taskId": "CLF-49",
+      "domain": "ops",
+      "contextNote": "files:6"
+    }
+  ],
+  "strategy": "openai"
+}

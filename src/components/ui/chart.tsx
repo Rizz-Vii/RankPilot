@@ -6,7 +6,7 @@ import * as RechartsPrimitive from "recharts";
 import { cn } from "@/lib/utils";
 import type { TooltipContentProps, DefaultLegendContentProps } from "recharts"; //
 
-import {
+import type {
   NameType,
   ValueType,
 } from "recharts/types/component/DefaultTooltipContent";

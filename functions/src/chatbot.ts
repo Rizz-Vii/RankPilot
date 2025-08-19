@@ -16,6 +16,7 @@ import {
   getNeuroSEOContext,
   getSiteContext
 } from "./context";
+import type { AdminContext, AuditContext, ChatContext, SiteContext } from "./context";
 
 // Initialize services
 const db = getFirestore();
@@ -129,12 +130,14 @@ export const customerChatHandler = onCall(
 
       // Add conversation history for context
       if (chatContext.recentConversations.length > 0) {
-        const recentHistory = chatContext.recentConversations
+        type ConversationHistoryItem = { question?: string; response?: string };
+        const recentHistory = (chatContext.recentConversations as unknown[])
           .slice(0, 3) // Last 3 conversations
           .reverse();
 
-        recentHistory.forEach(conv => {
-          if (conv.question && conv.response) {
+        recentHistory.forEach((raw) => {
+          const conv = raw as ConversationHistoryItem;
+          if (typeof conv.question === 'string' && typeof conv.response === 'string') {
             messages.splice(-1, 0,
               { role: "user", content: conv.question },
               { role: "assistant", content: conv.response }
@@ -152,10 +155,13 @@ export const customerChatHandler = onCall(
       let aiResponse = "";
       let tokensUsed = 0;
       try {
+        const extract = (c: OpenAI.Chat.Completions.ChatCompletionMessageParam["content"]): string =>
+          typeof c === 'string' ? c : '';
         const history = messages
           .filter((m) => m.role === "user" || m.role === "assistant")
-          .map((m) => ({ role: m.role as ("user" | "assistant"), content: String((m as any).content || "") }));
-        const sys = String((messages.find((m) => m.role === "system") as any)?.content || "");
+          .map((m) => ({ role: m.role as ("user" | "assistant"), content: extract(m.content) }));
+        const sysMsg = messages.find((m) => m.role === "system");
+        const sys = sysMsg ? extract(sysMsg.content as OpenAI.Chat.Completions.ChatCompletionMessageParam["content"]) : "";
         const prompt = composePrompt(sys, history, message);
         aiResponse = await getManagedAI(prompt, "gpt-4o", { latencyBudgetMs: Number(process.env.AI_LATENCY_BUDGET_MS || 8000) });
         tokensUsed = aiResponse ? Math.min(1500, Math.ceil(aiResponse.split(/\s+/).length * 1.3)) : 0;
@@ -245,9 +251,10 @@ export const adminChatHandler = onCall(
 
       // Verify admin access
       const userDoc = await db.collection("users").doc(uid).get();
-      const userData = userDoc.data();
+      const userData = userDoc.data() as Record<string, unknown> | undefined;
 
-      if (!userData || !["admin", "enterprise"].includes(userData.subscriptionTier)) {
+      const tier = (userData?.subscriptionTier as string | undefined) || "free";
+      if (!userData || !["admin", "enterprise"].includes(tier)) {
         throw new HttpsError("permission-denied", "Admin access required");
       }
 
@@ -258,7 +265,7 @@ export const adminChatHandler = onCall(
 
       // Fetch admin context data
       const chatContext = await getChatContext(uid, true);
-      const adminContext = await getAdminContext(userData.subscriptionTier);
+      const adminContext = await getAdminContext(tier);
 
       // Build admin system prompt
       const systemPrompt = buildAdminSystemPrompt(chatContext, adminContext);
@@ -294,10 +301,13 @@ export const adminChatHandler = onCall(
       let aiResponse = "";
       let tokensUsed = 0;
       try {
+        const extract = (c: OpenAI.Chat.Completions.ChatCompletionMessageParam["content"]): string =>
+          typeof c === 'string' ? c : '';
         const history = messages
           .filter((m) => m.role === "user" || m.role === "assistant")
-          .map((m) => ({ role: m.role as ("user" | "assistant"), content: String((m as any).content || "") }));
-        const sys = String((messages.find((m) => m.role === "system") as any)?.content || "");
+          .map((m) => ({ role: m.role as ("user" | "assistant"), content: extract(m.content) }));
+        const sysMsg = messages.find((m) => m.role === "system");
+        const sys = sysMsg ? extract(sysMsg.content as OpenAI.Chat.Completions.ChatCompletionMessageParam["content"]) : "";
         const prompt = composePrompt(sys, history, message);
         aiResponse = await getManagedAI(prompt, "gpt-4o", { latencyBudgetMs: Number(process.env.AI_LATENCY_BUDGET_MS || 8000) });
         tokensUsed = aiResponse ? Math.min(1800, Math.ceil(aiResponse.split(/\s+/).length * 1.3)) : 0;
@@ -356,10 +366,10 @@ export const adminChatHandler = onCall(
  * Builds system prompt for customer chatbot
  */
 function buildCustomerSystemPrompt(
-  chatContext: any,
-  auditContext: any,
-  siteContext: any,
-  neuroSEOContext: any
+  chatContext: ChatContext,
+  auditContext: AuditContext | null,
+  siteContext: SiteContext,
+  neuroSEOContext: { insights: string }
 ): string {
   const userTier = chatContext.userTier || "free";
   const availableFeatures = chatContext.availableFeatures || [];
@@ -443,7 +453,7 @@ IMPORTANT: If the user asks about features beyond their tier, explain the limita
 /**
  * Builds system prompt for admin chatbot
  */
-function buildAdminSystemPrompt(chatContext: any, adminContext: any): string {
+function buildAdminSystemPrompt(chatContext: ChatContext, adminContext: AdminContext): string {
   return `You are RankPilot Admin AI, an advanced system management assistant for RankPilot administrators.
 
 ADMIN CONTEXT:
@@ -458,7 +468,7 @@ CURRENT SYSTEM METRICS:
 - Error Rate: ${adminContext.systemMetrics.errorRate}%
 
 RECENT ACTIVITY:
-${adminContext.recentActivity.slice(0, 3).map((activity: any) =>
+${adminContext.recentActivity.slice(0, 3).map((activity) =>
     `- ${activity.type || "Activity"}: ${activity.description || "No description"}`
   ).join("\n")}
 
@@ -502,7 +512,7 @@ async function saveConversation(
   question: string,
   response: string,
   chatType: "customer" | "admin",
-  metadata: any = {}
+  metadata: Record<string, unknown> = {}
 ): Promise<void> {
   try {
     const collectionName = chatType === "admin" ? "adminChats" : "chatLogs";
@@ -541,4 +551,3 @@ async function saveConversation(
     // Don't throw error to avoid breaking the chat flow
   }
 }
-

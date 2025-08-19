@@ -6,7 +6,8 @@
  * 3. Ownership transfer succeeds when invoked by current owner (if rules permit).
  */
 import fs from 'fs';
-import { initializeTestEnvironment, RulesTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
+import type { RulesTestEnvironment} from '@firebase/rules-unit-testing';
+import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
 import { setLogLevel } from 'firebase/firestore';
 
 if (!process.env.FIRESTORE_EMULATOR_HOST) {

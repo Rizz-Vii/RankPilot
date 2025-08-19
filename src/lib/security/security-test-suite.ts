@@ -198,7 +198,7 @@ export class SecurityTestSuite {
                     blockedAfterAttempts = true;
                     break;
                 }
-            } catch (error) {
+            } catch {
                 // Network error might indicate blocking
                 blockedAfterAttempts = true;
                 break;
@@ -253,7 +253,7 @@ export class SecurityTestSuite {
                         cvssScore: 5.3
                     });
                 }
-            } catch (error) {
+            } catch {
                 // Endpoint might not exist, which is acceptable
             }
         }
@@ -288,7 +288,7 @@ export class SecurityTestSuite {
                     cvssScore: 6.8
                 });
             }
-        } catch (error) {
+        } catch {
             // MFA endpoint might not exist
         }
     }
@@ -379,7 +379,7 @@ export class SecurityTestSuite {
                     });
                 }
             }
-        } catch (error) {
+        } catch {
             // Expected behavior - access should be denied
         }
     }
@@ -432,7 +432,7 @@ export class SecurityTestSuite {
             // Test 3: PII Protection
             await this.testPIIProtection(testResult);
 
-        } catch (error) {
+        } catch {
             testResult.status = 'failed';
         }
 
@@ -488,7 +488,7 @@ export class SecurityTestSuite {
             // Test 3: API Input Validation
             await this.testAPIInputValidation(testResult);
 
-        } catch (error) {
+        } catch {
             testResult.status = 'failed';
         }
 
@@ -511,7 +511,7 @@ export class SecurityTestSuite {
                     rateLimited = true;
                     break;
                 }
-            } catch (error) {
+            } catch {
                 break;
             }
         }
@@ -570,7 +570,7 @@ export class SecurityTestSuite {
             // Test 3: Secure Cookie Settings
             await this.testSecureCookieSettings(testResult);
 
-        } catch (error) {
+        } catch {
             testResult.status = 'failed';
         }
 
@@ -623,7 +623,7 @@ export class SecurityTestSuite {
             // Test 2: SameSite Cookie Attribute
             await this.testSameSiteCookieAttribute(testResult);
 
-        } catch (error) {
+        } catch {
             testResult.status = 'failed';
         }
 
@@ -690,7 +690,7 @@ export class SecurityTestSuite {
                 }
             }
 
-        } catch (error) {
+        } catch {
             testResult.status = 'failed';
         }
 
@@ -719,7 +719,7 @@ export class SecurityTestSuite {
             // Test various injection payloads
             await this.testInjectionVulnerabilities(testResult);
 
-        } catch (error) {
+        } catch {
             testResult.status = 'failed';
         }
 
@@ -758,7 +758,7 @@ export class SecurityTestSuite {
             // Test OWASP Top 10 compliance
             await this.testOWASPCompliance(testResult);
 
-        } catch (error) {
+        } catch {
             testResult.status = 'failed';
         }
 

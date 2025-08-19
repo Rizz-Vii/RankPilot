@@ -1,4 +1,4 @@
-import { Variants } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 
 // Shared framer-motion variants for dashboard section & card entrance animations
 export const dashboardContainerVariants: Variants = {

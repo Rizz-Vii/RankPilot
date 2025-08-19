@@ -8,7 +8,8 @@
  *   BATCH_SIZE=200 npm run backfill:semantic-map-agg
  */
 import { initializeApp, getApps } from 'firebase-admin/app';
-import { getFirestore, QueryDocumentSnapshot, FieldValue } from 'firebase-admin/firestore';
+import type { QueryDocumentSnapshot} from 'firebase-admin/firestore';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { deriveSemanticMapAggregate } from './scan-neuroseo-large-docs';
 
 interface LegacySemanticDoc {

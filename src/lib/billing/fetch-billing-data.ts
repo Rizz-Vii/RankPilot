@@ -1,5 +1,6 @@
-import { collection, doc, getDoc, getDocs, limit, orderBy, query, where, Firestore } from 'firebase/firestore';
 import { getLogger } from '@/lib/logging/app-logger';
+import type { Firestore } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
 
 export interface BillingSubscription {
     userId: string;
@@ -43,22 +44,57 @@ export async function fetchBillingData(firestore: Firestore, userId: string, opt
         const subSnap = await getDoc(doc(firestore, 'subscriptions', userId));
         let subscription: BillingSubscription | null = null;
         if (subSnap.exists()) {
-            const d = subSnap.data() as Record<string, any>;
+            interface SubscriptionDoc {
+                status?: string;
+                tier?: string;
+                currentPeriodEnd?: { toDate?: () => Date } | Date | null;
+                trialEnd?: { toDate?: () => Date } | Date | null;
+                cancelAt?: { toDate?: () => Date } | Date | null;
+            }
+            const raw: unknown = subSnap.data();
+            const d: SubscriptionDoc = (raw && typeof raw === 'object') ? raw as SubscriptionDoc : {};
+            const toMaybeDate = (value: SubscriptionDoc[keyof SubscriptionDoc]): Date | null | undefined => {
+                if (!value) return value === null ? null : undefined;
+                if (value instanceof Date) return value;
+                if (typeof value === 'object' && 'toDate' in value) {
+                    const fn = (value as { toDate?: () => Date }).toDate;
+                    if (typeof fn === 'function') {
+                        try {
+                            const res = fn.call(value);
+                            return res instanceof Date ? res : undefined;
+                        } catch {
+                            return undefined;
+                        }
+                    }
+                }
+                return undefined;
+            };
             subscription = {
                 userId,
                 status: typeof d.status === 'string' ? d.status : 'free',
                 tier: typeof d.tier === 'string' ? d.tier : 'free',
-                currentPeriodEnd: d.currentPeriodEnd?.toDate?.() || undefined,
-                trialEnd: d.trialEnd?.toDate?.() || null,
-                cancelAt: d.cancelAt?.toDate?.() || null,
+                currentPeriodEnd: toMaybeDate(d.currentPeriodEnd) || undefined,
+                trialEnd: toMaybeDate(d.trialEnd) || null,
+                cancelAt: toMaybeDate(d.cancelAt) || null,
             };
         }
         // invoices scoped by userId only (team support later)
         const invQ = query(collection(firestore, 'financeInvoices'), where('userId', '==', userId), orderBy('period', 'desc'), limit(invoiceLimit));
         const invSnap = await getDocs(invQ);
         const invoices: BillingInvoice[] = invSnap.docs.map(d => {
-            const data = d.data() as Record<string, any>;
-            return {
+            interface InvoiceDoc {
+                period?: string;
+                amount?: number | string;
+                currency?: string;
+                status?: string;
+                issuedAt?: unknown;
+                paidAt?: unknown;
+                userId?: string;
+                teamId?: string;
+            }
+            const rawInv: unknown = d.data();
+            const data: InvoiceDoc = (rawInv && typeof rawInv === 'object') ? rawInv as InvoiceDoc : {};
+            const invoice: BillingInvoice = {
                 id: d.id,
                 period: typeof data.period === 'string' ? data.period : '1970-01',
                 amount: Number(data.amount) || 0,
@@ -68,7 +104,8 @@ export async function fetchBillingData(firestore: Firestore, userId: string, opt
                 paidAt: data.paidAt,
                 userId: typeof data.userId === 'string' ? data.userId : userId,
                 teamId: typeof data.teamId === 'string' ? data.teamId : undefined
-            } as BillingInvoice;
+            };
+            return invoice;
         });
         // compute effective monthly = sum of last paid invoice(s) in most recent period (not persisted)
         const latestPeriod = invoices.length ? invoices[0].period : undefined;
@@ -77,7 +114,13 @@ export async function fetchBillingData(firestore: Firestore, userId: string, opt
         logger.info('billing-ui.load.success', { userId, invoiceCount: invoices.length, tier: subscription?.tier || 'free' });
         return { subscription, invoices, nextInvoice, effectiveMonthly, loading: false };
     } catch (e: unknown) {
-        const msg = (e && typeof e === 'object' && 'message' in e) ? (e as any).message : String(e);
+        let msg: string;
+        if (e && typeof e === 'object' && 'message' in e) {
+            const maybe = (e as { message?: unknown }).message;
+            msg = typeof maybe === 'string' ? maybe : String(maybe);
+        } else {
+            msg = String(e);
+        }
         logger.error('billing-ui.load.error', { userId, error: msg });
         return { subscription: null, invoices: [], nextInvoice: null, effectiveMonthly: 0, loading: false, error: msg };
     }

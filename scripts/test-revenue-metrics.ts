@@ -3,7 +3,8 @@
  * Lightweight unit assertions for revenue metrics formulas.
  * Run: npm run test:revenue-metrics
  */
-import { computeRevenueMetrics, SubscriptionEvent } from '../src/lib/finance/revenue-metrics';
+import type { SubscriptionEvent } from '../src/lib/finance/revenue-metrics';
+import { computeRevenueMetrics } from '../src/lib/finance/revenue-metrics';
 import assert from 'assert';
 
 function almost(a: number | null, b: number | null, eps = 0.01) {

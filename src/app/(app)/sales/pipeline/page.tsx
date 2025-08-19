@@ -5,7 +5,7 @@ import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { QuotaBar } from '@/components/metrics/QuotaBar';
-import { getMockMetrics } from '@/lib/domain/mockMetrics';
+import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 import { ToolPageHeader } from '@/components/tool-page-header';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useProvenance } from '@/hooks/useProvenance';
 
 export default function SalesPipelinePage() {
-  const data = getMockMetrics('sales');
+  const { data } = useMockDomainMetrics('sales', true);
   const { user } = useAuth();
   const userId = user?.uid; const teamId = (user as any)?.teamId as string | undefined;
   interface SalesPipelineMetricsSnapshot { pipeline:number; closedWon:number; totalDeals:number; ts:Date }
@@ -114,11 +114,11 @@ export default function SalesPipelinePage() {
           </div>
         )}
         <section className="grid gap-4 md:grid-cols-3">
-          {data.kpis.map(k => (
+          {(data?.kpis || []).map(k => (
             <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
           ))}
         </section>
-        {data.quotas && (
+        {data?.quotas && (
           <section className="space-y-4">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Usage & Quotas</h2>
             <div className="grid gap-4 md:grid-cols-3">

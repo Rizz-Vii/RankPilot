@@ -1,7 +1,7 @@
 /**
  * Edge Computing Configuration
  * Advanced Architecture Enhancement - DevReady Phase 3
- * 
+ *
  * Features:
  * - Edge function definitions
  * - Global CDN optimization
@@ -9,7 +9,8 @@
  * - Intelligent caching strategies
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 // Edge locations configuration
 const EDGE_LOCATIONS = {
@@ -90,7 +91,7 @@ function applyCachingStrategy(request: NextRequest, response: NextResponse): Nex
     // Determine caching strategy
     let cacheConfig: CacheConfig = PERFORMANCE_RULES.HTML_PAGES; // default
 
-    for (const [ruleType, config] of Object.entries(PERFORMANCE_RULES)) {
+    for (const [_unusedRuleKey, config] of Object.entries(PERFORMANCE_RULES)) {
         if (config.paths.some(path => pathname.startsWith(path))) {
             cacheConfig = config;
             break;

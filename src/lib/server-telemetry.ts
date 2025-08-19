@@ -7,10 +7,7 @@
  */
 
 // Import the TelemetryProvider type from the shared telemetry.ts file.
-import type { TelemetryProvider } from "./telemetry";
-
-// Type alias for the OpenTelemetry Node.js SDK module for better type safety.
-type OpenTelemetryNodeSDKModule = typeof import("@opentelemetry/sdk-node");
+import type { TelemetryProvider } from "./telemetry"; // type-only usage retained
 
 // Global variables to hold the OpenTelemetry API instances (Tracer, Meter, Logger).
 // These are initialized to undefined and populated upon successful SDK startup.
@@ -56,9 +53,7 @@ async function createRealProvider(): Promise<TelemetryProvider> {
     // Dynamically import all necessary OpenTelemetry packages.
     // This ensures that these potentially large dependencies are only loaded
     // when this function is called (i.e., on the server in production).
-    const OpenTelemetry: OpenTelemetryNodeSDKModule = await import(
-      "@opentelemetry/sdk-node"
-    );
+    const OpenTelemetry = await import("@opentelemetry/sdk-node");
     // Corrected import for ATTR_SERVICE_NAME and SemanticResourceAttributes
     const { SemanticResourceAttributes } = await import(
       "@opentelemetry/semantic-conventions"
@@ -72,12 +67,9 @@ async function createRealProvider(): Promise<TelemetryProvider> {
     const { OTLPTraceExporter } = await import(
       "@opentelemetry/exporter-trace-otlp-http"
     );
-    const { OTLPMetricExporter } = await import(
-      "@opentelemetry/exporter-metrics-otlp-http"
-    );
-    const { PeriodicExportingMetricReader } = await import(
-      "@opentelemetry/sdk-metrics"
-    );
+    // Metrics exporters intentionally omitted (commented) until metrics pipeline enabled
+    // const { OTLPMetricExporter } = await import('@opentelemetry/exporter-metrics-otlp-http');
+    // const { PeriodicExportingMetricReader } = await import('@opentelemetry/sdk-metrics');
     const {
       LoggerProvider,
       ConsoleLogRecordExporter,

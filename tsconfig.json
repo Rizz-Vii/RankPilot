@@ -18,7 +18,13 @@
   "paths": {
       "@/*": ["src/*"]
   },
-  
+  "noImplicitOverride": true,
+  "useUnknownInCatchVariables": true,
+  "verbatimModuleSyntax": true,
+  // Stage 2 (enable after noise reduction)
+  // "noUncheckedIndexedAccess": true,
+  // "exactOptionalPropertyTypes": true,
+
   },
   "include": [
     "next-env.d.ts",
@@ -27,7 +33,8 @@
     "src/**/*.tsx",
     "functions/**/*.ts",
     "playwright.config.*.ts",
-    ".next/types/**/*.ts",
+    // Exclude Next.js generated types from strict typecheck to avoid brittle coupling to Next internal route typings
+    // They are validated during Next build; not needed for standalone tsc.
     "types/**/*.d.ts",
     "testing/**/*.ts",
     "testing/**/*.tsx"

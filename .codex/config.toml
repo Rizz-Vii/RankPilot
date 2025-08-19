@@ -1,0 +1,120 @@
+# Codex Project Configuration (Enhanced)
+# Derived from OpenAI production best practices & project conventions.
+
+[project]
+root = "/workspaces/studio"
+name = "RankPilot Studio"
+trust_level = "trusted"
+
+[defaults]
+# Model + reasoning defaults (override per task if needed)
+model = "gpt-5.1"
+reasoning = { effort = "medium" }
+max_output_tokens = 4096
+verbosity = "concise"
+tool_call_budget = 12
+
+[guardrails]
+# Soft limits to prevent runaway operations
+max_edit_batch = 10          # files per batch
+max_lines_per_edit = 180    # keep mechanical safety threshold
+require_typecheck = true
+require_lint = true
+
+[paths]
+prompts = ".codex/prompts"
+queues = ".codex/queues"
+policies = ".codex/policies"
+
+[telemetry]
+log_level = "info"
+redact_patterns = ["API_KEY", "SECRET", "TOKEN"]
+
+[workflow]
+# Enforce small iterative loops
+checkpoint_every_n_tool_calls = 5
+early_stop_criteria = [
+	"All requirements mapped (done/deferred)",
+	"Validation (typecheck+lint+tests) clean",
+	"No further safe-impacting context needed"
+]
+minimal_reasoning_tool_cap = 2
+deep_reasoning_extra_validation = true
+
+[tests]
+# Script names to run for fast validation
+fast_suite = ["typecheck", "lint", "tests:unit-fast"]
+deep_suite_append = ["quality:fast"]
+
+[policies]
+# Mapping to policy docs for reference in UI / CLI
+ai_usage = ".codex/policies/ai-usage.md"
+prompt_style = ".codex/policies/prompt-style.md"
+
+[retry]
+max_attempts = 2
+backoff_seconds = 2
+on_exhaustion = "summarize_and_halt"
+
+[caching]
+# Placeholder for future embedding / semantic recall cache controls
+enabled = true
+max_entries = 500
+strategy = "lru"
+
+[security]
+block_env_leak = true
+
+[format]
+# Output formatting preferences for assistant
+headings = true
+coverage_line = true
+diff_summary = true
+plan_delta_only = true
+
+[profiles.minimal]
+reasoning_effort = "low"
+tool_call_cap = 2
+verbosity = "terse"
+
+[profiles.balanced]
+reasoning_effort = "medium"
+tool_call_cap = 12
+verbosity = "concise"
+
+[profiles.deep]
+reasoning_effort = "high"
+tool_call_cap = 25
+verbosity = "balanced"
+require_risk_log = true
+
+# Cost-optimized profile for large mechanical / repetitive edit tasks (e.g., ESLint autofix batches)
+[profiles.mini]
+model = "codex-mini-latest"
+reasoning_effort = "low"
+verbosity = "terse"
+tool_call_cap = 8              # allow a few chained batches before checkpoint
+max_output_tokens = 2048       # cap to prevent runaway verbosity
+temperature = 0.15
+mechanical_task = true         # hint flag for orchestrator (non-semantic refactors)
+batch_loc_soft_cap = 140       # keep within guardrail (<180)
+auto_checkpoint_after_edits = 3
+plan_delta_only = true         # reiterate compression for long runs
+early_abort_on_test_regression = true
+
+[cost]
+p95_output_guard = true
+plan_hash_delta = true
+max_noop_tool_calls = 3
+
+[routing]
+enable_profile_router = true
+semantic_change_threshold = 0.25
+cluster_eslint = true
+
+[autonomy]
+assumption_ledger = true
+auto_reasoning_downgrade_after_green = 2
+plan_delta_only = true
+
+# End of config

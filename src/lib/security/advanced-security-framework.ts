@@ -13,7 +13,7 @@
  * - API rate limiting and DDoS protection
  */
 
-import { randomBytes } from 'crypto';
+import { randomBytes, createCipheriv, createDecipheriv } from 'crypto';
 import { EventEmitter } from 'events';
 
 // Narrowed request type used internally (was previously 'unknown' in many helpers)
@@ -273,20 +273,14 @@ export class AdvancedSecurityFramework extends EventEmitter {
      */
     async encryptData(data: string, keyId: string = 'default'): Promise<string> {
         try {
-            const key = this.encryptionKeys.get(keyId);
-            if (!key) {
-                throw new Error('Encryption key not found');
-            }
-
-            const iv = randomBytes(16);
-            const cipher = require('crypto').createCipher('aes-256-gcm', key);
-
-            let encrypted = cipher.update(data, 'utf8', 'hex');
-            encrypted += cipher.final('hex');
-
+            const keyHex = this.encryptionKeys.get(keyId);
+            if (!keyHex) throw new Error('Encryption key not found');
+            const key = Buffer.from(keyHex, 'hex'); // 32 bytes
+            const iv = randomBytes(12); // 96-bit nonce recommended for GCM
+            const cipher = createCipheriv('aes-256-gcm', key, iv);
+            const encrypted = Buffer.concat([cipher.update(data, 'utf8'), cipher.final()]);
             const tag = cipher.getAuthTag();
-
-            return `${iv.toString('hex')}:${tag.toString('hex')}:${encrypted}`;
+            return `${iv.toString('hex')}:${tag.toString('hex')}:${encrypted.toString('hex')}`;
         } catch (error) {
             console.error('[SecurityFramework] Encryption error:', error);
             throw new Error('Data encryption failed');
@@ -298,27 +292,18 @@ export class AdvancedSecurityFramework extends EventEmitter {
      */
     async decryptData(encryptedData: string, keyId: string = 'default'): Promise<string> {
         try {
-            const key = this.encryptionKeys.get(keyId);
-            if (!key) {
-                throw new Error('Decryption key not found');
-            }
-
+            const keyHex = this.encryptionKeys.get(keyId);
+            if (!keyHex) throw new Error('Decryption key not found');
+            const key = Buffer.from(keyHex, 'hex');
             const parts = encryptedData.split(':');
-            if (parts.length !== 3) {
-                throw new Error('Invalid encrypted data format');
-            }
-
+            if (parts.length !== 3) throw new Error('Invalid encrypted data format');
             const iv = Buffer.from(parts[0], 'hex');
             const tag = Buffer.from(parts[1], 'hex');
-            const encrypted = parts[2];
-
-            const decipher = require('crypto').createDecipher('aes-256-gcm', key);
+            const encrypted = Buffer.from(parts[2], 'hex');
+            const decipher = createDecipheriv('aes-256-gcm', key, iv);
             decipher.setAuthTag(tag);
-
-            let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-            decrypted += decipher.final('utf8');
-
-            return decrypted;
+            const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
+            return decrypted.toString('utf8');
         } catch (error) {
             console.error('[SecurityFramework] Decryption error:', error);
             throw new Error('Data decryption failed');

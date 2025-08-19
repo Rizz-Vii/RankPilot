@@ -5,7 +5,7 @@
 import { exec } from 'child_process';
 import * as fs from 'fs/promises';
 import { promisify } from 'util';
-import { AgentCapability, RankPilotAgent, SafetyConstraint } from '../core/AgentFramework';
+import type { AgentCapability, RankPilotAgent, SafetyConstraint } from '../core/AgentFramework';
 
 const execAsync = promisify(exec);
 

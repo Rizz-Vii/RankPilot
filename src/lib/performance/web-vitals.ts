@@ -90,7 +90,7 @@ export const performanceUtils = {
     // Send metric to analytics
     sendToAnalytics: (metric: WebVitalsMetric) => {
         if (typeof window !== 'undefined' && 'gtag' in window) {
-            const win = window as unknown as { gtag?: (...args: any[]) => void };
+            const win = window as unknown as { gtag?: (...args: unknown[]) => void };
             if (typeof win.gtag === 'function') {
                 win.gtag('event', metric.name, {
                     event_category: 'Web Vitals',

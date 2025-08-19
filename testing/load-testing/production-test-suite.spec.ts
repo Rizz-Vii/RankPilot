@@ -3,7 +3,10 @@
  * Orchestrates all production testing scenarios with reporting
  */
 
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+
+// Diagnostics aggregator for captured errors across production suite
+const productionSuiteDiagnostics = { errors: [] as string[] };
 
 test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
 
@@ -76,6 +79,7 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
                 console.log(`   ${check.name}: ${status} (${responseTime}ms) ${status >= 200 && status < 400 ? '✅' : '❌'}`);
 
             } catch (error) {
+                productionSuiteDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 results.push({
                     name: check.name,
                     status: 'ERROR',
@@ -190,6 +194,7 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
                 }
 
             } catch (error) {
+                productionSuiteDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 errorCount++;
                 console.log(`   ${functionName}: ❌ Not Deployed or Unreachable`);
             }
@@ -270,6 +275,7 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
                 console.log(`   ${test.name}: ${responseTime}ms ${withinTarget ? '✅' : '⚠️'} (target: ${test.target}ms)`);
 
             } catch (error) {
+                productionSuiteDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log(`   ${test.name}: ❌ Failed to measure`);
             }
         }

@@ -1,7 +1,7 @@
 /**
  * Performance Optimization Engine
  * Implements Priority 3 Advanced Architecture Enhancements from DevReady Phase 3
- * 
+ *
  * Features:
  * - Intelligent resource management and optimization
  * - Real-time performance monitoring with Core Web Vitals
@@ -18,8 +18,9 @@ import { EventEmitter } from 'events';
 // Utility: safely derive an error message from unknown
 function safeErrorMessage(err: unknown): string {
     if (typeof err === 'string') return err;
-    if (err && typeof err === 'object' && 'message' in err && typeof (err as any).message === 'string') {
-        return (err as any).message as string;
+    if (err && typeof err === 'object' && 'message' in err) {
+        const maybe = (err as { message?: unknown }).message;
+        if (typeof maybe === 'string') return maybe;
     }
     return 'Unexpected error';
 }
@@ -828,12 +829,12 @@ export class PerformanceOptimizationEngine extends EventEmitter {
     private calculateAverages(metrics: PerformanceMetrics[]): Partial<PerformanceMetrics> {
         if (metrics.length === 0) return {};
 
-        const averages: Partial<PerformanceMetrics> = {};
+        const averages: Partial<PerformanceMetrics> & Record<string, unknown> = {};
         const metricKeys = Object.keys(metrics[0]).filter(key => key !== 'timestamp');
 
         for (const key of metricKeys) {
             const values = metrics.map(m => m[key as keyof PerformanceMetrics] as number);
-            (averages as any)[key] = values.reduce((sum, val) => sum + val, 0) / values.length;
+            averages[key] = values.reduce((sum, val) => sum + val, 0) / values.length as unknown as never;
         }
 
         return averages;

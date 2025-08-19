@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
 import { withProvenance, enforceProvenance } from '@/lib/middleware/provenance';
 
@@ -24,12 +25,14 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
             if (testUserEmail) {
                 const rec = await adminAuth.getUserByEmail(testUserEmail).catch(() => null);
                 if (!rec) {
-                    return NextResponse.json(enforceProvenance({ error: 'unknown_test_user' }, { path: 'test/finance/seed-invoice', note: 'missing_auth_testUser_invalid' }), { status: 400 });
+                    const unknownBody = enforceProvenance({ error: 'unknown_test_user' }, { path: 'test/finance/seed-invoice', note: 'missing_auth_testUser_invalid' });
+                    return NextResponse.json(unknownBody, { status: 400 });
                 }
                 uid = rec.uid;
                 decoded = { uid };
             } else {
-                return NextResponse.json(enforceProvenance({ error: 'auth_required' }, { path: 'test/finance/seed-invoice', note: 'missing_auth' }), { status: 401 });
+                const authBody = enforceProvenance({ error: 'auth_required' }, { path: 'test/finance/seed-invoice', note: 'missing_auth' });
+                return NextResponse.json(authBody, { status: 401 });
             }
         } else {
             const idToken = authHeader.replace('Bearer ', '');
@@ -59,8 +62,10 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         if (useTeam && teamId) { (doc as any).teamId = teamId; }
         if (status === 'paid') (doc as any).paidAt = now;
         await adminDb.collection('financeInvoices').add(doc);
-        return NextResponse.json(enforceProvenance({ ok: true, period, status, amount }, { path: 'test/finance/seed-invoice', note: 'seeded' }));
+        const okBody = enforceProvenance({ ok: true, period, status, amount }, { path: 'test/finance/seed-invoice', note: 'seeded' });
+        return NextResponse.json(okBody);
     } catch (e: unknown) {
-        return NextResponse.json(enforceProvenance({ error: 'internal_error', message: (e as any)?.message }, { path: 'test/finance/seed-invoice', note: 'exception' }), { status: 500 });
+        const errBody = enforceProvenance({ error: 'internal_error', message: (e as any)?.message }, { path: 'test/finance/seed-invoice', note: 'exception' });
+        return NextResponse.json(errBody, { status: 500 });
     }
 }, { path: 'test/finance/seed-invoice' });

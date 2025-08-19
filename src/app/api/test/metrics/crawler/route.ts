@@ -9,7 +9,8 @@
 // Response: JSON { domain, added: { hits, fallbacks }, totals: { aggregateHits, legacyFallbacks, adoptionPct } }
 // Adoption % = aggregateHits / (aggregateHits + legacyFallbacks) * 100 (null if denom=0)
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 import { recordCrawlerAggregateHit, recordCrawlerLegacyFallback, recordSemanticMapAggregateHit, recordSemanticMapLegacyFallback, getUnifiedMetricsSnapshot } from '@/lib/metrics/unified-metrics';
 
 export const dynamic = 'force-dynamic';

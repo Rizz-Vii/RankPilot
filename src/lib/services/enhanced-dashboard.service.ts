@@ -14,13 +14,10 @@ import {
     where,
     orderBy,
     limit,
-    getDocs,
-    doc,
-    getDoc,
-    Timestamp
+    getDocs
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { DashboardData } from "./dashboard-data.service";
+// Removed unused DashboardData import
 
 export class EnhancedDashboardService {
 

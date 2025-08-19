@@ -1,7 +1,7 @@
 // Chart Configuration Types and Components
 // Generated: July 31, 2025
 
-import { ChartConfig } from './index';
+import type { ChartConfig } from './index';
 
 // ============================================================================
 // CHART CONFIGURATIONS

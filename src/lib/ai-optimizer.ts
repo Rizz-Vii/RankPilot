@@ -2,7 +2,8 @@
  * AI Response Optimization - Caching, Batching, and Smart Retry
  */
 
-import { withAITimeout, TimeoutResult } from "./timeout";
+import type { TimeoutResult } from "./timeout";
+import { withAITimeout } from "./timeout";
 import { performanceMonitor, withPerformanceMonitoring } from "./performance-monitor";
 
 export interface CacheOptions {

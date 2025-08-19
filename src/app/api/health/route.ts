@@ -1,11 +1,12 @@
 // API Health Check
-import { NextResponse } from 'next/server';
-import { getUnifiedMetricsSnapshot } from '@/lib/metrics/unified-metrics';
+import { adminDb } from '@/lib/firebase-admin';
 import { getAIUsage24h, getSubtoolUsage24h } from '@/lib/metrics/ai-usage';
 import { getKpiSnapshot } from '@/lib/metrics/kpi-aggregation';
-import { getNeuroseoMetricsSnapshot } from '@/lib/neuroseo/metrics-registry';
-import { adminDb } from '@/lib/firebase-admin';
+import { getUnifiedMetricsSnapshot } from '@/lib/metrics/unified-metrics';
 import { ensureDailyUnifiedMetricsExport } from '@/lib/metrics/unified-metrics-export';
+import { enforceProvenance } from '@/lib/middleware/provenance';
+import { getNeuroseoMetricsSnapshot } from '@/lib/neuroseo/metrics-registry';
+import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 export async function GET() {
   const ts = Date.now();
@@ -23,8 +24,10 @@ export async function GET() {
   await ensureDailyUnifiedMetricsExport();
   // Derive crawler metrics (exposed explicitly for observability)
   interface CrawlerRaw { success: number; errors: number; totalCrawlMs: number; totalAnalysisMs: number; crawlP95?: number; analysisP95?: number; crawlP99?: number; analysisP99?: number }
-  const crawlerRaw: CrawlerRaw = (typeof (unified as any)?.crawler === 'object' && (unified as any).crawler)
-    ? (unified as any).crawler as CrawlerRaw
+  type UnifiedWithCrawler = typeof unified & { crawler?: CrawlerRaw };
+  const unifiedWithCrawler = unified as UnifiedWithCrawler;
+  const crawlerRaw: CrawlerRaw = typeof unifiedWithCrawler.crawler === 'object' && unifiedWithCrawler.crawler
+    ? unifiedWithCrawler.crawler
     : { success: 0, errors: 0, totalCrawlMs: 0, totalAnalysisMs: 0 };
   const crawlerRuns = crawlerRaw.success + crawlerRaw.errors;
   const crawlerMetrics = {
@@ -44,15 +47,39 @@ export async function GET() {
   try {
     const today = new Date(ts).toISOString().slice(0, 10);
     const snap = await adminDb.collection('teamCrawlerUsage').where('date', '==', today).limit(200).get();
+    interface TeamCrawlerDoc { count?: number; limit?: number; rejections?: number }
     let totalTeams = 0, totalUsed = 0, totalLimit = 0, totalRejections = 0;
-    snap.docs.forEach(d => { const data: any = d.data() as any; totalTeams++; totalUsed += (data?.count || 0); totalLimit += (data?.limit || 0); totalRejections += (data?.rejections || 0); });
+    snap.docs.forEach(d => {
+      const data = d.data() as TeamCrawlerDoc;
+      totalTeams++;
+      totalUsed += data.count || 0;
+      totalLimit += data.limit || 0;
+      totalRejections += data.rejections || 0;
+    });
     teamQuota = { totalTeams, totalUsed, totalLimit, totalRejections };
   } catch { }
   try {
     const dateKey = new Date(ts).toISOString().slice(0, 10);
     const dailySnap = await adminDb.collection('aiUsageDaily').where('date', '==', dateKey).get();
-    let dIn = 0, dOut = 0, dCost = 0; dailySnap.docs.forEach(d => { const data: any = d.data() as any; dIn += (data?.tokensIn || 0); dOut += (data?.tokensOut || 0); dCost += (data?.costEstimate || 0); });
-    ; (kpis as any).aiDailyTokensIn = dIn; (kpis as any).aiDailyTokensOut = dOut; (kpis as any).aiDailyCostEstimate = +dCost.toFixed(4);
+    interface AIDailyDoc { tokensIn?: number; tokensOut?: number; costEstimate?: number }
+    let dIn = 0, dOut = 0, dCost = 0;
+    dailySnap.docs.forEach(d => {
+      const data = d.data() as AIDailyDoc;
+      dIn += data.tokensIn || 0;
+      dOut += data.tokensOut || 0;
+      dCost += data.costEstimate || 0;
+    });
+    type MutableKpis = typeof kpis & {
+      aiDailyTokensIn?: number;
+      aiDailyTokensOut?: number;
+      aiDailyCostEstimate?: number;
+      crawlerAggregateAdoptionPct?: number;
+      semanticMapAggregateAdoptionPct?: number;
+    };
+    const mutableKpis = kpis as MutableKpis;
+    mutableKpis.aiDailyTokensIn = dIn;
+    mutableKpis.aiDailyTokensOut = dOut;
+    mutableKpis.aiDailyCostEstimate = +dCost.toFixed(4);
   } catch { }
   // Basic alert derivation (OPS-01): threshold checks mapped to warning/critical levels
   const alerts: Array<{ type: string; level: 'warn' | 'critical'; message: string; value: number | null; threshold: number }> = [];
@@ -75,14 +102,14 @@ export async function GET() {
     push(crawlerMetrics.errorRatePct > 5 && crawlerMetrics.errorRatePct <= 15, 'warn', 'crawlerErrorRate', crawlerMetrics.errorRatePct, 5, 'Crawler error rate elevated');
   }
   // Crawler aggregate adoption alerts (T14 rollout) – encourage migration to aggregate-first reads
-  const adoption = (kpis as any).crawlerAggregateAdoptionPct as number | undefined;
+  const adoption = (kpis as { crawlerAggregateAdoptionPct?: number }).crawlerAggregateAdoptionPct;
   if (adoption != null) {
     // Critical if below 50%, warn if between 50-80% (denominator ensures at least some samples were recorded)
     push(adoption < 50, 'critical', 'crawlerAggregateAdoption', adoption, 50, 'Crawler aggregate adoption below 50%');
     if (adoption >= 50) push(adoption < 80, 'warn', 'crawlerAggregateAdoption', adoption, 80, 'Crawler aggregate adoption below 80%');
   }
   // Semantic Map aggregate adoption alerts (T14)
-  const smAdoption = (kpis as any).semanticMapAggregateAdoptionPct as number | undefined;
+  const smAdoption = (kpis as { semanticMapAggregateAdoptionPct?: number }).semanticMapAggregateAdoptionPct;
   if (smAdoption != null) {
     push(smAdoption < 50, 'critical', 'semanticMapAggregateAdoption', smAdoption, 50, 'Semantic map aggregate adoption below 50%');
     if (smAdoption >= 50) push(smAdoption < 80, 'warn', 'semanticMapAggregateAdoption', smAdoption, 80, 'Semantic map aggregate adoption below 80%');
@@ -90,12 +117,16 @@ export async function GET() {
   const aiUsage = getAIUsage24h();
   // Per-model cost breakdown (optional fields if tracking present in aiUsage map)
   let perModelCosts: Record<string, { tokensIn: number; tokensOut: number; cost: number }> | null = null;
-  const anyUsage: unknown = aiUsage as unknown;
-  const providers: any = (anyUsage as any)?.providers;
-  if (providers && typeof providers === 'object') {
+  interface ProviderUsage { tokensIn?: number; tokensOut?: number; costEstimate?: number }
+  const providers = (aiUsage as { providers?: Record<string, ProviderUsage> }).providers;
+  if (providers) {
     perModelCosts = {};
-    Object.entries<any>(providers).forEach(([prov, val]) => {
-      perModelCosts![prov] = { tokensIn: (val?.tokensIn || 0), tokensOut: (val?.tokensOut || 0), cost: +(((val?.costEstimate || 0))).toFixed(4) };
+    Object.entries(providers as Record<string, ProviderUsage>).forEach(([prov, val]) => {
+      perModelCosts![prov] = {
+        tokensIn: val.tokensIn || 0,
+        tokensOut: val.tokensOut || 0,
+        cost: +((val.costEstimate || 0)).toFixed(4)
+      };
     });
   }
   // Route latency p95 alerts (warn >600ms, critical >1200ms) limited to top offenders
@@ -108,7 +139,8 @@ export async function GET() {
     }
   });
   const subtoolUsage = getSubtoolUsage24h();
-  return NextResponse.json({
+  // Enforce provenance tagging for audit coverage (canonical pattern)
+  const body = enforceProvenance({
     status,
     timestamp: new Date(ts).toISOString(),
     build: process.env.BUILD_SHA || 'dev',
@@ -127,5 +159,6 @@ export async function GET() {
       neuro,
       unified
     }
-  }, { status: status === 'ok' ? 200 : 503 });
+  }, { path: 'health' });
+  return NextResponse.json(body, { status: status === 'ok' ? 200 : 503 });
 }

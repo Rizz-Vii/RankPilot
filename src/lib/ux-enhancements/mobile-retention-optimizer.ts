@@ -6,6 +6,10 @@
 
 import { z } from "zod";
 
+// Local diagnostics for layout and navigation (non-persistent)
+const navigationDiagnostics: { lastId: string | number | null } = { lastId: null };
+const retentionDiagnostics: { layoutPaddingSummary?: { top: number; bottom: number; left: number; right: number; total: number } } = {};
+
 export const TouchTargetSchema = z.object({
   element: z.string(),
   currentSize: z.object({
@@ -71,6 +75,18 @@ export class MobileRetentionOptimizer {
       const paddingBottom = parseInt(computedStyle.paddingBottom);
       const paddingLeft = parseInt(computedStyle.paddingLeft);
       const paddingRight = parseInt(computedStyle.paddingRight);
+      // Summarize padding for diagnostics
+      const top = Number.isFinite(paddingTop) ? paddingTop : 0;
+      const bottom = Number.isFinite(paddingBottom) ? paddingBottom : 0;
+      const left = Number.isFinite(paddingLeft) ? paddingLeft : 0;
+      const right = Number.isFinite(paddingRight) ? paddingRight : 0;
+      retentionDiagnostics.layoutPaddingSummary = {
+        top,
+        bottom,
+        left,
+        right,
+        total: top + bottom + left + right,
+      };
 
       const effectiveWidth = rect.width;
       const effectiveHeight = rect.height;
@@ -348,6 +364,7 @@ export class MobileRetentionOptimizer {
     const _navigation = performance.getEntriesByType(
       "navigation"
     )[0] as PerformanceNavigationTiming;
+    navigationDiagnostics.lastId = (_navigation as unknown as { id?: string | number })?.id ?? null;
 
     return {
       firstContentfulPaint: this.getMetric("first-contentful-paint") || 0,

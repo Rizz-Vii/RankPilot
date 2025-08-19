@@ -1,4 +1,5 @@
-import { CHART_OF_ACCOUNTS, JournalEntry, signedAmount } from './accounts';
+import type { JournalEntry} from './accounts';
+import { CHART_OF_ACCOUNTS, signedAmount } from './accounts';
 
 export interface ProfitAndLossFigures {
     revenue: number;

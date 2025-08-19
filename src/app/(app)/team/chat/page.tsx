@@ -1,73 +1,58 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { VirtualizedMessageList } from "@/components/chat/VirtualizedMessageList";
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from "@/components/tool-page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-import { VirtualizedMessageList } from "@/components/chat/VirtualizedMessageList";
 import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  MessageCircle, 
-  Users, 
-  Send, 
-  Hash,
-  Phone,
-  Video,
-  Paperclip,
-  Image,
-  Smile,
-  Search,
-  Settings,
-  MoreVertical,
-  UserPlus,
-  Bell,
-  BellOff,
-  Pin,
-  Reply,
-  Heart,
-  ThumbsUp,
-  Download,
-  File,
-  Calendar,
-  Clock,
-  CheckCircle2,
-  Circle,
-  Zap,
-  Star,
-  Edit3,
-  Trash2
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
-  onSnapshot, 
-  updateDoc,
-  doc,
-  serverTimestamp,
-  getDocs,
-  setDoc,
-  getDoc
-} from "firebase/firestore";
-import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  where
+} from "firebase/firestore";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  Bell,
+  Hash,
+  Heart,
+  Image as ImageIcon,
+  MoreVertical,
+  Paperclip,
+  Phone,
+  Reply,
+  Search,
+  Send,
+  Settings,
+  Smile,
+  Star,
+  ThumbsUp,
+  UserPlus,
+  Video,
+  Zap
+} from "lucide-react"; // Pruned unused icons (lint cleanup)
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 interface ChatMessage {
   id: string;
@@ -120,7 +105,7 @@ export default function TeamChatPage() {
   const [activeChannel, setActiveChannel] = useState("general");
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  // Removed unused isTyping state (could be reintroduced when implementing live typing notices)
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
@@ -129,7 +114,7 @@ export default function TeamChatPage() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isCallOpen, setIsCallOpen] = useState(false);
   const [activeCall, setActiveCall] = useState<{ id: string; type: 'audio' | 'video'; channelId: string } | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  // Removed unused messagesEndRef
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Initialize default channels
@@ -147,7 +132,7 @@ export default function TeamChatPage() {
       id: "support",
       name: "Support",
       description: "Customer support coordination",
-      type: "support", 
+      type: "support",
       members: [],
       isPrivate: false,
       unreadCount: 0
@@ -196,8 +181,15 @@ export default function TeamChatPage() {
       }
       // Fallback to users/{uid}.teamId
       const uSnap = await getDoc(doc(db, 'users', user.uid));
-      const uData = uSnap.exists() ? (uSnap.data() as any) : undefined;
-      const tId = typeof uData?.teamId === 'string' ? uData.teamId : (user as any)?.teamId;
+      let tId: string | undefined;
+      if (uSnap.exists()) {
+        const raw = uSnap.data() as Record<string, unknown>;
+        if (typeof raw.teamId === 'string') tId = raw.teamId;
+      }
+      // Legacy fallback (user object patched with teamId client side)
+      if (!tId && typeof (user as unknown as { teamId?: unknown })?.teamId === 'string') {
+        tId = (user as unknown as { teamId?: string }).teamId;
+      }
       if (typeof tId === 'string') setTeamId(tId);
     })();
   }, [user?.uid]);
@@ -217,14 +209,29 @@ export default function TeamChatPage() {
     setMessagesLoading(true);
     const unsubscribeMessages = onSnapshot(messagesQuery, (snapshot) => {
       const newMessages: ChatMessage[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data() as any;
-        newMessages.push({
-          id: doc.id,
-          ...data,
-          timestamp: data.timestamp?.toDate() || new Date(),
-          editedAt: data.editedAt?.toDate()
-        } as ChatMessage);
+      snapshot.forEach((d) => {
+        const raw = d.data() as Record<string, unknown>;
+        const ts = (raw.timestamp as { toDate?: () => Date } | undefined)?.toDate?.() || new Date();
+        const edited = (raw.editedAt as { toDate?: () => Date } | undefined)?.toDate?.();
+        const base = raw as Partial<ChatMessage>;
+        const msg: ChatMessage = {
+          id: d.id,
+          content: typeof base.content === 'string' ? base.content : '',
+          authorId: typeof base.authorId === 'string' ? base.authorId : 'unknown',
+          authorName: typeof base.authorName === 'string' ? base.authorName : 'User',
+          authorAvatar: typeof base.authorAvatar === 'string' ? base.authorAvatar : undefined,
+          channelId: typeof base.channelId === 'string' ? base.channelId : activeChannel,
+          timestamp: ts,
+          type: base.type === 'file' || base.type === 'image' || base.type === 'system' ? base.type : 'text',
+          fileUrl: typeof base.fileUrl === 'string' ? base.fileUrl : undefined,
+          fileName: typeof base.fileName === 'string' ? base.fileName : undefined,
+          fileSize: typeof base.fileSize === 'number' ? base.fileSize : undefined,
+          reactions: (base.reactions && typeof base.reactions === 'object') ? (base.reactions as ChatMessage['reactions']) : {},
+          replyTo: typeof base.replyTo === 'string' ? base.replyTo : undefined,
+          edited: typeof base.edited === 'boolean' ? base.edited : undefined,
+          editedAt: edited,
+        };
+        newMessages.push(msg);
       });
       setMessages(newMessages);
       setMessagesLoading(false);
@@ -234,13 +241,19 @@ export default function TeamChatPage() {
   const presenceQuery = query(collection(db, 'presence'));
     const unsubscribePresence = onSnapshot(presenceQuery, (snapshot) => {
       const users: UserPresence[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data() as any;
-        users.push({
-          userId: doc.id,
-          ...data,
-          lastSeen: data.lastSeen?.toDate() || new Date()
-        } as UserPresence);
+      snapshot.forEach((d) => {
+        const raw = d.data() as Record<string, unknown>;
+        const lastSeen = (raw.lastSeen as { toDate?: () => Date } | undefined)?.toDate?.() || new Date();
+        const presence: UserPresence = {
+          userId: d.id,
+          userName: typeof raw.userName === 'string' ? raw.userName : 'User',
+          userAvatar: typeof raw.userAvatar === 'string' ? raw.userAvatar : undefined,
+          status: ['online', 'away', 'busy', 'offline'].includes(String(raw.status)) ? (raw.status as UserPresence['status']) : 'offline',
+          lastSeen,
+          isTyping: Boolean(raw.isTyping),
+          typingIn: typeof raw.typingIn === 'string' ? raw.typingIn : undefined
+        };
+        users.push(presence);
       });
       setOnlineUsers(users.filter(u => u.status !== 'offline'));
     });
@@ -264,7 +277,7 @@ export default function TeamChatPage() {
       updateUserPresence('offline');
     };
   }, [user, teamId]);
-  
+
   // Simple presence updater; merges into presence/{uid}
   const updateUserPresence = async (status: UserPresence['status']) => {
     try {
@@ -317,7 +330,7 @@ export default function TeamChatPage() {
     if (!newMessage.trim() || !user) return;
 
     try {
-      const messageData: Record<string, any> = {
+      const messageData: Record<string, unknown> = {
         content: newMessage.trim(),
         authorId: user.uid,
         authorName: user.displayName || user.email?.split('@')[0] || 'User',
@@ -498,7 +511,7 @@ export default function TeamChatPage() {
             })}
 
             <Separator className="my-4" />
-            
+
             {/* Online Users */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-muted-foreground">
@@ -548,7 +561,7 @@ export default function TeamChatPage() {
                   );
                 })()}
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -724,12 +737,12 @@ export default function TeamChatPage() {
                   <Paperclip className="h-4 w-4" />
                 </Button>
                 <Button size="sm" variant="ghost">
-                  <Image className="h-4 w-4" />
+                    <ImageIcon className="h-4 w-4" />
                 </Button>
                 <Button size="sm" variant="ghost">
                   <Smile className="h-4 w-4" />
                 </Button>
-                <Button 
+                  <Button
                   onClick={sendMessage}
                   disabled={!newMessage.trim()}
                   className="px-4"

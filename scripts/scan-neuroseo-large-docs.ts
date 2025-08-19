@@ -13,7 +13,8 @@
  *   BATCH_SIZE=50 npm run scan:neuroseo-large         # smaller batch
  */
 import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, QueryDocumentSnapshot, FieldValue } from 'firebase-admin/firestore';
+import type { QueryDocumentSnapshot} from 'firebase-admin/firestore';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
 interface SemanticMapFullDoc {
     userId?: string;

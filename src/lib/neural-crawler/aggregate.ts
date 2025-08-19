@@ -52,7 +52,7 @@ export async function dualWriteNeuralCrawlerAggregate(full: FullResultLike & { _
     } catch (e) {
         // Silent degradation per policy; failing aggregate must not block primary write.
         if (process.env.NODE_ENV !== 'production') {
-            // eslint-disable-next-line no-console
+             
             console.warn('[dualWriteNeuralCrawlerAggregate] failed', e);
         }
     }

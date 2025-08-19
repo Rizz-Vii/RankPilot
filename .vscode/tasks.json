@@ -17,6 +17,167 @@
           "beginsPattern": "^(?:.*ready - started server on|.*Starting local development server)",
           "endsPattern": "^(?:.*ready - Local|.*ready - on http|.*Compiled successfully)"
         }
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "typecheck",
+      "type": "shell",
+      "command": "npm run typecheck",
+      "problemMatcher": "$tsc"
+    },
+    {
+      "label": "lint",
+      "type": "shell",
+      "command": "npm run lint:flat:all",
+      "problemMatcher": [
+        "$eslint-stylish"
+      ]
+    },
+    {
+      "label": "lint:fix",
+      "type": "shell",
+      "command": "npm run lint:fix",
+      "problemMatcher": [
+        "$eslint-stylish"
+      ]
+    },
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "npm run build",
+      "problemMatcher": "$tsc",
+      "group": "build"
+    },
+    {
+      "label": "tests:unit-fast",
+      "type": "shell",
+      "command": "npm run test:unit",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "tests:provenance",
+      "type": "shell",
+      "command": "npm run test:provenance-audit"
+    },
+    {
+      "label": "verify-fast",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "typecheck",
+        "lint",
+        "build"
+      ]
+    },
+    {
+      "label": "quality:fast",
+      "type": "shell",
+      "command": "npm run quality:fast"
+    },
+    {
+      "label": "quality:full",
+      "type": "shell",
+      "command": "npm run quality:full"
+    },
+    {
+      "label": "aider:prep",
+      "type": "shell",
+      "command": "npm run ai:aider:prep",
+      "problemMatcher": []
+    },
+    {
+      "label": "delegation:enqueue",
+      "type": "shell",
+      "command": "npm run delegate:enqueue",
+      "problemMatcher": []
+    },
+    {
+      "label": "delegation:process",
+      "type": "shell",
+      "command": "npm run delegate:process",
+      "problemMatcher": []
+    },
+    {
+      "label": "delegation:auto",
+      "type": "shell",
+      "command": "AIDER_AUTORUN=1 npm run delegate:process",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "delegation",
+        "pattern": {
+          "regexp": "."
+        },
+        "background": {
+          "activeOnStart": true,
+          // Heuristic patterns; adjust if scripts log different markers
+          "beginsPattern": "^Starting delegation processing",
+          "endsPattern": "^Delegation queue idle"
+        }
+      }
+    },
+    {
+      "label": "codex:brain:auto",
+      "type": "shell",
+      "command": "npm run brain:auto",
+      "problemMatcher": []
+    },
+    {
+      "label": "codex:brain:plan",
+      "type": "shell",
+      "command": "npm run brain:plan-only",
+      "problemMatcher": []
+    },
+    {
+      "label": "codex:brain:execute",
+      "type": "shell",
+      "command": "npm run brain:execute",
+      "problemMatcher": []
+    },
+    {
+      "label": "eslint:autofix-all",
+      "type": "shell",
+      "command": "npm run eslint:autofix-all",
+      "problemMatcher": [
+        "$eslint-stylish"
+      ]
+    },
+    {
+      "label": "lint:report:json",
+      "type": "shell",
+      "command": "npm run lint:report:json",
+      "problemMatcher": []
+    },
+    {
+      "label": "refactor:lint-sweep",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "eslint:autofix-all",
+        "lint:report:json",
+        "quality:fast"
+      ]
+    }
+    ,
+    {
+      "label": "delegation:loop",
+      "type": "shell",
+      "command": "npm run delegate:loop",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "delegation-loop",
+        "pattern": {
+          "regexp": "."
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^\\[delegate:loop] queue snapshot",
+          "endsPattern": "^$" // never marks done; manual stop
+        }
       }
     }
   ]

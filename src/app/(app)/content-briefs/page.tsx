@@ -10,7 +10,7 @@ import { ToolPageHeader } from '@/components/tool-page-header';
 import KPIGrid from '@/components/metrics/KPIGrid';
 import { useContentBriefMetrics } from '@/hooks/useContentBriefMetrics';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { getMockMetrics } from '@/lib/domain/mockMetrics';
+import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 
 export default function ContentBriefsPage() {
@@ -18,10 +18,10 @@ export default function ContentBriefsPage() {
   const live = useContentBriefMetrics(months);
   const isMobile = useIsMobile();
   // Fallback to marketing mock metrics until dedicated content mocks are added
-  const mock = getMockMetrics('marketing');
+  const { data: mock } = useMockDomainMetrics('marketing', true);
   interface BriefMetric { key: string; label: string; value: number; delta: number; trend: number[]; intent?: string }
   interface BriefLive { kpis: BriefMetric[]; rows: any[]; loading: boolean }
-  const data: BriefLive = (live.kpis.length ? (live as unknown as BriefLive) : { kpis: mock.kpis as BriefMetric[], rows: [], loading: live.loading });
+  const data: BriefLive = (live.kpis.length ? (live as unknown as BriefLive) : { kpis: (mock?.kpis as BriefMetric[] | undefined) || [], rows: [], loading: live.loading });
   // Track under marketing grouping for now (extend analytics taxonomy later)
   useEffect(() => { trackDashboardView('marketing'); }, []);
 

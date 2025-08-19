@@ -1,6 +1,7 @@
 import type { firestore as AdminFirestore } from 'firebase-admin';
 import { getLogger } from '@/lib/logging/app-logger';
-import { coerceWindowStart, windowStartToMs, TimestampLike } from '@/lib/firestore/typed-snapshot';
+import type { TimestampLike } from '@/lib/firestore/typed-snapshot';
+import { coerceWindowStart, windowStartToMs } from '@/lib/firestore/typed-snapshot';
 
 const WINDOW_MS = 60 * 60 * 1000; // 1 hour
 

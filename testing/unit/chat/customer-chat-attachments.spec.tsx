@@ -1,7 +1,8 @@
 import { strict as assert } from 'assert';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { AuthContext, AuthContextType } from '@/context/AuthContext';
+import type { AuthContextType } from '@/context/AuthContext';
+import { AuthContext } from '@/context/AuthContext';
 import CustomerChatBot from '@/components/chat/CustomerChatBot';
 
 // Minimal fetch mock for chat history GET
@@ -63,7 +64,7 @@ describe('CustomerChatBot attachments rendering', () => {
 function delay(ms: number){ return new Promise(res => setTimeout(res, ms)); }
 async function waitFor<T>(fn: () => T | null, timeout = 1000, interval = 25): Promise<T> {
   const start = Date.now();
-  // eslint-disable-next-line no-constant-condition
+   
   while(true){
     const v = fn();
     if (v) return v;

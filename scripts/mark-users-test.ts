@@ -2,7 +2,7 @@
  * mark-users-test.ts
  * Sets testAccount=true for specified user emails so they are included in historical seeding.
  */
-/* eslint-disable no-console */
+ 
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import * as path from 'path';

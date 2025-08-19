@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 export interface VirtualMessage {
   id: string | number;
   // Additional properties allowed
-  [key: string]: unknown; // eslint-disable-line @typescript-eslint/no-explicit-any
+  [key: string]: unknown;  
 }
 
 interface VirtualizedMessageListProps<T extends VirtualMessage> {

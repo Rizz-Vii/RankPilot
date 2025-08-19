@@ -11,7 +11,8 @@
 import { db } from '@/lib/firebase';
 import { rateLimit } from '@/lib/utils/rate-limit';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 
 interface PushSubscription {
     endpoint: string;

@@ -3,7 +3,8 @@
  * Build-safe implementation
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 // Note: defer importing NeuroSEOSuite until runtime to avoid build-time
 // evaluation of modules that may touch Firebase client SDK.

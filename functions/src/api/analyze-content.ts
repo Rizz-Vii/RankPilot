@@ -1,4 +1,5 @@
-import { HttpsOptions, onCall } from "firebase-functions/v2/https";
+import type { HttpsOptions} from "firebase-functions/v2/https";
+import { onCall } from "firebase-functions/v2/https";
 import { getAI } from "../ai/genkit"; // Import AI generation module
 
 // Set options for the content analyzer function
@@ -59,7 +60,7 @@ export const analyzeContent = onCall(httpsOptions, async (request) => {
 
     // AI call with real processing
     const ai = getAI();
-    const aiResponse = await ai.generate(prompt);
+    await ai.generate(prompt);
 
     // Process AI response for structured output
     const analysis = {
@@ -134,7 +135,7 @@ function extractTopPhrases(content: string, targetKeywords: string[]): string[] 
  * @param {string[]} targetKeywords - Target keywords to look for in content
  * @return {ContentAnalysisResponse} Mock content analysis data
  */
-function mockContentAnalysis(
+function _mockContentAnalysis(
   content: string,
   targetKeywords: string[] = []
 ): ContentAnalysisResponse {

@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
-import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
+import { enforceTeamRateLimit, TeamRateLimitError, applyTeamRateLimit } from '@/lib/rate-limit/team-rate-limit';
 
 // Proxy route to bypass client-side CORS issues when calling callable Cloud Function directly.
 // Accepts SEO audit request JSON and forwards to Cloud Function endpoint.
@@ -23,17 +24,18 @@ export const POST = withProvenance(async function POST(req: Request) {
 
         // TEAM-01: Apply team rate limit if teamId provided (lightweight - before upstream call)
         if (typeof (body as any).teamId === 'string') {
+            const teamId = (body as any).teamId as string;
             try {
-                const { adminDb } = (global as any).adminDb ? { adminDb: (global as any).adminDb } : await import('@/lib/firebase-admin');
-                // Allow test override via header for deterministic integration test
-                const testLimitHeader = nreq.headers.get('x-test-team-limit');
-                const overrideLimit = testLimitHeader ? Number(testLimitHeader) : undefined;
-                await enforceTeamRateLimit(adminDb, (body as any).teamId, { routeKey: 'seo-audit/run', ...(Number.isFinite(overrideLimit as number) ? { limit: overrideLimit as number } : {}) });
-            } catch (e: unknown) {
-                if (e instanceof TeamRateLimitError) {
-                    return NextResponse.json(enforceProvenance({ success: false, error: 'rate_limited', retryAfter: e.retryAfterSeconds, provenance: 'synthetic' }, { path: 'seo-audit/run', note: 'rate_limit' }), { status: 429, headers: { 'Retry-After': String(e.retryAfterSeconds) } });
+                const res = await applyTeamRateLimit(teamId);
+                if (res && res.allowed) {
+                    (nreq as any)._teamRateHeaders = { ...res.headers, 'X-RateLimit-Policy': 'bucket' };
+                } else if (res && !res.allowed) {
+                    return NextResponse.json(enforceProvenance({ success: false, error: 'rate_limited', retryAfter: res.retryAfterSeconds, provenance: 'synthetic' }, { path: 'seo-audit/run', note: 'rate_limit' }), { status: 429, headers: { ...res.headers, 'X-RateLimit-Policy': 'bucket' } });
                 }
-                throw e;
+            } catch (e) {
+                if (e instanceof TeamRateLimitError) {
+                    return NextResponse.json(enforceProvenance({ success: false, error: 'rate_limited', retryAfter: e.retryAfterSeconds, provenance: 'synthetic' }, { path: 'seo-audit/run', note: 'rate_limit' }), { status: 429, headers: { 'Retry-After': String(e.retryAfterSeconds), 'X-RateLimit-Policy': 'bucket' } });
+                }
             }
         }
         // Forward request in callable format ({data: {...}})
@@ -55,7 +57,12 @@ export const POST = withProvenance(async function POST(req: Request) {
         // Callable functions wrap response JSON in {result: ...} or raw; parse generically
         const json = await cfResp.json();
         const data = json?.result || json;
-        return NextResponse.json(enforceProvenance({ success: true, data, provenance: 'live' }, { path: 'seo-audit/run' }), { status: 200 });
+        const base = NextResponse.json(enforceProvenance({ success: true, data, provenance: 'live' }, { path: 'seo-audit/run' }), { status: 200 });
+        const rateHeaders = (nreq as any)._teamRateHeaders;
+        if (rateHeaders) {
+            Object.entries(rateHeaders).forEach(([k, v]) => base.headers.set(k, v as string));
+        }
+        return base;
     } catch (e: unknown) {
         return NextResponse.json(enforceProvenance({ success: false, error: (e as any)?.message || 'Proxy error', provenance: 'synthetic' }, { path: 'seo-audit/run', note: 'exception' }), { status: 500 });
     }

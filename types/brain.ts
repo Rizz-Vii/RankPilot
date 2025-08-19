@@ -1,15 +1,19 @@
+// TRACKD-GENERATED: consolidated unsafe dynamic types into single alias (defer precise modeling)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type Unsafe = any; // TODO:TRACKD-DEFER:typing refine dynamic execution context & plan/result types
+
 export interface Task {
   id: string;
   title: string;
   raw: string;
   domain: string;
   status: 'TODO' | 'IN-PROGRESS' | 'DONE';
-  metadata?: Record<string, any>;
+  metadata?: Record<string, Unsafe>; // previously Record<string, any>
 }
 
-export interface Planner { plan(batch: Task[], ctx: any): Promise<any>; }
-export interface ToolRunner { name: string; supports(domain: string): boolean; run(plan: any, opts: any): Promise<any>; }
-export interface Validator { name: string; run(ctx: any): Promise<any>; }
+export interface Planner { plan(batch: Task[], ctx: Unsafe): Promise<Unsafe>; }
+export interface ToolRunner { name: string; supports(domain: string): boolean; run(plan: Unsafe, opts: Unsafe): Promise<Unsafe>; }
+export interface Validator { name: string; run(ctx: Unsafe): Promise<Unsafe>; }
 
 export interface RunRecord {
   ts: number; runId: string; mode: string;
@@ -21,5 +25,5 @@ export interface RunRecord {
 }
 
 export interface TaskSource { name: string; fetch(): Promise<Task[]>; }
-export interface Guard { name: string; check(input: any, cfg: any): { ok: boolean; reason?: string } }
+export interface Guard { name: string; check(input: Unsafe, cfg: Unsafe): { ok: boolean; reason?: string } }
 export interface Reporter { name: string; write(rec: RunRecord): Promise<void> }

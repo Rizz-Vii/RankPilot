@@ -10,10 +10,13 @@ export const GET = withProvenance(async function GET() {
     try {
         const session = await getServerSession().catch(() => null);
         if (!session || !(session as any).user) {
-            return NextResponse.json(enforceProvenance({ error: 'not_authenticated' }, { path: 'test/auth/token', note: 'no_session' }), { status: 401 });
+            const noSessionBody = enforceProvenance({ error: 'not_authenticated' }, { path: 'test/auth/token', note: 'no_session' });
+            return NextResponse.json(noSessionBody, { status: 401 });
         }
-        return NextResponse.json(enforceProvenance({ user: (session as any).user }, { path: 'test/auth/token', note: 'ok' }));
+        const okBody = enforceProvenance({ user: (session as any).user }, { path: 'test/auth/token', note: 'ok' });
+        return NextResponse.json(okBody);
     } catch (e: unknown) {
-        return NextResponse.json(enforceProvenance({ error: 'internal_error', message: (e as any)?.message }, { path: 'test/auth/token', note: 'exception' }), { status: 500 });
+        const errBody = enforceProvenance({ error: 'internal_error', message: (e as any)?.message }, { path: 'test/auth/token', note: 'exception' });
+        return NextResponse.json(errBody, { status: 500 });
     }
 }, { path: 'test/auth/token' });

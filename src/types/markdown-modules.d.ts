@@ -6,5 +6,6 @@ declare module 'remark-rehype';
 declare module 'rehype-stringify';
 
 declare module 'unified' {
-    export function unified(): any;
+    // Minimal factory signature; refine when real types installed.
+    export function unified(): { use: (...args: unknown[]) => unknown; process: (...args: unknown[]) => Promise<unknown> };
 }

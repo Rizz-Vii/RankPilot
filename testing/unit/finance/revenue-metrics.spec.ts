@@ -1,5 +1,6 @@
 import { strict as assert } from 'assert';
-import { computeRevenueMetrics, SubscriptionEvent } from '@/lib/finance/revenue-metrics';
+import type { SubscriptionEvent } from '@/lib/finance/revenue-metrics';
+import { computeRevenueMetrics } from '@/lib/finance/revenue-metrics';
 
 describe('computeRevenueMetrics', () => {
     it('computes MRR, ARR, churn, LTV with mixed subscriptions', () => {

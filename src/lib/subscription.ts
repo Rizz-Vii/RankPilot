@@ -1,6 +1,6 @@
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { STRIPE_PLANS, PlanType } from "./stripe";
+import type { PlanType } from "./stripe";
 
 export interface SubscriptionData {
   status: "active" | "canceled" | "past_due" | "free";
@@ -168,9 +168,9 @@ export function getRemainingUsage(
       limits.competitorAnalysis === -1
         ? "unlimited"
         : Math.max(
-            0,
-            limits.competitorAnalysis - (currentUsage.competitors || 0)
-          ),
+          0,
+          limits.competitorAnalysis - (currentUsage.competitors || 0)
+        ),
   };
 }
 

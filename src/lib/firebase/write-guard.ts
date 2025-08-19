@@ -1,4 +1,5 @@
-import { addDoc, setDoc, updateDoc, DocumentReference, CollectionReference, onSnapshot } from 'firebase/firestore';
+import type { CollectionReference, DocumentReference} from 'firebase/firestore';
+import { addDoc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 
 export interface GuardOptions { requireTeamId?: boolean; stripUndefined?: boolean; }
 
@@ -71,11 +72,13 @@ export function managedOnSnapshot(q: unknown, onData: (snap: unknown) => void, o
     const key = deriveReadableKey(q);
     trackListener(key);
     let timeout: ReturnType<typeof setTimeout> | null = null;
-    const unsub = (onSnapshot as unknown as Function)(q as any, (snap: unknown) => {
+    type OnSnapshotFn = (query: unknown, next: (snap: unknown) => void, error?: (err: unknown) => void) => () => void;
+    const invokeOnSnapshot = onSnapshot as unknown as OnSnapshotFn;
+    const unsub = invokeOnSnapshot(q, (snap: unknown) => {
         if (timeout) clearTimeout(timeout);
         timeout = setTimeout(() => onData(snap), debounceMs);
     }, (err: unknown) => { if (onError) onError(err); });
-    return () => { if (timeout) clearTimeout(timeout); (unsub as any)(); untrackListener(key); };
+    return () => { if (timeout) clearTimeout(timeout); unsub(); untrackListener(key); };
 }
 
 export function getActiveListenerSummary() {
@@ -85,27 +88,34 @@ export function getActiveListenerSummary() {
 // Build a stable, human-readable key for any Firestore reference or query.
 function deriveReadableKey(q: unknown): string {
     try {
-        const anyQ = q as any;
+        const anyQ = q as Record<string, unknown>;
         // Prefer public API first: DocumentReference/CollectionReference expose path
-        const path: string | undefined = typeof anyQ?.path === 'string' ? anyQ.path : undefined;
+        const pathVal = anyQ && typeof anyQ === 'object' ? (anyQ as { path?: unknown }).path : undefined;
+        const path: string | undefined = typeof pathVal === 'string' ? pathVal : undefined;
         if (path) {
-            // Heuristic: document refs usually have an even number of segments and an id
             const segments = path.split('/');
             const kind = segments.length % 2 === 0 ? 'doc' : 'col';
             return `${kind}:${path}`;
         }
 
-        // Query: attempt a best-effort readable description from known internals without throwing
-        const qInternal = anyQ?._query || anyQ?._ref?._query || anyQ?._delegate?._query;
-        const segs: string[] | undefined = qInternal?.path?.segments || anyQ?._queryPath?.segments || anyQ?._path?.segments;
+        const qInternal = (anyQ as { _query?: unknown; _ref?: { _query?: unknown }; _delegate?: { _query?: unknown } })._query
+            || (anyQ as { _ref?: { _query?: unknown } })._ref?._query
+            || (anyQ as { _delegate?: { _query?: unknown } })._delegate?._query;
+        const segs: string[] | undefined = (qInternal as { path?: { segments?: string[] } } | undefined)?.path?.segments
+            || (anyQ as { _queryPath?: { segments?: string[] } })._queryPath?.segments
+            || (anyQ as { _path?: { segments?: string[] } })._path?.segments;
         const basePath = Array.isArray(segs) && segs.length ? segs.join('/') : undefined;
 
         const constraints: string[] = [];
-        const filters = qInternal?.filters || qInternal?.filter || anyQ?._queryOptions?.filters;
+        const filters = (qInternal as { filters?: unknown[]; filter?: unknown } | undefined)?.filters
+            || (qInternal as { filter?: unknown } | undefined)?.filter
+            || (anyQ as { _queryOptions?: { filters?: unknown[] } })._queryOptions?.filters;
         if (Array.isArray(filters)) constraints.push(`where:${filters.length}`);
-        const orderBy = qInternal?.orderBy || anyQ?._queryOptions?.orderBy;
+        const orderBy = (qInternal as { orderBy?: unknown[] } | undefined)?.orderBy
+            || (anyQ as { _queryOptions?: { orderBy?: unknown[] } })._queryOptions?.orderBy;
         if (Array.isArray(orderBy)) constraints.push(`orderBy:${orderBy.length}`);
-        const limit = qInternal?.limit || anyQ?._queryOptions?.limit;
+        const limit = (qInternal as { limit?: number } | undefined)?.limit
+            || (anyQ as { _queryOptions?: { limit?: number } })._queryOptions?.limit;
         if (typeof limit === 'number') constraints.push(`limit:${limit}`);
 
         if (basePath) {

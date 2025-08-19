@@ -9,8 +9,13 @@ import { isEventType } from './event-types';
 
 // Keep as type-only to avoid bundling when unused in tests without Firebase.
 // Minimal Firestore interfaces (subset) to support create-only writes without pulling full types
+export interface FirestoreLegacyDocRef {
+  get?: () => Promise<{ exists: boolean; data(): Record<string, unknown> | undefined }>;
+  create?: (data: Record<string, unknown>) => Promise<unknown>;
+  set?: (data: Record<string, unknown>, opts?: { merge?: boolean }) => Promise<unknown>;
+}
 export interface FirestoreLegacyCollectionRef {
-  doc(id: string): { get?: () => Promise<any>; create?: (data: any) => Promise<any>; set?: (data: any, opts?: any) => Promise<any> };
+  doc(id: string): FirestoreLegacyDocRef;
 }
 export interface FirestoreLegacyLike {
   collection(path: string): FirestoreLegacyCollectionRef;
@@ -81,22 +86,27 @@ function ensureValidAttrs(attrs?: Record<string, unknown>) {
 
 async function sha256Hex(input: string): Promise<string> {
   // Prefer Web Crypto subtle if available; fallback to Node crypto.
-  const g = globalThis as any;
-  if (g?.crypto?.subtle && typeof g.crypto.subtle.digest === 'function') {
+  const g: unknown = globalThis;
+  if (
+    typeof g === 'object' && g !== null &&
+    'crypto' in g && typeof (g as { crypto?: unknown }).crypto === 'object' &&
+    (g as { crypto: { subtle?: unknown } }).crypto.subtle &&
+    typeof (g as { crypto: { subtle: { digest?: unknown } } }).crypto.subtle.digest === 'function'
+  ) {
     const enc = new TextEncoder();
     const data = enc.encode(input);
-    const hashBuf = await g.crypto.subtle.digest('SHA-256', data);
+    const hashBuf = await (g as { crypto: { subtle: { digest(algo: string, data: Uint8Array): Promise<ArrayBuffer> } } }).crypto.subtle.digest('SHA-256', data);
     const bytes = Array.from(new Uint8Array(hashBuf));
     return bytes.map((b) => b.toString(16).padStart(2, '0')).join('');
   }
   // Node fallback
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const nodeCrypto = require('crypto') as typeof import('crypto');
+  // Dynamic import without explicit type annotation to satisfy consistent-type-imports rule
+  const nodeCrypto = await import('crypto');
   return nodeCrypto.createHash('sha256').update(input).digest('hex');
 }
 
 function hasLegacyCollection(db: Firestore | undefined | null): db is FirestoreLegacyLike {
-  return !!db && typeof (db as any).collection === 'function';
+  return !!db && typeof (db as Record<string, unknown>).collection === 'function';
 }
 
 async function writeCreateOnlyViaLegacy(
@@ -132,7 +142,9 @@ async function writeCreateOnlyViaModular(
   // Lazy import to avoid adding weight when unused in tests
   const mod = await import('firebase/firestore');
   const { doc, getDoc, setDoc } = mod;
-  const ref = doc(db as any, docPath);
+  // The modular Firestore instance is opaque here; use any to satisfy overload while retaining runtime safety.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ref = doc(db as unknown as any, docPath);
   const snap = await getDoc(ref);
   if (snap.exists()) {
     throw new Error('DOC_EXISTS');
@@ -209,7 +221,11 @@ export async function publishEvent(
       return { eventId };
     } catch (e: unknown) {
       // On existing doc collision only, retry once with a new timestamp
-      if (e && typeof (e as any).message === 'string' && (e as any).message.includes('DOC_EXISTS')) {
+      if (
+        e && typeof e === 'object' && 'message' in e &&
+        typeof (e as { message?: unknown }).message === 'string' &&
+        (e as { message: string }).message.includes('DOC_EXISTS')
+      ) {
         lastError = e;
         attempt += 1;
         continue;

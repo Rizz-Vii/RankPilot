@@ -13,7 +13,7 @@ const CONFIG_PATH = path.resolve(process.cwd(), '.provenance-audit.json');
 const AI_HINTS = [
     /\/ai\//i,
     /neuroseo\/(?!metrics)/i,
-    /automation\/(?!run-due)/i,
+    /automation\//i,
     /competitive/i,
     /conversational-seo/i,
     /multi-model/i,
@@ -26,9 +26,7 @@ const AI_HINTS = [
 const PROV_MARKERS = [/enforceProvenance/, /withProvenance/, /__provenance\s*:/];
 
 // Optional exemption list (exact relative file paths) for documented reasons (see PROVENANCE_POLICY.md)
-const EXEMPTIONS = new Set<string>([
-    // 'src/app/api/automation/run-due/route.ts' // example deprecated endpoint (currently enforced)
-]);
+const EXEMPTIONS = new Set<string>([/* intentionally empty; deprecated automation run-due endpoint removed */]);
 
 const STRICT = process.env.PROV_STRICT === '1'; // when enabled, require withProvenance for non-streaming AI routes
 

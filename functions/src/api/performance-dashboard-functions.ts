@@ -3,8 +3,8 @@
  * Proper Firebase Functions v2 implementation with CallableRequest pattern
  */
 
-import { onCall, CallableRequest, HttpsOptions } from "firebase-functions/v2/https";
-import { logger } from "firebase-functions";
+import type { CallableRequest, HttpsOptions } from "firebase-functions/v2/https";
+import { onCall } from "firebase-functions/v2/https";
 import { StructuredLogger } from "../lib/structured-logger";
 import { MetricsCollector } from "../lib/metrics-collector";
 import { AIResponseCache } from "../lib/ai-response-cache";

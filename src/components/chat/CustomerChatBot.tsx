@@ -11,21 +11,20 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/context/AuthContext';
-import { auth } from '@/lib/firebase';
-import { cn } from '@/lib/utils';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Bot, Loader2, Maximize2, MessageCircle, Minimize2, Send, User, X, Square } from 'lucide-react';
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { useIsMobile } from '@/lib/mobile-responsive-utils';
-import DOMPurify from 'isomorphic-dompurify';
-import { storage } from '@/lib/firebase';
 import { extractRpMeta } from '@/lib/chat/rpMeta';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { auth, storage } from '@/lib/firebase';
+import { useIsMobile } from '@/lib/mobile-responsive-utils';
+import { cn } from '@/lib/utils';
+import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage';
+import { AnimatePresence, motion } from 'framer-motion';
+import DOMPurify from 'isomorphic-dompurify';
+import { Bot, Loader2, Maximize2, MessageCircle, Minimize2, Send, User, X } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import rehypeStringify from 'rehype-stringify';
 import remarkGfm from 'remark-gfm';
-import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
-import rehypeStringify from 'rehype-stringify';
+import { unified } from 'unified';
 
 // Types
 interface ChatMessage {
@@ -321,12 +320,15 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
 
     const renderMarkdown = async (text: string) => {
         try {
-            const file = await unified()
+            // unified() returns a Processor (typed as any/unknown under strict ESM interop); cast after building pipeline
+            // Cast unified() to any early to appease strict/unknown chain
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const processor = (unified() as any)
                 .use(remarkParse)
                 .use(remarkGfm)
                 .use(remarkRehype)
-                .use(rehypeStringify)
-                .process(text);
+                .use(rehypeStringify);
+            const file = await (processor as unknown as { process(input: string): Promise<unknown> }).process(text);
             return String(file);
         } catch {
             return text.replace(/</g, '&lt;');
@@ -1129,7 +1131,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                             </div>
                         )}
                         <div className={cn('border-t border-border bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60', isMobile ? 'p-3' : 'p-4')}>
-                            <div className={cn('flex gap-2 items-center', isMobile && 'gap-1')}>   
+                            <div className={cn('flex gap-2 items-center', isMobile && 'gap-1')}>
                                 {/* Attachment buttons */}
                                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
                                 <Button variant="ghost" size="icon" className={cn('h-10 w-10', isMobile && 'h-9 w-9')} onClick={() => fileInputRef.current?.click()} aria-label="Attach image">

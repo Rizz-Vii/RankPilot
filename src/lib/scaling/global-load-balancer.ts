@@ -880,9 +880,10 @@ export class EnterpriseGlobalLoadBalancer {
         console.log(`Executed failover from ${failedEndpoint.region} to ${failoverEndpoint.region}`);
     }
 
-    // Type guard for loose user location inputs
-    private isLatLong(value: any): value is { latitude: number; longitude: number; } {
-        return value && typeof value === 'object' &&
-            typeof value.latitude === 'number' && typeof value.longitude === 'number';
+    // Type guard for loose user location inputs (avoid `any`)
+    private isLatLong(value: unknown): value is { latitude: number; longitude: number; } {
+        return !!value && typeof value === 'object' &&
+            typeof (value as { latitude?: unknown }).latitude === 'number' &&
+            typeof (value as { longitude?: unknown }).longitude === 'number';
     }
 }

@@ -3,7 +3,7 @@
  * RankPilot - Comprehensive Testing Suite
  */
 
-import { Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 interface SecurityTestResult {
     test: string;

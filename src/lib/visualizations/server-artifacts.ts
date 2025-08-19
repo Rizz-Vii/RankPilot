@@ -2,15 +2,15 @@
  * Server-only artifact generation for visualizations.
  * Splitting this out avoids importing client code on the server and keeps SSR clean.
  */
+import type { ExportFormat, ServerChartArtifactData } from '@/types/visualization-exports';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
-import { ExportFormat, ServerChartArtifactData } from '@/types/visualization-exports';
 
 // Helper to safely extract a 2D table from mixed chart data shapes
 function extractTable(input: ServerChartArtifactData | { table?: unknown[][]; data?: unknown[] }): unknown[][] {
-  const anyInput = input as any; // localized cast boundary
-  if (Array.isArray(anyInput?.table)) return anyInput.table as unknown[][];
-  if (Array.isArray(anyInput?.data)) return anyInput.data.map((d: unknown) => Array.isArray(d) ? d : [d]);
+  const maybe: Partial<{ table: unknown[][]; data: unknown[] }> = input as Partial<{ table: unknown[][]; data: unknown[] }>;
+  if (Array.isArray(maybe.table)) return maybe.table;
+  if (Array.isArray(maybe.data)) return maybe.data.map((d: unknown) => Array.isArray(d) ? d : [d]);
   return [["Chart Export"], [new Date().toISOString()]];
 }
 
@@ -78,12 +78,15 @@ export async function generateServerArtifact(
     }
     const svg: string | undefined = chartData?.svg;
     if (typeof svg === 'string' && svg.trim().length) {
-      const sharpMod: any = await import('sharp');
-      const sharp = sharpMod.default || sharpMod;
+      const sharpMod = await import('sharp');
+      const loaded = (sharpMod as { default?: unknown })?.default || sharpMod;
+      type SharpFn = (input: Buffer, options?: Record<string, unknown>) => { resize: (w?: number, h?: number, o?: Record<string, unknown>) => unknown; png: () => { toBuffer(): Promise<Buffer> }; toBuffer(): Promise<Buffer> };
+      if (typeof loaded !== 'function') throw new Error('sharp module did not export a callable default');
+      const sharp = loaded as unknown as SharpFn;
       const img = sharp(Buffer.from(svg, 'utf-8'), { density: 300 });
       const w = (config.width && Number(config.width)) || undefined;
       const h = (config.height && Number(config.height)) || undefined;
-      const pipeline = (w || h) ? img.resize(w, h, { fit: 'inside' }) : img;
+      const pipeline = ((w || h) ? (img as unknown as { resize: (w?: number, h?: number, o?: Record<string, unknown>) => unknown }).resize(w, h, { fit: 'inside' }) : img) as unknown as { png: () => { toBuffer(): Promise<Buffer> } };
       const buffer: Buffer = await pipeline.png().toBuffer();
       return { buffer, contentType: 'image/png', ext: 'png' };
     }

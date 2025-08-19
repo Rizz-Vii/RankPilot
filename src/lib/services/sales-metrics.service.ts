@@ -1,10 +1,14 @@
 // Sales Metrics Service - Firestore aggregation with graceful mock fallback
 // NOTE: Collections assumed: salesDeals, salesForecastSnapshots. Adjust to real schema.
-import { collection, getDocs, query, where, Timestamp, Unsubscribe, DocumentData, QuerySnapshot, QueryConstraint } from 'firebase/firestore';
+import type { Unsubscribe, DocumentData, QuerySnapshot, QueryConstraint } from 'firebase/firestore';
+import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { managedOnSnapshot } from '@/lib/firebase/write-guard';
 import { db } from '@/lib/firebase/connection-manager';
+// Local diagnostics for sales metrics ingestion
+const salesDiagnostics: { lastIngestError?: string } = {};
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
-import { SalesDealFirestore, ForecastSnapshotFirestore, mapSalesDeal, mapForecastSnapshot } from '@/types/firestore-docs';
+import type { SalesDealFirestore, ForecastSnapshotFirestore} from '@/types/firestore-docs';
+import { mapSalesDeal, mapForecastSnapshot } from '@/types/firestore-docs';
 import { mapDocs } from '@/lib/firebase/snapshot-map';
 
 export interface SalesDealDoc { stage: string; amount: number; probability?: number; createdAt?: unknown; updatedAt?: unknown; status?: string; cycleDays?: number; userId?: string; teamId?: string; }
@@ -75,7 +79,11 @@ export async function fetchSalesMetrics(userId: string, range: '30d' | '90d' | '
         if (!deals.length) throw new Error('No deals');
         return aggregate(deals, forecast);
     } catch (e) {
-        const mock = getMockMetrics('sales');
+        const msg = typeof e === 'object' && e && 'message' in (e as Record<string, unknown>) && typeof (e as { message?: unknown }).message === 'string'
+            ? (e as { message: string }).message
+            : String(e);
+        salesDiagnostics.lastIngestError = msg.length > 140 ? msg.slice(0, 140) : msg;
+        const mock = await getMockMetrics('sales');
         return {
             kpis: mock.kpis.map(k => ({ ...k, target: k.key === 'forecast' ? 95 : k.key === 'velocity' ? 30 : undefined, invertTarget: k.key === 'velocity' })),
             funnel: [

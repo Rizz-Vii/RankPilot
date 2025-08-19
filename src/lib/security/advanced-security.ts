@@ -10,7 +10,8 @@
  */
 
 import { rateLimit } from '@/lib/utils/rate-limit';
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 
 // Security configuration
 const SECURITY_CONFIG = {
@@ -307,7 +308,7 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
  */
 export class SecurityMonitor {
     private static instance: SecurityMonitor;
-    private events: Array<{ id: string; timestamp: string; type: string; details: any }> = [];
+    private events: Array<{ id: string; timestamp: string; type: string; details: unknown }> = [];
 
     static getInstance(): SecurityMonitor {
         if (!SecurityMonitor.instance) {
@@ -335,11 +336,11 @@ export class SecurityMonitor {
         console.log('[SECURITY_MONITOR]', event);
     }
 
-    getRecentEvents(limit = 100): Array<{ id: string; timestamp: string; type: string; details: any }> {
+    getRecentEvents(limit = 100): Array<{ id: string; timestamp: string; type: string; details: unknown }> {
         return this.events.slice(-limit);
     }
 
-    getEventsByType(eventType: string, limit = 100): Array<{ id: string; timestamp: string; type: string; details: any }> {
+    getEventsByType(eventType: string, limit = 100): Array<{ id: string; timestamp: string; type: string; details: unknown }> {
         return this.events
             .filter(event => event.type === eventType)
             .slice(-limit);
@@ -350,7 +351,12 @@ export class SecurityMonitor {
 
         for (const event of this.events) {
             if (event.type === 'threat_detected') {
-                const threatType = event.details?.threatType || 'unknown';
+                let threatType = 'unknown';
+                const details = event.details as Record<string, unknown> | null;
+                if (details && typeof details === 'object') {
+                    const maybe = (details as Record<string, unknown>)["threatType"];
+                    if (typeof maybe === 'string') threatType = maybe;
+                }
                 summary[threatType] = (summary[threatType] || 0) + 1;
             }
         }
@@ -367,14 +373,6 @@ export function validateCompliance(request: NextRequest): {
     issues: string[];
 } {
     const issues: string[] = [];
-
-    // Check for required security headers in response
-    const complianceHeaders = [
-        'X-Frame-Options',
-        'X-Content-Type-Options',
-        'X-XSS-Protection',
-        'Strict-Transport-Security',
-    ];
 
     // HTTPS enforcement
     if (!request.url.startsWith('https://') && process.env.NODE_ENV === 'production') {

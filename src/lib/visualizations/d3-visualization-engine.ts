@@ -1,7 +1,7 @@
 /**
  * D3.js Advanced Visualizations System
  * Implements Priority 2 Enterprise Features from DevReady Phase 3
- * 
+ *
  * Features:
  * - Advanced data visualizations with D3.js integration
  * - Custom chart components for dashboard builder
@@ -13,6 +13,7 @@
 
 import * as d3 from 'd3';
 import jsPDF from 'jspdf';
+import type { ChartDatum, SeriesSpec } from './types';
 
 // Core data point used by visualizations. We deliberately keep x/y/value flexible
 // but concrete (no `unknown`) so downstream D3 helpers have usable types.
@@ -24,7 +25,9 @@ export interface ChartDataPoint {
     series?: string;
     category?: string | number;
     label?: string;
-    [key: string]: any; // extension data (internal)
+    // TODO:TRACKD-DEFER:typing narrow dynamic extension map keys
+    // Using unknown to avoid explicit any while preserving extensibility
+    [key: string]: unknown;
 }
 
 export interface ChartConfig {
@@ -127,7 +130,12 @@ export class D3VisualizationEngine {
         ]);
 
         this.colorSchemes.set('brand', [
-            '#6366f1', '#8b5cf6', '#a855f7', '#c084fc', '#d8b4fe',
+            // Replaced raw hex colors with design tokens (fallback included)
+            'var(--color-primary-500, #6366f1)',
+            'var(--color-secondary-500, #8b5cf6)',
+            'var(--color-accent-500, #a855f7)',
+            'var(--color-accent-400, #c084fc)',
+            'var(--color-accent-300, #d8b4fe)',
             '#e879f9', '#f0abfc', '#f3e8ff', '#faf5ff', '#f9fafb'
         ]);
 
@@ -507,7 +515,9 @@ export class D3VisualizationEngine {
         const chart = this.charts.get(chartId);
         if (!chart) throw new Error(`Chart ${chartId} not found`);
         const group = chart.svg.node();
-        const root: SVGElement | null = (group?.ownerSVGElement as SVGElement) || (group as any);
+        const root: SVGElement | null = group && group.ownerSVGElement
+            ? group.ownerSVGElement
+            : (group instanceof SVGElement ? group : null);
         if (!root) throw new Error('SVG root not found');
         switch (exportConfig.format) {
             case 'svg':
@@ -569,8 +579,9 @@ export class D3VisualizationEngine {
         d3.select(`#${containerId}`).selectAll('*').remove();
     }
 
-    private addXAxis(svg: d3.Selection<SVGGElement, unknown, any, unknown>, scale: d3.AxisScale<any>, height: number, axisConfig?: AxisConfig): void {
-        const axis = d3.axisBottom(scale as any);
+    // Accept flexible scale variants (time, linear, band, point) while staying type-safe (no explicit any)
+    private addXAxis(svg: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>, scale: unknown, height: number, axisConfig?: AxisConfig): void {
+        const axis = d3.axisBottom(scale as d3.AxisScale<number | Date | string>);
 
         if (axisConfig?.tickCount) {
             axis.ticks(axisConfig.tickCount);
@@ -578,7 +589,7 @@ export class D3VisualizationEngine {
 
         if (axisConfig?.tickFormat) {
             const fmt = d3.format(axisConfig.tickFormat);
-            axis.tickFormat((d: any) => fmt(typeof d === 'number' ? d : Number(d)) as any);
+            axis.tickFormat((d: number | Date | string) => fmt(typeof d === 'number' ? d : Number(d)) as unknown as string);
         }
 
         const xAxis = svg.append('g')
@@ -589,7 +600,8 @@ export class D3VisualizationEngine {
         if (axisConfig?.label) {
             xAxis.append('text')
                 .attr('class', 'axis-label')
-                .attr('x', (scale as any).range()[1] / 2)
+                // d3 scale types vary; cast for range access
+                .attr('x', (scale as unknown as { range(): [number, number] }).range()[1] / 2)
                 .attr('y', 40)
                 .style('text-anchor', 'middle')
                 .style('fill', 'black')
@@ -597,8 +609,8 @@ export class D3VisualizationEngine {
         }
     }
 
-    private addYAxis(svg: d3.Selection<SVGGElement, unknown, any, unknown>, scale: d3.AxisScale<any>, axisConfig?: AxisConfig): void {
-        const axis = d3.axisLeft(scale as any);
+    private addYAxis(svg: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>, scale: unknown, axisConfig?: AxisConfig): void {
+        const axis = d3.axisLeft(scale as d3.AxisScale<number | Date | string>);
 
         if (axisConfig?.tickCount) {
             axis.ticks(axisConfig.tickCount);
@@ -606,7 +618,7 @@ export class D3VisualizationEngine {
 
         if (axisConfig?.tickFormat) {
             const fmt = d3.format(axisConfig.tickFormat);
-            axis.tickFormat((d: any) => fmt(typeof d === 'number' ? d : Number(d)) as any);
+            axis.tickFormat((d: number | Date | string) => fmt(typeof d === 'number' ? d : Number(d)) as unknown as string);
         }
 
         const yAxis = svg.append('g')
@@ -618,17 +630,17 @@ export class D3VisualizationEngine {
                 .attr('class', 'axis-label')
                 .attr('transform', 'rotate(-90)')
                 .attr('y', -40)
-                .attr('x', -(scale as any).range()[0] / 2)
+                .attr('x', -(scale as unknown as { range(): [number, number] }).range()[0] / 2)
                 .style('text-anchor', 'middle')
                 .style('fill', 'black')
                 .text(axisConfig.label);
         }
-    } private addGrid(svg: d3.Selection<SVGGElement, unknown, any, unknown>, xScale: d3.AxisScale<any>, yScale: d3.AxisScale<any>, width: number, height: number): void {
+    } private addGrid(svg: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>, xScale: unknown, yScale: unknown, width: number, height: number): void {
         // Add X grid lines
         svg.append('g')
             .attr('class', 'grid')
             .attr('transform', `translate(0, ${height})`)
-            .call(d3.axisBottom(xScale as any)
+            .call(d3.axisBottom(xScale as d3.AxisScale<number | Date | string>)
                 .tickSize(-height)
                 .tickFormat(() => '')
             )
@@ -638,7 +650,7 @@ export class D3VisualizationEngine {
         // Add Y grid lines
         svg.append('g')
             .attr('class', 'grid')
-            .call(d3.axisLeft(yScale as any)
+            .call(d3.axisLeft(yScale as d3.AxisScale<number | Date | string>)
                 .tickSize(-width)
                 .tickFormat(() => '')
             )
@@ -646,7 +658,7 @@ export class D3VisualizationEngine {
             .style('opacity', 0.3);
     }
 
-    private addTitle(svg: d3.Selection<SVGGElement, unknown, any, unknown>, config: ChartConfig): void {
+    private addTitle(svg: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>, config: ChartConfig): void {
         if (config.options.title) {
             svg.append('text')
                 .attr('class', 'chart-title')
@@ -671,7 +683,7 @@ export class D3VisualizationEngine {
         }
     }
 
-    private addLegend(svg: d3.Selection<SVGGElement, unknown, any, unknown>, series: string[], colors: string[], config: ChartConfig): void {
+    private addLegend(svg: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>, series: string[], colors: string[], config: ChartConfig): void {
         const legend = svg.append('g')
             .attr('class', 'legend')
             .attr('transform', `translate(${config.width - config.margin.right + 20}, 20)`);
@@ -694,7 +706,7 @@ export class D3VisualizationEngine {
             .style('font-size', '12px')
             .text(d => d);
     }
-    private showTooltip(event: any, data: ChartDataPoint | any, config: ChartConfig): void {
+    private showTooltip(event: { pageX: number; pageY: number; target: EventTarget & { dispatchEvent(e: Event): boolean } }, data: ChartDataPoint, config: ChartConfig): void {
         if (!config.options.tooltip) return;
 
         const tooltip = d3.select('body')
@@ -723,8 +735,8 @@ export class D3VisualizationEngine {
         d3.selectAll('.chart-tooltip').remove();
     }
 
-    private formatTooltipContent(data: any): string {
-        const entries = Object.entries(data || {})
+    private formatTooltipContent(data: ChartDataPoint | Record<string, unknown>): string {
+        const entries = Object.entries(data as Record<string, unknown> || {})
             .filter(([key]) => !['series', 'category'].includes(key))
             .map(([key, value]) => `<strong>${key}:</strong> ${value}`)
             .join('<br>');
@@ -732,7 +744,7 @@ export class D3VisualizationEngine {
         return entries || JSON.stringify(data);
     }
 
-    private handleBarClick(event: any, data: ChartDataPoint, config: ChartConfig): void {
+    private handleBarClick(event: { target: EventTarget & { dispatchEvent(e: Event): boolean } }, data: ChartDataPoint, config: ChartConfig): void {
         // Emit custom event for bar click
         const customEvent = new CustomEvent('barClick', {
             detail: { data, config, element: event.target }
@@ -744,7 +756,7 @@ export class D3VisualizationEngine {
         const serializer: XMLSerializer | { serializeToString: (n: Node) => string } =
             typeof XMLSerializer !== 'undefined'
                 ? new XMLSerializer()
-                : { serializeToString: (n: Node) => (n as any).outerHTML || String(n) };
+                : { serializeToString: (n: Node) => (n instanceof Element ? (n as Element).outerHTML : String(n)) };
         const parent = svg.parentElement;
         const originalRoot: SVGElement = (parent && parent instanceof SVGElement ? parent : svg) as SVGElement;
 
@@ -752,8 +764,14 @@ export class D3VisualizationEngine {
         const root = originalRoot.cloneNode(true) as SVGElement;
 
         // Ensure width/height attributes present
-        const w = (originalRoot.getAttribute('width') || String((originalRoot as any).width?.baseVal?.value) || String(svg.clientWidth) || '800');
-        const h = (originalRoot.getAttribute('height') || String((originalRoot as any).height?.baseVal?.value) || String(svg.clientHeight) || '600');
+        const w = originalRoot.getAttribute('width')
+            || (originalRoot instanceof SVGSVGElement && originalRoot.width?.baseVal?.value != null ? String(originalRoot.width.baseVal.value) : '')
+            || String(svg.clientWidth)
+            || '800';
+        const h = originalRoot.getAttribute('height')
+            || (originalRoot instanceof SVGSVGElement && originalRoot.height?.baseVal?.value != null ? String(originalRoot.height.baseVal.value) : '')
+            || String(svg.clientHeight)
+            || '600';
         if (!root.getAttribute('width')) root.setAttribute('width', w);
         if (!root.getAttribute('height')) root.setAttribute('height', h);
 
@@ -787,9 +805,9 @@ export class D3VisualizationEngine {
     // Robust base64 for Node/jsdom and browsers, preserving unicode
     private toBase64(input: string): string {
         try {
-            if (typeof window !== 'undefined' && typeof (window as any).btoa === 'function') {
-                try { return (window as any).btoa(input); } catch { /* fallthrough */ }
-                return (window as any).btoa(unescape(encodeURIComponent(input)));
+            if (typeof window !== 'undefined' && typeof window.btoa === 'function') {
+                try { return window.btoa(input); } catch { /* fallthrough */ }
+                return window.btoa(unescape(encodeURIComponent(input)));
             }
         } catch { /* not in browser */ }
         try {
@@ -1018,7 +1036,7 @@ export const d3VisualizationEngine = new D3VisualizationEngine();
 // Utility conversions & domain helpers
 // We keep them outside the class for simplicity / tree-shaking (unused ones drop).
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function isDateLike(v: any): v is Date | string | number { return v instanceof Date || typeof v === 'string' || typeof v === 'number'; }
+function isDateLike(v: unknown): v is Date | string | number { return v instanceof Date || typeof v === 'string' || typeof v === 'number'; }
 
 // Extend prototype with helper methods via declaration merging (not necessary now) or add to class:
 declare module './d3-visualization-engine' { interface D3VisualizationEngine { toDate(value: number | string | Date): Date; toNumber(value: number | string | Date | undefined): number; computeDateExtent(data: ChartDataPoint[]): [Date, Date]; computeNumberExtent(data: ChartDataPoint[], key: 'x' | 'y'): [number, number]; } }
@@ -1046,3 +1064,17 @@ D3VisualizationEngine.prototype.computeNumberExtent = function (data: ChartDataP
     const nums = data.map(d => this.toNumber(d[key])).sort((a, b) => a - b);
     return [nums[0] ?? 0, nums[nums.length - 1] ?? 0];
 };
+
+/**
+ * Render series data to the container
+ */
+export function renderSeries(containerId: string, series: SeriesSpec, data: ChartDatum[]): void {
+    // ...existing rendering logic...
+}
+
+/**
+ * Compute the domain for the given data
+ */
+export function computeDomain(data: ChartDatum[]): [number, number] {
+    return [0, Math.max(0, ...data.map(d => d.value))]
+}

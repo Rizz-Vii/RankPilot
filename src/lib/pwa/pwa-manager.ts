@@ -1,7 +1,7 @@
 /**
  * PWA Service Worker Registration and Management
  * Advanced Architecture Enhancement - DevReady Phase 3
- * 
+ *
  * Features:
  * - Service worker registration with update management
  * - Push notification subscription management
@@ -14,6 +14,9 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { useEffect, useState } from 'react';
+
+// Local diagnostics (non-persistent)
+const pwaDiagnostics: { errors: Array<{ message: string }> } = { errors: [] };
 
 interface PWAInstallPrompt extends Event {
     readonly platforms: string[];
@@ -220,7 +223,12 @@ export class PWAManager {
             }
             console.log('[PWA] Notification permission (current):', Notification.permission);
         } catch (e) {
-            // Ignore in environments that lack Notification
+            // Ignore in environments that lack Notification; track diagnostics
+            const message = typeof e === 'object' && e && 'message' in (e as Record<string, unknown>) && typeof (e as { message?: unknown }).message === 'string'
+                ? (e as { message: string }).message
+                : String(e);
+            pwaDiagnostics.errors.push({ message });
+            if (pwaDiagnostics.errors.length > 25) pwaDiagnostics.errors.shift();
         }
     }
 
@@ -415,7 +423,8 @@ export class PWAManager {
     isInstalled(): boolean {
         try {
             const standalone = window.matchMedia('(display-mode: standalone)').matches;
-            const legacyIOS = (window.navigator as any)?.standalone === true;
+            const nav = window.navigator as unknown as { standalone?: boolean };
+            const legacyIOS = nav.standalone === true;
             return standalone || legacyIOS;
         } catch {
             return false;

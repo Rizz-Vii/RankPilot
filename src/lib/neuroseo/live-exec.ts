@@ -3,14 +3,14 @@
  * Strategy: cache -> live (orchestrator) -> synthetic fallback.
  * Provides provenance tagging: 'cache' | 'live' | 'synthetic'.
  */
-import { neuroSEOOrchestrator } from './enhanced-orchestrator';
-import type { } from './enhanced-orchestrator';
-import { createDeterministicRng, tagSynthetic } from '@/lib/synthetic/synthetic-utils';
-import { getLogger } from '@/lib/logging/app-logger';
-import { adminDb } from '@/lib/firebase-admin';
-import { z } from 'zod';
 import { InMemoryCache } from '@/lib/cache/simple-cache';
-import { recordAnalysisRun, recordCacheHit, getNeuroseoMetricsSnapshot, recordWorkflowRun, recordWorkflowFailure } from './metrics-registry';
+import { adminDb } from '@/lib/firebase-admin';
+import { getLogger } from '@/lib/logging/app-logger';
+import { createDeterministicRng, tagSynthetic } from '@/lib/synthetic/synthetic-utils';
+import { z } from 'zod';
+import { neuroSEOOrchestrator } from './enhanced-orchestrator';
+import { getNeuroseoMetricsSnapshot, recordAnalysisRun, recordCacheHit, recordWorkflowFailure, recordWorkflowRun } from './metrics-registry';
+import type { EngineResult, NeuroSeoJobContext } from './types';
 
 const logger = getLogger('neuroseo-live');
 
@@ -80,9 +80,9 @@ export async function executeNeuroLive(req: LiveExecRequest, opts?: { timeoutMs?
         recordWorkflowRun();
         const orchestratorPromise = neuroSEOOrchestrator.runAnalysis({
             urls: req.urls,
-            analysisType: (req.analysisType as unknown) || 'comprehensive',
+            analysisType: (req.analysisType ?? 'comprehensive'),
             userId: req.userId || 'anonymous'
-        } as any).then(r => r as LiveNeuroSEOReport);
+        }).then(r => r as LiveNeuroSEOReport);
         const report = await Promise.race([orchestratorPromise, timeoutPromise]);
         const result: LiveExecResult = { provenance: 'live', report, generatedAt: new Date().toISOString(), latencyMs: Math.round(performance.now() - start) };
         cache.set(key, { ts: Date.now(), result });
@@ -94,7 +94,9 @@ export async function executeNeuroLive(req: LiveExecRequest, opts?: { timeoutMs?
         });
         return result;
     } catch (err: unknown) {
-        const msg = (err && typeof err === 'object' && 'message' in err) ? (err as any).message : 'unknown';
+        const msg = (err && typeof err === 'object' && 'message' in err && typeof (err as { message?: unknown }).message === 'string')
+            ? (err as { message: string }).message
+            : 'unknown';
         logger.warn('live.degraded', { reason: timedOut ? 'timeout' : 'error', message: msg });
         recordWorkflowFailure();
         const rng = createDeterministicRng([req.urls.join('|'), req.analysisType, 'synthetic']);
@@ -164,4 +166,11 @@ async function persistCompactAnalysis(userId: string, urls: string[], analysisTy
     }
     await adminDb.collection('neuroSeoAnalyses').doc(docId).set(parsed.data, { merge: true });
     logger.info('persist.success', { hashKey: hashKey.slice(0, 16), provenance: result.provenance });
+}
+
+// ---------------- Engine Runner (NEU-04) ----------------
+export async function runEngines(context: NeuroSeoJobContext): Promise<EngineResult[]> {
+    // TODO: implement engine execution loop (currently deterministic placeholder to satisfy return type)
+    void context; // unused for now
+    return [];
 }

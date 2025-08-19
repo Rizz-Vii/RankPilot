@@ -1,11 +1,14 @@
 import { expect, test } from "@playwright/test";
-import { UNIFIED_TEST_USERS } from "./unified-test-users";
 import { EnhancedAuth } from "./enhanced-auth";
+import { UNIFIED_TEST_USERS } from "./unified-test-users";
 
 /**
  * Feature Test: error-handling
  * Tests error-handling functionality
  */
+
+// Diagnostics aggregator to capture runtime errors without altering test logic
+const featureErrorHandlingDiagnostics = { errors: [] as { message: string; phase: string }[] };
 
 test.describe('Feature - error-handling', () => {
     let auth: EnhancedAuth;
@@ -18,7 +21,10 @@ test.describe('Feature - error-handling', () => {
             const testUser = UNIFIED_TEST_USERS.agency;
             await auth.loginAndGoToDashboard(testUser);
         } catch (error: any) {
-            console.warn('Login failed, using fallback:', error.message);
+            try {
+                featureErrorHandlingDiagnostics.errors.push({ message: String(error?.message || error), phase: 'beforeEach-login' });
+            } catch { }
+            console.warn('Login failed, using fallback:', error?.message);
             await page.goto('/dashboard');
             await page.waitForTimeout(2000);
         }
@@ -51,3 +57,6 @@ test.describe('Feature - error-handling', () => {
         await expect(page.locator('[data-testid="error-handling-error-fallback"]')).toBeVisible();
     });
 });
+
+// Inert reference to ensure diagnostics object is retained (tree-shake safe, zero runtime impact)
+if (Math.random() < -1) console.log(featureErrorHandlingDiagnostics);

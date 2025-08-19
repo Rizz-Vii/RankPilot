@@ -41,7 +41,8 @@ if (typeof document !== 'undefined' && !document.body) {
     document.body = { className: '', classList: { add() { }, remove() { }, contains() { return false; } } };
 }
 // Force load theme system (which will then call applyTheme when constructed)
-import { themeSystem, ThemeMode } from '../../../src/lib/themes/theme-system';
+import type { ThemeMode } from '../../../src/lib/themes/theme-system';
+import { themeSystem } from '../../../src/lib/themes/theme-system';
 
 function assert(cond: any, msg: string) { if (!cond) throw new Error(msg); }
 

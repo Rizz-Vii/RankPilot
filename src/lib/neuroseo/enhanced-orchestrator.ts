@@ -219,7 +219,9 @@ export class EnhancedNeuroSEOOrchestrator {
             yield { type: 'complete', data: { overallScore: report.overallScore, duration, provenance: 'live' } };
             return { ...report, cached: false };
         } catch (error: unknown) {
-            const errMsg = (error && typeof error === 'object' && 'message' in error) ? (error as any).message : 'unknown';
+            const errMsg = (error && typeof error === 'object' && 'message' in error && typeof (error as { message?: unknown }).message === 'string')
+                ? (error as { message: string }).message
+                : 'unknown';
             logger.error('NeuroSEO Stream Failed', { error: errMsg });
             yield { type: 'error', data: { message: errMsg } };
             throw error;
@@ -329,7 +331,7 @@ export class EnhancedNeuroSEOOrchestrator {
     }
 
     // ---------------- Deterministic Mock Generators (Phase 0) ----------------
-    private generateMockKeywords(url?: string, analysisType?: string) {
+    private generateMockKeywords(url?: string, analysisType?: string): UrlAnalysisResult['keywords'] { // deterministic mock
         const baseKeywords = [
             'seo optimization', 'technical seo', 'content strategy', 'user experience', 'page speed', 'semantic search',
             'backlink profile', 'search visibility', 'crawl budget', 'structured data'
@@ -337,7 +339,7 @@ export class EnhancedNeuroSEOOrchestrator {
         const rng = this.seededRng(this.hashSeed(`${url || ''}|${analysisType || ''}`));
         // Pick 3-5 keywords deterministically
         const count = 3 + Math.floor(rng() * 3); // 3..5
-        const chosen: unknown[] = [];
+        const chosen: UrlAnalysisResult['keywords'] = [];
         const usedIdx = new Set<number>();
         while (chosen.length < count && usedIdx.size < baseKeywords.length) {
             const idx = Math.floor(rng() * baseKeywords.length);

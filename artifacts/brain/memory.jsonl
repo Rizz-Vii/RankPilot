@@ -1,0 +1,161 @@
+{"ts":1755582463593,"source":"brain","kind":"plan-generated","id":"test-run","status":"ok","meta":{"steps":3}}
+{"ts":1755582516029,"source":"brain","kind":"plan-generated","id":"test-run","status":"ok","meta":{"steps":2}}
+{"ts":1755582751566,"source":"brain","kind":"plan-generated","id":"cli-1755582751566","status":"ok","meta":{"steps":49}}
+{"ts":1755582930771,"source":"brain","kind":"plan-generated","id":"cli-1755582930770","status":"ok","meta":{"steps":49}}
+{"ts":1755583394464,"source":"brain","kind":"plan-generated","id":"cli-1755583394464","status":"ok","meta":{"steps":49}}
+{"ts":1755583408990,"source":"brain","kind":"plan-generated","id":"cli-1755583408990","status":"ok","meta":{"steps":49}}
+{"ts":1755583771400,"source":"brain","kind":"plan-generated","id":"cli-1755583771400","status":"ok","meta":{"steps":49}}
+{"ts":1755583847177,"source":"brain","kind":"plan-generated","id":"cli-1755583847177","status":"ok","meta":{"steps":49}}
+{"ts":1755583870176,"source":"brain","kind":"plan-generated","id":"cli-1755583870176","status":"ok","meta":{"steps":49}}
+{"ts":1755584106089,"source":"brain","kind":"plan-generated","id":"cli-1755584106089","status":"ok","meta":{"steps":49}}
+{"ts":1755584462224,"source":"brain","kind":"plan-generated","id":"cli-1755584462224","status":"ok","meta":{"steps":15}}
+{"ts":1755585545502,"source":"brain","kind":"plan-generated","id":"cli-1755585545502","status":"ok","meta":{"steps":10}}
+{"ts":1755588313008,"source":"brain","kind":"mission-set","status":"active","meta":{"tsErrors":16,"lintErrors":2,"lintWarnings":75,"steps":3}}
+{"ts":1755589019420,"source":"brain","kind":"answer","status":"ok","meta":{"top":1,"ordering":[1,4,5]}}
+{"ts":1755589087365,"source":"brain","kind":"mission-set","status":"active","meta":{"tsErrors":16,"lintErrors":2,"lintWarnings":75,"steps":3}}
+{"ts":1755589087367,"source":"brain","kind":"mission-enqueue","status":"ok","meta":{"lineage":"MISSION-1755589087365","enqueued":3}}
+{"ts":1755589458434,"source":"brain","kind":"mission-set","status":"active","meta":{"tsErrors":16,"lintErrors":2,"lintWarnings":75,"steps":3}}
+{"ts":1755589497017,"source":"brain","kind":"answer","status":"ok","meta":{"top":1,"ordering":[1,4,5]}}
+{"ts":1755589509209,"source":"brain","kind":"plan-generated","id":"cli-1755589509208","status":"ok","meta":{"steps":3}}
+{"ts":1755589977912,"source":"brain","kind":"plan-generated","id":"cli-1755589977912","status":"ok","meta":{"steps":3}}
+{"ts":1755590020223,"source":"brain","kind":"mission-set","status":"active","meta":{"tsErrors":16,"lintErrors":2,"lintWarnings":75,"steps":3}}
+{"ts":1755590307849,"source":"brain","kind":"plan-generated","id":"cli-1755590307848","status":"ok","meta":{"steps":3}}
+{"ts":1755590329010,"source":"brain","kind":"mission-set","status":"active","meta":{"tsErrors":16,"lintErrors":2,"lintWarnings":75,"steps":3}}
+{"ts":1755590648365,"source":"brain","kind":"mission-set","status":"active","meta":{"tsErrors":16,"lintErrors":2,"lintWarnings":75,"steps":3}}
+{"ts":1755590666282,"source":"brain","kind":"plan-generated","id":"cli-1755590666281","status":"ok","meta":{"steps":3}}
+{"ts":1755590708454,"source":"brain","kind":"mission-set","status":"active","meta":{"tsErrors":16,"lintErrors":2,"lintWarnings":75,"steps":3}}
+{"ts":1755596465103,"source":"brain","kind":"mission-set","status":"active","meta":{"tsErrors":16,"lintErrors":2,"lintWarnings":75,"steps":6,"date":"19-Aug-25","melbTime":"07:41 PM","utcDelta":"+10:00"}}
+{"ts":1755596490037,"source":"brain","kind":"answer","status":"ok","meta":{"top":1,"ordering":[1,4,5],"date":"19-Aug-25","melbTime":"07:41 PM","utcDelta":"+10:00"}}
+{"ts":1755596527797,"source":"brain","kind":"chat-ingest","id":"chat-0","status":"ok","meta":{"excerpt":"[ChatContext]","date":"19-Aug-25","melbTime":"07:42 PM","utcDelta":"+10:00"}}
+{"ts":1755596527798,"source":"brain","kind":"chat-ingest","id":"chat-1","status":"ok","meta":{"excerpt":"User Request:","date":"19-Aug-25","melbTime":"07:42 PM","utcDelta":"+10:00"}}
+{"ts":1755596527798,"source":"brain","kind":"chat-ingest","id":"chat-2","status":"ok","meta":{"excerpt":"execute watch mode brain","date":"19-Aug-25","melbTime":"07:42 PM","utcDelta":"+10:00"}}
+{"ts":1755596527798,"source":"brain","kind":"chat-ingest","id":"chat-3","status":"ok","meta":{"excerpt":"provide this chat context and your last message to the brain,","date":"19-Aug-25","melbTime":"07:42 PM","utcDelta":"+10:00"}}
+{"ts":1755596527799,"source":"brain","kind":"chat-ingest","id":"chat-4","status":"ok","meta":{"excerpt":"then ask the brain  if it wants you to proceed with concrete fixes for the TS errors next?","date":"19-Aug-25","melbTime":"07:42 PM","utcDelta":"+10:00"}}
+{"ts":1755596527799,"source":"brain","kind":"chat-ingest","id":"chat-5","status":"ok","meta":{"excerpt":"review the brains response and execute the brains response.","date":"19-Aug-25","melbTime":"07:42 PM","utcDelta":"+10:00"}}
+{"ts":1755596527799,"source":"brain","kind":"chat-ingest","id":"chat-6","status":"ok","meta":{"excerpt":"inter-interact with the brain(for accuracy improvement)  to resolve all remaining ts/lint.","date":"19-Aug-25","melbTime":"07:42 PM","utcDelta":"+10:00"}}
+{"ts":1755596527800,"source":"brain","kind":"chat-ingest","id":"chat-7","status":"ok","meta":{"excerpt":"Assistant Last Summary (previous message):","date":"19-Aug-25","melbTime":"07:42 PM","utcDelta":"+10:00"}}
+{"ts":1755596527800,"source":"brain","kind":"chat-ingest","id":"chat-8","status":"ok","meta":{"excerpt":"Implemented enhancements: mission history/delta, loop-status mode, conversation ingestion, watch mode, autopulse, memory pruning, targeted TS file steps. Missio","date":"19-Aug-25","melbTime":"07:42 PM","utcDelta":"+10:00"}}
+{"ts":1755596527800,"source":"brain","kind":"chat-ingest","id":"chat-9","status":"ok","meta":{"excerpt":"Instruction to Brain: Consider current diagnostics and mission steps. If TypeScript errors remain (>0), respond via enhancement priorities making 'fix-types' an","date":"19-Aug-25","melbTime":"07:42 PM","utcDelta":"+10:00"}}
+{"ts":1755596529710,"source":"brain","kind":"plan-generated","id":"cli-1755596529710","status":"ok","meta":{"steps":3,"strategy":"openai","model":"gpt-4o-mini","tokens":1791,"date":"19-Aug-25","melbTime":"07:42 PM","utcDelta":"+10:00"}}
+{"ts":1755596810443,"source":"brain","kind":"answer","status":"ok","meta":{"top":1,"ordering":[1,4,5],"date":"19-Aug-25","melbTime":"07:46 PM","utcDelta":"+10:00"}}
+{"ts":1755597333221,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"07:55 PM","utcDelta":"+10:00"}}
+{"ts":1755598628324,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:17 PM","utcDelta":"+10:00"}}
+{"ts":1755598643324,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:17 PM","utcDelta":"+10:00"}}
+{"ts":1755598658341,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:17 PM","utcDelta":"+10:00"}}
+{"ts":1755598673354,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:17 PM","utcDelta":"+10:00"}}
+{"ts":1755598688372,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:18 PM","utcDelta":"+10:00"}}
+{"ts":1755598703373,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:18 PM","utcDelta":"+10:00"}}
+{"ts":1755598718386,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:18 PM","utcDelta":"+10:00"}}
+{"ts":1755598733394,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:18 PM","utcDelta":"+10:00"}}
+{"ts":1755598748412,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:19 PM","utcDelta":"+10:00"}}
+{"ts":1755598763418,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:19 PM","utcDelta":"+10:00"}}
+{"ts":1755598778431,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:19 PM","utcDelta":"+10:00"}}
+{"ts":1755598793433,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:19 PM","utcDelta":"+10:00"}}
+{"ts":1755598808451,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:20 PM","utcDelta":"+10:00"}}
+{"ts":1755598823465,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:20 PM","utcDelta":"+10:00"}}
+{"ts":1755598838478,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:20 PM","utcDelta":"+10:00"}}
+{"ts":1755598853497,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:20 PM","utcDelta":"+10:00"}}
+{"ts":1755598868508,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:21 PM","utcDelta":"+10:00"}}
+{"ts":1755598883534,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:21 PM","utcDelta":"+10:00"}}
+{"ts":1755598898537,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:21 PM","utcDelta":"+10:00"}}
+{"ts":1755598913553,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:21 PM","utcDelta":"+10:00"}}
+{"ts":1755598928570,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:22 PM","utcDelta":"+10:00"}}
+{"ts":1755598943583,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:22 PM","utcDelta":"+10:00"}}
+{"ts":1755598958599,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:22 PM","utcDelta":"+10:00"}}
+{"ts":1755598973613,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:22 PM","utcDelta":"+10:00"}}
+{"ts":1755598988626,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:23 PM","utcDelta":"+10:00"}}
+{"ts":1755599003647,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:23 PM","utcDelta":"+10:00"}}
+{"ts":1755599018656,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:23 PM","utcDelta":"+10:00"}}
+{"ts":1755599033672,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:23 PM","utcDelta":"+10:00"}}
+{"ts":1755599048686,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:24 PM","utcDelta":"+10:00"}}
+{"ts":1755599063690,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:24 PM","utcDelta":"+10:00"}}
+{"ts":1755599078704,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:24 PM","utcDelta":"+10:00"}}
+{"ts":1755599093718,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:24 PM","utcDelta":"+10:00"}}
+{"ts":1755599108734,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:25 PM","utcDelta":"+10:00"}}
+{"ts":1755599123737,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:25 PM","utcDelta":"+10:00"}}
+{"ts":1755599138742,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:25 PM","utcDelta":"+10:00"}}
+{"ts":1755599153762,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:25 PM","utcDelta":"+10:00"}}
+{"ts":1755599168768,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:26 PM","utcDelta":"+10:00"}}
+{"ts":1755599183769,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:26 PM","utcDelta":"+10:00"}}
+{"ts":1755599198783,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:26 PM","utcDelta":"+10:00"}}
+{"ts":1755599213804,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:26 PM","utcDelta":"+10:00"}}
+{"ts":1755599228815,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:27 PM","utcDelta":"+10:00"}}
+{"ts":1755599243829,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:27 PM","utcDelta":"+10:00"}}
+{"ts":1755599258844,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:27 PM","utcDelta":"+10:00"}}
+{"ts":1755599273867,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:27 PM","utcDelta":"+10:00"}}
+{"ts":1755599288878,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:28 PM","utcDelta":"+10:00"}}
+{"ts":1755599303878,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:28 PM","utcDelta":"+10:00"}}
+{"ts":1755599318892,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:28 PM","utcDelta":"+10:00"}}
+{"ts":1755599333909,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:28 PM","utcDelta":"+10:00"}}
+{"ts":1755599348938,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:29 PM","utcDelta":"+10:00"}}
+{"ts":1755599363944,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:29 PM","utcDelta":"+10:00"}}
+{"ts":1755599378948,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:29 PM","utcDelta":"+10:00"}}
+{"ts":1755599393957,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:29 PM","utcDelta":"+10:00"}}
+{"ts":1755599408970,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:30 PM","utcDelta":"+10:00"}}
+{"ts":1755599423971,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:30 PM","utcDelta":"+10:00"}}
+{"ts":1755599438991,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:30 PM","utcDelta":"+10:00"}}
+{"ts":1755599454012,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:30 PM","utcDelta":"+10:00"}}
+{"ts":1755599469015,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:31 PM","utcDelta":"+10:00"}}
+{"ts":1755599484024,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:31 PM","utcDelta":"+10:00"}}
+{"ts":1755599499038,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:31 PM","utcDelta":"+10:00"}}
+{"ts":1755599514060,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:31 PM","utcDelta":"+10:00"}}
+{"ts":1755599529071,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:32 PM","utcDelta":"+10:00"}}
+{"ts":1755599544085,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:32 PM","utcDelta":"+10:00"}}
+{"ts":1755599559105,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:32 PM","utcDelta":"+10:00"}}
+{"ts":1755599574117,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:32 PM","utcDelta":"+10:00"}}
+{"ts":1755599589124,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:33 PM","utcDelta":"+10:00"}}
+{"ts":1755599604140,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:33 PM","utcDelta":"+10:00"}}
+{"ts":1755599619151,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:33 PM","utcDelta":"+10:00"}}
+{"ts":1755599634166,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:33 PM","utcDelta":"+10:00"}}
+{"ts":1755599649181,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:34 PM","utcDelta":"+10:00"}}
+{"ts":1755599664193,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:34 PM","utcDelta":"+10:00"}}
+{"ts":1755599679210,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:34 PM","utcDelta":"+10:00"}}
+{"ts":1755599694237,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:34 PM","utcDelta":"+10:00"}}
+{"ts":1755599709238,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:35 PM","utcDelta":"+10:00"}}
+{"ts":1755599724256,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:35 PM","utcDelta":"+10:00"}}
+{"ts":1755599739268,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:35 PM","utcDelta":"+10:00"}}
+{"ts":1755599754284,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:35 PM","utcDelta":"+10:00"}}
+{"ts":1755599769303,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:36 PM","utcDelta":"+10:00"}}
+{"ts":1755599784318,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:36 PM","utcDelta":"+10:00"}}
+{"ts":1755599799334,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:36 PM","utcDelta":"+10:00"}}
+{"ts":1755599814347,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:36 PM","utcDelta":"+10:00"}}
+{"ts":1755599829369,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:37 PM","utcDelta":"+10:00"}}
+{"ts":1755599844357,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:37 PM","utcDelta":"+10:00"}}
+{"ts":1755599859372,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:37 PM","utcDelta":"+10:00"}}
+{"ts":1755599874383,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:37 PM","utcDelta":"+10:00"}}
+{"ts":1755599889393,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:38 PM","utcDelta":"+10:00"}}
+{"ts":1755599904403,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:38 PM","utcDelta":"+10:00"}}
+{"ts":1755599919437,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:38 PM","utcDelta":"+10:00"}}
+{"ts":1755599934433,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:38 PM","utcDelta":"+10:00"}}
+{"ts":1755599949448,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:39 PM","utcDelta":"+10:00"}}
+{"ts":1755599964464,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:39 PM","utcDelta":"+10:00"}}
+{"ts":1755599979490,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:39 PM","utcDelta":"+10:00"}}
+{"ts":1755599994493,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:39 PM","utcDelta":"+10:00"}}
+{"ts":1755600009508,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:40 PM","utcDelta":"+10:00"}}
+{"ts":1755600024509,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:40 PM","utcDelta":"+10:00"}}
+{"ts":1755600039531,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:40 PM","utcDelta":"+10:00"}}
+{"ts":1755600054546,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:40 PM","utcDelta":"+10:00"}}
+{"ts":1755600069555,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:41 PM","utcDelta":"+10:00"}}
+{"ts":1755600084573,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:41 PM","utcDelta":"+10:00"}}
+{"ts":1755600099595,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:41 PM","utcDelta":"+10:00"}}
+{"ts":1755600114604,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:41 PM","utcDelta":"+10:00"}}
+{"ts":1755600129607,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:42 PM","utcDelta":"+10:00"}}
+{"ts":1755600144612,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:42 PM","utcDelta":"+10:00"}}
+{"ts":1755600159622,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:42 PM","utcDelta":"+10:00"}}
+{"ts":1755600174639,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:42 PM","utcDelta":"+10:00"}}
+{"ts":1755600189655,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:43 PM","utcDelta":"+10:00"}}
+{"ts":1755600204670,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:43 PM","utcDelta":"+10:00"}}
+{"ts":1755600219684,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:43 PM","utcDelta":"+10:00"}}
+{"ts":1755600234699,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:43 PM","utcDelta":"+10:00"}}
+{"ts":1755600249704,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:44 PM","utcDelta":"+10:00"}}
+{"ts":1755600264716,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:44 PM","utcDelta":"+10:00"}}
+{"ts":1755600279727,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:44 PM","utcDelta":"+10:00"}}
+{"ts":1755600294743,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:44 PM","utcDelta":"+10:00"}}
+{"ts":1755600309760,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:45 PM","utcDelta":"+10:00"}}
+{"ts":1755600324790,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:45 PM","utcDelta":"+10:00"}}
+{"ts":1755600339791,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:45 PM","utcDelta":"+10:00"}}
+{"ts":1755600354808,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:45 PM","utcDelta":"+10:00"}}
+{"ts":1755600369821,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:46 PM","utcDelta":"+10:00"}}
+{"ts":1755600384836,"source":"brain","kind":"answer","status":"ok","meta":{"top":0,"ordering":[0,6,1],"date":"19-Aug-25","melbTime":"08:46 PM","utcDelta":"+10:00"}}
+{"ts":1755601486878,"source":"brain","kind":"plan-generated","id":"cli-1755601486878","status":"ok","meta":{"steps":3,"strategy":"openai","model":"gpt-4o-mini","tokens":1701,"date":"19-Aug-25","melbTime":"09:04 PM","utcDelta":"+10:00"}}
+{"ts":1755601657618,"source":"brain","kind":"plan-generated","id":"cli-1755601657618","status":"ok","meta":{"steps":3,"strategy":"openai","model":"gpt-4o-mini","tokens":1716,"date":"19-Aug-25","melbTime":"09:07 PM","utcDelta":"+10:00"}}

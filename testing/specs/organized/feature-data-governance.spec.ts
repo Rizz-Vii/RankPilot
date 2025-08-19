@@ -1,11 +1,13 @@
 import { expect, test } from "@playwright/test";
-import { UNIFIED_TEST_USERS } from "./unified-test-users";
 import { EnhancedAuth } from "./enhanced-auth";
+import { UNIFIED_TEST_USERS } from "./unified-test-users";
 
 /**
  * Feature Test: data-governance
  * Tests data-governance functionality
  */
+
+const featureDataGovernanceDiagnostics = { errors: [] as { message: string; phase: string }[] };
 
 test.describe('Feature - data-governance', () => {
     let auth: EnhancedAuth;
@@ -18,7 +20,10 @@ test.describe('Feature - data-governance', () => {
             const testUser = UNIFIED_TEST_USERS.agency;
             await auth.loginAndGoToDashboard(testUser);
         } catch (error: any) {
-            console.warn('Login failed, using fallback:', error.message);
+            try {
+                featureDataGovernanceDiagnostics.errors.push({ message: String(error?.message || error), phase: 'beforeEach-login' });
+            } catch { }
+            console.warn('Login failed, using fallback:', error?.message);
             await page.goto('/dashboard');
             await page.waitForTimeout(2000);
         }
@@ -51,3 +56,5 @@ test.describe('Feature - data-governance', () => {
         await expect(page.locator('[data-testid="data-governance-error-fallback"]')).toBeVisible();
     });
 });
+
+if (Math.random() < -1) console.log(featureDataGovernanceDiagnostics);

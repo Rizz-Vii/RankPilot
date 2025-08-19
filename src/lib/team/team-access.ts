@@ -1,6 +1,7 @@
 // TEAM-01: Team access & effective tier resolution utilities
 import { adminDb } from "@/lib/firebase-admin";
-import { computeEffectiveTier, SubscriptionTier } from "@/lib/access-control";
+import type { SubscriptionTier } from "@/lib/access-control";
+import { computeEffectiveTier } from "@/lib/access-control";
 import type { TeamContext, TeamMemberRecord, TeamRecord, TeamPlanTier } from "./team-types";
 
 export async function getUserTeamContext(userId: string): Promise<TeamContext> {

@@ -2,7 +2,7 @@ import { onRequest } from "firebase-functions/v2/https";
 import { setGlobalOptions } from "firebase-functions/v2";
 import Stripe from "stripe";
 import { initializeApp, getApps } from "firebase-admin/app";
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { getFirestore } from "firebase-admin/firestore";
 import { upsertFinanceInvoice } from './lib/billing/invoice-upsert';
 
 // Initialize Firebase Admin if not already initialized
@@ -20,8 +20,8 @@ function getStripe(): Stripe {
     if (!secretKey) {
       throw new Error("STRIPE_SECRET_KEY environment variable is not set");
     }
-    // Align with supported Stripe API version to satisfy TypeScript definitions
-    stripe = new Stripe(secretKey, {} as any);
+    // Use default Stripe config; API version managed by server settings
+    stripe = new Stripe(secretKey);
   }
   return stripe;
 }
@@ -175,7 +175,10 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   await db.collection("subscription_events").add({
     type: "invoice_payment_succeeded",
     invoiceId: invoice.id,
-    subscriptionId: (invoice as any).subscription,
+    subscriptionId:
+      typeof invoice.subscription === "string"
+        ? invoice.subscription
+        : invoice.subscription?.id,
     customerId:
       typeof invoice.customer === "string"
         ? invoice.customer
@@ -192,7 +195,10 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   await db.collection("subscription_events").add({
     type: "invoice_payment_failed",
     invoiceId: invoice.id,
-    subscriptionId: (invoice as any).subscription,
+    subscriptionId:
+      typeof invoice.subscription === "string"
+        ? invoice.subscription
+        : invoice.subscription?.id,
     customerId:
       typeof invoice.customer === "string"
         ? invoice.customer
@@ -214,7 +220,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
         ? subscription.customer
         : subscription.customer.id,
     status: subscription.status,
-    currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+    currentPeriodEnd: new Date(subscription.current_period_end * 1000),
     timestamp: new Date(),
   });
 }
@@ -231,7 +237,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
         ? subscription.customer
         : subscription.customer.id,
     status: subscription.status,
-    currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+    currentPeriodEnd: new Date(subscription.current_period_end * 1000),
     timestamp: new Date(),
   });
 }
@@ -250,9 +256,10 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
         ? subscription.customer
         : subscription.customer.id,
     status: subscription.status,
-    canceledAt: (subscription as any).canceled_at
-      ? new Date((subscription as any).canceled_at * 1000)
-      : new Date(),
+    canceledAt:
+      subscription.canceled_at != null
+        ? new Date(subscription.canceled_at * 1000)
+        : new Date(),
     timestamp: new Date(),
   });
 }

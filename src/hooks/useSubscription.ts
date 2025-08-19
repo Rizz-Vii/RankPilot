@@ -1,25 +1,16 @@
-import { useState, useEffect } from "react";
+"use client";
 import { useAuth } from "@/context/AuthContext";
+import type { SubscriptionTier, UserAccess } from "@/lib/access-control";
+import { canAccessCapability, getAccessibleFeatures, getRemainingUsage, isAtUsageLimit, normalizeUserAccess } from "@/lib/access-control";
+import { db } from "@/lib/firebase";
+import type { PlanType } from "@/lib/stripe";
+import { FREE_PLAN, STRIPE_PLANS } from "@/lib/stripe";
+import type { SubscriptionData } from "@/lib/subscription";
 import { doc, getDoc } from "firebase/firestore";
+import { useEffect, useState } from "react";
 // Optional real-time subscription consolidation
 // We intentionally lazy-load onSnapshot only when realtime enabled to avoid bundling cost for static pages
 let _onSnapshot: ((...args: any[]) => any) | null = null;
-import { db } from "@/lib/firebase";
-import { SubscriptionData } from "@/lib/subscription";
-import { STRIPE_PLANS, FREE_PLAN, PlanType } from "@/lib/stripe";
-import {
-  UserAccess,
-  SubscriptionTier,
-  UserRole,
-  canAccessFeature,
-  canAccessCapability,
-  getUserLimits,
-  getRemainingUsage,
-  isAtUsageLimit,
-  getAccessibleFeatures,
-  normalizeUserAccess,
-  TIER_LIMITS,
-} from "@/lib/access-control";
 
 export interface PlanLimits {
   auditsPerMonth: number;

@@ -1,6 +1,7 @@
 "use client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartConfig } from "@/components/ui/chart";
+import type { ChartConfig } from "@/components/ui/chart";
+import { ChartContainer } from "@/components/ui/chart";
 import { KeyRound } from "lucide-react";
 import { PolarGrid, RadialBarChart, RadialBar, PolarAngleAxis } from "recharts";
 

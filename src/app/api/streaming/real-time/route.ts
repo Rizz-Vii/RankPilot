@@ -5,7 +5,8 @@
 
 import { realTimeDataStreamer } from '@/lib/streaming/real-time-data-streamer';
 import { allowStreamingMockUser } from '@/lib/flags/demo';
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 
 interface StreamingRequest {
     action: 'register' | 'subscribe' | 'collaborate' | 'metrics';

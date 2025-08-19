@@ -1,4 +1,5 @@
-import { initializeTestEnvironment, RulesTestEnvironment } from '@firebase/rules-unit-testing';
+import type { RulesTestEnvironment } from '@firebase/rules-unit-testing';
+import { initializeTestEnvironment } from '@firebase/rules-unit-testing';
 import fs from 'fs';
 
 (async () => {

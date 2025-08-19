@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { generateInsights as aiGenerateInsights } from '@/ai/flows/generate-insights';
 import { enforceProvenanceOnChunk } from '@/lib/middleware/provenance';

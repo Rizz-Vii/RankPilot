@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { neuroSEOOrchestrator } from '@/lib/neuroseo/enhanced-orchestrator';
 import { getLogger } from '@/lib/logging/app-logger';
 import { createDeterministicRng, tagSynthetic } from '@/lib/synthetic/synthetic-utils';

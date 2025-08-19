@@ -1,4 +1,5 @@
-import { d3VisualizationEngine, ChartExportConfig } from '@/lib/visualizations/d3-visualization-engine';
+import type { ChartExportConfig } from '@/lib/visualizations/d3-visualization-engine';
+import { d3VisualizationEngine } from '@/lib/visualizations/d3-visualization-engine';
 import { auth } from '@/lib/firebase';
 
 export type ChartExportFormat = ChartExportConfig['format'];

@@ -15,11 +15,12 @@ export function sanitizeWidgetCreate(input: unknown): WidgetCreateInput {
     const obj = (input && typeof input === 'object') ? input as Record<string, unknown> : {};
     const out: WidgetCreateInput = {};
     if (typeof obj.title === 'string') out.title = obj.title.slice(0, 120);
-    if (typeof obj.type === 'string') out.type = obj.type as any;
-    if (obj.dataSource && typeof obj.dataSource === 'object') out.dataSource = obj.dataSource as any;
-    if (obj.visualization && typeof obj.visualization === 'object') out.visualization = obj.visualization as any;
-    if (obj.styling && typeof obj.styling === 'object') out.styling = obj.styling as any;
-    if (obj.permissions && typeof obj.permissions === 'object') out.permissions = obj.permissions as any;
+    // TODO:TRACKD-DEFER:typing refine type narrowing to concrete discriminated union for widget types
+    if (typeof obj.type === 'string') out.type = obj.type as DashboardWidget['type'];
+    if (obj.dataSource && typeof obj.dataSource === 'object') out.dataSource = obj.dataSource as unknown as DashboardWidget['dataSource'];
+    if (obj.visualization && typeof obj.visualization === 'object') out.visualization = obj.visualization as unknown as DashboardWidget['visualization'];
+    if (obj.styling && typeof obj.styling === 'object') out.styling = obj.styling as unknown as DashboardWidget['styling'];
+    if (obj.permissions && typeof obj.permissions === 'object') out.permissions = obj.permissions as unknown as DashboardWidget['permissions'];
     return out;
 }
 
@@ -27,9 +28,9 @@ export function sanitizeWidgetMutation(input: unknown): WidgetMutation {
     const obj = (input && typeof input === 'object') ? input as Record<string, unknown> : {};
     const out: WidgetMutation = {};
     if (typeof obj.title === 'string') out.title = obj.title.slice(0, 120);
-    if (obj.dataSource && typeof obj.dataSource === 'object') out.dataSource = obj.dataSource as any;
-    if (obj.visualization && typeof obj.visualization === 'object') out.visualization = obj.visualization as any;
-    if (obj.styling && typeof obj.styling === 'object') out.styling = obj.styling as any;
-    if (obj.permissions && typeof obj.permissions === 'object') out.permissions = obj.permissions as any;
+    if (obj.dataSource && typeof obj.dataSource === 'object') out.dataSource = obj.dataSource as unknown as DashboardWidget['dataSource'];
+    if (obj.visualization && typeof obj.visualization === 'object') out.visualization = obj.visualization as unknown as DashboardWidget['visualization'];
+    if (obj.styling && typeof obj.styling === 'object') out.styling = obj.styling as unknown as DashboardWidget['styling'];
+    if (obj.permissions && typeof obj.permissions === 'object') out.permissions = obj.permissions as unknown as DashboardWidget['permissions'];
     return out;
 }

@@ -2,7 +2,7 @@
 // Implementation Date: July 30, 2025
 // Priority: HIGH - Business Operations Excellence & Revenue Optimization
 
-import { RankPilotAgent } from '../core/AgentFramework';
+import type { RankPilotAgent } from '../core/AgentFramework';
 
 export interface BusinessOperationsAgent {
     id: string;

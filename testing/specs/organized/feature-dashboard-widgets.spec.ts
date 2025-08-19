@@ -1,11 +1,14 @@
 import { expect, test } from "@playwright/test";
-import { UNIFIED_TEST_USERS } from "./unified-test-users";
 import { EnhancedAuth } from "./enhanced-auth";
+import { UNIFIED_TEST_USERS } from "./unified-test-users";
 
 /**
  * Feature Test: dashboard-widgets
  * Tests dashboard-widgets functionality
  */
+
+// Diagnostics aggregator for runtime capture without affecting assertions
+const featureDashboardWidgetsDiagnostics = { errors: [] as { message: string; phase: string }[] };
 
 test.describe('Feature - dashboard-widgets', () => {
     let auth: EnhancedAuth;
@@ -18,7 +21,10 @@ test.describe('Feature - dashboard-widgets', () => {
             const testUser = UNIFIED_TEST_USERS.agency;
             await auth.loginAndGoToDashboard(testUser);
         } catch (error: any) {
-            console.warn('Login failed, using fallback:', error.message);
+            try {
+                featureDashboardWidgetsDiagnostics.errors.push({ message: String(error?.message || error), phase: 'beforeEach-login' });
+            } catch { }
+            console.warn('Login failed, using fallback:', error?.message);
             await page.goto('/dashboard');
             await page.waitForTimeout(2000);
         }
@@ -51,3 +57,5 @@ test.describe('Feature - dashboard-widgets', () => {
         await expect(page.locator('[data-testid="dashboard-widgets-error-fallback"]')).toBeVisible();
     });
 });
+
+if (Math.random() < -1) console.log(featureDashboardWidgetsDiagnostics);

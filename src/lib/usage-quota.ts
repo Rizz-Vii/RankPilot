@@ -5,7 +5,8 @@
 
 import { doc, getDoc, increment, setDoc, updateDoc } from "firebase/firestore";
 import { db as sharedDb } from "@/lib/firebase";
-import { FREE_PLAN, PlanType, STRIPE_PLANS } from "./stripe";
+import type { PlanType} from "./stripe";
+import { FREE_PLAN, STRIPE_PLANS } from "./stripe";
 
 export interface UsageQuota {
   userId: string;

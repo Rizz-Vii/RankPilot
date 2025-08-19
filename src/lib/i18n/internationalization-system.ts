@@ -1,7 +1,7 @@
 /**
  * Internationalization System for RankPilot
  * Priority 3 Feature Implementation - DevReady Phase 3
- * 
+ *
  * Features:
  * - Multi-language support with RTL layout capabilities
  * - Dynamic language switching
@@ -561,15 +561,26 @@ export class InternationalizationSystem {
         document.documentElement.dir = config.rtl ? 'rtl' : 'ltr';
 
         // Centralized language class & dir attribute via classListManager
-        try {
-            const { setLanguageClass } = require('@/lib/dom/classListManager');
-            setLanguageClass(config.code, config.rtl ? 'rtl' : 'ltr');
-        } catch {
-            // Fallback: minimal direct manipulation if module not available
+        const fallbackApply = () => {
+        // Minimal direct manipulation if module not available
             document.body.className = document.body.className.replace(/lang-\w+/g, '').trim();
             document.body.classList.add(`lang-${config.code}`);
             if (config.rtl) document.body.classList.add('rtl'); else document.body.classList.remove('rtl');
-        }
+        };
+
+        // Dynamic import (no CommonJS require to satisfy lint rule)
+        void import('@/lib/dom/classListManager')
+            .then(mod => {
+                if (mod && typeof (mod as { setLanguageClass?: unknown }).setLanguageClass === 'function') {
+                    (mod as { setLanguageClass: (code: string, dir: string) => void })
+                        .setLanguageClass(config.code, config.rtl ? 'rtl' : 'ltr');
+                } else {
+                    fallbackApply();
+                }
+            })
+            .catch(() => {
+                fallbackApply();
+            });
     }
 
     private saveLanguagePreference(): void {

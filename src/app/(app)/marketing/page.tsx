@@ -6,8 +6,10 @@ import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { QuotaBar } from '@/components/metrics/QuotaBar';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
+import type { DomainMetricSet } from '@/lib/domain/mockMetrics';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
-import { fetchMarketingMetrics, subscribeMarketingMetrics, AggregatedMarketingMetrics } from '@/lib/services/marketing-metrics.service';
+import type { AggregatedMarketingMetrics } from '@/lib/services/marketing-metrics.service';
+import { fetchMarketingMetrics, subscribeMarketingMetrics } from '@/lib/services/marketing-metrics.service';
 import { MarketingContextProvider } from './_parts/marketing-context';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -34,7 +36,7 @@ const ChannelPerformance = dynamic(()=> import('./_parts/channel-performance').t
 interface Summary { impr:number; leads:number; ctr:number; roi:number; }
 
 export default function MarketingDashboardRoot(){
-  const mock = getMockMetrics('marketing');
+  const [mock, setMock] = useState<DomainMetricSet | null>(null);
   const { user, loading: authLoading } = useAuth();
   const userId = user?.uid; const teamId = (user as any)?.teamId as string|undefined;
   const [months, setMonths] = useState(6);
@@ -47,6 +49,7 @@ export default function MarketingDashboardRoot(){
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
 
   useEffect(()=> { trackDashboardView('marketing'); }, []);
+  useEffect(()=> { let active = true; getMockMetrics('marketing').then(m => { if(active) setMock(m); }).catch(() => { if(active) setMock({ kpis: [] }); }); return () => { active = false; }; }, []);
   useEffect(()=> { if(typeof window==='undefined') return; const stored = window.localStorage.getItem('marketingMonths'); if(stored){ const n = parseInt(stored,10); if([3,6,9,12].includes(n)) setMonths(n); } }, []);
   useEffect(()=> { if(typeof window!=='undefined') window.localStorage.setItem('marketingMonths', String(months)); }, [months]);
 
@@ -69,17 +72,17 @@ export default function MarketingDashboardRoot(){
   }, [initialLoading, metrics, markLive, markFallback]);
 
   const summary: Summary = useMemo(()=> {
-    const ks = metrics?.kpis || mock.kpis;
+    const ks = metrics?.kpis || mock?.kpis || [];
     const impr = ks.find(k=> k.key==='impr')?.value || 0;
     const leads = ks.find(k=> k.key==='leads')?.value || 0;
     const ctr = ks.find(k=> k.key==='ctr')?.value || 0;
     const roi = ks.find(k=> k.key==='roi')?.value || 0;
     return { impr, leads, ctr, roi };
-  }, [metrics, mock.kpis]);
+  }, [metrics, mock?.kpis]);
 
   function handleRefresh(){ setDataVersion(v=> v+1); }
   function exportSnapshot(format:'json'|'csv'){
-    const rows = (metrics?.kpis || mock.kpis).map(k=> ({ key:k.key, label:k.label, value:k.value, delta:k.delta }));
+    const rows = (metrics?.kpis || mock?.kpis || []).map(k=> ({ key:k.key, label:k.label, value:k.value, delta:k.delta }));
     if(format==='json') { const blob = new Blob([JSON.stringify({ generatedAt:new Date().toISOString(), rows }, null,2)], { type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='marketing-snapshot.json'; a.click(); URL.revokeObjectURL(url); return; }
     const header='key,label,value,delta'; const body = rows.map(r=> [r.key,r.label,r.value,r.delta??''].join(',')); const blob = new Blob([[header,...body].join('\n')], { type:'text/csv'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='marketing-snapshot.csv'; a.click(); URL.revokeObjectURL(url);
   }
@@ -109,8 +112,8 @@ export default function MarketingDashboardRoot(){
           <motion.section aria-label="Key performance indicators" className="grid gap-4 md:grid-cols-4" variants={dashboardContainerVariants} initial="hidden" animate="visible">
             {initialLoading && Array.from({length:4}).map((_,i)=> (<Skeleton key={i} className="h-32 rounded-xl" shimmer aria-label="Loading metric" />))}
             {!initialLoading && (()=> {
-              type Ext = typeof mock.kpis[number] & { target?: number; invertTarget?: boolean };
-              const base = (metrics?.kpis || mock.kpis) as typeof mock.kpis;
+              type Ext = DomainMetricSet['kpis'][number] & { target?: number; invertTarget?: boolean };
+              const base = (metrics?.kpis || mock?.kpis || []);
               const targetMap: Record<string,{target?:number; invertTarget?:boolean}> = {};
               metrics?.kpis?.forEach(k=> { (targetMap as any)[k.key] = { target: (k as any).target, invertTarget: (k as any).invertTarget }; });
               const extended: Ext[] = base.map(k=> ({ ...k, ...(targetMap[k.key]||{}) }));
@@ -132,7 +135,7 @@ export default function MarketingDashboardRoot(){
             <LazyDataTable columns={[{ key:'name', header:'Name' }, { key:'channel', header:'Channel' }, { key:'impressions', header:'Impr.' }, { key:'ctr', header:'CTR %' }, { key:'leads', header:'Leads' }, { key:'roi', header:'ROI %' }]} rows={(metrics?.campaigns|| []).slice(0,40).map(c=> { const ctr = c.impressions? (c.clicks||0)/c.impressions*100:0; const roi = c.spend? ((c.revenue||0) - (c.spend||0))/(c.spend||0)*100:0; return { ...c, ctr: Number(ctr.toFixed(2)), roi: Number(roi.toFixed(1)) }; })} loading={initialLoading} empty="No campaign data" />
           </section>
 
-          {mock.quotas && (
+          {mock?.quotas && (
             <section className="space-y-4">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Usage & Quotas</h2>
               <div className="grid gap-4 md:grid-cols-3">

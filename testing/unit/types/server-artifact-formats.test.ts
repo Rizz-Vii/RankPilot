@@ -1,7 +1,7 @@
 import { strict as assert } from 'assert';
 import { generateServerArtifact } from '@/lib/visualizations/server-artifacts';
 import { generateChartExport } from '@/lib/visualizations/server-exports';
-import { ExportFormat } from '@/types/visualization-exports';
+import type { ExportFormat } from '@/types/visualization-exports';
 
 describe('Server Artifact Format Guards', () => {
     it('generateServerArtifact json format', async () => {

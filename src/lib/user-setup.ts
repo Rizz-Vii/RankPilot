@@ -77,3 +77,6 @@ export const USER_EMAILS = {
   FREE_USER: "abbas_ali_rizvi@hotmail.com",
   STARTER_USER: "abba7254@gmail.com",
 } as const;
+
+// Local export to avoid unused import noise when updateDoc isn't referenced directly elsewhere
+export const userSetupOps = { updateDoc };

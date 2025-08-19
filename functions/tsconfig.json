@@ -15,7 +15,9 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+  "resolveJsonModule": true,
+  "noImplicitOverride": true,
+  "useUnknownInCatchVariables": true
   },
   "compileOnSave": true,
   "include": ["src/**/*.ts"],

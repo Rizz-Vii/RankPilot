@@ -1,5 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
+// Avoid importing Node-only admin SDK on Edge runtime. We'll dynamically import
+// the team rate limiter only when not running in Edge.
+type ApplyTeamRateLimit = (teamId?: string) => Promise<{ allowed: boolean; headers: Record<string, string> } | null>;
+let _applyTeamRateLimit: ApplyTeamRateLimit | null = null;
 
 // Store request counts in memory (in production, use Redis or similar)
 const requestCounts = new Map<string, { count: number; timestamp: number }>();
@@ -48,7 +53,7 @@ export async function rateLimit(req: NextRequest) {
     userData.count++;
     requestCounts.set(userId, userData);
 
-    // Check if rate limit exceeded
+    // Check if per-user rate limit exceeded
     if (userData.count > limit) {
       console.warn(`Rate limit exceeded for user ${userId}`);
       return new NextResponse(
@@ -70,7 +75,28 @@ export async function rateLimit(req: NextRequest) {
       );
     }
 
-    // Add rate limit headers
+    // Team-scoped token bucket (optional via flag + header)
+    const teamId = req.headers.get('x-team-id') || undefined;
+    let teamResult: { allowed: boolean; headers: Record<string, string> } | null = null;
+    try {
+      if (process.env.NEXT_RUNTIME !== 'edge' && teamId) {
+        if (!_applyTeamRateLimit) {
+          const mod = await import('@/lib/rate-limit/team-rate-limit');
+          _applyTeamRateLimit = mod.applyTeamRateLimit as ApplyTeamRateLimit;
+        }
+        teamResult = await _applyTeamRateLimit?.(teamId) ?? null;
+      }
+    } catch (e) {
+      console.warn('[rate-limit] team rate limiter unavailable in this runtime', e);
+    }
+    if (teamResult && !teamResult.allowed) {
+      return new NextResponse(
+        JSON.stringify({ error: 'Team rate limit exceeded' }),
+        { status: 429, headers: teamResult.headers }
+      );
+    }
+
+    // Success path: add user + (if present) team headers
     const response = NextResponse.next();
     response.headers.set("X-RateLimit-Limit", limit.toString());
     response.headers.set(
@@ -81,7 +107,9 @@ export async function rateLimit(req: NextRequest) {
       "X-RateLimit-Reset",
       Math.ceil((userData.timestamp + WINDOW_SIZE_MS) / 1000).toString()
     );
-
+    if (teamResult && teamResult.allowed) {
+      Object.entries(teamResult.headers).forEach(([k, v]) => response.headers.set(k, v));
+    }
     return response;
   } catch (error) {
     console.error("Rate limiting error:", error);

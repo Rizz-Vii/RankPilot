@@ -1,4 +1,5 @@
-import { chromium, FullConfig } from "@playwright/test";
+import type { FullConfig } from "@playwright/test";
+import { chromium } from "@playwright/test";
 
 async function globalSetup(config: FullConfig) {
     console.log("🧪 Testing Environment Setup");

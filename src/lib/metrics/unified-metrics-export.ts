@@ -36,8 +36,14 @@ export async function ensureDailyUnifiedMetricsExport(): Promise<void> {
         let externalCrawler: Partial<ExternalCrawlerMetrics> | null = null;
         try {
             const cDoc = await adminDb.collection('runtimeMetrics').doc('crawler').get();
-            if (cDoc.exists) externalCrawler = (cDoc.data() as any) || null;
-        } catch (e) { console.warn('crawlerMetrics.load_failed', (e as any)?.message); }
+            if (cDoc.exists) {
+                const data = cDoc.data() as Partial<ExternalCrawlerMetrics> | undefined;
+                externalCrawler = data || null;
+            }
+        } catch (e: unknown) {
+            const msg = (typeof e === 'object' && e && 'message' in e && typeof (e as { message?: unknown }).message === 'string') ? (e as { message: string }).message : 'unknown';
+            console.warn('crawlerMetrics.load_failed', msg);
+        }
         const ref = adminDb.collection('unifiedMetricsDaily').doc(dateKey);
         await adminDb.runTransaction(async tx => {
             const snap = await tx.get(ref);
@@ -53,10 +59,10 @@ export async function ensureDailyUnifiedMetricsExport(): Promise<void> {
                     errors: Number(externalCrawler.errors) || 0,
                     totalCrawlMs: Number(externalCrawler.totalCrawlMs) || 0,
                     totalAnalysisMs: Number(externalCrawler.totalAnalysisMs) || 0,
-                    crawlP95: (externalCrawler as any).crawlP95 ?? null,
-                    analysisP95: (externalCrawler as any).analysisP95 ?? null,
-                    crawlP99: (externalCrawler as any).crawlP99 ?? null,
-                    analysisP99: (externalCrawler as any).analysisP99 ?? null
+                    crawlP95: externalCrawler.crawlP95 ?? null,
+                    analysisP95: externalCrawler.analysisP95 ?? null,
+                    crawlP99: externalCrawler.crawlP99 ?? null,
+                    analysisP99: externalCrawler.analysisP99 ?? null
                 } : (kpis.crawler ? {
                     success: Number(kpis.crawler.success) || 0,
                     errors: Number(kpis.crawler.errors) || 0,
@@ -68,14 +74,18 @@ export async function ensureDailyUnifiedMetricsExport(): Promise<void> {
                     analysisP99: null
                 } : undefined),
                 // Persist semantic map aggregate adoption counters (raw) if present
-                semanticMap: (getUnifiedMetricsSnapshot() as any)?.semanticMap || undefined,
+                semanticMap: ((): unknown => {
+                    const snap = getUnifiedMetricsSnapshot() as { semanticMap?: unknown } | undefined;
+                    return snap?.semanticMap;
+                })() || undefined,
                 updatedAt: new Date(),
                 _schema: 1
             };
-            if (!snap.exists) tx.set(ref, { ...base, createdAt: new Date() }); else tx.update(ref, base as any);
+            if (!snap.exists) tx.set(ref, { ...base, createdAt: new Date() }); else tx.update(ref, base as Partial<UnifiedDailyDoc>);
         });
         lastWrittenDate = dateKey;
-    } catch (e) {
-        console.warn('unifiedMetricsDaily.export_failed', (e as any)?.message);
+    } catch (e: unknown) {
+        const msg = (typeof e === 'object' && e && 'message' in e && typeof (e as { message?: unknown }).message === 'string') ? (e as { message: string }).message : 'unknown';
+        console.warn('unifiedMetricsDaily.export_failed', msg);
     }
 }

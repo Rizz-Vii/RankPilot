@@ -1,5 +1,7 @@
-import { Page, expect } from "@playwright/test";
-import { EnhancedAuth, UserTier, UnifiedTestUser, TEST_USERS } from "./enhanced-auth";
+import type { Page} from "@playwright/test";
+import { expect } from "@playwright/test";
+import type { UserTier, UnifiedTestUser} from "./enhanced-auth";
+import { EnhancedAuth, TEST_USERS } from "./enhanced-auth";
 import { GracefulTestUtils } from "./graceful-test-utils";
 
 /**

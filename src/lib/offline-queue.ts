@@ -50,10 +50,10 @@ function withStore<T>(db: IDBDatabase, store: string, mode: IDBTransactionMode, 
             get(target, prop, receiver) {
                 const v = Reflect.get(target, prop, receiver);
                 if (typeof v === 'function') {
-                    return function (this: IDBObjectStore, ...args: any[]) {
-                        // Bind the original object store as context
-                        const req: IDBRequest = (v as Function).apply(target, args);
-                        if (prop === 'add' || prop === 'put') {
+                    return function <A extends unknown[]>(this: IDBObjectStore, ...args: A) {
+                        // Bind the original object store as context (dynamic IDB API call)
+                        const req = (v as (...a: A) => IDBRequest).apply(target, args);
+                        if ((prop === 'add' || prop === 'put') && req) {
                             req.onsuccess = () => { out = req.result as T; };
                         }
                         return req;

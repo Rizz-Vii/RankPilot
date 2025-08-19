@@ -29,7 +29,7 @@ class AppLoggerImpl {
         const { __audit, __degraded, ...rest } = context || {};
         const env: LogEnvelope = { timestamp: new Date().toISOString(), level, message, traceId: this.traceId, component: this.component, elapsedMs: Math.round(now - this.startTime), audit: __audit || undefined, degraded: __degraded || undefined, ...(context ? { context: Object.keys(rest).length ? rest : undefined } : {}) };
         const line = JSON.stringify(env);
-        // eslint-disable-next-line no-console
+         
         const consoleAny = console as unknown as Record<string, (...args: unknown[]) => void>;
         (consoleAny[level === 'debug' ? 'debug' : level] || consoleAny.log)(line);
     }

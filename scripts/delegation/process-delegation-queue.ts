@@ -1,9 +1,8 @@
 #!/usr/bin/env ts-node
-import { readQueue, writeQueue } from './queue-utils';
-import { spawnSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
+import { readQueue, writeQueue } from './queue-utils';
 
 // Lightweight env loader (avoids external dotenv dep). Loads .env.local then .env if present BEFORE key checks.
 (() => {
@@ -52,6 +51,9 @@ if (!process.env.OPENAI_API_KEY && process.env.OPENAI_GPT5_KEY) {
 }
 
 // Validation thresholds / policies
+// Validation thresholds (restored to baseline after large-file remediation strategy introduced).
+// Baseline: single 80KB, aggregate 40KB. Large monolith files can now be processed via
+// segmented tasks that specify a line range in the task.message (see validateTask).
 const MAX_FILE_BYTES = 80 * 1024; // single file guard (~80KB)
 const MAX_AGG_BYTES = 40 * 1024;  // aggregate soft cap (~40KB)
 const LOG_ROTATE_BYTES = 200 * 1024; // rotate aide log after 200KB
@@ -131,6 +133,46 @@ function validateFiles(files: string[]) {
     return { details, aggregateBytes: agg, aggregateTooLarge, risk };
 }
 
+/**
+ * Enhanced task validation that supports segmented large-file processing.
+ * If a task targets a single file exceeding size limits BUT includes a message with a
+ * line range hint (e.g., "lines 1-600" or "Lines 1201-1800"), we treat the effective
+ * working set size as the proportional byte span of those lines. This allows keeping
+ * global size thresholds strict while still remediating large legacy files incrementally.
+ */
+function validateTask(task: DelegationTask) {
+    const base = validateFiles(task.files);
+    // Only attempt segment logic for single-file tasks that otherwise fail due to size.
+    if (task.files.length === 1 && (base.risk === 'aggregate_too_large' || base.risk === 'large_file')) {
+        const msg = (task.message || task.summary || '').toLowerCase();
+        const m = msg.match(/lines?\s+(\d+)\s*[-to]{1,3}\s*(\d+)/i);
+        if (m) {
+            const start = parseInt(m[1], 10);
+            const end = parseInt(m[2], 10);
+            if (!isNaN(start) && !isNaN(end) && end > start) {
+                const filePath = task.files[0];
+                try {
+                    const content = fs.readFileSync(filePath, 'utf8');
+                    const lines = content.split(/\n/);
+                    const totalLines = lines.length || 1;
+                    const clampedStart = Math.max(1, Math.min(start, totalLines));
+                    const clampedEnd = Math.max(clampedStart + 1, Math.min(end, totalLines));
+                    // Approximate bytes for segment using proportional length to entire file size
+                    const stat = fs.statSync(filePath);
+                    const fileBytes = stat.size;
+                    const segmentLines = (clampedEnd - clampedStart + 1);
+                    const estSegmentBytes = Math.max(1, Math.round((segmentLines / totalLines) * fileBytes));
+                    // If the estimated segment bytes fit within thresholds, downgrade risk to ok.
+                    if (estSegmentBytes <= MAX_AGG_BYTES) {
+                        return { ...base, risk: 'ok', segment: { start: clampedStart, end: clampedEnd, estBytes: estSegmentBytes, fileBytes } };
+                    }
+                } catch { /* ignore segment attempt */ }
+            }
+        }
+    }
+    return base;
+}
+
 function isDirectDeleteTask(task: any): boolean {
     const directIds = new Set([
         'DEL-REMOVE-ENHANCED-CARD-STUB',
@@ -150,7 +192,7 @@ for (const task of tasks) {
     changed = true;
     writeQueue(tasks);
     console.log(`Processing ${task.taskId} (${task.files.length} files) mode=${AIDER_AUTORUN ? 'autorun' : 'manual'}`);
-    const validation = validateFiles(task.files);
+    const validation = validateTask(task);
     if (validation.risk !== 'ok') {
         // Mark failed early (except manual mode retains pending for user review)
         if (DRY_RUN) {
@@ -201,7 +243,9 @@ for (const task of tasks) {
         continue;
     }
     try {
-        const aiderArgs = ['--model', MODEL, ...AIDER_ARGS, ...task.files, '--yes'];
+        const analyticsDir = path.resolve('.codex/tmp');
+        const analyticsLog = path.join(analyticsDir, 'aider-analytics.jsonl');
+        const aiderArgs = ['--model', MODEL, ...AIDER_ARGS, ...task.files, '--yes', '--analytics', '--analytics-log', analyticsLog];
         const fallbackMessage = 'Apply requested mechanical edits described by task summary: ' + task.summary + ' (idempotent). If already applied, make no changes.';
         const effectiveMessage = (task as any).message && typeof (task as any).message === 'string' && (task as any).message.trim().length ? (task as any).message.trim() : fallbackMessage;
         aiderArgs.push('--message', effectiveMessage);
@@ -216,7 +260,52 @@ for (const task of tasks) {
             changed = true;
             continue;
         }
+        fs.mkdirSync(analyticsDir, { recursive: true });
         const res = spawnSync('aider', aiderArgs, { stdio: 'inherit' });
+        // Parse analytics log for token usage (latest line with token fields)
+        try {
+            /** Extract token stats from a raw analytics JSON object. */
+            const extractTokens = (raw: any) => {
+                if (!raw || typeof raw !== 'object') return null;
+                const src = (raw.properties && typeof raw.properties === 'object') ? raw.properties : raw; // aide places fields under properties
+                const inTok = src.prompt_tokens ?? src.input_tokens ?? src.total_prompt_tokens ?? null;
+                const outTok = src.completion_tokens ?? src.output_tokens ?? src.total_completion_tokens ?? null;
+                if (typeof inTok === 'number' || typeof outTok === 'number') {
+                    return {
+                        input_tokens: typeof inTok === 'number' ? inTok : 0,
+                        output_tokens: typeof outTok === 'number' ? outTok : 0,
+                        tool_calls: typeof (src.tool_calls === 'number' ? src.tool_calls : raw.tool_calls) === 'number' ? (src.tool_calls ?? raw.tool_calls ?? 0) : 0
+                    };
+                }
+                return null;
+            };
+            let tokenStats: any = { input_tokens: 0, output_tokens: 0, tool_calls: 0 };
+            if (fs.existsSync(analyticsLog)) {
+                const lines = fs.readFileSync(analyticsLog, 'utf8').trim().split(/\n/).filter(Boolean);
+                for (let i = lines.length - 1; i >= 0; i--) {
+                    try {
+                        const obj = JSON.parse(lines[i]);
+                        const found = extractTokens(obj);
+                        if (found) { tokenStats = found; break; }
+                    } catch { /* continue */ }
+                }
+                // Fallback: if still zero, scan forward for *any* message_send event with tokens
+                if (tokenStats.input_tokens === 0 && tokenStats.output_tokens === 0) {
+                    for (let i = 0; i < lines.length; i++) {
+                        try {
+                            const obj = JSON.parse(lines[i]);
+                            const found = extractTokens(obj);
+                            if (found) { tokenStats = found; break; }
+                        } catch { /* ignore */ }
+                    }
+                }
+            }
+            // include total for convenience
+            if (typeof (tokenStats as any).input_tokens === 'number' && typeof (tokenStats as any).output_tokens === 'number') {
+                (tokenStats as any).total_tokens = (tokenStats as any).input_tokens + (tokenStats as any).output_tokens;
+            }
+            fs.writeFileSync(path.join(analyticsDir, 'last-token-stats.json'), JSON.stringify(tokenStats));
+        } catch { /* ignore token stats errors */ }
         if (res.status === 0) {
             task.status = 'done';
             const { added, removed } = computeLocDelta(task.files);

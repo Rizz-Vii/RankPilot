@@ -5,6 +5,11 @@
 
 import { EventEmitter } from 'events';
 
+// Lightweight in-module metrics to aid diagnostics
+const apmMetrics: { keyFrequencies: Record<string, number> } = {
+    keyFrequencies: Object.create(null) as Record<string, number>,
+};
+
 export interface APMMetric {
     id: string;
     name: string;
@@ -223,6 +228,9 @@ export class EnterpriseAPM extends EventEmitter {
 
         // Collect all metrics matching the query
         for (const [key, metrics] of this.metrics.entries()) {
+            if (typeof key === 'string') {
+                apmMetrics.keyFrequencies[key] = (apmMetrics.keyFrequencies[key] || 0) + 1;
+            }
             const filteredMetrics = metrics.filter(metric => {
                 // Name filter
                 if (query.name && metric.name !== query.name) return false;
@@ -434,7 +442,8 @@ export class EnterpriseAPM extends EventEmitter {
     private startSystemResourceMonitoring(): void {
         const collector = setInterval(() => {
             if (typeof window !== 'undefined' && 'performance' in window) {
-                const memory = (performance as any)?.memory;
+                const perfAny = performance as unknown as { memory?: { usedJSHeapSize: number } };
+                const memory = perfAny.memory;
                 if (memory) {
                     this.recordMetric({
                         name: 'system.memory_usage',
@@ -574,7 +583,13 @@ export class EnterpriseAPM extends EventEmitter {
         });
     }
 
-    private async analyzePerformancePatterns(_events: PerformanceEvent[], _metrics: APMMetric[]): Promise<{ summary: string; issues: any[]; trends: any[]; predictions: any[]; }> {
+    private async analyzePerformancePatterns(_events: PerformanceEvent[], _metrics: APMMetric[]): Promise<{
+        summary: string;
+        issues: Array<{ severity: string; description: string; recommendation: string; }>;
+        trends: Array<{ metric: string; trend: 'up' | 'down' | 'stable'; change: number; }>;
+        predictions: Array<{ metric: string; prediction: number; confidence: number; }>;
+    }> {
+    // Placeholder deterministic output; real implementation would analyze _events/_metrics
         return { summary: 'Performance analysis completed', issues: [], trends: [], predictions: [] };
     }
 
@@ -677,7 +692,7 @@ export class EnterpriseAPM extends EventEmitter {
             browser: navigator.userAgent,
             os: navigator.platform,
             screen: { width: window.screen.width, height: window.screen.height },
-            connection: (navigator as any)?.connection?.effectiveType || 'unknown'
+            connection: (navigator as unknown as { connection?: { effectiveType?: string } })?.connection?.effectiveType || 'unknown'
         };
     }
 

@@ -10,5 +10,8 @@ export const onEventWrite = functions.firestore
       console.warn('[onEventWrite] missing type/orgId; skipping');
       return;
     }
-    await mirrorEvent({ snapshot: snapshot as any, context: { params: context?.params as any } });
+    await mirrorEvent({
+      snapshot: { id: snapshot.id, data: () => snapshot.data() as Record<string, unknown> },
+      context: { params: context.params as Record<string, string> }
+    });
   });

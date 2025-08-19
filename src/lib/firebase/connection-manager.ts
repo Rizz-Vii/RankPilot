@@ -3,8 +3,10 @@
  * Fixes Firestore internal assertion failures and connection issues
  */
 
-import { FirebaseApp, getApp, getApps, initializeApp } from 'firebase/app';
-import { connectFirestoreEmulator, Firestore, initializeFirestore, terminate } from 'firebase/firestore';
+import type { FirebaseApp} from 'firebase/app';
+import { getApp, getApps, initializeApp } from 'firebase/app';
+import type { Firestore} from 'firebase/firestore';
+import { connectFirestoreEmulator, initializeFirestore, terminate } from 'firebase/firestore';
 
 // Firebase configuration - kept in sync with legacy defaults previously duplicated in firebase/index.ts
 const firebaseConfig = {
@@ -28,6 +30,23 @@ const firebaseConfig = {
 // Global sentinel key to suppress duplicate noisy init logs across HMR / route workers
 // (placed on globalThis to survive module reload boundaries in dev)
 const CLIENT_INIT_SENTINEL = '__RP_FIREBASE_INIT_LOGGED__';
+
+// Local diagnostics for connection initialization
+const connectionMetrics: { errorCount: number; lastError: { message: string; code?: string } | null } = {
+    errorCount: 0,
+    lastError: null,
+};
+
+function safeSerialize(err: unknown): { message: string; code?: string } {
+    if (typeof err === 'string') return { message: err };
+    if (err && typeof err === 'object') {
+        const anyErr = err as Record<string, unknown>;
+        const message = typeof anyErr.message === 'string' ? anyErr.message : String(err);
+        const code = typeof anyErr.code === 'string' ? anyErr.code : undefined;
+        return { message, code };
+    }
+    return { message: 'Unknown error' };
+}
 
 class FirestoreConnectionManager {
     private static instance: FirestoreConnectionManager;
@@ -96,6 +115,9 @@ class FirestoreConnectionManager {
                     connectFirestoreEmulator(this.db, host, port);
                     console.log(`🔧 Connected to Firestore emulator at ${host}:${port}`);
                 } catch (error) {
+                    // Track emulator connection issues without failing init
+                    connectionMetrics.lastError = safeSerialize(error);
+                    connectionMetrics.errorCount++;
                     console.log('🔧 Firestore emulator already connected');
                 }
             }

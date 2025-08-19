@@ -1,7 +1,8 @@
 import OpenAI from "openai";
 import { gemini15Flash } from "@genkit-ai/googleai"; // Import the model reference
 import { ai } from "./genkit";
-import { z, ZodType } from "zod";
+import type { ZodType } from "zod";
+import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 // Initialize the OpenAI client for fallback
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });

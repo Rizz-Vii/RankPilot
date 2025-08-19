@@ -21,6 +21,17 @@ export function sampleContext(maxKb: number): { files: string[]; notes: string[]
   } catch {}
   const files = [...pri, ...recent];
   const notes: string[] = [];
+  // Include recent memory events (lightweight) for heuristic planning awareness
+  try {
+    const memFile = path.join(root, 'artifacts/brain/memory.jsonl');
+    if (fs.existsSync(memFile)) {
+      const raw = fs.readFileSync(memFile, 'utf8').trim().split(/\n/).slice(-5); // last 5 events
+      const events = raw.map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean) as any[];
+      for (const ev of events) {
+        notes.push(`mem:${ev.source}:${ev.kind}:${ev.status || ''}:${ev.id || ''}`);
+      }
+    }
+  } catch { }
   // Cap by size budget (rough: assume 1KB per entry; keep first N)
   const cap = Math.max(1, Math.min(128, Math.floor(maxKb)));
   const capped = files.slice(0, cap);

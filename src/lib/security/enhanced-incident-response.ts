@@ -1,7 +1,7 @@
 /**
  * Enhanced Incident Response Automation
  * DevNext Part III Step 3: Advanced Security Hardening
- * 
+ *
  * Optimizes incident response to achieve <5 minute response times:
  * - AI-powered incident classification and prioritization
  * - Automated response orchestration and workflow execution
@@ -14,6 +14,9 @@
 import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
 
+// Local incident metrics instrumentation
+const incidentMetrics: { durationMs?: number } = {};
+
 // Minimal incident shape used internally (previously passed as 'unknown')
 export interface Incident {
     id: string;
@@ -22,7 +25,7 @@ export interface Incident {
     category?: string;
     source?: string;
     indicators?: string[];
-    [key: string]: any; // Allow extensibility without losing type safety for known fields
+    [key: string]: unknown; // Extensible incident attributes while preserving type safety
 }
 
 export interface IncidentResponse {
@@ -130,6 +133,14 @@ export interface AutomationRule {
     lastTriggered?: number;
     triggerCount: number;
 }
+
+// Structured automation action definition replacing loose Record<string, unknown>
+type BlockAutomationAction = { type: 'block'; parameters: { duration?: number; scope: string; immediate?: boolean; channels?: string[]; priority?: string; escalate?: boolean; }; };
+type ContainAutomationAction = { type: 'contain'; parameters: { method: string; pattern?: string; }; };
+type IsolateAutomationAction = { type: 'isolate'; parameters: { scope: string; duration?: number; }; };
+type NotifyAutomationAction = { type: 'notify'; parameters: { channels: string[]; priority?: string; escalate?: boolean; }; };
+type RemediateAutomationAction = { type: 'remediate'; parameters: { script?: string; planId?: string; }; };
+export type AutomationAction = BlockAutomationAction | ContainAutomationAction | IsolateAutomationAction | NotifyAutomationAction | RemediateAutomationAction;
 
 export class EnhancedIncidentResponseSystem extends EventEmitter {
     private responses: Map<string, IncidentResponse> = new Map();
@@ -537,9 +548,10 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
                     case 'equals':
                         return fieldValue === condition.value;
                     case 'contains':
-                        return Array.isArray(fieldValue)
-                            ? fieldValue.includes(condition.value as any)
-                            : String(fieldValue).includes(String(condition.value));
+                        if (Array.isArray(fieldValue)) {
+                            return fieldValue.some(v => Object.is(v, condition.value) || String(v) === String(condition.value));
+                        }
+                        return String(fieldValue).includes(String(condition.value));
                     case 'greater_than':
                         return Number(fieldValue) > Number(condition.value);
                     case 'less_than':
@@ -622,7 +634,35 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
                 response.actions.push(action);
 
                 try {
-                    const result = await this.executeAutomationAction(ruleAction);
+                    const toAutomationAction = (ra: AutomationRule['actions'][number]): AutomationAction => {
+                        switch (ra.type) {
+                            case 'block': {
+                                const { scope = 'unknown', duration } = ra.parameters as { scope?: string; duration?: number };
+                                return { type: 'block', parameters: { scope: String(scope), duration: typeof duration === 'number' ? duration : 0 } };
+                            }
+                            case 'contain': {
+                                const { method = 'unspecified', pattern } = ra.parameters as { method?: string; pattern?: string };
+                                return { type: 'contain', parameters: { method: String(method), pattern: pattern ? String(pattern) : undefined } };
+                            }
+                            case 'isolate': {
+                                const { scope = 'unknown', duration } = ra.parameters as { scope?: string; duration?: number };
+                                return { type: 'isolate', parameters: { scope: String(scope), duration: typeof duration === 'number' ? duration : undefined } };
+                            }
+                            case 'notify': {
+                                const { channels, priority, escalate } = ra.parameters as { channels?: unknown; priority?: string; escalate?: boolean };
+                                const normalizedChannels = Array.isArray(channels) ? channels.map(c => String(c)) : ['security-alerts'];
+                                return { type: 'notify', parameters: { channels: normalizedChannels, priority: priority ? String(priority) : undefined, escalate: Boolean(escalate) } };
+                            }
+                            case 'remediate': {
+                                const { script, planId } = ra.parameters as { script?: string; planId?: string };
+                                return { type: 'remediate', parameters: { script: script ? String(script) : undefined, planId: planId ? String(planId) : undefined } };
+                            }
+                            default:
+                                return { type: 'notify', parameters: { channels: ['security-alerts'] } };
+                        }
+                    };
+                    const typedAction: AutomationAction = toAutomationAction(ruleAction);
+                    const result = await this.executeAutomationAction(typedAction);
                     action.status = 'completed';
                     action.completedAt = Date.now();
                     action.duration = action.completedAt - (action.startedAt || 0);
@@ -661,7 +701,7 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
     /**
      * Execute individual automation action
      */
-    private async executeAutomationAction(action: { type: string; parameters: Record<string, any> }): Promise<{ success: boolean; output: string; artifacts: string[]; }> {
+    private async executeAutomationAction(action: AutomationAction): Promise<{ success: boolean; output: string; artifacts: string[]; }> {
         // Simulate automation action execution
         await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
 
@@ -793,6 +833,11 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
         } catch (error) {
             response.status = 'escalated';
             this.emit('responseError', { response, error });
+        } finally {
+            const duration = Date.now() - startTime;
+            if (Number.isFinite(duration)) {
+                incidentMetrics.durationMs = duration;
+            }
         }
     }
 

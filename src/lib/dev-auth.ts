@@ -3,7 +3,7 @@
  * Provides convenience functions for logging in with real Firebase credentials
  */
 
-import { User } from "firebase/auth";
+import type { User } from "firebase/auth";
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,

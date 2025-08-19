@@ -1,8 +1,9 @@
+import { adminDb } from '../firebase-admin';
+import type { CrawlResult } from '../neuroseo/neural-crawler';
 import { NeuralCrawler } from '../neuroseo/neural-crawler';
 import { makeChunks } from './chunker';
 import { embedAndStoreChunk } from './embedding';
 import type { CrawlIngestionConfig, IngestionResult, SiteContentChunk } from './siteContentTypes';
-import { adminDb } from '../firebase-admin';
 
 export async function ingestSiteContentForOrg(uid: string, config: CrawlIngestionConfig): Promise<IngestionResult> {
     const crawler = new NeuralCrawler();
@@ -19,14 +20,28 @@ export async function ingestSiteContentForOrg(uid: string, config: CrawlIngestio
         if (exclude.some(r => r.test(url))) { skipped++; continue; }
         if (include.length && !include.some(r => r.test(url))) { skipped++; continue; }
         try {
-            const result = await crawler.crawl(url, { includeImages: false, analyzeAuthorship: false, extractSchema: false, timeout: 20000 } as Record<string, unknown> as any);
+            interface CrawlIngestOptions { includeImages: boolean; analyzeAuthorship: boolean; extractSchema: boolean; timeout: number }
+            const crawlOpts: CrawlIngestOptions = {
+                includeImages: false,
+                analyzeAuthorship: false,
+                extractSchema: false,
+                timeout: 20000
+            };
+            const result: CrawlResult = await crawler.crawl(url, crawlOpts);
             const chunks: SiteContentChunk[] = makeChunks({ url: result.url, title: result.title, text: result.content, chunkSize: config.chunkSize, overlap: config.overlap });
             for (const chunk of chunks) {
                 const docRef = adminDb.collection('siteContent').doc(uid).collection('default').doc(chunk.meta.hash);
                 const snap = await docRef.get();
                 if (snap.exists) {
-                    const prevMeta = (snap.data()?.meta as Record<string, unknown>) || {};
-                    const createdAt = typeof (prevMeta as any).createdAt === 'number' ? (prevMeta as any).createdAt : chunk.meta.createdAt;
+                    const prevMetaRaw = (snap.data()?.meta as unknown) || {};
+                    const createdAt = ((): number => {
+                        if (prevMetaRaw && typeof prevMetaRaw === 'object' && 'createdAt' in (prevMetaRaw as { createdAt?: unknown })) {
+                            const val = (prevMetaRaw as { createdAt?: unknown }).createdAt;
+                            if (typeof val === 'number') return val;
+                        }
+                        return chunk.meta.createdAt;
+                    })();
+                    const prevMeta = (prevMetaRaw && typeof prevMetaRaw === 'object') ? prevMetaRaw as Record<string, unknown> : {};
                     await embedAndStoreChunk(uid, { ...chunk, meta: { ...chunk.meta, lastHash: prevMeta.hash as string | undefined, createdAt, updatedAt: Date.now() } }, 'default');
                     updated++;
                 } else {
@@ -47,7 +62,7 @@ export async function ingestSiteContentForOrg(uid: string, config: CrawlIngestio
         } catch (e: unknown) {
             errors++;
             if (process.env.RANKPILOT_INGEST_DEBUG === '1') {
-                // eslint-disable-next-line no-console
+
                 const err = e as { message?: string };
                 console.error('[INGEST][ERROR]', url, err.message || e);
             }

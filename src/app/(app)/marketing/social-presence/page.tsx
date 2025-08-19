@@ -5,7 +5,7 @@ import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { QuotaBar } from '@/components/metrics/QuotaBar';
-import { getMockMetrics } from '@/lib/domain/mockMetrics';
+import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
 import { Button } from '@/components/ui/button';
 import { ActionCard } from '@/components/shared/ActionCard';
 import { SkeletonOverlay } from '@/components/shared/SkeletonOverlay';
@@ -89,9 +89,9 @@ function AccountsPanel({ accounts, onConnect, connecting }: AccountsPanelProps){
 export default function SocialPresencePage() {
   const [months, setMonths] = useState(6);
   const live = useMarketingCampaignMetrics(months);
-  const mock = getMockMetrics('marketing');
+  const { data: mock } = useMockDomainMetrics('marketing', true);
   type CampaignMetrics = typeof live;
-  const data: CampaignMetrics | { kpis: typeof mock.kpis; quotas: typeof mock.quotas; rows: any[]; loading:boolean } = (live.kpis.length ? live : { kpis: mock.kpis, quotas: mock.quotas, rows: [], loading:false });
+  const data: CampaignMetrics | { kpis: NonNullable<typeof mock>['kpis']; quotas: NonNullable<typeof mock>['quotas']; rows: any[]; loading:boolean } = (live.kpis.length ? live : { kpis: (mock?.kpis || []), quotas: mock?.quotas, rows: [], loading:false });
   useEffect(() => { trackDashboardView('marketing'); }, []);
   const { toast } = useToast();
   const { user } = useAuth();

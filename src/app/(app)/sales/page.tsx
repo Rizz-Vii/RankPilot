@@ -5,13 +5,15 @@ import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
+import type { DomainMetricSet } from '@/lib/domain/mockMetrics';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 import { ToolPageHeader } from '@/components/tool-page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { DownloadCloud, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { fetchSalesMetrics, AggregatedSalesMetrics, subscribeSalesMetrics, SalesDealDoc, ForecastSnapshotDoc } from '@/lib/services/sales-metrics.service';
+import type { AggregatedSalesMetrics, SalesDealDoc, ForecastSnapshotDoc } from '@/lib/services/sales-metrics.service';
+import { fetchSalesMetrics, subscribeSalesMetrics } from '@/lib/services/sales-metrics.service';
 import { fetchRecentSalesMetricsSnapshots, fetchRecentSalesForecastSnapshots } from '@/lib/services/sales-automation-snapshots';
 import { SalesContextProvider } from './_parts/sales-context';
 import { Badge } from '@/components/ui/badge';
@@ -34,7 +36,7 @@ const StageVelocity = dynamic(() => import('./_parts/stage-velocity').then(m => 
 interface SalesKpiSummary { totalPipeline: number; weightedForecast: number; winRate: number; velocityDays: number; }
 
 export default function SalesDashboardRoot() {
-  const mock = getMockMetrics('sales');
+  const [mock, setMock] = useState<DomainMetricSet | null>(null);
   const [range, setRange] = useState<'30d' | '90d' | 'ytd'>('30d');
   const [refreshing, setRefreshing] = useState(false);
   const [dataVersion, setDataVersion] = useState(0);
@@ -51,6 +53,7 @@ export default function SalesDashboardRoot() {
   const [snapForecast, setSnapForecast] = useState<{ forecast: number; period: string; ts: Date } | null>(null);
 
   useEffect(() => { trackDashboardView('sales'); }, []);
+  useEffect(() => { let active = true; getMockMetrics('sales').then(m => { if(active) setMock(m); }).catch(() => { if(active) setMock({ kpis: [] }); }); return () => { active = false; }; }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -99,13 +102,13 @@ export default function SalesDashboardRoot() {
 
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   const summary: SalesKpiSummary = useMemo(() => {
-    const ksource = metrics?.kpis || mock.kpis;
+    const ksource = metrics?.kpis || mock?.kpis || [];
     const totalPipeline = ksource.find(k => /pipeline/i.test(k.key))?.value || 0;
     const weightedForecast = ksource.find(k => /forecast/i.test(k.key))?.value || Math.round(totalPipeline * 0.62);
     const winRate = ksource.find(k => /win/i.test(k.key))?.value || 27;
     const velocityDays = ksource.find(k => /velocity|cycle|avg_cycle/i.test(k.key))?.value || 34;
     return { totalPipeline, weightedForecast, winRate, velocityDays };
-  }, [metrics, mock.kpis, dataVersion]);
+  }, [metrics, mock?.kpis, dataVersion]);
 
   function handleRefresh() { setDataVersion(v => v + 1); }
 
@@ -116,7 +119,7 @@ export default function SalesDashboardRoot() {
   }, [initialLoading, metrics, markLive, markFallback]);
 
   function exportSnapshot(format: 'json' | 'csv') {
-    const rows = (metrics?.kpis || mock.kpis).map(k => ({ key: k.key, label: k.label, value: k.value, delta: k.delta }));
+    const rows = (metrics?.kpis || mock?.kpis || []).map(k => ({ key: k.key, label: k.label, value: k.value, delta: k.delta }));
     if (format === 'json') {
       const blob = new Blob([JSON.stringify({ generatedAt: new Date().toISOString(), rows }, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'sales-snapshot.json'; a.click(); URL.revokeObjectURL(url); return;
@@ -189,8 +192,8 @@ export default function SalesDashboardRoot() {
         <Skeleton key={i} className="h-32 rounded-xl" shimmer aria-label="Loading metric" />
             ))}
             {!initialLoading && (() => {
-              type Ext = typeof mock.kpis[number] & { target?: number; invertTarget?: boolean };
-              const base = (metrics?.kpis || mock.kpis) as typeof mock.kpis;
+              type Ext = DomainMetricSet['kpis'][number] & { target?: number; invertTarget?: boolean };
+              const base = (metrics?.kpis || mock?.kpis || []);
               const targetMap: Record<string, { target?: number; invertTarget?: boolean }> = {};
               metrics?.kpis?.forEach(k => { (targetMap as any)[k.key] = { target: (k as any).target, invertTarget: (k as any).invertTarget }; });
               const extended: Ext[] = base.map(k => ({ ...k, ...(targetMap[k.key] || {}) }));

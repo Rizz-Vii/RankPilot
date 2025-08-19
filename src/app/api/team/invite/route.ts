@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import crypto from 'crypto';
 // NOTE: Global collection 'invites_index' provides O(1) inviteId -> teamId mapping.

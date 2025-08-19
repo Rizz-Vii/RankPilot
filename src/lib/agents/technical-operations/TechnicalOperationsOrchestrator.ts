@@ -2,7 +2,7 @@
 // Implementation Date: July 30, 2025
 // Priority: CRITICAL - Technical Operations Excellence & System Stability
 
-import { RankPilotAgent } from '../core/AgentFramework';
+import type { RankPilotAgent } from '../core/AgentFramework';
 
 export interface TechnicalOperationsAgent {
     id: string;

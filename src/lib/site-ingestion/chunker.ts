@@ -1,6 +1,9 @@
 import crypto from 'crypto';
 import type { SiteContentChunk } from './siteContentTypes';
 
+// Local progress diagnostics (non-persistent)
+const chunkProgress: { lastIndex: number; highestIndex: number } = { lastIndex: 0, highestIndex: 0 };
+
 interface MakeChunksParams {
     url: string;
     title?: string;
@@ -33,6 +36,9 @@ export function makeChunks({ url, title, text, chunkSize = 1800, overlap = 200 }
         });
         i += chunkSize - overlap;
         index++;
+        // Update in-module progress diagnostics
+        chunkProgress.lastIndex = index;
+        if (index > chunkProgress.highestIndex) chunkProgress.highestIndex = index;
     }
     return chunks;
 }

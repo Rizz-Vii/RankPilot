@@ -1,5 +1,21 @@
 {
   "recommendations": [
-    "bradlc.vscode-tailwindcss"
+    "bradlc.vscode-tailwindcss",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "github.copilot",
+    "github.copilot-chat",
+    "ms-playwright.playwright",
+    "hbenl.vscode-mocha-test-adapter",
+    "eamodio.gitlens",
+    "yoavbls.pretty-ts-errors",
+    "wix.vscode-import-cost",
+    "usernamehw.errorlens",
+    "Gruntfuggly.todo-tree",
+    "mhutchie.git-graph",
+    "ms-azuretools.vscode-docker",
+    "redhat.vscode-yaml",
+    "mikestead.dotenv",
+    "DavidAnson.vscode-markdownlint"
   ]
 }

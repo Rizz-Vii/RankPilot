@@ -1,10 +1,12 @@
 // Finance Metrics Service - aggregates invoice data with mock fallback
-import { collection, getDocs, orderBy, query, where, Unsubscribe, limit, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
+import type { Unsubscribe} from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, where, limit, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { managedOnSnapshot } from '@/lib/firebase/write-guard';
 import { db } from '@/lib/firebase/connection-manager';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
 import { allowFinanceMocks } from '@/lib/flags/finance';
-import { FinanceInvoiceFirestore, FinanceInvoiceRuntime, mapFinanceInvoiceDoc } from '@/types/firestore-docs';
+import type { FinanceInvoiceFirestore, FinanceInvoiceRuntime} from '@/types/firestore-docs';
+import { mapFinanceInvoiceDoc } from '@/types/firestore-docs';
 
 // Legacy export kept for downstream code expecting FinanceInvoiceDoc name
 export interface FinanceInvoiceDoc extends FinanceInvoiceRuntime { }
@@ -18,10 +20,8 @@ export interface AggregatedFinanceMetrics {
 
 function aggregateInvoices(invoices: FinanceInvoiceRuntime[], months: number): AggregatedFinanceMetrics {
     if (!invoices.length) {
-        if (allowFinanceMocks()) {
-            const mock = getMockMetrics('finance');
-            return { kpis: mock.kpis, mrrSeries: [], aging: [], invoices: [] };
-        }
+        // Return empty aggregates here; mock fallback is handled at the async layers
+        // where awaiting is possible (fetch) or explicitly in subscribers.
         return { kpis: [], mrrSeries: [], aging: [], invoices: [] };
     }
     const periods = Array.from(new Set(invoices.map(i => i.period))).sort();
@@ -100,7 +100,7 @@ export async function fetchFinanceMetrics(userId: string, months: number, teamId
         return aggregateInvoices(invoices, months);
     } catch {
         if (allowFinanceMocks()) {
-            const mock = getMockMetrics('finance');
+            const mock = await getMockMetrics('finance');
             return { kpis: mock.kpis, mrrSeries: [], aging: [], invoices: [] };
         }
         return { kpis: [], mrrSeries: [], aging: [], invoices: [] };
@@ -116,14 +116,21 @@ export function subscribeFinanceMetrics(userId: string, months: number, cb: (m: 
         (snap: unknown) => {
             const qs = snap as QuerySnapshot<DocumentData>;
             invoices = qs.docs.map(docSnap => mapFinanceInvoiceDoc(docSnap.id, docSnap.data() as FinanceInvoiceFirestore));
-            cb(aggregateInvoices(invoices, months));
+            if (!invoices.length && allowFinanceMocks()) {
+                void getMockMetrics('finance')
+                    .then(mock => cb({ kpis: mock.kpis, mrrSeries: [], aging: [], invoices: [] }))
+                    .catch(() => cb(aggregateInvoices(invoices, months)));
+            } else {
+                cb(aggregateInvoices(invoices, months));
+            }
         },
         err => {
             if ((err as { code?: string })?.code === 'permission-denied') {
                 console.warn('[FinanceMetrics] permission-denied accessing financeInvoices');
                 if (allowFinanceMocks()) {
-                    const mock = getMockMetrics('finance');
-                    cb({ kpis: mock.kpis, mrrSeries: [], aging: [], invoices: [] });
+                    void getMockMetrics('finance')
+                        .then(mock => cb({ kpis: mock.kpis, mrrSeries: [], aging: [], invoices: [] }))
+                        .catch(() => cb({ kpis: [], mrrSeries: [], aging: [], invoices: [] }));
                 } else {
                     cb({ kpis: [], mrrSeries: [], aging: [], invoices: [] });
                 }

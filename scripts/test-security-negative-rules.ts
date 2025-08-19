@@ -9,7 +9,8 @@ if (!process.env.FIRESTORE_EMULATOR_HOST) {
     console.warn('SEC-01 security negative tests skipped (FIRESTORE_EMULATOR_HOST not set).');
     process.exit(0);
 }
-import { initializeTestEnvironment, RulesTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
+import type { RulesTestEnvironment} from '@firebase/rules-unit-testing';
+import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import { setLogLevel, Timestamp } from 'firebase/firestore';
 
 (async () => {

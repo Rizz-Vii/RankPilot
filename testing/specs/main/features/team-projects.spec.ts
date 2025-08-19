@@ -1,6 +1,6 @@
-import { test, expect, Page } from "@playwright/test";
-import { TestOrchestrator, UserFlow } from "../../../utils/test-orchestrator";
+import { expect, test } from "@playwright/test";
 import { GracefulTestUtils } from "../../../utils/graceful-test-utils";
+import { TestOrchestrator } from "../../../utils/test-orchestrator";
 
 /**
  * Team Projects - Comprehensive Test Suite
@@ -14,7 +14,7 @@ test.describe("Team Projects - Comprehensive Suite", () => {
   test.beforeEach(async ({ page }) => {
     orchestrator = new TestOrchestrator(page);
     gracefulUtils = new GracefulTestUtils(page);
-    
+
     // Set extended timeouts for complex interactions
     page.setDefaultNavigationTimeout(30000);
     page.setDefaultTimeout(20000);
@@ -84,7 +84,7 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       // Fill all form fields
       await page.fill("#name", "E2E Test Project");
       await page.fill("#description", "Test project created by automation");
-      
+
       // Set status
       await page.locator("[role=combobox]").first().click();
       await page.locator("text=Active").click();
@@ -182,7 +182,7 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       await expect(page.locator(".bg-green-500", { hasText: "Active" })).toBeVisible();
       await expect(page.locator(".bg-gray-500", { hasText: "Planning" })).toBeVisible();
 
-      // Check priority badges  
+      // Check priority badges
       await expect(page.locator(".bg-orange-500", { hasText: "High" })).toBeVisible();
       await expect(page.locator(".bg-yellow-500", { hasText: "Medium" })).toBeVisible();
 

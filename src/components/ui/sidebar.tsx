@@ -1,24 +1,13 @@
 "use client";
 
-import React, {
-  ReactNode,
-  CSSProperties,
-  ForwardedRef,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  createContext,
-  forwardRef,
-} from "react";
-import { Slot, SlotProps } from "@radix-ui/react-slot";
-import { VariantProps, cva } from "class-variance-authority";
+import { Slot } from "@radix-ui/react-slot"; // value import
+import type { VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
+import { motion } from "framer-motion"; // value import
 import { PanelLeft } from "lucide-react";
-import { motion, HTMLMotionProps } from "framer-motion";
+import type { ReactNode } from "react";
+import React, { createContext, forwardRef, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
@@ -27,6 +16,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 import "./sidebar.css";
 
 // --- Constants ---
@@ -576,9 +567,8 @@ export {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-  SidebarMenuLink, // Ensure SidebarMenuLink is also exported if used
-  useSidebar,
+  SidebarMenuItem, SidebarMenuLink, SidebarProvider,
+  SidebarTrigger, // Ensure SidebarMenuLink is also exported if used
+  useSidebar
 };
+

@@ -5,7 +5,7 @@ import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { QuotaBar } from '@/components/metrics/QuotaBar';
-import { getMockMetrics } from '@/lib/domain/mockMetrics';
+import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
 import { allowFinanceMocks } from '@/lib/flags/finance';
 import { Alert } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
@@ -19,7 +19,7 @@ import { useProvenance } from '@/hooks/useProvenance';
 export default function BillingOverviewPage() {
   const [months, setMonths] = useState(6);
   const live = useFinanceInvoiceMetrics(months);
-  const mock = getMockMetrics('finance');
+  const { data: mock } = useMockDomainMetrics('finance', allowFinanceMocks());
   interface FinanceKPI { key: string; label: string; value: number; delta?: number; trend?: number[]; intent?: 'success' | 'neutral' | 'warning' | 'danger' | 'accent'; }
   interface FinanceQuota { key: string; label: string; used: number; limit: number; }
   interface InvoiceLike { period: string; planTier: string; amount: number; status: string; issuedAt?: { toDate?: () => Date }; paidAt?: { toDate?: () => Date } | null }
@@ -56,7 +56,7 @@ export default function BillingOverviewPage() {
     const rows: InvoiceLike[] = ((live as any).rows || []).map(adaptInvoice).filter(Boolean) as InvoiceLike[];
     return { kpis, quotas, rows, loading: !!live.loading };
   };
-  const data: FinanceDataShape = live.kpis.length ? normalizeLive() : { kpis: allowFinanceMocks()? mock.kpis as FinanceKPI[] : [], quotas: allowFinanceMocks()? mock.quotas as FinanceQuota[] : [], rows: [], loading:false };
+  const data: FinanceDataShape = live.kpis.length ? normalizeLive() : { kpis: allowFinanceMocks() && mock ? (mock.kpis as FinanceKPI[]) : [], quotas: allowFinanceMocks() && mock && mock.quotas ? (mock.quotas as FinanceQuota[]) : [], rows: [], loading:false };
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(() => { trackDashboardView('finance'); }, []);
   useEffect(()=> { if(live.kpis.length) markLive(); else markFallback(); }, [live.kpis.length, markLive, markFallback]);

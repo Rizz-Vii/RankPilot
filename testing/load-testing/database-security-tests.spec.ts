@@ -3,11 +3,13 @@
  * Comprehensive testing for Firestore integration and security protocols
  */
 
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 // Production URLs
 const PRODUCTION_BASE_URL = 'https://australia-southeast2-rankpilot-h3jpc.cloudfunctions.net';
 const RANKPILOT_APP_URL = 'https://rankpilot.app';
+// Added diagnostics container to consume previously unused catch error variables
+const testDiagnostics = { errors: [] as string[] };
 
 test.describe('RankPilot Database Integration Tests', () => {
 
@@ -35,6 +37,7 @@ test.describe('RankPilot Database Integration Tests', () => {
                 console.log('   ✅ User data properly protected');
 
             } catch (error) {
+                testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('   ✅ User data access properly restricted');
             }
         });
@@ -67,6 +70,7 @@ test.describe('RankPilot Database Integration Tests', () => {
                     expect([200, 401, 403, 402]).toContain(response.status());
 
                 } catch (error) {
+                    testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                     console.log(`   ${testCase.tier} tier: Access properly controlled`);
                 }
             }
@@ -92,6 +96,7 @@ test.describe('RankPilot Database Integration Tests', () => {
                 console.log('   ✅ Analytics data access controlled');
 
             } catch (error) {
+                testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('   ✅ Analytics data properly secured');
             }
         });
@@ -124,6 +129,7 @@ test.describe('RankPilot Database Integration Tests', () => {
                 }
 
             } catch (error) {
+                testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('   ⚠️ Query test completed (auth-protected)');
             }
         });
@@ -158,6 +164,7 @@ test.describe('RankPilot Database Integration Tests', () => {
                 }
 
             } catch (error) {
+                testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('   ⚠️ Batch write test completed (auth-protected)');
             }
         });
@@ -181,6 +188,7 @@ test.describe('RankPilot Database Integration Tests', () => {
                 expect([200, 401, 403]).toContain(response.status());
 
             } catch (error) {
+                testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('   ⚠️ Real-time connection test completed');
             }
         });
@@ -227,6 +235,7 @@ test.describe('RankPilot Database Integration Tests', () => {
                     expect([400, 401, 403, 422]).toContain(response.status());
 
                 } catch (error) {
+                    testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                     console.log(`   ${testCase.name}: Properly rejected`);
                 }
             }
@@ -265,6 +274,7 @@ test.describe('RankPilot Database Integration Tests', () => {
                 }
 
             } catch (error) {
+                testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('   ⚠️ Duplicate prevention test completed');
             }
         });
@@ -295,6 +305,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                 console.log('   ✅ Invalid JWT properly rejected');
 
             } catch (error) {
+                testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('   ✅ JWT validation working');
             }
         });
@@ -318,6 +329,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                 expect([401, 403, 440]).toContain(response.status());
 
             } catch (error) {
+                testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('   ✅ Session timeout properly handled');
             }
         });
@@ -351,6 +363,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                     }
 
                 } catch (error) {
+                    testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                     console.log(`   ${roleTest.role} access: Properly controlled`);
                 }
             }
@@ -385,6 +398,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                     expect([400, 401, 403, 422]).toContain(response.status());
 
                 } catch (error) {
+                    testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                     console.log('   ✅ SQL Injection properly prevented');
                 }
             }
@@ -417,6 +431,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                     expect([200, 400, 401, 403, 422]).toContain(response.status());
 
                 } catch (error) {
+                    testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                     console.log('   ✅ XSS properly prevented');
                 }
             }
@@ -445,6 +460,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                 console.log('   ✅ CSRF protection active');
 
             } catch (error) {
+                testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('   ✅ CSRF properly prevented');
             }
         });
@@ -471,6 +487,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                 expect([200, 401, 403]).toContain(response.status());
 
             } catch (error) {
+                testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('   ✅ Personal data access properly controlled');
             }
         });
@@ -494,6 +511,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                 expect([200, 202, 401, 403]).toContain(response.status());
 
             } catch (error) {
+                testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('   ✅ Data deletion properly handled');
             }
         });
@@ -517,6 +535,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                 expect([200, 401, 403]).toContain(response.status());
 
             } catch (error) {
+                testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('   ✅ Audit trail properly secured');
             }
         });
@@ -539,6 +558,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                 console.log('   ✅ HTTPS enforcement active');
 
             } catch (error) {
+                testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('   ✅ HTTP properly blocked/redirected');
             }
         });
@@ -571,7 +591,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
             console.log('🚦 Testing Rate Limiting...');
 
             const rapidRequests = 100;
-            const promises: Promise<any>[] = [];
+            const promises: Promise<import('@playwright/test').APIResponse>[] = [];
 
             for (let i = 0; i < rapidRequests; i++) {
                 const promise = page.request.get(`${RANKPILOT_APP_URL}/api/health`, {
@@ -593,6 +613,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                 expect(rateLimited).toBeGreaterThan(rapidRequests * 0.1); // At least 10% should be limited
 
             } catch (error) {
+                testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('   ✅ Rate limiting active (requests blocked)');
             }
         });

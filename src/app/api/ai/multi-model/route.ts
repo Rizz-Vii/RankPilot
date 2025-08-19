@@ -3,12 +3,14 @@
  * Implements Priority 1 Advanced AI Optimization from DevReady Phase 3
  */
 
-import { multiModelOrchestrator, MultiModelRequest } from '@/lib/ai/multi-model-orchestrator';
+import type { MultiModelRequest } from '@/lib/ai/multi-model-orchestrator';
+import { multiModelOrchestrator } from '@/lib/ai/multi-model-orchestrator';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { recordRouteLatency, recordError, recordFallback, recordRateLimitRejection } from '@/lib/metrics/unified-metrics';
 import { adminDb } from '@/lib/firebase-admin';
 import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 
 export const POST = withProvenance(async function POST(request: NextRequest) {
     const start = Date.now();

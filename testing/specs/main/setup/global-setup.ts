@@ -1,4 +1,5 @@
-import { chromium, FullConfig } from "@playwright/test";
+import type { FullConfig } from "@playwright/test";
+import { chromium } from "@playwright/test";
 import { getProxyConfig, rotateUserAgent } from "../utils/test-utils";
 
 async function globalSetup(config: FullConfig) {

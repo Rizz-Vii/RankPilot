@@ -43,8 +43,8 @@ export interface QueryFilter {
     value: string | number | boolean | Array<string | number | boolean> | null;
 }
 
-// Generic Firestore document representation (permissive but non-unknown)
-export type FirestoreDocument = Record<string, any> & { id?: string };
+// Generic Firestore document representation using unknown to avoid any
+export type FirestoreDocument = Record<string, unknown> & { id?: string };
 
 export interface ShardedQueryResult {
     documents: FirestoreDocument[];

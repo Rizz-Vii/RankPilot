@@ -95,6 +95,12 @@ export interface CompetitiveVisibilityAnalysis {
   }>;
 }
 
+// Local instrumentation for visibility analysis
+const visibilityMetrics = {
+  queryChars: 0,
+  queryTokenEstimate: 0,
+};
+
 export class AIVisibilityEngine {
   async analyzeVisibility(
     url: string,
@@ -363,6 +369,16 @@ export class AIVisibilityEngine {
 
     for (let i = 0; i < queries.length; i++) {
       const query = queries[i];
+      // Instrument query characteristics for diagnostics
+      let qLen = 0;
+      if (typeof (query as unknown) === 'string') {
+        qLen = (query as unknown as string).length;
+      } else {
+        const qStr = (query as LLMQuery).query;
+        if (typeof qStr === 'string') qLen = qStr.length;
+      }
+      visibilityMetrics.queryChars = qLen;
+      visibilityMetrics.queryTokenEstimate = Math.ceil(qLen / 4);
       const response = responses[i];
 
       const targetSource = response.sources.find(

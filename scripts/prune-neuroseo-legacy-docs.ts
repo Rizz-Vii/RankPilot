@@ -22,7 +22,8 @@
  *   5 unexpected failure
  */
 import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 
 interface Candidate { collection: string; id: string; size: number; userId?: string; url?: string; historyId?: string; hasAggregate: boolean; }
 interface Summary { generatedAt: string; threshold: number; dryRun: boolean; confirm: boolean; targetCrawler?: number; targetSemantic?: number; adoption?: { crawler?: number | null; semantic?: number | null }; counts: Record<string, { scanned: number; candidates: number; deleted: number }>; }

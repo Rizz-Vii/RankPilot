@@ -2,17 +2,30 @@
 // Deterministic seed ensures reproducible placeholder values, aiding tests & diff stability.
 // Only for temporary UI simulation—replace with real NeuroSEOSuite / backend results over time.
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 type SeedRandomFactory = (seed?: string) => (() => number);
-const seedrandom: SeedRandomFactory = require('seedrandom') as SeedRandomFactory;
+let seedrandomRef: SeedRandomFactory | null = null;
+async function getSeedRandom(): Promise<SeedRandomFactory> {
+    if (seedrandomRef) return seedrandomRef;
+    const mod: unknown = await import('seedrandom');
+    const resolved = (mod as { default?: unknown });
+    seedrandomRef = (resolved && typeof resolved === 'object' && 'default' in resolved && typeof resolved.default === 'function'
+        ? (resolved.default as SeedRandomFactory)
+        : (mod as unknown as SeedRandomFactory));
+    return seedrandomRef;
+}
 
 export type SyntheticProvenance = '__synthetic';
 
 export function createDeterministicRng(seedParts: Array<string | number | undefined | null>) {
     const seed = seedParts.filter(Boolean).join('::');
-    const rng = seedrandom(seed || 'synthetic-default');
+    // Lazy async init; we return a closure that queues until seedrandom loaded
+    let realRng: (() => number) | null = null;
+    getSeedRandom().then(factory => { realRng = factory(seed || 'synthetic-default'); });
     return function rand() {
-        return rng(); // 0 <= n < 1
+        if (realRng) return realRng();
+        // Fallback deterministic hash while loading
+        const h = seed.split('').reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 0);
+        return ((h % 1000) / 1000);
     };
 }
 

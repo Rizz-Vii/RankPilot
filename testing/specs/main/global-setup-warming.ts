@@ -3,7 +3,8 @@
  * Pre-warms AI-heavy pages to reduce test execution time
  */
 
-import { chromium, FullConfig } from "@playwright/test";
+import type { FullConfig } from "@playwright/test";
+import { chromium } from "@playwright/test";
 
 async function globalSetup(config: FullConfig) {
     console.log("🌟 Starting RankPilot Test Suite with Page Warming...");

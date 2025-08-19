@@ -125,16 +125,18 @@ export interface UserActivity {
 }
 
 interface AnomalyEvidence {
-    expected: number | number[] | string | string[] | Record<string, any>;
-    observed: number | string | Record<string, any>;
+    expected: number | number[] | string | string[] | Record<string, unknown>;
+    observed: number | string | Record<string, unknown>;
     deviation: number;
     confidence: number; // 0-1
 }
 
 interface AnomalyContext {
-    baselineData: any; // Using any here intentionally to allow diverse baseline structures
+    // TODO:TRACKD-DEFER:typing refine baselineData structural typing (varies by anomaly type)
+    baselineData: unknown; // previously any
     sessionContext: UserBehaviorProfile['currentSession'];
-    environmentalFactors: Record<string, any>;
+    // TODO:TRACKD-DEFER:typing enumerate known environmental factor keys
+    environmentalFactors: Record<string, unknown>;
 }
 
 export interface BehavioralAnomaly {

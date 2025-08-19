@@ -1,0 +1,7 @@
+# Ignore raw session logs and transient caches
+sessions/*.jsonl
+sessions/**/*.jsonl
+sessions/*-raw.txt
+cache/
+# Allow curated redacted examples:
+!sessions/README.md

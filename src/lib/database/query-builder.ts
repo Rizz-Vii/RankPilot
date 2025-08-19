@@ -3,9 +3,10 @@
  * Provides standardized, reusable query patterns across the application
  */
 
-import {
+import type {
     DocumentSnapshot,
-    Query,
+    Query} from 'firebase/firestore';
+import {
     collection,
     limit,
     orderBy,

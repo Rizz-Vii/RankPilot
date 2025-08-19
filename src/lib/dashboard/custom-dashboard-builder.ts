@@ -1,7 +1,7 @@
 /**
  * Custom Dashboard Builder System
  * Implements Priority 2 Enterprise Features from DevReady Phase 3
- * 
+ *
  * Features:
  * - Drag-and-drop dashboard creation for enterprise users
  * - Advanced visualizations with D3.js integration
@@ -262,8 +262,9 @@ export class CustomDashboardBuilder {
                 ...widgetConfig.visualization
             },
             styling: {
-                backgroundColor: '#ffffff',
-                borderColor: '#e2e8f0',
+                // Replaced raw hex with design system CSS vars
+                backgroundColor: 'var(--color-surface-base)',
+                borderColor: 'var(--color-border-subtle)',
                 borderRadius: 8,
                 padding: 16,
                 fontSize: 14,
@@ -625,18 +626,27 @@ export class CustomDashboardBuilder {
             const { collection, getDocs } = await import('firebase/firestore');
             const snapshot = await getDocs(collection(db, 'dashboardTemplates'));
             snapshot.forEach(d => {
-                const raw = d.data() as Partial<DashboardTemplate> & { layout?: any; };
+                const raw = d.data() as Partial<DashboardTemplate> & { layout?: DashboardTemplate['layout']; category?: string };
                 if (!raw?.id) return;
                 if (!this.templates.has(raw.id)) {
+                    const allowedCategories: DashboardTemplate['category'][] = ['seo', 'analytics', 'performance', 'competitive', 'executive'];
+                    const category: DashboardTemplate['category'] = (raw.category && allowedCategories.includes(raw.category as DashboardTemplate['category'])) ? raw.category as DashboardTemplate['category'] : 'seo';
                     this.templates.set(raw.id, {
                         id: raw.id,
                         name: raw.name || 'Unnamed Template',
                         description: raw.description || '',
-                        category: (raw.category as any) || 'seo',
+                        category,
                         preview: raw.preview || '',
                         requiredTier: raw.requiredTier || 'free',
                         estimatedSetupTime: raw.estimatedSetupTime || 'unknown',
-                        layout: raw.layout as any
+                        layout: raw.layout ?? {
+                            name: raw.name || 'Unnamed Template',
+                            description: raw.description || '',
+                            widgets: [],
+                            layout: { columns: 12, rows: 8, gap: 16, responsive: true },
+                            theme: this.getDefaultTheme(),
+                            sharing: { isShared: false, allowComments: false, collaborators: [] }
+                        }
                     });
                 }
             });
@@ -723,11 +733,12 @@ export class CustomDashboardBuilder {
 
     private getDefaultTheme() {
         return {
-            primary: '#3b82f6',
-            secondary: '#8b5cf6',
-            background: '#f8fafc',
-            text: '#334155',
-            accent: '#10b981'
+            // Map semantic roles -> existing design token palette
+            primary: 'var(--color-primary-500)',
+            secondary: 'var(--color-secondary-500, var(--color-primary-600))',
+            background: 'var(--color-surface-alt)',
+            text: 'var(--color-text-primary)',
+            accent: 'var(--color-success-500)'
         };
     }
 

@@ -7,7 +7,8 @@ import { zapierWorkflowBuilder } from '@/lib/automation/zapier-workflow-builder'
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 
 // Initialize Firebase Admin if not already initialized
 if (!getApps().length) {

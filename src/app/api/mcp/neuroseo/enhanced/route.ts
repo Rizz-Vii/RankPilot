@@ -5,7 +5,8 @@
 
 import { neuroSEOMCPOrchestrator } from '@/lib/neuroseo/mcp-enhanced';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 
 export const POST = withProvenance(async function POST(request: NextRequest) {
     try {

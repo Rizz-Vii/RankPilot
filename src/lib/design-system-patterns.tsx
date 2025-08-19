@@ -1,10 +1,9 @@
 // Design System Component Patterns for RankPilot NeuroSEO™
 // Based on homepage and site-header professional patterns
 
-import { Button } from "@/components/ui/button";
-import { EnhancedButton } from "@/components/ui/enhanced-button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EnhancedButton } from "@/components/ui/enhanced-button";
 
 // ===== ERROR HANDLING PATTERNS =====
 
@@ -221,38 +220,26 @@ const AIFeatureBadge = ({ children }: { children: React.ReactNode }) => (
 );
 
 export {
+  AIFeatureBadge, BodyText, ErrorInput,
   // Error handling
   ErrorMessage,
-  ErrorInput,
-
-  // Success states
-  SuccessMessage,
-  SuccessBadge,
-
-  // Typography
-  PageHeading,
-  SectionHeading,
-  BodyText,
-
-  // Buttons
-  PrimaryAction,
-  SecondaryAction,
-
   // Cards
   FeatureCard,
-
-  // Layout
-  PageLayout,
-
   // Forms
   FormField,
-
-  // Status
-  StatusIndicator,
-
   // Branding
   NeuroSEOBadge,
-  AIFeatureBadge,
+  // Typography
+  PageHeading,
+  // Layout
+  PageLayout,
+  // Buttons
+  PrimaryAction,
+  SecondaryAction, SectionHeading,
+  // Status
+  StatusIndicator, SuccessBadge,
+  // Success states
+  SuccessMessage
 };
 
 // ===== USAGE EXAMPLES =====

@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
-import { InvoiceRecord } from '@/lib/finance/derive-subscription-events';
+import type { InvoiceRecord } from '@/lib/finance/derive-subscription-events';
 
 const PERIOD_REGEX = /^[0-9]{4}-(0[1-9]|1[0-2])$/;
 

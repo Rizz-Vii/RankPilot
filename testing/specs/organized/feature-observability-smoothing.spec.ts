@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { UNIFIED_TEST_USERS } from './unified-test-users';
-import { EnhancedAuth } from './enhanced-auth';
+import type { EnhancedAuth } from './enhanced-auth';
 
 /**
  * Feature Test: observability smoothing (T15 acceptance)

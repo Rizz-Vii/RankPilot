@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 import { getNeuroseoMetricsSnapshot } from '@/lib/neuroseo/metrics-registry';
 import { getUnifiedMetricsSnapshot } from '@/lib/metrics/unified-metrics';
 import { getLogger } from '@/lib/logging/app-logger';

@@ -1,8 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { getLogger } from '@/lib/logging/app-logger';
 import { withProvenance, enforceProvenance } from '@/lib/middleware/provenance';
-import { FinanceInvoiceFirestore, FinanceInvoiceRuntime, mapFinanceInvoiceDoc } from '@/types/firestore-docs';
+import type { FinanceInvoiceFirestore, FinanceInvoiceRuntime} from '@/types/firestore-docs';
+import { mapFinanceInvoiceDoc } from '@/types/firestore-docs';
 
 type FinanceInvoiceDoc = FinanceInvoiceRuntime;
 
@@ -56,7 +58,8 @@ export const GET = withProvenance(async function GET(req: NextRequest) {
                 }
             }
             if (!uid) {
-                const res = NextResponse.json(enforceProvenance({ error: 'auth_required' }, { path: 'finance/metrics', note: 'auth' }), { status: 401 });
+                const authBody = enforceProvenance({ error: 'auth_required' }, { path: 'finance/metrics', note: 'auth' });
+                const res = NextResponse.json(authBody, { status: 401 });
                 res.headers.set('x-finance-diagnostics', 'auth=missing');
                 return res;
             }
@@ -92,12 +95,14 @@ export const GET = withProvenance(async function GET(req: NextRequest) {
         const payload: any = aggregateInvoices(invoices, months) as any;
         payload.invoicesCount = (payload?.invoices?.length || invoices.length);
         const diag = `auth=${authHeader ? 'ok' : 'bypass'}; items=${payload?.invoices?.length}; months=${months}; scope=${teamId ? 'team' : 'user'}`;
-        const res = NextResponse.json(enforceProvenance({ ...(payload as any), __provenance: 'live' }, { path: 'finance/metrics', note: 'ok' }));
+        const okBody = enforceProvenance({ ...(payload as any), __provenance: 'live' }, { path: 'finance/metrics', note: 'ok' });
+        const res = NextResponse.json(okBody);
         res.headers.set('x-finance-diagnostics', diag);
         return res;
     } catch (e: unknown) {
         logger.error('finance.metrics.error', { error: (e as any)?.message });
-        const res = NextResponse.json(enforceProvenance({ error: 'internal_error' }, { path: 'finance/metrics', note: 'exception' }), { status: 500 });
+        const errBody = enforceProvenance({ error: 'internal_error' }, { path: 'finance/metrics', note: 'exception' });
+        const res = NextResponse.json(errBody, { status: 500 });
         res.headers.set('x-finance-diagnostics', 'auth=unknown; error=exception');
         return res;
     }

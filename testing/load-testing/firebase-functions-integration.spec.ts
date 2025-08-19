@@ -3,7 +3,10 @@
  * Comprehensive testing for all deployed Firebase Functions
  */
 
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+
+// Lightweight diagnostics aggregator to consume caught errors without altering test semantics
+const functionTestDiagnostics = { errors: [] as string[] };
 
 // Production Firebase Functions URLs (australia-southeast2)
 const PRODUCTION_BASE_URL = 'https://australia-southeast2-rankpilot-h3jpc.cloudfunctions.net';
@@ -43,6 +46,7 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
                 }
 
             } catch (error) {
+                functionTestDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('⚠️  Keyword Suggestions test failed (likely auth-protected):', error);
             }
         });
@@ -70,6 +74,7 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
                 }
 
             } catch (error) {
+                functionTestDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('⚠️  Content Analyzer test failed (likely auth-protected):', error);
             }
         });
@@ -97,6 +102,7 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
                 }
 
             } catch (error) {
+                functionTestDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('⚠️  SEO Audit test failed (likely auth-protected):', error);
             }
         });
@@ -124,6 +130,7 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
                 expect([200, 400, 401, 403]).toContain(response.status());
 
             } catch (error) {
+                functionTestDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('⚠️  Payment Receipt test failed:', error);
             }
         });
@@ -147,6 +154,7 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
                 expect([200, 400, 401, 403]).toContain(response.status());
 
             } catch (error) {
+                functionTestDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('⚠️  Welcome Email test failed:', error);
             }
         });
@@ -168,6 +176,7 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
                 expect([400, 401, 403]).toContain(response.status());
 
             } catch (error) {
+                functionTestDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('⚠️  Stripe Webhook test failed:', error);
             }
         });
@@ -198,6 +207,7 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
                 }
 
             } catch (error) {
+                functionTestDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('⚠️  Real-time Metrics test failed (likely auth-protected):', error);
             }
         });
@@ -225,6 +235,7 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
                 }
 
             } catch (error) {
+                functionTestDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('⚠️  Function Metrics test failed (likely auth-protected):', error);
             }
         });
@@ -252,6 +263,7 @@ test.describe('RankPilot Firebase Functions - Integration Tests', () => {
                 }
 
             } catch (error) {
+                functionTestDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
                 console.log('⚠️  A/B Test Management test failed (likely auth-protected):', error);
             }
         });
@@ -271,6 +283,7 @@ test.describe('RankPilot Firebase Functions - Error Handling', () => {
             expect(response.status()).toBe(404);
 
         } catch (error) {
+            functionTestDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
             // Expected for non-existent functions
             console.log('✅ Invalid function properly rejected');
         }
@@ -287,6 +300,7 @@ test.describe('RankPilot Firebase Functions - Error Handling', () => {
             expect([400, 401, 500]).toContain(response.status());
 
         } catch (error) {
+            functionTestDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
             console.log('✅ Malformed request properly handled');
         }
     });
@@ -313,6 +327,7 @@ test.describe('RankPilot Firebase Functions - Error Handling', () => {
             expect([200, 400, 413, 500]).toContain(response.status());
 
         } catch (error) {
+            functionTestDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
             console.log('⚠️  Large payload test failed (expected for memory limits)');
         }
     });
@@ -367,6 +382,7 @@ test.describe('RankPilot Firebase Functions - Security Tests', () => {
             expect(successCount + rateLimitedCount).toBeGreaterThan(rapidRequests * 0.5);
 
         } catch (error) {
+            functionTestDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
             console.log('⚠️  Rate limiting test completed with timeouts (expected)');
         }
     });

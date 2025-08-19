@@ -1,4 +1,4 @@
-import { Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { type UnifiedTestUser, type UserTier, UNIFIED_TEST_USERS } from "../../../config/unified-test-users";
 
 export type UserType = "standard" | "admin";

@@ -20,13 +20,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type {
+    BatchExportConfig} from '@/lib/visualizations/chart-export-manager';
 import {
-    BatchExportConfig,
     chartExportManager
 } from '@/lib/visualizations/chart-export-manager';
-import {
+import type {
     ChartConfig,
-    ChartDataPoint,
+    ChartDataPoint} from '@/lib/visualizations/d3-visualization-engine';
+import {
     d3VisualizationEngine
 } from '@/lib/visualizations/d3-visualization-engine';
 import {

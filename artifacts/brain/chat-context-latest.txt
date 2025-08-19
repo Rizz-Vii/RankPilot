@@ -1,0 +1,12 @@
+[ChatContext]
+User Request:
+execute watch mode brain
+provide this chat context and your last message to the brain,
+then ask the brain  if it wants you to proceed with concrete fixes for the TS errors next?
+review the brains response and execute the brains response.
+inter-interact with the brain(for accuracy improvement)  to resolve all remaining ts/lint.
+
+Assistant Last Summary (previous message):
+Implemented enhancements: mission history/delta, loop-status mode, conversation ingestion, watch mode, autopulse, memory pruning, targeted TS file steps. Mission delta & backlog targets. Next optional steps: narrow Stripe Invoice/Subscription typings and ConversationHistoryItem typing. Requested whether to proceed with TS fixes.
+
+Instruction to Brain: Consider current diagnostics and mission steps. If TypeScript errors remain (>0), respond via enhancement priorities making 'fix-types' and any file-specific ts error steps high priority. If already clean, suggest next strategic improvement.

@@ -36,7 +36,7 @@ interface AutomationRecipe {
     active: boolean;
     schedule: ScheduleSpec;
     actions: AutomationActionType[];
-    actionConfigs?: Record<string, any>;
+    actionConfigs?: Record<string, unknown>;
     lastRun?: Date | null;
     nextRun?: Date | null;
     lockedAt?: Date | null;
@@ -93,7 +93,7 @@ export async function runDueAutomationTick(injectedDb?: ReturnType<typeof getFir
         .orderBy("nextRun", "asc")
         .limit(50)
         .get()
-        .catch((e: any) => {
+        .catch((e) => {
             logger.error("runDueAutomationScheduler query error", e);
             throw e;
         });
@@ -105,31 +105,31 @@ export async function runDueAutomationTick(injectedDb?: ReturnType<typeof getFir
 
     let processed = 0;
     for (const docSnap of snap.docs) {
-        const data = docSnap.data() as any;
+        const data = docSnap.data() as Record<string, unknown>;
         const recipe: AutomationRecipe = {
             id: docSnap.id,
-            userId: data.userId,
-            teamId: data.teamId || null,
-            name: data.name,
-            active: !!data.active,
-            schedule: data.schedule || {},
-            actions: data.actions || [],
-            actionConfigs: data.actionConfigs || {},
-            lastRun: data.lastRun?.toDate?.() || null,
-            nextRun: data.nextRun?.toDate?.() || null,
-            lockedAt: data.lockedAt?.toDate?.() || null,
-            running: !!data.running,
-            failureCount: typeof data.failureCount === 'number' ? data.failureCount : 0,
+            userId: String(data.userId),
+            teamId: (data.teamId as string | undefined) || null,
+            name: String(data.name),
+            active: Boolean(data.active),
+            schedule: (data.schedule as ScheduleSpec) || {},
+            actions: (data.actions as AutomationActionType[]) || [],
+            actionConfigs: (data.actionConfigs as Record<string, unknown>) || {},
+            lastRun: (data.lastRun as { toDate?: () => Date } | undefined)?.toDate?.() || null,
+            nextRun: (data.nextRun as { toDate?: () => Date } | undefined)?.toDate?.() || null,
+            lockedAt: (data.lockedAt as { toDate?: () => Date } | undefined)?.toDate?.() || null,
+            running: Boolean(data.running),
+            failureCount: typeof data.failureCount === 'number' ? (data.failureCount as number) : 0,
         };
 
         if (!recipe.active) continue;
 
         // Acquire lock atomically to prevent double processing
-        const lockOk = await db.runTransaction(async (tx: any) => {
+        const lockOk = await db.runTransaction(async (tx) => {
             const fresh = await tx.get(docSnap.ref);
-            const d = fresh.data() as any;
-            const running = !!d?.running;
-            const lockedAt = d?.lockedAt?.toDate?.() as Date | undefined;
+            const d = fresh.data() as Record<string, unknown>;
+            const running = Boolean(d?.running);
+            const lockedAt = (d?.lockedAt as { toDate?: () => Date } | undefined)?.toDate?.();
             const lockExpired = !lockedAt || now.getTime() - lockedAt.getTime() > 10 * 60_000; // 10 minutes
             if (running && !lockExpired) return false;
             tx.update(docSnap.ref, { running: true, lockedAt: FieldValue.serverTimestamp() });
@@ -142,45 +142,47 @@ export async function runDueAutomationTick(injectedDb?: ReturnType<typeof getFir
             const actionsResults: { type: AutomationActionType; status: "ok" | "skipped" | "error"; message?: string }[] = [];
 
             for (const action of recipe.actions) {
-                const cfg = recipe.actionConfigs?.[action];
+                const cfg = recipe.actionConfigs?.[action] as Record<string, unknown> | undefined;
+                const str = (v: unknown, fb: string) => (typeof v === 'string' ? v : fb);
+                const strArr = (v: unknown, fb: string[]) => (Array.isArray(v) ? v.map((x) => String(x)) : fb);
                 try {
                     // Test-only forced error to validate backoff behavior in emulator tests
                     if (action === "testForceError" && process.env.SCHEDULER_TEST_MODE === '1') {
                         throw new Error("Forced error (test mode)");
                     }
                     if (action === "sendDigestEmail") {
-                        const to: string = cfg?.to || "digest@example.com";
-                        const subject = cfg?.subject || "NeuroSEO Digest";
-                        const body = `Automated digest at ${new Date().toISOString()}\nURLs: ${(cfg?.urls || ["https://example.com"]).join(", ")}\nKeywords: ${(cfg?.keywords || ["example"]).join(", ")}`;
+                        const to: string = str(cfg?.["to"], "digest@example.com");
+                        const subject = str(cfg?.["subject"], "NeuroSEO Digest");
+                        const body = `Automated digest at ${new Date().toISOString()}\nURLs: ${strArr(cfg?.["urls"], ["https://example.com"]).join(", ")}\nKeywords: ${strArr(cfg?.["keywords"], ["example"]).join(", ")}`;
                         await db.collection("emailQueue").add({ userId: recipe.userId, teamId: recipe.teamId || null, recipeId: recipe.id, to, subject, body, status: "pending", createdAt: now });
                         actionsResults.push({ type: action, status: "ok", message: "Digest enqueued" });
                     } else if (action === "salesRefreshMetrics") {
-                        const range: "30d" | "90d" | "ytd" = cfg?.range || "30d";
-                        const dealsSnap = await db.collection("salesDeals").where(recipe.teamId ? "teamId" : "userId", "==", recipe.teamId || recipe.userId).get();
-                        const deals = dealsSnap.docs.map((d: any) => d.data() as any);
-                        if (!deals.length) actionsResults.push({ type: action, status: "skipped", message: "No deals" });
-                        else {
-                            const pipeline = deals.filter((d: any) => d.status !== "ClosedLost").reduce((a: number, b: any) => a + (b.amount || 0), 0);
-                            const closedWon = deals.filter((d: any) => d.status === "ClosedWon").length;
+                        const range: "30d" | "90d" | "ytd" = (str(cfg?.["range"], "30d") as "30d" | "90d" | "ytd");
+                const dealsSnap = await db.collection("salesDeals").where(recipe.teamId ? "teamId" : "userId", "==", recipe.teamId || recipe.userId).get();
+                const deals = dealsSnap.docs.map((d) => d.data() as Record<string, unknown>);
+                if (!deals.length) actionsResults.push({ type: action, status: "skipped", message: "No deals" });
+                else {
+                            const pipeline = deals.filter((d) => (d as Record<string, unknown>).status !== "ClosedLost").reduce((a: number, b: Record<string, unknown>) => a + (Number(b.amount) || 0), 0);
+                            const closedWon = deals.filter((d) => (d as Record<string, unknown>).status === "ClosedWon").length;
                             await db.collection("salesMetricsSnapshots").add({ userId: recipe.userId, teamId: recipe.teamId || null, range, pipeline, closedWon, totalDeals: deals.length, createdAt: now });
                             actionsResults.push({ type: action, status: "ok", message: "Metrics snapshot stored" });
                         }
                     } else if (action === "salesForecastSnapshot") {
                         const dealsSnap = await db.collection("salesDeals").where(recipe.teamId ? "teamId" : "userId", "==", recipe.teamId || recipe.userId).get();
-                        const deals = dealsSnap.docs.map((d: any) => d.data() as any);
-                        const pipeline = deals.filter((d: any) => d.status !== "ClosedLost").reduce((a: number, b: any) => a + (b.amount || 0), 0);
+                        const deals = dealsSnap.docs.map((d) => d.data() as Record<string, unknown>);
+                        const pipeline = deals.filter((d) => (d as Record<string, unknown>).status !== "ClosedLost").reduce((a: number, b: Record<string, unknown>) => a + (Number(b.amount) || 0), 0);
                         const period = new Date().toISOString().slice(0, 10);
                         await db.collection("salesForecastSnapshots").add({ userId: recipe.userId, teamId: recipe.teamId || null, period, forecast: Math.round(pipeline * 0.8), actual: null, createdAt: now });
                         actionsResults.push({ type: action, status: "ok", message: "Forecast snapshot added" });
                     } else if (action === "salesPipelineDigest") {
-                        const to: string = cfg?.to || "sales-digest@example.com";
-                        const range: "30d" | "90d" | "ytd" = cfg?.range || "30d";
+                        const to: string = str(cfg?.["to"], "sales-digest@example.com");
+                        const range: "30d" | "90d" | "ytd" = (str(cfg?.["range"], "30d") as "30d" | "90d" | "ytd");
                         const dealsSnap = await db.collection("salesDeals").where(recipe.teamId ? "teamId" : "userId", "==", recipe.teamId || recipe.userId).get();
-                        const deals = dealsSnap.docs.map((d: any) => d.data() as any);
+                        const deals = dealsSnap.docs.map((d) => d.data() as Record<string, unknown>);
                         if (!deals.length) actionsResults.push({ type: action, status: "skipped", message: "No deals" });
                         else {
-                            const pipeline = deals.filter((d: any) => d.status !== "ClosedLost").reduce((a: number, b: any) => a + (b.amount || 0), 0);
-                            const closedWon = deals.filter((d: any) => d.status === "ClosedWon").length;
+                            const pipeline = deals.filter((d) => (d as Record<string, unknown>).status !== "ClosedLost").reduce((a: number, b: Record<string, unknown>) => a + (Number(b.amount) || 0), 0);
+                            const closedWon = deals.filter((d) => (d as Record<string, unknown>).status === "ClosedWon").length;
                             const winRate = deals.length ? (closedWon / deals.length) * 100 : 0;
                             const body = `Sales Pipeline Digest (range=${range})\nPipeline: ${pipeline}\nClosed Won: ${closedWon}\nWin Rate: ${winRate.toFixed(1)}%`;
                             await db.collection("emailQueue").add({ userId: recipe.userId, teamId: recipe.teamId || null, recipeId: recipe.id, to, subject: "Sales Pipeline Digest", body, status: "pending", createdAt: now });
@@ -188,34 +190,34 @@ export async function runDueAutomationTick(injectedDb?: ReturnType<typeof getFir
                         }
                     } else if (action === "financeRevenueSnapshot") {
                         const invSnap = await db.collection("financeInvoices").where(recipe.teamId ? "teamId" : "userId", "==", recipe.teamId || recipe.userId).get();
-                        const invoices = invSnap.docs.map((d: any) => d.data() as any);
+                        const invoices = invSnap.docs.map((d) => d.data() as Record<string, unknown>);
                         if (!invoices.length) actionsResults.push({ type: action, status: "skipped", message: "No invoices" });
                         else {
-                            const periods = Array.from(new Set(invoices.map((i: any) => i.period))).sort();
+                            const periods = Array.from(new Set(invoices.map((i) => (i as Record<string, unknown>).period))).sort();
                             const last = periods.at(-1)!;
-                            const current = invoices.filter((i: any) => i.period === last);
-                            const paid = current.filter((i: any) => i.status === "paid");
-                            const mrr = paid.reduce((s: number, i: any) => s + (i.amount || 0), 0);
-                            const onTime = paid.filter((i: any) => {
-                                const paidAt = (i as any).paidAt?.toDate?.();
-                                const due = (i as any).dueAt?.toDate?.();
+                            const current = invoices.filter((i) => (i as Record<string, unknown>).period === last);
+                            const paid = current.filter((i) => (i as Record<string, unknown>).status === "paid");
+                            const mrr = paid.reduce((s: number, i: Record<string, unknown>) => s + (Number(i.amount) || 0), 0);
+                            const onTime = paid.filter((i) => {
+                                const paidAt = (i as { paidAt?: { toDate?: () => Date } }).paidAt?.toDate?.();
+                                const due = (i as { dueAt?: { toDate?: () => Date } }).dueAt?.toDate?.();
                                 return paidAt && due && paidAt.getTime() <= due.getTime();
                             });
                             const onTimePct = paid.length ? (onTime.length / paid.length) * 100 : 0;
-                            const outstanding = current.filter((i: any) => i.status !== "paid").length;
+                            const outstanding = current.filter((i) => (i as Record<string, unknown>).status !== "paid").length;
                             await db.collection("financeRevenueSnapshots").add({ userId: recipe.userId, teamId: recipe.teamId || null, period: last, mrr, onTimePct: Number(onTimePct.toFixed(1)), outstanding, createdAt: now });
                             actionsResults.push({ type: action, status: "ok", message: "Revenue snapshot stored" });
                         }
                     } else if (action === "financeInvoiceAgingDigest") {
-                        const to: string = cfg?.to || "finance-aging@example.com";
+                        const to: string = str(cfg?.to, "finance-aging@example.com");
                         const invSnap = await db.collection("financeInvoices").where(recipe.teamId ? "teamId" : "userId", "==", recipe.teamId || recipe.userId).get();
-                        const invoices = invSnap.docs.map((d: any) => d.data() as any);
+                        const invoices = invSnap.docs.map((d) => d.data() as Record<string, unknown>);
                         const nowMs = Date.now();
                         const buckets: Record<string, number> = { "0-30": 0, "31-60": 0, "61-90": 0, "90+": 0 };
                         invoices
-                            .filter((i: any) => i.status !== "paid")
-                            .forEach((i: any) => {
-                                const due = (i as any).dueAt?.toDate?.()?.getTime?.();
+                            .filter((i) => (i as Record<string, unknown>).status !== "paid")
+                            .forEach((i) => {
+                                const due = (i as { dueAt?: { toDate?: () => Date } }).dueAt?.toDate?.()?.getTime?.();
                                 if (!due) return;
                                 const days = Math.floor((nowMs - due) / 86_400_000);
                                 if (days <= 30) buckets["0-30"]++;
@@ -231,8 +233,8 @@ export async function runDueAutomationTick(injectedDb?: ReturnType<typeof getFir
                         // Actions requiring app-only libs are skipped here; run-now API can handle them on demand
                         actionsResults.push({ type: action, status: "skipped", message: "Unsupported in scheduler" });
                     }
-                } catch (e: any) {
-                    actionsResults.push({ type: action, status: "error", message: e?.message || "Action failed" });
+                } catch (e) {
+                    actionsResults.push({ type: action, status: "error", message: (e as { message?: string })?.message || "Action failed" });
                 }
             }
 
@@ -285,7 +287,7 @@ export async function runDueAutomationTick(injectedDb?: ReturnType<typeof getFir
                 createdAt: now,
             });
         } catch (e) {
-            logger.error("runDueAutomationScheduler recipe error", { id: recipe.id, error: e as any });
+            logger.error("runDueAutomationScheduler recipe error", { id: recipe.id, error: (e as { message?: string })?.message || String(e) });
             try {
                 await docSnap.ref.update({ running: false, lockedAt: FieldValue.delete(), updatedAt: nowTs });
             } catch { }

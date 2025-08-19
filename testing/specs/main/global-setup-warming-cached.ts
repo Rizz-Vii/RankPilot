@@ -3,7 +3,8 @@
  * Saves warmed state for subsequent high-memory AI tests
  */
 
-import { chromium, FullConfig } from "@playwright/test";
+import type { FullConfig } from "@playwright/test";
+import { chromium } from "@playwright/test";
 import fs from 'fs';
 import path from 'path';
 

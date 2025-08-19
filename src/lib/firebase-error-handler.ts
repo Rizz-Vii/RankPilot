@@ -1,7 +1,7 @@
 // Firebase error handling utilities
+import { logEvent, type Analytics } from "firebase/analytics";
 import { FirebaseError } from "firebase/app";
 import { analytics } from "./firebase";
-import { logEvent, type Analytics } from "firebase/analytics";
 
 export class FirebaseErrorHandler {
   static isNetworkError(error: unknown): boolean {
@@ -64,12 +64,16 @@ export class FirebaseErrorHandler {
 }
 
 // Wrapper for analytics events that won&apos;t throw errors
-export function safeAnalyticsEvent(eventName: string, eventParams?: unknown): void {
+export function safeAnalyticsEvent(eventName: string, eventParams?: Record<string, unknown>): void {
   if (typeof window === "undefined") return;
 
   try {
     if (analytics) {
-      logEvent(analytics as Analytics, eventName, eventParams as any);
+      if (eventParams) {
+        logEvent(analytics as Analytics, eventName, eventParams as Record<string, unknown>);
+      } else {
+        logEvent(analytics as Analytics, eventName);
+      }
     }
   } catch (error) {
     FirebaseErrorHandler.handleFirebaseError(error, "analytics event");

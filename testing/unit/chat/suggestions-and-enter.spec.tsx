@@ -1,7 +1,8 @@
 import { strict as assert } from 'assert';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { AuthContext, AuthContextType } from '@/context/AuthContext';
+import type { AuthContextType } from '@/context/AuthContext';
+import { AuthContext } from '@/context/AuthContext';
 import CustomerChatBot from '@/components/chat/CustomerChatBot';
 
 function mockFetchEmpty(counter: { calls: number }) {

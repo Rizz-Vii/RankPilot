@@ -1,74 +1,72 @@
 // Minimal self-contained test (no mocha harness required)
+import type { EventType } from '../../src/lib/events/event-types';
+import type { FirestoreLegacyCollectionRef, FirestoreLegacyDocRef } from '../../src/lib/events/publishEvent';
 import { publishEvent } from '../../src/lib/events/publishEvent';
+type DocData = Record<string, unknown>;
 
 class InMemoryDocSnapshot {
-  private _data: any | undefined;
-  constructor(data?: any) {
+  private _data: DocData | undefined;
+  readonly exists: boolean;
+  constructor(data?: DocData) {
     this._data = data;
+    this.exists = !!data;
   }
-  exists(): boolean {
-    return !!this._data;
-  }
-  get exists2(): boolean {
-    return this.exists();
-  }
-  data() {
+  data(): DocData | undefined {
     return this._data;
   }
 }
 
-class InMemoryDocRef {
-  private store: Map<string, any>;
+class InMemoryDocRef implements FirestoreLegacyDocRef {
+  private store: Map<string, DocData>;
   readonly path: string;
-  constructor(store: Map<string, any>, path: string) {
+  constructor(store: Map<string, DocData>, path: string) {
     this.store = store;
     this.path = path;
   }
-  async get() {
+  async get(): Promise<{ exists: boolean; data(): DocData | undefined }> {
     const data = this.store.get(this.path);
-    const snap: any = new InMemoryDocSnapshot(data);
-    (snap as any).exists = (snap as any).exists2;
-    return snap;
+    return new InMemoryDocSnapshot(data);
   }
-  async create(data: any) {
+  async create(data: DocData): Promise<void> {
     if (this.store.has(this.path)) throw new Error('already exists');
     this.store.set(this.path, data);
   }
-  async set(data: any) {
+  async set(data: DocData): Promise<void> {
     if (this.store.has(this.path)) throw new Error('already exists');
     this.store.set(this.path, data);
   }
 }
 
-class InMemoryCollectionRef {
-  private store: Map<string, any>;
+class InMemoryCollectionRef implements FirestoreLegacyCollectionRef {
+  private store: Map<string, DocData>;
   readonly path: string;
-  constructor(store: Map<string, any>, path: string) {
+  constructor(store: Map<string, DocData>, path: string) {
     this.store = store;
     this.path = path;
   }
-  doc(id: string) {
+  doc(id: string): FirestoreLegacyDocRef {
     return new InMemoryDocRef(this.store, `${this.path}/${id}`);
   }
 }
 
-class InMemoryFirestore {
-  private store = new Map<string, any>();
-  collection(path: string) {
-    return new InMemoryCollectionRef(this.store, path);
-  }
-  dump() {
+class InMemoryFirestore implements FirestoreLegacyCollectionRef { // also exposes dump() for test assertions
+  private store = new Map<string, DocData>();
+  // FirestoreLegacyCollectionRef requirement
+  doc(id: string): FirestoreLegacyDocRef { return new InMemoryDocRef(this.store, id); }
+  // Adapter so publishEvent sees legacy style: provide collection()
+  collection(path: string): FirestoreLegacyCollectionRef { return new InMemoryCollectionRef(this.store, path); }
+  dump(): Array<[string, DocData]> {
     return Array.from(this.store.entries());
   }
 }
 
 async function run() {
   // Happy path
-  const db: any = new InMemoryFirestore();
+  const db = new InMemoryFirestore();
   const res = await publishEvent({
     db,
     orgId: 'org_abc',
-    type: 'automation.run.started' as any,
+    type: 'automation.run.started' as EventType,
     source: 'automation',
     attrs: { naturalKey: 'run-1', step: 'init', ok: true },
   });
@@ -88,22 +86,28 @@ async function run() {
       db,
       orgId: 'org_abc',
       // Intentionally invalid type; runtime check should throw
-      type: 'automation.run.UNKNOWN' as any,
+      type: 'automation.run.UNKNOWN' as unknown as EventType,
       source: 'automation',
     });
-  } catch (e: any) {
-    caught = e && e.message === 'UNKNOWN_EVENT_TYPE';
+  } catch (e: unknown) {
+    caught = !!(
+      e &&
+      typeof e === 'object' &&
+      'message' in e &&
+      typeof (e as { message?: unknown }).message === 'string' &&
+      (e as { message: string }).message === 'UNKNOWN_EVENT_TYPE'
+    );
   }
   if (!caught) throw new Error('UNKNOWN_EVENT_TYPE was not thrown');
 
-  // eslint-disable-next-line no-console
+
   console.log('publishEvent tests: PASS');
 }
 
 run().catch((err) => {
-  // eslint-disable-next-line no-console
+
   console.error('publishEvent tests: FAIL');
-  // eslint-disable-next-line no-console
+
   console.error(err);
   process.exit(1);
 });

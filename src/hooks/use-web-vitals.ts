@@ -6,7 +6,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { performanceUtils, WebVitalsMetric, WebVitalsState } from '../lib/performance/web-vitals';
+import type { WebVitalsMetric, WebVitalsState } from '../lib/performance/web-vitals';
+import { performanceUtils } from '../lib/performance/web-vitals';
 
 /**
  * Enhanced Web Vitals monitoring hook with real-time tracking

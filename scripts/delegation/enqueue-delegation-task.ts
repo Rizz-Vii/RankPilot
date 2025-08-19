@@ -1,5 +1,6 @@
 #!/usr/bin/env ts-node
-import { appendTask, readQueue, DelegationQueueTask } from './queue-utils';
+import type { DelegationQueueTask } from './queue-utils';
+import { appendTask, readQueue } from './queue-utils';
 
 const args = process.argv.slice(2);
 function getArg(name: string): string | undefined {

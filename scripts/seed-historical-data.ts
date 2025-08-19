@@ -14,7 +14,7 @@
  *  client read failures. Domain (sales/marketing/finance) history is represented via
  *  user activities (users/{uid}/activities) for future dashboard integration.
  */
-/* eslint-disable no-console */
+ 
 
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';

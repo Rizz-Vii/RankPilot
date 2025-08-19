@@ -1,6 +1,6 @@
-import { test, expect, Page } from "@playwright/test";
-import { TestOrchestrator, UserFlow } from "../../../utils/test-orchestrator";
+import { expect, test } from "@playwright/test";
 import { GracefulTestUtils } from "../../../utils/graceful-test-utils";
+import { TestOrchestrator } from "../../../utils/test-orchestrator";
 
 /**
  * Team Reports - Comprehensive Test Suite
@@ -14,7 +14,7 @@ test.describe("Team Reports - Comprehensive Suite", () => {
   test.beforeEach(async ({ page }) => {
     orchestrator = new TestOrchestrator(page);
     gracefulUtils = new GracefulTestUtils(page);
-    
+
     // Set extended timeouts for complex interactions
     page.setDefaultNavigationTimeout(30000);
     page.setDefaultTimeout(20000);
@@ -84,7 +84,7 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       // Fill all form fields
       await page.fill("#title", "E2E Test Report");
       await page.fill("#description", "Test report created by automation");
-      
+
       // Set type
       await page.locator("[role=combobox]").first().click();
       await page.locator("text=Monthly").click();
@@ -192,7 +192,7 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       await expect(page.locator(".bg-purple-500", { hasText: "Quarterly" })).toBeVisible();
       await expect(page.locator(".bg-blue-500", { hasText: "Weekly" })).toBeVisible();
 
-      // Check status badges  
+      // Check status badges
       await expect(page.locator(".bg-green-500", { hasText: "Published" })).toBeVisible();
       await expect(page.locator(".bg-blue-500", { hasText: "Scheduled" })).toBeVisible();
       await expect(page.locator(".bg-gray-500", { hasText: "Draft" })).toBeVisible();
@@ -364,7 +364,7 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       // Check for content section indicators
       await expect(page.locator("text=Content Sections")).toBeVisible();
-      
+
       // Check specific content badges
       await expect(page.locator("text=Keywords")).toBeVisible();
       await expect(page.locator("text=Competitors")).toBeVisible();
@@ -382,7 +382,7 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       // Check for recipient information
       await expect(page.locator("text=Recipients")).toBeVisible();
-      
+
       // Should show recipient count and emails
       const recipientSections = page.locator("text=Recipients");
       await expect(recipientSections.first()).toBeVisible();

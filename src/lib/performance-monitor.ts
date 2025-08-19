@@ -258,18 +258,18 @@ export const performanceMonitor = new PerformanceMonitor();
 
 // Decorator for automatic performance monitoring
 export function monitorPerformance(operationType: string) {
-  return function <T extends (...args: any[]) => Promise<any>>(
+  return function <A extends unknown[], R>(
     _target: unknown,
     _propertyName: string,
-    descriptor: TypedPropertyDescriptor<T>
+    descriptor: TypedPropertyDescriptor<(...args: A) => Promise<R>>
   ) {
     const original = descriptor.value!;
-    descriptor.value = (async function (this: unknown, ...args: any[]) {
+    descriptor.value = (async function (this: unknown, ...args: A) {
       const operationId = performanceMonitor.startOperation(operationType);
       try {
-        const result = await original.apply(this, args);
+        const result = await original.apply(this, args as A);
         performanceMonitor.endOperation(operationId, true);
-        return result;
+        return result as R;
       } catch (error) {
         performanceMonitor.endOperation(
           operationId,
@@ -278,7 +278,7 @@ export function monitorPerformance(operationType: string) {
         );
         throw error;
       }
-    }) as T;
+    }) as (...args: A) => Promise<R>;
     return descriptor;
   };
 }

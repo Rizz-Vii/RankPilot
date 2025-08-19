@@ -5,7 +5,7 @@
  */
 import OpenAI from 'openai';
 // Test hook + small infra helpers
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 declare const global: { __OPENAI_SHIM__?: new (args: { apiKey: string }) => OpenAI } | undefined;
 
 function createOpenAI(apiKey: string) {

@@ -1,7 +1,7 @@
 /**
  * Zero-Trust Security Orchestrator
  * DevNext Part III Step 3: Advanced Security Hardening
- * 
+ *
  * Implements comprehensive zero-trust security architecture:
  * - Identity verification at every transaction
  * - Least privilege access control
@@ -173,9 +173,10 @@ export class ZeroTrustOrchestrator extends EventEmitter {
                     activityPattern: []
                 },
                 verification: {
-                    factors: request.authenticationFactors.filter((f): f is ('password' | 'mfa' | 'biometric' | 'device' | 'location') => (
-                        ['password', 'mfa', 'biometric', 'device', 'location'] as const).includes(f as any)
-                    ),
+                    factors: request.authenticationFactors.filter((f): f is ('password' | 'mfa' | 'biometric' | 'device' | 'location') => {
+                        const allowed: readonly string[] = ['password', 'mfa', 'biometric', 'device', 'location'];
+                        return allowed.includes(f);
+                    }),
                     strength: this.calculateAuthStrength(request.authenticationFactors),
                     lastVerification: Date.now()
                 },

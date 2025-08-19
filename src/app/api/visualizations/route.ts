@@ -13,7 +13,8 @@ import { adminAuth, adminDb } from '@/lib/firebase-admin';
 // Note: adminStorage will be imported after fixing corrupted code below.
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { generateChartExport, generateDashboardExport, persistExportArtifact, persistBufferToStorage } from '@/lib/visualizations/server-exports';
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 
 export const POST = withProvenance(async function POST(request: Request) {
     const nreq = request as NextRequest;
@@ -43,8 +44,8 @@ export const POST = withProvenance(async function POST(request: Request) {
             return NextResponse.json(enforceProvenance({ error: 'Advanced visualizations require Agency tier or higher' }, { path: 'visualizations', note: 'tier' }), { status: 403 });
         }
         const body = await nreq.json().catch(() => ({}));
-        const action: string | undefined = (body && typeof body === 'object') ? (body as any).action : undefined;
-        const data = (body && typeof body === 'object') ? (body as any).data : undefined;
+        const action: string | undefined = (body && typeof body === 'object') ? (body as { action?: unknown }).action as string | undefined : undefined;
+        const data = (body && typeof body === 'object') ? (body as { data?: unknown }).data : undefined;
         switch (action) {
             case 'create_chart':
                 return await createChart(userId, data);
@@ -139,11 +140,12 @@ export const DELETE = withProvenance(async function DELETE(request: Request) {
 // Chart Management Functions
 interface ChartMetadata { title: string; description?: string; tags: string[]; created: Date; updated: Date; version: string }
 interface ChartSettings { shared: boolean; exportEnabled: boolean; refreshInterval: number }
-interface ChartDoc { id: string; userId: string; config?: Record<string, any>; data?: any[]; metadata: ChartMetadata; settings: ChartSettings }
+// TODO:TRACKD-DEFER:typing refine config/data structures for charts (currently loose for backward compatibility)
+interface ChartDoc { id: string; userId: string; config?: Record<string, unknown>; data?: unknown[]; metadata: ChartMetadata; settings: ChartSettings }
 type ChartCreateInput = Partial<Omit<ChartDoc, 'id' | 'userId' | 'metadata' | 'settings'>> & {
     id?: string; title?: string; description?: string; tags?: string[]; shared?: boolean; exportEnabled?: boolean; refreshInterval?: number;
 };
-function isObj(v: unknown): v is Record<string, any> { return !!v && typeof v === 'object'; }
+function isObj(v: unknown): v is Record<string, unknown> { return !!v && typeof v === 'object'; }
 async function createChart(userId: string, chartData: unknown) {
     const cd: ChartCreateInput = isObj(chartData) ? chartData as ChartCreateInput : {};
     const chartDoc: ChartDoc = {
@@ -194,25 +196,25 @@ async function updateChart(userId: string, updateData: unknown) {
 
     const updatedChart: ChartDoc = {
         ...(chartData as ChartDoc),
-        ...(updates as any),
+        ...(updates as Record<string, unknown>),
         metadata: {
             ...(chartData.metadata || { title: 'Untitled Chart', tags: [], created: new Date(), updated: new Date(), version: '1.0' }),
-            ...(updates as any)?.metadata,
+            ...(isObj((updates as { metadata?: unknown }).metadata) ? (updates as { metadata?: Record<string, unknown> }).metadata : {}),
             updated: new Date()
         },
         settings: {
             ...(chartData.settings || { shared: false, exportEnabled: true, refreshInterval: 60000 }),
-            ...(updates as any)?.settings,
+            ...(isObj((updates as { settings?: unknown }).settings) ? (updates as { settings?: Record<string, unknown> }).settings : {}),
         }
     };
 
     // Firestore update expects plain object; ensure no prototype & allow partial merge
-    await chartRef.update({ ...updatedChart } as Record<string, any>);
+    await chartRef.update({ ...updatedChart } as Record<string, unknown>);
 
     return NextResponse.json(enforceProvenance({ success: true, message: 'Chart updated successfully' }, { path: 'visualizations', note: 'update_chart' }));
 }
 
-interface ChartExportInput { chartId?: string; format?: string; config?: any; artifact?: any }
+interface ChartExportInput { chartId?: string; format?: string; config?: unknown; artifact?: unknown }
 async function exportChart(userId: string, exportData: unknown) {
     const ed: ChartExportInput = isObj(exportData) ? exportData as ChartExportInput : {};
     const { chartId, format, config, artifact } = ed;
@@ -234,19 +236,37 @@ async function exportChart(userId: string, exportData: unknown) {
     }
 
     // Narrow export shape (avoid passing raw DocumentData which may include non-serializables)
-    const exportBase = {
-        id: chartId,
-        userId,
-        config: (chartData as any).config || {},
-        data: Array.isArray((chartData as any).data) ? (chartData as any).data : [],
-        metadata: (chartData as any).metadata || {},
-        settings: (chartData as any).settings || {}
-    };
+    const cConfig = isObj((chartData as { config?: unknown }).config) ? (chartData as { config?: Record<string, unknown> }).config : {};
+    const cData = Array.isArray((chartData as { data?: unknown }).data) ? (chartData as { data?: unknown[] }).data : [];
+    const cMetadata = isObj((chartData as { metadata?: unknown }).metadata) ? (chartData as { metadata?: Record<string, unknown> }).metadata : {};
+    const cSettings = isObj((chartData as { settings?: unknown }).settings) ? (chartData as { settings?: Record<string, unknown> }).settings : {};
+    const exportBase = { id: chartId, userId, config: cConfig, data: cData, metadata: cMetadata, settings: cSettings };
     const allowedFormats = new Set(['png', 'jpeg', 'json', 'csv', 'pdf']);
     const safeFormat = (format && allowedFormats.has(format)) ? format : 'json';
+    // Coerce safe format to ExportFormat subset used by server exporters
+    const serverFormatRaw = (safeFormat === 'csv' || safeFormat === 'jpeg') ? 'json' : safeFormat; // fallback unsupported formats to json export path
+    function isExportFormat(v: string): v is import('@/types/visualization-exports').ExportFormat {
+        return ['pdf', 'excel', 'json', 'png', 'svg'].includes(v);
+    }
+    const serverFormat: import('@/types/visualization-exports').ExportFormat = isExportFormat(serverFormatRaw) ? serverFormatRaw : 'json';
+    const chartExportBase: import('@/types/visualization-exports').ServerChartArtifactData = {
+        id: exportBase.id,
+        userId: exportBase.userId,
+        config: isObj(exportBase.config) ? { type: (exportBase.config as { type?: unknown }).type as string | undefined } : undefined,
+        data: Array.isArray(exportBase.data) ? exportBase.data : undefined,
+        metadata: isObj(exportBase.metadata)
+            ? Object.fromEntries(
+                Object.entries(exportBase.metadata).filter(([_, v]) => ['string', 'number', 'boolean'].includes(typeof v))
+            ) as Record<string, string | number | boolean | undefined>
+            : undefined,
+        svg: undefined,
+        image: undefined,
+        previewImage: undefined
+    };
+    const chartExportConfig = isObj(config) ? config as Partial<{ title?: string; width?: number; height?: number }> : undefined;
     const exportUrl = artifact
-        ? await persistExportArtifact({ userId, kind: 'chart', id: chartId, format: safeFormat as any, artifact, metadata: { chartType: (chartData as any).config?.type } })
-        : await generateChartExport(exportBase as any, safeFormat as any, config);
+        ? await persistExportArtifact({ userId, kind: 'chart', id: chartId, format: safeFormat, artifact: String(artifact), metadata: { chartType: chartExportBase.config?.type } })
+        : await generateChartExport(chartExportBase, serverFormat, chartExportConfig);
 
     // Track export in analytics
     await adminDb.collection('analytics').add({
@@ -311,10 +331,12 @@ async function deleteChart(userId: string, chartId: string) {
 }
 
 // Dashboard Management Functions
-interface DashboardSettings { theme: string; refreshInterval: number; autoSave: boolean; shared: boolean; exportOptions: Record<string, any> }
+// TODO:TRACKD-DEFER:typing refine exportOptions shape
+interface DashboardSettings { theme: string; refreshInterval: number; autoSave: boolean; shared: boolean; exportOptions: Record<string, unknown> }
 interface DashboardMetadata { created: Date; updated: Date; version: string; tags: string[] }
-interface DashboardDoc { id: string; userId: string; name: string; description?: string; widgets: any[]; settings: DashboardSettings; metadata: DashboardMetadata }
-type DashboardCreateInput = Partial<Omit<DashboardDoc, 'id' | 'userId' | 'settings' | 'metadata'>> & { id?: string; theme?: string; refreshInterval?: number; autoSave?: boolean; shared?: boolean; exportOptions?: Record<string, any>; tags?: string[] };
+// TODO:TRACKD-DEFER:typing specify widget discriminated union
+interface DashboardDoc { id: string; userId: string; name: string; description?: string; widgets: unknown[]; settings: DashboardSettings; metadata: DashboardMetadata }
+type DashboardCreateInput = Partial<Omit<DashboardDoc, 'id' | 'userId' | 'settings' | 'metadata'>> & { id?: string; theme?: string; refreshInterval?: number; autoSave?: boolean; shared?: boolean; exportOptions?: Record<string, unknown>; tags?: string[] };
 async function createDashboard(userId: string, dashboardData: unknown) {
     const dd: DashboardCreateInput = isObj(dashboardData) ? dashboardData as DashboardCreateInput : {};
     const dashboardDoc: DashboardDoc = {
@@ -366,24 +388,24 @@ async function updateDashboard(userId: string, updateData: unknown) {
 
     const updatedDashboard: DashboardDoc = {
         ...(dashboardData as DashboardDoc),
-        ...(updates as any),
+        ...(updates as Record<string, unknown>),
         metadata: {
             ...(dashboardData.metadata || { created: new Date(), updated: new Date(), version: '1.0', tags: [] }),
-            ...(updates as any)?.metadata,
+            ...(isObj((updates as { metadata?: unknown }).metadata) ? (updates as { metadata?: Record<string, unknown> }).metadata : {}),
             updated: new Date()
         },
         settings: {
             ...(dashboardData.settings || { theme: 'light', refreshInterval: 60000, autoSave: true, shared: false, exportOptions: {} }),
-            ...(updates as any)?.settings,
+            ...(isObj((updates as { settings?: unknown }).settings) ? (updates as { settings?: Record<string, unknown> }).settings : {}),
         }
     };
 
-    await dashboardRef.update({ ...updatedDashboard } as Record<string, any>);
+    await dashboardRef.update({ ...updatedDashboard } as Record<string, unknown>);
 
     return NextResponse.json(enforceProvenance({ success: true, message: 'Dashboard updated successfully' }, { path: 'visualizations', note: 'update_dashboard' }));
 }
 
-interface DashboardExportInput { dashboardId?: string; format?: string; config?: any; artifact?: any }
+interface DashboardExportInput { dashboardId?: string; format?: string; config?: unknown; artifact?: unknown }
 async function exportDashboard(userId: string, exportData: unknown) {
     const ed: DashboardExportInput = isObj(exportData) ? exportData as DashboardExportInput : {};
     const { dashboardId, format, config, artifact } = ed;
@@ -404,19 +426,30 @@ async function exportDashboard(userId: string, exportData: unknown) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const dashboardExportBase = {
-        id: dashboardId,
-        userId,
-        widgets: Array.isArray((dashboardData as any).widgets) ? (dashboardData as any).widgets : [],
-        settings: (dashboardData as any).settings || {},
-        metadata: (dashboardData as any).metadata || {},
-        name: (dashboardData as any).name || 'Dashboard'
-    };
+    const dWidgets = Array.isArray((dashboardData as { widgets?: unknown }).widgets) ? (dashboardData as { widgets?: unknown[] }).widgets : [];
+    const dSettings = isObj((dashboardData as { settings?: unknown }).settings) ? (dashboardData as { settings?: Record<string, unknown> }).settings : {};
+    const dMetadata = isObj((dashboardData as { metadata?: unknown }).metadata) ? (dashboardData as { metadata?: Record<string, unknown> }).metadata : {};
+    const dName = typeof (dashboardData as { name?: unknown }).name === 'string' ? (dashboardData as { name?: string }).name : 'Dashboard';
+    const dashboardExportBase = { id: dashboardId, userId, widgets: dWidgets, settings: dSettings, metadata: dMetadata, name: dName };
     const allowedDashFormats = new Set(['png', 'jpeg', 'json', 'csv', 'pdf']);
     const safeDashFormat = (format && allowedDashFormats.has(format)) ? format : 'json';
+    const dashServerFormat = (safeDashFormat === 'csv' || safeDashFormat === 'jpeg') ? 'json' : safeDashFormat;
+    const dashboardExportObj: import('@/types/visualization-exports').ServerDashboardArtifactData = {
+        id: dashboardExportBase.id,
+        userId: dashboardExportBase.userId,
+        widgets: Array.isArray(dashboardExportBase.widgets) ? dashboardExportBase.widgets.map(w => ({
+            id: (w as { id?: unknown }).id ? String((w as { id?: unknown }).id) : 'w',
+            type: (w as { type?: unknown }).type ? String((w as { type?: unknown }).type) : 'unknown'
+        })) : []
+    };
+    function isDashExportFormat(v: string): v is import('@/types/visualization-exports').ExportFormat {
+        return ['pdf', 'excel', 'json', 'png', 'svg'].includes(v);
+    }
+    const dashFormat: import('@/types/visualization-exports').ExportFormat = isDashExportFormat(dashServerFormat) ? dashServerFormat : 'json';
+    const dashExportConfig = isObj(config) ? config as Partial<{ title?: string }> : undefined;
     const exportUrl = artifact
-        ? await persistExportArtifact({ userId, kind: 'dashboard', id: dashboardId, format: safeDashFormat as any, artifact, metadata: { widgetCount: ((dashboardData as any).widgets?.length) || 0 } })
-        : await generateDashboardExport(dashboardExportBase as any, safeDashFormat as any, config);
+        ? await persistExportArtifact({ userId, kind: 'dashboard', id: dashboardId, format: safeDashFormat, artifact: String(artifact), metadata: { widgetCount: (dashboardExportObj.widgets?.length) || 0 } })
+        : await generateDashboardExport(dashboardExportObj, dashFormat, dashExportConfig);
 
     // Track export in analytics
     await adminDb.collection('analytics').add({

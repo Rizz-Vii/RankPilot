@@ -1,15 +1,22 @@
 // Server-only execution utilities for automation recipes
-import { Timestamp, addDoc, collection, doc, getDocs, query, updateDoc, where, orderBy, limit } from 'firebase/firestore';
+import type { InvoiceRecord } from '@/lib/finance/derive-subscription-events';
 import { db } from '@/lib/firebase';
-import { InvoiceRecord } from '@/lib/finance/derive-subscription-events';
-import { AutomationRunResult, AutomationActionType, computeNextRun, listAutomationRecipes, updateAutomationRecipe } from './recipes';
+import { Timestamp, addDoc, collection, doc, getDocs, query, updateDoc, where } from 'firebase/firestore';
+import { fetchRewriteSourceContents } from './content-fetch';
+import type { AutomationActionType, AutomationRunResult } from './recipes';
+import { computeNextRun, listAutomationRecipes, updateAutomationRecipe } from './recipes';
 
 // Helpers
-const safeMsg = (e: unknown): string => (typeof e === 'string' ? e : (e && typeof e === 'object' && 'message' in e && typeof (e as any).message === 'string') ? (e as any).message : 'Unknown error');
+const safeMsg = (e: unknown): string => {
+    if (typeof e === 'string') return e;
+    if (e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string') {
+        return (e as { message: string }).message;
+    }
+    return 'Unknown error';
+};
 function asCfg<T extends keyof ActionConfigMap>(cfg: ActionConfigMap | undefined, key: T): ActionConfigMap[T] | undefined {
     return cfg?.[key] as ActionConfigMap[T] | undefined;
 }
-import { fetchRewriteSourceContents } from './content-fetch';
 
 // Execute due automation recipes (server context)
 // Shape for optional per-action configuration stored on recipe.actionConfigs
@@ -48,21 +55,24 @@ type NormalizedInvoice = InvoiceRecord & { paidAt?: Date; dueAt?: Date };
 // Strict YYYY-MM (01-12) validation; fallback to raw slice or current period for malformed inputs.
 const PERIOD_REGEX = /^[0-9]{4}-(0[1-9]|1[0-2])$/;
 
+interface PossibleInvoiceShape {
+    period?: unknown; status?: unknown; amount?: unknown; paidAt?: { toDate?: () => Date } | null; dueAt?: { toDate?: () => Date } | null; userId?: unknown;
+}
 function normalizeInvoice(raw: unknown): NormalizedInvoice | null {
-    const r = raw as any;
+    const r = (raw && typeof raw === 'object') ? (raw as PossibleInvoiceShape) : {} as PossibleInvoiceShape;
     let period: string;
-    if (typeof r?.period === 'string') {
+    if (typeof r.period === 'string') {
         if (PERIOD_REGEX.test(r.period)) period = r.period;
         else period = r.period.slice(0, 7);
     } else {
         period = new Date().toISOString().slice(0, 7);
     }
     if (!PERIOD_REGEX.test(period)) return null; // discard unrecoverable malformed periods
-    const status: string = typeof r?.status === 'string' ? r.status : 'unknown';
-    const amount: number = typeof r?.amount === 'number' ? r.amount : 0;
-    const paidAt: Date | undefined = r?.paidAt?.toDate && typeof r.paidAt.toDate === 'function' ? r.paidAt.toDate() : undefined;
-    const dueAt: Date | undefined = r?.dueAt?.toDate && typeof r.dueAt.toDate === 'function' ? r.dueAt.toDate() : undefined;
-    return { userId: typeof r?.userId === 'string' ? r.userId : 'unknown', period, status: status as any, amount, paidAt, dueAt };
+    const status: string = typeof r.status === 'string' ? r.status : 'unknown';
+    const amount: number = typeof r.amount === 'number' ? r.amount : 0;
+    const paidAt: Date | undefined = r.paidAt && typeof r.paidAt.toDate === 'function' ? r.paidAt.toDate() : undefined;
+    const dueAt: Date | undefined = r.dueAt && typeof r.dueAt.toDate === 'function' ? r.dueAt.toDate() : undefined;
+    return { userId: typeof r.userId === 'string' ? r.userId : 'unknown', period, status: status as unknown as InvoiceRecord['status'], amount, paidAt, dueAt };
 }
 
 export async function runDueAutomationRecipes(userId: string, teamId?: string) {
@@ -78,31 +88,38 @@ export async function runDueAutomationRecipes(userId: string, teamId?: string) {
                 const cfg = asCfg(recipe.actionConfigs, action as keyof ActionConfigMap);
                 if (action === 'runNeuroSEOAnalysis') {
                     const { NeuroSEOSuite } = await import('@/lib/neuroseo');
-                    const urls: string[] = Array.isArray((cfg as any)?.urls) && (cfg as any).urls.length ? (cfg as any).urls : ['https://example.com'];
-                    const keywords: string[] = Array.isArray((cfg as any)?.keywords) && (cfg as any).keywords.length ? (cfg as any).keywords : ['example'];
+                    const urlsCandidate = (cfg as { urls?: unknown })?.urls;
+                    const keywordsCandidate = (cfg as { keywords?: unknown })?.keywords;
+                    const urls: string[] = Array.isArray(urlsCandidate) && urlsCandidate.every(u => typeof u === 'string') && urlsCandidate.length ? urlsCandidate : ['https://example.com'];
+                    const keywords: string[] = Array.isArray(keywordsCandidate) && keywordsCandidate.every(k => typeof k === 'string') && keywordsCandidate.length ? keywordsCandidate : ['example'];
                     await new NeuroSEOSuite().runAnalysis({ urls, targetKeywords: keywords, analysisType: 'comprehensive', userPlan: 'agency', userId });
                     actionsResults.push({ type: action, status: 'ok' });
                 } else if (action === 'sendDigestEmail') {
-                    const to: string = (cfg as any)?.to || 'digest@example.com';
-                    const subject = (cfg as any)?.subject || 'NeuroSEO Digest';
-                    const body = `Automated NeuroSEO digest generated at ${new Date().toISOString()}\nURLs: ${(((cfg as any)?.urls) || ['https://example.com']).join(', ')}\nKeywords: ${(((cfg as any)?.keywords) || ['example']).join(', ')}`;
+                    const to = typeof (cfg as { to?: unknown })?.to === 'string' ? (cfg as { to?: string }).to! : 'digest@example.com';
+                    const subject = typeof (cfg as { subject?: unknown })?.subject === 'string' ? (cfg as { subject?: string }).subject! : 'NeuroSEO Digest';
+                    const urlsList = (cfg as { urls?: unknown })?.urls;
+                    const keywordsList = (cfg as { keywords?: unknown })?.keywords;
+                    const urls = Array.isArray(urlsList) && urlsList.every(u => typeof u === 'string') ? urlsList : ['https://example.com'];
+                    const keywords = Array.isArray(keywordsList) && keywordsList.every(k => typeof k === 'string') ? keywordsList : ['example'];
+                    const body = `Automated NeuroSEO digest generated at ${new Date().toISOString()}\nURLs: ${urls.join(', ')}\nKeywords: ${keywords.join(', ')}`;
                     try { await addDoc(collection(db, 'emailQueue'), { userId, teamId: recipe.teamId || null, recipeId: recipe.id!, to, subject, body, status: 'pending', createdAt: Timestamp.fromDate(new Date()) }); actionsResults.push({ type: action, status: 'ok', message: 'Digest enqueued' }); } catch (e: unknown) { actionsResults.push({ type: action, status: 'error', message: safeMsg(e) }); }
                 } else if (action === 'generateContentRewrite') {
                     try {
                         const { RewriteGenEngine } = await import('@/lib/neuroseo/rewrite-gen');
                         const engine = new RewriteGenEngine();
-                        const urls: string[] = Array.isArray((cfg as any)?.urls) && (cfg as any).urls.length ? (cfg as any).urls.slice(0, 3) : ['https://example.com'];
+                        const urlsCandidate = (cfg as { urls?: unknown })?.urls;
+                        const urls: string[] = Array.isArray(urlsCandidate) && urlsCandidate.every(u => typeof u === 'string') && urlsCandidate.length ? urlsCandidate.slice(0, 3) : ['https://example.com'];
                         const sourceMap = await fetchRewriteSourceContents(urls, { max: 3, deterministicFallback: true });
                         const batchId = await addDoc(collection(db, 'rewriteBatches'), { userId, teamId: recipe.teamId || null, recipeId: recipe.id!, createdAt: Timestamp.fromDate(new Date()), urlCount: urls.length, status: 'processing' });
                         for (const url of urls) {
                             const originalContent = sourceMap[url] || `Placeholder content for ${url}`;
                             const analysis = await engine.generateRewrites({
                                 originalContent,
-                                targetKeywords: (((cfg as any)?.keywords) || ['example']).slice(0, 5),
+                                targetKeywords: (() => { const kw = (cfg as { keywords?: unknown })?.keywords; return Array.isArray(kw) && kw.every(k => typeof k === 'string') ? kw.slice(0, 5) : ['example']; })(),
                                 tone: 'professional', audience: 'general', contentType: 'article',
                                 goals: [{ type: 'readability', target: 60, priority: 'medium', description: 'Improve readability' }],
                                 constraints: [{ type: 'preserve_facts', value: true, importance: 'high' }],
-                                seoRequirements: { primaryKeyword: (((cfg as any)?.keywords)?.[0]) || 'example', secondaryKeywords: (((cfg as any)?.keywords) || []).slice(1, 4), targetLength: { min: 300, max: 1200 }, readabilityScore: 50, headingStructure: true, metaOptimization: false, internalLinks: 2, externalLinks: 2 }
+                                seoRequirements: { primaryKeyword: (() => { const kw = (cfg as { keywords?: unknown })?.keywords; return Array.isArray(kw) && typeof kw[0] === 'string' ? kw[0] : 'example'; })(), secondaryKeywords: (() => { const kw = (cfg as { keywords?: unknown })?.keywords; return Array.isArray(kw) && kw.every(k => typeof k === 'string') ? kw.slice(1, 4) : []; })(), targetLength: { min: 300, max: 1200 }, readabilityScore: 50, headingStructure: true, metaOptimization: false, internalLinks: 2, externalLinks: 2 }
                             });
                             await addDoc(collection(db, 'rewriteVariants'), { batchId: batchId.id, url, userId, teamId: recipe.teamId || null, recipeId: recipe.id!, analysis });
                         }
@@ -111,7 +128,7 @@ export async function runDueAutomationRecipes(userId: string, teamId?: string) {
                     } catch (e: unknown) { actionsResults.push({ type: action, status: 'error', message: safeMsg(e) }); }
                 } else if (action === 'salesRefreshMetrics') {
                     try {
-                        const range: '30d' | '90d' | 'ytd' = (cfg as any)?.range || '30d';
+                        const range = ((): '30d' | '90d' | 'ytd' => { const r = (cfg as { range?: unknown })?.range; return r === '90d' || r === 'ytd' ? r : '30d'; })();
                         const dealsQ = query(collection(db, 'salesDeals'), where(recipe.teamId ? 'teamId' : 'userId', '==', recipe.teamId || userId));
                         const dealsSnap = await getDocs(dealsQ);
                         const deals = dealsSnap.docs.map(d => d.data() as SalesDealDoc);
@@ -135,8 +152,8 @@ export async function runDueAutomationRecipes(userId: string, teamId?: string) {
                     } catch (e: unknown) { actionsResults.push({ type: action, status: 'error', message: safeMsg(e) }); }
                 } else if (action === 'salesPipelineDigest') {
                     try {
-                        const to: string = (cfg as any)?.to || 'sales-digest@example.com';
-                        const range: '30d' | '90d' | 'ytd' = (cfg as any)?.range || '30d';
+                        const to = typeof (cfg as { to?: unknown })?.to === 'string' ? (cfg as { to?: string }).to! : 'sales-digest@example.com';
+                        const range = ((): '30d' | '90d' | 'ytd' => { const r = (cfg as { range?: unknown })?.range; return r === '90d' || r === 'ytd' ? r : '30d'; })();
                         const dealsQ = query(collection(db, 'salesDeals'), where(recipe.teamId ? 'teamId' : 'userId', '==', recipe.teamId || userId));
                         const dealsSnap = await getDocs(dealsQ);
                         const deals = dealsSnap.docs.map(d => d.data() as SalesDealDoc);
@@ -170,7 +187,7 @@ export async function runDueAutomationRecipes(userId: string, teamId?: string) {
                     } catch (e: unknown) { actionsResults.push({ type: action, status: 'error', message: safeMsg(e) }); }
                 } else if (action === 'financeInvoiceAgingDigest') {
                     try {
-                        const to: string = (cfg as any)?.to || 'finance-aging@example.com';
+                        const to = typeof (cfg as { to?: unknown })?.to === 'string' ? (cfg as { to?: string }).to! : 'finance-aging@example.com';
                         const invQ = query(collection(db, 'financeInvoices'), where(recipe.teamId ? 'teamId' : 'userId', '==', recipe.teamId || userId));
                         const invSnap = await getDocs(invQ);
                         const invoices = invSnap.docs.map(d => normalizeInvoice(d.data())).filter(Boolean) as NormalizedInvoice[];

@@ -162,3 +162,19 @@ verifier.verifyAll().catch((error) => {
   console.error("Unexpected error:", error);
   process.exit(1);
 });
+
+// Additional environment variable validations
+const optionalNumeric = (name: string) => {
+  const v = process.env[name];
+  if (v && isNaN(Number(v))) {
+    throw new Error(`Env ${name} must be numeric if set`);
+  }
+};
+
+optionalNumeric("BUCKET_TOKENS");
+optionalNumeric("BUCKET_REFILL_PER_MIN");
+// Finance mode
+const fm = process.env.FINANCE_METRICS_MODE;
+if (fm && !["mock", "live"].includes(fm)) {
+  throw new Error("FINANCE_METRICS_MODE must be mock|live");
+}

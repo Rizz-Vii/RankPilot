@@ -3,7 +3,8 @@
  * Enhanced AI capabilities through MCP server integration
  */
 
-import { MCPResponse, mcpService } from '@/lib/mcp';
+import type { MCPResponse} from '@/lib/mcp';
+import { mcpService } from '@/lib/mcp';
 
 export interface NeuroSEOMCPAnalysis {
     originalAnalysis: unknown;

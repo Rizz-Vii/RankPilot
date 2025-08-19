@@ -1,5 +1,6 @@
 import { expect } from 'chai';
-import { themeSystem, ThemeMode } from '../../../src/lib/themes/theme-system';
+import type { ThemeMode } from '../../../src/lib/themes/theme-system';
+import { themeSystem } from '../../../src/lib/themes/theme-system';
 
 // Provide minimal DOM if tests run in a Node environment without jsdom
 if (typeof document === 'undefined') {

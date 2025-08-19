@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { computePnL, computeBalanceSheet } from '../../../src/lib/accounting/aggregation';
-import { JournalEntry } from '../../../src/lib/accounting/accounts';
+import type { JournalEntry } from '../../../src/lib/accounting/accounts';
 
 test.describe('accounting aggregation', () => {
     const baseEntries: JournalEntry[] = [

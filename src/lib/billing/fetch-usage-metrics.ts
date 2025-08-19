@@ -1,4 +1,5 @@
-import { collection, getDocs, limit, orderBy, query, where, Firestore, QueryDocumentSnapshot } from 'firebase/firestore';
+import type { Firestore} from 'firebase/firestore';
+import { collection, getDocs, limit, orderBy, query, where, QueryDocumentSnapshot } from 'firebase/firestore';
 import { getLogger } from '@/lib/logging/app-logger';
 
 export interface NormalizedUsageMetrics {

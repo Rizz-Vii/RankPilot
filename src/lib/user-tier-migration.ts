@@ -13,6 +13,13 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
+// In-module diagnostics for migration query utilities
+const migrationQueryDiagnostics = {
+  hasQuery: !!query,
+  hasWhere: !!where,
+  queryLength: Array.isArray((query as unknown)) ? (query as unknown as unknown[]).length : undefined,
+};
+
 // Mapping from old tier names to new tier names
 const TIER_MIGRATION_MAP = {
   starter: "professional",

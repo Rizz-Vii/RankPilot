@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import type { DashboardData } from "@/lib/services/dashboard-data.service";
-import { User as FirebaseUser } from "firebase/auth"; // This line is unchanged
+import type { User as FirebaseUser } from "firebase/auth"; // This line is unchanged
 import { auth, db } from "@/lib/firebase";
 import { useMockAuth } from "@/lib/dev-auth";
 import { ensureUserSubscription } from "@/lib/user-subscription-sync";

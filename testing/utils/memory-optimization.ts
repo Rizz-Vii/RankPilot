@@ -3,7 +3,7 @@
  * Handles process cleanup, memory management, and resource optimization
  */
 
-import { Page, Browser } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
 export class MemoryOptimizer {
     private page: Page;
@@ -219,7 +219,7 @@ export class ProcessManager {
     async forceKillTestProcesses(): Promise<void> {
         try {
             // Kill any remaining playwright/test processes
-            const { exec } = require('child_process');
+            const { exec } = await import('child_process');
             await new Promise<void>((resolve) => {
                 exec('pkill -f "playwright|npm.*test" || true', () => {
                     console.log('✅ Force killed test processes');

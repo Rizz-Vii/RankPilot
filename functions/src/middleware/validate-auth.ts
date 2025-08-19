@@ -1,6 +1,6 @@
-import { CallableRequest } from "firebase-functions/v2/https";
+import type { CallableRequest } from "firebase-functions/v2/https";
 import { HttpsError } from "firebase-functions/v2/https";
-import { DecodedIdToken } from "firebase-admin/auth";
+import type { DecodedIdToken } from "firebase-admin/auth";
 
 export interface AuthenticatedRequest extends CallableRequest {
   auth: {

@@ -1,72 +1,140 @@
-import type { firestore as AdminFirestore } from 'firebase-admin';
-import { getLogger } from '@/lib/logging/app-logger';
-import { recordRateLimitRejection, recordTeamRateLimitAllowed } from '@/lib/metrics/unified-metrics';
-import { coerceWindowStart, windowStartToMs, TimestampLike } from '@/lib/firestore/typed-snapshot';
+import { Timestamp } from 'firebase-admin/firestore';
+import { adminDb } from '../firebase-admin';
+
+export interface RateLimitBucketState {
+    remaining: number;
+    updatedAt: number; // epoch ms
+}
+
+interface TeamRateLimitResult {
+    allowed: boolean;
+    state: RateLimitBucketState;
+    retryAfterSeconds?: number;
+    headers: Record<string, string>;
+}
+
+// Legacy error class + function signatures kept for backward compatibility with existing route imports.
+export class TeamRateLimitError extends Error {
+    retryAfterSeconds: number;
+    constructor(retryAfterSeconds: number, message = 'Team rate limit exceeded') {
+        super(message);
+        this.retryAfterSeconds = retryAfterSeconds;
+    }
+}
+
+function readConfig() {
+    return {
+        enabled: process.env.ENABLE_TEAM_BUCKET_LIMIT === '1',
+        cap: parseInt(process.env.BUCKET_TOKENS || '60', 10),
+        refillPerMin: parseInt(process.env.BUCKET_REFILL_PER_MIN || '1', 10)
+    };
+}
 
 /**
- * Team-Aware Rate Limiter (PERF-01)
- * Strategy: Fixed window (1h) count; acceptable for Phase 1.
- * Firestore doc: teamRateLimits/{teamId} => { count, windowStart }
+ * Apply team-scoped token bucket limit. Safe no-op when flag disabled or missing teamId.
+ * Firestore doc path strategy: rateLimits/{teamId}
  */
+export async function applyTeamRateLimit(teamId?: string): Promise<TeamRateLimitResult | null> {
+    const { enabled, cap, refillPerMin } = readConfig();
+    if (!enabled || !teamId) return null;
 
-const WINDOW_MS = 60 * 60 * 1000; // 1 hour
-
-export class TeamRateLimitError extends Error {
-    status: number = 429;
-    retryAfterSeconds: number;
-    scope: string;
-    constructor(scope: string, retryAfterSeconds: number) {
-        super('rate_limited');
-        this.retryAfterSeconds = retryAfterSeconds;
-        this.scope = scope;
-    }
-}
-
-interface RateDoc { count: number; windowStart: TimestampLike | Date; }
-interface EnforceOpts { limit?: number; routeKey?: string; }
-
-export async function enforceTeamRateLimit(db: AdminFirestore.Firestore, teamId: string, opts: EnforceOpts = {}) {
-    const logger = getLogger('team-rate-limit');
-    const limit = opts.limit ?? deriveTeamLimit(db, teamId);
-    const routeKey = opts.routeKey || 'generic';
-    const docRef = db.collection('teamRateLimits').doc(teamId);
     const now = Date.now();
-    let retryAfterSeconds = 0;
-    const res = await db.runTransaction(async tx => {
-        const snap = await tx.get(docRef);
-        const raw = snap.exists ? (snap.data() as Partial<RateDoc>) : undefined;
-        const data: RateDoc = {
-            count: typeof raw?.count === 'number' ? raw.count : 0,
-            windowStart: raw?.windowStart ? coerceWindowStart(raw.windowStart, now) : new Date(now)
-        };
-        const windowStartMs = windowStartToMs(data.windowStart, now);
-        if (now - windowStartMs >= WINDOW_MS) {
-            data.count = 0;
-            data.windowStart = new Date(now);
-        }
-        if (data.count + 1 > limit) {
-            retryAfterSeconds = Math.max(1, Math.ceil((WINDOW_MS - (now - windowStartMs)) / 1000));
-            return { allowed: false, remaining: 0, resetAt: new Date(windowStartMs + WINDOW_MS) };
-        }
-        data.count += 1;
-        tx.set(docRef, data, { merge: true });
-        return { allowed: true, remaining: Math.max(0, limit - data.count), resetAt: new Date(windowStartMs + WINDOW_MS) };
-    });
-    if (!res.allowed) {
-        recordRateLimitRejection(`team:${teamId}`);
-        recordRateLimitRejection(routeKey);
-        logger.warn('team.rate.limit.exceeded', { teamId, limit, retryAfterSeconds });
-        throw new TeamRateLimitError(teamId, retryAfterSeconds);
-    }
-    // Record allowed metric for utilization tracking (routeKey and team scope)
-    recordTeamRateLimitAllowed(routeKey);
-    recordTeamRateLimitAllowed(`team:${teamId}`);
-    return res;
-}
+    const docRef = adminDb.collection('rateLimits').doc(teamId);
+    let snap = await docRef.get();
+    let state: RateLimitBucketState;
 
-function deriveTeamLimit(_db: AdminFirestore.Firestore, _teamId: string): number {
-    if (process.env.TEAM_RATE_LIMIT) {
-        const n = parseInt(process.env.TEAM_RATE_LIMIT, 10); if (!isNaN(n)) return n;
+    if (!snap.exists) {
+        state = { remaining: cap, updatedAt: now };
+        // Initialize lazily; ignore write errors (fallback)
+        try {
+            await docRef.create({ remaining: state.remaining, updatedAt: Timestamp.fromMillis(state.updatedAt) });
+        } catch {
+            // ignore race
+        }
+    } else {
+        // Narrow the Firestore document shape defensively without using any
+        interface FirestoreRateLimitDoc { remaining?: unknown; updatedAt?: { toMillis?: () => number } | number }
+        const raw = snap.data() as FirestoreRateLimitDoc | undefined;
+        const remaining = typeof raw?.remaining === 'number' ? raw.remaining : cap;
+        let updatedAt: number;
+        if (raw?.updatedAt && typeof raw.updatedAt === 'object' && 'toMillis' in raw.updatedAt && typeof raw.updatedAt.toMillis === 'function') {
+            updatedAt = raw.updatedAt.toMillis();
+        } else if (typeof raw?.updatedAt === 'number') {
+            updatedAt = raw.updatedAt;
+        } else {
+            updatedAt = now;
+        }
+        state = { remaining, updatedAt };
     }
-    return 500; // default per hour
+
+    // Refill
+    if (state.remaining < cap) {
+        const minutes = Math.floor((now - state.updatedAt) / 60000);
+        if (minutes > 0 && refillPerMin > 0) {
+            const toAdd = minutes * refillPerMin;
+            state.remaining = Math.min(cap, state.remaining + toAdd);
+            state.updatedAt = now;
+        }
+    }
+
+    // Decision
+    if (state.remaining <= 0) {
+        const msUntilNext = 60000 / (refillPerMin || 1) - (now - state.updatedAt);
+        const retryAfterSeconds = Math.max(1, Math.ceil(msUntilNext / 1000));
+        return {
+            allowed: false,
+            state,
+            retryAfterSeconds,
+            headers: {
+                'X-Team-RateLimit-Limit': String(cap),
+                'X-Team-RateLimit-Remaining': '0',
+                'X-Team-RateLimit-Reset': String(Math.floor((now + msUntilNext) / 1000)),
+                'Retry-After': String(retryAfterSeconds)
+            }
+        };
+    }
+
+    // Consume 1 token
+    state.remaining -= 1;
+    const writePayload = {
+        remaining: state.remaining,
+        updatedAt: Timestamp.fromMillis(now)
+    };
+
+    try {
+        // Optimistic: only write if updatedAt not changed (simple compare)
+        await adminDb.runTransaction(async (tx: FirebaseFirestore.Transaction) => {
+            const fresh = await tx.get(docRef);
+            const freshUpdated = fresh.exists
+                ? (fresh.data()?.updatedAt?.toMillis
+                    ? fresh.data()?.updatedAt.toMillis()
+                    : fresh.data()?.updatedAt) : 0;
+            if (freshUpdated === state.updatedAt || !fresh.exists) {
+                tx.set(docRef, writePayload, { merge: true });
+            } else {
+                // Race: ignore; accept in-memory decrement
+            }
+        });
+    } catch (e) {
+        console.warn('[team-rate-limit] write failed; allowing request', e);
+    }
+
+    return {
+        allowed: true,
+        state,
+        headers: {
+            'X-Team-RateLimit-Limit': String(cap),
+            'X-Team-RateLimit-Remaining': String(state.remaining),
+            'X-Team-RateLimit-Reset': String(Math.floor((now + 60000 / (refillPerMin || 1)) / 1000))
+        }
+    };
+}
+// deriveTeamLimit reserved for future dynamic per-team overrides (kept as documented placeholder)
+// function deriveTeamLimit(db: AdminFirestore.Firestore, teamId: string): number { /* planned extension */ return CAP }
+
+// Back-compat wrapper emulating older imperative throwing API
+export async function enforceTeamRateLimit(_db: unknown, teamId: string, _opts?: { routeKey?: string }) {
+    const res = await applyTeamRateLimit(teamId);
+    if (res && !res.allowed) throw new TeamRateLimitError(res.retryAfterSeconds || 60);
+    return res;
 }

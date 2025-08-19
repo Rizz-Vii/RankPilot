@@ -3,6 +3,14 @@
  * Part of the NeuroSEO™ Suite for RankPilot
  */
 
+import type { RewriteTransition } from './types';
+
+// Local rewrite diagnostics
+const rewriteMetrics: { transitionVariantCount: number; transitionUniqueCount: number } = {
+  transitionVariantCount: 0,
+  transitionUniqueCount: 0,
+};
+
 export interface RewriteRequest {
   originalContent: string;
   targetKeywords: string[];
@@ -615,6 +623,11 @@ export class RewriteGenEngine {
       technical: ["Subsequently", "Therefore", "Additionally", "Moreover"],
     };
     const _chosenTransitions = transitions[tone as keyof typeof transitions] || transitions.professional; // reserved for future insertion logic
+    // Instrument selected transition variety
+    rewriteMetrics.transitionVariantCount = _chosenTransitions?.length ?? 0;
+    rewriteMetrics.transitionUniqueCount = Array.isArray(_chosenTransitions)
+      ? new Set(_chosenTransitions).size
+      : 0;
 
     // Simplify complex words (basic example)
     const simplifications = {
@@ -963,4 +976,11 @@ export class RewriteGenEngine {
       reasoning: `${winner.title} performs best with an overall score of ${winner.scores[5]}, excelling in multiple areas including SEO optimization and user engagement.`,
     };
   }
+}
+
+// Standalone helper (previously mis-indented inside class)
+export function generateTransitions(input: string): RewriteTransition[] {
+  // TODO: implement actual transition generation; keep deterministic for now
+  void input; // suppress unused param
+  return [];
 }

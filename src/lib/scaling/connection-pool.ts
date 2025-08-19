@@ -32,6 +32,11 @@ export const connectionPoolConfig: ConnectionPoolConfig = {
   retryDelay: 1000, // 1 second
 };
 
+// Local diagnostics for pool acquisition
+const poolDiagnostics: { lastAcquireErrorCategory: 'timeout' | 'generic' | null } = {
+  lastAcquireErrorCategory: null,
+};
+
 export class ConnectionPoolManager {
   private static instance: ConnectionPoolManager;
   private activeConnections: Map<string, unknown> = new Map();
@@ -82,7 +87,12 @@ export class ConnectionPoolManager {
         try {
           connectFirestoreEmulator(db, 'localhost', 8080);
         } catch (error) {
-          // Emulator already connected or not available
+          // Emulator already connected or not available; categorize error
+          const msg = typeof error === 'object' && error && 'message' in (error as Record<string, unknown>) && typeof (error as { message?: unknown }).message === 'string'
+            ? (error as { message: string }).message
+            : String(error);
+          const isTimeout = /timeout|deadline exceeded/i.test(msg);
+          poolDiagnostics.lastAcquireErrorCategory = isTimeout ? 'timeout' : 'generic';
         }
       }
 

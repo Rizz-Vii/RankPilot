@@ -5,7 +5,7 @@ import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { QuotaBar } from '@/components/metrics/QuotaBar';
-import { getMockMetrics } from '@/lib/domain/mockMetrics';
+import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
 import { Button } from '@/components/ui/button';
 import { ActionCard } from '@/components/shared/ActionCard';
 import { SkeletonOverlay } from '@/components/shared/SkeletonOverlay';
@@ -60,11 +60,11 @@ function VariantDialog({ open, base, onClose }: VariantDialogProps){
 export default function EmailCampaignsPage() {
   const [months, setMonths] = useState(6);
   const live = useMarketingCampaignMetrics(months);
-  const mock = getMockMetrics('marketing');
+  const { data: mock } = useMockDomainMetrics('marketing', true);
   interface MarketingMetric { key: string; label: string; value: number; delta: number; trend: number[]; intent?: string }
   interface MarketingQuota { key: string; label: string; used: number; limit: number }
   interface MarketingLive { kpis: MarketingMetric[]; rows: any[]; loading: boolean; addOptimistic: (row: any)=>void; quotas?: MarketingQuota[] }
-  const data: MarketingLive = (live.kpis.length ? live : { kpis: mock.kpis, rows: [], loading: false, addOptimistic: live.addOptimistic }) as MarketingLive;
+  const data: MarketingLive = (live.kpis.length ? live : { kpis: (mock?.kpis || []), rows: [], loading: false, addOptimistic: live.addOptimistic }) as MarketingLive;
   useEffect(() => { trackDashboardView('marketing'); }, []);
   const { toast } = useToast();
   const { user } = useAuth();

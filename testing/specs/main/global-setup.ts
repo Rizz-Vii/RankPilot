@@ -1,4 +1,5 @@
-import { chromium, FullConfig } from "@playwright/test";
+import type { FullConfig } from "@playwright/test";
+import { chromium } from "@playwright/test";
 import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';

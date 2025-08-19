@@ -4,7 +4,8 @@
  */
 
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { recordRouteLatency, recordError, recordRateLimitRejection } from '@/lib/metrics/unified-metrics';
 import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';

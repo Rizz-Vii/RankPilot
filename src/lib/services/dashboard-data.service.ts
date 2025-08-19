@@ -16,9 +16,7 @@ import {
   limit,
   getDocs,
   doc,
-  getDoc,
   updateDoc,
-  onSnapshot,
   Timestamp
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
