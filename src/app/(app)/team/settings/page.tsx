@@ -138,7 +138,7 @@ export default function TeamSettingsPage() {
         projects: editState.projects.map(p => p.id),
         integrations: editState.integrations,
       });
-  setTeam({ ...team, ...editState } as any as Team);
+  setTeam({ ...team, ...editState } as Team);
     } catch (e: unknown) {
       setError("Failed to save changes.");
     } finally {
