@@ -81,9 +81,9 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
             highContrast: false,
         });
     setCustomColors({
-        primary: 'var(--color-primary-500, #3B82F6)',
-        secondary: 'var(--color-gray-500, #6B7280)',
-        accent: 'var(--color-success-500, #10B981)'
+        primary: 'var(--color-primary-500)',
+        secondary: 'var(--color-gray-500)',
+        accent: 'var(--color-success-500)'
     });
     };
 
@@ -176,14 +176,14 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
                                             <Input
                                                 id="primary-color"
                                                 type="color"
-                                                value={customColors.primary}
+                                                value={primaryColorForPicker || ''}
                                                 onChange={(e) => handleCustomColorChange('primary', e.target.value)}
                                                 className="w-12 h-12 rounded-md border cursor-pointer"
                                             />
                                             <Input
                                                 value={customColors.primary}
                                                 onChange={(e) => handleCustomColorChange('primary', e.target.value)}
-                                                placeholder="#3B82F6" /* token primary-500 */
+                                                placeholder="var(--color-primary-500)" /* token primary-500 */
                                                 className="flex-1"
                                             />
                                         </div>
@@ -195,14 +195,14 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
                                             <Input
                                                 id="secondary-color"
                                                 type="color"
-                                                value={customColors.secondary}
+                                                value={secondaryColorForPicker || ''}
                                                 onChange={(e) => handleCustomColorChange('secondary', e.target.value)}
                                                 className="w-12 h-12 rounded-md border cursor-pointer"
                                             />
                                             <Input
                                                 value={customColors.secondary}
                                                 onChange={(e) => handleCustomColorChange('secondary', e.target.value)}
-                                                placeholder="#6B7280" /* token gray-500 */
+                                                placeholder="var(--color-gray-500)" /* token gray-500 */
                                                 className="flex-1"
                                             />
                                         </div>
@@ -214,14 +214,14 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
                                             <Input
                                                 id="accent-color"
                                                 type="color"
-                                                value={customColors.accent}
+                                                value={accentColorForPicker || ''}
                                                 onChange={(e) => handleCustomColorChange('accent', e.target.value)}
                                                 className="w-12 h-12 rounded-md border cursor-pointer"
                                             />
                                             <Input
                                                 value={customColors.accent}
                                                 onChange={(e) => handleCustomColorChange('accent', e.target.value)}
-                                                placeholder="#10B981" /* token success-500 */
+                                                placeholder="var(--color-success-500)" /* token success-500 */
                                                 className="flex-1"
                                             />
                                         </div>
