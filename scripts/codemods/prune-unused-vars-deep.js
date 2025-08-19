@@ -22,8 +22,8 @@ function safeInit(node){ if(!node) return true; switch(node.kind){ case ts.Synta
 function collect(sf){
   const map=new Map();
   function reg(name,decl){ if(!map.has(name)) map.set(name,{decl,used:0}); }
-  function use(name){ const e=map.get(name); if(e) e.used++; }
-  function visit(n){ if(ts.isVariableDeclaration(n) && ts.isIdentifier(n.name)) reg(n.name.text,n); if(ts.isIdentifier(n)) use(n.text); ts.forEachChild(n,visit); }
+  function markUsed(name){ const e=map.get(name); if(e) e.used++; }
+  function visit(n){ if(ts.isVariableDeclaration(n) && ts.isIdentifier(n.name)) reg(n.name.text,n); if(ts.isIdentifier(n)) markUsed(n.text); ts.forEachChild(n,visit); }
   visit(sf);
   const edits=[]; const text=sf.getFullText();
   for(const [name,info] of map){
