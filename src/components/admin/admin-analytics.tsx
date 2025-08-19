@@ -80,8 +80,8 @@ export default function AdminAnalytics() {
       });
 
       const toolUsage: ToolUsage[] = [
-        { name: 'Audits', value: totalAudits || 1, color: '#8884d8' },
-        { name: 'Keyword', value: totalKeywordSearches || 1, color: '#82ca9d' },
+        { name: 'Audits', value: totalAudits || 1, color: 'hsl(243,52%,68%)' },
+        { name: 'Keyword', value: totalKeywordSearches || 1, color: 'hsl(143,40%,65%)' },
       ];
 
       const userGrowth: UserGrowth[] = monthlyActivity.map((m, idx) => ({
@@ -224,13 +224,13 @@ export default function AdminAnalytics() {
                 <Line
                   type="monotone"
                   dataKey="newUsers"
-                  stroke="#8884d8"
+                  stroke="hsl(243,52%,68%)"
                   name="New Users"
                 />
                 <Line
                   type="monotone"
                   dataKey="totalUsers"
-                  stroke="#82ca9d"
+                  stroke="hsl(143,40%,65%)"
                   name="Total Users"
                 />
               </LineChart>
@@ -258,7 +258,7 @@ export default function AdminAnalytics() {
                     `${name} ${((percent || 0) * 100).toFixed(0)}%`
                   }
                   outerRadius={80}
-                  fill="#8884d8"
+                  fill="hsl(243,52%,68%)"
                   dataKey="value"
                 >
                   {analytics.toolUsage.map((entry: ToolUsage, index) => (
@@ -287,10 +287,10 @@ export default function AdminAnalytics() {
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="users" fill="#8884d8" name="Active Users" />
+              <Bar dataKey="users" fill="hsl(243,52%,68%)" name="Active Users" />
               <Bar
                 dataKey="activities"
-                fill="#82ca9d"
+                fill="hsl(143,40%,65%)"
                 name="Total Activities"
               />
             </BarChart>
