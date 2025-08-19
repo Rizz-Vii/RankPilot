@@ -1991,6 +1991,7 @@ export class ComprehensiveDatabaseSeeder {
     console.log(`✅ Successfully seeded ${totalBilling} billing records`);
   }
 
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   async seedUsageTracking() {
     console.log("📊 Seeding usage tracking data...");
 
@@ -2157,6 +2158,7 @@ export class ComprehensiveDatabaseSeeder {
 
     console.log(`✅ Successfully seeded ${totalMetrics} system metrics records`);
   }
+  /* eslint-enable @typescript-eslint/no-unused-vars */
 }
 
 // CLI execution
