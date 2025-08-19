@@ -22,7 +22,17 @@ export default function useAdminRoute(): AdminRouteResult {
   const { user, loading, role } = useAuth();
   const router = useRouter();
 
-  // Tightened test override: requires both localStorage flag AND E2E runtime/build flag
+
+  useEffect(() => {
+    // Redirect if not loading and user is not authenticated or role is not 'admin'
+    if (!loading && (!user || role !== "admin")) {
+      // Redirect to a page indicating unauthorized access or the home page
+      router.push("/login"); // Redirect to home page as an example
+    }
+  }, [user, loading, role, router]);
+
+  // Tightened test override: requires both localStorage flag AND E2E runtime/build flag.
+  // Moved below hook calls to keep hooks usage unconditional (fixes react-hooks/rules-of-hooks).
   if (typeof window !== 'undefined') {
     try {
       const allowE2E = (process.env.NEXT_PUBLIC_E2E === '1') || window.__E2E__ === '1';
@@ -32,14 +42,6 @@ export default function useAdminRoute(): AdminRouteResult {
       }
     } catch { /* ignore */ }
   }
-
-  useEffect(() => {
-    // Redirect if not loading and user is not authenticated or role is not 'admin'
-    if (!loading && (!user || role !== "admin")) {
-      // Redirect to a page indicating unauthorized access or the home page
-      router.push("/login"); // Redirect to home page as an example
-    }
-  }, [user, loading, role, router]);
 
   if (loading || (user && role !== "admin")) {
     return { user: null, loading: true, role: null };
