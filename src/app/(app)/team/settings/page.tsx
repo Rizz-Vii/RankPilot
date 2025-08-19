@@ -45,7 +45,8 @@ export default function TeamSettingsPage() {
         // 2) Fallback: read users/{uid}.teamId and load that team
         if (!teamDoc) {
           const userDocSnap = await getDoc(doc(db, "users", user.uid));
-          const teamIdFromUser = userDocSnap.exists() ? (userDocSnap.data() as any)?.teamId : undefined;
+          const userData = userDocSnap.exists() ? (userDocSnap.data() as Record<string, unknown>) : undefined;
+          const teamIdFromUser = userData ? (userData.teamId as string | undefined) : undefined;
           if (typeof teamIdFromUser === "string" && teamIdFromUser) {
             const teamSnap = await getDoc(doc(db, "teams", teamIdFromUser));
             if (teamSnap.exists()) {
@@ -55,14 +56,15 @@ export default function TeamSettingsPage() {
         }
 
         // 3) Legacy fallback (if your auth user object was extended elsewhere)
-        if (!teamDoc && typeof (user as any).teamId === "string") {
-          const docSnap = await getDoc(doc(db, "teams", (user as any).teamId));
+        if (!teamDoc && typeof (user as unknown as Record<string, unknown>).teamId === "string") {
+          const docSnap = await getDoc(doc(db, "teams", (user as unknown as Record<string, unknown>).teamId as string));
           if (docSnap.exists()) teamDoc = { id: docSnap.id, ...docSnap.data() } as Team;
         }
         if (!teamDoc) throw new Error("Team not found");
 
         // Fetch only the team's projects (limit 10 per 'in' query)
-  const projectIds: string[] = Array.isArray((teamDoc as any).projects) ? (teamDoc as any).projects as string[] : [];
+  const teamData = teamDoc as unknown as Record<string, unknown>;
+  const projectIds: string[] = Array.isArray(teamData.projects) ? (teamData.projects as unknown as string[]) : [];
         let allProjectsArr: unknown[] = [];
         if (projectIds.length > 0) {
           try {
@@ -82,13 +84,16 @@ export default function TeamSettingsPage() {
 
         setTeam(teamDoc);
         setAllProjects(allProjectsArr as ProjectLite[]);
-        setEditState({
-          name: (teamDoc as any).name ?? "",
-          description: (teamDoc as any).description ?? "",
-          members: Array.isArray((teamDoc as any).members) ? (teamDoc as any).members : [],
-          projects: (allProjectsArr as ProjectLite[]).filter(p => Array.isArray((teamDoc as any).projects) && (teamDoc as any).projects.includes(p.id)) as ProjectLite[],
-          integrations: Array.isArray((teamDoc as any).integrations) ? (teamDoc as any).integrations : [],
-        });
+        {
+          const td = teamDoc as unknown as Record<string, unknown>;
+          setEditState({
+            name: (td.name as string) ?? "",
+            description: (td.description as string) ?? "",
+            members: Array.isArray(td.members) ? (td.members as Team['members']) : [],
+            projects: (allProjectsArr as ProjectLite[]).filter(p => Array.isArray(td.projects) && (td.projects as unknown as string[]).includes(p.id)) as ProjectLite[],
+            integrations: Array.isArray(td.integrations) ? (td.integrations as Team['integrations']) : [],
+          });
+        }
       } catch (e: unknown) {
         console.error("TeamSettings load error:", e);
         setError("Failed to load team data.");
@@ -99,7 +104,7 @@ export default function TeamSettingsPage() {
   }, [user?.uid]);
 
   // Handlers for editing
-  const handleInputChange = (e: any) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setEditState(prev => prev ? ({ ...prev, [e.target.name]: e.target.value }) : prev);
   };
   const handleMemberRoleChange = (id: string, role: string) => {
