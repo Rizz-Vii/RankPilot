@@ -46,7 +46,7 @@ function collectRefs(code){
 function processFile(file){
   const original = fs.readFileSync(file,'utf8');
   const lines = original.split(/\n/);
-  const _refs = collectRefs(original);
+  collectRefs(original);
   const changes = [];
   let modified = false;
   // Pass 1: variable declarators
