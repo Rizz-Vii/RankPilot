@@ -28,10 +28,7 @@ import type { NeuroSEOAnalysisRequest, NeuroSEOReport } from "@/lib/neuroseo";
 import { submitOrQueue, queueAnalysisRequest } from "@/lib/offline-queue";
 import { TimeoutError } from "@/lib/timeout";
 import { cn } from "@/lib/utils";
-import type {
-  CompetitorAnalysisInput,
-  CompetitorAnalysisOutput
-} from "@/types";
+import type { CompetitorAnalysisOutput } from "@/types";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, BarChart3, Users } from "lucide-react";
@@ -238,15 +235,12 @@ export default function CompetitorsPage() {
   const [report, setReport] = useState<NeuroSEOReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [currentEngine, setCurrentEngine] = useState<string>("");
-  const [completedEngines, setCompletedEngines] = useState<string[]>([]);
+  const [_analysisProgress, setAnalysisProgress] = useState(0);
+  const [_currentEngine, setCurrentEngine] = useState<string>("");
+  const [_completedEngines, setCompletedEngines] = useState<string[]>([]);
   const { toast } = useToast();
 
-  // Form state
-  const [yourUrl, setYourUrl] = useState("");
-  const [competitorUrls, setCompetitorUrls] = useState("");
-  const [targetKeywords, setTargetKeywords] = useState("");
+  // Form state (managed by CompetitorAnalysisForm)
 
   // Get user subscription tier for feature gating
   const userTier = (user as { subscriptionTier?: string } | null | undefined)?.subscriptionTier || "free";
@@ -291,8 +285,6 @@ export default function CompetitorsPage() {
 
   const handleSubmit = async (values: { yourUrl: string; competitorUrls: string; keywords: string; }) => {
     // Transform form values to CompetitorAnalysisInput
-  const competitorUrlList = values.competitorUrls.split('\n').map(url => url.trim()).filter(Boolean);
-  const keywordList = values.keywords.split(',').map(keyword => keyword.trim()).filter(Boolean);
 
     if (!values.yourUrl.trim()) {
       setError("Please enter your website URL");
@@ -316,9 +308,9 @@ export default function CompetitorsPage() {
 
     try {
       const analysisRequest: NeuroSEOAnalysisRequest = {
-        urls: [yourUrl.trim()],
-        targetKeywords: targetKeywords.split(',').map(k => k.trim()).filter(Boolean),
-        competitorUrls: competitorUrls.split(',').map(u => u.trim()).filter(Boolean),
+        urls: [values.yourUrl.trim()],
+        targetKeywords: values.keywords.split(',').map(k => k.trim()).filter(Boolean),
+        competitorUrls: values.competitorUrls.split(',').map(u => u.trim()).filter(Boolean),
         analysisType: "competitive",
         userPlan: userTier,
         userId: user.uid,
@@ -364,11 +356,11 @@ export default function CompetitorsPage() {
           tool: TOOL_NAMES.COMPETITOR_ANALYSIS,
           timestamp: serverTimestamp(),
           details: {
-            yourUrl: yourUrl.trim(),
-            competitors: competitorUrls.split(',').map(u => u.trim()).filter(Boolean),
-            keywords: targetKeywords.split(',').map(k => k.trim()).filter(Boolean),
+            yourUrl: values.yourUrl.trim(),
+            competitors: values.competitorUrls.split(',').map(u => u.trim()).filter(Boolean),
+            keywords: values.keywords.split(',').map(k => k.trim()).filter(Boolean),
           },
-          resultsSummary: `NeuroSEO™ competitive analysis completed for ${yourUrl.trim()} vs ${competitorUrls.split(',').length} competitors.`,
+          resultsSummary: `NeuroSEO™ competitive analysis completed for ${values.yourUrl.trim()} vs ${values.competitorUrls.split(',').length} competitors.`,
         });
       }
     } catch (e: unknown) {
