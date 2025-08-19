@@ -199,7 +199,7 @@ export const getKeywordSuggestionsEnhanced = onCall(httpsOptions, async (request
         corpusSummary += ` | UserRecent:${recKw.slice(0, 10).join(', ')}`;
       }
     } catch (e) {
-      logger.warn('corpus_build_failed', { error: (e as any)?.message });
+      logger.warn('corpus_build_failed', { error: e instanceof Error ? e.message : String(e) });
     }
 
     // Optional Firecrawl context (first provided crawlUrls or simple search URL if pattern)
@@ -214,8 +214,8 @@ export const getKeywordSuggestionsEnhanced = onCall(httpsOptions, async (request
             body: JSON.stringify({ url: u, formats: ['markdown'], onlyMainContent: true, mobile: true })
           });
           if (resp.ok) {
-            const j: any = await resp.json();
-            const md: string = j.markdown || '';
+            const j = await resp.json();
+            const md = (j && typeof j === 'object' && 'markdown' in j) ? String((j as Record<string, unknown>).markdown) : '';
             if (md) crawlContext += `\nURL:${u}\n${md.slice(0, 800)}`;
           }
           if (crawlContext.length > 2400) break;
@@ -371,7 +371,7 @@ async function generateRelatedQueries(query: string, language: string, ctx?: { c
         output = typeof gen === 'string' ? gen : gen?.text?.();
       }
     } catch (e) {
-      logger.warn("Real AI related queries failed, falling back to mock", { error: (e as any)?.message });
+      logger.warn("Real AI related queries failed, falling back to mock", { error: e instanceof Error ? e.message : String(e) });
     }
     if (!output) {
       output = await getMockAI(prompt, undefined, { temperature: 0.8, maxOutputTokens: 200 });
