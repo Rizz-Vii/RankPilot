@@ -9,6 +9,8 @@ import { StructuredLogger } from "../lib/structured-logger";
 import { MetricsCollector } from "../lib/metrics-collector";
 import { AIResponseCache } from "../lib/ai-response-cache";
 
+type MockRequest = { auth?: { uid?: string }; data?: unknown; rawRequest?: { headers?: Record<string, string> } };
+
 describe("Firebase Functions Basic Test Suite", () => {
 
   describe("StructuredLogger", () => {
@@ -19,7 +21,7 @@ describe("Firebase Functions Basic Test Suite", () => {
         rawRequest: {
           headers: { "user-agent": "test-agent" }
         }
-      } as any;
+      } as unknown as MockRequest;
 
       const trace = StructuredLogger.startTrace(mockRequest, "test-function");
 
@@ -44,7 +46,7 @@ describe("Firebase Functions Basic Test Suite", () => {
         auth: { uid: "user123" },
         data: {},
         rawRequest: { headers: {} }
-      } as any;
+      } as unknown as MockRequest;
 
       const trace = StructuredLogger.startTrace(mockRequest, "test-function");
 
@@ -131,7 +133,7 @@ describe("Firebase Functions Basic Test Suite", () => {
         auth: { uid: "integration-user" },
         data: {},
         rawRequest: { headers: {} }
-      } as any;
+      } as unknown as MockRequest;
 
       // Start trace
       const trace = StructuredLogger.startTrace(mockRequest, "integration-test");

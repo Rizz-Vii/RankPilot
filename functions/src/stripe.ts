@@ -20,7 +20,7 @@ function getStripe(): Stripe {
       throw new Error("STRIPE_SECRET_KEY environment variable is not set");
     }
     // Stripe types lag newest apiVersion; use latest supported pinned version
-    stripe = new Stripe(secretKey, {} as any); // Use default API version to satisfy type narrowing
+    stripe = new Stripe(secretKey, {} as Stripe.StripeConfig); // Use default API version to satisfy type narrowing
   }
   return stripe;
 }
@@ -172,7 +172,7 @@ async function handleSubscriptionCreated(session: Stripe.Checkout.Session) {
   );
 
   // Cast subscription to access current_period_end
-  const sub = subscription as any;
+  const sub = subscription as unknown as { current_period_end?: number };
 
   await db
     .collection("users")
@@ -195,7 +195,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   if (!userId) return;
 
   // Cast subscription to access current_period_end
-  const sub = subscription as any;
+  const sub = subscription as unknown as { current_period_end?: number };
 
   await db
     .collection("users")
@@ -221,7 +221,7 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
 }
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
-  const subscriptionId = (invoice as any).subscription as string | null;
+  const subscriptionId = invoice.subscription as string | null;
   if (subscriptionId && typeof subscriptionId === "string") {
     const subscription =
       await getStripe().subscriptions.retrieve(subscriptionId);
@@ -247,7 +247,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
-  const subscriptionId = (invoice as any).subscription as string | null;
+  const subscriptionId = invoice.subscription as string | null;
   if (subscriptionId && typeof subscriptionId === "string") {
     const subscription =
       await getStripe().subscriptions.retrieve(subscriptionId);

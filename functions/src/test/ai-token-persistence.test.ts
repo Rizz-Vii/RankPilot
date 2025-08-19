@@ -1,19 +1,22 @@
 import { expect } from 'chai';
 import { describe, it, beforeEach } from 'mocha';
 
+type OpenAIResult = { ok: boolean; content?: string; usage?: { in: number; out: number } };
+interface AIModule { aiMemoryManager: { persistDailyUsage?: (provider: string, inT: number, outT: number, model: string) => Promise<void>; invokeOpenAI?: (...args: unknown[]) => Promise<OpenAIResult>; }; getAI: (prompt: string, model: string) => Promise<string>; }
+
 const managerPath = '../lib/ai-memory-manager.ts';
 
 describe('AI Memory Manager - token persistence', () => {
-    let aiModule: any;
+    let aiModule: AIModule;
     beforeEach(async () => {
         process.env.OPENAI_API_KEY = process.env.OPENAI_API_KEY || 'test-key';
         delete require.cache[require.resolve(managerPath)];
-        aiModule = await import(managerPath);
+        aiModule = (await import(managerPath)) as unknown as AIModule;
     });
 
     it('invokes persistDailyUsage with provider token counts', async () => {
-        const mm = aiModule.aiMemoryManager as any;
-        let called: any = null;
+        const mm = aiModule.aiMemoryManager as { persistDailyUsage?: (provider: string, inT: number, outT: number, model: string) => Promise<void>; invokeOpenAI?: (...args: unknown[]) => Promise<OpenAIResult>; };
+        let called: unknown = null;
         mm.persistDailyUsage = async (provider: string, inT: number, outT: number, model: string) => {
             called = { provider, inT, outT, model };
         };

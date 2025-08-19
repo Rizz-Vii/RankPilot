@@ -13,7 +13,7 @@ getFirestore();
 
 async function main() {
     const key = process.env.STRIPE_SECRET_KEY; if (!key) throw new Error('STRIPE_SECRET_KEY required');
-    const stripe = new Stripe(key, {} as any);
+    const stripe = new Stripe(key, {} as Stripe.StripeConfig);
     const limitArg = process.argv.find(a => a.startsWith('--limit='));
     const limit = limitArg ? parseInt(limitArg.split('=')[1], 10) : 200;
     const teamIdArg = process.argv.find(a => a.startsWith('--teamId='));
