@@ -19,7 +19,8 @@ import LoadingScreen from "@/components/ui/loading-screen";
 import { useAuth } from "@/context/AuthContext";
 import { useRealTimeDashboardData } from "@/hooks/use-dashboard-data";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Variants, motion } from "framer-motion";
+import type { Variants} from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Activity,
   AlertCircle,
