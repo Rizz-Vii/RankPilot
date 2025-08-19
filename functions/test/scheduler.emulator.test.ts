@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { getApps, initializeApp, cert } from 'firebase-admin/app';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { getApps, initializeApp } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 import { runDueAutomationTick } from '../src/scheduled/run-due-automation';
 
 /**

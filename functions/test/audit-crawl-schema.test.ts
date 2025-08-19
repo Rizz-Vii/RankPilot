@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import { getApps, initializeApp } from 'firebase-admin/app';
-import { runKpiDailySnapshot } from '../src/scheduled/kpi-daily-snapshot';
 import { __testPerformWebCrawl } from '../src/api/audit';
 
 // This test ensures performWebCrawl returns a structure that passes CrawlResultSchema (indirectly via runSeoAudit validation path).

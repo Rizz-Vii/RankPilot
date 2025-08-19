@@ -5,7 +5,7 @@ import path from 'path';
 interface TaskMeta { id: string; summary: string; files?: string[]; estLoc?: number; previousFailures?: number; domains?: string[] }
 interface Decision { profile: string; reason: string }
 
-const CONFIG_PATH = path.resolve('.codex/config.toml')
+const _CONFIG_PATH = path.resolve('.codex/config.toml')
 
 function estimateSemanticProbability(t: TaskMeta): number {
     const summary = (t.summary || '').toLowerCase()
