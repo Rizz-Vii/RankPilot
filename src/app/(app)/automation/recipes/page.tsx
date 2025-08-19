@@ -49,7 +49,7 @@ export default function AutomationRecipesPage() {
 
   useEffect(() => {
     if (!user) return;
-    (async () => {
+    void (async () => {
       setLoading(true);
       try {
   const list = await listAutomationRecipes(user.uid, (user as any)?.teamId);
