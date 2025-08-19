@@ -50,7 +50,7 @@ export default function FinanceDashboardRoot() {
   const [agingSnap, setAgingSnap] = useState<{ buckets: Record<string, number>; ts: Date } | null>(null);
   const { trigger, running } = useAutomationTrigger();
 
-  useEffect(()=> { void trackDashboardView('finance'); }, []);
+  useEffect(()=> { void trackDashboardView('finance'); }, [trackDashboardView]);
 
   // Persist months selection
   useEffect(()=> { if(typeof window==='undefined') return; const stored = window.localStorage.getItem('financeMonths'); if(stored) { const num = parseInt(stored,10); if([3,6,9,12].includes(num)) setMonths(num as 3|6|9|12); } }, []);
@@ -93,7 +93,7 @@ export default function FinanceDashboardRoot() {
       unsub = subscribeFinanceMetrics(userId, months, (m)=> { setMetrics(m); setInitialLoading(false); }, teamId);
     })();
     return ()=> { active=false; if(unsub) unsub(); };
-  }, [userId, teamId, months, dataVersion, authLoading]);
+  }, [userId, user, teamId, months, dataVersion, authLoading, fetchFinanceMetrics, subscribeFinanceMetrics]);
 
   // Load latest automation snapshots (finance)
   useEffect(()=> {
@@ -115,7 +115,7 @@ export default function FinanceDashboardRoot() {
         }
       } catch { /* silent */ }
     })();
-  }, [userId, teamId, dataVersion]);
+  }, [userId, teamId, dataVersion, fetchRecentFinanceRevenueSnapshots, fetchLatestFinanceInvoiceAging]);
 
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   const summary: Summary = useMemo(()=> {
