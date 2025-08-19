@@ -2,7 +2,6 @@
 // Use only when standard build fails due to ESLint or TypeScript issues
 
 const { execSync } = require('child_process');
-const path = require('path');
 
 function buildWithoutChecks() {
   console.log('🚨 Emergency build mode - skipping type checking and ESLint');

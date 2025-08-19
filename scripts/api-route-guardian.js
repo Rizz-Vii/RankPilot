@@ -3,7 +3,6 @@
 // Priority: HIGH - Foundation Stabilization Phase 1.3
 
 const fs = require('fs');
-const path = require('path');
 
 /**
  * API Route Guardian Agent - Fix Firebase initialization in API routes

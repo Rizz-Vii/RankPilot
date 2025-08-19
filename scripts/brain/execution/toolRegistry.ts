@@ -1,8 +1,6 @@
 import type { ToolRunner } from '../../../types/brain';
 import { spawnSync } from 'child_process';
 import { loadPlugins } from '../plugins';
-import fs from 'fs';
-import path from 'path';
 
 function mk(name: string, supportsDomains: string[] = []): ToolRunner {
   return {

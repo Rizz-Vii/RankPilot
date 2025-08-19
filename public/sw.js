@@ -10,7 +10,6 @@
  * - Network-first strategy for dynamic data
  */
 
-const CACHE_NAME = 'rankpilot-v1.0.0';
 const STATIC_CACHE = 'rankpilot-static-v1';
 const DYNAMIC_CACHE = 'rankpilot-dynamic-v1';
 
@@ -23,13 +22,6 @@ const STATIC_ASSETS = [
     // Removed '/settings' and '/neuroseo' as they cause 404 errors in cache.addAll()
 ];
 
-// API endpoints to cache with network-first strategy
-const DYNAMIC_CACHE_PATHS = [
-    '/api/user',
-    '/api/dashboard',
-    '/api/neuroseo/live',
-    '/api/settings'
-];
 
 // Install event - cache static assets with individual error handling
 self.addEventListener('install', (event) => {
