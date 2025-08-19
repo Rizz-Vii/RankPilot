@@ -470,7 +470,7 @@ export default function BillingPage() {
                         data-testid="view-all-invoices"
                         className="text-xs text-muted-foreground underline hover:text-foreground"
                         aria-label="View all invoices in billing portal"
-                        onClick={handleManageBilling}
+                        onClick={() => void handleManageBilling()}
                       >
                         View all invoices
                       </button>
@@ -529,7 +529,7 @@ export default function BillingPage() {
                     </>
                   )}
                 </Button>
-                <Button className="w-full" onClick={handleManageBilling} disabled={isManagingPortal}>
+                <Button className="w-full" onClick={() => void handleManageBilling()} disabled={isManagingPortal}>
                   {isManagingPortal ? (
                     <div className="flex items-center gap-2">
                       <RefreshCw className="h-4 w-4 animate-spin" />

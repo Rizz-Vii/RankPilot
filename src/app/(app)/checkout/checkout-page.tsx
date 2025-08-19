@@ -236,7 +236,7 @@ export default function CheckoutPage() {
               </div>
 
               <Button
-                onClick={handleCheckout}
+                onClick={() => void handleCheckout()}
                 disabled={loading}
                 className="w-full"
                 size="lg"
