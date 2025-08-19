@@ -47,8 +47,8 @@ export interface KpiDailyDoc {
     smoothedLatencyP95?: number | null;
     smoothedCrawlerAdoption?: number | null;
     smoothedSemanticAdoption?: number | null;
-    createdAt: any;            // Firestore Timestamp
-    updatedAt: any;            // Firestore Timestamp
+    createdAt: FirebaseFirestore.Timestamp | FirebaseFirestore.FieldValue | null;            // Firestore Timestamp
+    updatedAt: FirebaseFirestore.Timestamp | FirebaseFirestore.FieldValue | null;            // Firestore Timestamp
     _schema: 1;                // simple schema version for future migrations
 }
 
@@ -62,10 +62,10 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
     try {
         const usageSnap = await db.collection('aiUsageDaily').where('date', '==', dateKey).get();
         usageSnap.docs.forEach(d => {
-            const data: any = d.data();
-            aiTokensIn += data.tokensIn || 0;
-            aiTokensOut += data.tokensOut || 0;
-            aiCost += data.costEstimate || 0;
+            const data = d.data() as Record<string, unknown>;
+            aiTokensIn += (data.tokensIn as number) || 0;
+            aiTokensOut += (data.tokensOut as number) || 0;
+            aiCost += (data.costEstimate as number) || 0;
         });
     } catch (e) {
         logger.warn('kpiDailySnapshot.aiUsageQueryFailed', (e as any)?.message);
@@ -78,12 +78,12 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
         const periodKey = dateKey.slice(0, 7); // YYYY-MM
         const revSnap = await db.collection('financeInvoices').where('period', '==', periodKey).limit(5000).get();
         if (!revSnap.empty) {
-            const paid: any[] = []; const all: any[] = [];
-            revSnap.docs.forEach(d => { const data: any = d.data(); all.push(data); if (data.status === 'paid') paid.push(data); });
-            revenueMrr = paid.reduce((s, i) => s + (i.amount || 0), 0);
-            revenueOutstanding = all.filter(i => i.status !== 'paid').length;
+            const paid: Record<string, unknown>[] = []; const all: Record<string, unknown>[] = [];
+            revSnap.docs.forEach(d => { const data = d.data() as Record<string, unknown>; all.push(data); if (data.status === 'paid') paid.push(data); });
+            revenueMrr = paid.reduce((s, i) => s + ((i as any).amount || 0), 0);
+            revenueOutstanding = all.filter(i => (i as any).status !== 'paid').length;
             if (paid.length) {
-                const onTime = paid.filter(i => { const paidAt = i.paidAt?.toDate?.(); const due = i.dueAt?.toDate?.(); return paidAt && due && paidAt.getTime() <= due.getTime(); });
+                const onTime = paid.filter(i => { const paidAt = (i as any).paidAt?.toDate?.(); const due = (i as any).dueAt?.toDate?.(); return paidAt && due && paidAt.getTime() <= due.getTime(); });
                 revenueOnTimePct = +(onTime.length / paid.length * 100).toFixed(1);
             } else revenueOnTimePct = 0;
         }
@@ -107,17 +107,17 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
     try {
         const uDoc = await db.collection('unifiedMetricsDaily').doc(dateKey).get();
         if (uDoc.exists) {
-            const u: any = uDoc.data();
-            provenanceCoveragePct = typeof u.provenanceCoveragePct === 'number' ? u.provenanceCoveragePct : null;
-            p90LatencyOverall = typeof u.p90LatencyOverall === 'number' ? u.p90LatencyOverall : null;
-            p95LatencyOverall = typeof u.p95LatencyOverall === 'number' ? u.p95LatencyOverall : null;
-            p99LatencyOverall = typeof u.p99LatencyOverall === 'number' ? u.p99LatencyOverall : null;
-            crawlerAggregateAdoptionPct = typeof u.crawlerAggregateAdoptionPct === 'number' ? u.crawlerAggregateAdoptionPct : null;
-            semanticMapAggregateAdoptionPct = typeof u.semanticMapAggregateAdoptionPct === 'number' ? u.semanticMapAggregateAdoptionPct : null;
-            teamRateLimitUtilizationPct = typeof u.teamRateLimitUtilizationPct === 'number' ? u.teamRateLimitUtilizationPct : null;
-            fallbackRatePct = typeof u.fallbackRate === 'number' ? u.fallbackRate : (typeof u.fallbackRatePct === 'number' ? u.fallbackRatePct : null);
-            cacheHitRatio = typeof u.cacheHitRatio === 'number' ? u.cacheHitRatio : null;
-            rateLimitRejectionRate = typeof u.rateLimitRejectionRate === 'number' ? u.rateLimitRejectionRate : null;
+            const u = uDoc.data() as Record<string, unknown> | undefined;
+            provenanceCoveragePct = typeof (u as any)?.provenanceCoveragePct === 'number' ? (u as any).provenanceCoveragePct : null;
+            p90LatencyOverall = typeof (u as any)?.p90LatencyOverall === 'number' ? (u as any).p90LatencyOverall : null;
+            p95LatencyOverall = typeof (u as any)?.p95LatencyOverall === 'number' ? (u as any).p95LatencyOverall : null;
+            p99LatencyOverall = typeof (u as any)?.p99LatencyOverall === 'number' ? (u as any).p99LatencyOverall : null;
+            crawlerAggregateAdoptionPct = typeof (u as any)?.crawlerAggregateAdoptionPct === 'number' ? (u as any).crawlerAggregateAdoptionPct : null;
+            semanticMapAggregateAdoptionPct = typeof (u as any)?.semanticMapAggregateAdoptionPct === 'number' ? (u as any).semanticMapAggregateAdoptionPct : null;
+            teamRateLimitUtilizationPct = typeof (u as any)?.teamRateLimitUtilizationPct === 'number' ? (u as any).teamRateLimitUtilizationPct : null;
+            fallbackRatePct = typeof (u as any)?.fallbackRate === 'number' ? (u as any).fallbackRate : (typeof (u as any)?.fallbackRatePct === 'number' ? (u as any).fallbackRatePct : null);
+            cacheHitRatio = typeof (u as any)?.cacheHitRatio === 'number' ? (u as any).cacheHitRatio : null;
+            rateLimitRejectionRate = typeof (u as any)?.rateLimitRejectionRate === 'number' ? (u as any).rateLimitRejectionRate : null;
         }
     } catch (e) {
         logger.warn('kpiDailySnapshot.unifiedMetricsLoadFailed', (e as any)?.message);
@@ -146,7 +146,7 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
             rateLimitRejectionRate,
             updatedAt: FieldValue.serverTimestamp(),
             _schema: 1
-        } as any;
+        };
         if (!snap.exists) {
             tx.set(ref, { ...base, createdAt: FieldValue.serverTimestamp() });
         } else {
@@ -191,15 +191,15 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
         // Compute 7-day moving averages for key metrics (including current day if present)
         try {
             const recentSnap = await db.collection('kpiDaily').orderBy('date', 'desc').limit(7).get();
-            const rows = recentSnap.docs.map(d => d.data() as any);
+            const rows = recentSnap.docs.map(d => d.data() as Record<string, unknown>);
             const avg = (arr: number[]) => arr.length ? +(arr.reduce((s, v) => s + v, 0) / arr.length).toFixed(2) : null;
-            ma7Provenance = avg(rows.map(r => r.provenanceCoveragePct).filter((v: any) => typeof v === 'number'));
-            ma7CrawlerAdoption = avg(rows.map(r => r.crawlerAggregateAdoptionPct).filter((v: any) => typeof v === 'number'));
-            ma7SemanticAdoption = avg(rows.map(r => r.semanticMapAggregateAdoptionPct).filter((v: any) => typeof v === 'number'));
-            ma7FallbackRate = avg(rows.map(r => r.fallbackRatePct ?? r.fallbackRate).filter((v: any) => typeof v === 'number'));
-            ma7LatencyP95 = avg(rows.map(r => r.p95LatencyOverall).filter((v: any) => typeof v === 'number'));
-            ma7CacheHitRatio = avg(rows.map(r => r.cacheHitRatio).filter((v: any) => typeof v === 'number'));
-            ma7RateLimitRejectionRate = avg(rows.map(r => r.rateLimitRejectionRate).filter((v: any) => typeof v === 'number'));
+            ma7Provenance = avg(rows.map(r => (r as any).provenanceCoveragePct).filter((v: number) => typeof v === 'number'));
+            ma7CrawlerAdoption = avg(rows.map(r => (r as any).crawlerAggregateAdoptionPct).filter((v: number) => typeof v === 'number'));
+            ma7SemanticAdoption = avg(rows.map(r => (r as any).semanticMapAggregateAdoptionPct).filter((v: number) => typeof v === 'number'));
+            ma7FallbackRate = avg(rows.map(r => (r as any).fallbackRatePct ?? (r as any).fallbackRate).filter((v: number) => typeof v === 'number'));
+            ma7LatencyP95 = avg(rows.map(r => (r as any).p95LatencyOverall).filter((v: number) => typeof v === 'number'));
+            ma7CacheHitRatio = avg(rows.map(r => (r as any).cacheHitRatio).filter((v: number) => typeof v === 'number'));
+            ma7RateLimitRejectionRate = avg(rows.map(r => (r as any).rateLimitRejectionRate).filter((v: number) => typeof v === 'number'));
             // Exponential smoothing (alpha=0.3) using existing kpiDaily order (rows newest->oldest)
             const alpha = 0.3;
             const provenanceSeries = rows.map(r => r.provenanceCoveragePct).filter((v: any) => typeof v === 'number').slice().reverse(); // oldest->newest
@@ -220,10 +220,10 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
             try {
                 await db.collection('kpiDaily').doc(dateKey).update({ smoothedProvenance, smoothedLatencyP95, smoothedCrawlerAdoption, smoothedSemanticAdoption, updatedAt: FieldValue.serverTimestamp() });
             } catch (e) {
-                logger.warn('kpiDailySnapshot.smoothingPersistFailed', (e as any)?.message);
+                logger.warn('kpiDailySnapshot.smoothingPersistFailed', (e as unknown as { message?: string })?.message);
             }
             // Include smoothing fields when writing alerts snapshot below
-            (globalThis as any).__SMOOTHING = { smoothedProvenance, smoothedLatencyP95, smoothedCrawlerAdoption, smoothedSemanticAdoption };
+            (globalThis as unknown as Record<string, unknown>).__SMOOTHING = { smoothedProvenance, smoothedLatencyP95, smoothedCrawlerAdoption, smoothedSemanticAdoption };
         } catch (e) {
             logger.warn('kpiAlertsDaily.movingAverageFailed', (e as any)?.message);
         }
@@ -241,12 +241,12 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
                 updatedAt: FieldValue.serverTimestamp()
             });
         } catch (e) {
-            logger.warn('kpiDailySnapshot.ma7PersistFailed', (e as any)?.message);
+            logger.warn('kpiDailySnapshot.ma7PersistFailed', (e as unknown as { message?: string })?.message);
         }
         await db.runTransaction(async tx => {
             const aSnap = await tx.get(alertsRef);
             const smoothing = (globalThis as any).__SMOOTHING || {};
-            const base = { date: dateKey, alerts, ma7Provenance, ma7CrawlerAdoption, ma7SemanticAdoption, ma7FallbackRate, ma7LatencyP95, ma7CacheHitRatio, ma7RateLimitRejectionRate, ...smoothing, updatedAt: FieldValue.serverTimestamp() } as any;
+            const base = { date: dateKey, alerts, ma7Provenance, ma7CrawlerAdoption, ma7SemanticAdoption, ma7FallbackRate, ma7LatencyP95, ma7CacheHitRatio, ma7RateLimitRejectionRate, ...smoothing, updatedAt: FieldValue.serverTimestamp() };
             if (!aSnap.exists) tx.set(alertsRef, { ...base, createdAt: FieldValue.serverTimestamp() }); else tx.update(alertsRef, base);
         });
         // Retention purge for alert snapshots
@@ -259,10 +259,10 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
                 await batch.commit();
             }
         } catch (e) {
-            logger.warn('kpiAlertsDaily.retentionFailed', (e as any)?.message);
+            logger.warn('kpiAlertsDaily.retentionFailed', (e as unknown as { message?: string })?.message);
         }
     } catch (e) {
-        logger.warn('kpiAlertsDaily.persistFailed', (e as any)?.message);
+        logger.warn('kpiAlertsDaily.persistFailed', (e as unknown as { message?: string })?.message);
     }
 
     // Retention purge (older than RETENTION_DAYS)
@@ -274,7 +274,7 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
         oldSnap.docs.forEach(d => batch.delete(d.ref));
         if (!oldSnap.empty) await batch.commit();
     } catch (e) {
-        logger.warn('kpiDailySnapshot.retentionFailed', (e as any)?.message);
+        logger.warn('kpiDailySnapshot.retentionFailed', (e as unknown as { message?: string })?.message);
     }
 
     logger.info('kpiDailySnapshot.complete', { date: dateKey, aiTokensIn, aiTokensOut, aiCostEstimate: aiCost });

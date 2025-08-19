@@ -229,7 +229,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
 
     if (userId) {
       // Cast subscription to access current_period_end
-      const sub = subscription as any;
+      const sub = subscription as unknown as { current_period_end?: number };
 
       await db
         .collection("users")
