@@ -234,24 +234,39 @@ export default function SemanticMapPage() {
             result = {
               id: data.report?.analysisId || `semantic_${Date.now()}`,
               url: analysisUrl,
-              topicClusters: (semantic.fingerprint?.topicClusters || []).map((c: unknown, index: number) => ({
-                id: (c as any).id || `cluster_${index}`,
-                topic: (c as any).name,
-                keywords: (c as any).keywords || [],
-                semanticScore: Math.round((c as any).relevanceScore || 0),
-                contentGaps: (semantic.fingerprint?.contentGaps || []).filter((g: any) => g.topic === (c as any).name).map((g: any) => g.description),
-                relatedTopics: ((c as any).subTopics || []).map((s: any) => s.name).slice(0, 2),
-                searchVolume: randomInt(rng, 5000, 55000),
-                difficulty: randomInt(rng, 30, 70),
-                opportunity: pickOpportunity()
-              })),
-              keywordAnalysis: (data.report?.keywords || []).map((k: unknown) => ({
-                keyword: (k as any).keyword,
-                density: randomFloat(rng, 0.5, 3.5),
-                prominence: randomFloat(rng, 0, 100),
-                semanticRelevance: randomFloat(rng, 60, 100),
-                context: ['Main content', 'Headings', 'Meta tags'].slice(0, randomInt(rng, 1, 3))
-              })),
+              topicClusters: (semantic.fingerprint?.topicClusters || []).map((c: unknown, index: number) => {
+                const cObj = c as Record<string, unknown>;
+                const contentGaps = (semantic.fingerprint?.contentGaps || [])
+                  .filter((g: unknown) => {
+                    const gObj = g as Record<string, unknown>;
+                    return (gObj.topic as string | undefined) === (cObj.name as string | undefined);
+                  })
+                  .map((g: unknown) => (g as Record<string, unknown>).description as string);
+                const relatedTopics = ((cObj.subTopics as unknown[]) || [])
+                  .map((s: unknown) => (s as Record<string, unknown>).name as string)
+                  .slice(0, 2);
+                return {
+                  id: (cObj.id as string) || `cluster_${index}`,
+                  topic: cObj.name as string,
+                  keywords: (cObj.keywords as string[]) || [],
+                  semanticScore: Math.round((cObj.relevanceScore as number) || 0),
+                  contentGaps,
+                  relatedTopics,
+                  searchVolume: randomInt(rng, 5000, 55000),
+                  difficulty: randomInt(rng, 30, 70),
+                  opportunity: pickOpportunity()
+                };
+              }),
+              keywordAnalysis: (data.report?.keywords || []).map((k: unknown) => {
+                const kObj = k as Record<string, unknown>;
+                return {
+                  keyword: kObj.keyword as string,
+                  density: randomFloat(rng, 0.5, 3.5),
+                  prominence: randomFloat(rng, 0, 100),
+                  semanticRelevance: randomFloat(rng, 60, 100),
+                  context: ['Main content', 'Headings', 'Meta tags'].slice(0, randomInt(rng, 1, 3))
+                };
+              }),
               contentAnalysis: {
                 readabilityScore: randomInt(rng, 70, 100),
                 contentDepth: randomInt(rng, 60, 100),
@@ -260,16 +275,26 @@ export default function SemanticMapPage() {
                 expertiseSignals: randomInt(rng, 70, 100)
               },
               semanticGraph: {
-                nodes: (semantic.visualizationData?.nodes || []).map((n: any) => ({ id: n.id, label: n.label, type: n.type, score: n.size })),
-                edges: (semantic.visualizationData?.edges || []).map((e: any) => ({ source: e.source, target: e.target, weight: e.weight }))
+                nodes: (semantic.visualizationData?.nodes || []).map((n: unknown) => {
+                  const no = n as Record<string, unknown>;
+                  return { id: no.id as string, label: no.label as string, type: no.type as string, score: no.size as number };
+                }),
+                edges: (semantic.visualizationData?.edges || []).map((e: unknown) => {
+                  const eo = e as Record<string, unknown>;
+                  return { source: eo.source as string, target: eo.target as string, weight: eo.weight as number };
+                })
               },
-              recommendations: (semantic.recommendations || []).map((r: unknown) => ({
-                type: (r as any).type && (r as any).type.includes('keyword') ? 'keyword' : (r as any).type && (r as any).type.includes('semantic') ? 'semantic' : 'content',
-                priority: (r as any).priority,
-                title: (r as any).title,
-                description: (r as any).description,
-                impact: `Estimated impact: ${(r as any).estimatedImpact}`
-              })),
+              recommendations: (semantic.recommendations || []).map((r: unknown) => {
+                const ro = r as Record<string, unknown>;
+                const typeStr = ro.type as string | undefined;
+                return {
+                  type: typeStr && typeStr.includes('keyword') ? 'keyword' : typeStr && typeStr.includes('semantic') ? 'semantic' : 'content',
+                  priority: ro.priority as string,
+                  title: ro.title as string,
+                  description: ro.description as string,
+                  impact: `Estimated impact: ${ro.estimatedImpact as string}`
+                };
+              }),
               overallScore: data.report?.overallScore || 0,
               createdAt: new Date()
             };
