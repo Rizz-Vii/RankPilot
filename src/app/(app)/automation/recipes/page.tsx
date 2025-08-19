@@ -220,7 +220,7 @@ export default function AutomationRecipesPage() {
                   <Input value={financeAgingTo} onChange={e=>setFinanceAgingTo(e.target.value)} disabled={hydrationDisabled} />
                 </div>
               )}
-              <Button onClick={create} disabled={hydrationDisabled}>Create</Button>
+              <Button onClick={() => void create()} disabled={hydrationDisabled}>Create</Button>
             </CardContent>
         </Card>
         <Separator />
@@ -236,7 +236,7 @@ export default function AutomationRecipesPage() {
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base flex items-center justify-between">
                       <span>{r.name}</span>
-                      <Switch checked={r.active} disabled={hydrationDisabled} onCheckedChange={() => toggleActive(r)} />
+                      <Switch checked={r.active} disabled={hydrationDisabled} onCheckedChange={() => void toggleActive(r)} />
                     </CardTitle>
                     <CardDescription className="text-xs">{r.schedule.cron ? `Cron: ${r.schedule.cron}` : r.schedule.intervalMinutes ? `${r.schedule.intervalMinutes}m interval` : r.schedule.atHourUTC !== undefined ? `Daily @ ${r.schedule.atHourUTC}:00 UTC` : 'Custom'}
                     </CardDescription>
