@@ -1,6 +1,6 @@
 // src/app/(app)/dashboard/page.tsx - Complete Dynamic Database Integration
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CoreWebVitalsWidget } from "@/components/performance/core-web-vitals-monitor";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
@@ -96,22 +96,22 @@ const DashboardMetricCard: React.FC<{
   invertTarget?: boolean; // when lower is better
 }> = ({ title, value, change, changeLabel = "from last period", helper, icon: Icon, testId, target, targetLabel, invertTarget }) => {
   const changeDir = change !== undefined ? (change > 0 ? "up" : change < 0 ? "down" : "flat") : null;
-  const numericValue = useMemo(() => {
+  const numericValue = (() => {
     if (value === "—") return null;
     const num = parseFloat(value.replace(/[^0-9.]/g, ""));
     return isNaN(num) ? null : num;
-  }, [value]);
-  const kpiProgress = useMemo(() => {
+  })();
+  const kpiProgress = (() => {
     if (target === undefined || numericValue === null) return null;
     const pct = invertTarget ? (numericValue <= target ? 100 : Math.max(0, (target / numericValue) * 100)) : Math.min(100, (numericValue / target) * 100);
     return Math.round(pct);
-  }, [target, numericValue, invertTarget]);
-  const kpiStatus = useMemo(() => {
+  })();
+  const kpiStatus = (() => {
     if (kpiProgress === null) return null;
     if (kpiProgress >= 100) return "on-track";
     if (kpiProgress >= 75) return "monitor";
     return "behind";
-  }, [kpiProgress]);
+  })();
   const progressBarId = testId ? `${testId}-progress` : undefined;
   const titleId = testId ? `${testId}-title` : undefined;
   return (
@@ -239,7 +239,7 @@ export default function DashboardPage() {
     if (dashboardData) setLastUpdated(new Date());
   }, [dashboardData]);
 
-  const relativeUpdated = useMemo(() => {
+  const relativeUpdated = (() => {
     if (!lastUpdated) return "—";
     const diffMs = Date.now() - lastUpdated.getTime();
     const diffMin = Math.floor(diffMs / 60000);
@@ -249,13 +249,13 @@ export default function DashboardPage() {
     if (diffHr < 24) return `${diffHr}h ago`;
     const diffDay = Math.floor(diffHr / 24);
     return `${diffDay}d ago`;
-  }, [lastUpdated]);
+  })();
 
   // Executive summary (accessible)
-  const executiveSummary = useMemo(() => {
+  const executiveSummary = (() => {
     if (!dashboardData) return "Data loading";
     return `SEO Score ${dashboardData.seoScore.current}. Domain Authority ${dashboardData.domainAuthority.score}. Backlinks ${dashboardData.backlinks.total}. Tracked keywords ${dashboardData.trackedKeywords.current}. Visibility ${dashboardData.keywordVisibility.score}%.`;
-  }, [dashboardData]);
+  })();
 
   // Trend range selection with localStorage persistence
   const [trendRange, setTrendRange] = useState<"30d" | "90d" | "ytd">("30d");
@@ -273,7 +273,7 @@ export default function DashboardPage() {
   const rangeLabel = trendRange.toUpperCase();
 
   // Real trend filtering
-  const filteredSeoTrend = useMemo(() => {
+  const filteredSeoTrend = (() => {
     const all = dashboardData?.seoScoreTrend || [];
     if (!all.length) return [];
     const now = new Date();
@@ -288,10 +288,10 @@ export default function DashboardPage() {
     // YTD
     const yearStart = new Date(now.getFullYear(), 0, 1);
     return all.filter(p => new Date(p.date) >= yearStart);
-  }, [dashboardData?.seoScoreTrend, trendRange]);
+  })();
 
   // Channel metrics derived from trafficSources
-  const channelMetrics = useMemo(() => {
+  const channelMetrics = (() => {
     const sources = dashboardData?.trafficSources || [];
     const total = sources.reduce((s, x) => s + (x.value || 0), 0) || 1;
     const findVal = (name: string) => sources.find(s => s.name === name)?.value || 0;
@@ -303,7 +303,7 @@ export default function DashboardPage() {
     const hhi = [organic, social, referral, direct].reduce((acc, v) => acc + Math.pow(v/total, 2), 0);
     const diversification = Math.round((1 - hhi) * 100);
     return { organic, social, referral, direct, diversification };
-  }, [dashboardData?.trafficSources]);
+  })();
 
   // ----- Dynamic KPI Targets per Subscription Tier -----
   const subscriptionTier: string = (profile?.subscriptionTier || profile?.role || "free").toLowerCase();
