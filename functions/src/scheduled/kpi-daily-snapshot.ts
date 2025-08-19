@@ -245,7 +245,7 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
         }
         await db.runTransaction(async tx => {
             const aSnap = await tx.get(alertsRef);
-            const smoothing = (globalThis as any).__SMOOTHING || {};
+            const smoothing = (globalThis as unknown as Record<string, unknown>).__SMOOTHING || {};
             const base = { date: dateKey, alerts, ma7Provenance, ma7CrawlerAdoption, ma7SemanticAdoption, ma7FallbackRate, ma7LatencyP95, ma7CacheHitRatio, ma7RateLimitRejectionRate, ...smoothing, updatedAt: FieldValue.serverTimestamp() };
             if (!aSnap.exists) tx.set(alertsRef, { ...base, createdAt: FieldValue.serverTimestamp() }); else tx.update(alertsRef, base);
         });

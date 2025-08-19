@@ -221,7 +221,7 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
 }
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
-  const subscriptionId = invoice.subscription as string | null;
+  const subscriptionId = (invoice as unknown as { subscription?: string | null }).subscription as string | null;
   if (subscriptionId && typeof subscriptionId === "string") {
     const subscription =
       await getStripe().subscriptions.retrieve(subscriptionId);
