@@ -4,7 +4,8 @@
  */
 
 import { logger } from "firebase-functions";
-import { HttpsError, HttpsOptions, onCall } from "firebase-functions/v2/https";
+import type { HttpsOptions} from "firebase-functions/v2/https";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
 // Use consolidated AI memory manager (path adjusted for actual location)
 import { getAI as getMockAI } from "../lib/ai-memory-manager";
 import { getAI as getGenkitAI } from "../ai/genkit"; // real AI engine
@@ -16,7 +17,7 @@ try {
   if (!getApps().length) {
     initializeApp();
   }
-} catch (e) {
+} catch {
   logger.info("Admin already initialized for keyword suggestions function");
 }
 const db = getFirestore();
@@ -85,7 +86,7 @@ export const getKeywordSuggestionsEnhanced = onCall(httpsOptions, async (request
     try {
       const userDoc = await db.collection("users").doc(userId).get();
       plan = (userDoc.data()?.subscriptionTier || userDoc.data()?.role || "free").toLowerCase();
-    } catch (e) {
+    } catch {
       logger.warn("Could not fetch user plan, defaulting to free", { userId });
     }
 
@@ -124,7 +125,7 @@ export const getKeywordSuggestionsEnhanced = onCall(httpsOptions, async (request
         .select("userId")
         .get();
       used = snapshot.size;
-    } catch (e) {
+    } catch {
       logger.warn("Failed to compute daily keyword usage", { userId });
     }
 
@@ -170,8 +171,8 @@ export const getKeywordSuggestionsEnhanced = onCall(httpsOptions, async (request
     try {
       const recentSnap = await db.collection('keywordResearch').where('userId', '==', userId).orderBy('createdAt', 'desc').limit(5).get();
       const globalSnap = await db.collectionGroup('keywordResearch').orderBy('createdAt', 'desc').limit(25).get();
-      const clusters: Record<string, number> = {}; let total = 0;
-      globalSnap.forEach(d => { const s = d.data(); const sugg: any[] = s.suggestions || []; sugg.slice(0, 15).forEach(k => { const c = (k.semanticCluster || 'general'); clusters[c] = (clusters[c] || 0) + 1; total++; }); });
+      const clusters: Record<string, number> = {}; let _total = 0;
+      globalSnap.forEach(d => { const s = d.data(); const sugg: any[] = s.suggestions || []; sugg.slice(0, 15).forEach(k => { const c = (k.semanticCluster || 'general'); clusters[c] = (clusters[c] || 0) + 1; _total++; }); });
       const topClusters = Object.entries(clusters).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([c, f]) => `${c}(${f})`).join(', ');
       corpusSummary = `GlobalClusters:${topClusters}`;
       if (!recentSnap.empty) {
@@ -303,8 +304,8 @@ OUTPUT REQUIREMENTS:
     if (useReal) {
       try {
         const ai = getGenkitAI();
-        const gen = await ai.generate(prompt);
-        rawOutput = gen?.text();
+        const gen = await ai.generate(prompt) as { text?: () => string } | string;
+        rawOutput = typeof gen === 'string' ? gen : gen?.text?.();
       } catch (realErr) {
         logger.warn("Real AI generation failed, falling back to mock", { error: (realErr as any)?.message });
       }
@@ -315,7 +316,7 @@ OUTPUT REQUIREMENTS:
     let parsedResult: any = {};
     try {
       parsedResult = JSON.parse(rawOutput);
-    } catch (e) {
+    } catch {
       logger.warn("AI returned non-JSON content, using fallback generation", { snippet: rawOutput?.slice(0, 120) });
       return getFallbackKeywords(query, count);
     }
@@ -348,8 +349,8 @@ async function generateRelatedQueries(query: string, language: string, ctx?: { c
     try {
       if (process.env.USE_REAL_AI === "true") {
         const ai = getGenkitAI();
-        const gen = await ai.generate(prompt);
-        output = gen?.text();
+        const gen = await ai.generate(prompt) as { text?: () => string } | string;
+        output = typeof gen === 'string' ? gen : gen?.text?.();
       }
     } catch (e) {
       logger.warn("Real AI related queries failed, falling back to mock", { error: (e as any)?.message });

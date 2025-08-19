@@ -11,7 +11,7 @@ import { logger } from "firebase-functions/v2";
 // Initialize Firebase Admin (only if not already initialized)
 try {
   initializeApp();
-} catch (error) {
+} catch {
   // App already initialized, continue
   logger.info("Firebase app already initialized");
 }
@@ -36,7 +36,7 @@ export interface SiteContext {
     totalPages: number;
     contentSummary: string;
     keywords: string[];
-    recentAnalyses: any[];
+    recentAnalyses: Array<Record<string, unknown>>;
 }
 
 export interface AdminContext {
@@ -46,7 +46,7 @@ export interface AdminContext {
         totalAnalyses: number;
         errorRate: number;
     };
-    recentActivity: any[];
+    recentActivity: Array<{ type: string; description: string; timestamp: Date | string }>;
     performanceInsights: string[];
 }
 
