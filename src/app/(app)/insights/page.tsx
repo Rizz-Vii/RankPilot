@@ -282,12 +282,12 @@ export default function InsightsPage() {
           {` • Showing up to ${maxInsights} insights (tier: ${tier})`}
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" disabled={isLoading || refreshing} onClick={handleRefresh} data-testid="refresh-insights">
+          <Button size="sm" variant="outline" disabled={isLoading || refreshing} onClick={() => void handleRefresh()} data-testid="refresh-insights">
             <RefreshCw className={`h-4 w-4 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
             {refreshing ? 'Refreshing' : 'Refresh'}
           </Button>
           {streamSupported && (
-    <Button size="sm" variant={streaming ? 'destructive' : 'secondary'} aria-pressed={streaming} onClick={streaming ? stopStream : startStream} data-testid="stream-toggle">
+    <Button size="sm" variant={streaming ? 'destructive' : 'secondary'} aria-pressed={streaming} onClick={streaming ? stopStream : () => void startStream()} data-testid="stream-toggle">
   <Radio className={`h-4 w-4 mr-1 ${streaming ? 'animate-pulse text-destructive-foreground motion-safe:animate-pulse' : ''}`} aria-hidden="true" />
               {streaming ? 'Stop Stream' : 'Live Stream'}
             </Button>
