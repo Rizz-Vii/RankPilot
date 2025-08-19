@@ -836,40 +836,42 @@ export async function __testPerformWebCrawl(u: string, d: number, m: boolean) { 
 /**
  * Calculate overall SEO score from crawl results
  */
-function calculateOverallScore(crawlResults: any): number {
+function calculateOverallScore(crawlResults: Partial<CrawlResult>): number {
   // Align with weighting described in AI prompt (base 95 then deduct)
   let score = 95;
   const issues = categorizeIssues(crawlResults);
   score -= issues.critical.length * 15;
   score -= issues.major.length * 8;
   score -= issues.minor.length * 2;
-  if (crawlResults.loadTime > 3000) score -= 5; // additional perf penalty
+  if ((crawlResults.loadTime ?? 0) > 3000) score -= 5; // additional perf penalty
   return Math.min(100, Math.max(0, Math.round(score)));
 }
 
 /**
  * Categorize issues from crawl results
  */
-function categorizeIssues(crawlResults: any) {
+function categorizeIssues(crawlResults: Partial<CrawlResult>) {
   const issues: {
     critical: string[];
     major: string[];
     minor: string[];
   } = { critical: [], major: [], minor: [] };
 
-  if (!crawlResults.metaDescription) {
+  const cr = crawlResults as Partial<CrawlResult>;
+
+  if (!cr.metaDescription) {
     issues.critical.push("Missing meta description");
   }
 
-  if (crawlResults.loadTime > 3000) {
+  if ((cr.loadTime ?? 0) > 3000) {
     issues.major.push("Slow page load time detected");
   }
 
-  if (!crawlResults.mobileOptimized) {
+  if (cr.mobileOptimized === false) {
     issues.major.push("Poor mobile optimization");
   }
 
-  if (crawlResults.headings.h1?.length !== 1) {
+  if ((cr.headings?.h1?.length ?? 0) !== 1) {
     issues.minor.push("Multiple or missing H1 tags");
   }
 
@@ -879,18 +881,19 @@ function categorizeIssues(crawlResults: any) {
 /**
  * Generate recommendations from crawl results
  */
-function generateRecommendations(crawlResults: any): string[] {
-  const recommendations = [];
+function generateRecommendations(crawlResults: Partial<CrawlResult>): string[] {
+  const recommendations: string[] = [];
+  const cr = crawlResults as Partial<CrawlResult>;
 
-  if (!crawlResults.metaDescription) {
+  if (!cr.metaDescription) {
     recommendations.push("Add meta descriptions to improve click-through rates");
   }
 
-  if (crawlResults.loadTime > 3000) {
+  if ((cr.loadTime ?? 0) > 3000) {
     recommendations.push("Optimize page loading speed for better user experience");
   }
 
-  if (!crawlResults.mobileOptimized) {
+  if (cr.mobileOptimized === false) {
     recommendations.push("Implement responsive design for mobile devices");
   }
 
