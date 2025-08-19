@@ -55,6 +55,129 @@ export default function BillingPage() {
     setIsMounted(true);
   }, []);
 
+  // Firestore fetch side-effect
+  useEffect(() => {
+    if (!user?.uid) return;
+    let cancelled = false;
+    void (async () => {
+      const _logger = getLogger("billing-ui");
+      try {
+        const data = await fetchBillingData(db, user.uid, { invoiceLimit: 10 });
+        if (cancelled) return;
+        setBilling(data);
+      } catch (e) {
+        if (cancelled) return;
+        const err = e as any;
+        setFetchError(err?.message || "Failed to load billing data");
+        _logger.error("billing-ui.client.fetch.error", { error: err?.message });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid, db, fetchBillingData, getLogger]);
+
+  // Payment method fetch (server API)
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const token = await user.getIdToken?.();
+        const res = await fetch("/api/billing/payment-method", { headers: { authorization: `Bearer ${token}` } });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (cancelled) return;
+        setPaymentMethodState(json.paymentMethod || null);
+      } catch {
+        /* silent */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const subscription = billing?.subscription || null;
+  const PAGE_SIZE = 10;
+  interface InvoiceLite { id:string; amount:number; period?:string; description?:string; date?:string; createdAt?:Date; issuedAt?:{ toDate:()=>Date }; [k:string]:any }
+  const [invoices, setInvoices] = useState<InvoiceLite[]>(billing?.invoices as InvoiceLite[] || []);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // Normalize initial invoices to include description/date for display parity with API pagination
+  useEffect(() => {
+    if (billing?.invoices) {
+      const normalized = (billing.invoices || []).map((inv: any) => {
+        const createdAt: Date = inv?.createdAt?.toDate?.() || inv?.issuedAt?.toDate?.() || (inv?.date ? new Date(inv.date) : new Date(`${inv?.period || '1970-01'}-01T00:00:00Z`));
+        return {
+          ...inv,
+          description: inv?.description || `Invoice ${inv?.period}`,
+          date: inv?.date || createdAt.toISOString(),
+          createdAt,
+        };
+      });
+      setInvoices(normalized);
+      setHasMore((billing.invoices || []).length === PAGE_SIZE);
+    }
+  }, [billing?.invoices, PAGE_SIZE]);
+
+  const pageCount = Math.max(1, Math.ceil(invoices.length / PAGE_SIZE));
+  const paginated = invoices.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  async function maybeLoadMore(nextPage: number) {
+    if (nextPage * PAGE_SIZE < invoices.length) return;
+    if (!hasMore || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const last = invoices[invoices.length - 1];
+      // Use composite cursor if API returned one previously (stored on last invoice as _cursor maybe later) else fallback
+      const cursor = last?.periodAndCreatedAtCursor || last?.period;
+      const token = await user?.getIdToken?.();
+      const res = await fetch(`/api/billing/invoices?limit=${PAGE_SIZE}&cursor=${encodeURIComponent(cursor)}`, { headers: { authorization: `Bearer ${token}` } });
+      if (res.ok) {
+        const json = await res.json();
+        const newOnes = (json.invoices || []).filter((inv: any) => !invoices.some(i => i.id === inv.id));
+        // Attach composite cursor to each invoice for subsequent pagination
+        if (json.nextCursor && newOnes.length) {
+          // store on the last currently loaded invoice for retrieval
+          newOnes[newOnes.length - 1].periodAndCreatedAtCursor = json.nextCursor;
+        }
+        if (newOnes.length) setInvoices(prev => [...prev, ...newOnes]);
+        setHasMore(json.hasMore);
+      }
+    } catch {
+      /* silent */
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
+  function changePage(delta: number) {
+    const next = Math.min(Math.max(0, page + delta), pageCount - 1);
+    if (next !== page) {
+      setPage(next);
+      if (delta > 0) void maybeLoadMore(next);
+    }
+  }
+
+  // Align with server contract (expMonth/expYear)
+  const paymentMethod: PaymentMethod = paymentMethodState || { brand: "••••", last4: "----", expMonth: 0, expYear: 0 };
+  const [usageMetrics, setUsageMetrics] = useState<NormalizedUsageMetrics | null>(null);
+  useEffect(() => {
+    if (!user?.uid) return;
+    let cancelled = false;
+    void (async () => {
+      const m = await fetchUsageMetrics(db, user.uid);
+      if (!cancelled) setUsageMetrics(m);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid, db, fetchUsageMetrics]);
+  const usage = usageMetrics ? { keywordsTracked: usageMetrics.keywordsTracked, keywordsLimit: usageMetrics.keywordsLimit, competitorAnalysis: usageMetrics.competitorAnalysis, competitorLimit: usageMetrics.competitorLimit, reportsGenerated: usageMetrics.reportsGenerated, currentPeriodStart: usageMetrics.periodStart.toISOString(), currentPeriodEnd: usageMetrics.periodEnd.toISOString() } : { keywordsTracked: 0, keywordsLimit: 0, competitorAnalysis: 0, competitorLimit: 0, reportsGenerated: 0, currentPeriodStart: subscription ? (subscription.currentPeriodEnd ? subscription.currentPeriodEnd.toISOString() : new Date().toISOString()) : new Date().toISOString(), currentPeriodEnd: subscription ? (subscription.currentPeriodEnd ? subscription.currentPeriodEnd.toISOString() : new Date().toISOString()) : new Date().toISOString() };
+
   const handleUpgrade = (plan?: string) => {
     toast.info("Redirecting to upgrade options...");
     // Redirect to pricing page with optional preselected plan
@@ -158,110 +281,6 @@ export default function BillingPage() {
     );
   }
 
-  // Firestore fetch side-effect
-  useEffect(() => {
-    if(!user?.uid) return;
-    let cancelled = false;
-    void (async () => {
-      const _logger = getLogger('billing-ui');
-      try {
-  const data = await fetchBillingData(db, user.uid, { invoiceLimit: 10 });
-        if(cancelled) return;
-        setBilling(data);
-      } catch (e) {
-        if(cancelled) return;
-        const err = e as any;
-        setFetchError(err?.message || 'Failed to load billing data');
-        _logger.error('billing-ui.client.fetch.error', { error: err?.message });
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [user?.uid, db, fetchBillingData, getLogger]);
-
-  // Payment method fetch (server API)
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    void (async () => {
-      try {
-        const token = await user.getIdToken?.();
-        const res = await fetch('/api/billing/payment-method', { headers: { authorization: `Bearer ${token}` } });
-        if (!res.ok) return;
-        const json = await res.json();
-        if (cancelled) return;
-        setPaymentMethodState(json.paymentMethod || null);
-      } catch { /* silent */ }
-    })();
-    return () => { cancelled = true; };
-  }, [user]);
-
-  if(!billingPortalEnabled) {
-  return <div className="min-h-screen flex items-center justify-center"><Card className="w-full max-w-md"><CardHeader className="text-center"><AlertTriangle className="h-12 w-12 text-warning-foreground mx-auto mb-4" /><CardTitle>Billing Portal Disabled</CardTitle><CardDescription>The billing portal is not enabled for your account yet.</CardDescription></CardHeader></Card></div>;
-  }
-
-  const subscription = billing?.subscription || null;
-  const PAGE_SIZE = 10;
-  interface InvoiceLite { id:string; amount:number; period?:string; description?:string; date?:string; createdAt?:Date; issuedAt?:{ toDate:()=>Date }; [k:string]:any }
-  const [invoices, setInvoices] = useState<InvoiceLite[]>(billing?.invoices as InvoiceLite[] || []);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  // Normalize initial invoices to include description/date for display parity with API pagination
-  useEffect(() => {
-    if (billing?.invoices) {
-      const normalized = (billing.invoices || []).map((inv: any) => {
-        const createdAt: Date = inv?.createdAt?.toDate?.() || inv?.issuedAt?.toDate?.() || (inv?.date ? new Date(inv.date) : new Date(`${inv?.period || '1970-01'}-01T00:00:00Z`));
-        return {
-          ...inv,
-          description: inv?.description || `Invoice ${inv?.period}`,
-          date: inv?.date || createdAt.toISOString(),
-          createdAt,
-        };
-      });
-      setInvoices(normalized);
-      setHasMore((billing.invoices || []).length === PAGE_SIZE);
-    }
-  }, [billing?.invoices, PAGE_SIZE]);
-  const pageCount = Math.max(1, Math.ceil(invoices.length / PAGE_SIZE));
-  const paginated = invoices.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-  async function maybeLoadMore(nextPage: number) {
-    if (nextPage * PAGE_SIZE < invoices.length) return;
-    if (!hasMore || loadingMore) return;
-    setLoadingMore(true);
-    try {
-      const last = invoices[invoices.length - 1];
-  // Use composite cursor if API returned one previously (stored on last invoice as _cursor maybe later) else fallback
-  const cursor = last?.periodAndCreatedAtCursor || last?.period;
-      const token = await user?.getIdToken?.();
-      const res = await fetch(`/api/billing/invoices?limit=${PAGE_SIZE}&cursor=${encodeURIComponent(cursor)}`, { headers: { authorization: `Bearer ${token}` } });
-      if (res.ok) {
-        const json = await res.json();
-  const newOnes = (json.invoices || []).filter((inv: any) => !invoices.some(i => i.id === inv.id));
-        // Attach composite cursor to each invoice for subsequent pagination
-        if(json.nextCursor && newOnes.length) {
-          // store on the last currently loaded invoice for retrieval
-          newOnes[newOnes.length - 1].periodAndCreatedAtCursor = json.nextCursor;
-        }
-        if (newOnes.length) setInvoices(prev => [...prev, ...newOnes]);
-        setHasMore(json.hasMore);
-      }
-    } catch { /* silent */ } finally { setLoadingMore(false); }
-  }
-  function changePage(delta: number) { const next = Math.min(Math.max(0, page + delta), pageCount - 1); if (next !== page) { setPage(next); if (delta > 0) void maybeLoadMore(next); } }
-  const currentPlan = subscription ? {
-    name: subscription.tier || 'unknown',
-    price: billing?.effectiveMonthly || 0,
-    billingCycle: 'monthly',
-    nextBillingDate: subscription.currentPeriodEnd ? subscription.currentPeriodEnd.toISOString() : '',
-    status: subscription.status || 'active'
-  } : {
-    name: 'Free', price: 0, billingCycle: 'monthly', nextBillingDate: new Date().toISOString(), status: 'free'
-  };
-  // Align with server contract (expMonth/expYear)
-  const paymentMethod: PaymentMethod = paymentMethodState || { brand: '••••', last4: '----', expMonth: 0, expYear: 0 };
-  const [usageMetrics, setUsageMetrics] = useState<NormalizedUsageMetrics | null>(null);
-  useEffect(() => { if(!user?.uid) return; let cancelled=false; void (async () => { const m = await fetchUsageMetrics(db, user.uid); if(!cancelled) setUsageMetrics(m); })(); return () => { cancelled = true; }; }, [user?.uid, db, fetchUsageMetrics]);
-  const usage = usageMetrics ? { keywordsTracked: usageMetrics.keywordsTracked, keywordsLimit: usageMetrics.keywordsLimit, competitorAnalysis: usageMetrics.competitorAnalysis, competitorLimit: usageMetrics.competitorLimit, reportsGenerated: usageMetrics.reportsGenerated, currentPeriodStart: usageMetrics.periodStart.toISOString(), currentPeriodEnd: usageMetrics.periodEnd.toISOString() } : { keywordsTracked: 0, keywordsLimit: 0, competitorAnalysis: 0, competitorLimit: 0, reportsGenerated: 0, currentPeriodStart: currentPlan.nextBillingDate, currentPeriodEnd: currentPlan.nextBillingDate };
 
   if(fetchError) {
   return <div className="min-h-screen flex items-center justify-center"><Card className="w-full max-w-md"><CardHeader className="text-center"><AlertTriangle className="h-12 w-12 text-destructive-foreground mx-auto mb-4" /><CardTitle>Billing Load Error</CardTitle><CardDescription>{fetchError}</CardDescription></CardHeader><CardContent className="flex justify-center"><Button variant="outline" onClick={()=>{setFetchError(null); setBilling(null);}}><RefreshCw className="h-4 w-4 mr-2" />Retry</Button></CardContent></Card></div>;
