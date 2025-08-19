@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   FileText,
   Target,
@@ -29,9 +28,9 @@ import { createDeterministicRng, randomInt, randomFloat, tagSynthetic } from '@/
 import { useAuth } from "@/context/AuthContext";
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { db } from "@/lib/firebase";
-import { collection, addDoc, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { toast } from "sonner";
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Progress } from '@/components/ui/progress';
 
 interface TopicCluster {
