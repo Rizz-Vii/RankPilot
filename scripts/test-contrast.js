@@ -11,20 +11,20 @@ const bgRegex = /background(?:-color)?:\s*([^;]+);/g;
 
 // Basic token -> hex approximation map (expand as needed)
 const tokenMap = {
-  '--foreground': '#1a1a1a',
-  '--background': '#ffffff',
-  '--primary': '#3b82f6',
-  '--primary-foreground': '#ffffff',
-  '--success': '#16a34a',
-  '--success-foreground': '#ffffff',
-  '--warning': '#f59e0b',
-  '--warning-foreground': '#1a1a1a',
-  '--destructive': '#dc2626',
-  '--destructive-foreground': '#ffffff',
-  '--accent': '#7c3aed',
-  '--accent-foreground': '#ffffff',
-  '--muted': '#f3f3f3',
-  '--muted-foreground': '#555555'
+  '--foreground': 'rgb(26,26,26)',
+  '--background': 'rgb(255,255,255)',
+  '--primary': 'rgb(59,130,246)',
+  '--primary-foreground': 'rgb(255,255,255)',
+  '--success': 'rgb(22,163,74)',
+  '--success-foreground': 'rgb(255,255,255)',
+  '--warning': 'rgb(245,158,11)',
+  '--warning-foreground': 'rgb(26,26,26)',
+  '--destructive': 'rgb(220,38,38)',
+  '--destructive-foreground': 'rgb(255,255,255)',
+  '--accent': 'rgb(124,58,237)',
+  '--accent-foreground': 'rgb(255,255,255)',
+  '--muted': 'rgb(243,243,243)',
+  '--muted-foreground': 'rgb(85,85,85)'
 };
 
 function resolveColor(val) {
