@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { Button } from "@/components/ui/button";
@@ -15,15 +15,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   PenTool, 
   Sparkles, 
-  Target, 
   TrendingUp,
-  Brain,
   Download,
   RefreshCw,
-  Zap,
   Copy,
-  Eye,
-  ThumbsUp,
   BarChart3,
   CheckCircle2,
   ArrowRight,
@@ -36,9 +31,9 @@ import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import { useProvenance } from "@/hooks/useProvenance";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { toast } from "sonner";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 
 interface ContentSuggestion {
@@ -102,7 +97,7 @@ interface RewriteGenResult {
 
 export default function RewriteGenPage() {
   const { user } = useAuth();
-  const { provenance, setProvenance, markLive, markFallback } = useProvenance();
+  const { provenance, setProvenance, markLive } = useProvenance();
   const [inputUrl, setInputUrl] = useState("");
   const [contentText, setContentText] = useState("");
   const [targetKeywords, setTargetKeywords] = useState("");
