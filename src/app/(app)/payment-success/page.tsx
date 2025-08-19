@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   CheckCircle,
   Download,
@@ -19,16 +18,11 @@ import {
   Calendar,
   CreditCard,
   ArrowRight,
-  Receipt,
   Star,
   Rocket,
 } from "lucide-react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { toast } from "sonner";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import confetti from "canvas-confetti";
 
 // Simple loading component
@@ -50,14 +44,11 @@ const LoadingScreen = ({
 );
 
 export default function PaymentSuccess() {
-  const [emailSent, setEmailSent] = useState(false);
-  const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
 
 
   const searchParams = useSearchParams();
-  const { user } = useAuth();
 
   const plan = searchParams?.get("plan") || "agency";
   const amount = searchParams?.get("amount") || "79";
