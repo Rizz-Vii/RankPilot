@@ -6,6 +6,12 @@
 const fs = require('fs');
 const path = require('path');
 
+const COLORS = {
+  PRIMARY: '#6699CC',
+  WHITE: '#FFFFFF',
+  FLAME: '#ff6b6b'
+};
+
 // Create a simple canvas-like drawing system using ASCII art as a placeholder
 // In a real implementation, you'd use a proper image library like sharp or canvas
 
@@ -15,25 +21,25 @@ const faviconSizes = [16, 32, 48, 180, 192, 512];
 const createFaviconSVG = (size) => `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${size}" height="${size}" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
   <!-- Background circle -->
-  <circle cx="16" cy="16" r="16" fill="#6699CC"/>
+  <circle cx="16" cy="16" r="16" fill="${COLORS.PRIMARY}"/>
   
   <!-- Rocket body -->
-  <ellipse cx="16" cy="16" rx="4.8" ry="11.2" fill="#FFFFFF"/>
+  <ellipse cx="16" cy="16" rx="4.8" ry="11.2" fill="${COLORS.WHITE}"/>
   
   <!-- Rocket nose -->
-  <path d="M16 4.8 L12.8 11.2 L19.2 11.2 Z" fill="#FFFFFF"/>
+  <path d="M16 4.8 L12.8 11.2 L19.2 11.2 Z" fill="${COLORS.WHITE}"/>
   
   <!-- Left fin -->
-  <path d="M11.2 22.4 L8 27.2 L12.8 25.6 Z" fill="#FFFFFF"/>
+  <path d="M11.2 22.4 L8 27.2 L12.8 25.6 Z" fill="${COLORS.WHITE}"/>
   
   <!-- Right fin -->
-  <path d="M20.8 22.4 L24 27.2 L19.2 25.6 Z" fill="#FFFFFF"/>
+  <path d="M20.8 22.4 L24 27.2 L19.2 25.6 Z" fill="${COLORS.WHITE}"/>
   
   <!-- Rocket flame -->
-  <ellipse cx="16" cy="28.8" rx="2.56" ry="3.84" fill="#ff6b6b"/>
+  <ellipse cx="16" cy="28.8" rx="2.56" ry="3.84" fill="${COLORS.FLAME}"/>
   
   <!-- Window/detail -->
-  <circle cx="16" cy="12" r="1.6" fill="#6699CC"/>
+  <circle cx="16" cy="12" r="1.6" fill="${COLORS.PRIMARY}"/>
 </svg>`;
 
 // Create favicon files
@@ -87,7 +93,7 @@ const generateFavicons = () => {
     <msapplication>
         <tile>
             <square150x150logo src="/mstile-150x150.png"/>
-            <TileColor>#6699CC</TileColor>
+            <TileColor>${COLORS.PRIMARY}</TileColor>
         </tile>
     </msapplication>
 </browserconfig>`;
