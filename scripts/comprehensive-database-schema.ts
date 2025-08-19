@@ -565,7 +565,7 @@ interface ActivityDocument {
     analysisId?: string;
     url?: string;
     keyword?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   ipAddress?: string;
   userAgent?: string;
@@ -831,8 +831,8 @@ export class ComprehensiveDatabaseSeeder {
           uid: userId,
           email: `${tier}.user${i + 1}@rankpilot-demo.com`,
           displayName: `${tier.charAt(0).toUpperCase() + tier.slice(1)} User ${i + 1}`,
-          role: tier as any,
-          subscriptionTier: tier as any,
+          role: tier as UserDocument['role'],
+          subscriptionTier: tier as UserDocument['subscriptionTier'],
           subscriptionStatus: Math.random() > 0.05 ? 'active' : 'past_due', // 95% active
           subscriptionStartDate: generateTimestamp(createdDaysAgo),
           profile: {
