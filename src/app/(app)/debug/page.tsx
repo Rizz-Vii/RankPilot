@@ -54,7 +54,7 @@ export default function DebugPage() {
         </CardHeader>
         <CardContent>
           <div className="flex gap-4">
-            <Button onClick={handleFixUser}>Fix Abba User Subscription</Button>
+            <Button onClick={() => void handleFixUser()}>Fix Abba User Subscription</Button>
           </div>
         </CardContent>
       </Card>

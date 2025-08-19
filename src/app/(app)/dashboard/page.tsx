@@ -388,7 +388,7 @@ export default function DashboardPage() {
       >
         <div className="flex items-center gap-2">
           <div className="text-xs text-muted-foreground" data-testid="last-updated" aria-label={`Last updated ${relativeUpdated}`}>Updated {relativeUpdated}</div>
-          <Button variant="outline" size="sm" onClick={refresh} disabled={dataLoading} data-testid="refresh-dashboard">
+          <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={dataLoading} data-testid="refresh-dashboard">
             <RefreshCw className={`h-4 w-4 mr-1 ${dataLoading ? "animate-spin" : ""}`} />
             {dataLoading ? "Refreshing" : "Refresh"}
           </Button>
