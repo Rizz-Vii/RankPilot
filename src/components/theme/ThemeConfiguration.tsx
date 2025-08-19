@@ -49,11 +49,29 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
     } = useTheme();
 
     const [customColors, setCustomColors] = useState({
-        // Using CSS var fallbacks; actual tokens are defined in design system
-        primary: 'var(--color-primary-500, #3B82F6)',
-        secondary: 'var(--color-gray-500, #6B7280)',
-        accent: 'var(--color-success-500, #10B981)',
+        // Prefer CSS token references; resolved for color pickers at runtime
+        primary: 'var(--color-primary-500)',
+        secondary: 'var(--color-gray-500)',
+        accent: 'var(--color-success-500)',
     });
+
+    const resolveCssVar = (varName: string) => {
+        if (typeof window === 'undefined') return '';
+        const v = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+        return v || '';
+    };
+
+    const primaryColorForPicker = customColors.primary.startsWith('var(')
+        ? resolveCssVar('--color-primary-500')
+        : customColors.primary;
+
+    const secondaryColorForPicker = customColors.secondary.startsWith('var(')
+        ? resolveCssVar('--color-gray-500')
+        : customColors.secondary;
+
+    const accentColorForPicker = customColors.accent.startsWith('var(')
+        ? resolveCssVar('--color-success-500')
+        : customColors.accent;
 
     const handleThemeChange = (newTheme: ThemeMode) => {
         setTheme(newTheme);
