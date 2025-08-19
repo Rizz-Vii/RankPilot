@@ -318,7 +318,7 @@ export default function ContentAnalyzerPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+          <form ref={formRef} onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
             <div>
               <Label htmlFor="url">Website URL *</Label>
               <Input
