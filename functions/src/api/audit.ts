@@ -1,13 +1,15 @@
-import { HttpsOptions, onCall, HttpsError } from "firebase-functions/v2/https";
+import type { HttpsOptions} from "firebase-functions/v2/https";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { createHash } from 'crypto';
 // Indirect AI import so unit tests can stub via global.__genkit or env GENKIT_TEST_STUB
-let __aiMod: any = null;
-function getAIWrapper() {
+type GenAI = { generate: (prompt: string) => Promise<unknown> | unknown };
+let __aiMod: GenAI | null = null;
+function getAIWrapper(): GenAI {
   if (process.env.GENKIT_TEST_STUB === '1') {
-    return { generate: async () => ({ text: () => null }) };
+    return { generate: async () => ({ text: () => null }) } as GenAI;
   }
   if (__aiMod) return __aiMod;
-  try { __aiMod = require('../ai/genkit').getAI(); } catch { __aiMod = { generate: async () => ({ text: () => null }) }; }
+  try { __aiMod = require('../ai/genkit').getAI() as GenAI; } catch { __aiMod = { generate: async () => ({ text: () => null }) } as GenAI; }
   return __aiMod;
 }
 import { getApps, initializeApp } from "firebase-admin/app";
@@ -85,11 +87,11 @@ const DENY_LIST: RegExp[] = [/localhost/i, /127\.0\.0\.1/, /\.internal$/i];
 const MAX_URL_LENGTH = 2048;
 const PROMPT_MAX_CHARS = 2000; // guard prompt size
 
-function logPhase(phase: string, data: Record<string, any>) {
+function logPhase(phase: string, data: Record<string, unknown>) {
   try {
     // Structured log for observability
     console.log(JSON.stringify({ ts: new Date().toISOString(), phase, ...data }));
-  } catch (e) {
+  } catch {
     console.log(`[audit-log-fallback] ${phase}`, data);
   }
 }
@@ -150,11 +152,11 @@ async function checkAndIncrementTeamQuota(teamId: string | undefined, plan: stri
   await db.runTransaction(async tx => {
     const snap = await tx.get(ref);
     let count = 0;
-    let rejections = 0;
+    let _rejections = 0;
     if (snap.exists) {
-      const data: any = snap.data();
+      const data = snap.data() as Record<string, unknown>;
       count = typeof data.count === 'number' ? data.count : 0;
-      rejections = typeof data.rejections === 'number' ? data.rejections : 0;
+      _rejections = typeof data.rejections === 'number' ? data.rejections : 0;
     }
     if (count >= limit) {
       // Record rejection then throw
@@ -213,9 +215,11 @@ async function buildGlobalCorpusSummary(limit = 50): Promise<{ summary: string; 
     if (snapshot.empty) return { summary: 'No global audit corpus available yet.', issueSamples: [], avgScore: 0 };
     let totalScore = 0; let count = 0; const issueFreq: Record<string, number> = {};
     snapshot.forEach(doc => {
-      const data: any = doc.data();
-      const sc = data.score?.overall || data.score?.seo || 0; totalScore += sc; count++;
-      const issues: string[] = Array.isArray(data.issues) ? data.issues.slice(0, 10) : [];
+      const data = doc.data() as Record<string, unknown>;
+      const scoreObj = data.score as Record<string, unknown> | undefined;
+      const sc = (typeof scoreObj?.overall === 'number' ? scoreObj.overall : (typeof scoreObj?.seo === 'number' ? scoreObj.seo : 0)) as number;
+      totalScore += sc; count++;
+      const issues: string[] = Array.isArray(data.issues) ? (data.issues as unknown[]).slice(0, 10).map(String) : [];
       issues.forEach(i => { issueFreq[i] = (issueFreq[i] || 0) + 1; });
     });
     const topIssues = Object.entries(issueFreq).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([i, f]) => `${i}(${f})`);
@@ -225,7 +229,7 @@ async function buildGlobalCorpusSummary(limit = 50): Promise<{ summary: string; 
       avgScore: count ? totalScore / count : 0
     };
   } catch (e) {
-    console.warn('global_corpus_failed', (e as any)?.message);
+    console.warn('global_corpus_failed', (e as { message?: string } | undefined)?.message);
     return { summary: 'Global corpus unavailable', issueSamples: [], avgScore: 0 };
   }
 }
@@ -292,7 +296,7 @@ type CrawlResult = z.infer<typeof CrawlResultSchema>;
  * @param {Object} request - The Cloud Function request object
  * @return {Promise<AuditResponse>} The SEO audit results
  */
-async function coreSeoAudit(request: any) {
+async function coreSeoAudit(request: { data: unknown; auth?: { uid?: string } | null }) {
   const start = Date.now();
   const { url, depth = 1, checkMobile = true, plan, forceFresh, teamId, debugTeamLimit } = request.data as AuditRequest & { plan?: string; forceFresh?: boolean; teamId?: string; debugTeamLimit?: number };
   if (!url || typeof url !== 'string') {
@@ -322,14 +326,14 @@ async function coreSeoAudit(request: any) {
       const teamQuota = await checkAndIncrementTeamQuota(teamId, plan, debugTeamLimit);
       if (quotaInfo && teamQuota) quotaInfo.team = teamQuota;
       else if (teamQuota) quotaInfo = { limit: -1, used: 0, remaining: -1, team: teamQuota };
-    } catch (teamErr: any) {
+    } catch (teamErr) {
       if (teamErr instanceof HttpsError && teamErr.code === 'resource-exhausted') throw teamErr; // propagate quota exhaustion
-      console.warn('team_quota_degraded', (teamErr as any)?.message);
+      console.warn('team_quota_degraded', (teamErr as { message?: string } | undefined)?.message);
     }
   } catch (quotaErr) {
     if (quotaErr instanceof HttpsError) {
       // If it's a team quota rejection, increment runtimeMetrics/crawler.teamQuotaRejections
-      if (quotaErr.message.includes('Team daily crawler quota exceeded') && request.data?.teamId) {
+      if (quotaErr.message.includes('Team daily crawler quota exceeded') && teamId) {
         try { await db.collection('runtimeMetrics').doc('crawler').set({ teamQuotaRejections: FieldValue.increment(1), updatedAt: FieldValue.serverTimestamp() }, { merge: true }); } catch { }
       }
       throw quotaErr;
@@ -352,7 +356,7 @@ async function coreSeoAudit(request: any) {
     logPhase('start_audit', { url: normalizedUrl, uid, depth, checkMobile });
     // Real AI-powered SEO audit with web crawling (placeholder crawl logic)
     const crawlPhaseStart = Date.now();
-    let crawlResults: CrawlResult | any = await performWebCrawl(url, depth, checkMobile);
+    let crawlResults: CrawlResult | Record<string, unknown> = await performWebCrawl(url, depth, checkMobile);
     const crawlParsed = CrawlResultSchema.safeParse(crawlResults);
     if (!crawlParsed.success) {
       logPhase('crawl_schema_invalid', { issues: crawlParsed.error.issues.length });
@@ -384,15 +388,16 @@ async function coreSeoAudit(request: any) {
         if (!histSnap.empty) {
           const historySummaries: string[] = [];
           histSnap.docs.forEach(d => {
-            const data = d.data();
-            const score = data.score?.overall || data.score?.seo || 'n/a';
-            const issuesArr: string[] = Array.isArray(data.issues) ? data.issues.slice(0, 5) : [];
+            const data = d.data() as Record<string, unknown>;
+            const scoreObj = data.score as Record<string, unknown> | undefined;
+            const score = (typeof scoreObj?.overall === 'number' ? scoreObj.overall : scoreObj?.seo) ?? 'n/a';
+            const issuesArr: string[] = Array.isArray(data.issues) ? (data.issues as unknown[]).slice(0, 5).map(String) : [];
             historySummaries.push(`Score:${score} Issues:${issuesArr.join('; ')}`);
           });
           historyContext = historySummaries.join(' | ');
         }
       } catch (histCtxErr) {
-        console.warn('history_context_failed', (histCtxErr as any)?.message);
+        console.warn('history_context_failed', (histCtxErr as { message?: string } | undefined)?.message);
       }
     }
 
@@ -430,20 +435,25 @@ ONLY JSON, no prose outside JSON.`;
 
     // AI call with strict schema validation
     const ai = getAIWrapper();
-    let aiRaw: any = undefined;
-    try { const gen = await ai.generate(prompt); aiRaw = gen?.text(); } catch (aiErr) { console.warn('ai_generate_failed', (aiErr as any)?.message); }
-    logPhase('ai_complete', { url: normalizedUrl, usedAI: !!aiRaw });
+    let aiRaw: string | null = null;
+    try {
+      const gen = await ai.generate(prompt) as { text?: () => string } | string;
+      aiRaw = typeof gen === 'string' ? gen : gen?.text?.() ?? null;
+    } catch (aiErr) {
+      console.warn('ai_generate_failed', (aiErr as { message?: string } | undefined)?.message);
+    }
+    logPhase('ai_complete', { url: normalizedUrl, usedAI: Boolean(aiRaw) });
 
     const core: AuditCoreResponse = {
       score: calculateOverallScore(crawlResults),
       issues: categorizeIssues(crawlResults),
       recommendations: generateRecommendations(crawlResults),
-      performanceMetrics: crawlResults.performanceMetrics,
+      performanceMetrics: (crawlResults as CrawlResult).performanceMetrics,
     };
 
     // If AI returned structured JSON, attempt to adopt it; else fallback to synthetic core build
-    const parsedRaw = tryParseAIJson(aiRaw);
-    let parsed: any = null;
+    const parsedRaw = tryParseAIJson(aiRaw || undefined);
+    let parsed: unknown = null;
     if (parsedRaw) {
       const safe = AiAuditSchema.safeParse(parsedRaw);
       if (safe.success) parsed = safe.data; else logPhase('ai_schema_invalid', { issues: safe.error.issues.length });
@@ -452,27 +462,28 @@ ONLY JSON, no prose outside JSON.`;
     const crawl_time_ms = crawlDuration;
     const total_time_ms = Date.now() - start; // final total
     const analysis_time_ms = Math.max(0, total_time_ms - crawl_time_ms);
-    if (parsed && typeof parsed === 'object' && typeof parsed.overallScore === 'number') {
+    if (parsed && typeof parsed === 'object' && typeof (parsed as any).overallScore === 'number') {
       // Normalize items array & required fields
-      const parsedItems = Array.isArray(parsed.items) ? parsed.items.slice(0, 50).map((it: any, idx: number) => ({
+      const p: any = parsed;
+      const parsedItems = Array.isArray(p.items) ? p.items.slice(0, 50).map((it: Record<string, unknown>, idx: number) => ({
         id: String(it.id || `ai-${idx}`),
-        name: String(it.name || it.title || `Issue ${idx + 1}`),
-        title: String(it.title || it.name || `Issue ${idx + 1}`),
-        description: String(it.description || it.details || it.title || ''),
-        details: String(it.details || it.description || ''),
-        status: ['pass', 'fail', 'warning'].includes(it.status) ? it.status : 'warning',
-        score: typeof it.score === 'number' ? it.score : 60,
-        impact: ['low', 'medium', 'high'].includes(it.impact) ? it.impact : 'medium',
-        recommendation: String(it.recommendation || '')
+        name: String(it.name || (it as any).title || `Issue ${idx + 1}`),
+        title: String((it as any).title || it.name || `Issue ${idx + 1}`),
+        description: String((it as any).description || (it as any).details || (it as any).title || ''),
+        details: String((it as any).details || (it as any).description || ''),
+        status: ['pass', 'fail', 'warning'].includes((it as any).status) ? (it as any).status as 'pass'|'fail'|'warning' : 'warning',
+        score: typeof (it as any).score === 'number' ? (it as any).score : 60,
+        impact: ['low', 'medium', 'high'].includes((it as any).impact) ? (it as any).impact as 'low'|'medium'|'high' : 'medium',
+        recommendation: String((it as any).recommendation || '')
       })) : buildItemsFromIssues(core);
       enriched = {
-        score: typeof parsed.score === 'number' ? parsed.score : parsed.overallScore,
-        overallScore: parsed.overallScore,
-        issues: parsed.issues && parsed.issues.critical ? parsed.issues as any : core.issues,
-        recommendations: Array.isArray(parsed.recommendations) && parsed.recommendations.length ? parsed.recommendations : core.recommendations,
-        performanceMetrics: parsed.performanceMetrics || core.performanceMetrics,
+        score: typeof p.score === 'number' ? p.score : p.overallScore,
+        overallScore: p.overallScore,
+        issues: p.issues && (p.issues as any).critical ? p.issues as any : core.issues,
+        recommendations: Array.isArray(p.recommendations) && p.recommendations.length ? p.recommendations : core.recommendations,
+        performanceMetrics: p.performanceMetrics || core.performanceMetrics,
         items: parsedItems,
-        summary: typeof parsed.summary === 'string' ? parsed.summary : `Audit completed for ${normalizedUrl}.`,
+        summary: typeof p.summary === 'string' ? p.summary : `Audit completed for ${normalizedUrl}.`,
         totalProcessingTime: Date.now() - start,
         cacheHit: false,
         source: 'live',
@@ -892,7 +903,7 @@ function generateRecommendations(crawlResults: any): string[] {
  * Helper function to generate mock data for emulator testing
  * @return {AuditResponse} Mock audit response data
  */
-function mockAuditResponse(): AuditCoreResponse {
+function _mockAuditResponse(): AuditCoreResponse {
   return {
     score: 68 + Math.floor(Math.random() * 20),
     issues: {
