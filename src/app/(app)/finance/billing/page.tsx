@@ -24,36 +24,42 @@ export default function BillingOverviewPage() {
   interface FinanceQuota { key: string; label: string; used: number; limit: number; }
   interface InvoiceLike { period: string; planTier: string; amount: number; status: string; issuedAt?: { toDate?: () => Date }; paidAt?: { toDate?: () => Date } | null }
   interface FinanceDataShape { kpis: FinanceKPI[]; quotas: FinanceQuota[]; rows: InvoiceLike[]; loading: boolean }
-  const adaptInvoice = (r: Record<string, any>): InvoiceLike | null => {
+  const adaptInvoice = (r: Record<string, unknown>): InvoiceLike | null => {
     if (!r) return null;
-    if (typeof r.period !== 'string' || typeof r.planTier !== 'string') return null;
+    if (typeof (r as Record<string, unknown>)['period'] !== 'string' || typeof (r as Record<string, unknown>)['planTier'] !== 'string') return null;
+    const rec = r as Record<string, unknown>;
     return {
-      period: r.period,
-      planTier: r.planTier,
-      amount: typeof r.amount === 'number' ? r.amount : 0,
-      status: typeof r.status === 'string' ? r.status : 'pending',
-      issuedAt: r.issuedAt && typeof r.issuedAt === 'object' ? r.issuedAt : undefined,
-      paidAt: r.paidAt && typeof r.paidAt === 'object' ? r.paidAt : undefined
+      period: String(rec['period']),
+      planTier: String(rec['planTier']),
+      amount: typeof rec['amount'] === 'number' ? (rec['amount'] as number) : 0,
+      status: typeof rec['status'] === 'string' ? String(rec['status']) : 'pending',
+      issuedAt: rec['issuedAt'] && typeof rec['issuedAt'] === 'object' ? (rec['issuedAt'] as any) : undefined,
+      paidAt: rec['paidAt'] && typeof rec['paidAt'] === 'object' ? (rec['paidAt'] as any) : undefined
     };
   };
   const normalizeLive = (): FinanceDataShape => {
-    const kpis: FinanceKPI[] = (live.kpis || []).map(k => ({
-      key: String((k as any).key || 'kpi'),
-      label: String((k as any).label || (k as any).key || 'Metric'),
-      value: Number((k as any).value || 0),
-      delta: typeof (k as any).delta === 'number' ? (k as any).delta : undefined,
-      trend: Array.isArray((k as any).trend) ? (k as any).trend.filter((n: any) => typeof n === 'number') : undefined,
-      intent: ((): FinanceKPI['intent'] => {
-        const v = (k as any).intent; return v === 'success'||v==='neutral'||v==='warning'||v==='danger'||v==='accent'? v : undefined;
-      })()
-    }));
-    const quotas: FinanceQuota[] = ((live as any).quotas || []).map((q: any) => ({
-      key: String(q.key || 'quota'),
-      label: String(q.label || q.key || 'Quota'),
-      used: Number(q.used || 0),
-      limit: Number(q.limit || 0)
-    }));
-    const rows: InvoiceLike[] = ((live as any).rows || []).map(adaptInvoice).filter(Boolean) as InvoiceLike[];
+    const kpis: FinanceKPI[] = (live.kpis || []).map((k: Record<string, unknown>) => {
+      const rec = k as Record<string, unknown>;
+      const key = typeof rec['key'] === 'string' ? rec['key'] : 'kpi';
+      const label = typeof rec['label'] === 'string' ? rec['label'] : (typeof rec['key'] === 'string' ? rec['key'] : 'Metric');
+      const value = typeof rec['value'] === 'number' ? (rec['value'] as number) : 0;
+      const delta = typeof rec['delta'] === 'number' ? (rec['delta'] as number) : undefined;
+      const trend = Array.isArray(rec['trend']) ? (rec['trend'] as unknown[]).filter((n): n is number => typeof n === 'number') : undefined;
+      const intent = ((): FinanceKPI['intent'] | undefined => {
+        const v = rec['intent'];
+        return (typeof v === 'string' && ['success', 'neutral', 'warning', 'danger', 'accent'].includes(v)) ? (v as FinanceKPI['intent']) : undefined;
+      })();
+      return { key: String(key), label: String(label), value: Number(value), delta, trend, intent };
+    });
+    const quotas: FinanceQuota[] = (live.quotas || []).map((q: Record<string, unknown>) => {
+      const rec = q as Record<string, unknown>;
+      const key = typeof rec['key'] === 'string' ? rec['key'] : 'quota';
+      const label = typeof rec['label'] === 'string' ? rec['label'] : (typeof rec['key'] === 'string' ? rec['key'] : 'Quota');
+      const used = typeof rec['used'] === 'number' ? (rec['used'] as number) : Number(rec['used'] as unknown) || 0;
+      const limit = typeof rec['limit'] === 'number' ? (rec['limit'] as number) : Number(rec['limit'] as unknown) || 0;
+      return { key: String(key), label: String(label), used: Number(used), limit: Number(limit) };
+    });
+    const rows: InvoiceLike[] = (live.rows || []).map(adaptInvoice).filter(Boolean) as InvoiceLike[];
     return { kpis, quotas, rows, loading: !!live.loading };
   };
   const data: FinanceDataShape = live.kpis.length ? normalizeLive() : { kpis: allowFinanceMocks() && mock ? (mock.kpis as FinanceKPI[]) : [], quotas: allowFinanceMocks() && mock && mock.quotas ? (mock.quotas as FinanceQuota[]) : [], rows: [], loading:false };
