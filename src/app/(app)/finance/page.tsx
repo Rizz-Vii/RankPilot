@@ -50,7 +50,7 @@ export default function FinanceDashboardRoot() {
   const [agingSnap, setAgingSnap] = useState<{ buckets: Record<string, number>; ts: Date } | null>(null);
   const { trigger, running } = useAutomationTrigger();
 
-  useEffect(()=> { trackDashboardView('finance'); }, []);
+  useEffect(()=> { void trackDashboardView('finance'); }, []);
 
   // Persist months selection
   useEffect(()=> { if(typeof window==='undefined') return; const stored = window.localStorage.getItem('financeMonths'); if(stored) { const num = parseInt(stored,10); if([3,6,9,12].includes(num)) setMonths(num as 3|6|9|12); } }, []);
@@ -143,7 +143,7 @@ export default function FinanceDashboardRoot() {
   }
 
   function runAutomation(action: 'financeRevenueSnapshot' | 'financeInvoiceAgingDigest') {
-    trigger(action, {
+    void trigger(action, {
       optimistic: action === 'financeRevenueSnapshot' ? () => {
         setRevSnap(s => s ? { ...s, ts: new Date() } : s);
       } : undefined,

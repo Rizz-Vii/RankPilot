@@ -32,7 +32,7 @@ export default function InvoicesPage() {
   const { data: mock } = useMockDomainMetrics('finance', allowFinanceMocks());
   const data = (live.kpis.length ? live : { kpis: allowFinanceMocks()? (mock?.kpis || []) : [], rows: [], loading: false });
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
-  useEffect(() => { trackDashboardView('finance'); }, []);
+  useEffect(() => { void trackDashboardView('finance'); }, []);
   useEffect(()=> { if(live.kpis.length) markLive(); else markFallback(); }, [live.kpis.length, markLive, markFallback]);
   return (
     <FeatureGate feature="finance_invoices" requiredTier="starter" showUpgrade>
@@ -81,8 +81,8 @@ export default function InvoicesPage() {
             <ActionCard title="Download CSV" desc="Export invoice history" action="Export" />
             <ActionCard title="Generate Receipt" desc="Create receipt copy" action="Generate" />
             <ActionCard title="Update Billing" desc="Modify payment details" action="Update" />
-            <ActionCard title="Refresh Metrics" desc="Force revenue snapshot" action="Run" onClick={()=> trigger('financeRevenueSnapshot')} loading={!!running['financeRevenueSnapshot']} loadingLabel="Refreshing" />
-            <ActionCard title="Aging Digest" desc="Queue invoice aging digest" action="Run" onClick={()=> trigger('financeInvoiceAgingDigest')} loading={!!running['financeInvoiceAgingDigest']} loadingLabel="Queuing" />
+            <ActionCard title="Refresh Metrics" desc="Force revenue snapshot" action="Run" onClick={()=> void trigger('financeRevenueSnapshot')} loading={!!running['financeRevenueSnapshot']} loadingLabel="Refreshing" />
+            <ActionCard title="Aging Digest" desc="Queue invoice aging digest" action="Run" onClick={()=> void trigger('financeInvoiceAgingDigest')} loading={!!running['financeInvoiceAgingDigest']} loadingLabel="Queuing" />
           </div>
         </section>
       </div>

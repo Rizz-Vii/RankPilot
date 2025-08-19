@@ -120,8 +120,8 @@ export default function RevenueAnalyticsPage() {
             <ActionCard title="Run Cohort" desc="Generate churn cohort table" action="Generate" />
             <ActionCard title="Detect Anomalies" desc="Scan revenue series" action="Scan" />
             <ActionCard title="Update LTV Model" desc="Recalculate predictive LTV" action="Recalc" />
-            <ActionCard title="Revenue Snapshot" desc="Force revenue snapshot" action="Run" onClick={()=> trigger('financeRevenueSnapshot')} loading={!!running['financeRevenueSnapshot']} loadingLabel="Running" />
-            <ActionCard title="Aging Digest" desc="Queue invoice aging digest" action="Run" onClick={()=> trigger('financeInvoiceAgingDigest')} loading={!!running['financeInvoiceAgingDigest']} loadingLabel="Queuing" />
+            <ActionCard title="Revenue Snapshot" desc="Force revenue snapshot" action="Run" onClick={()=> void trigger('financeRevenueSnapshot')} loading={!!running['financeRevenueSnapshot']} loadingLabel="Running" />
+            <ActionCard title="Aging Digest" desc="Queue invoice aging digest" action="Run" onClick={()=> void trigger('financeInvoiceAgingDigest')} loading={!!running['financeInvoiceAgingDigest']} loadingLabel="Queuing" />
           </div>
         </section>
       </div>
