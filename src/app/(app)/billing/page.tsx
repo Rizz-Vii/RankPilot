@@ -172,7 +172,7 @@ export default function BillingPage() {
         if(cancelled) return;
         const err = e as any;
         setFetchError(err?.message || 'Failed to load billing data');
-        getLogger('billing-ui').error('billing-ui.client.fetch.error', { error: err?.message });
+        _logger.error('billing-ui.client.fetch.error', { error: err?.message });
       }
     })();
     return () => { cancelled = true; };
@@ -180,15 +180,20 @@ export default function BillingPage() {
 
   // Payment method fetch (server API)
   useEffect(() => {
-    if(!user?.uid) return; let cancelled=false;
+    if (!user) return;
+    let cancelled = false;
     void (async () => {
       try {
-        const res = await fetch('/api/billing/payment-method', { headers: { 'authorization': `Bearer ${await user.getIdToken?.()}` }});
-        if(!res.ok) return; const json = await res.json(); if(cancelled) return; setPaymentMethodState(json.paymentMethod || null);
+        const token = await user.getIdToken?.();
+        const res = await fetch('/api/billing/payment-method', { headers: { authorization: `Bearer ${token}` } });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (cancelled) return;
+        setPaymentMethodState(json.paymentMethod || null);
       } catch { /* silent */ }
     })();
     return () => { cancelled = true; };
-  }, [user?.uid, user?.getIdToken]);
+  }, [user]);
 
   if(!billingPortalEnabled) {
   return <div className="min-h-screen flex items-center justify-center"><Card className="w-full max-w-md"><CardHeader className="text-center"><AlertTriangle className="h-12 w-12 text-warning-foreground mx-auto mb-4" /><CardTitle>Billing Portal Disabled</CardTitle><CardDescription>The billing portal is not enabled for your account yet.</CardDescription></CardHeader></Card></div>;
