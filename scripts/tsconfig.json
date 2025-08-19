@@ -6,10 +6,7 @@
     "moduleResolution": "NodeNext",
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
-    "baseUrl": "..",
-    "composite": true,
-    "declaration": false,
-    "emitDeclarationOnly": false
+    "baseUrl": ".."
   },
   "include": [
     "./**/*.ts"
