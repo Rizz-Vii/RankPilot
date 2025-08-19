@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
-import { getMockMetrics } from '@/lib/domain/mockMetrics';
+import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
 import { allowFinanceMocks } from '@/lib/flags/finance';
 import { fetchRecentFinanceRevenueSnapshots } from '@/lib/services/finance-automation-snapshots';
 import { useAuth } from '@/context/AuthContext';
@@ -14,9 +14,9 @@ import { useAutomationTrigger } from '@/hooks/useAutomationTrigger';
 import { useFinanceInvoiceMetrics } from '@/hooks/useFinanceInvoiceMetrics';
 import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
-import type { RevenueSnapshot } from '@/lib/finance/revenue-metrics';
+import type { RevenueSnapshot , SubscriptionEvent } from '@/lib/finance/revenue-metrics';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
-import { computeRevenueMetrics, SubscriptionEvent } from '@/lib/finance/revenue-metrics';
+import { computeRevenueMetrics } from '@/lib/finance/revenue-metrics';
 import { deriveSubscriptionEvents } from '@/lib/finance/derive-subscription-events';
 import { useProvenance } from '@/hooks/useProvenance';
 
@@ -30,7 +30,7 @@ export default function RevenueAnalyticsPage() {
   const [loadingSnap, setLoadingSnap] = useState(false);
   const { trigger, running } = useAutomationTrigger();
   useEffect(()=> { if(!userId) return; setLoadingSnap(true); (async()=> { try { const r = await fetchRecentFinanceRevenueSnapshots(userId, teamId,1); if(r.length) { const first:any = r[0]; const ts = first.createdAt && typeof first.createdAt==='object' && first.createdAt.toDate? first.createdAt.toDate(): new Date(); setRevSnap({ mrr:first.mrr, onTime:first.onTimePct, outstanding:first.outstanding, ts, period:first.period }); } } finally { setLoadingSnap(false);} })(); }, [userId, teamId]);
-  const mock = getMockMetrics('finance');
+  const { data: mock } = useMockDomainMetrics('finance', allowFinanceMocks());
   type MetricIntent = 'neutral' | 'success' | 'warning' | 'accent' | 'danger';
   interface KpiItem { key: string; label: string; value: number; delta: number; trend: number[]; intent?: MetricIntent }
   interface InvoiceRow { period:string; planTier:string; amount:number; status:string; issuedAt?:{ toDate?:()=>Date }; paidAt?:{ toDate?:()=>Date }|null }
@@ -47,7 +47,7 @@ export default function RevenueAnalyticsPage() {
       paidAt: r.paidAt && typeof r.paidAt === 'object'? r.paidAt : undefined
     };
   };
-  const data: InvoiceMetrics = live.kpis.length ? ({ kpis: live.kpis as KpiItem[], rows: (Array.isArray(live.rows)? live.rows.map(adaptInvoice).filter(Boolean) as InvoiceRow[]: []), loading: live.loading }) : { kpis: allowFinanceMocks()? (mock.kpis as KpiItem[]) : [], rows: [], loading:false };
+  const data: InvoiceMetrics = live.kpis.length ? ({ kpis: live.kpis as KpiItem[], rows: (Array.isArray(live.rows)? live.rows.map(adaptInvoice).filter(Boolean) as InvoiceRow[]: []), loading: live.loading }) : { kpis: allowFinanceMocks()? ((mock?.kpis as KpiItem[] | undefined) || []) : [], rows: [], loading:false };
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   const [derived, setDerived] = useState<RevenueSnapshot|null>(null);
   useEffect(() => { trackDashboardView('finance'); }, []);

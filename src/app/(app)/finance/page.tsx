@@ -1,42 +1,42 @@
 "use client";
-import React, { useEffect, useMemo, useState } from 'react';
-import { FeatureGate } from '@/components/subscription/FeatureGate';
-import { MetricCard } from '@/components/metrics/MetricCard';
-import { TrendSparkline } from '@/components/metrics/TrendSparkline';
-import { QuotaBar } from '@/components/metrics/QuotaBar';
-import { getMockMetrics } from '@/lib/domain/mockMetrics';
-import { allowFinanceMocks } from '@/lib/flags/finance';
-import { Alert } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
-import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
-import { fetchFinanceMetrics, subscribeFinanceMetrics, AggregatedFinanceMetrics } from '@/lib/services/finance-metrics.service';
-import { fetchRecentFinanceRevenueSnapshots, fetchLatestFinanceInvoiceAging } from '@/lib/services/finance-automation-snapshots';
-import { FinanceContextProvider } from './_parts/finance-context';
-import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/button';
-import { DashboardSurface } from '@/components/layout/DashboardSurface';
 import { dashboardContainerVariants, dashboardItemVariants } from '@/components/dashboard/animation-variants';
-import { motion } from 'framer-motion';
+import { DashboardSurface } from '@/components/layout/DashboardSurface';
+import { MetricCard } from '@/components/metrics/MetricCard';
+import { QuotaBar } from '@/components/metrics/QuotaBar';
+import { TrendSparkline } from '@/components/metrics/TrendSparkline';
+import { ActionCard } from '@/components/shared/action-card';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from '@/components/tool-page-header';
-import { SuiteAccentProvider } from '@/context/SuiteAccentContext';
-import { DownloadCloud, RefreshCw } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 import { AdaptiveProgress } from '@/components/ui/adaptive-progress';
+import { Alert } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/context/AuthContext';
+import { SuiteAccentProvider } from '@/context/SuiteAccentContext';
+import { useAutomationTrigger } from '@/hooks/useAutomationTrigger';
+import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
 import { useProvenance } from '@/hooks/useProvenance';
+import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { allowFinanceMocks } from '@/lib/flags/finance';
+import { fetchLatestFinanceInvoiceAging, fetchRecentFinanceRevenueSnapshots } from '@/lib/services/finance-automation-snapshots';
+import type { AggregatedFinanceMetrics } from '@/lib/services/finance-metrics.service';
+import { fetchFinanceMetrics, subscribeFinanceMetrics } from '@/lib/services/finance-metrics.service';
+import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
+import { AlertTriangle, DownloadCloud, RefreshCw } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { FinanceContextProvider } from './_parts/finance-context';
 import { InvoiceDetailModal } from './_parts/invoice-detail-modal';
 import { OnTimeBreakdownModal } from './_parts/on-time-breakdown-modal';
-import { ActionCard } from '@/components/shared/action-card';
-import { useAutomationTrigger } from '@/hooks/useAutomationTrigger';
 
-import MrrTrend from './_parts/mrr-trend';
 import InvoiceAging from './_parts/invoice-aging';
+import MrrTrend from './_parts/mrr-trend';
 
 interface Summary { mrr: number; churn: number; ltv: number; onTime?: number; }
 
 export default function FinanceDashboardRoot() {
-  const mock = getMockMetrics('finance');
+  const { data: mock } = useMockDomainMetrics('finance', allowFinanceMocks());
   const { user, loading: authLoading } = useAuth();
   const userId = user?.uid; const teamId = (user as any)?.teamId as string|undefined;
   const [months, setMonths] = useState(6);
@@ -88,7 +88,7 @@ export default function FinanceDashboardRoot() {
           const res = await fetchFinanceMetrics(userId, months, teamId);
           if (active) { setMetrics(res); setInitialLoading(false); }
         } catch { /* swallow */ }
-      } finally { if(active) setRefreshing(false);} 
+      } finally { if (active) setRefreshing(false); }
       // Realtime updates via Firestore subscription as a secondary path
       unsub = subscribeFinanceMetrics(userId, months, (m)=> { setMetrics(m); setInitialLoading(false); }, teamId);
     })();
@@ -120,19 +120,19 @@ export default function FinanceDashboardRoot() {
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   const summary: Summary = useMemo(()=> {
     const live = metrics?.kpis;
-    const ks = (live && live.length > 0) ? live : (allowFinanceMocks() ? mock.kpis : []);
+    const ks = (live && live.length > 0) ? live : (allowFinanceMocks() && mock ? mock.kpis : []);
     return {
       mrr: ks.find(k=> k.key==='mrr')?.value || 0,
       churn: ks.find(k=> /churn/i.test(k.key))?.value || 0,
       ltv: ks.find(k=> /ltv/i.test(k.key))?.value || 0,
       onTime: ks.find(k=> k.key==='on_time')?.value
     };
-  }, [metrics, mock.kpis]);
+  }, [metrics, mock]);
 
   function handleRefresh(){ setDataVersion(v=> v+1); }
   function exportSnapshot(format: 'json'|'csv'){
     const live = metrics?.kpis;
-    const source = (live && live.length > 0) ? live : mock.kpis;
+    const source = (live && live.length > 0) ? live : (mock?.kpis || []);
     const rows = source.map(k=> ({ key:k.key, label:k.label, value:k.value, delta:k.delta }));
     if(format==='json'){
       const blob = new Blob([JSON.stringify({ generatedAt: new Date().toISOString(), rows }, null,2)], { type:'application/json'});
@@ -215,29 +215,30 @@ export default function FinanceDashboardRoot() {
           <motion.section aria-label="Key performance indicators" className="grid gap-4 md:grid-cols-4" variants={dashboardContainerVariants} initial="hidden" animate="visible">
             {initialLoading && Array.from({length:4}).map((_,i)=> (<Skeleton key={i} className="h-32 rounded-xl" shimmer aria-label="Loading metric" />))}
             {!initialLoading && (()=> {
-              type Ext = typeof mock.kpis[number] & { target?: number; invertTarget?: boolean };
-              const live = metrics?.kpis as typeof mock.kpis | undefined;
-              const base = (live && live.length > 0 ? live : (allowFinanceMocks() ? mock.kpis : [])) as typeof mock.kpis;
+                const mockKpis = (allowFinanceMocks() && mock) ? mock.kpis : [];
+                type Ext = (typeof mockKpis extends Array<infer T> ? T : never) & { target?: number; invertTarget?: boolean };
+                const live = metrics?.kpis as typeof mockKpis | undefined;
+                const base = (live && live.length > 0 ? live : mockKpis);
               const targetMap: Record<string,{target?:number; invertTarget?:boolean}> = {};
-              metrics?.kpis?.forEach(k=> { (targetMap as any)[k.key] = { target: (k as any).target, invertTarget: (k as any).invertTarget }; });
-              const extended: Ext[] = base.map(k=> ({ ...k, ...(targetMap[k.key]||{}) }));
-              return extended.map((k,i)=> {
+                metrics?.kpis?.forEach(k => { targetMap[k.key] = { target: (k as any).target, invertTarget: (k as any).invertTarget }; });
+                const extended: Ext[] = base.map(k => ({ ...k, ...(targetMap[k.key] || {}) }));
+                return extended.map((k, i) => {
                 const pctToTarget = k.target!=null? (k.invertTarget? (k.target / (k.value||1))*100 : (k.value / (k.target||1))*100): null;
                 const alertState = pctToTarget!=null? (k.invertTarget? pctToTarget <= 100 : pctToTarget >= 100): false;
                 return (
                   <motion.div variants={dashboardItemVariants} key={k.key}>
-                  <MetricCard label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || (i===0? 'accent':'neutral')} badge={k.target? (<Badge variant={alertState? 'default':'outline'} className="text-[10px]">{pctToTarget!.toFixed(0)}% target</Badge>): undefined} footer={k.target? <AdaptiveProgress value={Math.min(100, pctToTarget!)} invert={!!k.invertTarget} aria-label={`${k.label} target progress`} />: undefined} />
+                    <MetricCard label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || (i === 0 ? 'accent' : 'neutral')} badge={k.target ? (<Badge variant={alertState ? 'default' : 'outline'} className="text-[10px]">{pctToTarget!.toFixed(0)}% target</Badge>) : undefined} footer={k.target ? <AdaptiveProgress value={Math.min(100, pctToTarget!)} invert={!!k.invertTarget} aria-label={`${k.label} target progress`} /> : undefined} />
                   </motion.div>
                 );
               });
             })()}
           </motion.section>
 
-          {mock.quotas && (
+            {allowFinanceMocks() && mock?.quotas && (
             <section className="space-y-4">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Usage & Quotas</h2>
               <div className="grid gap-4 md:grid-cols-3">
-                {mock.quotas.map(q=> (
+                  {mock.quotas.map(q => (
                   <div key={q.key} className="rounded-xl border p-4 space-y-3">
                     <div className="flex items-center justify-between text-sm font-medium"><span>{q.label}</span><span className="text-xs text-muted-foreground">{q.used}/{q.limit}</span></div>
                     <QuotaBar used={q.used} limit={q.limit} />
