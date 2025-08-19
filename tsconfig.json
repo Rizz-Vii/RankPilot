@@ -1,40 +1,24 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2022",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": false,
-    "skipLibCheck": true,
-    "strict": true,
     "noEmit": true,
-    "esModuleInterop": true,
-  "module": "ESNext",
-  "moduleResolution": "Bundler",
-    "resolveJsonModule": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
     "plugins": [{ "name": "next" }],
     "baseUrl": ".",
-  "paths": {
-      "@/*": ["src/*"]
-  },
-  "noImplicitOverride": true,
-  "useUnknownInCatchVariables": true,
-  "verbatimModuleSyntax": true,
-  // Stage 2 (enable after noise reduction)
-  // "noUncheckedIndexedAccess": true,
-  // "exactOptionalPropertyTypes": true,
-
+    "verbatimModuleSyntax": true
   },
   "include": [
     "next-env.d.ts",
     "middleware.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
-    "functions/**/*.ts",
     "playwright.config.*.ts",
-    // Exclude Next.js generated types from strict typecheck to avoid brittle coupling to Next internal route typings
-    // They are validated during Next build; not needed for standalone tsc.
     "types/**/*.d.ts",
     "testing/**/*.ts",
     "testing/**/*.tsx"
