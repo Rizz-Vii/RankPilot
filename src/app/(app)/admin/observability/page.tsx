@@ -116,7 +116,7 @@ export default function ObservabilityDashboard() {
     };
     void fetchHistory();
     void fetchAlertHistory();
-  }, []);
+  }, [setHistory, setAlertHistory]);
 
 
   const forceAdmin = typeof window !== 'undefined' && (localStorage.getItem('TEST_FORCE_ADMIN')==='1');
