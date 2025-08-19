@@ -58,7 +58,7 @@ const classify = (pct: number | null | undefined) => pct == null ? '' : pct < 50
 const badgeClass = (state: string) => state === 'critical' ? 'text-red-600' : state === 'warn' ? 'text-amber-600' : 'text-green-600';
 
 // Exported for unit test: server MA7 (precomputed) must take precedence over client recompute.
-export const preferredMA = (computed: number[] | undefined, serverVal: number | null | undefined) => {
+const preferredMAInternal = (computed: number[] | undefined, serverVal: number | null | undefined): number | undefined => {
   if (typeof serverVal === 'number') return serverVal; // authoritative precomputed value
   return computed && computed.length ? computed[0] : undefined;
 };
@@ -190,7 +190,7 @@ export default function ObservabilityDashboard() {
   // Prefer server precomputed MA7 fields (latest doc) when present to avoid client recompute drift.
   const latestHistory: KPIRecord | undefined = history[0]; // newest doc (already newest->oldest ordering)
   // preferredMA helper imported from module scope (see export above)
-  const maLatestProvenance = preferredMA(maProvenance, latestHistory?.ma7Provenance);
+  const maLatestProvenance: number | undefined = preferredMAInternal(maProvenance, latestHistory?.ma7Provenance);
   const smoothedProv = latestHistory?.smoothedProvenance as number | undefined;
   const smoothedLatencyP95 = latestHistory?.smoothedLatencyP95 as number | undefined;
   const smoothedCrawlerAdoption = latestHistory?.smoothedCrawlerAdoption as number | undefined;
@@ -236,10 +236,10 @@ export default function ObservabilityDashboard() {
   const maCacheHit = useMemo(()=>computeMA7(histCacheHit),[histCacheHit]);
   const maRateLimitReject = useMemo(()=>computeMA7(histRateLimitReject),[histRateLimitReject]);
   // Preferred MA7 values (server if present else computed) for delta badges
-  const maLatestP95 = preferredMA(maP95, latestHistory?.ma7LatencyP95);
-  const maLatestCrawler = preferredMA(maCrawler, latestHistory?.ma7CrawlerAdoption);
-  const maLatestSemantic = preferredMA(maSemantic, latestHistory?.ma7SemanticAdoption);
-  const maLatestTeamUtil = preferredMA(maTeamUtil, latestHistory?.ma7TeamRateLimitUtilizationPct); // (not persisted yet – fallback to computed)
+  const maLatestP95 = preferredMAInternal(maP95, latestHistory?.ma7LatencyP95);
+  const maLatestCrawler = preferredMAInternal(maCrawler, latestHistory?.ma7CrawlerAdoption);
+  const maLatestSemantic = preferredMAInternal(maSemantic, latestHistory?.ma7SemanticAdoption);
+  const maLatestTeamUtil = preferredMAInternal(maTeamUtil, latestHistory?.ma7TeamRateLimitUtilizationPct); // (not persisted yet – fallback to computed)
 
 
 
