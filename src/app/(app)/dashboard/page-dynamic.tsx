@@ -432,7 +432,7 @@ export default function DashboardPage() {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={refresh}
+              onClick={() => void refresh()}
               className="ml-2"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
