@@ -94,18 +94,9 @@ export default function InsightsPage() {
     return list.length ? list : ['https://example.com'];
   }, [simplifiedActivities]);
 
-  const loadFromCache = () => {
-    try {
-      if (!user) return false;
-      const raw = localStorage.getItem(cacheKey);
-      if (!raw) return false;
-      const parsed = JSON.parse(raw);
-      if (Date.now() - parsed.timestamp > cacheTTLms) return false;
-      setInsights(parsed.data.insights.slice(0, maxInsights));
-      setLastGenerated(new Date(parsed.timestamp));
-      return true;
-    } catch { return false; }
-  };
+  // cache helpers moved into fetchInsights to avoid stale dependency warnings for
+  // react-hooks/exhaustive-deps (they referenced component-scope values like user,
+  // cacheKey, maxInsights and would force fetchInsights to change every render).
 
   const saveCache = (data: GenerateInsightsOutput) => {
     try {
@@ -115,9 +106,27 @@ export default function InsightsPage() {
   };
 
   const fetchInsights = useCallback(async (opts: { force?: boolean } = {}) => {
+    const loadFromCacheLocal = () => {
+      try {
+        if (!user) return false;
+        const raw = localStorage.getItem(cacheKey);
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        if (Date.now() - parsed.timestamp > cacheTTLms) return false;
+        setInsights(parsed.data.insights.slice(0, maxInsights));
+        setLastGenerated(new Date(parsed.timestamp));
+        return true;
+      } catch { return false; }
+    };
+    const saveCacheLocal = (data: GenerateInsightsOutput) => {
+      try {
+        if (!user) return;
+        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data }));
+      } catch {}
+    };
     if (authLoading || !user) { setIsLoading(false); return; }
     setError(null);
-    if (!opts.force && loadFromCache()) { setIsLoading(false); return; }
+    if (!opts.force && loadFromCacheLocal()) { setIsLoading(false); return; }
     if (simplifiedActivities.length === 0) { setInsights([]); setIsLoading(false); return; }
     setIsLoading(true);
     try {
@@ -152,7 +161,7 @@ export default function InsightsPage() {
         setLastGenerated(new Date());
         return;
       }
-      saveCache(result);
+      saveCacheLocal(result);
       setInsights(result.insights.slice(0, maxInsights));
       setLastGenerated(new Date());
     } catch (e: any) {
