@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import useAdminRoute from '@/hooks/useAdminRoute';
 import LoadingScreen from '@/components/ui/loading-screen';
 import { ToolPageHeader } from '@/components/tool-page-header';
@@ -69,11 +69,19 @@ export default function ObservabilityDashboard() {
   const [history, setHistory] = useState<KPIRecord[]>([]); // recent kpiDaily docs newest->oldest
   const [alertHistory, setAlertHistory] = useState<AlertEntry[]>([]); // placeholder persisted alert snapshots (future)
   const [busy, setBusy] = useState(false);
-  const load = async () => {
+  const load = useCallback(async () => {
     setBusy(true);
-    try { const r = await fetch('/api/health'); const j = await r.json(); setData(j); } catch { /* noop */ } finally { setBusy(false); }
-  };
-  useEffect(() => { void load(); const id = setInterval(() => { void load(); }, 8000); return () => clearInterval(id); }, []);
+    try {
+      const r = await fetch('/api/health');
+      const j = await r.json();
+      setData(j);
+    } catch {
+      /* noop */
+    } finally {
+      setBusy(false);
+    }
+  }, [setBusy, setData]);
+  useEffect(() => { void load(); const id = setInterval(() => { void load(); }, 8000); return () => clearInterval(id); }, [load]);
   useEffect(() => {
     // Lightweight fetch of last 14 daily KPI docs for sparklines.
     const fetchHistory = async () => {
