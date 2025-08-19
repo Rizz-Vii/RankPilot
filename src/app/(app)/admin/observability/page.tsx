@@ -63,6 +63,60 @@ const preferredMAInternal = (computed: number[] | undefined, serverVal: number |
   return computed && computed.length ? computed[0] : undefined;
 };
 
+const Sparkline = ({ values, color, ma7Values, testId }: { values: number[]; color: string; ma7Values?: number[]; testId?: string }) => {
+  if (!values.length) return <div className="h-8" data-testid={testId || undefined} />;
+  const max = Math.max(...values); const min = Math.min(...values);
+  const norm = values.map(v => max === min ? 50 : ((v - min) / (max - min)) * 100);
+  const maNorm = (ma7Values || []).map(v => max === min ? 50 : ((v - min) / (max - min)) * 100);
+  return (
+    <div className="relative h-8" data-testid={testId}>
+      <div className="flex items-end gap-0.5 h-8 absolute inset-0">
+        {norm.slice().reverse().map((h, i) => (
+          <div key={i} style={{ height: `${Math.max(4, h)}%` }} className={`w-1 rounded-sm ${color} opacity-70`} />
+        ))}
+      </div>
+      {maNorm.length > 0 && (
+        <svg className="absolute inset-0 w-full h-full pointer-events-none" data-testid={testId? `${testId}-ma7`: undefined} preserveAspectRatio="none">
+          {(() => {
+            const pts = maNorm.slice().reverse();
+            const step = pts.length ? (100 / (pts.length - 1)) : 0;
+            const path = pts.map((h,i)=> `${i===0? 'M':'L'} ${i*step},${100 - h}`).join(' ');
+            return <path d={path} strokeWidth={1.2} stroke="currentColor" className="text-foreground" fill="none" />;
+          })()}
+        </svg>
+      )}
+    </div>
+  );
+};
+
+const computeMA7 = (vals: number[]) => {
+  if (!vals.length) return [] as number[];
+  // vals currently newest->oldest; flip to oldest->newest for sliding window
+  const chronological = [...vals].reverse();
+  const out: number[] = [];
+  for (let i=0;i<chronological.length;i++) {
+    const start = Math.max(0, i-6);
+    const slice = chronological.slice(start, i+1);
+    const avg = slice.reduce((s,v)=>s+v,0)/slice.length;
+    out.push(+avg.toFixed(2));
+  }
+  // Return back in newest->oldest order
+  return out.reverse();
+};
+
+const buildDelta = (latest: number | null | undefined, ma: number | null | undefined, direction: 'higher' | 'lower') => {
+  if (typeof latest !== 'number' || typeof ma !== 'number' || ma === 0) return null;
+  const delta = +(latest - ma).toFixed(2);
+  const rel = ma ? delta / ma : 0;
+  let cls = 'text-muted-foreground';
+  if (direction === 'higher') {
+    if (rel < -0.15) cls = 'text-red-600'; else if (rel < -0.05) cls = 'text-amber-600'; else cls = 'text-green-600';
+  } else {
+    if (rel > 0.15) cls = 'text-red-600'; else if (rel > 0.05) cls = 'text-amber-600'; else cls = 'text-green-600';
+  }
+  return <span className={`text-[10px] font-medium ${cls}`} data-testid={`delta-badge-${direction}`}>{delta>0? '+':''}{delta}{direction==='higher'? '% vs MA7':' vs MA7'}</span>;
+};
+
 export default function ObservabilityDashboard() {
   const { user, loading, role } = useAdminRoute();
   const [data, setData] = useState<HealthPayload | null>(null);
@@ -135,32 +189,6 @@ export default function ObservabilityDashboard() {
   // Cards array defined later after extra computed
   let provenanceExtra: React.ReactNode = null;
 
-  // Simple sparkline renderer (CSS-only) for historical values
-  const Sparkline = ({ values, color, ma7Values, testId }: { values: number[]; color: string; ma7Values?: number[]; testId?: string }) => {
-    if (!values.length) return <div className="h-8" data-testid={testId || undefined} />;
-    const max = Math.max(...values); const min = Math.min(...values);
-    const norm = values.map(v => max === min ? 50 : ((v - min) / (max - min)) * 100);
-    const maNorm = (ma7Values || []).map(v => max === min ? 50 : ((v - min) / (max - min)) * 100);
-    return (
-      <div className="relative h-8" data-testid={testId}>
-        <div className="flex items-end gap-0.5 h-8 absolute inset-0">
-          {norm.slice().reverse().map((h, i) => (
-            <div key={i} style={{ height: `${Math.max(4, h)}%` }} className={`w-1 rounded-sm ${color} opacity-70`} />
-          ))}
-        </div>
-        {maNorm.length > 0 && (
-          <svg className="absolute inset-0 w-full h-full pointer-events-none" data-testid={testId? `${testId}-ma7`: undefined} preserveAspectRatio="none">
-            {(() => {
-              const pts = maNorm.slice().reverse();
-              const step = pts.length ? (100 / (pts.length - 1)) : 0;
-              const path = pts.map((h,i)=> `${i===0? 'M':'L'} ${i*step},${100 - h}`).join(' ');
-              return <path d={path} strokeWidth={1.2} stroke="currentColor" className="text-foreground" fill="none" />;
-            })()}
-          </svg>
-        )}
-      </div>
-    );
-  };
 
   // If no history yet (e.g., first load or Firestore blocked in test), synthesize single-point series from live kpis
   const kpiFallback = (data?.kpis as KPIRecord) || {} as KPIRecord;
@@ -180,20 +208,6 @@ export default function ObservabilityDashboard() {
   // 2. MA7 delta uses server-provided MA7 if available, otherwise client-computed
   // 3. Smoothed delta only shown if smoothed value exists in latest history
   // Note: MA7 is never substituted for smoothed values - they are separate concepts
-  const computeMA7 = (vals: number[]) => {
-    if (!vals.length) return [] as number[];
-    // vals currently newest->oldest; flip to oldest->newest for sliding window
-    const chronological = [...vals].reverse();
-    const out: number[] = [];
-    for (let i=0;i<chronological.length;i++) {
-      const start = Math.max(0, i-6);
-      const slice = chronological.slice(start, i+1);
-      const avg = slice.reduce((s,v)=>s+v,0)/slice.length;
-      out.push(+avg.toFixed(2));
-    }
-    // Return back in newest->oldest order
-    return out.reverse();
-  };
   const maProvenance = useMemo(()=>computeMA7(histProvenance),[histProvenance]);
   // Prefer server precomputed MA7 fields (latest doc) when present to avoid client recompute drift.
   const latestHistory: KPIRecord | undefined = history[0]; // newest doc (already newest->oldest ordering)
@@ -221,19 +235,6 @@ export default function ObservabilityDashboard() {
     })();
     provenanceExtra = <span className="flex flex-col gap-0.5">{provenanceExtra}{provSmoothedNode}</span>;
   }
-  // Delta helper (MA7 vs latest) reused for multiple metrics (direction aware)
-  const buildDelta = (latest: number | null | undefined, ma: number | null | undefined, direction: 'higher' | 'lower') => {
-    if (typeof latest !== 'number' || typeof ma !== 'number' || ma === 0) return null;
-    const delta = +(latest - ma).toFixed(2);
-    const rel = ma ? delta / ma : 0;
-    let cls = 'text-muted-foreground';
-    if (direction === 'higher') {
-      if (rel < -0.15) cls = 'text-red-600'; else if (rel < -0.05) cls = 'text-amber-600'; else cls = 'text-green-600';
-    } else {
-      if (rel > 0.15) cls = 'text-red-600'; else if (rel > 0.05) cls = 'text-amber-600'; else cls = 'text-green-600';
-    }
-    return <span className={`text-[10px] font-medium ${cls}`} data-testid={`delta-badge-${direction}`}>{delta>0? '+':''}{delta}{direction==='higher'? '% vs MA7':' vs MA7'}</span>;
-  };
   // MA7 computations must be declared before cards using them to avoid TS use-before-declaration errors
   const maP95 = useMemo(()=>computeMA7(histP95),[histP95]);
   const maCost = useMemo(()=>computeMA7(histCost),[histCost]);
