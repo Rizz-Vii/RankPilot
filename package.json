@@ -306,6 +306,7 @@
     "validate:event-types": "node scripts/validate-event-types.mjs",
     "brain:baseline": "npm run build:brain && node -e \"require('./dist/brain/index').runBaseline().then(r=>console.log(JSON.stringify(r,null,2)))\"",
     "brain:verify": "npm run build:brain && node tests/brain/final.verify.js",
+    "brain:maintenance": "npm run brain:prune-artifacts && npm run brain:compact-memory",
   "brain:watch": "ts-node -P scripts/tsconfig.json scripts/brain/watch-loop.ts",
   "brain:prune-artifacts": "ts-node -P scripts/tsconfig.json scripts/prune-brain-artifacts.ts",
   "brain:compact-memory": "ts-node -P scripts/tsconfig.json scripts/brain/compact-memory.ts",

@@ -103,5 +103,32 @@ PB_BRAIN_BUDGET_TOKEN=5000 PB_BRAIN_BUDGET_TIME=30 npm run brain:auto
 
 Artifacts written under `artifacts/brain/` (run-*.json, remediation-*.json, plan-*.txt). Sensitive fields redacted.
 
+### Watch Loop Telemetry & Maintenance (Aug 2025 update)
+
+New capabilities:
+
+- Per‑tick mission regeneration with delta computation (TS / Lint error changes).
+- Optional JSONL tick stream: `watch-ticks.jsonl` (enable with `BRAIN_TICK_JSON=1`). Each line: `{ ts, tick, durationMs, mode, mission{...}, missionDelta{...} }`.
+- Automatic per‑file TypeScript fix task enqueue (enable `BRAIN_ENQUEUE_TS=1`). Honors cooldown `BRAIN_ENQUEUE_TS_COOLDOWN_MS` (default 900000 ms).
+- Auto start delegation loop if urgent remediation is top (`BRAIN_AUTODELEGATE=1`) with cooldown `BRAIN_AUTODELEGATE_COOLDOWN_MS` (default 600000 ms).
+- Periodic maintenance (artifact pruning + memory compaction) when `BRAIN_AUTO_MAINTENANCE=1`; frequency via `BRAIN_MAINTENANCE_EVERY_N` (default 30 ticks).
+- Force mission regeneration toggle: `BRAIN_REGENERATE_MISSION=1` (default on after integration).
+
+Maintenance scripts:
+
+```
+npm run brain:prune-artifacts   # Trim old plan/run/remediation artifacts
+npm run brain:compact-memory    # Truncate memory.jsonl & gzip archive overflow
+npm run brain:maintenance       # Runs both sequentially
+```
+
+Recommended watch invocation (verbose ask mode with telemetry & maintenance):
+
+```
+BRAIN_MODE=ask BRAIN_VERBOSE=1 BRAIN_TICK_JSON=1 BRAIN_ENQUEUE_TS=1 BRAIN_AUTODELEGATE=1 BRAIN_AUTO_MAINTENANCE=1 npm run brain:watch
+```
+
+Safety: Cooldowns prevent runaway task enqueue or loop spawning. Adjust via env vars rather than code edits.
+
 
 

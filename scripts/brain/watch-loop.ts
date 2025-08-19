@@ -10,9 +10,15 @@
  *   BRAIN_TICK_JSON=1  Persist each tick as JSON lines (artifacts/brain/watch-ticks.jsonl)
  *   BRAIN_ENQUEUE_TS=1  When urgent TS remediation is top, enqueue per-file TS fix tasks (cooldown)
  *   BRAIN_ENQUEUE_TS_COOLDOWN_MS (default 900000) 15m between per-file enqueue bursts
+ *   BRAIN_AUTO_MAINTENANCE=1  Run maintenance (prune + compact) every N ticks.
+ *   BRAIN_MAINTENANCE_EVERY_N (default 30) Number of ticks between maintenance runs.
+ *   BRAIN_REGENERATE_MISSION=1 Force mission regeneration each tick (normally true once this patch applied).
  */
 import { spawn } from 'child_process';
 import path from 'path';
+// Lightweight import (ts-nocheck) for mission regeneration
+let runMissionCycle: undefined | (() => any);
+try { runMissionCycle = require('./mission/missionManager').runMissionCycle; } catch { /* ignore */ }
 
 const INTERVAL = Number(process.env.BRAIN_INTERVAL_MS || 180000);
 const MODE = process.env.BRAIN_MODE === 'ask' ? 'ask' : 'plan-only';
@@ -137,6 +143,27 @@ function runOnce() {
     running = true;
     tick += 1;
     const started = Date.now();
+    // Optionally regenerate mission BEFORE CLI so delta reflects immediate diagnostics shift this tick.
+    let previousMission: any = undefined;
+    let missionDelta: any = null;
+    let missionCurrent: any = null;
+    try {
+        if (process.env.BRAIN_REGENERATE_MISSION === '1' || process.env.BRAIN_REGENERATE_MISSION === undefined) {
+            const fs = require('fs');
+            const curPath = path.join('artifacts', 'brain', 'currentMission.json');
+            if (fs.existsSync(curPath)) previousMission = JSON.parse(fs.readFileSync(curPath, 'utf8'));
+            if (runMissionCycle) missionCurrent = runMissionCycle();
+            if (previousMission && missionCurrent) {
+                try {
+                    missionDelta = {
+                        tsErrors: missionCurrent.diagnostics.typecheck.errors - (previousMission?.diagnostics?.typecheck?.errors || 0),
+                        lintErrors: missionCurrent.diagnostics.lint.errors - (previousMission?.diagnostics?.lint?.errors || 0),
+                        lintWarnings: missionCurrent.diagnostics.lint.warnings - (previousMission?.diagnostics?.lint?.warnings || 0)
+                    };
+                } catch { missionDelta = null; }
+            }
+        }
+    } catch { /* noop */ }
     const cli = path.join('dist', 'brain', 'scripts', 'brain', 'cli.js');
     const args = ['--mode', MODE];
     if (MODE === 'ask') args.push('--json');
@@ -148,6 +175,7 @@ function runOnce() {
         const dur = Date.now() - started;
         const ts = new Date().toISOString();
         try {
+            // Parsed enhancement context (ask mode only currently provides JSON). For plan-only we'll still emit tick + mission context.
             if (MODE === 'ask' && process.env.BRAIN_VERBOSE === '1') {
                 try {
                     const jsonLine = out.split(/\n/).filter(l => l.trim().startsWith('{')).pop();
@@ -167,9 +195,7 @@ function runOnce() {
                         if (md.delta) {
                             console.log(`\x1b[90m[brain:watch] missionΔ TS=${md.delta.tsErrors >= 0 ? '+' + md.delta.tsErrors : md.delta.tsErrors} LintE=${md.delta.lintErrors >= 0 ? '+' + md.delta.lintErrors : md.delta.lintErrors} LintW=${md.delta.lintWarnings >= 0 ? '+' + md.delta.lintWarnings : md.delta.lintWarnings}\x1b[0m`);
                         }
-                        if (process.env.BRAIN_TICK_JSON === '1') {
-                            try { const fs = require('fs'); fs.mkdirSync('artifacts/brain', { recursive: true }); const rec = { ts: Date.now(), tick, durationMs: dur, context: ctx, enhancements: list, mission: md.current, missionDelta: md.delta }; fs.appendFileSync('artifacts/brain/watch-ticks.jsonl', JSON.stringify(rec) + '\n'); } catch { }
-                        }
+                        // Always persist tick (ask mode) if enabled handled later in unified block.
                         lastPreferred = list.map((x: any) => ({ id: x.id, rank: x.rank }));
                     } else {
                         console.log(`\x1b[35m[brain:watch]\x1b[0m ${ts} tick=${tick} dur=${dur}ms (no json)`);
@@ -177,9 +203,61 @@ function runOnce() {
                 } catch (e) {
                     console.log(`\x1b[35m[brain:watch]\x1b[0m ${ts} tick=${tick} parse-error ${(e as any).message}`);
                 }
-            } else {
-                console.log(`\x1b[35m[brain:watch]\x1b[0m ${ts} tick=${tick} mode=${MODE} dur=${dur}ms code=${code}`);
             }
+            // Plan-only mode (or non-verbose ask) basic log including mission context.
+            if (!(MODE === 'ask' && process.env.BRAIN_VERBOSE === '1')) {
+                let tsErrors: number | undefined; let lintErrors: number | undefined; let lintWarnings: number | undefined;
+                try {
+                    const fs = require('fs');
+                    const cur = JSON.parse(fs.readFileSync(path.join('artifacts', 'brain', 'currentMission.json'), 'utf8'));
+                    tsErrors = cur?.diagnostics?.typecheck?.errors; lintErrors = cur?.diagnostics?.lint?.errors; lintWarnings = cur?.diagnostics?.lint?.warnings;
+                } catch { /* ignore */ }
+                const ctxStr = (tsErrors !== undefined) ? ` ctx(TS=${tsErrors} LintE=${lintErrors} LintW=${lintWarnings})` : '';
+                console.log(`\x1b[35m[brain:watch]\x1b[0m ${ts} tick=${tick} mode=${MODE} dur=${dur}ms code=${code}${ctxStr}`);
+                if (missionDelta) {
+                    console.log(`\x1b[90m[brain:watch] missionΔ TS=${missionDelta.tsErrors >= 0 ? '+' + missionDelta.tsErrors : missionDelta.tsErrors} LintE=${missionDelta.lintErrors >= 0 ? '+' + missionDelta.lintErrors : missionDelta.lintErrors} LintW=${missionDelta.lintWarnings >= 0 ? '+' + missionDelta.lintWarnings : missionDelta.lintWarnings}\x1b[0m`);
+                }
+            }
+            // Unified tick JSON persistence (both modes)
+            if (process.env.BRAIN_TICK_JSON === '1') {
+                try {
+                    const fs = require('fs');
+                    fs.mkdirSync('artifacts/brain', { recursive: true });
+                    // Re-read current mission (may already be in missionCurrent)
+                    if (!missionCurrent) {
+                        try { missionCurrent = JSON.parse(fs.readFileSync(path.join('artifacts', 'brain', 'currentMission.json'), 'utf8')); } catch { }
+                    }
+                    const rec = {
+                        ts: Date.now(),
+                        tick,
+                        durationMs: dur,
+                        mode: MODE,
+                        mission: missionCurrent ? {
+                            tsErrors: missionCurrent.diagnostics?.typecheck?.errors,
+                            lintErrors: missionCurrent.diagnostics?.lint?.errors,
+                            lintWarnings: missionCurrent.diagnostics?.lint?.warnings,
+                            status: missionCurrent.status,
+                            steps: missionCurrent.immediateSteps?.length || 0
+                        } : null,
+                        missionDelta,
+                        autoDelegationEnabled: process.env.BRAIN_AUTODELEGATE === '1'
+                    };
+                    fs.appendFileSync('artifacts/brain/watch-ticks.jsonl', JSON.stringify(rec) + '\n');
+                } catch { /* ignore */ }
+            }
+            // Maintenance cadence
+            try {
+                if (process.env.BRAIN_AUTO_MAINTENANCE === '1') {
+                    const every = Number(process.env.BRAIN_MAINTENANCE_EVERY_N || 30);
+                    if (every > 0 && tick % every === 0) {
+                        console.log('\x1b[36m[brain:watch] running maintenance (prune + compact)\x1b[0m');
+                        const { spawn } = require('child_process');
+                        // Fire-and-forget sequential scripts
+                        spawn('npm', ['run', 'brain:prune-artifacts'], { stdio: 'ignore', detached: true, env: { ...process.env } }).unref();
+                        spawn('npm', ['run', 'brain:compact-memory'], { stdio: 'ignore', detached: true, env: { ...process.env } }).unref();
+                    }
+                }
+            } catch { /* ignore */ }
         } catch {/* ignore */ }
         running = false;
     });
