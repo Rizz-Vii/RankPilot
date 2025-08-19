@@ -44,7 +44,7 @@ export default function SiteIngestionAdminPage() {
           <label className="text-xs text-muted-foreground">Max Pages</label>
           <input type="number" className="w-24 border rounded px-2 py-1 text-sm" value={maxPages} onChange={e=>setMaxPages(parseInt(e.target.value)||1)} />
         </div>
-  <button onClick={() => void runIngestion()} disabled={!baseUrl || status==='Running'} className="px-3 py-1 rounded bg-primary text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50">Ingest</button>
+  <button onClick={() => { void runIngestion(); }} disabled={!baseUrl || status==='Running'} className="px-3 py-1 rounded bg-primary text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50">Ingest</button>
   <div className="text-xs text-muted-foreground">Status: {status}</div>
       </div>
       {result && (
