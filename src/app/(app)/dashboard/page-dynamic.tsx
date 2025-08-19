@@ -17,11 +17,12 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import LoadingScreen from "@/components/ui/loading-screen";
+import type {
+  ChartConfig} from "@/components/ui/chart";
 import {
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
-  ChartConfig,
+  ChartTooltipContent
 } from "@/components/ui/chart";
 import {
   LineChart,
@@ -40,7 +41,8 @@ import {
   PolarGrid,
   PolarAngleAxis,
 } from "recharts";
-import { Variants, motion } from "framer-motion";
+import type { Variants} from "framer-motion";
+import { motion } from "framer-motion";
 import { useRealTimeDashboardData } from "@/hooks/use-dashboard-data";
 import { useEffect, useState } from "react";
 import ToolGrid from "@/components/tool-grid";
