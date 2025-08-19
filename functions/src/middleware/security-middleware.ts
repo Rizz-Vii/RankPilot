@@ -20,7 +20,7 @@ export interface SecurityOptions {
 const requestCounts = new Map<string, { count: number; resetTime: number }>();
 
 export function withSecurity(options: SecurityOptions = {}) {
-  return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
+  return function (target: unknown, propertyName: string, descriptor: PropertyDescriptor) {
     const method = descriptor.value;
 
     descriptor.value = async function (request: CallableRequest) {
@@ -35,7 +35,7 @@ export function withSecurity(options: SecurityOptions = {}) {
 
         // Admin check
         if (options.requireAdmin) {
-          const token = request.auth?.token as any;
+          const token = request.auth?.token as { role?: string } | undefined;
           if (!token?.role || token.role !== "admin") {
             throw new HttpsError("permission-denied", "Admin access required");
           }

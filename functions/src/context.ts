@@ -52,7 +52,7 @@ export interface AdminContext {
 
 export interface ChatContext {
     userTier: string;
-    recentConversations: any[];
+    recentConversations: unknown[];
     availableFeatures: string[];
 }
 

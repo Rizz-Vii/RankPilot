@@ -172,12 +172,30 @@ export const getKeywordSuggestionsEnhanced = onCall(httpsOptions, async (request
       const recentSnap = await db.collection('keywordResearch').where('userId', '==', userId).orderBy('createdAt', 'desc').limit(5).get();
       const globalSnap = await db.collectionGroup('keywordResearch').orderBy('createdAt', 'desc').limit(25).get();
       const clusters: Record<string, number> = {}; let _total = 0;
-      globalSnap.forEach(d => { const s = d.data(); const sugg: any[] = s.suggestions || []; sugg.slice(0, 15).forEach(k => { const c = (k.semanticCluster || 'general'); clusters[c] = (clusters[c] || 0) + 1; _total++; }); });
+      globalSnap.forEach(d => {
+        const s = d.data() as Record<string, unknown>;
+        const sugg = Array.isArray(s['suggestions']) ? (s['suggestions'] as unknown[]) : [];
+        sugg.slice(0, 15).forEach(item => {
+          if (item && typeof item === 'object' && 'semanticCluster' in item) {
+            const c = String((item as Record<string, unknown>).semanticCluster || 'general');
+            clusters[c] = (clusters[c] || 0) + 1;
+            _total++;
+          }
+        });
+      });
       const topClusters = Object.entries(clusters).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([c, f]) => `${c}(${f})`).join(', ');
       corpusSummary = `GlobalClusters:${topClusters}`;
       if (!recentSnap.empty) {
         const recKw: string[] = [];
-        recentSnap.forEach(d => { const s = d.data(); (s.suggestions || []).slice(0, 5).forEach((k: any) => recKw.push(k.keyword)); });
+        recentSnap.forEach(d => {
+          const s = d.data() as Record<string, unknown>;
+          const suggArr = Array.isArray(s['suggestions']) ? (s['suggestions'] as unknown[]) : [];
+          suggArr.slice(0, 5).forEach(item => {
+            if (item && typeof item === 'object' && 'keyword' in item) {
+              recKw.push(String((item as Record<string, unknown>).keyword));
+            }
+          });
+        });
         corpusSummary += ` | UserRecent:${recKw.slice(0, 10).join(', ')}`;
       }
     } catch (e) {
@@ -203,7 +221,7 @@ export const getKeywordSuggestionsEnhanced = onCall(httpsOptions, async (request
           if (crawlContext.length > 2400) break;
         }
       } catch (e) {
-        logger.warn('firecrawl_keyword_context_failed', { error: (e as any)?.message });
+        logger.warn('firecrawl_keyword_context_failed', { error: e instanceof Error ? e.message : String(e) });
       }
     }
 
@@ -307,7 +325,7 @@ OUTPUT REQUIREMENTS:
         const gen = await ai.generate(prompt) as { text?: () => string } | string;
         rawOutput = typeof gen === 'string' ? gen : gen?.text?.();
       } catch (realErr) {
-        logger.warn("Real AI generation failed, falling back to mock", { error: (realErr as any)?.message });
+        logger.warn("Real AI generation failed, falling back to mock", { error: realErr instanceof Error ? realErr.message : String(realErr) });
       }
     }
     if (!rawOutput) {
@@ -413,7 +431,7 @@ function cleanupCache() {
 }
 
 // Utility helpers for normalization & lightweight semantic grouping
-function clampNumber(val: any, min: number, max: number) {
+function clampNumber(val: unknown, min: number, max: number) {
   const n = typeof val === "number" && !isNaN(val) ? val : min;
   return Math.min(Math.max(n, min), max);
 }

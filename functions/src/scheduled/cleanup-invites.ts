@@ -8,6 +8,17 @@ const EXPIRED_RETENTION_DAYS = Number(process.env.INVITES_EXPIRED_RETENTION_DAYS
 
 function days(ms: number) { return ms / (1000 * 60 * 60 * 24); }
 
+function toMillis(v: unknown): number | undefined {
+  if (v == null) return undefined;
+  if (typeof v === "number") return v;
+  if (v instanceof Date) return v.getTime();
+  if (typeof v === "object" && v !== null && "toDate" in v) {
+    const maybeToDate = (v as { toDate?: unknown }).toDate;
+    if (typeof maybeToDate === "function") return (v as { toDate: () => Date }).toDate().getTime();
+  }
+  return undefined;
+}
+
 export const cleanupInvites = onSchedule({
     schedule: "every 24 hours",
     timeZone: "Etc/UTC",
@@ -22,22 +33,22 @@ export const cleanupInvites = onSchedule({
         for (const t of teams.docs) {
             const invitesSnap = await db.collection('teams').doc(t.id).collection('invites').get();
             for (const inv of invitesSnap.docs) {
-                const data: any = inv.data();
-                const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate().getTime() : (data.expiresAt instanceof Date ? data.expiresAt.getTime() : undefined);
-                if (data.status === 'pending' && expiresAt && expiresAt < now) {
+                const data = inv.data() as Record<string, unknown>;
+                const expiresAt = toMillis(data['expiresAt']);
+                if (String(data['status']) === 'pending' && expiresAt && expiresAt < now) {
                     await inv.ref.update({ status: 'expired', expiredAt: new Date() });
                     await db.collection('invites_index').doc(inv.id).set({ teamId: t.id, status: 'expired', updatedAt: new Date() }, { merge: true });
                     markedExpired++;
                 }
-                if (data.status === 'accepted') {
-                    const acceptedAt = data.acceptedAt?.toDate ? data.acceptedAt.toDate().getTime() : (data.acceptedAt instanceof Date ? data.acceptedAt.getTime() : 0);
+                if (String(data['status']) === 'accepted') {
+                    const acceptedAt = toMillis(data['acceptedAt']) || 0;
                     if (acceptedAt && days(now - acceptedAt) > ACCEPTED_RETENTION_DAYS) {
                         await inv.ref.delete();
                         await db.collection('invites_index').doc(inv.id).delete().catch(() => { });
                         deletedAccepted++;
                     }
-                } else if (data.status === 'expired') {
-                    const expiredAt = data.expiredAt?.toDate ? data.expiredAt.toDate().getTime() : (data.expiredAt instanceof Date ? data.expiredAt.getTime() : (expiresAt || 0));
+                } else if (String(data['status']) === 'expired') {
+                    const expiredAt = toMillis(data['expiredAt']) || (expiresAt || 0);
                     if (expiredAt && days(now - expiredAt) > EXPIRED_RETENTION_DAYS) {
                         await inv.ref.delete();
                         await db.collection('invites_index').doc(inv.id).delete().catch(() => { });
