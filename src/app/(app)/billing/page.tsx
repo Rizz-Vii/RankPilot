@@ -176,7 +176,7 @@ export default function BillingPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [user?.uid]);
+  }, [user?.uid, db, fetchBillingData, getLogger]);
 
   // Payment method fetch (server API)
   useEffect(() => {
@@ -188,7 +188,7 @@ export default function BillingPage() {
       } catch { /* silent */ }
     })();
     return () => { cancelled = true; };
-  }, [user?.uid]);
+  }, [user?.uid, user?.getIdToken]);
 
   if(!billingPortalEnabled) {
   return <div className="min-h-screen flex items-center justify-center"><Card className="w-full max-w-md"><CardHeader className="text-center"><AlertTriangle className="h-12 w-12 text-warning-foreground mx-auto mb-4" /><CardTitle>Billing Portal Disabled</CardTitle><CardDescription>The billing portal is not enabled for your account yet.</CardDescription></CardHeader></Card></div>;
@@ -216,7 +216,7 @@ export default function BillingPage() {
       setInvoices(normalized);
       setHasMore((billing.invoices || []).length === PAGE_SIZE);
     }
-  }, [billing?.invoices]);
+  }, [billing?.invoices, PAGE_SIZE]);
   const pageCount = Math.max(1, Math.ceil(invoices.length / PAGE_SIZE));
   const paginated = invoices.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   async function maybeLoadMore(nextPage: number) {
@@ -255,7 +255,7 @@ export default function BillingPage() {
   // Align with server contract (expMonth/expYear)
   const paymentMethod: PaymentMethod = paymentMethodState || { brand: '••••', last4: '----', expMonth: 0, expYear: 0 };
   const [usageMetrics, setUsageMetrics] = useState<NormalizedUsageMetrics | null>(null);
-  useEffect(() => { if(!user?.uid) return; let cancelled=false; void (async () => { const m = await fetchUsageMetrics(db, user.uid); if(!cancelled) setUsageMetrics(m); })(); return () => { cancelled = true; }; }, [user?.uid]);
+  useEffect(() => { if(!user?.uid) return; let cancelled=false; void (async () => { const m = await fetchUsageMetrics(db, user.uid); if(!cancelled) setUsageMetrics(m); })(); return () => { cancelled = true; }; }, [user?.uid, db, fetchUsageMetrics]);
   const usage = usageMetrics ? { keywordsTracked: usageMetrics.keywordsTracked, keywordsLimit: usageMetrics.keywordsLimit, competitorAnalysis: usageMetrics.competitorAnalysis, competitorLimit: usageMetrics.competitorLimit, reportsGenerated: usageMetrics.reportsGenerated, currentPeriodStart: usageMetrics.periodStart.toISOString(), currentPeriodEnd: usageMetrics.periodEnd.toISOString() } : { keywordsTracked: 0, keywordsLimit: 0, competitorAnalysis: 0, competitorLimit: 0, reportsGenerated: 0, currentPeriodStart: currentPlan.nextBillingDate, currentPeriodEnd: currentPlan.nextBillingDate };
 
   if(fetchError) {
