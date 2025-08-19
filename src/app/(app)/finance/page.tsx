@@ -127,7 +127,7 @@ export default function FinanceDashboardRoot() {
       ltv: ks.find(k=> /ltv/i.test(k.key))?.value || 0,
       onTime: ks.find(k=> k.key==='on_time')?.value
     };
-  }, [metrics, mock]);
+  }, [metrics, mock, allowFinanceMocks]);
 
   function handleRefresh(){ setDataVersion(v=> v+1); }
   function exportSnapshot(format: 'json'|'csv'){
