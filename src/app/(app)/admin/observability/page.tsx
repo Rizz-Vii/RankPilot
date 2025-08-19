@@ -106,8 +106,8 @@ export default function ObservabilityDashboard() {
     setAlertHistory(flat);
       } catch { /* ignore */ }
     };
-    fetchHistory();
-    fetchAlertHistory();
+    void fetchHistory();
+    void fetchAlertHistory();
   }, []);
 
 
