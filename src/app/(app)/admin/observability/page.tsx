@@ -73,7 +73,7 @@ export default function ObservabilityDashboard() {
     setBusy(true);
     try { const r = await fetch('/api/health'); const j = await r.json(); setData(j); } catch { /* noop */ } finally { setBusy(false); }
   };
-  useEffect(() => { load(); const id = setInterval(load, 8000); return () => clearInterval(id); }, []);
+  useEffect(() => { void load(); const id = setInterval(() => { void load(); }, 8000); return () => clearInterval(id); }, []);
   useEffect(() => {
     // Lightweight fetch of last 14 daily KPI docs for sparklines.
     const fetchHistory = async () => {
