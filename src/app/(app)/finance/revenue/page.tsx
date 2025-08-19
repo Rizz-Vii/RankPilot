@@ -29,7 +29,7 @@ export default function RevenueAnalyticsPage() {
   const [revSnap, setRevSnap] = useState<FinanceRevenueSnapshot|null>(null);
   const [loadingSnap, setLoadingSnap] = useState(false);
   const { trigger, running } = useAutomationTrigger();
-  useEffect(()=> { if(!userId) return; setLoadingSnap(true); (async()=> { try { const r = await fetchRecentFinanceRevenueSnapshots(userId, teamId,1); if(r.length) { const first:any = r[0]; const ts = first.createdAt && typeof first.createdAt==='object' && first.createdAt.toDate? first.createdAt.toDate(): new Date(); setRevSnap({ mrr:first.mrr, onTime:first.onTimePct, outstanding:first.outstanding, ts, period:first.period }); } } finally { setLoadingSnap(false);} })(); }, [userId, teamId]);
+  useEffect(()=> { if(!userId) return; setLoadingSnap(true); void (async()=> { try { const r = await fetchRecentFinanceRevenueSnapshots(userId, teamId,1); if(r.length) { const first:any = r[0]; const ts = first.createdAt && typeof first.createdAt==='object' && first.createdAt.toDate? first.createdAt.toDate(): new Date(); setRevSnap({ mrr:first.mrr, onTime:first.onTimePct, outstanding:first.outstanding, ts, period:first.period }); } } finally { setLoadingSnap(false);} })(); }, [userId, teamId]);
   const { data: mock } = useMockDomainMetrics('finance', allowFinanceMocks());
   type MetricIntent = 'neutral' | 'success' | 'warning' | 'accent' | 'danger';
   interface KpiItem { key: string; label: string; value: number; delta: number; trend: number[]; intent?: MetricIntent }
