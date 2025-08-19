@@ -641,31 +641,45 @@ export async function __testRunSeoAudit(data: any, auth?: any) {
 // Test helper to apply AI JSON enrichment logic (schema parse + normalization)
 export function __testApplyAiAudit(core: AuditCoreResponse, aiJson: string, normalizedUrl: string) {
   const parsedRaw = tryParseAIJson(aiJson);
-  let parsed: any = null;
+  let parsed: unknown = null;
   if (parsedRaw) {
     const safe = AiAuditSchema.safeParse(parsedRaw);
     if (safe.success) parsed = safe.data;
   }
-  if (parsed && typeof parsed === 'object' && typeof parsed.overallScore === 'number') {
-    const parsedItems = Array.isArray(parsed.items) ? parsed.items.slice(0, 50).map((it: any, idx: number) => ({
-      id: String(it.id || `ai-${idx}`),
-      name: String(it.name || it.title || `Issue ${idx + 1}`),
-      title: String(it.title || it.name || `Issue ${idx + 1}`),
-      description: String(it.description || it.details || it.title || ''),
-      details: String(it.details || it.description || ''),
-      status: ['pass', 'fail', 'warning'].includes(it.status) ? it.status : 'warning',
-      score: typeof it.score === 'number' ? it.score : 60,
-      impact: ['low', 'medium', 'high'].includes(it.impact) ? it.impact : 'medium',
-      recommendation: String(it.recommendation || '')
-    })) : buildItemsFromIssues(core);
+  if (parsed && typeof parsed === 'object' && typeof (parsed as Record<string, unknown>).overallScore === 'number') {
+    const p = parsed as Record<string, unknown>;
+    const parsedItems = Array.isArray(p.items) ? (p.items as unknown[]).slice(0, 50).map((it: unknown, idx: number) => {
+      const obj = it as Record<string, unknown>;
+      const statusVal = (obj.status ?? 'warning') as string;
+      const status = ['pass', 'fail', 'warning'].includes(statusVal) ? (statusVal as 'pass' | 'fail' | 'warning') : 'warning';
+      const impactVal = (obj.impact ?? 'medium') as string;
+      const impact = ['low', 'medium', 'high'].includes(impactVal) ? (impactVal as 'low' | 'medium' | 'high') : 'medium';
+      return {
+        id: String(obj.id ?? `ai-${idx}`),
+        name: String(obj.name ?? obj.title ?? `Issue ${idx + 1}`),
+        title: String(obj.title ?? obj.name ?? `Issue ${idx + 1}`),
+        description: String(obj.description ?? obj.details ?? obj.title ?? ''),
+        details: String(obj.details ?? obj.description ?? ''),
+        status,
+        score: typeof obj.score === 'number' ? (obj.score as number) : 60,
+        impact,
+        recommendation: String(obj.recommendation ?? '')
+      };
+    }) : buildItemsFromIssues(core);
+
+    const issuesParsed: EnrichedAuditResponse['issues'] =
+      (p.issues && (p.issues as Record<string, unknown>).critical)
+        ? (p.issues as unknown as EnrichedAuditResponse['issues'])
+        : core.issues;
+
     return {
-      score: typeof parsed.score === 'number' ? parsed.score : parsed.overallScore,
-      overallScore: parsed.overallScore,
-      issues: parsed.issues && parsed.issues.critical ? parsed.issues as any : core.issues,
-      recommendations: Array.isArray(parsed.recommendations) && parsed.recommendations.length ? parsed.recommendations : core.recommendations,
-      performanceMetrics: parsed.performanceMetrics || core.performanceMetrics,
+      score: typeof p.score === 'number' ? (p.score as number) : (p.overallScore as number),
+      overallScore: p.overallScore as number,
+      issues: issuesParsed,
+      recommendations: Array.isArray(p.recommendations) && (p.recommendations as unknown[]).length ? (p.recommendations as unknown as string[]) : core.recommendations,
+      performanceMetrics: (p.performanceMetrics as EnrichedAuditResponse['performanceMetrics']) || core.performanceMetrics,
       items: parsedItems,
-      summary: typeof parsed.summary === 'string' ? parsed.summary : `Audit completed for ${normalizedUrl}.`,
+      summary: typeof p.summary === 'string' ? (p.summary as string) : `Audit completed for ${normalizedUrl}.`,
       totalProcessingTime: 0,
       cacheHit: false,
       source: 'live' as const,
