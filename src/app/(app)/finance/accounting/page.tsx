@@ -28,7 +28,7 @@ export default function AccountingPage(){
   const { trigger, running } = useAutomationTrigger();
 
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
-  useEffect(()=> { trackDashboardView('finance'); }, []);
+  useEffect(()=> { void trackDashboardView('finance'); }, []);
 
   useEffect(()=> { if(!userId) return; setLoading(true); void (async()=> { try {
   const rawSnaps = await fetchRecentAccountingSnapshots(userId, teamId, undefined, 8) as any[];
