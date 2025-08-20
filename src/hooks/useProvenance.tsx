@@ -12,7 +12,7 @@ export function useProvenance(opts: UseProvenanceOptions = {}) {
   const markFallback = useCallback(() => setProvenance("fallback"), []);
 
   const ProvenanceLegend = useMemo(() => {
-    const Cmp: FC = () => {
+    const ProvenanceLegendComponent: FC = function ProvenanceLegendComponent() {
       if (!provenance) return null;
       return (
         <div className="text-xs text-muted-foreground border rounded-md px-2 py-1 bg-muted/30 max-w-[260px]">
@@ -25,7 +25,7 @@ export function useProvenance(opts: UseProvenanceOptions = {}) {
         </div>
       );
     };
-    return Cmp;
+    return ProvenanceLegendComponent;
   }, [provenance]);
 
   return { provenance, setProvenance, markLive, markCache, markFallback, ProvenanceLegend };
