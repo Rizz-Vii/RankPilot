@@ -50,6 +50,19 @@ interface ChatResponse {
     };
 }
 
+interface RawMessage {
+    id?: string;
+    message?: string;
+    response?: string;
+    timestamp?: string;
+    isUser?: boolean;
+    tokensUsed?: number;
+    type?: string;
+    mediaUrl?: string;
+}
+
+type AuthUserLike = { uid?: string; getIdToken?: (force?: boolean) => Promise<string> };
+
 interface CustomerChatBotProps {
     currentUrl?: string;
     className?: string;
@@ -320,15 +333,13 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
 
     const renderMarkdown = async (text: string) => {
         try {
-            // unified() returns a Processor (typed as any/unknown under strict ESM interop); cast after building pipeline
-            // Cast unified() to any early to appease strict/unknown chain
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const processor = (unified() as any)
+            // unified() may not have precise ESM types here; use unknown and narrow to the Process interface we need
+            const processor = (unified() as unknown)
                 .use(remarkParse)
                 .use(remarkGfm)
                 .use(remarkRehype)
                 .use(rehypeStringify);
-            const file = await (processor as unknown as { process(input: string): Promise<unknown> }).process(text);
+            const file = await (processor as { process(input: string): Promise<unknown> }).process(text);
             return String(file);
         } catch {
             return text.replace(/</g, '&lt;');
@@ -436,7 +447,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
 
     try {
             // Get fresh user token to avoid 401 from stale tokens
-            const curr = (auth.currentUser || (user as any)) as any;
+            const curr = (auth.currentUser || user as AuthUserLike) as AuthUserLike | undefined;
             if (!curr || typeof curr.getIdToken !== 'function') {
                 throw new Error('Authentication failed. Please sign in again and retry.');
             }
@@ -477,15 +488,18 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                                 const dataStr = part.slice(5).trim();
                                 if (dataStr === '[DONE]') { doneReading = true; break; }
                                 try {
-                                    const json = JSON.parse(dataStr);
-                                    if (json.token) {
-                                        accumulated += json.token;
+                                    const json = JSON.parse(dataStr) as Record<string, unknown>;
+                                    const tokenPiece = json['token'];
+                                    if (typeof tokenPiece === 'string') {
+                                        accumulated += tokenPiece;
                                         const interim = accumulated.replace(/</g, '&lt;').replace(/\n/g, '<br/>');
                                         setMessages(prev => prev.map(m => m.id === aiId ? { ...m, response: interim } : m));
-                                    } else if (json.final) {
-                                        if (json.sessionId && json.sessionId !== sessionId) setSessionId(json.sessionId);
-                                        if (json.tokensUsed) {
-                                            setMessages(prev => prev.map(m => m.id === aiId ? { ...m, tokensUsed: json.tokensUsed } : m));
+                                    } else if (json['final']) {
+                                        const sessionIdPiece = json['sessionId'];
+                                        if (typeof sessionIdPiece === 'string' && sessionIdPiece !== sessionId) setSessionId(sessionIdPiece);
+                                        const tokensUsedPiece = json['tokensUsed'];
+                                        if (typeof tokensUsedPiece === 'number') {
+                                            setMessages(prev => prev.map(m => m.id === aiId ? { ...m, tokensUsed: tokensUsedPiece } : m));
                                         }
                                         // Derive suggestions from rp_meta if present
                                         try {
@@ -494,10 +508,8 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                                             if (meta?.actions?.length) nextSugg.push(...meta.actions);
                                             if (nextSugg.length) setSuggestions(nextSugg.slice(0,4));
                                         } catch { /* ignore */ }
-                                    } else if (json.error) {
-                                        setError(json.error);
-                                    } else if (json.error) {
-                                        setError(json.error);
+                                    } else if (typeof json['error'] === 'string') {
+                                        setError(json['error']);
                                     }
                                 } catch { /* ignore parse issues */ }
                             }
@@ -557,7 +569,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${forced ? await (auth.currentUser || (user as any))?.getIdToken?.(true) : token}`,
+                    'Authorization': `Bearer ${forced ? await (auth.currentUser || user as AuthUserLike)?.getIdToken?.(true) : token}`,
                 },
                 body: JSON.stringify({
                     message: messageToSend,
@@ -641,7 +653,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
         if (!pendingImage || !user) return;
         setUploading(true);
         try {
-            const token = await (auth.currentUser || (user as any))?.getIdToken?.();
+            const token = await (auth.currentUser || user as AuthUserLike)?.getIdToken?.();
             if (!token) throw new Error('Auth required');
             const path = `chatUploads/${user.uid}/${Date.now()}_${pendingImage.name}`;
             const sRef = storageRef(storage, path);
@@ -746,7 +758,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
             setAnnouncements(a => [...a.slice(-3), 'Voice note uploaded']);
             setAttachmentsUsed(c => c + 1);
             try {
-                const token = await (auth.currentUser || (user as any))?.getIdToken?.();
+                const token = await (auth.currentUser || user as AuthUserLike)?.getIdToken?.();
                 if (token) {
                     await fetch('/api/chat/customer', {
                         method: 'POST',
@@ -775,23 +787,26 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
             setLoadingMore(true);
             lastScrollFetchRef.current = now;
             try {
-                const token = await (auth.currentUser || (user as any))?.getIdToken?.();
+                const token = await (auth.currentUser || user as AuthUserLike)?.getIdToken?.();
                 const before = oldestMessageTsRef.current;
                 const url = before ? `/api/chat/customer?limit=25&before=${encodeURIComponent(before)}` : `/api/chat/customer?limit=25`;
                 const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
                 if (res.ok) {
                     const data = await res.json();
                     if (Array.isArray(data.messages) && data.messages.length) {
-                        const mapped = data.messages.map((m: any) => ({
-                            id: m.id,
-                            message: m.isUser ? m.message : '',
-                            response: !m.isUser ? m.response : '',
-                            timestamp: m.timestamp,
-                            isUser: m.isUser,
-                            tokensUsed: m.tokensUsed,
-                            type: m.type,
-                            mediaUrl: m.mediaUrl,
-                        }));
+                        const mapped = (data.messages as unknown[]).map((m: unknown) => {
+                            const mm = m as RawMessage;
+                            return {
+                                id: String(mm.id || ''),
+                                message: mm.isUser ? (mm.message || '') : '',
+                                response: !mm.isUser ? (mm.response || '') : '',
+                                timestamp: String(mm.timestamp || new Date().toISOString()),
+                                isUser: !!mm.isUser,
+                                tokensUsed: mm.tokensUsed,
+                                type: mm.type,
+                                mediaUrl: mm.mediaUrl,
+                            };
+                        });
                         oldestMessageTsRef.current = mapped[0]?.timestamp || oldestMessageTsRef.current;
                         setHasMore(data.hasMore ?? false);
                         setMessages(prev => [...mapped, ...prev]);
@@ -928,7 +943,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                                                         if (actionUpdateDebounceRef.current) clearTimeout(actionUpdateDebounceRef.current);
                                                         actionUpdateDebounceRef.current = setTimeout(async () => {
                                                             try {
-                                                                const token = await (auth.currentUser || (user as any))?.getIdToken?.();
+                                                                const token = await (auth.currentUser || user as AuthUserLike)?.getIdToken?.();
                                                                 if (!token || !sessionId) return;
                                                                 const res = await fetch(`/api/chat/customer/actions?sessionId=${sessionId}`, {
                                                                     method: 'POST',
