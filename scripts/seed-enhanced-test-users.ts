@@ -867,16 +867,3 @@ if (require.main === module) {
   }
 }
 
-// CLI execution
-if (require.main === module) {
-  const seeder = new EnhancedTestUserSeeder();
-  seeder.seedAllTestUsers()
-    .then(() => {
-      console.log("✅ All enhanced test users seeded successfully!");
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error("❌ Enhanced test user seeding failed:", error);
-      process.exit(1);
-    });
-}
