@@ -92,7 +92,7 @@ export default function AccountingPage(){
         )}
         <section className="grid gap-4 md:grid-cols-3">
           {kpis.map(k => (
-            <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last" trend={<TrendSparkline data={k.trend} />} intent={(k as any).intent||'neutral'} />
+            <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last" trend={<TrendSparkline data={k.trend} />} intent={k.intent||'neutral'} />
           ))}
         </section>
         <section className="space-y-4">
