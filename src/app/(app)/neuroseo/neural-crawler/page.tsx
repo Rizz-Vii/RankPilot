@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
@@ -107,6 +107,8 @@ export default function NeuralCrawlerPage() {
   const [currentResult, setCurrentResult] = useState<CrawlResult | null>(null);
   const [crawlHistory, setCrawlHistory] = useState<CrawlHistory[]>([]);
   const [selectedTab, setSelectedTab] = useState("overview");
+  const aggHits = useRef(0);
+  const legacyFallbacks = useRef(0);
   const aggReadFlagEnv = process.env.NEXT_PUBLIC_DATA_MIN_NEURAL_CRAWLER_READ_AGG === '1';
   const pruneFlag = process.env.NEXT_PUBLIC_DATA_MIN_NEURAL_CRAWLER_PRUNE_LEGACY === '1';
   // Allow runtime override via localStorage (dev/testing) key: neuralCrawlerReadAggOverride = 'on'|'off'
@@ -140,7 +142,7 @@ export default function NeuralCrawlerPage() {
           const aggSnap = await getDoc(aggRef);
             if (aggSnap.exists()) {
               const data: unknown = aggSnap.data();
-              aggHits++;
+              aggHits.current++;
               recordCrawlerAggregateHit();
               console.info('[neuralCrawler] aggregate hit', { historyId: latest.id });
               setCurrentResult(legacyFromAggregate(data));
@@ -158,7 +160,7 @@ export default function NeuralCrawlerPage() {
             );
             const legacySnap = await getDocs(qLegacy);
             if (!legacySnap.empty) {
-              legacyFallbacks++;
+              legacyFallbacks.current++;
               recordCrawlerLegacyFallback();
               console.warn('[neuralCrawler] legacy fallback (aggregate miss)', { url: latest.url });
               const docData: unknown = legacySnap.docs[0].data();
