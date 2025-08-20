@@ -71,73 +71,77 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [activities, setActivities] = useState<UserActivity[]>([]);
 
   // Use mock auth in development
-  const { user: mockUser } = useMockAuth();
+  useMockAuth();
   const isDevelopment = typeof window !== "undefined" && process.env.NODE_ENV === "development";
 
 
 
-  const handleAuthStateChange = async (currentUser: FirebaseUser | null) => {
-    setUser(currentUser);
-    if (currentUser) {
-      // Ensure user has proper subscription data
-      try {
-        await ensureUserSubscription(currentUser.uid, currentUser.email || "");
-      } catch (error) {
-        console.error("Error ensuring user subscription:", error);
-      }
-
-      // Fetch user profile and role
-      const userDocRef = doc(db, "users", currentUser.uid);
-      const userDocSnap = await getDoc(userDocRef);
-
-      if (userDocSnap.exists()) {
-        const userData = userDocSnap.data();
-        setRole(userData?.role || null);
-        setProfile(userData || null);
-        // Attach teamId from Firestore user doc if present without breaking User prototype methods
-        try {
-          (currentUser as any).teamId = (userData as any)?.teamId;
-        } catch {}
-        setUser(currentUser as User);
-      } else {
-        setRole(null);
-        setProfile(null);
-        setUser(currentUser as User);
-      }
-
-      // Fetch user activities
-      try {
-        const activitiesRef = collection(
-          db,
-          "users",
-          currentUser.uid,
-          "activities"
-        );
-        const q = query(activitiesRef, orderBy("timestamp", "desc"), limit(50));
-        const querySnapshot = await getDocs(q);
-        const fetchedActivities = querySnapshot.docs.map(
-          (doc) =>
-            ({
-              id: doc.id,
-              ...doc.data(),
-            }) as UserActivity
-        );
-        setActivities(fetchedActivities);
-      } catch (error) {
-        console.log("Activities not found, setting empty array");
-        setActivities([]);
-      }
-    } else {
-      setRole(null);
-      setProfile(null);
-      setActivities([]); // Clear activities on logout
-    }
-
-    setLoading(false);
-  };
 
   useEffect(() => {
     // Always use Firebase auth, but also listen for mock auth events in development
+    const handleAuthStateChange = async (currentUser: FirebaseUser | null) => {
+      setUser(currentUser);
+      if (currentUser) {
+        // Ensure user has proper subscription data
+        try {
+          await ensureUserSubscription(currentUser.uid, currentUser.email || "");
+        } catch (error) {
+          console.error("Error ensuring user subscription:", error);
+        }
+
+        // Fetch user profile and role
+        const userDocRef = doc(db, "users", currentUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          setRole(userData?.role || null);
+          setProfile(userData || null);
+          // Attach teamId from Firestore user doc if present without breaking User prototype methods
+          try {
+            (currentUser as any).teamId = (userData as any)?.teamId;
+          } catch (e) {
+            // non-fatal; ignore
+            console.debug("Failed to attach teamId", e);
+          }
+          setUser(currentUser as User);
+        } else {
+          setRole(null);
+          setProfile(null);
+          setUser(currentUser as User);
+        }
+
+        // Fetch user activities
+        try {
+          const activitiesRef = collection(
+            db,
+            "users",
+            currentUser.uid,
+            "activities"
+          );
+          const q = query(activitiesRef, orderBy("timestamp", "desc"), limit(50));
+          const querySnapshot = await getDocs(q);
+          const fetchedActivities = querySnapshot.docs.map(
+            (snapshot) =>
+              ({
+                id: snapshot.id,
+                ...snapshot.data(),
+              }) as UserActivity
+          );
+          setActivities(fetchedActivities);
+        } catch (error) {
+          console.debug("Activities not found, setting empty array");
+          setActivities([]);
+        }
+      } else {
+        setRole(null);
+        setProfile(null);
+        setActivities([]); // Clear activities on logout
+      }
+
+      setLoading(false);
+    };
+
     const unsubscribe = auth.onAuthStateChanged(handleAuthStateChange);
 
     // In development, also listen for mock auth events
