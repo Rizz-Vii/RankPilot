@@ -37,8 +37,8 @@ function PostDialog({ open, onClose, onSchedule, loading }: PostDialogProps){
           <option value="facebook">Facebook</option>
           <option value="x">X</option>
         </select></label>
-        <label className="text-xs font-medium flex flex-col gap-1">Scheduled Time (optional)<Input type="datetime-local" value={time} onChange={e=> setTime(e.target.value)} /></label>
-        <Textarea rows={6} value={content} onChange={e=> setContent(e.target.value)} className="text-xs" />
+        <label className="text-xs font-medium flex flex-col gap-1">Scheduled Time (optional)<Input type="datetime-local" value={time} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTime(e.target.value)} /></label>
+        <Textarea rows={6} value={content} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)} className="text-xs" />
       </div>
       <div className="flex justify-end gap-2">
         <Button variant="ghost" size="sm" onClick={onClose} disabled={loading}>Cancel</Button>
@@ -56,7 +56,7 @@ function OptimizeDialog({ open, original, channel, onClose }: OptimizeDialogProp
   return <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
     <div className="w-full max-w-lg rounded-xl border bg-card p-6 space-y-4 shadow-xl relative">
       <header className="space-y-1"><h3 className="font-semibold text-lg">Optimized Copy</h3><p className="text-xs text-muted-foreground">AI-enhanced based on platform heuristics.</p></header>
-      <Textarea value={variant} onChange={e=> setVariant(e.target.value)} rows={8} className="text-xs" />
+      <Textarea value={variant} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setVariant(e.target.value)} rows={8} className="text-xs" />
       <div className="flex justify-end"><Button size="sm" onClick={onClose}>Close</Button></div>
     </div>
   </div>;
@@ -73,13 +73,13 @@ function AccountsPanel({ accounts, onConnect, connecting }: AccountsPanelProps){
       {!accounts.length && <li className="text-muted-foreground text-[11px]">No accounts connected</li>}
     </ul>
     <div className="flex gap-2 items-end">
-      <select className="bg-background border rounded-md h-8 px-2 text-xs" value={platform} onChange={e=> setPlatform(e.target.value)}>
+      <select className="bg-background border rounded-md h-8 px-2 text-xs" value={platform} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPlatform(e.target.value)}>
         <option value="linkedin">LinkedIn</option>
         <option value="instagram">Instagram</option>
         <option value="facebook">Facebook</option>
         <option value="x">X</option>
       </select>
-      <Input placeholder="@handle" value={handle} onChange={e=> setHandle(e.target.value)} className="h-8 text-xs" />
+      <Input placeholder="@handle" value={handle} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHandle(e.target.value)} className="h-8 text-xs" />
       <Button size="sm" disabled={!handle || connecting} onClick={()=> onConnect(platform, handle)}>{connecting? 'Connecting…':'Connect'}</Button>
     </div>
   </div>;
