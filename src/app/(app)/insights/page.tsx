@@ -33,7 +33,7 @@ import { ToolPageHeader } from "@/components/tool-page-header";
 import styles from "./insights.module.css";
 
 // Activity & preview interfaces (narrow, avoids unknown property accesses)
-interface ActivityDetails { keywords?: string[] | string; url?: string; urls?: string[]; [k: string]: any }
+interface ActivityDetails { keywords?: string[] | string; url?: string; urls?: string[]; [k: string]: unknown }
 interface UserActivity { type: string; tool: string; details: ActivityDetails; resultsSummary?: string }
 interface PreviewActivity { tool: string; type: string; [k: string]: unknown }
 
@@ -62,12 +62,17 @@ export default function InsightsPage() {
   const cacheKey = `insights-cache-${user?.uid}`;
   const cacheTTLms = 10 * 60 * 1000; // 10 min
 
-  const simplifiedActivities = useMemo<UserActivity[]>(() => activities.map((a: any) => ({
-    type: String(a?.type || ''),
-    tool: String(a?.tool || ''),
-    details: ((): ActivityDetails => { const d = a?.details; return d && typeof d === 'object' ? d as ActivityDetails : {}; })(),
-    resultsSummary: a?.resultsSummary ? String(a.resultsSummary) : undefined,
-  })), [activities]);
+  const simplifiedActivities = useMemo<UserActivity[]>(() => activities.map((a: unknown) => {
+    const act = a as Record<string, unknown>;
+    const detailsRaw = act['details'];
+    const details = detailsRaw && typeof detailsRaw === 'object' ? (detailsRaw as ActivityDetails) : {};
+    return {
+      type: String(act['type'] || ''),
+      tool: String(act['tool'] || ''),
+      details,
+      resultsSummary: act['resultsSummary'] ? String(act['resultsSummary']) : undefined,
+    };
+  }), [activities]);
 
   const derivedKeywords = useMemo(() => {
     const kwSet = new Set<string>();
@@ -134,19 +139,20 @@ export default function InsightsPage() {
       try {
         const aiResult = await generateInsightsFlow({ activities: simplifiedActivities });
         // Normalize to expected GenerateInsightsOutput shape (if flow returns partial)
-        const raw: any = aiResult as any;
-        const normalizedInsights: GenerateInsightsOutput['insights'] = Array.isArray(raw?.insights) ? raw.insights.map((i: any) => ({
-          id: String(i.id || Math.random().toString(36).slice(2)),
-          title: String(i.title || 'Untitled Insight'),
-          description: String(i.description || ''),
-          category: String(i.category || 'general'),
-          priority: String(i.priority || 'low'),
-          estimatedImpact: typeof i.estimatedImpact === 'number' ? i.estimatedImpact : 0,
-          actionItems: Array.isArray(i.actionItems) ? i.actionItems.map((x: any) => String(x)) : [],
-          metrics: typeof i.metrics === 'object' && i.metrics ? i.metrics : undefined,
-          actionLink: typeof i.actionLink === 'string' ? i.actionLink : undefined,
-          actionText: typeof i.actionText === 'string' ? i.actionText : undefined,
-        })) : [];
+        const raw = aiResult as Record<string, unknown> | null | undefined;
+        const rawInsights = Array.isArray(raw?.insights) ? (raw!.insights as unknown[]) : [];
+        const normalizedInsights: GenerateInsightsOutput['insights'] = rawInsights.map((i: Record<string, unknown>) => ({
+          id: String(i['id'] ?? Math.random().toString(36).slice(2)),
+          title: String(i['title'] ?? 'Untitled Insight'),
+          description: String(i['description'] ?? ''),
+          category: String(i['category'] ?? 'general'),
+          priority: String(i['priority'] ?? 'low'),
+          estimatedImpact: typeof i['estimatedImpact'] === 'number' ? (i['estimatedImpact'] as number) : 0,
+          actionItems: Array.isArray(i['actionItems']) ? (i['actionItems'] as unknown[]).map(x => String(x)) : [],
+          metrics: typeof i['metrics'] === 'object' && i['metrics'] ? (i['metrics'] as Record<string, unknown>) : undefined,
+          actionLink: typeof i['actionLink'] === 'string' ? (i['actionLink'] as string) : undefined,
+          actionText: typeof i['actionText'] === 'string' ? (i['actionText'] as string) : undefined,
+        }));
         const normalized: GenerateInsightsOutput = {
           insights: normalizedInsights,
           summary: typeof raw?.summary === 'string' ? raw.summary : `Generated ${normalizedInsights.length} insights`,
@@ -164,8 +170,13 @@ export default function InsightsPage() {
       saveCacheLocal(result);
       setInsights(result.insights.slice(0, maxInsights));
       setLastGenerated(new Date());
-    } catch (e: any) {
-      setError(typeof e?.message === 'string' ? e.message : 'Failed to generate insights');
+    } catch (e: unknown) {
+      const msg = e instanceof Error
+        ? e.message
+        : (typeof e === 'object' && e !== null && typeof (e as Record<string, unknown>)['message'] === 'string'
+          ? (e as Record<string, unknown>)['message'] as string
+          : 'Failed to generate insights');
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
@@ -190,8 +201,8 @@ export default function InsightsPage() {
   }, [lastGenerated]);
 
   const handleRefresh = async () => { setRefreshing(true); await fetchInsights({ force: true }); setRefreshing(false); };
-  const abortRef = (typeof window !== 'undefined') ? (window as any)._insightsAbortRef || { current: null as AbortController | null } : { current: null as AbortController | null };
-  if (typeof window !== 'undefined') (window as any)._insightsAbortRef = abortRef;
+  const abortRef = (typeof window !== 'undefined') ? ((window as unknown as Record<string, unknown>)['_insightsAbortRef'] as { current: AbortController | null } | undefined) || { current: null as AbortController | null } : { current: null as AbortController | null };
+  if (typeof window !== 'undefined') (window as unknown as Record<string, unknown>)['_insightsAbortRef'] = abortRef;
 
   const startStream = async () => {
     if (!user) return;
@@ -220,23 +231,32 @@ export default function InsightsPage() {
             const dataStr = raw.replace(/^data:\s*/, '');
             if (dataStr === '[DONE]') { break; }
             try {
-              const evt: any = JSON.parse(dataStr);
-              if (evt?.type === 'init') {
-                setTotalActivities(typeof evt.activityCount === 'number' ? evt.activityCount : 0);
-              } else if (evt?.type === 'activity_batch' && Array.isArray(evt.batch)) {
-                setStreamedActivities(prev => prev + evt.batch.length);
-                setActivityPreview(prev => [...prev, ...(evt.batch as PreviewActivity[])].slice(0, 8));
-              } else if (evt?.type === 'insight' && evt.insight) {
-                newInsights.push(evt.insight as Insight); push();
+              const evt = JSON.parse(dataStr) as Record<string, unknown>;
+              const type = typeof evt['type'] === 'string' ? (evt['type'] as string) : undefined;
+              if (type === 'init') {
+                setTotalActivities(typeof evt['activityCount'] === 'number' ? (evt['activityCount'] as number) : 0);
+              } else if (type === 'activity_batch' && Array.isArray(evt['batch'])) {
+                const batch = evt['batch'] as unknown[];
+                setStreamedActivities(prev => prev + batch.length);
+                setActivityPreview(prev => [...prev, ...(batch as PreviewActivity[])].slice(0, 8));
+              } else if (type === 'insight' && evt['insight']) {
+                newInsights.push(evt['insight'] as Insight); push();
                 setStreamedInsights(prev => prev + 1);
-              } else if (evt?.type === 'final') {
-                if (typeof evt.total === 'number') setExpectedInsights(evt.total);
-              } else if (evt?.type === 'error') { setError(typeof evt.message === 'string' ? evt.message : 'Stream error'); }
+              } else if (type === 'final') {
+                if (typeof evt['total'] === 'number') setExpectedInsights(evt['total'] as number);
+              } else if (type === 'error') {
+                setError(typeof evt['message'] === 'string' ? (evt['message'] as string) : 'Stream error');
+              }
             } catch { /* ignore parse */ }
         }
       }
-    } catch (e) {
-      const err: any = e; if (err?.name !== 'AbortError') { setError(err?.message || 'Streaming failed'); setStreamSupported(false); }
+    } catch (e: unknown) {
+      const errObj = e as Record<string, unknown> | undefined;
+      if (errObj && errObj['name'] !== 'AbortError') {
+        const msg = typeof errObj['message'] === 'string' ? (errObj['message'] as string) : 'Streaming failed';
+        setError(msg);
+        setStreamSupported(false);
+      }
     } finally { setStreaming(false); }
   };
   const stopStream = () => { if (abortRef.current) abortRef.current.abort(); setStreaming(false); };
