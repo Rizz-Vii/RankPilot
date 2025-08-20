@@ -3,20 +3,21 @@ import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { auth } from '@/lib/firebase';
 
+interface SiteIngestionResult {
+  baseUrl: string;
+  pagesCrawled: number;
+  errors?: Array<{ url?: string; message: string }>; // minimal shape
+  durationMs?: number;
+  startedAt?: string;
+  finishedAt?: string;
+  [key: string]: any; // allow extra diagnostic fields without casting elsewhere
+}
+
 export default function SiteIngestionAdminPage() {
   const { profile } = useAuth();
   const [baseUrl, setBaseUrl] = useState('');
   const [maxPages, setMaxPages] = useState(8);
   const [status, setStatus] = useState('Idle');
-  interface SiteIngestionResult {
-    baseUrl: string;
-    pagesCrawled: number;
-    errors?: Array<{ url?: string; message: string }>; // minimal shape
-    durationMs?: number;
-    startedAt?: string;
-    finishedAt?: string;
-    [key: string]: any; // allow extra diagnostic fields without casting elsewhere
-  }
   const [result, setResult] = useState<SiteIngestionResult | null>(null);
   const isAdmin = (profile as any)?.subscriptionTier === 'admin';
 
@@ -24,12 +25,21 @@ export default function SiteIngestionAdminPage() {
     if (!isAdmin || !baseUrl) return;
     setStatus('Running');
     try {
-  const idToken = await (auth.currentUser as any)?.getIdToken?.();
-      const res = await fetch('/api/admin/site/ingest', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` }, body: JSON.stringify({ baseUrl, maxPages }) });
-      const json = await res.json();
+      const idToken = await (auth.currentUser as any)?.getIdToken?.();
+      const res = await fetch('/api/admin/site/ingest', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken ?? ''}`,
+        },
+        body: JSON.stringify({ baseUrl, maxPages }),
+      });
+      const json = (await res.json()) as SiteIngestionResult;
       setResult(json);
       setStatus(res.ok ? 'Completed' : 'Failed');
     } catch (e: unknown) {
+      // eslint-disable-next-line no-console
+      console.error(e);
       setStatus('Error');
     }
   }
@@ -39,12 +49,12 @@ export default function SiteIngestionAdminPage() {
     <div className="p-6 space-y-4 max-w-2xl">
       <h1 className="text-xl font-semibold">Site Ingestion Admin</h1>
       <div className="space-y-2">
-        <input className="w-full border rounded px-2 py-1 text-sm" placeholder="https://example.com" value={baseUrl} onChange={e=>setBaseUrl(e.target.value)} />
+        <input className="w-full border rounded px-2 py-1 text-sm" placeholder="https://example.com" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} />
         <div className="flex items-center gap-2">
-          <label className="text-xs text-muted-foreground">Max Pages</label>
-          <input type="number" className="w-24 border rounded px-2 py-1 text-sm" value={maxPages} onChange={e=>setMaxPages(parseInt(e.target.value)||1)} />
+          <label htmlFor="max-pages" className="text-xs text-muted-foreground">Max Pages</label>
+          <input id="max-pages" min={1} type="number" className="w-24 border rounded px-2 py-1 text-sm" value={maxPages} onChange={(e) => setMaxPages(Math.max(1, parseInt(e.target.value, 10) || 1))} />
         </div>
-  <button onClick={() => { void runIngestion(); }} disabled={!baseUrl || status==='Running'} className="px-3 py-1 rounded bg-primary text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50">Ingest</button>
+  <button type="button" onClick={() => { void runIngestion(); }} disabled={!baseUrl || status === 'Running'} className="px-3 py-1 rounded bg-primary text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50">Ingest</button>
   <div className="text-xs text-muted-foreground">Status: {status}</div>
       </div>
       {result && (
