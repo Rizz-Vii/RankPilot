@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Card,
@@ -17,7 +17,6 @@ import {
   Mail,
   Phone,
   MessageSquare,
-  Clock,
   HelpCircle,
   CheckCircle,
   Users,
@@ -73,42 +72,9 @@ const supportChannels = [
   },
 ];
 
-const faqs = [
-  {
-    question: "How do I cancel my subscription?",
-    answer:
-      "You can cancel your subscription anytime from the Billing page in your dashboard. Your access will continue until the end of your current billing period.",
-  },
-  {
-    question: "Can I upgrade or downgrade my plan?",
-    answer:
-      "Yes! You can change your plan at any time. Upgrades take effect immediately, while downgrades take effect at your next billing cycle.",
-  },
-  {
-    question: "What payment methods do you accept?",
-    answer:
-      "We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and bank transfers for enterprise customers.",
-  },
-  {
-    question: "Do you offer refunds?",
-    answer:
-      "Yes, we offer a 14-day money-back guarantee for all new subscriptions. Enterprise customers may have custom refund terms.",
-  },
-  {
-    question: "How do I update my billing information?",
-    answer:
-      "You can update your payment method and billing details from the Billing page in your account dashboard.",
-  },
-  {
-    question: "Is my data secure?",
-    answer:
-      "Absolutely! We use enterprise-grade security measures including SSL encryption, secure data centers, and regular security audits.",
-  },
-];
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedFaq, setSelectedFaq] = useState<number | null>(null);
 
   const {
     register,
