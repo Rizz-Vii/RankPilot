@@ -1,7 +1,7 @@
 // Admin component for user tier migration
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,51 +31,52 @@ export default function AdminTierMigration() {
   const [stats, setStats] = useState<TierStats | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
 
-  const runMigration = async () => {
+  const runMigration = async (): Promise<void> => {
     setIsRunning(true);
     setMigrationComplete(false);
     setLogs([]);
 
-    try {
-      // Capture console.log output
-      const originalLog = console.log;
-      const originalWarn = console.warn;
-      const originalError = console.error;
+    // Capture originals here so we can always restore them in finally
+    const originalLog = console.log;
+    const originalWarn = console.warn;
+    const originalError = console.error;
 
+    try {
+      // Capture console output into an array for UI display
       const capturedLogs: string[] = [];
 
-      console.log = (...args) => {
+      (console as any).log = (...args: any[]): void => {
         const message = args.join(" ");
         capturedLogs.push(`[LOG] ${message}`);
         setLogs([...capturedLogs]);
-        originalLog(...args);
+        originalLog.apply(console, args);
       };
 
-      console.warn = (...args) => {
+      (console as any).warn = (...args: any[]): void => {
         const message = args.join(" ");
         capturedLogs.push(`[WARN] ${message}`);
         setLogs([...capturedLogs]);
-        originalWarn(...args);
+        originalWarn.apply(console, args);
       };
 
-      console.error = (...args) => {
+      (console as any).error = (...args: any[]): void => {
         const message = args.join(" ");
         capturedLogs.push(`[ERROR] ${message}`);
         setLogs([...capturedLogs]);
-        originalError(...args);
+        originalError.apply(console, args);
       };
 
       await identifyAndCorrectUserTiers();
 
-      // Restore original console methods
-      console.log = originalLog;
-      console.warn = originalWarn;
-      console.error = originalError;
-
       setMigrationComplete(true);
     } catch (error) {
-      console.error("Migration failed:", error);
+      // Use original error logger to avoid relying on overridden console
+      originalError("Migration failed:", error);
     } finally {
+      // Restore original console methods and stop spinner
+      (console as any).log = originalLog;
+      (console as any).warn = originalWarn;
+      (console as any).error = originalError;
       setIsRunning(false);
     }
   };
