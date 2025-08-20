@@ -54,10 +54,9 @@ export function EnhancedAppNav({
   const [mounted, setMounted] = useState(false);
 
   // Helper: persist expanded group state (desktop only)
-  const persistExpanded = useCallback((expanded: Set<string>) => {
+  const persistExpanded = useCallback((expanded: string[]) => {
     try {
-      const arr = Array.from(expanded);
-      window.localStorage.setItem(EXPANDED_STORAGE_KEY, JSON.stringify(arr));
+      window.localStorage.setItem(EXPANDED_STORAGE_KEY, JSON.stringify(expanded));
     } catch {}
   }, []);
 
@@ -82,24 +81,24 @@ export function EnhancedAppNav({
       );
 
       setNavState((prev) => {
-        let expanded = new Set<string>(prev.expandedGroups);
+        let expanded = Array.isArray(prev.expandedGroups) ? [...prev.expandedGroups] : [];
 
         // If mobile: collapse all except active (for focus) to reduce scroll noise
         if (mobile) {
-          expanded = new Set(activeGroup ? [activeGroup.id] : []);
+          expanded = activeGroup ? [activeGroup.id] : [];
         } else if (restored && restored.length) {
-          expanded = new Set(restored.filter((id) => groups.some((g) => g.id === id)));
+          expanded = restored.filter((id) => groups.some((g) => g.id === id));
         } else {
           // Ensure hero groups exist; keep default but add active if missing
-          if (activeGroup && !expanded.has(activeGroup.id)) {
-            expanded.add(activeGroup.id);
+          if (activeGroup && !expanded.includes(activeGroup.id)) {
+            expanded.push(activeGroup.id);
           }
         }
 
         // Normalize to a single expanded group (active group preferred)
-        if (expanded.size > 1) {
-          const chosen = activeGroup?.id || Array.from(expanded)[0];
-          expanded = new Set([chosen]);
+        if (expanded.length > 1) {
+          const chosen = activeGroup?.id || expanded[0];
+          expanded = [chosen];
         }
         return {
           ...prev,
@@ -124,8 +123,8 @@ export function EnhancedAppNav({
   // Enforce only one expanded group at a time
   const toggleGroup = useCallback((groupId: string) => {
     setNavState((prev) => {
-      const isOpen = prev.expandedGroups.has(groupId);
-      const newExpanded = isOpen ? new Set<string>() : new Set<string>([groupId]);
+      const isOpen = prev.expandedGroups.includes(groupId);
+      const newExpanded = isOpen ? [] : [groupId];
       return { ...prev, expandedGroups: newExpanded };
     });
   }, []);
@@ -137,7 +136,7 @@ export function EnhancedAppNav({
         ...prev,
         activeItem: item.href,
         activeGroup: groupId,
-        expandedGroups: mobile ? new Set<string>() : prev.expandedGroups,
+        expandedGroups: mobile ? [] : prev.expandedGroups,
       }));
       onItemClickAction?.(item);
     },
@@ -338,7 +337,7 @@ export function EnhancedAppNav({
 
   const renderNavGroup = useCallback(
     (group: NavGroup, index: number) => {
-      const isExpanded = navState.expandedGroups.has(group.id);
+      const isExpanded = navState.expandedGroups.includes(group.id);
       const isActive = navState.activeGroup === group.id;
       const GroupIcon = group.icon;
 
