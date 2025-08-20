@@ -1,10 +1,9 @@
 // src/hooks/useAdminRoute.ts
-"use client";
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+ "use client";
+ 
+ import { useEffect } from "react";
+ import { useRouter } from "next/navigation";
+ import { useAuth } from "@/context/AuthContext";
 
 // Explicit return contract so downstream destructuring is strongly typed instead of widening to unknown.
 interface AdminRouteResult {
@@ -13,10 +12,11 @@ interface AdminRouteResult {
   role: string | null;
 }
 
-declare global {
-  // Augment Window with optional __E2E__ flag used in tests.
-  interface Window { __E2E__?: string; }
-}
+ // eslint-disable-next-line @typescript-eslint/no-unused-vars
+ declare global {
+   // Augment Window with optional __E2E__ flag used in tests.
+   interface Window { __E2E__?: string; }
+ }
 
 export default function useAdminRoute(): AdminRouteResult {
   const { user, loading, role } = useAuth();
