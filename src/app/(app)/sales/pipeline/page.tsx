@@ -1,6 +1,6 @@
 "use client";
 // Sales - Pipeline
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
@@ -11,7 +11,6 @@ import { ToolPageHeader } from '@/components/tool-page-header';
 import { Button } from '@/components/ui/button';
 import { fetchRecentSalesMetricsSnapshots, fetchRecentSalesForecastSnapshots } from '@/lib/services/sales-automation-snapshots';
 import { ActionCard } from '@/components/shared/action-card';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { useAutomationTrigger } from '@/hooks/useAutomationTrigger';
 import { AddDealModal } from '../_parts/add-deal-modal';
@@ -21,18 +20,18 @@ import { useProvenance } from '@/hooks/useProvenance';
 export default function SalesPipelinePage() {
   const { data } = useMockDomainMetrics('sales', true);
   const { user } = useAuth();
-  const userId = user?.uid; const teamId = (user as any)?.teamId as string | undefined;
+  const userId = user?.uid;
+  const teamId = (user as any)?.teamId as string | undefined;
   interface SalesPipelineMetricsSnapshot { pipeline:number; closedWon:number; totalDeals:number; ts:Date }
   interface SalesPipelineForecastSnapshot { forecast:number; period:string; ts:Date }
   const [snapMetrics, setSnapMetrics] = useState<SalesPipelineMetricsSnapshot | null>(null);
   const [snapForecast, setSnapForecast] = useState<SalesPipelineForecastSnapshot | null>(null);
   interface PipelineHistory { ts:Date; pipeline:number }
   const [metricsHistory, setMetricsHistory] = useState<PipelineHistory[]>([]);
-  const { toast } = useToast();
   const { trigger, running } = useAutomationTrigger();
   const [addOpen, setAddOpen] = useState(false);
   const [loadingSnaps, setLoadingSnaps] = useState(false);
-  const { provenance, markLive, markFallback, ProvenanceLegend } = useProvenance();
+  const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(() => { trackDashboardView('sales'); }, []);
   useEffect(()=> {
     if(!userId) return; let active = true; setLoadingSnaps(true);
