@@ -15,28 +15,48 @@ function getAnalyticsInstance(): Analytics | null {
 }
 
 // Defensive helper – Firebase analytics types require a real instance
-function withAnalytics(cb: (a: Analytics) => void) {
+function withAnalytics(cb: (a: Analytics) => void): void {
   const a = getAnalyticsInstance();
   if (!a) return; // silently ignore when unavailable (dev / unsupported)
-  try { cb(a); } catch {/* swallow – non critical */ }
+  try {
+    cb(a);
+  } catch (err) {
+    // Non-critical — swallow errors; show debug info in non-production environments
+    // eslint-disable-next-line no-console
+    if (process.env.NODE_ENV !== "production") console.debug("analytics error", err);
+  }
 }
 
 // Compute simple conversion rates – placeholder until richer analytics needed
-function calculateConversionRates(data: unknown) {
+const calculateConversionRates = (data: unknown): {
+  viewToBegin: number;
+  beginToPurchase: number;
+  viewToPurchase: number;
+} => {
   try {
-    const daily = (data && typeof data === 'object' && 'daily' in data) ? (data as { daily?: unknown }).daily : {};
+    const daily = (data && typeof data === "object" && "daily" in data)
+      ? (data as { daily?: unknown }).daily
+      : {};
     // naive aggregate: purchase / view_pricing etc.
-    let views = 0, purchases = 0, begins = 0;
-    if (daily && typeof daily === 'object') {
+    let views = 0;
+    let purchases = 0;
+    let begins = 0;
+    if (daily && typeof daily === "object") {
       Object.values(daily as Record<string, unknown>).forEach((d: unknown) => {
-        if (d && typeof d === 'object') {
+        if (d && typeof d === "object") {
           const obj = d as Record<string, unknown>;
           const vp = obj.view_pricing as unknown;
           const bc = obj.begin_checkout as unknown;
           const pu = obj.purchase as unknown;
-          views += Number((vp && typeof vp === 'object' && 'count' in vp ? (vp as { count?: unknown }).count : vp) || 0);
-          begins += Number((bc && typeof bc === 'object' && 'count' in bc ? (bc as { count?: unknown }).count : bc) || 0);
-          purchases += Number((pu && typeof pu === 'object' && 'count' in pu ? (pu as { count?: unknown }).count : pu) || 0);
+          views += Number(
+            (vp && typeof vp === "object" && "count" in vp ? (vp as { count?: unknown }).count : vp) || 0
+          );
+          begins += Number(
+            (bc && typeof bc === "object" && "count" in bc ? (bc as { count?: unknown }).count : bc) || 0
+          );
+          purchases += Number(
+            (pu && typeof pu === "object" && "count" in pu ? (pu as { count?: unknown }).count : pu) || 0
+          );
         }
       });
     }
@@ -48,7 +68,7 @@ function calculateConversionRates(data: unknown) {
   } catch {
     return { viewToBegin: 0, beginToPurchase: 0, viewToPurchase: 0 };
   }
-}
+};
 
 // Payment Analytics Events
 export const trackPaymentEvents = {
@@ -170,36 +190,36 @@ export const trackUserEvents = {
       signup_date?: string;
     }
   ) => {
-    if (typeof window !== "undefined" && rawAnalytics) {
-      setUserProperties(rawAnalytics as Analytics, {
-        user_id: userId,
-        ...properties,
-      });
-    }
+    const a = getAnalyticsInstance();
+    if (!a) return;
+    setUserProperties(a, {
+      user_id: userId,
+      ...properties,
+    });
   },
 
   // Track user engagement
   engagement: (action: string, category: string, label?: string) => {
-    if (typeof window !== "undefined" && rawAnalytics) {
-      logEvent(rawAnalytics as Analytics, "engagement", {
-        action,
-        category,
-        label: label || null,
-        timestamp: new Date().toISOString(),
-      });
-    }
+    const a = getAnalyticsInstance();
+    if (!a) return;
+    logEvent(a, "engagement", {
+      action,
+      category,
+      label: label || null,
+      timestamp: new Date().toISOString(),
+    });
   },
 
   // Track feature usage
   featureUsage: (feature: string, plan: string, usage_count?: number) => {
-    if (typeof window !== "undefined" && rawAnalytics) {
-      logEvent(rawAnalytics as Analytics, "feature_usage", {
-        feature,
-        plan,
-        usage_count: usage_count || 1,
-        timestamp: new Date().toISOString(),
-      });
-    }
+    const a = getAnalyticsInstance();
+    if (!a) return;
+    logEvent(a, "feature_usage", {
+      feature,
+      plan,
+      usage_count: usage_count || 1,
+      timestamp: new Date().toISOString(),
+    });
   },
 };
 
@@ -212,15 +232,15 @@ export const conversionFunnel = {
     plan?: string,
     additionalData?: Record<string, unknown>
   ) => {
-    if (typeof window !== "undefined" && rawAnalytics) {
-      logEvent(rawAnalytics as Analytics, "funnel_step", {
-        step_number: step,
-        step_name: stepName,
-        plan: plan || null,
-        ...additionalData,
-        timestamp: new Date().toISOString(),
-      });
-    }
+    const a = getAnalyticsInstance();
+    if (!a) return;
+    logEvent(a, "funnel_step", {
+      step_number: step,
+      step_name: stepName,
+      plan: plan || null,
+      ...additionalData,
+      timestamp: new Date().toISOString(),
+    });
   },
 
   // Track conversion rates in Firestore
@@ -284,14 +304,14 @@ export const getAnalyticsDashboard = async () => {
 export const abTesting = {
   // Track A/B test variant
   trackVariant: (testName: string, variant: string, plan?: string) => {
-    if (typeof window !== "undefined" && rawAnalytics) {
-      logEvent(rawAnalytics as Analytics, "ab_test_variant", {
-        test_name: testName,
-        variant,
-        plan: plan || null,
-        timestamp: new Date().toISOString(),
-      });
-    }
+    const a = getAnalyticsInstance();
+    if (!a) return;
+    logEvent(a, "ab_test_variant", {
+      test_name: testName,
+      variant,
+      plan: plan || null,
+      timestamp: new Date().toISOString(),
+    });
   },
 
   // Track A/B test conversion
@@ -301,15 +321,15 @@ export const abTesting = {
     conversionType: string,
     value?: number
   ) => {
-    if (typeof window !== "undefined" && rawAnalytics) {
-      logEvent(rawAnalytics as Analytics, "ab_test_conversion", {
-        test_name: testName,
-        variant,
-        conversion_type: conversionType,
-        value: value || null,
-        timestamp: new Date().toISOString(),
-      });
-    }
+    const a = getAnalyticsInstance();
+    if (!a) return;
+    logEvent(a, "ab_test_conversion", {
+      test_name: testName,
+      variant,
+      conversion_type: conversionType,
+      value: value ?? null,
+      timestamp: new Date().toISOString(),
+    });
   },
 };
 
