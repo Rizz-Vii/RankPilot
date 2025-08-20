@@ -1,8 +1,7 @@
-// Dynamic Entitlements Loader (Phase 2)
-// Provides runtime-loaded entitlement flags with safe fallback defaults.
-
-import { getFirestore } from 'firebase/firestore';
-// NOTE: We intentionally duplicate the SubscriptionTier union here to avoid a
+ // Dynamic Entitlements Loader (Phase 2)
+ // Provides runtime-loaded entitlement flags with safe fallback defaults.
+ 
+ // NOTE: We intentionally duplicate the SubscriptionTier union here to avoid a
 // circular dependency (access-control imports ENTITLEMENT_FLAGS). Keep in sync
 // with access-control.ts. Future refactor: extract shared types to types/access.ts.
 export type SubscriptionTier = 'free' | 'starter' | 'agency' | 'enterprise';
@@ -24,9 +23,10 @@ export async function loadEntitlements(force = false): Promise<EntitlementMap> {
     const now = Date.now();
     if (!force && now - cache.loadedAt < TTL_MS) return cache.map;
     try {
-        const db = getFirestore();
-        const docRef = (await import('firebase/firestore')).doc(db, 'planEntitlements', 'global');
-        const snap = await (await import('firebase/firestore')).getDoc(docRef);
+        const firebaseFirestore = await import('firebase/firestore');
+        const db = firebaseFirestore.getFirestore();
+        const docRef = firebaseFirestore.doc(db, 'planEntitlements', 'global');
+        const snap = await firebaseFirestore.getDoc(docRef);
         if (snap.exists()) {
             const data = snap.data() as { entitlements?: Record<string, { enabled?: boolean }> } | undefined;
             const ent: EntitlementMap = { ...DEFAULT_ENTITLEMENTS };
