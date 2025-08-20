@@ -1,5 +1,5 @@
-import type { Firestore} from 'firebase/firestore';
-import { collection, getDocs, limit, orderBy, query, where, QueryDocumentSnapshot } from 'firebase/firestore';
+import type { Firestore } from 'firebase/firestore';
+import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
 import { getLogger } from '@/lib/logging/app-logger';
 
 export interface NormalizedUsageMetrics {
@@ -7,9 +7,11 @@ export interface NormalizedUsageMetrics {
     periodStart: Date;
     periodEnd: Date;
     keywordsTracked: number;
-    keywordsLimit: number | -1;
+    // -1 in limits indicates "unlimited"
+    keywordsLimit: number;
     competitorAnalysis: number;
-    competitorLimit: number | -1;
+    // -1 in limits indicates "unlimited"
+    competitorLimit: number;
     reportsGenerated: number;
 }
 
@@ -26,18 +28,29 @@ export async function fetchUsageMetrics(firestore: Firestore, userId: string): P
         const q = query(collection(firestore, 'usage'), where('userId', '==', userId), orderBy('period', 'desc'), limit(1));
         const snap = await getDocs(q);
         if (snap.empty) return null;
-        const raw = snap.docs[0].data() as Record<string, any>;
+        const raw = snap.docs[0].data() as Record<string, unknown>;
         const period = typeof raw.period === 'string' ? raw.period : '1970-01';
         const { start, end } = monthBounds(period);
+
+        const toNumber = (v: unknown): number => {
+            if (v == null) return 0;
+            const n = Number(v);
+            return Number.isFinite(n) ? n : 0;
+        };
+
+        const usage = raw.usage as Record<string, unknown> | undefined;
+        const limits = raw.limits as Record<string, unknown> | undefined;
+
         return {
             period,
             periodStart: start,
             periodEnd: end,
-            keywordsTracked: Number(raw.usage?.keywordSearches) || 0,
-            keywordsLimit: Number(raw.limits?.keywordSearches) || 0,
-            competitorAnalysis: Number(raw.usage?.competitorReports) || 0,
-            competitorLimit: Number(raw.limits?.competitorReports) || 0,
-            reportsGenerated: Number(raw.usage?.neuroSeoAnalyses) || 0,
+            keywordsTracked: toNumber(usage?.keywordSearches),
+            // -1 in limits indicates "unlimited"
+            keywordsLimit: toNumber(limits?.keywordSearches),
+            competitorAnalysis: toNumber(usage?.competitorReports),
+            competitorLimit: toNumber(limits?.competitorReports),
+            reportsGenerated: toNumber(usage?.neuroSeoAnalyses),
         };
     } catch (e: unknown) {
         const msg = (e && typeof e === 'object' && 'message' in e) ? (e as any).message : String(e);
