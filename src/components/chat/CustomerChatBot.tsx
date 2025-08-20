@@ -255,25 +255,28 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
             if (!isOpen || !user || messages.length > 0) return;
             setRestoring(true);
             try {
-                const token = await (auth.currentUser || (user as any))?.getIdToken?.();
+                const token = await (auth.currentUser || user as AuthUserLike)?.getIdToken?.();
                 if (!token) throw new Error('No auth token');
-        const res = await fetch('/api/chat/customer?limit=30', { headers: { Authorization: `Bearer ${token}` } });
+                const res = await fetch('/api/chat/customer?limit=30', { headers: { Authorization: `Bearer ${token}` } });
                 if (res.ok) {
                     const data = await res.json();
-            if (Array.isArray(data.messages) && data.messages.length) {
+                    if (Array.isArray(data.messages) && data.messages.length) {
                         setSessionId(data.sessionId || sessionId);
-        const mapped = data.messages.map((m: any) => ({
-                id: m.id,
-                message: m.isUser ? m.message : '',
-                response: !m.isUser ? m.response : '',
-                timestamp: m.timestamp,
-                isUser: m.isUser,
-                tokensUsed: m.tokensUsed,
-                type: m.type,
-                mediaUrl: m.mediaUrl,
-        }));
-            setMessages(mapped);
-            oldestMessageTsRef.current = mapped[0]?.timestamp || null;
+                        const mapped = (data.messages as unknown[]).map((m: unknown) => {
+                            const mm = m as RawMessage;
+                            return {
+                                id: String(mm.id || ''),
+                                message: mm.isUser ? (mm.message || '') : '',
+                                response: !mm.isUser ? (mm.response || '') : '',
+                                timestamp: String(mm.timestamp || new Date().toISOString()),
+                                isUser: !!mm.isUser,
+                                tokensUsed: mm.tokensUsed,
+                                type: mm.type,
+                                mediaUrl: mm.mediaUrl,
+                            };
+                        });
+                        setMessages(mapped);
+                        oldestMessageTsRef.current = mapped[0]?.timestamp || null;
                         setHasMore(data.hasMore ?? false);
                         if (data.sessionSummary) setSessionSummary(data.sessionSummary);
                         if (Array.isArray(data.pendingActions)) {
