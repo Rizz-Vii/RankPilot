@@ -17,7 +17,12 @@ import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 import { useProvenance } from '@/hooks/useProvenance';
 
-interface ImportDialogProps { open: boolean; onClose: ()=>void; onImport:(raw:string)=>Promise<void>; loading:boolean; }
+interface ImportDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onImport: (raw: string) => Promise<void>;
+  loading: boolean;
+}
 function ImportDialog({ open, onClose, onImport, loading }: ImportDialogProps){
   const [raw,setRaw] = useState('Acme Corp\nGlobex\nInitech');
   if(!open) return null;
@@ -26,7 +31,12 @@ function ImportDialog({ open, onClose, onImport, loading }: ImportDialogProps){
       <div className="w-full max-w-lg rounded-xl border bg-card p-6 space-y-4 shadow-xl relative">
         <SkeletonOverlay active={loading} label="Importing" />
         <header className="space-y-1"><h3 className="font-semibold text-lg">Import Leads</h3><p className="text-xs text-muted-foreground">Paste newline separated company or contact names (max 500).</p></header>
-        <Textarea value={raw} onChange={e=> setRaw(e.target.value)} rows={8} className="text-xs" />
+        <Textarea
+          value={raw}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRaw(e.target.value)}
+          rows={8}
+          className="text-xs"
+        />
         <div className="flex justify-end gap-2">
           <Button variant="ghost" size="sm" onClick={onClose} disabled={loading}>Cancel</Button>
           <Button size="sm" onClick={()=> onImport(raw)} disabled={loading}>{loading? 'Importing…':'Import'}</Button>
@@ -68,19 +78,63 @@ export default function LeadGenerationPage() {
     }catch(e:unknown){ toast({ title:'Import failed', description:(e instanceof Error ? e.message : String(e)) || 'Unknown error', variant:'destructive' }); }
     finally{ setBusy(null); }
   }
-  async function handleScore(){
-    try{ setBusy('score');
-      live.addOptimistic({ id: `tmp-${Date.now()}`, period: new Date().toISOString().slice(0,7), name: 'Lead Score', channel:'lead-gen', impressions:0, clicks:0, leads:0, spend:0, revenue:0, __provenance:'optimistic' } as any);
-      const res = await scoreLeads(userId, teamId); toast({ title:'Scoring complete', description:`Updated ${res.updated} leads.` }); }
-    catch(e:unknown){ toast({ title:'Scoring failed', description:(e instanceof Error ? e.message : String(e)) || 'Unknown error', variant:'destructive' }); }
-    finally{ setBusy(null); }
+  async function handleScore(): Promise<void> {
+    try {
+      setBusy('score');
+      live.addOptimistic(
+        {
+          id: `tmp-${Date.now()}`,
+          period: new Date().toISOString().slice(0, 7),
+          name: 'Lead Score',
+          channel: 'lead-gen',
+          impressions: 0,
+          clicks: 0,
+          leads: 0,
+          spend: 0,
+          revenue: 0,
+          __provenance: 'optimistic',
+        } as any
+      );
+      const res = await scoreLeads(userId, teamId);
+      toast({ title: 'Scoring complete', description: `Updated ${res.updated} leads.` });
+    } catch (e: unknown) {
+      toast({
+        title: 'Scoring failed',
+        description: (e instanceof Error ? e.message : String(e)) || 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setBusy(null);
+    }
   }
-  async function handleRoute(){
-    try{ setBusy('route');
-      live.addOptimistic({ id: `tmp-${Date.now()}`, period: new Date().toISOString().slice(0,7), name: 'Lead Route', channel:'lead-gen', impressions:0, clicks:0, leads:0, spend:0, revenue:0, __provenance:'optimistic' } as any);
-      const res = await routeLeads(userId, teamId); toast({ title:'Routing complete', description:`Routed ${res.routed} leads.` }); }
-    catch(e:unknown){ toast({ title:'Routing failed', description:(e instanceof Error ? e.message : String(e)) || 'Unknown error', variant:'destructive' }); }
-    finally{ setBusy(null); }
+  async function handleRoute(): Promise<void> {
+    try {
+      setBusy('route');
+      live.addOptimistic(
+        {
+          id: `tmp-${Date.now()}`,
+          period: new Date().toISOString().slice(0, 7),
+          name: 'Lead Route',
+          channel: 'lead-gen',
+          impressions: 0,
+          clicks: 0,
+          leads: 0,
+          spend: 0,
+          revenue: 0,
+          __provenance: 'optimistic',
+        } as any
+      );
+      const res = await routeLeads(userId, teamId);
+      toast({ title: 'Routing complete', description: `Routed ${res.routed} leads.` });
+    } catch (e: unknown) {
+      toast({
+        title: 'Routing failed',
+        description: (e instanceof Error ? e.message : String(e)) || 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setBusy(null);
+    }
   }
   return (
     <FeatureGate feature="marketing_lead_generation" requiredTier="enterprise" showUpgrade>
