@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
-import { enforceTeamRateLimit, TeamRateLimitError, applyTeamRateLimit } from '@/lib/rate-limit/team-rate-limit';
+import { TeamRateLimitError, applyTeamRateLimit } from '@/lib/rate-limit/team-rate-limit';
 
 // Proxy route to bypass client-side CORS issues when calling callable Cloud Function directly.
 // Accepts SEO audit request JSON and forwards to Cloud Function endpoint.
