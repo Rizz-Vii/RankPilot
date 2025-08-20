@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import LoadingScreen from "@/components/ui/loading-screen";
@@ -23,7 +23,6 @@ import {
   Upload,
   Eye,
   Download,
-  Settings,
   FileText,
   Monitor,
   Smartphone,
