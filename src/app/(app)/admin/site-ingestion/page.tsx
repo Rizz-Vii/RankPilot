@@ -10,7 +10,7 @@ interface SiteIngestionResult {
   durationMs?: number;
   startedAt?: string;
   finishedAt?: string;
-  [key: string]: any; // allow extra diagnostic fields without casting elsewhere
+  [key: string]: unknown; // allow extra diagnostic fields without casting elsewhere
 }
 
 export default function SiteIngestionAdminPage() {
@@ -19,13 +19,14 @@ export default function SiteIngestionAdminPage() {
   const [maxPages, setMaxPages] = useState(8);
   const [status, setStatus] = useState('Idle');
   const [result, setResult] = useState<SiteIngestionResult | null>(null);
-  const isAdmin = (profile as any)?.subscriptionTier === 'admin';
+  type ProfileWithTier = { subscriptionTier?: string } | null | undefined;
+  const isAdmin = (profile as ProfileWithTier)?.subscriptionTier === 'admin';
 
   async function runIngestion() {
     if (!isAdmin || !baseUrl) return;
     setStatus('Running');
     try {
-      const idToken = await (auth.currentUser as any)?.getIdToken?.();
+      const idToken = await auth.currentUser?.getIdToken?.();
       const res = await fetch('/api/admin/site/ingest', {
         method: 'POST',
         headers: {
