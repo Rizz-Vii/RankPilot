@@ -8,6 +8,7 @@
 
 
 export default function useAdminRoute(): { user: ReturnType<typeof useAuth>["user"]; loading: boolean; role: string | null } {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user, loading, role } = useAuth();
   const router = useRouter();
 
