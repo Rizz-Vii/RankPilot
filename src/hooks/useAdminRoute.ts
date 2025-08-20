@@ -5,12 +5,6 @@
  import { useRouter } from "next/navigation";
  import { useAuth } from "@/context/AuthContext";
 
-// Explicit return contract so downstream destructuring is strongly typed instead of widening to unknown.
-interface AdminRouteResult {
-  user: ReturnType<typeof useAuth>["user"]; // User | null
-  loading: boolean;
-  role: string | null;
-}
 
 declare global {
   // Augment Window with optional __E2E__ flag used in tests.
@@ -23,7 +17,7 @@ declare global {
 // This is a no-op that's safe in all environments.
 void (globalThis as any).__E2E__;
 
-export default function useAdminRoute(): AdminRouteResult {
+export default function useAdminRoute(): { user: ReturnType<typeof useAuth>["user"]; loading: boolean; role: string | null } {
   const { user, loading, role } = useAuth();
   const router = useRouter();
 
