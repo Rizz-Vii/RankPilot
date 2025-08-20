@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -81,7 +81,7 @@ interface User {
   activityCount?: number;
 }
 
-export default function AdminUserManagement() {
+export default function AdminUserManagement(): JSX.Element {
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,37 +94,48 @@ export default function AdminUserManagement() {
   >("promote");
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    let mounted = true;
 
-  async function fetchUsers() {
-    try {
-      setLoading(true);
-      const qy = query(collection(db, 'users'), orderBy('createdAt', 'desc'), limit(200));
-      const snap = await getDocs(qy);
-      const list: User[] = snap.docs.map(d => {
-        const data = d.data() as Record<string, any>;
-        return {
-          id: d.id,
-            email: typeof data.email === 'string' ? data.email : '',
-            displayName: typeof data.displayName === 'string' ? data.displayName : undefined,
-            role: typeof data.role === 'string' ? data.role : 'user',
+    (async function fetchUsers() {
+      try {
+        setLoading(true);
+        const qy = query(collection(db, "users"), orderBy("createdAt", "desc"), limit(200));
+        const snap = await getDocs(qy);
+        const list: User[] = snap.docs.map((d) => {
+          const data = d.data() as Record<string, any>;
+          return {
+            id: d.id,
+            email: typeof data.email === "string" ? data.email : "",
+            displayName:
+              typeof data.displayName === "string" ? data.displayName : undefined,
+            role: typeof data.role === "string" ? data.role : "user",
             createdAt: isTimestampLike(data.createdAt) ? data.createdAt : undefined,
             lastSignIn: isTimestampLike(data.lastSignIn) ? data.lastSignIn : undefined,
             subscriptionStatus: data.subscription?.status,
             subscriptionTier: data.subscription?.tier,
-            activityCount: typeof data.activityCount === 'number' ? data.activityCount : undefined
-        };
-      });
-      setUsers(list);
-    } catch (e) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to load users'});
-    } finally {
-      setLoading(false);
-    }
-  }
+            activityCount:
+              typeof data.activityCount === "number" ? data.activityCount : undefined,
+          };
+        });
+        if (mounted) setUsers(list);
+      } catch (e) {
+        if (mounted)
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to load users",
+          });
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
 
-  const handleUserAction = async () => {
+    return () => {
+      mounted = false;
+    };
+  }, [toast]);
+
+  const handleUserAction = async (): Promise<void> => {
     if (!selectedUser) return;
 
     try {
