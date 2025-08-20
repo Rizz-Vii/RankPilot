@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Eye, Bot, Search, TrendingUp, AlertCircle, CheckCircle2, ExternalLink, Copy, Download, Zap } from "lucide-react";
+import { Bot, Search, TrendingUp, AlertCircle, CheckCircle2, ExternalLink, Copy, Download } from "lucide-react";
 import { DashboardSurface } from '@/components/layout/DashboardSurface';
 import { SuiteAccentProvider } from '@/context/SuiteAccentContext';
 import { useAuth } from "@/context/AuthContext";
