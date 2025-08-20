@@ -1,5 +1,5 @@
 // Stripe Webhook Handler - Enhanced Security
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 /**
  * POST /api/webhooks/stripe
