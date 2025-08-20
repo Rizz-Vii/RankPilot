@@ -1,4 +1,3 @@
-// src/app/(app)/content-analyzer/page.tsx
 "use client";
 
 import {
@@ -36,31 +35,8 @@ import {
     RefreshCw,
     TrendingUp
 } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-// Type definitions for content analysis
-interface ContentAnalysisResponse {
-    overallScore: number;
-    readability: {
-        score: number;
-        grade: string;
-        suggestions: string[];
-    };
-    seo: {
-        score: number;
-        keywordDensity: number;
-        suggestions: string[];
-    };
-    sentiment: {
-        score: number;
-        tone: string;
-        suggestions: string[];
-    };
-    readabilityScore: number;
-    seoScore: number;
-    sentimentScore: number;
-    resultsSummary: string;
-}
 
 // Mock analysis function - to be replaced with NeuroSEO integration
 async function analyzeContent(): Promise<ContentAnalysisResponse> {
