@@ -27,8 +27,6 @@ import { trackPaymentEvents, conversionFunnel } from "@/lib/analytics";
 const createCheckoutSession = httpsCallable(functions, "createCheckoutSession");
 const createPayPalOrder = httpsCallable(functions, "createPayPalOrder");
 
-interface CheckoutPageProps {}
-
 const paymentMethods = [
   {
     id: "stripe",
@@ -48,10 +46,10 @@ const paymentMethods = [
   },
 ];
 
-export default function MultiPaymentCheckout() {
-  const [selectedMethod, setSelectedMethod] = useState("stripe");
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+export default function MultiPaymentCheckout(): JSX.Element {
+  const [selectedMethod, setSelectedMethod] = useState<string>("stripe");
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -75,7 +73,7 @@ export default function MultiPaymentCheckout() {
     conversionFunnel.step(2, "checkout_view", planId);
   }, [planId, price]);
 
-  const handleStripeCheckout = async () => {
+  const handleStripeCheckout = async (): Promise<void> => {
     try {
       setIsProcessing(true);
 
@@ -129,7 +127,7 @@ export default function MultiPaymentCheckout() {
   };
 
   interface PayPalApproveData { orderID?: string }
-  const handlePayPalApprove = async (data: PayPalApproveData) => {
+  const handlePayPalApprove = async (data: PayPalApproveData): Promise<void> => {
     try {
       setIsProcessing(true);
 
@@ -388,7 +386,7 @@ export default function MultiPaymentCheckout() {
                           createOrder={async () => {
                             try {
                               const result = await createPayPalOrder({
-                                userId: user.uid,
+                                userId: user?.uid || "",
                                 plan: planId,
                                 interval: billingInterval,
                                 amount: price,
@@ -404,7 +402,7 @@ export default function MultiPaymentCheckout() {
                               throw new Error(msg);
                             }
                           }}
-                          onApprove={handlePayPalApprove as any}
+                          onApprove={(data: any) => void handlePayPalApprove(data)}
                           onError={(error: unknown) => {
                             const msg = (error as { message?: string })?.message || 'PayPal error';
                             console.error("PayPal error:", error);
