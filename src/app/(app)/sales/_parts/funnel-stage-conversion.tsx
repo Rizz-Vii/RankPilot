@@ -1,10 +1,9 @@
 "use client";
-import React from 'react';
 import { useSalesContext } from './sales-context';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LabelList, Cell } from 'recharts';
 
 interface Props { onStageClick?: (stage: string) => void }
-export default function FunnelStageConversion({ onStageClick }: Props) {
+export default function FunnelStageConversion({ onStageClick }: Props): JSX.Element {
   const { data } = useSalesContext();
   const funnel = data?.funnel || [];
   return (
@@ -16,9 +15,28 @@ export default function FunnelStageConversion({ onStageClick }: Props) {
             <XAxis type="number" hide domain={[0, (dataMax: number) => dataMax * 1.1]} />
             <YAxis type="category" dataKey="stage" width={24} tick={{ fontSize: 10 }} />
             <Tooltip cursor={{ fill: 'hsl(var(--muted)/0.4)' }} labelStyle={{ fontSize: 12 }} contentStyle={{ fontSize: 12 }} />
-            <Bar dataKey="count" radius={4} fill="hsl(var(--primary)/0.3)" onClick={(d: any)=> onStageClick && onStageClick(d?.stage)} cursor={onStageClick? 'pointer':'default'}>
-              <LabelList dataKey="conversion" position="right" formatter={(v: unknown) => String(v) + '%'} className="text-[10px] fill-current" />
-              {funnel.map((f: any, i: number)=>(<Cell key={f?.stage ?? i} fill={`hsl(var(--primary)/${0.15 + (0.6*(1 - i/funnel.length))})`} />))}
+            <Bar
+              dataKey="count"
+              radius={4}
+              fill="hsl(var(--primary)/0.3)"
+              onClick={(d: any) => {
+                const stage = d?.payload?.stage ?? d?.stage;
+                if (onStageClick && typeof stage === 'string') onStageClick(stage);
+              }}
+              cursor={onStageClick ? 'pointer' : 'default'}
+            >
+              <LabelList
+                dataKey="conversion"
+                position="right"
+                formatter={(v: unknown) => `${String(v)}%`}
+                className="text-[10px] fill-current"
+              />
+              {funnel.map((f: any, i: number) => (
+                <Cell
+                  key={f?.stage ?? i}
+                  fill={`hsl(var(--primary)/${0.15 + (0.6 * (1 - i / funnel.length))})`}
+                />
+              ))}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
