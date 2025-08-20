@@ -308,7 +308,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
                 console.log('   ✅ Invalid JWT properly rejected');
 
             } catch (error) {
-                testDiagnostics.errors.push(error instanceof Error ? error.message : String(error));
+                pushDiagnostic(error);
                 console.log('   ✅ JWT validation working');
             }
         });
