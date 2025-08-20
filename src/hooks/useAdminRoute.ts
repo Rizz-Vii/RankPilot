@@ -12,12 +12,11 @@ interface AdminRouteResult {
   role: string | null;
 }
 
- /* eslint-disable @typescript-eslint/no-unused-vars */
- declare global {
-   // Augment Window with optional __E2E__ flag used in tests.
-   interface Window { __E2E__?: string; }
- }
- /* eslint-enable @typescript-eslint/no-unused-vars */
+declare global {
+  // Augment Window with optional __E2E__ flag used in tests.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface Window { __E2E__?: string; }
+}
 
 export default function useAdminRoute(): AdminRouteResult {
   const { user, loading, role } = useAuth();
