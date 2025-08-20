@@ -6,24 +6,11 @@
  import { useAuth } from "@/context/AuthContext";
 
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* Access __E2E__ at runtime via (window as any).__E2E__ to avoid a file-level type augmentation
-   that can be reported as an unused declaration by @typescript-eslint/no-unused-vars. */
-/* eslint-enable @typescript-eslint/no-unused-vars */
 
 export default function useAdminRoute(): { user: ReturnType<typeof useAuth>["user"]; loading: boolean; role: string | null } {
   const { user, loading, role } = useAuth();
   const router = useRouter();
 
-  // Prevent false-positive unused variable lint errors.
-  // Reference variables in a no-op so @typescript-eslint/no-unused-vars doesn't trigger.
-  // Use a conditional dead-code block so variables are referenced without side-effects.
-  if (false) {
-    void user;
-    void loading;
-    void role;
-    void router;
-  }
 
   useEffect(() => {
     // Redirect if not loading and user is not authenticated or role is not 'admin'
