@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getFirestore, collection, query, limit, getDocs } from 'firebase/firestore';
+import { collection, query, limit, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 // Dev-only diagnostics endpoint: validates current user Firestore read access for key collections
