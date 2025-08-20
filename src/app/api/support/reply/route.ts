@@ -29,7 +29,7 @@ function getTransport() {
     } as unknown as nodemailer.Transporter;
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
     try {
         const body = await req.json();
         const parsed = replySchema.safeParse(body);
@@ -53,22 +53,24 @@ export async function POST(req: NextRequest) {
             to: toEmail,
             subject,
             text: reply,
-            html: `<div style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #111; white-space: pre-wrap\">${reply}</div>`,
+            html: `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111; white-space: pre-wrap">${reply}</div>`,
         });
+
+        const serverTimestamp = admin.firestore.FieldValue.serverTimestamp;
 
         await docRef.update({
-            emailStatus: "replied",
-            lastReplyAt: (admin.firestore as any).FieldValue.serverTimestamp(),
+            emailStatus: 'replied',
+            lastReplyAt: serverTimestamp(),
             lastReplySubject: subject,
             lastReplyMessageId: info.messageId,
-            updatedAt: (admin.firestore as any).FieldValue.serverTimestamp(),
+            updatedAt: serverTimestamp(),
         });
 
-        await docRef.collection("replies").add({
+        await docRef.collection('replies').add({
             subject,
             body: reply,
             messageId: info.messageId,
-            createdAt: (admin.firestore as any).FieldValue.serverTimestamp(),
+            createdAt: serverTimestamp(),
         });
 
         return NextResponse.json({ success: true, id: info.messageId });
