@@ -16,6 +16,9 @@
  */
 import { spawn } from 'child_process';
 import path from 'path';
+// Fallback triage helpers (plain JS)
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { computeFallbackTriageAction, extractFirstJsonObject } = require('./triage-util.js');
 // Lightweight import (ts-nocheck) for mission regeneration
 let runMissionCycle: undefined | (() => any);
 try { runMissionCycle = require('./mission/missionManager').runMissionCycle; } catch { /* ignore */ }
@@ -24,6 +27,11 @@ const INTERVAL = Number(process.env.BRAIN_INTERVAL_MS || 180000);
 const MODE = process.env.BRAIN_MODE === 'ask' ? 'ask' : 'plan-only';
 let tick = 0;
 let running = false;
+// Agent triage state (optional, behind env flag)
+let lastAgentTriageAt = 0;
+let lastAgentTriageAction: string | null = null;
+let lastAgentTriageRationale: string | undefined;
+let lastAgentTriageMetrics: { retries: number; fallback: boolean; guardrailFailures: number } | null = null;
 let lastPreferred: any[] = [];
 let lastAutoDelegate = 0;
 let lastTsEnqueue = 0;
@@ -138,7 +146,7 @@ function formatEnhancements(list: any[]) {
     return header + '\n' + sep + '\n' + lines.join('\n');
 }
 
-function runOnce() {
+async function runOnce() {
     if (running) return;
     running = true;
     tick += 1;
@@ -152,7 +160,17 @@ function runOnce() {
             const fs = require('fs');
             const curPath = path.join('artifacts', 'brain', 'currentMission.json');
             if (fs.existsSync(curPath)) previousMission = JSON.parse(fs.readFileSync(curPath, 'utf8'));
-            if (runMissionCycle) missionCurrent = runMissionCycle();
+            try {
+                if (runMissionCycle) {
+                    console.log(`\x1b[35m[brain:watch] invoking runMissionCycle (tick=${tick})\x1b[0m`);
+                    missionCurrent = runMissionCycle();
+                    console.log(`\x1b[35m[brain:watch] mission updated tsErrors=${missionCurrent?.diagnostics?.typecheck?.errors} lintE=${missionCurrent?.diagnostics?.lint?.errors} lintW=${missionCurrent?.diagnostics?.lint?.warnings}\x1b[0m`);
+                } else {
+                    console.log(`\x1b[31m[brain:watch] runMissionCycle unavailable (tick=${tick})\x1b[0m`);
+                }
+            } catch (e) {
+                console.log(`\x1b[31m[brain:watch] mission regeneration failed (tick=${tick}): ${(e as any)?.message}\x1b[0m`);
+            }
             if (previousMission && missionCurrent) {
                 try {
                     missionDelta = {
@@ -161,6 +179,70 @@ function runOnce() {
                         lintWarnings: missionCurrent.diagnostics.lint.warnings - (previousMission?.diagnostics?.lint?.warnings || 0)
                     };
                 } catch { missionDelta = null; }
+            }
+        }
+
+        // Enhanced agent-based triage (guardrail + retry + fallback) -- legacy path removed
+        if (process.env.BRAIN_AGENT_TRIAGE === '1' && missionCurrent) {
+            const now = Date.now();
+            const cooldownMs = Number(process.env.BRAIN_AGENT_TRIAGE_COOLDOWN_MS || 300000);
+            if (now - lastAgentTriageAt > cooldownMs) {
+                lastAgentTriageAt = now;
+                const tsErrors = missionCurrent?.diagnostics?.typecheck?.errors ?? 0;
+                const lintErrors = missionCurrent?.diagnostics?.lint?.errors ?? 0;
+                const lintWarnings = missionCurrent?.diagnostics?.lint?.warnings ?? 0;
+                const diag = { tsErrors, lintErrors, lintWarnings };
+                // Reset metrics container for this attempt
+                lastAgentTriageMetrics = { retries: 0, fallback: false, guardrailFailures: 0 };
+                try {
+                    const { createSimpleAgent, runAgentOnce } = require('../../src/lib/ai/agents/agentAdapter');
+                    const { evaluateAgentTriageOutput, buildTriageInstructions } = require('./triage/validation');
+                    const instructions = buildTriageInstructions(diag);
+                    const triageAgent = await createSimpleAgent({
+                        name: 'TriageAgent',
+                        instructions,
+                        outputGuardrails: [{
+                            name: 'json-shape',
+                            execute: async ({ agentOutput }) => {
+                                const before = lastAgentTriageMetrics?.guardrailFailures || 0;
+                                const parsed = evaluateAgentTriageOutput(agentOutput, lastAgentTriageMetrics || undefined);
+                                const after = lastAgentTriageMetrics?.guardrailFailures || 0;
+                                const ok = !!parsed && before === after;
+                                return { tripwire: !ok, info: ok ? 'valid' : 'invalid-shape' };
+                            }
+                        }]
+                    });
+                    let res = await runAgentOnce(triageAgent, { input: 'Triage now.' });
+                    let parsed = (res.ok) ? evaluateAgentTriageOutput(res.output, lastAgentTriageMetrics || undefined) : null;
+                    if (!parsed && res.ok) {
+                        // Retry with stricter instruction
+                        const retryAgent = await createSimpleAgent({ name: 'TriageAgentRetry', instructions: instructions + ' STRICT JSON ONLY. Return ONLY the JSON object.' });
+                        const retry = await runAgentOnce(retryAgent, { input: 'Retry triage.' });
+                        lastAgentTriageMetrics && (lastAgentTriageMetrics.retries += 1);
+                        if (retry.ok) parsed = evaluateAgentTriageOutput(retry.output, lastAgentTriageMetrics || undefined);
+                        if (retry.meta) res.meta = { ...(res.meta || {}), retryMeta: retry.meta };
+                    }
+                    if (parsed) {
+                        lastAgentTriageAction = parsed.action;
+                        lastAgentTriageRationale = parsed.rationale;
+                        const mt = res.meta || {};
+                        const tokenStr = (mt.inputTokens || mt.outputTokens) ? ` tokens(in=${mt.inputTokens || '?'} out=${mt.outputTokens || '?'} tot=${mt.totalTokens || '?'})` : '';
+                        console.log(`\x1b[36m[brain:watch][agent-triage] action=${parsed.action} rationale=${parsed.rationale} model=${mt.model || 'n/a'}${tokenStr}\x1b[0m`);
+                    } else if (res.error === 'agents_disabled') {
+                        lastAgentTriageAt = now - cooldownMs + 10000; // retry sooner
+                        console.log('\x1b[90m[brain:watch][agent-triage] agents disabled\x1b[0m');
+                        const fb = computeFallbackTriageAction(diag); lastAgentTriageAction = fb.action; lastAgentTriageRationale = 'fallback:' + fb.rationale; lastAgentTriageMetrics && (lastAgentTriageMetrics.fallback = true);
+                    } else if (res.error) {
+                        console.log(`\x1b[31m[brain:watch][agent-triage] error: ${res.error}\x1b[0m`);
+                        const fb = computeFallbackTriageAction(diag); lastAgentTriageAction = fb.action; lastAgentTriageRationale = 'fallback:' + fb.rationale; lastAgentTriageMetrics && (lastAgentTriageMetrics.fallback = true);
+                    } else {
+                        console.log('\x1b[33m[brain:watch][agent-triage] invalid output (no JSON)\x1b[0m');
+                        const fb = computeFallbackTriageAction(diag); lastAgentTriageAction = fb.action; lastAgentTriageRationale = 'fallback:' + fb.rationale; lastAgentTriageMetrics && (lastAgentTriageMetrics.fallback = true);
+                    }
+                } catch (e) {
+                    console.log(`\x1b[31m[brain:watch][agent-triage] invocation failed: ${(e && e.message) || e}\x1b[0m`);
+                    try { const fb = computeFallbackTriageAction(diag); lastAgentTriageAction = fb.action; lastAgentTriageRationale = 'fallback:' + fb.rationale; lastAgentTriageMetrics && (lastAgentTriageMetrics.fallback = true); } catch { }
+                }
             }
         }
     } catch { /* noop */ }
@@ -240,7 +322,8 @@ function runOnce() {
                             steps: missionCurrent.immediateSteps?.length || 0
                         } : null,
                         missionDelta,
-                        autoDelegationEnabled: process.env.BRAIN_AUTODELEGATE === '1'
+                        autoDelegationEnabled: process.env.BRAIN_AUTODELEGATE === '1',
+                        triage: lastAgentTriageAction ? { action: lastAgentTriageAction, rationale: lastAgentTriageRationale, metrics: lastAgentTriageMetrics } : null
                     };
                     fs.appendFileSync('artifacts/brain/watch-ticks.jsonl', JSON.stringify(rec) + '\n');
                 } catch { /* ignore */ }
@@ -259,9 +342,29 @@ function runOnce() {
                 }
             } catch { /* ignore */ }
         } catch {/* ignore */ }
+        try {
+            // Post-run: apply agent triage recommendations (still honoring existing cooldowns & checks)
+            if (process.env.BRAIN_AGENT_TRIAGE === '1' && lastAgentTriageAction) {
+                const action = String(lastAgentTriageAction);
+                const wantStart = action === 'start_delegation' || action === 'start_and_enqueue';
+                const wantEnqueue = action === 'enqueue_ts_fixes' || action === 'start_and_enqueue';
+                if (wantStart) {
+                    // Reuse existing helper logic (guarded, cooldown independent). Provide a minimal fake parsed object.
+                    try {
+                        const fakeParsed = { preferred: [{ id: 0 }], context: { tsErrors: missionCurrent?.diagnostics?.typecheck?.errors || 0, lintErrors: missionCurrent?.diagnostics?.lint?.errors || 0 } };
+                        autoStartDelegationIfNeeded(fakeParsed);
+                    } catch { /* ignore */ }
+                }
+                if (wantEnqueue) {
+                    try {
+                        const fakeParsed = { preferred: [{ id: 0 }], context: { tsErrors: missionCurrent?.diagnostics?.typecheck?.errors || 0 } };
+                        enqueuePerFileTsFixIfNeeded(fakeParsed);
+                    } catch { /* ignore */ }
+                }
+            }
+        } catch { /* ignore */ }
         running = false;
     });
 }
-
-setInterval(runOnce, INTERVAL);
-runOnce();
+setInterval(() => { void runOnce(); }, INTERVAL);
+void runOnce();
