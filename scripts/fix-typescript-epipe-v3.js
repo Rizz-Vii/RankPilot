@@ -11,8 +11,9 @@ const { execSync } = require('child_process');
 
 console.log('🔧 RankPilot TypeScript EPIPE Error Fix v3');
 console.log('==========================================');
+'use strict';
 
-function safeClearPath(targetPath, description) {
+const safeClearPath = (targetPath, description) => {
   const fullPath = path.join(process.cwd(), targetPath);
   if (fs.existsSync(fullPath)) {
     try {
@@ -31,9 +32,9 @@ function safeClearPath(targetPath, description) {
     console.log(`   ℹ️  ${description} not found (already clean)`);
     return true;
   }
-}
+};
 
-function updateVSCodeSettings() {
+const updateVSCodeSettings = () => {
   console.log('2. Optimizing VS Code settings...');
   
   const vscodeDir = path.join(process.cwd(), '.vscode');
@@ -75,9 +76,9 @@ function updateVSCodeSettings() {
   } else {
     console.log('   ℹ️  VS Code settings already optimized');
   }
-}
+};
 
-function testTypeScript() {
+const testTypeScript = () => {
   console.log('3. Testing TypeScript compilation...');
   try {
     execSync('npx tsc --noEmit --incremental false', { 
@@ -90,9 +91,9 @@ function testTypeScript() {
     console.log('   ⚠️  TypeScript compilation had issues (this may be normal)');
     return false;
   }
-}
+};
 
-function createQuickRestartScript() {
+const createQuickRestartScript = () => {
   console.log('4. Creating quick restart utility...');
   
   const quickRestart = `#!/usr/bin/env node
@@ -116,7 +117,7 @@ try {
   }
   
   console.log('   ✅ Created quick-typescript-restart.js');
-}
+};
 
 // Main execution
 try {
