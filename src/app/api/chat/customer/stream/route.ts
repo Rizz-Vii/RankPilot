@@ -133,7 +133,7 @@ export async function POST(req: NextRequest): Promise<Response> {
         const body = await req.json().catch(() => ({}));
         const { message, sessionId, url, teamId } = body as { message?: string; sessionId?: string; url?: string; teamId?: string };
         if (teamId) {
-            try { await enforceTeamRateLimit(adminDb as any, teamId, { routeKey: 'chat/customer/stream' }); } catch (e: unknown) {
+            try { await enforceTeamRateLimit(adminDb, teamId, { routeKey: 'chat/customer/stream' }); } catch (e: unknown) {
                 if (e instanceof TeamRateLimitError) {
                     recordRateLimitRejection('chat/customer/stream');
                     recordRateLimitRejection(`team:${teamId}`);
@@ -350,7 +350,7 @@ export async function POST(req: NextRequest): Promise<Response> {
                     controller.close();
                 } catch (e: unknown) {
                     recordError('chat/customer/stream', '5xx_server');
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ error: (e as any)?.message || 'stream_error', providerTried: provider, openaiCircuitOpen: openAICircuitOpen(), provenance: 'synthetic' }, { path: 'chat/customer/stream' }))}\n\n`));
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ error: e instanceof Error ? e.message : String(e ?? 'stream_error'), providerTried: provider, openaiCircuitOpen: openAICircuitOpen(), provenance: 'synthetic' }, { path: 'chat/customer/stream' }))}\n\n`));
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
                 }
@@ -370,6 +370,6 @@ export async function POST(req: NextRequest): Promise<Response> {
     } catch (e: unknown) {
         recordError('chat/customer/stream', '5xx_server');
         recordRouteLatency('chat/customer/stream', Date.now() - start);
-        return NextResponse.json({ error: (e as any)?.message || 'Stream init failed' }, { status: 500 });
+        return NextResponse.json({ error: e instanceof Error ? e.message : String(e ?? 'Stream init failed') }, { status: 500 });
     }
 }
