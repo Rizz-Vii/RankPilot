@@ -11,7 +11,7 @@ if (!process.env.FIRESTORE_EMULATOR_HOST) {
 }
 import type { RulesTestEnvironment } from '@firebase/rules-unit-testing';
 import { initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { collection, doc, setDoc, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, Timestamp } from 'firebase/firestore';
 import { fetchBillingData } from '../src/lib/billing/fetch-billing-data';
 
 (async () => {
