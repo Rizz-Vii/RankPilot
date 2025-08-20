@@ -50,11 +50,20 @@ function CommandPalette({ onClose }: CommandPaletteProps) {
   const { translate } = useI18n();
   const tr = (k: string, fb: string) => { const v = translate(k); return v === k ? fb : v; };
   const cycleTheme = () => {
-    const order: Array<typeof theme> = ['light','dark','high-contrast','auto'];
-    const idx = order.indexOf(theme as typeof theme);
-    const next = order[(idx+1)%order.length] as any;
-    setTheme(next);
-    try { window.dispatchEvent(new CustomEvent('rp_theme_cycle', { detail: { from: theme, to: order[(idx+1)%order.length], at: Date.now() } })); } catch {}
+    const order = ['light', 'dark', 'high-contrast', 'auto'] as const;
+    type ThemeName = typeof order[number];
+    const idx = order.indexOf(theme as ThemeName);
+    const next = order[(idx + 1) % order.length] as ThemeName;
+    setTheme(next as any);
+    try {
+      window.dispatchEvent(
+        new CustomEvent('rp_theme_cycle', {
+          detail: { from: theme, to: next, at: Date.now() },
+        }),
+      );
+    } catch (err) {
+      // ignore in environments that disallow CustomEvent dispatch
+    }
   };
 
   useEffect(() => {
@@ -63,7 +72,7 @@ function CommandPalette({ onClose }: CommandPaletteProps) {
   }, [onClose]);
 
   return (
-    <Dialog open onOpenChange={(o)=>!o&&onClose()}>
+    <Dialog open={true} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-2xl p-0 overflow-hidden">
         <div className="border-b px-4 py-3 flex items-center justify-between bg-muted/40">
           <h3 className="text-sm font-medium flex items-center gap-2"><Command className="h-4 w-4"/>{tr('commandPalette.title','Command Center')}</h3>
