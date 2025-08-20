@@ -6,30 +6,49 @@
 const fs = require('fs');
 const path = require('path');
 
+function listFilesRecursive(dir) {
+  try {
+    if (!fs.existsSync(dir)) return [];
+    const result = [];
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    entries.forEach(entry => {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        result.push(...listFilesRecursive(full));
+      } else {
+        result.push(full);
+      }
+    });
+    return result;
+  } catch (err) {
+    return [];
+  }
+}
+
 function getProjectMetrics() {
   const metrics = {};
   
   try {
-    // Count test files
-    const testFiles = fs.readdirSync('tests', { recursive: true }).filter(f => f.endsWith('.spec.ts'));
+    // Count test files (recursive)
+    const testFiles = listFilesRecursive('tests').filter(f => f.endsWith('.spec.ts'));
     metrics.testFiles = testFiles.length;
     
-    // Count components
-    const componentFiles = fs.readdirSync('src/components', { recursive: true }).filter(f => f.endsWith('.tsx'));
+    // Count components (recursive)
+    const componentFiles = listFilesRecursive('src/components').filter(f => f.endsWith('.tsx'));
     metrics.components = componentFiles.length;
     
-    // Count documentation
-    const docFiles = fs.readdirSync('docs', { recursive: true }).filter(f => f.endsWith('.md'));
+    // Count documentation (recursive)
+    const docFiles = listFilesRecursive('docs').filter(f => f.endsWith('.md'));
     metrics.documentationFiles = docFiles.length;
     
-    // Count scripts
-    const scriptFiles = fs.readdirSync('scripts').filter(f => f.endsWith('.js') || f.endsWith('.ps1') || f.endsWith('.sh'));
+    // Count scripts (non-recursive)
+    const scriptFiles = fs.existsSync('scripts') ? fs.readdirSync('scripts').filter(f => f.endsWith('.js') || f.endsWith('.ps1') || f.endsWith('.sh')) : [];
     metrics.scripts = scriptFiles.length;
 
     // Count pilotScripts
     let pilotScriptCount = 0;
     try {
-      const pilotScriptFiles = fs.readdirSync('pilotScripts', { recursive: true }).filter(f => 
+      const pilotScriptFiles = listFilesRecursive('pilotScripts').filter(f => 
         f.endsWith('.js') || f.endsWith('.ps1') || f.endsWith('.sh') || f.endsWith('.ts'));
       pilotScriptCount = pilotScriptFiles.length;
     } catch (error) {
@@ -244,6 +263,8 @@ console.log('Analyzing project state and generating insights...');
 try {
   const dynamicContent = generateDynamicContent();
   const outputPath = '.github/pilotbuddy-dynamic.md';
+  // Ensure output directory exists
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   
   fs.writeFileSync(outputPath, dynamicContent, 'utf8');
   
