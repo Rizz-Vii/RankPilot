@@ -14,9 +14,9 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import {
-  AlertCircle,
   Bar,
   BarChart,
   CartesianGrid,
@@ -52,6 +52,7 @@ import {
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  AlertCircle,
   AlertTriangle,
   ListChecks
 } from "lucide-react";
