@@ -54,7 +54,7 @@ interface AuthContextShape {
     userTier?: string;
 }
 
-export function Phase5IntegrationHub() {
+export function Phase5IntegrationHub(): JSX.Element {
     const { role, userTier } = useAuth() as AuthContextShape;
     const isAdmin = role === 'admin' || role === 'owner';
     const allowedTiers = ['enterprise', 'admin'];
@@ -96,26 +96,26 @@ export function Phase5IntegrationHub() {
             setLastSync(now);
             setIsInitializing(false);
         } catch (error) {
-            console.error('Failed to initialize enterprise systems:', error);
+            console.debug('Failed to initialize enterprise systems:', error);
             setIsInitializing(false);
         }
     }, []);
 
-    const updateSystemStatus = (systemId: string, status: SystemStatus) => {
+    const updateSystemStatus = useCallback((systemId: string, status: SystemStatus): void => {
         setSystems(prev => ({
             ...prev,
             [systemId]: status
         }));
-    };
+    }, []);
 
-    const executeSystemAction = async (systemId: string, action: string) => {
+    const executeSystemAction = useCallback(async (systemId: string, action: string): Promise<void> => {
         try {
             switch (systemId) {
                 case 'apm':
                     if (action === 'export_data') {
                         const data = await apm.exportData('json');
                         // Trigger download or send to external system
-                        console.log('APM data exported:', data);
+                        console.debug('APM data exported:', data);
                     }
                     break;
 
@@ -123,7 +123,7 @@ export function Phase5IntegrationHub() {
                     if (action === 'retrain_models') {
                         // Mock model retraining (trainModel method doesn't exist)
                         updateSystemStatus('anomaly_detection', {
-                            ...systems.anomaly_detection,
+                            ...(systems.anomaly_detection ?? { name: 'Anomaly Detection', status: 'initializing', lastUpdate: Date.now() }),
                             alerts: ['Model retraining initiated (mock)']
                         });
                     }
@@ -133,7 +133,7 @@ export function Phase5IntegrationHub() {
                     if (action === 'optimize_routes') {
                         // Mock traffic optimization (optimizeTrafficRouting doesn't exist)
                         updateSystemStatus('global_optimization', {
-                            ...systems.global_optimization,
+                            ...(systems.global_optimization ?? { name: 'Global Infrastructure', status: 'initializing', lastUpdate: Date.now() }),
                             alerts: ['Traffic routing optimization applied (mock)']
                         });
                     }
@@ -143,26 +143,27 @@ export function Phase5IntegrationHub() {
                     if (action === 'run_quality_check') {
                         const filePaths = ['/workspaces/studio/src'];
                         const results = await devAutomation.analyzeCode(filePaths);
-                        const avgScore = results.length > 0 ?
-                            Math.round(results.reduce((sum, r) => sum + r.maintainability_index, 0) / results.length) : 95;
+                        const avgScore = results.length > 0
+                            ? Math.round(results.reduce((sum, r) => sum + r.maintainability_index, 0) / results.length)
+                            : 95;
 
                         updateSystemStatus('dev_automation', {
-                            ...systems.dev_automation,
+                            ...(systems.dev_automation ?? { name: 'Dev Automation', status: 'initializing', lastUpdate: Date.now() }),
                             alerts: [`Code quality check completed: ${avgScore}/100`]
                         });
                     }
                     break;
             }
         } catch (error) {
-            console.error(`Action ${action} failed for ${systemId}:`, error);
+            console.debug(`Action ${action} failed for ${systemId}:`, error);
         }
-    };
+    }, [apm, anomalyDetector, globalOptimizer, devAutomation, systems, updateSystemStatus]);
 
     useEffect(() => {
         initializeEnterpriseSystems();
     }, [initializeEnterpriseSystems]);
 
-    const getStatusColor = (status: string) => {
+    const getStatusColor = (status: SystemStatus['status']): string => {
         switch (status) {
             case 'operational': return colors.status.success.text;
             case 'warning': return colors.status.warning.text;
@@ -172,7 +173,7 @@ export function Phase5IntegrationHub() {
         }
     };
 
-    const getStatusIcon = (status: string) => {
+    const getStatusIcon = (status: SystemStatus['status']): React.ReactNode => {
         switch (status) {
             case 'operational': return <CheckCircle className={"h-5 w-5 " + colors.status.success.text} />;
             case 'warning': return <AlertTriangle className={"h-5 w-5 " + colors.status.warning.text} />;
