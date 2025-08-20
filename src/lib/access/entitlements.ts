@@ -31,14 +31,14 @@ export async function loadEntitlements(force = false): Promise<EntitlementMap> {
             const data = snap.data() as { entitlements?: Record<string, { enabled?: boolean }> } | undefined;
             const ent: EntitlementMap = { ...DEFAULT_ENTITLEMENTS };
             if (data?.entitlements) {
-                for (const [k, v] of Object.entries(data.entitlements)) {
+                for (const [k] of Object.entries(data.entitlements)) {
                     if (ent[k]) ent[k] = { ...ent[k] }; // we currently ignore enabled flag beyond placeholder
                 }
             }
             cache = { map: ent, loadedAt: now, source: 'dynamic' };
             return cache.map;
         }
-    } catch {
+    } catch (err) {
         // swallow
     }
     cache = { map: DEFAULT_ENTITLEMENTS, loadedAt: now, source: 'default' };
@@ -49,4 +49,4 @@ export async function loadEntitlements(force = false): Promise<EntitlementMap> {
 // (Temporary export commented out to surface accidental usages.)
 // export const ENTITLEMENT_FLAGS = DEFAULT_ENTITLEMENTS;
 
-export function getEntitlementsSource() { return cache.source; }
+export function getEntitlementsSource(): 'dynamic' | 'default' { return cache.source; }
