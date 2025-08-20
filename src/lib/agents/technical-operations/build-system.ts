@@ -2,13 +2,13 @@
 // Implementation Date: July 30, 2025
 // Priority: HIGH - Foundation Stabilization Phase 1.2
 
-import { exec } from 'child_process';
+import { exec as execCb } from 'child_process';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { promisify } from 'util';
 import type { AgentCapability, RankPilotAgent, SafetyConstraint } from '../core/AgentFramework';
 
-const execAsync = promisify(exec);
+const execAsync = promisify(execCb) as (command: string, options?: { timeout?: number } & Record<string, unknown>) => Promise<{ stdout: string; stderr: string }>;
 
 /**
  * Build System Agent - Autonomous build optimization and error resolution
@@ -311,6 +311,7 @@ echo "📋 Logs saved to build-emergency.log"
 exit 1
 `;
 
+            await fs.mkdir('scripts', { recursive: true });
             await fs.writeFile('scripts/emergency-build.sh', emergencyBuildScript);
 
             // Make script executable
@@ -405,5 +406,5 @@ exit 1
     }
 }
 
-// Export singleton instance
-export const buildSystemAgent = new BuildSystemAgent();
+ // Export singleton instance
+export const buildSystemAgent: BuildSystemAgent = new BuildSystemAgent();
