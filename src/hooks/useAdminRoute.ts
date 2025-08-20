@@ -8,9 +8,8 @@
 
 declare global {
   // Augment Window with optional __E2E__ flag used in tests.
-  /* eslint-disable @typescript-eslint/no-unused-vars */
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   interface Window { __E2E__?: string; }
-  /* eslint-enable @typescript-eslint/no-unused-vars */
 }
 
 // Reference the declared global property at runtime so TypeScript/ESLint don't report it as unused.
