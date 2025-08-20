@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, Globe, Search } from "lucide-react";
+import { ArrowLeft, Globe, Search } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "XML Sitemap Guide | RankPilot",
