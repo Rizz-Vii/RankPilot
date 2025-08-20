@@ -15,10 +15,11 @@ async function fetchRecentActivities(uid: string, limit = 25): Promise<ActivityL
         return snap.docs.map((d) => {
             const data = d.data() as Record<string, unknown> | undefined;
             return {
-                type: (data as any)?.type || 'unknown',
-                tool: (data as any)?.tool || 'unknown',
+                type: typeof data?.['type'] === 'string' ? (data?.['type'] as string) : 'unknown',
+                tool: typeof data?.['tool'] === 'string' ? (data?.['tool'] as string) : 'unknown',
                 details: data?.details,
-                resultsSummary: (data as any)?.resultsSummary,
+                resultsSummary:
+                  typeof data?.['resultsSummary'] === 'string' ? (data?.['resultsSummary'] as string) : undefined,
             };
         });
     } catch (e: unknown) {
