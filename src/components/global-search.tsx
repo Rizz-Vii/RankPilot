@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import type { ChangeEvent } from "react";
 import { useI18n } from '@/lib/i18n/internationalization-system';
 import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
@@ -25,9 +26,9 @@ function useRotatingPlaceholder(queries: string[], typingMs = 80, pauseMs = 3000
   const [placeholder, setPlaceholder] = useState(() => queries[0] || "");
   const indexRef = useRef(0);
   useEffect(() => {
-    let typingTimeout: number | null = null;
-    let nextPlaceholderTimeout: number | null = null;
-    let startTypingTimeout: number | null = null;
+    let typingTimeout: ReturnType<typeof setTimeout> | null = null;
+    let nextPlaceholderTimeout: ReturnType<typeof setTimeout> | null = null;
+    let startTypingTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const typeNextCharacter = (text: string, i: number) => {
       if (i <= text.length) {
@@ -130,13 +131,14 @@ export default function GlobalSearch() {
 
   return (
     <div className="relative" ref={searchContainerRef}>
-      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <Search aria-hidden="true" className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
       <Input
         type="search"
         placeholder={placeholder}
+        aria-label={tr('globalSearch.search','Search')}
         className="pl-8 sm:w-[200px] lg:w-[300px] bg-background transition-all duration-300 ease-in-out focus:w-[300px] lg:focus:w-[400px]"
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
         onFocus={() => setIsFocused(true)}
       />
   <AnimatePresence>
