@@ -51,9 +51,8 @@ function CommandPalette({ onClose }: CommandPaletteProps) {
   const tr = (k: string, fb: string) => { const v = translate(k); return v === k ? fb : v; };
   const cycleTheme = () => {
     const order = ['light', 'dark', 'high-contrast', 'auto'] as const;
-    type ThemeName = typeof order[number];
-    const idx = order.indexOf(theme as ThemeName);
-    const next = order[(idx + 1) % order.length] as ThemeName;
+    const idx = order.indexOf(theme as typeof order[number]);
+    const next = order[(idx + 1) % order.length];
     setTheme(next as any);
     try {
       window.dispatchEvent(
@@ -61,8 +60,8 @@ function CommandPalette({ onClose }: CommandPaletteProps) {
           detail: { from: theme, to: next, at: Date.now() },
         }),
       );
-    } catch (err) {
-      // ignore in environments that disallow CustomEvent dispatch
+    } catch {
+      // ignore dispatch errors in older browsers/environments
     }
   };
 
