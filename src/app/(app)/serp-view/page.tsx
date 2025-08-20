@@ -57,12 +57,12 @@ export default function SerpViewPage() {
         keyword: values.keyword,
         location: 'United States',
         device: 'desktop',
-        searchEngine: 'google'
+        searchEngine: 'google',
       };
-  const result = await getSerpData(serpInput);
+      const result = await getSerpData(serpInput);
       setResults(result);
-  // No caching layer yet; treat as live
-  markLive();
+      // No caching layer yet; treat as live
+      markLive();
 
       if (user) {
         const userActivitiesRef = collection(
