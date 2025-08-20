@@ -4,14 +4,12 @@ import { useEffect, useCallback } from "react";
 import { useUI } from "@/context/UIContext";
 
 interface KeyboardNavConfig {
-  enableArrowKeys?: boolean;
   enableTabNavigation?: boolean;
   enableShortcuts?: boolean;
 }
 
-export function useKeyboardNavigation(config: KeyboardNavConfig = {}) {
+export function useKeyboardNavigation(config: KeyboardNavConfig = {}): null {
   const {
-    enableArrowKeys = true,
     enableTabNavigation = true,
     enableShortcuts = true,
   } = config;
@@ -27,6 +25,9 @@ export function useKeyboardNavigation(config: KeyboardNavConfig = {}) {
       const focusable = document.querySelectorAll(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
       );
+      if (focusable.length === 0) {
+        return;
+      }
       const first = focusable[0] as HTMLElement;
       const last = focusable[focusable.length - 1] as HTMLElement;
 
