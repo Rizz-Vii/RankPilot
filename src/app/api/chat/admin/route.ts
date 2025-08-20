@@ -66,7 +66,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         // Optional team-aware rate limiting (when user has teamId)
         try {
             const userDoc = await adminDb.collection('users').doc(uid).get();
-            const udata = userDoc.exists ? userDoc.data() as any : undefined;
+            const udata = userDoc.exists ? userDoc.data() as Record<string, unknown> : undefined;
             const teamId = typeof udata?.teamId === 'string' ? udata.teamId : undefined;
             if (teamId) {
                 try { await enforceTeamRateLimit(adminDb, teamId, { routeKey: 'chat/admin' }); }
@@ -114,8 +114,11 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
             payload = rawText ? JSON.parse(rawText) : null;
         } catch (err) { void err; }
         if (!res.ok) {
-            const p: any = (payload as any) || {};
-            const errMsg = p?.error?.message || p?.error || p?.result?.error?.message || ((rawText || '').slice(0, 200) || 'Admin chat service unavailable');
+            const p = (payload as Record<string, unknown> | null) || {};
+            const errMsg = (((p as Record<string, unknown>)['error'] as Record<string, unknown> | undefined)?.['message'] as string | undefined)
+                || ((p as Record<string, unknown>)['error'] as string | undefined)
+                || (((p as Record<string, unknown>)['result'] as Record<string, unknown> | undefined)?.['error'] as Record<string, unknown> | undefined)?.['message'] as string | undefined
+                || ((rawText || '').slice(0, 200) || 'Admin chat service unavailable');
             const code = res.status === 401 ? 401 : res.status === 403 ? 403 : res.status === 400 ? 400 : 503;
             const hint = code === 401
                 ? ' (auth failed: ensure you are signed in; token may be expired)'
@@ -127,8 +130,8 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
             return NextResponse.json(enforceProvenance({ error: `${errMsg}${hint}`, upstreamStatus: res.status, provenance: 'synthetic' }, { path: 'chat/admin' }), { status: code });
         }
 
-        const container: any = (payload as any) || {};
-        const data: ChatResponse = (container?.result || container?.data || payload) as any;
+        const container: Record<string, unknown> = (payload as Record<string, unknown> | null) || {};
+        const data: ChatResponse = ((container as Record<string, unknown>)?.result ?? (container as Record<string, unknown>)?.data ?? payload) as unknown as ChatResponse;
         if (!data) {
             recordError('chat/admin', '5xx_server');
             recordRouteLatency('chat/admin', Date.now() - start);
@@ -143,8 +146,8 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         console.error('Admin chat API error:', error);
 
         // Handle Firebase Function errors
-        if (error && typeof error === 'object' && 'code' in (error as any)) {
-            const firebaseError = error as any;
+        if (error && typeof error === 'object' && 'code' in (error as Record<string, unknown>)) {
+            const firebaseError = error as { code?: string };
 
             switch (firebaseError.code) {
                 case 'unauthenticated':
