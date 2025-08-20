@@ -2,8 +2,8 @@
  * Firecrawl Integration (T10 – initial scaffold)
  * Optional depth-limited crawl with soft fallback when API key absent or failure.
  */
-import { recordError, recordFallback, recordRouteLatency } from '@/lib/metrics/unified-metrics';
 import { firecrawlCrawlResponseSchema } from '@/lib/crawler/schema';
+import { recordError, recordFallback, recordRouteLatency } from '@/lib/metrics/unified-metrics';
 
 export interface FirecrawlPageResult { url: string; content?: string; status?: number; title?: string; links?: string[]; canonicalUrl?: string; metaDescription?: string; }
 export interface FirecrawlCrawlOptions { depth?: number; limit?: number; timeoutMs?: number; userAgent?: string; }
@@ -28,17 +28,25 @@ export async function runFirecrawl(targetUrl: string, opts: FirecrawlCrawlOption
         const resp = await fetch('https://api.firecrawl.dev/v1/crawl', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` }, body: JSON.stringify({ url: targetUrl, maxDepth: depth, limit, formats: ['markdown'] }), signal: controller.signal });
         if (!resp.ok) { recordFallback('firecrawl:http_' + resp.status); return synthetic(targetUrl, 'http_' + resp.status); }
         const json = await resp.json();
-        const raw: any[] = Array.isArray(json?.pages) ? json.pages : [];
-        const pages: FirecrawlPageResult[] = raw.slice(0, limit).map(p => {
-            const links = Array.isArray(p.links) ? p.links.filter((l: any) => typeof l === 'string').slice(0, 50) : [];
-            const metaDescSource = typeof p.metaDescription === 'string' ? p.metaDescription : (p.meta && typeof p.meta.description === 'string' ? p.meta.description : undefined);
+        const pagesUnknown: unknown = (json && typeof json === 'object') ? (json as Record<string, unknown>).pages : undefined;
+        const raw: unknown[] = Array.isArray(pagesUnknown) ? pagesUnknown : [];
+        const pages: FirecrawlPageResult[] = raw.slice(0, limit).map((p, idx) => {
+            const obj = (p && typeof p === 'object') ? p as Record<string, unknown> : {};
+            const linksUnknown = obj.links;
+            const links = Array.isArray(linksUnknown)
+                ? linksUnknown.filter((l): l is string => typeof l === 'string').slice(0, 50)
+                : [];
+            const meta = obj.meta && typeof obj.meta === 'object' ? obj.meta as Record<string, unknown> : undefined;
+            const metaDescSource = typeof obj.metaDescription === 'string'
+                ? obj.metaDescription
+                : (meta && typeof meta.description === 'string' ? meta.description : undefined);
             return {
-                url: typeof p.url === 'string' ? p.url : targetUrl,
-                content: typeof p.markdown === 'string' ? p.markdown : (typeof p.html === 'string' ? p.html : ''),
-                status: typeof p.status === 'number' ? p.status : 200,
-                title: typeof p.title === 'string' ? p.title : '',
+                url: typeof obj.url === 'string' ? obj.url : targetUrl,
+                content: typeof obj.markdown === 'string' ? obj.markdown : (typeof obj.html === 'string' ? obj.html : ''),
+                status: typeof obj.status === 'number' ? obj.status : 200,
+                title: typeof obj.title === 'string' ? obj.title : `Page ${idx}`,
                 links,
-                canonicalUrl: typeof p.canonicalUrl === 'string' ? p.canonicalUrl : undefined,
+                canonicalUrl: typeof obj.canonicalUrl === 'string' ? obj.canonicalUrl : undefined,
                 metaDescription: metaDescSource
             };
         });
@@ -47,7 +55,7 @@ export async function runFirecrawl(targetUrl: string, opts: FirecrawlCrawlOption
         if (!validation.success) { recordFallback('firecrawl:validation'); return { ...synthetic(targetUrl, 'validation'), elapsedMs }; }
         return { pages: validation.data.pages as FirecrawlPageResult[], elapsedMs };
     } catch (e: unknown) {
-        const elapsedMs = Date.now() - start; if (e && typeof e === 'object' && 'name' in e && (e as any).name === 'AbortError') { recordFallback('firecrawl:timeout'); return { ...synthetic(targetUrl, 'timeout'), elapsedMs }; }
+        const elapsedMs = Date.now() - start; if (e && typeof e === 'object' && 'name' in e && (e as { name?: unknown }).name === 'AbortError') { recordFallback('firecrawl:timeout'); return { ...synthetic(targetUrl, 'timeout'), elapsedMs }; }
         recordError('firecrawl/crawl', '5xx_server'); recordFallback('firecrawl:exception'); return { ...synthetic(targetUrl, 'exception'), elapsedMs };
     }
     finally { clearTimeout(t); }
