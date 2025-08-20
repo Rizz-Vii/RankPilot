@@ -2,7 +2,11 @@
 import { execSync, spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import { readQueue, writeQueue } from './queue-utils';
+// Prefer require for interop; fallback to global attached by queue-utils
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const qu = require('./queue-utils.ts') || (globalThis as any).__QUEUE_UTILS__;
+const readQueue = qu.readQueue as () => any[];
+const writeQueue = qu.writeQueue as (tasks: any[]) => void;
 
 // Lightweight env loader (avoids external dotenv dep). Loads .env.local then .env if present BEFORE key checks.
 (() => {
@@ -29,7 +33,7 @@ import { readQueue, writeQueue } from './queue-utils';
                 process.env[key] = val;
             }
             // Only process first existing file in priority order
-        } catch (e) {
+        } catch {
             // Silent: env loading is best-effort
         }
     }
@@ -248,8 +252,10 @@ for (const task of tasks) {
     }
 
     if (!AIDER_AUTORUN) {
-        console.log('Manual mode: run the following command locally (after installing aider):');
+        console.log(`[delegation] AIDER_AUTORUN not set – leaving task ${task.taskId} pending (manual mode).`);
+        console.log('Manual run suggestion (after installing aider):');
         console.log(`  aider --model ${MODEL} ${task.files.join(' ')}`);
+        console.log('Hint: run with AIDER_AUTORUN=1 (or use npm run delegate:process:auto) to execute automatically.');
         task.status = 'pending';
         task.updatedAt = new Date().toISOString();
         continue;
@@ -258,8 +264,17 @@ for (const task of tasks) {
         const analyticsDir = path.resolve('.codex/tmp');
         const analyticsLog = path.join(analyticsDir, 'aider-analytics.jsonl');
         const aiderArgs = ['--model', MODEL, ...AIDER_ARGS, ...task.files, '--yes', '--analytics', '--analytics-log', analyticsLog];
+        const isLintTask = /^AI-LINT-/i.test(task.taskId);
+        const lintPrompt = isLintTask ? `You are a strict TypeScript & ESLint refactorer.
+Given the repository file(s), resolve ONLY the lint rule indicated in the task summary.
+Do NOT introduce unrelated refactors, formatting churn, or dependency changes.
+Maintain public API shapes. Avoid broad type widening; prefer local narrowing.
+If no changes are needed (already compliant) output the unchanged file.
+Task Summary: ${task.summary}
+Rules Focus: infer rule id from summary; fix occurrences safely.
+` : '';
         const fallbackMessage = 'Apply requested mechanical edits described by task summary: ' + task.summary + ' (idempotent). If already applied, make no changes.';
-        const effectiveMessage = (task as any).message && typeof (task as any).message === 'string' && (task as any).message.trim().length ? (task as any).message.trim() : fallbackMessage;
+        const effectiveMessage = (task as any).message && typeof (task as any).message === 'string' && (task as any).message.trim().length ? (task as any).message.trim() : (lintPrompt + fallbackMessage);
         aiderArgs.push('--message', effectiveMessage);
         // If API key missing, skip aider invocation gracefully
         if (!process.env.OPENAI_API_KEY && !process.env.OPENAI_GPT5_KEY) {
