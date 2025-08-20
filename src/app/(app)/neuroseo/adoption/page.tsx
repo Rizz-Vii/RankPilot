@@ -14,19 +14,25 @@ export default function AdoptionDashboard() {
   const { provenance } = useProvenance();
   const [data, setData] = useState<HealthPayload | null>(null);
   const [loading, setLoading] = useState(false);
-  const load = async () => {
+  const load = async (): Promise<void> => {
     setLoading(true);
     try {
       const r = await fetch('/api/health');
       const j = await r.json();
       setData(j);
-    } catch { } finally { setLoading(false); }
+    } catch (err) {
+      // Log and continue; avoid swallowing errors silently
+      // eslint-disable-next-line no-console
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => { load(); const id = setInterval(load, 8000); return () => clearInterval(id); }, []);
-  const kpis: any = (data as any)?.kpis;
+  const kpis = data?.kpis as { [k: string]: unknown } | undefined;
   const crawlerPct = (kpis?.crawlerAggregateAdoptionPct as number | undefined) ?? null;
   const smPct = (kpis?.semanticMapAggregateAdoptionPct as number | undefined) ?? null;
-  const classify = (v: number | null) => v == null ? '' : (v < 50 ? 'critical' : v < 80 ? 'warn' : 'ok');
+  const classify = (v: number | null | undefined) => (v === null || v === undefined) ? '' : (v < 50 ? 'critical' : v < 80 ? 'warn' : 'ok');
   const statCard = (label: string, pct: number | null, help: string) => (
     <Card><CardHeader><CardTitle className="flex items-center gap-2"><BarChart3 className="h-5 w-5" />{label}</CardTitle></CardHeader><CardContent className="space-y-2"><div className="flex justify-between text-sm"><span>{label}</span><span className="font-medium">{pct!=null? pct.toFixed(2)+"%" : loading? 'Loading…':'—'}</span></div><Progress value={pct||0} className={pct!=null? classify(pct)==='critical'? 'bg-red-200': classify(pct)==='warn'? 'bg-amber-200':'bg-green-200':''} /><p className="text-xs text-muted-foreground">{help}</p></CardContent></Card>
   );
