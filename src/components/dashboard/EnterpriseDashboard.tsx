@@ -184,7 +184,7 @@ export function EnterpriseDashboard() {
         );
     }
 
-        if (!metrics) {
+    if (!metrics) {
         return (
             <div className="p-8 text-center">
                 <AlertTriangle className="h-16 w-16 text-warning-foreground mx-auto mb-4" />
@@ -198,7 +198,7 @@ export function EnterpriseDashboard() {
     }
 
     return (
-    <div className="min-h-screen bg-background p-6 font-body">
+        <div className="min-h-screen bg-background p-6 font-body">
             <div className="max-w-7xl mx-auto space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
