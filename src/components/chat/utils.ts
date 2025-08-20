@@ -3,6 +3,8 @@
  * Common functions and types for chatbot functionality
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 // Note: Import toast from your toast implementation
 // import { toast } from '@/components/ui/use-toast';
 
