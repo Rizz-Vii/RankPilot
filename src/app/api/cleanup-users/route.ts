@@ -5,7 +5,6 @@ import {
   getDocs,
   doc,
   writeBatch,
-  updateDoc,
 } from "firebase/firestore";
 
 // Define types for better type safety
