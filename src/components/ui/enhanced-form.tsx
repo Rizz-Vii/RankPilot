@@ -75,10 +75,8 @@ export function EnhancedForm({
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [touched, setTouched] = React.useState<Record<string, boolean>>({});
   const [values, setValues] = React.useState(initialValues);
-  const [submitAttempted, setSubmitAttempted] = React.useState(false);
   const fieldRegistryRef = React.useRef<Map<string, FieldConfig>>(new Map());
   const formRef = useRef<HTMLFormElement>(null);
-  const hydrated = useHydration();
 
   const setFieldValue = (name: string, value: unknown) => {
     setValues((prev) => ({ ...prev, [name]: value }));
@@ -172,7 +170,7 @@ export function EnhancedForm({
     if (submitOnEnter && e.key === "Enter" && !e.shiftKey) {
       // Don't submit on Enter for textareas
       if (target.tagName.toLowerCase() !== "textarea") {
-  handleSubmit(e as any);
+        handleSubmit(e as any);
       }
     }
   };
@@ -286,7 +284,7 @@ export function EnhancedField({
     clearFieldError,
   } = useEnhancedForm();
 
-  const fieldValue = values[name] || "";
+  const fieldValue = values[name] ?? "";
   const fieldError = errors[name];
   const fieldTouched = touched[name];
   const isDisabled = disabled || isSubmitting;
@@ -381,7 +379,7 @@ export function EnhancedField({
         id={fieldId}
         name={name}
         type={type}
-  value={typeof fieldValue === 'string' || typeof fieldValue === 'number' ? fieldValue : (fieldValue as any ?? '')}
+        value={typeof fieldValue === "number" ? fieldValue : String(fieldValue)}
         onChange={(e) => handleChange(e.target.value)}
         onBlur={handleBlur}
         placeholder={placeholder}
