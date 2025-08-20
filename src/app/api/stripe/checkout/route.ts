@@ -1,16 +1,15 @@
 import { functions } from '@/lib/firebase';
 import { httpsCallable } from 'firebase/functions';
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
 const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', { apiVersion: '2022-11-15' });
 
-export async function POST(request: Request) {
-    const nreq = request as NextRequest;
+export async function POST(request: NextRequest) {
     try {
-        const { tier, billingInterval, successUrl, cancelUrl } = await nreq.json();
+        const { tier, billingInterval, successUrl, cancelUrl } = await request.json();
 
         // Validate required fields
         if (!tier) {
@@ -59,11 +58,10 @@ export async function POST(request: Request) {
     }
 }
 
-// Handle checkout session retrieval
-export async function GET(request: Request) {
-    const nreq = request as NextRequest;
+ // Handle checkout session retrieval
+export async function GET(request: NextRequest) {
     try {
-        const { searchParams } = new URL(nreq.url);
+        const { searchParams } = new URL(request.url);
         const sessionId = searchParams.get('session_id');
 
         if (!sessionId) {
@@ -84,7 +82,7 @@ export async function GET(request: Request) {
         });
 
     } catch (error: unknown) {
-        console.error('❌ Checkout retrieval error:', error as any);
+        console.error('❌ Checkout retrieval error:', error);
         return NextResponse.json(
             { error: 'Failed to retrieve checkout session' },
             { status: 500 }
