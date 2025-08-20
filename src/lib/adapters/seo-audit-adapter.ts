@@ -26,7 +26,9 @@ export function adaptSEOAuditResponse(raw: unknown, meta: { fallback?: boolean; 
 
     // Determine items
     const r = (raw && typeof raw === 'object') ? raw as Record<string, unknown> : {};
-    const itemsRaw = Array.isArray((r as any).items) ? (r as any).items as unknown[] : [];
+    // Narrow potential legacy shapes (avoid `any`): accept unknown then refine
+    const rawItemsCandidate: unknown = (r as Record<string, unknown>).items;
+    const itemsRaw: unknown[] = Array.isArray(rawItemsCandidate) ? rawItemsCandidate : [];
     const items: SEOAuditItem[] = itemsRaw.map((it, i) => {
         const o = (it && typeof it === 'object') ? it as Record<string, unknown> : {};
         const statusRaw = o.status;
@@ -48,7 +50,10 @@ export function adaptSEOAuditResponse(raw: unknown, meta: { fallback?: boolean; 
 
     const cacheHit: boolean = !!r.cacheHit;
     // Derive source priority: explicit > fallback flag > cacheHit inference
-    let source: 'live' | 'cache' | 'fallback' | undefined = (r.source as any);
+    let source: 'live' | 'cache' | 'fallback' | undefined = ((): 'live' | 'cache' | 'fallback' | undefined => {
+        const candidate = (r as Record<string, unknown>).source;
+        return candidate === 'live' || candidate === 'cache' || candidate === 'fallback' ? candidate : undefined;
+    })();
     if (!source) {
         if (meta.fallback) source = 'fallback';
         else if (cacheHit) source = 'cache';
