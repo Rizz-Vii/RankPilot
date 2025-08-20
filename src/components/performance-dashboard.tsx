@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, FC } from "react";
 import {
   Card,
   CardContent,
@@ -32,7 +32,7 @@ interface LatencySparklineProps { samples: number[]; id?: string; describedBy?: 
 const LatencySparkline = dynamic<LatencySparklineProps>(() => import('./performance/latency-sparkline').then(m => (m as any).LatencySparkline || (m as any).default), { ssr: false, loading: () => <div className="h-9 w-full bg-muted rounded" /> });
 
 // Threshold adaptive progress bar wrapper
-const AdaptiveProgress: React.FC<{ value: number; thresholds?: { good: number; warn: number }; label: string; invert?: boolean }> = ({ value, thresholds = { good: 90, warn: 70 }, label, invert }) => {
+const AdaptiveProgress: FC<{ value: number; thresholds?: { good: number; warn: number }; label: string; invert?: boolean }> = ({ value, thresholds = { good: 90, warn: 70 }, label, invert }) => {
   const pct = Math.max(0, Math.min(100, value));
   const state = (() => {
     if (invert) {
@@ -96,7 +96,7 @@ export function PerformanceDashboard() {
     window.localStorage.setItem('perfAutoRefresh', autoRefresh ? '1' : '0');
   }, [autoRefresh]);
 
-  const refreshStats = React.useCallback(async () => {
+  const refreshStats = useCallback(async (): Promise<void> => {
     setIsRefreshing(true);
 
     try {
