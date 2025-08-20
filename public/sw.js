@@ -187,9 +187,10 @@ async function staleWhileRevalidateStrategy(request) {
     return cachedResponse || fetchPromise;
 }
 
-// Helper functions
+ // Helper functions
 function isStaticAsset(pathname) {
-    return pathname.match(/\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/);
+    // Return a boolean indicating whether this path is a static asset by testing the file extension.
+    return /\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/.test(pathname);
 }
 
 function isAppRoute(pathname) {
@@ -455,7 +456,9 @@ async function removePendingPreference(id) {
 }
 
 async function showNotification(title, options) {
-    if (self?.registration?.showNotification) {
+    if (self && self.registration && typeof self.registration.showNotification === 'function') {
         return self.registration.showNotification(title, options);
     }
+    // Ensure a consistent Promise-returning API even when notifications are unavailable.
+    return Promise.resolve();
 }
