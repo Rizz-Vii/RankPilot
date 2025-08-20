@@ -39,7 +39,8 @@ export function plan(batch: Task[], opts?: { contextKb?: number }): BrainPlan {
   const failedIds = new Set(mem.filter(m => m.kind === 'task-complete' && m.status === 'fail').map(m => m.id).filter((v): v is string => Boolean(v)));
   const prioritized = [...batch.filter(b => failedIds.has(b.id)), ...batch.filter(b => !failedIds.has(b.id))];
   const diagNote = (tsErrors !== undefined) ? ` diag:ts=${tsErrors},lintE=${lintErrors},lintW=${lintWarnings}` : '';
-  const steps = prioritized.map((t) => ({ kind: 'do-task', taskId: t.id, domain: t.domain || 'docs', contextNote: `files:${ctx.files.length}${diagNote}` }));
+  const forceCodex = process.env.BRAIN_FORCE_CODEX === '1';
+  const steps = prioritized.map((t) => ({ kind: 'do-task', taskId: t.id, domain: t.domain || 'docs', contextNote: `files:${ctx.files.length}${diagNote}`, runners: forceCodex ? ['codex'] : undefined }));
   return { steps, strategy: 'heuristic' };
 }
 
@@ -79,9 +80,14 @@ export async function planWithOpenAI(batch: Task[], cfg: PlannerCfg, ctxKb = 8):
     ...missionLines,
     'Recent memory events:',
     ...mem.slice(-10).map(m => ` - ${m.source}:${m.kind}:${m.status || ''}:${m.id || ''}`),
-    'Tasks:',
+    'Tasks (include a concise files array suggestion referencing likely touched repo-relative paths; omit files only if purely conceptual):',
     ...batch.map(t => ` - (${t.id}) ${t.title} [domain=${t.domain}]`),
-    'Return JSON array of steps: [{"taskId":"id","kind":"do-task","runners":["codex"|"aider"],"reason":"..."}]'
+    'Return ONLY a JSON array of steps: [{"taskId":"id","kind":"do-task","runners":["codex"],"reason":"why","files":["src/..","scripts/..." ]}]',
+    'Rules:',
+    ' - Prefer ≤4 files per step; if many, split into multiple steps each with ≤4 files',
+    ' - Use exact existing paths; do not invent directories',
+    ' - If task is documentation-only, point to relevant .md file under docs/ or README.md',
+    ' - If unsure of exact file, pick the most central candidate (e.g., src/lib/..., or scripts/... )'
   ].join('\n');
   try {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY!, organization: process.env.OPENAI_ORGANIZATION });
@@ -125,7 +131,24 @@ export async function planWithOpenAI(batch: Task[], cfg: PlannerCfg, ctxKb = 8):
       }
       return plan(batch, { contextKb: ctxKb });
     }
-    const { steps, errors } = normalizeSteps(parsed as unknown[], batch);
+    // Attach files from parsed if provided
+    const parsedArr = Array.isArray(parsed) ? parsed as any[] : [];
+    const { steps, errors } = normalizeSteps(parsedArr, batch);
+    // Map files into steps (extend NormalizedStep at runtime with files for enqueue path)
+    const stepFilesMap: Record<string, string[] | undefined> = {};
+    for (const p of parsedArr) {
+      if (p && typeof p === 'object' && p.taskId && Array.isArray(p.files)) {
+        stepFilesMap[p.taskId] = p.files.filter((f: string) => typeof f === 'string' && f.length < 260);
+      }
+    }
+    // Simple file existence filter (keep only existing or plausible src/ docs/ scripts/ paths)
+    const exists = (p: string) => { try { return fs.existsSync(path.join(process.cwd(), p)); } catch { return false; } };
+    for (const s of steps as any[]) {
+      const cand = stepFilesMap[s.taskId];
+      if (cand && cand.length) {
+        s.files = cand.filter(f => /^(src|scripts|docs|functions|package\.json|README\.md)/.test(f) && (exists(f) || /package\.json|README\.md$/.test(f))).slice(0, 4);
+      }
+    }
     if (process.env.BRAIN_PLANNER_DEBUG === '1' && errors.length) {
       console.warn('[planner:openai] step schema issues:', errors.join('; '));
     }
