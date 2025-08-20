@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
 	Card,
@@ -14,12 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import {
 	Check,
 	Crown,
-	Zap,
-	Shield,
 	CreditCard,
-	Star,
 	TrendingUp,
-	Users,
 	Rocket,
 } from "lucide-react";
 import Link from "next/link";
@@ -171,7 +167,7 @@ function PricingContent() {
 	const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
 
 	// Initialize preselected plan from query (?plan=starter|agency|enterprise)
-	React.useEffect(() => {
+	useEffect(() => {
 		const q = (searchParams?.get("plan") || "").toLowerCase();
 		const allowed: PlanType[] = ["starter", "agency", "enterprise"];
 		if (allowed.includes(q as PlanType)) {
@@ -190,7 +186,7 @@ function PricingContent() {
 	}, []);
 
 	// Track pricing page view on mount
-	React.useEffect(() => {
+	useEffect(() => {
 		trackPaymentEvents.viewPricing();
 		conversionFunnel.step(1, "pricing_view");
 	}, []);
@@ -232,6 +228,7 @@ function PricingContent() {
 							Monthly
 						</span>
 						<button
+							type="button"
 							onClick={() => setIsYearly(!isYearly)}
 							className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
 								isYearly ? "bg-primary" : "bg-muted"
