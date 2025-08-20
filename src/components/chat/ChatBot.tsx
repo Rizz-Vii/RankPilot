@@ -11,21 +11,12 @@ import { usePathname } from 'next/navigation';
 import AdminChatBot from './AdminChatBot';
 import CustomerChatBot from './CustomerChatBot';
 
-// Define interfaces for component props
-interface CustomerChatBotProps {
-    currentUrl?: string;
-    className?: string;
-}
-
-interface AdminChatBotProps {
-    className?: string;
-}
-
+ // Define interfaces for component props
 interface ChatBotProps {
     className?: string;
 }
 
-export default function ChatBot({ className }: ChatBotProps) {
+export default function ChatBot({ className }: ChatBotProps): JSX.Element | null {
     const { user, profile } = useAuth();
     const userTier = profile?.subscriptionTier || 'free';
     const pathname = usePathname();
@@ -46,7 +37,7 @@ export default function ChatBot({ className }: ChatBotProps) {
     const showAdminChat = isAdmin; // Only show admin chat for admin/enterprise users
 
     // Get current URL for context
-    const currentUrl = typeof window !== 'undefined' ? window.location.href : undefined;
+    const currentUrl: string | undefined = typeof window !== 'undefined' ? window.location.href : undefined;
 
     return (
         <>
