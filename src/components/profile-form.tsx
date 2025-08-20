@@ -1,36 +1,37 @@
 // src/components/profile-form.tsx
-"use client";
-
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useToast } from "@/hooks/use-toast";
-import type { User } from "firebase/auth";
-import { asUserProfile, type UserProfile } from "../../types/user-profile";
+ "use client";
+ 
+ import { zodResolver } from "@hookform/resolvers/zod";
+ import { useForm } from "react-hook-form";
+ import { z } from "zod";
+ import { useState } from "react";
+ import type { User } from "firebase/auth";
+ import { doc, updateDoc } from "firebase/firestore";
+ import { Loader2 } from "lucide-react";
+ 
+ import { Button } from "@/components/ui/button";
+ import {
+   Form,
+   FormControl,
+   FormDescription,
+   FormField,
+   FormItem,
+   FormLabel,
+   FormMessage,
+ } from "@/components/ui/form";
+ import { Input } from "@/components/ui/input";
+ import { Textarea } from "@/components/ui/textarea";
+ import {
+   Card,
+   CardContent,
+   CardDescription,
+   CardFooter,
+   CardHeader,
+   CardTitle,
+ } from "@/components/ui/card";
+ import { db } from "@/lib/firebase";
+ import { useToast } from "@/hooks/use-toast";
+ import { asUserProfile, type UserProfile } from "@/types/user-profile";
 
 const formSchema = z.object({
   displayName: z
@@ -60,7 +61,7 @@ type ProfileFormValues = z.infer<typeof formSchema>;
 
 interface ProfileFormProps { user: User; profile: unknown; }
 
-export default function ProfileForm({ user, profile }: ProfileFormProps) {
+export default function ProfileForm({ user, profile }: ProfileFormProps): JSX.Element {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const prof: UserProfile | undefined = asUserProfile(profile);
@@ -79,7 +80,7 @@ export default function ProfileForm({ user, profile }: ProfileFormProps) {
     },
   });
 
-  async function handleFormSubmit(values: ProfileFormValues) {
+  async function handleFormSubmit(values: ProfileFormValues): Promise<void> {
     setIsLoading(true);
     try {
       const userDocRef = doc(db, "users", user.uid);
