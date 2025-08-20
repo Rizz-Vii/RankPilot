@@ -12,7 +12,6 @@ import LoadingState from "@/components/loading-state";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -31,7 +30,6 @@ import {
   XAxis,
   YAxis
 } from "@/components/ui/chart-components";
-import LoadingScreen from "@/components/ui/loading-screen";
 import { useAuth } from "@/context/AuthContext";
 import { getDemoData } from "@/lib/demo-data";
 import { runSEOAudit } from "@/lib/services/ai-service";
@@ -489,7 +487,7 @@ export default function SeoAuditPage() {
         description="Comprehensive SEO analysis and optimization recommendations for any website."
         badges={composeToolHeaderBadges("seo-audit", provenance)}
         showBreadcrumb
-  >
+      >
         {provenance && (
           <ProvenanceLegend />
         )}
