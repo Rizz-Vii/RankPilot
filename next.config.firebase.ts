@@ -1,9 +1,9 @@
-/** @type {import('next').NextConfig} */
+import type { NextConfig } from 'next';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isFirebaseDeployment = process.env.FIREBASE_DEPLOY === 'true';
 
-const nextConfig = {
+const nextConfig: NextConfig = {
     // Core configuration
     reactStrictMode: true,
     productionBrowserSourceMaps: false,
@@ -75,7 +75,7 @@ const nextConfig = {
     },
 
     // Webpack configuration for clean builds
-    webpack: (config: any, { buildId, dev, isServer, defaultLoaders, webpack }: any) => {
+    webpack: (config: any, _opts?: any) => {
         // Suppress webpack warnings during deployment
         if (isFirebaseDeployment) {
             config.stats = 'errors-only';
@@ -96,4 +96,4 @@ const nextConfig = {
     }
 };
 
-module.exports = nextConfig;
+export default nextConfig;
