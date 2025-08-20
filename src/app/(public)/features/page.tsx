@@ -32,10 +32,10 @@ import {
 
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
-  visible: (_i: number) => ({
+  visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: _i * 0.1, duration: 0.6 },
+    transition: { delay: i * 0.1, duration: 0.6 },
   }),
 };
 
