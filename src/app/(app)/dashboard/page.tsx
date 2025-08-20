@@ -201,6 +201,22 @@ export default function DashboardPage() {
     refresh
   } = useRealTimeDashboardData(user?.uid || null);
 
+  // Freshness timestamp (moved above to comply with hooks rules)
+
+  // Trend range selection with localStorage persistence
+  const [trendRange, setTrendRange] = useState<"30d" | "90d" | "ytd">("30d");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem("dashboardTrendRange");
+    if (stored === "30d" || stored === "90d" || stored === "ytd") {
+      setTrendRange(stored);
+    }
+  }, []);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("dashboardTrendRange", trendRange);
+  }, [trendRange]);
+
   if (authLoading || !user) return <LoadingScreen />;
 
   if (dataError) {
@@ -257,19 +273,7 @@ export default function DashboardPage() {
     return `SEO Score ${dashboardData.seoScore.current}. Domain Authority ${dashboardData.domainAuthority.score}. Backlinks ${dashboardData.backlinks.total}. Tracked keywords ${dashboardData.trackedKeywords.current}. Visibility ${dashboardData.keywordVisibility.score}%.`;
   })();
 
-  // Trend range selection with localStorage persistence
-  const [trendRange, setTrendRange] = useState<"30d" | "90d" | "ytd">("30d");
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const stored = window.localStorage.getItem("dashboardTrendRange");
-    if (stored === "30d" || stored === "90d" || stored === "ytd") {
-      setTrendRange(stored);
-    }
-  }, []);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem("dashboardTrendRange", trendRange);
-  }, [trendRange]);
+  // Trend range selection (moved above to comply with hooks rules)
   const rangeLabel = trendRange.toUpperCase();
 
   // Real trend filtering
