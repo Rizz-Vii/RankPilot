@@ -61,7 +61,6 @@ async function createProperUserSubscription(): Promise<void> {
   console.log("🛠️ Creating proper user subscription data...");
 
   // Current date calculations
-  const currentDate = new Date();
   const threeMonthsAgo = new Date();
   threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
