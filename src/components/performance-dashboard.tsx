@@ -29,7 +29,7 @@ import dynamic from 'next/dynamic';
 // Removed explicit .js extension so Next resolves the .tsx module; ensures LatencySparkline export is found.
 // Import TSX module (extensionless for Next.js). Ensure no duplicate .js wrapper exists.
 interface LatencySparklineProps { samples: number[]; id?: string; describedBy?: string }
-const LatencySparkline = dynamic<LatencySparklineProps>(() => import('./performance/latency-sparkline').then(m => (m as any).LatencySparkline || (m as any).default), { ssr: false, loading: () => <div className="h-9 w-full bg-muted rounded" /> });
+const LatencySparkline = dynamic(() => import('./performance/latency-sparkline').then(m => (m as any).LatencySparkline || (m as any).default), { ssr: false, loading: () => <div className="h-9 w-full bg-muted rounded" /> }) as unknown as FC<LatencySparklineProps>;
 
 // Threshold adaptive progress bar wrapper
 const AdaptiveProgress: FC<{ value: number; thresholds?: { good: number; warn: number }; label: string; invert?: boolean }> = ({ value, thresholds = { good: 90, warn: 70 }, label, invert }) => {
