@@ -31,7 +31,7 @@ function PostDialog({ open, onClose, onSchedule, loading }: PostDialogProps){
       <SkeletonOverlay active={loading} label="Scheduling" />
       <header className="space-y-1"><h3 className="font-semibold text-lg">Schedule Post</h3><p className="text-xs text-muted-foreground">Create AI-instrumented social post across channels.</p></header>
       <div className="space-y-2">
-        <label className="text-xs font-medium flex flex-col gap-1">Channel<select className="bg-background border rounded-md h-9 px-2 text-sm" value={channel} onChange={e=> setChannel(e.target.value)}>
+        <label className="text-xs font-medium flex flex-col gap-1">Channel<select className="bg-background border rounded-md h-9 px-2 text-sm" value={channel} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setChannel(e.target.value)}>
           <option value="linkedin">LinkedIn</option>
           <option value="instagram">Instagram</option>
           <option value="facebook">Facebook</option>
