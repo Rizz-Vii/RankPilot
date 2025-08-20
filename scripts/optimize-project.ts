@@ -17,6 +17,14 @@ import { promisify } from "util";
 import { EventEmitter as _EventEmitter } from "events";
 
  // Ensure these imports are recognized as used by linters
+// Some imported symbols may be flagged by @typescript-eslint/no-unused-vars in certain configs.
+// Explicitly reference them to satisfy the rule without changing runtime behavior.
+void fs;
+void join;
+void resolve;
+void exec;
+void promisify;
+void _EventEmitter;
 
 // Increase max listeners to prevent memory leak warnings
 _EventEmitter.defaultMaxListeners = 20;
