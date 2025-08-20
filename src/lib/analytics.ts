@@ -1,12 +1,12 @@
+import { db, analytics as rawAnalytics } from "@/lib/firebase";
 import { logEvent, setUserProperties, type Analytics } from "firebase/analytics";
 import {
   doc,
-  updateDoc,
+  getDoc,
   increment,
   serverTimestamp,
-  getDoc,
+  updateDoc,
 } from "firebase/firestore";
-import { analytics as rawAnalytics, db } from "@/lib/firebase";
 
 // Resolve analytics instance (only set in production via firebase/index)
 function getAnalyticsInstance(): Analytics | null {
@@ -22,18 +22,24 @@ function withAnalytics(cb: (a: Analytics) => void) {
 }
 
 // Compute simple conversion rates – placeholder until richer analytics needed
-function calculateConversionRates(data: any) {
+function calculateConversionRates(data: unknown) {
   try {
-    const daily = data?.daily || {};
+    const daily = (data && typeof data === 'object' && 'daily' in data) ? (data as { daily?: unknown }).daily : {};
     // naive aggregate: purchase / view_pricing etc.
     let views = 0, purchases = 0, begins = 0;
-    Object.values(daily as Record<string, any>).forEach((d: any) => {
-      if (typeof d === 'object' && d) {
-        views += Number(d.view_pricing?.count || d.view_pricing || 0);
-        begins += Number(d.begin_checkout?.count || d.begin_checkout || 0);
-        purchases += Number(d.purchase?.count || d.purchase || 0);
-      }
-    });
+    if (daily && typeof daily === 'object') {
+      Object.values(daily as Record<string, unknown>).forEach((d: unknown) => {
+        if (d && typeof d === 'object') {
+          const obj = d as Record<string, unknown>;
+          const vp = obj.view_pricing as unknown;
+          const bc = obj.begin_checkout as unknown;
+          const pu = obj.purchase as unknown;
+          views += Number((vp && typeof vp === 'object' && 'count' in vp ? (vp as { count?: unknown }).count : vp) || 0);
+          begins += Number((bc && typeof bc === 'object' && 'count' in bc ? (bc as { count?: unknown }).count : bc) || 0);
+          purchases += Number((pu && typeof pu === 'object' && 'count' in pu ? (pu as { count?: unknown }).count : pu) || 0);
+        }
+      });
+    }
     return {
       viewToBegin: views ? begins / views : 0,
       beginToPurchase: begins ? purchases / begins : 0,
