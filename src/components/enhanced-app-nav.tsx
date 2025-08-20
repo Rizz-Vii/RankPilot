@@ -1,13 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
-  navGroups,
   getVisibleNavGroups,
-  standaloneNavItems,
   defaultNavState,
   type NavState,
   type NavGroup,
