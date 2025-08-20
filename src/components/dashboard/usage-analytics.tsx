@@ -58,32 +58,6 @@ export function UsageAnalytics() {
   });
   const [loading, setLoading] = useState(true);
 
-  // Fetch usage from Firestore (or provide deterministic fallback)
-  const fetchUsageData = async () => {
-    if (!user?.uid) { setLoading(false); return; }
-    try {
-      const ref = doc(db, "usageMetrics", user.uid);
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const data = snap.data() as Partial<UsageData> | undefined;
-        setUsage(prev => ({
-          projects: typeof data?.projects === 'number' ? data.projects : prev.projects,
-          keywords: typeof data?.keywords === 'number' ? data.keywords : prev.keywords,
-          reports: typeof data?.reports === 'number' ? data.reports : prev.reports,
-          apiCalls: typeof data?.apiCalls === 'number' ? data.apiCalls : prev.apiCalls,
-          storage: typeof data?.storage === 'number' ? data.storage : prev.storage,
-          users: typeof data?.users === 'number' ? data.users : prev.users,
-        }));
-      } else {
-        // Deterministic fallback (bounded) for UI continuity
-        setUsage(u => ({ ...u }));
-      }
-    } catch {
-      // silent degrade – keep prior usage
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Helper functions to derive missing properties
   const isActive = subscription?.status === "active";
@@ -97,9 +71,43 @@ export function UsageAnalytics() {
     };
 
   useEffect(() => {
-    if (user) {
-      fetchUsageData();
-    }
+    let mounted = true;
+
+    const run = async () => {
+      if (!user?.uid) {
+        if (mounted) setLoading(false);
+        return;
+      }
+
+      try {
+        const ref = doc(db, "usageMetrics", user.uid);
+        const snap = await getDoc(ref);
+        if (snap.exists() && mounted) {
+          const data = snap.data() as Partial<UsageData> | undefined;
+          setUsage(prev => ({
+            projects: typeof data?.projects === 'number' ? data.projects : prev.projects,
+            keywords: typeof data?.keywords === 'number' ? data.keywords : prev.keywords,
+            reports: typeof data?.reports === 'number' ? data.reports : prev.reports,
+            apiCalls: typeof data?.apiCalls === 'number' ? data.apiCalls : prev.apiCalls,
+            storage: typeof data?.storage === 'number' ? data.storage : prev.storage,
+            users: typeof data?.users === 'number' ? data.users : prev.users,
+          }));
+        } else if (mounted) {
+          // Deterministic fallback (bounded) for UI continuity
+          setUsage(u => ({ ...u }));
+        }
+      } catch {
+        // silent degrade – keep prior usage
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    run();
+
+    return () => {
+      mounted = false;
+    };
   }, [user]);
 
   const limits = getLimits();
@@ -149,11 +157,13 @@ export function UsageAnalytics() {
 
   const getUsagePercentage = (current: number, limit: number) => {
     if (limit === -1) return 0; // Unlimited
+    if (limit <= 0) return current > 0 ? 100 : 0;
     return Math.min((current / limit) * 100, 100);
   };
 
   const getUsageStatus = (current: number, limit: number) => {
     if (limit === -1) return "unlimited";
+    if (limit <= 0) return current > 0 ? "exceeded" : "normal";
     const percentage = (current / limit) * 100;
     if (percentage >= 100) return "exceeded";
     if (percentage >= 80) return "warning";
@@ -163,13 +173,13 @@ export function UsageAnalytics() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "exceeded":
-  return "text-destructive-foreground";
+        return "text-destructive-foreground";
       case "warning":
-  return "text-warning-foreground";
+        return "text-warning-foreground";
       case "unlimited":
-  return "text-success-foreground";
+        return "text-success-foreground";
       default:
-  return "text-muted-foreground";
+        return "text-muted-foreground";
     }
   };
 
