@@ -251,7 +251,19 @@ export async function runDueAutomationRecipes(userId: string, teamId?: string) {
         }
         const finished = new Date();
         // computeNextRun expects full AutomationRecipe; we rely on recipe retaining required schedule fields at runtime.
-        const nextRun = computeNextRun(now, recipe as any);
+        // computeNextRun only needs schedule-related fields; project minimalist shape without broad unsafe casting
+        const scheduleCandidate = (recipe as unknown as { schedule?: { intervalMinutes?: number; cron?: string; atHourUTC?: number } }).schedule;
+        const recipeForSchedule = {
+            name: 'auto',
+            schedule: scheduleCandidate && typeof scheduleCandidate === 'object' ? scheduleCandidate : { cron: '@daily' },
+            createdAt: (recipe as unknown as { createdAt?: Date }).createdAt ?? new Date(),
+            updatedAt: new Date(),
+            active: (recipe.active ?? true) as boolean,
+            nextRun: recipe.nextRun ?? null,
+            userId: recipe.userId,
+            actions: Array.isArray(recipe.actions) ? recipe.actions : []
+        };
+        const nextRun = computeNextRun(now, recipeForSchedule as unknown as { name: string; schedule: { intervalMinutes?: number; cron?: string; atHourUTC?: number }; createdAt: Date; updatedAt: Date; active: boolean; nextRun: Date | null; userId: string; actions: AutomationActionType[] });
         await updateAutomationRecipe(recipe.id!, { lastRun: started, nextRun });
         results.push({ recipeId: recipe.id!, startedAt: started, finishedAt: finished, actions: actionsResults });
     }
