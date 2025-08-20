@@ -1,7 +1,7 @@
 /**
  * Conversational AI Enhancement System
  * Implements Priority 1 Conversational AI from DevReady Phase 3
- * 
+ *
  * Features:
  * - Chat-based SEO analysis with NeuroSEO integration
  * - Multi-turn dialogue with context awareness
@@ -474,7 +474,7 @@ export class ConversationalSEOEngine {
     }
 
     private generateAnalysisResponse(analysis: SEOAnalysisResult): string {
-        return `I've analyzed ${analysis.url} and found some interesting insights! 
+        return `I've analyzed ${analysis.url} and found some interesting insights!
 
 📊 **Overall SEO Score: ${analysis.overallScore}/100**
 
@@ -551,8 +551,22 @@ Would you like me to provide specific recommendations for any of these areas?`;
 
     private async loadUserSEOHistory(userId: string): Promise<ConversationContext['seoHistory']> {
         const cached = await advancedCacheManager.get(`seo-history-${userId}`, 'free');
-        if (cached && typeof cached === 'object') return cached as any; // transitional
+        if (this.isSEOHistory(cached)) return cached;
         return { previousAnalyses: [], commonIssues: [], improvementAreas: [] };
+    }
+
+    /** Narrow unknown cached value to expected SEO history shape */
+    private isSEOHistory(val: unknown): val is NonNullable<ConversationContext['seoHistory']> {
+        if (!val || typeof val !== 'object') return false;
+        const obj = val as Record<string, unknown>;
+        if (!Array.isArray(obj.previousAnalyses) || !Array.isArray(obj.commonIssues) || !Array.isArray(obj.improvementAreas)) return false;
+        // Light structural validation of previousAnalyses items
+        const analysesOk = (obj.previousAnalyses as unknown[]).every(a => {
+            if (!a || typeof a !== 'object') return false;
+            const aa = a as Record<string, unknown>;
+            return typeof aa.url === 'string' && typeof aa.overallScore === 'number';
+        });
+        return analysesOk;
     }
 
     private async generateWelcomeMessage(context: ConversationContext): Promise<ConversationMessage> {
@@ -563,7 +577,7 @@ Would you like me to provide specific recommendations for any of these areas?`;
         return {
             id: this.generateMessageId(),
             role: 'assistant',
-            content: `${greeting} 
+            content: `${greeting}
 
 What can I help you with today? I can:
 • Analyze your website's SEO performance
@@ -667,7 +681,7 @@ Just ask me anything about SEO!`,
     }
 
     private generateKeywordResponse(keywords: string[], analysis: MultiModelResponse, businessContext: string): string {
-        return `Great keyword research request for your ${businessContext} business! 
+        return `Great keyword research request for your ${businessContext} business!
 
 🎯 **Keywords Analyzed:** ${keywords.join(', ')}
 
