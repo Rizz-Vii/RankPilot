@@ -47,10 +47,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         }
     }
     const unified = getUnifiedMetricsSnapshot();
+    type UnifiedCounters = { aggregateHits?: number; legacyFallbacks?: number };
     const counters =
         domain === 'crawler'
-            ? (unified as any).crawler ?? { aggregateHits: 0, legacyFallbacks: 0 }
-            : (unified as any).semanticMap ?? { aggregateHits: 0, legacyFallbacks: 0 };
+            ? (unified as { crawler?: UnifiedCounters }).crawler ?? { aggregateHits: 0, legacyFallbacks: 0 }
+            : (unified as { semanticMap?: UnifiedCounters }).semanticMap ?? { aggregateHits: 0, legacyFallbacks: 0 };
     const aHits = Number(counters.aggregateHits ?? 0);
     const lFallbacks = Number(counters.legacyFallbacks ?? 0);
     const denom = aHits + lFallbacks;
