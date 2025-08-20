@@ -66,8 +66,8 @@ export function Phase5IntegrationHub(): JSX.Element {
 
     // Enterprise system instances
     const [apm] = useState(() => new EnterpriseAPM());
-    const [anomalyDetector] = useState(() => new AIAnomalyDetector());
-    const [globalOptimizer] = useState(() => new GlobalInfrastructureOptimizer());
+    const [_anomalyDetector] = useState(() => new AIAnomalyDetector());
+    const [_globalOptimizer] = useState(() => new GlobalInfrastructureOptimizer());
     const [devAutomation] = useState(() => new AIDevAutomation());
 
     const initializeEnterpriseSystems = useCallback(async () => {
@@ -157,7 +157,7 @@ export function Phase5IntegrationHub(): JSX.Element {
         } catch (error) {
             console.debug(`Action ${action} failed for ${systemId}:`, error);
         }
-    }, [apm, anomalyDetector, globalOptimizer, devAutomation, systems, updateSystemStatus]);
+    }, [apm, devAutomation, systems, updateSystemStatus]);
 
     useEffect(() => {
         initializeEnterpriseSystems();
