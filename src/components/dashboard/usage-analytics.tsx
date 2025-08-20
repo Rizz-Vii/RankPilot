@@ -47,7 +47,7 @@ interface UsageLimit {
 
 export function UsageAnalytics() {
   const { user } = useAuth();
-  const { subscription, loading: subscriptionLoading } = useSubscription();
+  const { subscription } = useSubscription();
   const [usage, setUsage] = useState<UsageData>({
     projects: 0,
     keywords: 0,
