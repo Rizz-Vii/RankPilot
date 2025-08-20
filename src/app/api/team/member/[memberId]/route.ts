@@ -1,9 +1,9 @@
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
-import { enforceProvenance } from '@/lib/middleware/provenance';
+import { enforceProvenance } from "@/lib/middleware/provenance";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-interface TeamMember { userId?: string; id?: string; email?: string; role?: string; status?: string; invitedAt?: any; lastActive?: any; }
+interface TeamMember { userId?: string; id?: string; email?: string; role?: string; status?: string; invitedAt?: unknown; lastActive?: unknown; }
 interface TeamDoc { memberIds?: string[]; members?: TeamMember[];[k: string]: unknown; }
 
 async function getTeam(uid: string) {
@@ -26,7 +26,7 @@ export const DELETE: (req: NextRequest, context: { params: Promise<{ memberId: s
             const missingAuthBody = enforceProvenance({ error: "Missing auth" }, { path: 'team/member', note: 'auth' });
             return NextResponse.json(missingAuthBody, { status: 401 });
         }
-        const token = authHeader.replace("Bearer ", "");
+        const token = authHeader.replace(/^Bearer\s+/i, "").trim();
         const decoded = await adminAuth.verifyIdToken(token);
 
         const team = await getTeam(decoded.uid);
@@ -69,7 +69,7 @@ export const DELETE: (req: NextRequest, context: { params: Promise<{ memberId: s
         return NextResponse.json(okBody);
     } catch (e: unknown) {
         console.error("Remove member error", e);
-        const msg = typeof e === 'object' && e && 'message' in e ? (e as any).message : 'Internal error';
+        const msg = e instanceof Error ? e.message : String(e);
         const errBody = enforceProvenance({ error: msg }, { path: 'team/member', note: 'exception' });
         return NextResponse.json(errBody, { status: 500 });
     }
