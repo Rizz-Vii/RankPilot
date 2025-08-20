@@ -47,7 +47,6 @@ import {
   Search,
   Filter,
   MoreHorizontal,
-  UserPlus,
   Shield,
   Crown,
   Calendar,
@@ -62,7 +61,6 @@ import {
   getDocs,
   doc,
   updateDoc,
-  where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
