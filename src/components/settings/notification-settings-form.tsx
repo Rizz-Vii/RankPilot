@@ -50,7 +50,7 @@ export interface NotificationSettingsFormProps {
 export default function NotificationSettingsForm({
   user,
   profile,
-}: NotificationSettingsFormProps) {
+}: NotificationSettingsFormProps): JSX.Element {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const prof: UserProfile | undefined = asUserProfile(profile);
@@ -68,7 +68,7 @@ export default function NotificationSettingsForm({
     },
   });
 
-  async function handleFormSubmit(values: NotificationFormValues) {
+  async function handleFormSubmit(values: NotificationFormValues): Promise<void> {
     setIsLoading(true);
     try {
       const userDocRef = doc(db, "users", user.uid);
