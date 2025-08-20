@@ -1,4 +1,4 @@
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { getLogger } from '@/lib/logging/app-logger';
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
@@ -60,17 +60,16 @@ export const GET = withProvenance(async function GET(req: Request) {
                 const maybe = v as { toDate?: () => Date };
                 return typeof maybe.toDate === 'function' ? maybe.toDate() : undefined;
             };
-            const createdAt: Date = toDate(inv["createdAt"]) || toDate(inv["issuedAt"]) || new Date(String(inv["date"] || `${inv["period"]}-01T00:00:00Z`));
+            const createdAt: Date = toDate(inv.createdAt) || toDate(inv.issuedAt) || new Date(String(inv.date || `${inv.period}-01T00:00:00Z`));
             return {
                 ...inv,
-                description: (inv["description"] as string) || `Invoice ${String(inv["period"])}`,
-                date: (inv["date"] as string) || createdAt.toISOString(),
+                description: (inv.description as string) || `Invoice ${String(inv.period)}`,
+                date: (inv.date as string) || createdAt.toISOString(),
                 createdAt: createdAt, // ensure returned
             };
         });
         const last = docs[docs.length - 1] as Record<string, unknown> | undefined;
-        const nextCursor = hasMore && last ? `${String(last["period"])}` +
-            `|${(last["createdAt"] as Date).getTime()}` : undefined;
+        const nextCursor = hasMore && last ? `${String(last.period)}|${(last.createdAt as Date).getTime()}` : undefined;
         logger.debug('billing-invoices.page', { uid, count: docs.length, hasMore, nextCursor });
         const res = NextResponse.json(enforceProvenance({ invoices: docs, hasMore, nextCursor }, { path: 'billing/invoices', note: 'page' }));
         res.headers.set('x-billing-diagnostics', `auth=ok; items=${docs.length}; hasMore=${hasMore}`);
