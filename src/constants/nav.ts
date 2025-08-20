@@ -12,7 +12,6 @@ import {
   Shield,
   Lightbulb,
   User,
-  Settings,
 } from "lucide-react";
 
 export interface NavItem {
