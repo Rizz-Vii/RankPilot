@@ -58,7 +58,6 @@ import { useRouter } from "next/navigation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { isDemoContentEnabled } from "@/lib/flags/demo";
 import { useCallback, useEffect, useState } from "react";
-import { db } from "@/lib/firebase";
 import { toast } from "sonner";
 import { safeErrorMessage } from "@/lib/utils";
 import type { TeamMember} from "@/lib/services/team.service";
@@ -88,7 +87,7 @@ const PERMISSIONS = {
 
 export default function TeamManagementPage() {
   const { user, loading: authLoading } = useAuth();
-  const { subscription, canUseFeature } = useSubscription();
+  const { canUseFeature } = useSubscription();
   const router = useRouter();
   const demoEnabled = isDemoContentEnabled();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -198,6 +197,8 @@ export default function TeamManagementPage() {
         return <Clock className="h-4 w-4 text-warning-foreground" />;
       case "inactive":
         return <AlertCircle className="h-4 w-4 text-destructive-foreground" />;
+      default:
+        return null;
     }
   };
 
@@ -211,6 +212,8 @@ export default function TeamManagementPage() {
         return "bg-success/10 text-success-foreground";
       case "viewer":
         return "bg-muted text-foreground";
+      default:
+        return "";
     }
   };
 
@@ -522,7 +525,7 @@ export default function TeamManagementPage() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {member.lastActive.toLocaleDateString()}
+                        {member.lastActive ? member.lastActive.toLocaleDateString() : "—"}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -562,7 +565,7 @@ export default function TeamManagementPage() {
                             size="sm"
                             disabled={transferLoadingId === member.id}
                             onClick={async () => {
-                              if (!confirm(`Transfer ownership to ${member.name}? This will reduce your permissions.`)) return;
+                              if (!window.confirm(`Transfer ownership to ${member.name}? This will reduce your permissions.`)) return;
                               setTransferLoadingId(member.id);
                               try {
                                 await transferTeamOwnership(member.id);
