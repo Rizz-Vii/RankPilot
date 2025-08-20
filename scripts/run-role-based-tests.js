@@ -28,6 +28,14 @@ class RoleBasedTestRunner {
     this.logFile = path.join("test-results", "role-based-test-run.log");
   }
 
+  getErrorMessage(error) {
+    if (!error) return String(error);
+    if (typeof error === "string") return error;
+    if (error && error.message) return error.message;
+    if (error && error.stack) return String(error.stack).split("\n")[0];
+    return String(error);
+  }
+
   log(message, level = "INFO") {
     const timestamp = new Date().toISOString();
     const logMessage = `[${timestamp}] [${level}] ${message}`;
@@ -47,7 +55,6 @@ class RoleBasedTestRunner {
 
     // Check if dev server is running
     try {
-      const { execSync } = require("child_process");
       execSync("curl -f http://localhost:3000 > /dev/null 2>&1", {
         stdio: "ignore",
       });
@@ -100,8 +107,8 @@ class RoleBasedTestRunner {
       this.log("✅ Free Tier Tests completed successfully");
     } catch (error) {
       this.testResults.freeTier.status = "failed";
-      this.testResults.freeTier.errors.push(error.message);
-      this.log(`❌ Free Tier Tests failed: ${error.message}`, "ERROR");
+      this.testResults.freeTier.errors.push(this.getErrorMessage(error));
+      this.log(`❌ Free Tier Tests failed: ${this.getErrorMessage(error)}`, "ERROR");
       throw error;
     } finally {
       this.testResults.freeTier.duration = Date.now() - startTime;
@@ -134,8 +141,8 @@ class RoleBasedTestRunner {
       this.log("✅ Enterprise Tier Tests completed successfully");
     } catch (error) {
       this.testResults.enterpriseTier.status = "failed";
-      this.testResults.enterpriseTier.errors.push(error.message);
-      this.log(`❌ Enterprise Tier Tests failed: ${error.message}`, "ERROR");
+      this.testResults.enterpriseTier.errors.push(this.getErrorMessage(error));
+      this.log(`❌ Enterprise Tier Tests failed: ${this.getErrorMessage(error)}`, "ERROR");
       throw error;
     } finally {
       this.testResults.enterpriseTier.duration = Date.now() - startTime;
@@ -164,7 +171,7 @@ class RoleBasedTestRunner {
 
       this.log("✅ Mobile Tests completed successfully");
     } catch (error) {
-      this.log(`⚠️ Mobile Tests had issues: ${error.message}`, "WARN");
+      this.log(`⚠️ Mobile Tests had issues: ${this.getErrorMessage(error)}`, "WARN");
       // Don't fail the entire test run for mobile issues
     }
   }
@@ -183,7 +190,7 @@ class RoleBasedTestRunner {
 
       this.log("✅ Compatibility Tests completed successfully");
     } catch (error) {
-      this.log(`⚠️ Compatibility Tests had issues: ${error.message}`, "WARN");
+      this.log(`⚠️ Compatibility Tests had issues: ${this.getErrorMessage(error)}`, "WARN");
       // Don't fail the entire test run for compatibility issues
     }
   }
@@ -254,7 +261,7 @@ class RoleBasedTestRunner {
       this.log("🎉 All role-based tests completed successfully!");
     } catch (error) {
       this.testResults.overall.status = "failed";
-      this.log(`💥 Test execution failed: ${error.message}`, "ERROR");
+      this.log(`💥 Test execution failed: ${this.getErrorMessage(error)}`, "ERROR");
       throw error;
     } finally {
       this.testResults.overall.endTime = new Date().toISOString();
