@@ -3,6 +3,7 @@
 import React, { useCallback, useState } from 'react';
 import { toast as sonnerToast } from 'sonner';
 import { exportChartClient } from '@/lib/visualizations/export-client';
+import type { ChartExportConfig } from '@/lib/visualizations/d3-visualization-engine';
 // Optional Sentry: only import if available in runtime to avoid SSR issues
 let Sentry: { captureException?: (...args: unknown[]) => void } | null = null;
 try { Sentry = require('@sentry/nextjs'); } catch {}
@@ -11,7 +12,7 @@ type Props = {
   chartId: string;
   format: 'png' | 'svg' | 'pdf' | 'json';
   label?: string;
-  config?: Partial<import('@/lib/visualizations/d3-visualization-engine').ChartExportConfig>;
+  config?: Partial<ChartExportConfig>;
   onDone?: (url: string) => void;
 };
 
