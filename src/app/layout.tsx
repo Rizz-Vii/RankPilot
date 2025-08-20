@@ -77,7 +77,9 @@ export default async function RootLayout({
         if (['ar','he'].includes(htmlLang)) htmlDir = 'rtl';
       }
     }
-  } catch {}
+  } catch (e) {
+    /* ignore cookie/headers parsing errors during SSR */
+  }
   // Default to primary/dark theme when no preference is set
   if (!themeClass) themeClass = 'theme-dark';
   if (!ssrThemeMode) ssrThemeMode = 'dark';
@@ -88,6 +90,20 @@ export default async function RootLayout({
   if (bodyExtra.includes('colorblind-support')) flags.push('colorblind-support');
   const addDarkClass = (ssrThemeMode === 'dark' && !ssrHighContrast) || themeClass === 'theme-dark';
   const bodyClass = ['font-body','antialiased','h-full',...flags,`lang-${htmlLang}`,themeClass || 'theme-dark', addDarkClass ? 'dark' : ''].filter(Boolean).join(' ');
+
+  // Dynamically import dev-only AgentsToggle server-side to avoid synchronous require() usage
+  let agentsToggleElement: React.ReactNode = null;
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      const mod = await import('@/components/dev/AgentsToggle');
+      const AgentsToggleComp = (mod && (mod.AgentsToggle ?? (mod.default as any))) as any;
+      if (AgentsToggleComp) {
+        agentsToggleElement = <div suppressHydrationWarning><AgentsToggleComp /></div>;
+      }
+    } catch (e) {
+      /* ignore dev-only import failures */
+    }
+  }
 
   return (
     <html lang={htmlLang} dir={htmlDir} suppressHydrationWarning className="h-full">
@@ -115,10 +131,7 @@ export default async function RootLayout({
           <ClientLayout>
             {children}
             {/* Dev-only Agents feature toggle */}
-            {process.env.NODE_ENV === 'development' ? (
-              // dynamic import avoided; lightweight component
-              <div suppressHydrationWarning>{require('@/components/dev/AgentsToggle').AgentsToggle({})}</div>
-            ) : null}
+            {agentsToggleElement}
             {/* DevListenerBadge temporarily disabled in server layout (dynamic ssr:false not allowed). Reintroduce inside a client component if needed. */}
           </ClientLayout>
         </AuthProvider>
