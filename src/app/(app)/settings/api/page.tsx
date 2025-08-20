@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import LoadingScreen from "@/components/ui/loading-screen";
@@ -23,7 +23,6 @@ import {
   Trash2,
   Plus,
   BarChart3,
-  Shield,
   ExternalLink,
   AlertTriangle,
   CheckCircle,
@@ -67,12 +66,14 @@ export default function ApiManagementPage() {
   const [newKeyName, setNewKeyName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
+  const canUseApi = canUseFeature("api_access");
+
   useEffect(() => {
-    if (user && canUseFeature("api_access")) {
+    if (user && canUseApi) {
       fetchApiKeys();
       fetchUsageStats();
     }
-  }, [user, canUseFeature]);
+  }, [user, canUseApi]);
 
   async function fetchApiKeys() {
     try {
