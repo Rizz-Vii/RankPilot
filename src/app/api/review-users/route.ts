@@ -26,12 +26,12 @@ function getExpectedQuotasForTier(tier: string): Record<string, number> {
   return quotaMap[tier] || quotaMap.free;
 }
 
-export async function GET() {
+export async function GET(): Promise<NextResponse> {
   try {
     console.log("🔍 Starting comprehensive user data review...");
 
     const usersSnapshot = await getDocs(collection(db, "users"));
-    const userAnalysis = [];
+    const userAnalysis: Array<Record<string, unknown>> = [];
 
     for (const userDoc of usersSnapshot.docs) {
       const userId = userDoc.id;
@@ -41,7 +41,7 @@ export async function GET() {
       const activitiesSnapshot = await getDocs(
         collection(db, "users", userId, "activities")
       );
-      const activities = [];
+      const activities: Array<Record<string, unknown>> = [];
 
       for (const activityDoc of activitiesSnapshot.docs) {
         const activityData = activityDoc.data();
@@ -57,7 +57,7 @@ export async function GET() {
       const keywordsSnapshot = await getDocs(
         collection(db, "users", userId, "keywords")
       );
-      const keywords = [];
+      const keywords: Array<Record<string, unknown>> = [];
 
       for (const keywordDoc of keywordsSnapshot.docs) {
         const keywordData = keywordDoc.data();
@@ -72,7 +72,7 @@ export async function GET() {
       const competitorsSnapshot = await getDocs(
         collection(db, "users", userId, "competitors")
       );
-      const competitors = [];
+      const competitors: Array<Record<string, unknown>> = [];
 
       for (const compDoc of competitorsSnapshot.docs) {
         const compData = compDoc.data();
@@ -87,7 +87,7 @@ export async function GET() {
       const contentSnapshot = await getDocs(
         collection(db, "users", userId, "content-analyses")
       );
-      const contentAnalyses = [];
+      const contentAnalyses: Array<Record<string, unknown>> = [];
 
       for (const contentDoc of contentSnapshot.docs) {
         const contentData = contentDoc.data();
@@ -102,7 +102,7 @@ export async function GET() {
       const achievementsSnapshot = await getDocs(
         collection(db, "users", userId, "achievements")
       );
-      const achievements = [];
+      const achievements: Array<Record<string, unknown>> = [];
 
       for (const achDoc of achievementsSnapshot.docs) {
         const achData = achDoc.data();
@@ -124,9 +124,9 @@ export async function GET() {
 
       // Check if quotas match tier expectations
       const expectedQuotas = getExpectedQuotasForTier(subscriptionTier);
-      const actualQuotas: Record<string, number> = (userData.quotas as any) || {};
+      const actualQuotas = (userData?.quotas ?? {}) as Record<string, number>;
 
-      Object.keys(expectedQuotas).forEach((quotaKey) => {
+      for (const quotaKey of Object.keys(expectedQuotas)) {
         const actualValue = actualQuotas[quotaKey];
         const expectedValue = expectedQuotas[quotaKey];
         if (actualValue !== expectedValue) {
@@ -134,7 +134,7 @@ export async function GET() {
             `Quota mismatch: ${quotaKey} expected ${expectedValue}, got ${actualValue}`
           );
         }
-      });
+      }
 
       // Check for conflicting tier/role/plan values
       if (role && role !== subscriptionTier) {
