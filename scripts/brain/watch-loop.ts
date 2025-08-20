@@ -14,7 +14,7 @@
  *   BRAIN_MAINTENANCE_EVERY_N (default 30) Number of ticks between maintenance runs.
  *   BRAIN_REGENERATE_MISSION=1 Force mission regeneration each tick (normally true once this patch applied).
  */
-import { spawn } from 'child_process';
+import { spawn, spawnSync, execSync } from 'child_process';
 import path from 'path';
 // Fallback triage helpers (plain JS)
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -57,7 +57,6 @@ function computeMissionDelta() {
 
 function isDelegationLoopRunning(): boolean {
     try {
-        const { execSync } = require('child_process');
         const out = execSync("ps -eo cmd | grep 'delegate:loop' | grep -v grep || true", { encoding: 'utf8' });
         return /delegate:loop/.test(out);
     } catch { return false; }
@@ -77,7 +76,6 @@ function autoStartDelegationIfNeeded(parsed: any) {
     lastAutoDelegate = now;
     try {
         console.log('\x1b[33m[brain:watch] auto-starting delegation:loop (urgent remediation detected)\x1b[0m');
-        const { spawn } = require('child_process');
         const proc = spawn('npm', ['run', 'delegate:loop'], { stdio: 'ignore', detached: true, env: { ...process.env } });
         proc.unref();
     } catch (e) {
@@ -96,7 +94,6 @@ function enqueuePerFileTsFixIfNeeded(parsed: any) {
     if (now - lastTsEnqueue < cooldown) return;
     lastTsEnqueue = now;
     try {
-        const { spawnSync } = require('child_process');
         const tc = spawnSync('npx', ['tsc', '--noEmit', '--pretty', 'false'], { encoding: 'utf8' });
         const out = (tc.stdout || '') + '\n' + (tc.stderr || '');
         const fileMatches = Array.from(new Set(out.split(/\n/).map(l => {
@@ -334,7 +331,6 @@ async function runOnce() {
                     const every = Number(process.env.BRAIN_MAINTENANCE_EVERY_N || 30);
                     if (every > 0 && tick % every === 0) {
                         console.log('\x1b[36m[brain:watch] running maintenance (prune + compact)\x1b[0m');
-                        const { spawn } = require('child_process');
                         // Fire-and-forget sequential scripts
                         spawn('npm', ['run', 'brain:prune-artifacts'], { stdio: 'ignore', detached: true, env: { ...process.env } }).unref();
                         spawn('npm', ['run', 'brain:compact-memory'], { stdio: 'ignore', detached: true, env: { ...process.env } }).unref();
