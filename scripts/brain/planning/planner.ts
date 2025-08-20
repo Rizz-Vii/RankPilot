@@ -15,7 +15,7 @@ function loadMission(): MissionLike | undefined {
   try {
     const f = path.join(process.cwd(), 'artifacts/brain/currentMission.json');
     if (fs.existsSync(f)) return JSON.parse(fs.readFileSync(f, 'utf8')) as MissionLike;
-  } catch { }
+  } catch (_err) { /* ignore errors reading mission */ }
   return undefined;
 }
 
@@ -24,8 +24,10 @@ function loadRecentMemory(limit = 40): MemoryEventLike[] {
     const f = path.join(process.cwd(), 'artifacts/brain/memory.jsonl');
     if (!fs.existsSync(f)) return [] as MemoryEventLike[];
     const lines = fs.readFileSync(f, 'utf8').trim().split(/\n/).slice(-limit);
-    return lines.map(l => { try { return JSON.parse(l) as MemoryEventLike; } catch { return null; } }).filter((v): v is MemoryEventLike => Boolean(v));
-  } catch { return []; }
+    return lines
+      .map(l => { try { return JSON.parse(l) as MemoryEventLike; } catch (_err) { return null; } })
+      .filter((v): v is MemoryEventLike => Boolean(v));
+  } catch (_err) { return []; }
 }
 
 export function plan(batch: Task[], opts?: { contextKb?: number }): BrainPlan {
@@ -44,12 +46,12 @@ export function plan(batch: Task[], opts?: { contextKb?: number }): BrainPlan {
   return { steps, strategy: 'heuristic' };
 }
 
-export function savePlanText(runId: string, planObj: unknown) {
+export function savePlanText(runId: string, planObj: unknown): void {
   try {
     const dir = path.join(process.cwd(), 'artifacts', 'brain');
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, `plan-${runId}.txt`), typeof planObj === 'string' ? planObj : JSON.stringify(planObj, null, 2));
-  } catch {}
+  } catch (_err) { /* ignore write errors */ }
 }
 
 interface PlannerCfg { tools?: Record<string, unknown>; tokens?: { plannerModel?: string; temperature?: number };[k: string]: unknown }
@@ -62,7 +64,7 @@ export async function planWithOpenAI(batch: Task[], cfg: PlannerCfg, ctxKb = 8):
   if (process.env.BRAIN_PLANNER_DEBUG === '1') {
     try {
       console.log(`[planner:openai] useFlag=${process.env.BRAIN_USE_OPENAI} keyPresent=${!!process.env.OPENAI_API_KEY} keyLen=${(process.env.OPENAI_API_KEY || '').length} gpt5Len=${(process.env.OPENAI_GPT5_KEY || '').length} orgLen=${(process.env.OPENAI_ORGANIZATION || '').length} model=${process.env.BRAIN_OPENAI_MODEL || cfg?.tokens?.plannerModel || 'gpt-4o-mini'} temp=${cfg?.tokens?.temperature ?? 0.2}`);
-    } catch { }
+    } catch (_err) { /* ignore logging errors */ }
   }
   if (!use && process.env.BRAIN_FORCE_OPENAI_STRATEGY !== '1') return plan(batch, { contextKb: ctxKb });
   const mem = loadRecentMemory();
@@ -108,7 +110,7 @@ export async function planWithOpenAI(batch: Task[], cfg: PlannerCfg, ctxKb = 8):
     if (fence) text = fence[1].trim();
     // Attempt direct JSON parse; fall back to extracting first array substring
     let parsed: unknown[] = [];
-    const tryParse = (s: string): unknown[] | undefined => { try { const v = JSON.parse(s); if (Array.isArray(v)) return v; } catch { } return undefined; };
+    const tryParse = (s: string): unknown[] | undefined => { try { const v = JSON.parse(s); if (Array.isArray(v)) return v; } catch (_err) { /* ignore JSON parse errors */ } return undefined; };
     parsed = tryParse(text) || [];
     if (!parsed.length) {
       const start = text.indexOf('[');
@@ -142,7 +144,7 @@ export async function planWithOpenAI(batch: Task[], cfg: PlannerCfg, ctxKb = 8):
       }
     }
     // Simple file existence filter (keep only existing or plausible src/ docs/ scripts/ paths)
-    const exists = (p: string) => { try { return fs.existsSync(path.join(process.cwd(), p)); } catch { return false; } };
+    const exists = (p: string) => { try { return fs.existsSync(path.join(process.cwd(), p)); } catch (_err) { return false; } };
     for (const s of steps as any[]) {
       const cand = stepFilesMap[s.taskId];
       if (cand && cand.length) {
