@@ -13,7 +13,7 @@ interface SeoAuditFormProps {
     isLoading: boolean;
 }
 
-export default function SeoAuditForm({ onSubmit, isLoading }: SeoAuditFormProps) {
+export default function SeoAuditForm({ onSubmit, isLoading }: SeoAuditFormProps): JSX.Element {
     const [url, setUrl] = useState('');
     const [checkMobile, setCheckMobile] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -27,7 +27,7 @@ export default function SeoAuditForm({ onSubmit, isLoading }: SeoAuditFormProps)
         }
     };
 
-    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
         e.preventDefault();
         setError(null);
         if (!validate(url)) {
@@ -59,18 +59,24 @@ export default function SeoAuditForm({ onSubmit, isLoading }: SeoAuditFormProps)
                     type="url"
                     placeholder="https://example.com"
                     value={url}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) => setUrl(e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setUrl(e.currentTarget.value)}
                     required
                     aria-invalid={!!error}
+                    aria-describedby={error ? 'audit-url-error' : undefined}
                 />
-                {error && <p className="text-xs text-red-500 mt-1" role="alert">{error}</p>}
+                {error && (
+                    <p id="audit-url-error" className="text-xs text-red-500 mt-1" role="alert">
+                        {error}
+                    </p>
+                )}
             </div>
             <div className="flex items-center gap-2">
                 <input
                     id="check-mobile"
                     type="checkbox"
                     checked={checkMobile}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) => setCheckMobile(e.target.checked)}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setCheckMobile(e.currentTarget.checked)}
+                    aria-checked={checkMobile}
                 />
                 <Label htmlFor="check-mobile">Include mobile checks</Label>
             </div>
