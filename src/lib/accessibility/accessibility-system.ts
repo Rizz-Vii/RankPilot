@@ -360,7 +360,7 @@ export class AccessibilityManager {
                 if (transcript) this.processVoiceCommand(transcript);
             } catch (err) {
                 // Swallow unexpected parsing errors but surface minimal diagnostics
-                console.warn('Voice recognition parse error');
+                console.warn('Voice recognition parse error', err);
             }
         };
 
