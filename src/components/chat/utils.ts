@@ -3,7 +3,6 @@
  * Common functions and types for chatbot functionality
  */
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
 // Note: Import toast from your toast implementation
 // import { toast } from '@/components/ui/use-toast';
@@ -29,7 +28,7 @@ export interface ChatSession {
     metadata?: Record<string, unknown>;
 }
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 export interface ChatContext {
     auditData?: boolean;
     siteContent?: boolean;
