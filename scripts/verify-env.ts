@@ -44,7 +44,7 @@ class EnvironmentVerifier {
     // Validate environment variables
     try {
       this.env = EnvSchema.parse(process.env);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         console.error("❌ Environment validation failed:");
         error.errors.forEach((err) => {
@@ -73,7 +73,7 @@ class EnvironmentVerifier {
     try {
       await this.adminAuth.listUsers(1);
       console.log("✅ Firebase Admin SDK: Connected successfully");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(
         "❌ Firebase Admin SDK:",
         error instanceof Error ? error.message : "Unknown error"
@@ -89,7 +89,7 @@ class EnvironmentVerifier {
       });
       await openai.models.list();
       console.log("✅ OpenAI API: Connected successfully");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(
         "❌ OpenAI API:",
         error instanceof Error ? error.message : "Unknown error"
@@ -107,7 +107,7 @@ class EnvironmentVerifier {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       console.log("✅ Google AI API: Connected successfully");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(
         "❌ Google AI API:",
         error instanceof Error ? error.message : "Unknown error"
@@ -120,7 +120,7 @@ class EnvironmentVerifier {
     try {
       await this.adminAuth.getUserByEmail(this.env.TEST_USER_EMAIL);
       console.log("✅ Test User: Account exists");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(
         "❌ Test User:",
         error instanceof Error ? error.message : "Unknown error"
@@ -131,7 +131,7 @@ class EnvironmentVerifier {
     try {
       await this.adminAuth.getUserByEmail(this.env.TEST_ADMIN_EMAIL);
       console.log("✅ Admin User: Account exists");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(
         "❌ Admin User:",
         error instanceof Error ? error.message : "Unknown error"
@@ -149,7 +149,7 @@ class EnvironmentVerifier {
       await this.verifyGoogleAI();
       await this.verifyTestUsers();
       console.log("\n✅ All verifications completed successfully");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("\n❌ Verification failed. Please check the errors above.");
       process.exit(1);
     }
@@ -158,8 +158,9 @@ class EnvironmentVerifier {
 
 // Run the verification
 const verifier = new EnvironmentVerifier();
-verifier.verifyAll().catch((error) => {
-  console.error("Unexpected error:", error);
+verifier.verifyAll().catch((error: unknown) => {
+  const msg = error instanceof Error ? error.message : String(error);
+  console.error("Unexpected error:", msg);
   process.exit(1);
 });
 
