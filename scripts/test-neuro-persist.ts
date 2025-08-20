@@ -4,10 +4,10 @@ import assert from 'assert';
 import { executeNeuroLive } from '../src/lib/neuroseo/live-exec';
 import { adminDb } from '../src/lib/firebase-admin';
 
-async function main() {
+async function main(): Promise<void> {
     const userId = 'tester_persist';
     const urls = ['https://example.com/doc1'];
-    const res = await executeNeuroLive({ urls, userId });
+    await executeNeuroLive({ urls, userId });
     const hashKey = Buffer.from(JSON.stringify({ u: [...urls].sort(), t: 'comprehensive' })).toString('base64').replace(/[^A-Za-z0-9]/g, '').slice(0, 40);
     const doc = await adminDb.collection('neuroSeoAnalyses').doc(hashKey).get();
     if (!doc.exists) {
@@ -15,7 +15,7 @@ async function main() {
         return;
     }
     const data = doc.data()!;
-    assert.equal(data.userId, userId, 'userId mismatch');
+    assert.strictEqual(data.userId, userId, 'userId mismatch');
     assert.ok(Array.isArray(data.urls), 'urls not array');
     console.log('NEU-02 persistence OK', { hashKey: data.hashKey, provenance: data.__provenance });
 }
