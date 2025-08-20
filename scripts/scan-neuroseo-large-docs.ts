@@ -13,7 +13,7 @@
  *   BATCH_SIZE=50 npm run scan:neuroseo-large         # smaller batch
  */
 import { getApps, initializeApp } from 'firebase-admin/app';
-import type { QueryDocumentSnapshot} from 'firebase-admin/firestore';
+import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
 interface SemanticMapFullDoc {
@@ -36,11 +36,11 @@ interface NeuralCrawlerFullDoc {
     issues?: any[]; entities?: any[]; headings?: Record<string, string[]>; createdAt?: any;
 }
 
-function approxSize(obj: any): number {
+function approxSize(obj: unknown): number {
     try { return Buffer.byteLength(JSON.stringify(obj)); } catch { return 0; }
 }
 
-export function deriveSemanticMapAggregate(full: SemanticMapFullDoc) {
+export function deriveSemanticMapAggregate(full: SemanticMapFullDoc): Record<string, unknown> {
     const topTopicClusters = (full.topicClusters || [])
         .slice(0, 5)
         .map(tc => ({ topic: tc.topic, semanticScore: tc.semanticScore ?? null, opportunity: tc.opportunity ?? null }));
@@ -69,7 +69,7 @@ export function deriveSemanticMapAggregate(full: SemanticMapFullDoc) {
     };
 }
 
-export function deriveNeuralCrawlerAggregate(full: NeuralCrawlerFullDoc) {
+export function deriveNeuralCrawlerAggregate(full: NeuralCrawlerFullDoc): Record<string, unknown> {
     const internalLinks = full.links?.filter(l => l.type === 'internal').length || 0;
     const externalLinks = full.links?.filter(l => l.type === 'external').length || 0;
     const headingsCounts = full.headings ? Object.fromEntries(Object.entries(full.headings).map(([k, v]) => [k, Array.isArray(v) ? v.length : 0])) : {};
@@ -122,7 +122,7 @@ async function ensureAggregateDoc(db: FirebaseFirestore.Firestore, collection: s
     }
 }
 
-async function scanCollection(db: FirebaseFirestore.Firestore, name: string, threshold: number, derive: (d: any) => any, opts: { write: boolean; output: ScanResultEntry[] }) {
+async function scanCollection(db: FirebaseFirestore.Firestore, name: string, threshold: number, derive: (d: any) => any, opts: { write: boolean; output: ScanResultEntry[] }): Promise<{ scanned: number; oversized: number }> {
     const batchSize = parseInt(process.env.BATCH_SIZE || '100', 10);
     console.log(`[scan] collection=${name} threshold=${threshold} batchSize=${batchSize}`);
     let last: QueryDocumentSnapshot | undefined;
@@ -169,7 +169,7 @@ async function scanCollection(db: FirebaseFirestore.Firestore, name: string, thr
     return { scanned, oversized };
 }
 
-async function main() {
+async function main(): Promise<void> {
     const threshold = parseInt(process.env.THRESHOLD_BYTES || '2500', 10);
     if (!getApps().length) initializeApp();
     const db = getFirestore();
