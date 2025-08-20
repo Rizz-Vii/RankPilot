@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
-import type { AutomationRecipe} from '@/lib/automation/recipes';
+import type { AutomationRecipe, AutomationRunLog, AutomationActionType } from '@/lib/automation/recipes';
 import { createAutomationRecipe, listAutomationRecipes, updateAutomationRecipe, defaultRecipeTemplate, listRecentAutomationRuns, countPendingEmails } from '@/lib/automation/recipes';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -45,7 +45,7 @@ export default function AutomationRecipesPage() {
   const [range, setRange] = useState<'30d' | '90d' | 'ytd'>('30d');
   const [cronExpr, setCronExpr] = useState<string>('');
   const [validationError, setValidationError] = useState<string>('');
-  const [runLogs, setRunLogs] = useState<Record<string, import('@/lib/automation/recipes').AutomationRunLog[]>>({});
+  const [runLogs, setRunLogs] = useState<Record<string, AutomationRunLog[]>>({});
   const [pendingEmails, setPendingEmails] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export default function AutomationRecipesPage() {
   const list = await listAutomationRecipes(user.uid, teamId);
         setRecipes(list);
         // Fetch run logs & pending emails for each recipe sequentially (small N expected)
-        const logsMap: Record<string, import('@/lib/automation/recipes').AutomationRunLog[]> = {};
+        const logsMap: Record<string, AutomationRunLog[]> = {};
         const emailMap: Record<string, number> = {};
         for (const r of list) {
           try {
@@ -86,11 +86,11 @@ export default function AutomationRecipesPage() {
   const tpl = defaultRecipeTemplate(user.uid, teamId);
       tpl.name = newName || 'Automation Recipe';
       if (cronExpr.trim()) {
-        tpl.schedule = { cron: cronExpr.trim() } as import('@/lib/automation/recipes').AutomationRecipe['schedule'];
+        tpl.schedule = { cron: cronExpr.trim() } as AutomationRecipe['schedule'];
       } else {
         tpl.schedule.intervalMinutes = interval;
       }
-      tpl.actions = selectedActions as import('@/lib/automation/recipes').AutomationActionType[];
+      tpl.actions = selectedActions as AutomationActionType[];
       tpl.actionConfigs = {
         runNeuroSEOAnalysis: {
           urls: analysisUrls.split('\n').map(l=>l.trim()).filter(Boolean).slice(0,5),
