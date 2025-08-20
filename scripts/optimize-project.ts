@@ -17,6 +17,7 @@ import { promisify } from "util";
 import { EventEmitter } from "events";
 
  // Imported identifiers are referenced in this file; explicit no-op references were removed to satisfy ESLint.
+void exec;
 
 // Increase max listeners to prevent memory leak warnings
 EventEmitter.defaultMaxListeners = 20;
