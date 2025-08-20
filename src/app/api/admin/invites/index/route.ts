@@ -2,6 +2,18 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 
+interface TeamMember {
+  userId?: string;
+  id?: string;
+  email?: string;
+  role?: 'owner' | 'admin' | string;
+}
+
+interface TeamData {
+  members?: TeamMember[];
+  memberIds?: string[];
+}
+
 // Admin-only (owner role) DEV/TEST endpoint: delete an invites_index doc to exercise backfill path.
 // Disabled automatically in production.
 export async function DELETE(req: NextRequest): Promise<NextResponse> {
@@ -14,9 +26,9 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
         const teamSnap = await adminDb.collection('teams').where('memberIds', 'array-contains', decoded.uid).limit(1).get();
         if (teamSnap.empty) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         const teamDoc = teamSnap.docs[0];
-        const teamData = teamDoc.data() as any;
-        const acting = (teamData?.members || []).find((m: any) => m?.userId === decoded.uid || m?.id === decoded.uid || m?.email === decoded.email);
-        if (!acting || !['owner', 'admin'].includes((acting as any).role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        const teamData = teamDoc.data() as TeamData;
+        const acting = (teamData?.members || []).find((m?: TeamMember) => m?.userId === decoded.uid || m?.id === decoded.uid || m?.email === decoded.email);
+        if (!acting || !['owner', 'admin'].includes(acting.role || '')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
         const { searchParams } = new URL(req.url);
         const inviteId = searchParams.get('inviteId');
@@ -24,6 +36,7 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
         await adminDb.collection('invites_index').doc(inviteId).delete();
         return NextResponse.json({ success: true, inviteId, action: 'index_deleted' });
     } catch (err: unknown) {
-        return NextResponse.json({ error: (err as any)?.message || 'Internal error' }, { status: 500 });
+        const msg = err instanceof Error ? err.message : String(err);
+        return NextResponse.json({ error: msg || 'Internal error' }, { status: 500 });
     }
 }
