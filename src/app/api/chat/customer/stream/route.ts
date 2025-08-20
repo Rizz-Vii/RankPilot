@@ -21,19 +21,34 @@ const QUOTA_LIMITS: Record<string, { messages: number; tokens: number }> = {
     admin: { messages: 10000, tokens: 2000000 },
 };
 
+// Lightweight typed aliases to avoid explicit `any` usage
+type UsageCounter = {
+    messages?: number;
+    tokens?: number;
+    tier?: string;
+    date?: string;
+    providerCounts?: Record<string, number>;
+};
+
+type SiteChunk = {
+    score: number;
+    meta?: { title?: string };
+    content: string;
+};
+
 async function checkAndIncrementMessageQuota(uid: string, tier: string) {
     const limits = QUOTA_LIMITS[tier] || QUOTA_LIMITS.free;
     const dateKey = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
     const docRef = adminDb.collection('usageCounters').doc(`${uid}_${dateKey}`);
     await adminDb.runTransaction(async (tx) => {
         const snap = await tx.get(docRef);
-        const data = snap.exists ? (snap.data() as any) : { messages: 0, tokens: 0, tier, date: dateKey };
-        if (data.messages >= limits.messages) {
+        const data = snap.exists ? (snap.data() as UsageCounter) : { messages: 0, tokens: 0, tier, date: dateKey };
+        if ((data.messages || 0) >= limits.messages) {
             throw new Error('Daily message quota reached');
         }
         tx.set(docRef, {
             messages: FieldValue.increment(1),
-            tokens: data.tokens || 0,
+            tokens: (data.tokens || 0),
             tier,
             date: dateKey,
             updatedAt: FieldValue.serverTimestamp(),
@@ -47,8 +62,8 @@ async function incrementTokenUsage(uid: string, tier: string, tokens: number) {
     const limits = QUOTA_LIMITS[tier] || QUOTA_LIMITS.free;
     await adminDb.runTransaction(async (tx) => {
         const snap = await tx.get(docRef);
-        const data = snap.exists ? (snap.data() as any) : { messages: 0, tokens: 0, tier, date: dateKey };
-        if ((data.tokens || 0) + tokens > limits.tokens) {
+        const data = snap.exists ? (snap.data() as UsageCounter) : { messages: 0, tokens: 0, tier, date: dateKey };
+        if (((data.tokens || 0) + tokens) > limits.tokens) {
             // Mark as capped; still increment up to limit
             const remaining = Math.max(0, limits.tokens - (data.tokens || 0));
             if (remaining > 0) {
@@ -153,10 +168,10 @@ export async function POST(req: NextRequest): Promise<Response> {
         try {
             const sessDoc = await adminDb.collection('chatLogs').doc(uid).collection('sessions').doc(currentSessionId).get();
             if (sessDoc.exists) {
-                const sData = sessDoc.data() as any;
-                if (sData.sessionSummary) memoryBlock += `\nConversation Memory Summary:\n${sData.sessionSummary}`;
-                if (Array.isArray(sData.pendingActions) && sData.pendingActions.length) memoryBlock += `\nPending Actions:\n- ${sData.pendingActions.slice(0, 8).join('\n- ')}`;
-                if (Array.isArray(sData.keywords) && sData.keywords.length) memoryBlock += `\nFocus Keywords: ${sData.keywords.slice(0, 5).join(', ')}`;
+                const sData = sessDoc.data() as { sessionSummary?: string; pendingActions?: string[]; keywords?: string[] } | undefined;
+                if (sData?.sessionSummary) memoryBlock += `\nConversation Memory Summary:\n${sData.sessionSummary}`;
+                if (Array.isArray(sData?.pendingActions) && sData!.pendingActions!.length) memoryBlock += `\nPending Actions:\n- ${sData!.pendingActions!.slice(0, 8).join('\n- ')}`;
+                if (Array.isArray(sData?.keywords) && sData!.keywords!.length) memoryBlock += `\nFocus Keywords: ${sData!.keywords!.slice(0, 5).join(', ')}`;
             }
         } catch { /* ignore */ }
 
@@ -182,7 +197,7 @@ export async function POST(req: NextRequest): Promise<Response> {
                         const siteChunksResult = await retrieveSiteChunks({ uid, queryEmbedding: qEmb, topK: 4 });
                         const siteChunks = siteChunksResult.chunks || [];
                         if (siteChunks.length) {
-                            siteBlock = '\nSite Knowledge Snippets (cite if used, prefer higher score):\n' + siteChunks.map((c: any) => `• (${c.score.toFixed(2)}) ${c.meta?.title ? c.meta.title + ' - ' : ''}${c.content.slice(0, 260)}`).join('\n');
+                            siteBlock = '\nSite Knowledge Snippets (cite if used, prefer higher score):\n' + siteChunks.map((c: SiteChunk) => `• (${c.score.toFixed(2)}) ${c.meta?.title ? c.meta.title + ' - ' : ''}${c.content.slice(0, 260)}`).join('\n');
                         }
                     } catch { /* ignore site retrieval errors */ }
                 }
@@ -222,7 +237,7 @@ export async function POST(req: NextRequest): Promise<Response> {
             ? `${systemPrompt}${combined}\nIntegrate memory + site knowledge + prior dialog context. Avoid redundancy; cite site snippets when used.`
             : systemPrompt;
 
-        let openAIStream: AsyncIterable<unknown> | null = null;
+        let openAIStream: AsyncIterable<{ choices?: Array<{ delta?: { content?: string } }> }> | null = null;
         let provider: 'openai' | 'gemini' = 'gemini';
         if (openaiKey && !openAICircuitOpen()) {
             const maxAttempts = 3;
@@ -238,7 +253,7 @@ export async function POST(req: NextRequest): Promise<Response> {
                         temperature: 0.2,
                         max_tokens: 800,
                         stream: true,
-                    })) as any;
+                    })) as unknown as AsyncIterable<{ choices?: Array<{ delta?: { content?: string } }> }>;
                     provider = 'openai';
                     recordOpenAISuccess();
                     break;
@@ -272,8 +287,8 @@ export async function POST(req: NextRequest): Promise<Response> {
                     // Emit provider info early
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ info: 'provider_selected', provider, openaiCircuitOpen: openAICircuitOpen(), provenance: provider === 'openai' ? 'live' : 'synthetic' }, { path: 'chat/customer/stream' }))}\n\n`));
                     if (openAIStream) {
-                        for await (const part of openAIStream as any) {
-                            const content = (part as any)?.choices?.[0]?.delta?.content;
+                        for await (const part of openAIStream) {
+                            const content = part?.choices?.[0]?.delta?.content;
                             if (content) {
                                 fullResponse += content;
                                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: content, provenance: provider === 'openai' ? 'live' : 'synthetic' })}\n\n`));
