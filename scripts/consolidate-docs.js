@@ -5,11 +5,13 @@
  * Created: July 26, 2025
  */
 
+'use strict';
+
 const fs = require('fs');
 const path = require('path');
 
-const DOCS_DIR = './docs';
-const BACKUP_DIR = './docs-backup-' + new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+const DOCS_DIR = path.resolve(process.cwd(), 'docs');
+const BACKUP_DIR = path.resolve(process.cwd(), `docs-backup-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`);
 
 // Consolidation mapping based on content analysis
 const consolidationMap = {
@@ -73,16 +75,16 @@ function createBackup() {
     }
 }
 
-// Read file content safely
+ // Read file content safely
 function readFileContent(filePath) {
+    const fullPath = path.join(DOCS_DIR, filePath);
     try {
-        const fullPath = path.join(DOCS_DIR, filePath);
-        if (fs.existsSync(fullPath)) {
-            return fs.readFileSync(fullPath, 'utf8');
-        }
-        return null;
+        return fs.readFileSync(fullPath, 'utf8');
     } catch (error) {
-        console.warn(`⚠️ Could not read file: ${filePath}`);
+        if (error && error.code === 'ENOENT') {
+            return null;
+        }
+        console.warn(`⚠️ Could not read file: ${filePath} — ${error && error.message ? error.message : error}`);
         return null;
     }
 }
@@ -162,12 +164,13 @@ function backupOriginalFiles() {
     });
 }
 
-// Generate consolidation summary
+ // Generate consolidation summary
 function generateSummary() {
+    const totalFilesProcessed = Object.values(consolidationMap).flat().length;
     const summaryContent = `# Documentation Consolidation Summary
 
 **Date:** ${new Date().toLocaleDateString()}
-**Total Files Processed:** 113
+**Total Files Processed:** ${totalFilesProcessed}
 **Comprehensive Documents Created:** ${Object.keys(consolidationMap).length}
 **Files Consolidated:** ${Object.values(consolidationMap).flat().length}
 
