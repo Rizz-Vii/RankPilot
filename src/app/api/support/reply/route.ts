@@ -44,7 +44,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         if (!docSnap.exists) {
             return NextResponse.json({ message: "Message not found" }, { status: 404 });
         }
-        const data = docSnap.data() as any;
+        type SupportMessageData = { email?: string } | undefined;
+        const data = docSnap.data() as SupportMessageData;
         const toEmail = data?.email;
         const from = process.env.CONTACT_FROM_EMAIL || process.env.SMTP_USER || "no-reply@rankpilot.com";
 
@@ -76,7 +77,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
         return NextResponse.json({ success: true, id: info.messageId });
     } catch (err: unknown) {
-        getLogger('support-reply').error('reply.error', { error: (err as any)?.message });
-        return NextResponse.json({ message: (err as any)?.message || "Internal error" }, { status: 500 });
+        const errMessage = err instanceof Error ? err.message : String(err);
+        getLogger('support-reply').error('reply.error', { error: errMessage });
+        return NextResponse.json({ message: errMessage || "Internal error" }, { status: 500 });
     }
 }
