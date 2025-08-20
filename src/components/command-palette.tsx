@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Command, Sun, Moon, Contrast, User, LogOut } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
