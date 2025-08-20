@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,8 @@ import {
 import { ChevronDown, Zap, Target, Rocket } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+const EXPANDED_STORAGE_KEY = "enhanced_nav_expanded_groups_v1";
+
 interface EnhancedAppNavProps {
   userTier?: string;
   isAdmin?: boolean;
@@ -50,7 +52,6 @@ export function EnhancedAppNav({
   const [navState, setNavState] = useState<NavState>(defaultNavState);
   const [visibleGroups, setVisibleGroups] = useState<NavGroup[]>([]);
   const [mounted, setMounted] = useState(false);
-  const EXPANDED_STORAGE_KEY = "enhanced_nav_expanded_groups_v1";
 
   // Helper: persist expanded group state (desktop only)
   const persistExpanded = useCallback((expanded: Set<string>) => {
