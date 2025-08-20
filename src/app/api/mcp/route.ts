@@ -5,7 +5,7 @@
 
 import { mcpService } from '@/lib/mcp';
 import { neuroSEOMCPOrchestrator } from '@/lib/neuroseo/mcp-enhanced';
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 /**
@@ -14,14 +14,14 @@ import { NextResponse } from 'next/server';
  */
 export async function GET() {
     try {
-        const status = mcpService.getServiceStatus();
+        const status = await mcpService.getServiceStatus();
 
         return NextResponse.json({
             success: true,
             data: status,
             message: 'MCP service status retrieved successfully',
         });
-    } catch (error) {
+    } catch (error: unknown) {
         return NextResponse.json({
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error',
@@ -43,7 +43,8 @@ export async function POST(request: NextRequest) {
         const pathParts = pathname.split('/').filter(Boolean);
         const serviceAction = pathParts.slice(2).join('/'); // Remove 'api/mcp'
 
-        const { query, limit = 10 } = await request.json();
+        const _body = await request.json();
+        const { query, limit = 10 } = _body ?? {};
 
         // Handle HuggingFace model search
         if (serviceAction === 'huggingface/search') {
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
             ],
         }, { status: 400 });
 
-    } catch (error) {
+    } catch (error: unknown) {
         return NextResponse.json({
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error',
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
                     requestId: result.requestId,
                 },
             });
-        } catch (error) {
+        } catch (error: unknown) {
             return NextResponse.json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
@@ -156,7 +157,7 @@ export async function POST(request: NextRequest) {
                     requestId: result.requestId,
                 },
             });
-        } catch (error) {
+        } catch (error: unknown) {
             return NextResponse.json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
@@ -193,7 +194,7 @@ export async function POST(request: NextRequest) {
                     requestId: result.requestId,
                 },
             });
-        } catch (error) {
+        } catch (error: unknown) {
             return NextResponse.json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
@@ -235,7 +236,7 @@ export async function POST(request: NextRequest) {
                     timestamp: new Date().toISOString(),
                 },
             });
-        } catch (error) {
+        } catch (error: unknown) {
             return NextResponse.json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
