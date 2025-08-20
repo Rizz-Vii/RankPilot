@@ -7,12 +7,9 @@ import {
   FaLinkedin,
   FaTwitter,
   FaYoutube,
-  FaEnvelope,
-  FaPhone,
-  FaMapMarkerAlt,
   FaGithub,
 } from "react-icons/fa";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronUp } from "lucide-react";
@@ -80,7 +77,7 @@ export default function SiteFooter() {
   const [emailSubscription, setEmailSubscription] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
 
-  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+  const handleNewsletterSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubscribing(true);
 
