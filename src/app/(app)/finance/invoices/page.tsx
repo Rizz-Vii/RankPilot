@@ -72,7 +72,7 @@ export default function InvoicesPage(): JSX.Element {
         <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Invoices</h2>
           <LazyDataTable
-            columns={[{ key:'period', header:'Period'}, { key:'planTier', header:'Tier'}, { key:'amount', header:'Amount'}, { key:'status', header:'Status'}, { key:'issuedAt', header:'Issued', render:(r:any)=> r.issuedAt?.toDate?.()?.toISOString().slice(0,10)}, { key:'paidAt', header:'Paid', render:(r:any)=> r.paidAt? r.paidAt.toDate().toISOString().slice(0,10): '-' }]}
+            columns={[{ key:'period', header:'Period'}, { key:'planTier', header:'Tier'}, { key:'amount', header:'Amount'}, { key:'status', header:'Status'}, { key:'issuedAt', header:'Issued', render:(r)=> { const rec = r as InvoiceRowLite; return rec.issuedAt?.toDate?.()?.toISOString().slice(0,10) } }, { key:'paidAt', header:'Paid', render:(r)=> { const rec = r as InvoiceRowLite; return rec.paidAt ? rec.paidAt.toDate().toISOString().slice(0,10) : '-' } }]}
             rows={live.rows}
             loading={live.loading}
             empty="No invoice data"
