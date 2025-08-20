@@ -119,16 +119,17 @@ class ProjectOptimizer {
     try {
       await this.withTimeout(operation());
       console.log(`✓ ${description}`);
-    } catch (error: any) {
-      if (error.code === "ENOENT") {
+    } catch (error: unknown) {
+      const err = error as { code?: string; message?: string };
+      if (err.code === "ENOENT") {
         // File doesn't exist, which is fine for cleanup
         return;
       }
-      if (error.message.includes("timed out")) {
+      if (err.message?.includes("timed out")) {
         console.warn(`⚠ ${description} - timed out`);
         return;
       }
-      if (error.message.includes("aborted")) {
+      if (err.message?.includes("aborted")) {
         console.warn(`⚠ ${description} - aborted`);
         return;
       }
@@ -191,13 +192,13 @@ class ProjectOptimizer {
                 await fs.access(publicImagePath);
                 await fs.unlink(filePath);
                 console.log(`✓ Removed duplicate image: src/lib/${imageFile}`);
-              } catch (error) {
+              } catch {
                 // Public version doesn't exist, keep the src version
                 console.log(`⚠ Keeping unique image: src/lib/${imageFile}`);
               }
             }
-          } catch (error) {
-            console.log(`⚠ Could not access src/lib directory: ${error}`);
+          } catch (error: unknown) {
+            console.log(`⚠ Could not access src/lib directory: ${String(error)}`);
           }
         },
       },
@@ -248,8 +249,9 @@ class ProjectOptimizer {
                   cwd: this.projectRoot,
                   signal: this.abortController.signal,
                 });
-              } catch (error: any) {
-                if (error.code !== "ENOENT") {
+              } catch (error: unknown) {
+                const err = error as { code?: string };
+                if (err.code !== "ENOENT") {
                   throw error;
                 }
               }
@@ -270,8 +272,9 @@ class ProjectOptimizer {
                 cwd: this.projectRoot,
                 signal: this.abortController.signal,
               });
-            } catch (error: any) {
-              if (error.code !== "ENOENT") {
+            } catch (error: unknown) {
+              const err = error as { code?: string };
+              if (err.code !== "ENOENT") {
                 throw error;
               }
             }
@@ -333,13 +336,17 @@ class ProjectOptimizer {
           try {
             await this.withTimeout(task.execute());
             console.log(`✅ ${task.name} completed successfully\n`);
-          } catch (error: any) {
-            console.error(`❌ ${task.name} failed:`, error.message);
+          } catch (error: unknown) {
+            const err = error as { message?: string };
+            console.error(
+              `❌ ${task.name} failed:`,
+              err.message ?? String(error)
+            );
 
             // Decide whether to continue or stop
             if (
-              error.message.includes("aborted") ||
-              error.message.includes("SIGINT")
+              err.message?.includes("aborted") ||
+              err.message?.includes("SIGINT")
             ) {
               break;
             }
@@ -354,8 +361,9 @@ class ProjectOptimizer {
       console.log('  1. Run "npm run build" to test optimized build');
       console.log('  2. Run "npm run dev" to verify development server');
       console.log("  3. Check documentation for updated instructions");
-    } catch (error: any) {
-      console.error("💥 Optimization failed:", error.message);
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      console.error("💥 Optimization failed:", err.message ?? String(error));
       process.exit(1);
     }
   }
@@ -369,7 +377,7 @@ if (require.main === module) {
     dryRun: args.includes("--dry-run"),
     concurrent: args.includes("--concurrent"),
     timeout: args.includes("--timeout")
-      ? parseInt(args[args.indexOf("--timeout") + 1]) || 30000
+      ? parseInt(args[args.indexOf("--timeout") + 1], 10) || 30000
       : 30000,
   };
 
