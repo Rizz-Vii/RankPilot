@@ -162,8 +162,7 @@ export async function verifyDummyData(): Promise<DataSummary> {
     console.log("\n🔎 Data Quality Checks:");
 
     // Check if all users have the expected subcollections
-    const usersWithoutActivities =
-      userCount - (totalActivities > 0 ? userCount : 0);
+    const usersWithoutActivities = totalActivities > 0 ? 0 : userCount;
     const usersWithoutUsage = userCount - totalUsage;
 
     console.log(
