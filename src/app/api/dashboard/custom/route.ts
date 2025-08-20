@@ -4,9 +4,10 @@
  */
 
 import { customDashboardBuilder } from '@/lib/dashboard/custom-dashboard-builder';
+import { extractErrorMessage } from '@/lib/errors/extract-error-message';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
@@ -117,7 +118,10 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         }
     } catch (error) {
         console.error('[DashboardAPI] Error:', error);
-        return NextResponse.json(enforceProvenance({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' }, { path: 'dashboard/custom', note: 'exception' }), { status: 500 });
+        return NextResponse.json(
+            enforceProvenance({ error: 'Internal server error', details: extractErrorMessage(error) }, { path: 'dashboard/custom', note: 'exception' }),
+            { status: 500 }
+        );
     }
 }, { path: 'dashboard/custom' });
 
@@ -167,6 +171,9 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
         }
     } catch (error) {
         console.error('[DashboardAPI] GET Error:', error);
-        return NextResponse.json(enforceProvenance({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' }, { path: 'dashboard/custom', note: 'exception' }), { status: 500 });
+        return NextResponse.json(
+            enforceProvenance({ error: 'Internal server error', details: extractErrorMessage(error) }, { path: 'dashboard/custom', note: 'exception' }),
+            { status: 500 }
+        );
     }
 }, { path: 'dashboard/custom' });
