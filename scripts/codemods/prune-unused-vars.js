@@ -46,7 +46,7 @@ function collectRefs(code){
 function processFile(file){
   const original = fs.readFileSync(file,'utf8');
   const lines = original.split(/\n/);
-  collectRefs(original);
+  const refs = collectRefs(original);
   const changes = [];
   let modified = false;
   // Pass 1: variable declarators
@@ -58,14 +58,20 @@ function processFile(file){
     if(m){
       const name = m[3];
       if(name.startsWith('_')) continue;
-      // ensure appears exactly once (this declarator) in refs; remove if unused elsewhere
+      // ensure appears exactly once (this declarator) in file; remove if unused elsewhere
       let occurrences = 0;
-      const occRe = new RegExp('\\b'+name+'\\b','g');
-      let mm; while((mm=occRe.exec(original))){ occurrences++; if(occurrences>1) break; }
-      if(occurrences===1){
-        lines[i] = '';// remove line
+      if (refs.has(name)) {
+        const occRe = new RegExp('\\b' + name + '\\b', 'g');
+        let mm;
+        while ((mm = occRe.exec(original))) {
+          occurrences++;
+          if (occurrences > 1) break;
+        }
+      }
+      if (occurrences === 1) {
+        lines[i] = ''; // remove line
         modified = true;
-        changes.push({type:'var', name, line:i+1});
+        changes.push({ type: 'var', name, line: i + 1 });
       }
     }
   }
