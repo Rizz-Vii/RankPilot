@@ -17,7 +17,7 @@ const logger = getLogger('api.neuroseo.stream').withTrace();
 
 interface StreamPayload { urls?: string[]; analysisType?: string; userId?: string; timeoutMs?: number; teamId?: string; }
 
-function sseEncoder() {
+function sseEncoder(): (controller: ReadableStreamDefaultController, event: string, data: Record<string, unknown>) => void {
     const encoder = new TextEncoder();
     return (controller: ReadableStreamDefaultController, event: string, data: Record<string, unknown>) => {
         controller.enqueue(encoder.encode(`event: ${event}\n`));
@@ -25,7 +25,7 @@ function sseEncoder() {
     };
 }
 
-async function persistCompact(urls: string[], analysisType: string, userId: string | undefined, overallScore: number, provenance: 'live' | 'cache' | 'synthetic') {
+async function persistCompact(urls: string[], analysisType: string, userId: string | undefined, overallScore: number, provenance: 'live' | 'cache' | 'synthetic'): Promise<void> {
     if (!userId) return;
     try {
         const hashKey = Buffer.from(JSON.stringify({ u: [...urls].sort(), t: analysisType }))
@@ -41,7 +41,7 @@ async function persistCompact(urls: string[], analysisType: string, userId: stri
     } catch (e: unknown) { logger.warn('persist.stream.degraded', { message: (e as any)?.message }); }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<Response> {
     let payload: StreamPayload;
     try { payload = await request.json(); } catch { return new Response(JSON.stringify({ error: 'Invalid JSON body' }), { status: 400 }); }
     const { urls = [], analysisType = 'comprehensive', userId = 'anonymous', timeoutMs = 12000, teamId } = payload;
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
             write(controller, 'ack', { received: urls.length, analysisType });
             try {
                 // TEAM-01: Apply team limiter if teamId provided else legacy per-user limiter for transition period.
-                const g: any = globalThis as any;
+                const g = globalThis as unknown as { adminDb?: typeof adminDb };
                 if (typeof teamId === 'string' && teamId) {
                     const { adminDb: _adminDb } = g.adminDb ? { adminDb: g.adminDb } : await import('@/lib/firebase-admin');
                     await enforceTeamRateLimit(_adminDb, teamId, { routeKey: 'neuroseo/stream' });
@@ -75,7 +75,8 @@ export async function POST(request: NextRequest) {
                     const admin = g.adminDb || (await import('@/lib/firebase-admin')).adminDb;
                     await enforceNeuroSeoRateLimit(admin, userId, {});
                 }
-                const atype = (['comprehensive', 'quick', 'competitor'] as const).includes(analysisType as any) ? analysisType as 'comprehensive' | 'quick' | 'competitor' : 'comprehensive';
+                const allowedTypes = ['comprehensive', 'quick', 'competitor'] as const;
+                const atype = (allowedTypes as readonly string[]).includes(analysisType) ? (analysisType as typeof allowedTypes[number]) : 'comprehensive';
                 const orchestration = neuroSEOOrchestrator.runAnalysisStream({ urls, analysisType: atype, userId });
                 for await (const evt of orchestration) {
                     if (evt.type === 'cached') { recordCacheHit(); finalProvenance = 'cache'; }
