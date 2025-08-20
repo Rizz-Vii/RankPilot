@@ -8,10 +8,10 @@
  * - CompetitorAnalysisOutput - The return type for the analyzeCompetitors function.
  */
 
-import { ai } from "../genkit";
-import { z } from "zod";
-const geminiApiKey = process.env.GEMINI_API_KEY;
-const googleApiKey = process.env.GOOGLE_API_KEY;
+import { z } from 'zod';
+import { ai } from '../genkit';
+const geminiApiKey: string | undefined = process.env.GEMINI_API_KEY;
+const googleApiKey: string | undefined = process.env.GOOGLE_API_KEY;
 
 const CompetitorAnalysisInputSchema = z.object({
   yourUrl: z.string().url().describe("The URL of your website."),
@@ -62,11 +62,11 @@ export type CompetitorAnalysisOutput = z.infer<
   typeof CompetitorAnalysisOutputSchema
 >;
 
-export async function analyzeCompetitors(
+export const analyzeCompetitors = async (
   input: CompetitorAnalysisInput
-): Promise<CompetitorAnalysisOutput> {
+): Promise<CompetitorAnalysisOutput> => {
   return _competitorAnalysisFlow(input);
-}
+};
 
 const analysisPrompt = ai.definePrompt({
   name: "competitorAnalysisPrompt",
