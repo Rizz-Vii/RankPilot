@@ -10,10 +10,9 @@ const c = (code: number) => (s: string) => useColor ? `\u001b[${code}m${s}\u001b
 const dim = c(2);
 const cyan = c(36);
 const green = c(32);
-const yellow = c(33);
 const red = c(31);
 
-function timeMeta() {
+function timeMeta(): { date: string; melbTime: string; utcDelta: string } {
   const now = new Date();
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const date = `${String(now.getDate()).padStart(2, '0')}-${monthNames[now.getMonth()]}-${String(now.getFullYear()).slice(-2)}`;
@@ -36,7 +35,9 @@ function timeMeta() {
     const sign = diff >= 0 ? '+' : '-';
     const abs = Math.abs(diff); const dh = Math.floor(abs / 60); const dm = abs % 60;
     utcDelta = `${sign}${String(dh).padStart(2, '0')}:${String(dm).padStart(2, '0')}`;
-  } catch { }
+  } catch (_) {
+    // ignore errors computing timezone delta
+  }
   return { date, melbTime, utcDelta };
 }
 
@@ -49,12 +50,15 @@ function computeDiffStats(): { files: number; locAdded: number } {
   } catch { return { files: 0, locAdded: 0 }; }
 }
 
-function writeRemediation(reason: string, tasks: Task[]) {
+function writeRemediation(reason: string, tasks: Task[]): void {
   try {
     fs.mkdirSync('artifacts/brain', { recursive: true });
     const ts = new Date().toISOString().replace(/[:.]/g, '-');
     fs.writeFileSync(`artifacts/brain/remediation-${ts}.json`, JSON.stringify({ reason, tasks }, null, 2));
-  } catch {}
+  } catch (err) {
+    // ignore errors while attempting to write remediation artifact
+    void err;
+  }
 }
 
 export async function runBatch(tasks: Task[], opts: { mode: 'execute' | 'dry-run' | 'plan-only'; cfg: any; preflightEstimate?: { files: number; locAdded: number } }): Promise<{ results: any[]; diffs: { files: number; locAdded: number } }> {
