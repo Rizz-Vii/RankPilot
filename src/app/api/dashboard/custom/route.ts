@@ -76,13 +76,15 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
                     return NextResponse.json(enforceProvenance({ error: 'Dashboard ID is required' }, { path: 'dashboard/custom', note: 'validation' }), { status: 400 });
                 }
                 if (body.widgetConfig && body.position) {
-                    const sanitized = sanitizeWidgetCreate(body.widgetConfig);
-                    const widget = await customDashboardBuilder.addWidget(body.dashboardId, sanitized as any, body.position);
+                    // Avoid explicit `any` by asserting the sanitized result as WidgetCreateInput
+                    const sanitized = sanitizeWidgetCreate(body.widgetConfig) as WidgetCreateInput;
+                    const widget = await customDashboardBuilder.addWidget(body.dashboardId, sanitized, body.position);
                     return NextResponse.json(enforceProvenance({ success: true, widget, message: 'Widget added successfully' }, { path: 'dashboard/custom', note: 'add_widget' }));
                 } else if (body.updates?.widgetId) {
                     const { widgetId, ...rest } = body.updates;
-                    const sanitized = sanitizeWidgetMutation(rest);
-                    const result = await customDashboardBuilder.updateWidget(body.dashboardId, widgetId, sanitized as any);
+                    // Avoid explicit `any` by asserting the sanitized result as WidgetMutation
+                    const sanitized = sanitizeWidgetMutation(rest) as WidgetMutation;
+                    const result = await customDashboardBuilder.updateWidget(body.dashboardId, widgetId, sanitized);
                     return NextResponse.json(enforceProvenance({ success: true, widget: result, message: 'Widget updated successfully' }, { path: 'dashboard/custom', note: 'update_widget' }));
                 }
                 return NextResponse.json(enforceProvenance({ error: 'Invalid update request' }, { path: 'dashboard/custom', note: 'invalid_update' }), { status: 400 });
