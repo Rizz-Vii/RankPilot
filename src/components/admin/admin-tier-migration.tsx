@@ -14,21 +14,10 @@ import { Badge } from "@/components/ui/badge";
 import { RefreshCw, CheckCircle, AlertTriangle, Info } from "lucide-react";
 import { identifyAndCorrectUserTiers } from "@/lib/user-tier-migration";
 
-interface TierStats {
-  total: number;
-  free: number;
-  professional: number;
-  enterprise: number;
-  outdated: number;
-  starter: number;
-  agency: number;
-  unknown: number;
-}
 
 export default function AdminTierMigration() {
   const [isRunning, setIsRunning] = useState(false);
   const [migrationComplete, setMigrationComplete] = useState(false);
-  const [stats, setStats] = useState<TierStats | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
 
   const runMigration = async (): Promise<void> => {
