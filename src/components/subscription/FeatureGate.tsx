@@ -56,7 +56,6 @@ export function FeatureGate({
   showUpgrade = true,
   adminOnly = false,
 }: FeatureGateProps): JSX.Element | null {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { subscription, canUseFeature, userAccess, loading } = useSubscription();
 
   // Test bypass: if window.__TEST_MODE__ true, always render children (Playwright deterministic bypass)
