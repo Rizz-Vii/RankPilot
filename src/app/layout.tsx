@@ -1,6 +1,7 @@
 import { ClientLayout } from "@/components/client-layout";
 import { AuthProvider } from "@/context/AuthContext";
 import "@/styles/globals.css";
+import type React from "react";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 
@@ -96,7 +97,7 @@ export default async function RootLayout({
   if (process.env.NODE_ENV === 'development') {
     try {
       const mod = await import('@/components/dev/AgentsToggle');
-      const AgentsToggleComp = (mod && (mod.AgentsToggle ?? (mod.default as any))) as any;
+      const AgentsToggleComp = (mod && (mod.AgentsToggle ?? mod.default)) as React.ComponentType | undefined;
       if (AgentsToggleComp) {
         agentsToggleElement = <div suppressHydrationWarning><AgentsToggleComp /></div>;
       }
