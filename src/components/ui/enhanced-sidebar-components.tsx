@@ -7,7 +7,6 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { sidebarStyles, mobileSidebarOptimizations } from '@/lib/design-system/sidebar-styles';
 import { typography } from '@/lib/design-system/typography';
-import { spacing } from '@/lib/design-system/spacing';
 import { colors, getTierBadgeColor } from '@/lib/design-system/colors';
 
 interface NavItemProps {
@@ -29,6 +28,7 @@ export const EnhancedNavItem: React.FC<NavItemProps> = ({
 }) => {
     return (
         <button
+            type="button"
             onClick={onClick}
             className={cn(
                 sidebarStyles.navItem.base,
@@ -60,7 +60,7 @@ export const EnhancedNavItem: React.FC<NavItemProps> = ({
             )}
 
             {tierBadge && (
-                <span className={getTierBadgeColor(tierBadge)}>
+                <span className={cn(getTierBadgeColor(tierBadge))}>
                     {tierBadge}
                 </span>
             )}
@@ -106,6 +106,7 @@ export const EnhancedUserSwitchItem: React.FC<UserSwitchItemProps> = ({
 }) => {
     return (
         <button
+            type="button"
             onClick={onClick}
             className={cn(
                 sidebarStyles.userSwitch.userItem,
@@ -113,8 +114,8 @@ export const EnhancedUserSwitchItem: React.FC<UserSwitchItemProps> = ({
                 isActive && colors.status.info.bg
             )}
         >
-            <div className={"w-8 h-8 rounded-full " + colors.background.dark + " flex items-center justify-center"}>
-                <span className={"text-xs font-medium " + colors.text.inverse}>
+            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center", colors.background.dark)}>
+                <span className={cn("text-xs font-medium", colors.text.inverse)}>
                     {name.charAt(0).toUpperCase()}
                 </span>
             </div>
@@ -131,7 +132,7 @@ export const EnhancedUserSwitchItem: React.FC<UserSwitchItemProps> = ({
                 </div>
             </div>
 
-            <span className={getTierBadgeColor(tier)}>
+            <span className={cn(getTierBadgeColor(tier))}>
                 {tier.toUpperCase()}
             </span>
         </button>
