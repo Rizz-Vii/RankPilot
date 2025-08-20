@@ -27,7 +27,7 @@ export interface ChatSession {
     metadata?: Record<string, unknown>;
 }
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 export interface ChatContext {
     auditData?: boolean;
     siteContent?: boolean;
@@ -35,7 +35,6 @@ export interface ChatContext {
     systemMetrics?: boolean;
     userTier: string;
 }
-/* eslint-enable @typescript-eslint/no-unused-vars */
 
 // Utility functions
 export const generateSessionId = (type: 'customer' | 'admin' = 'customer'): string => {
