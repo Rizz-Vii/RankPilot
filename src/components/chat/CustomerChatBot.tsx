@@ -506,7 +506,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                                         }
                                         // Derive suggestions from rp_meta if present
                                         try {
-                                            const { meta } = extractRpMeta(accumulated);
+                                            const { meta } = extractRpMeta(accumulated) as any;
                                             const nextSugg: string[] = [];
                                             if (meta?.actions?.length) nextSugg.push(...meta.actions);
                                             if (nextSugg.length) setSuggestions(nextSugg.slice(0,4));
@@ -521,7 +521,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                     // Final markdown render
                     try {
                         // Clean rp_meta before rendering
-                        const { cleaned, meta } = extractRpMeta(accumulated);
+                        const { cleaned, meta } = extractRpMeta(accumulated) as any;
                         let html = await renderMarkdown(cleaned);
                         html = DOMPurify.sanitize(html);
                         // Generate suggestions based on accumulated + user intent
@@ -608,7 +608,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
 
             // Add AI response
             // Extract rp_meta for suggestions
-            const { cleaned, meta } = extractRpMeta(data.response);
+            const { cleaned, meta } = extractRpMeta(data.response) as any;
             let html = await renderMarkdown(cleaned);
             html = DOMPurify.sanitize(html);
             const aiMessage: ChatMessage = {
