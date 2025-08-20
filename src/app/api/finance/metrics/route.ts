@@ -11,7 +11,29 @@ import { mapFinanceInvoiceDoc } from '@/types/firestore-docs';
 
 type FinanceInvoiceDoc = FinanceInvoiceRuntime;
 
-function aggregateInvoices(invoices: FinanceInvoiceDoc[], months: number) {
+type AggregatedResult = {
+  kpis: unknown;
+  mrrSeries: { period: string; mrr: number }[];
+  aging: Array<{ bucket: string; count: number; amount: number }>;
+  invoices?: FinanceInvoiceDoc[];
+  invoicesCount?: number;
+};
+
+function extractErrInfo(err: unknown): { code?: number | string; message?: string } {
+  if (err && typeof err === 'object') {
+    const obj = err as Record<string, unknown>;
+    return {
+      code:
+        typeof obj['code'] === 'number' || typeof obj['code'] === 'string'
+          ? (obj['code'] as number | string)
+          : undefined,
+      message: typeof obj['message'] === 'string' ? (obj['message'] as string) : undefined,
+    };
+  }
+  return {};
+}
+
+function aggregateInvoices(invoices: FinanceInvoiceDoc[], months: number): AggregatedResult {
   if (!invoices.length) {
     return { kpis: [], mrrSeries: [], aging: [], invoices: [] };
   }
@@ -128,7 +150,7 @@ export const GET = withProvenance(
       const authHeader =
         req.headers.get('authorization') || req.headers.get('Authorization');
       let uid: string | undefined;
-      let decoded: any;
+      let decoded: { uid?: string } | undefined;
 
       if (!authHeader) {
         // Non-production test bypass: ?testUser=email@example.com
@@ -161,8 +183,8 @@ export const GET = withProvenance(
         }
       } else {
         const idToken = authHeader.replace('Bearer ', '');
-        decoded = await adminAuth.verifyIdToken(idToken);
-        uid = (decoded as any).uid;
+        decoded = (await adminAuth.verifyIdToken(idToken)) as { uid?: string };
+        uid = decoded?.uid;
       }
 
       const monthsParam = Number(new URL(req.url).searchParams.get('months') || 6);
@@ -185,8 +207,8 @@ export const GET = withProvenance(
         );
       } catch (err: unknown) {
         // Fallback path when composite index (condField + period) is missing in local/emulated envs.
-        const e: any = err as any;
-        if (e?.code === 9 || /FAILED_PRECONDITION/i.test(e?.message || '')) {
+        const e = extractErrInfo(err);
+        if (e.code === 9 || /FAILED_PRECONDITION/i.test(e.message || '')) {
           const q2 = await adminDb
             .collection('financeInvoices')
             .where(condField, '==', teamId || uid)
@@ -205,19 +227,19 @@ export const GET = withProvenance(
       const payload = aggregateInvoices(invoices, months);
       // ensure invoicesCount is present
       // payload.invoices may be undefined in edge cases, fall back to invoices.length
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      (payload as any).invoicesCount = ((payload as any)?.invoices?.length || invoices.length);
+      payload.invoicesCount = payload.invoices?.length ?? invoices.length;
 
-      const diag = `auth=${authHeader ? 'ok' : 'bypass'}; items=${(payload as any)?.invoices?.length}; months=${months}; scope=${teamId ? 'team' : 'user'}`;
+      const diag = `auth=${authHeader ? 'ok' : 'bypass'}; items=${payload.invoices?.length ?? invoices.length}; months=${months}; scope=${teamId ? 'team' : 'user'}`;
       const okBody = enforceProvenance(
-        { ...(payload as any), __provenance: 'live' },
+        { ...payload, __provenance: 'live' },
         { path: 'finance/metrics', note: 'ok' },
       );
       const res = NextResponse.json(okBody);
       res.headers.set('x-finance-diagnostics', diag);
       return res;
     } catch (e: unknown) {
-      logger.error('finance.metrics.error', { error: (e as any)?.message });
+      const info = extractErrInfo(e);
+      logger.error('finance.metrics.error', { error: info.message });
       const errBody = enforceProvenance(
         { error: 'internal_error' },
         { path: 'finance/metrics', note: 'exception' },
