@@ -7,7 +7,7 @@ type SortBy = "metric" | "value" | "change";
 type Direction = "asc" | "desc";
 
 // Simple deterministic generator for demo/server-side mock data
-function generateRows(total: number, seed: string) {
+function generateRows(total: number, seed: string): { metric: string; value: string; change: string }[] {
     const rows: { metric: string; value: string; change: string }[] = [];
     let s = 0;
     for (let i = 0; i < seed.length; i++) s = (s + seed.charCodeAt(i)) % 997;
@@ -25,7 +25,7 @@ function generateRows(total: number, seed: string) {
     return rows;
 }
 
-function parseNumeric(val: string) {
+function parseNumeric(val: string): number {
     if (val.endsWith("%")) return parseFloat(val.replace(/%/g, ""));
     return parseFloat(val.replace(/[$,]/g, ""));
 }
@@ -38,12 +38,12 @@ interface RawRow {
     [k: string]: unknown;
 }
 
-function formatCurrency(val: number) {
+function formatCurrency(val: number): string {
     // Format like $50,000 (no decimals by default)
     return `$${val.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
-function formatPercent(val: number) {
+function formatPercent(val: number): string {
     const sign = val >= 0 ? "+" : "";
     return `${sign}${Math.round(val)}%`;
 }
@@ -169,7 +169,7 @@ async function fetchFromFirestore(opts: {
     }
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
     try {
         const { searchParams } = new URL(req.url);
         const widgetId = searchParams.get("widgetId") || "global";
