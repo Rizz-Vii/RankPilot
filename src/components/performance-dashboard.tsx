@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, FC } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import type { FC } from "react";
 import {
   Card,
   CardContent,
