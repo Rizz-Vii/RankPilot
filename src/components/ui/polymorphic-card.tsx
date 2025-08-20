@@ -91,7 +91,7 @@ const PolymorphicCard = React.forwardRef<PolymorphicCardElement, PolymorphicCard
         },
         ref
     ) => {
-    const Comp: any = asChild ? Slot : useMotion ? motion.div : 'div';
+    const Comp: React.ElementType = asChild ? Slot : useMotion ? motion.div : 'div';
 
         // Use static mappings instead of dynamic template classes to satisfy Tailwind JIT
         const spacingToStack: Record<NonNullable<PolymorphicCardProps["spacing"]>, string> = {
@@ -126,13 +126,13 @@ const PolymorphicCard = React.forwardRef<PolymorphicCardElement, PolymorphicCard
             </div>
         ) : children;
 
-    const motionProps: Record<string, unknown> = useMotion && animation ? animation : {};
+    const motionProps = useMotion && animation ? animation : undefined;
 
         return (
             <Comp
                 ref={ref}
                 className={cn(polymorphicCardVariants({ variant, size, spacing }), className)}
-                {...(useMotion ? motionProps : {})}
+                {...(motionProps ?? {})}
                 {...props}
             >
                 {cardContent}
