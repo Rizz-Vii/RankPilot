@@ -1,5 +1,4 @@
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { TeamRateLimitError, applyTeamRateLimit } from '@/lib/rate-limit/team-rate-limit';
 
