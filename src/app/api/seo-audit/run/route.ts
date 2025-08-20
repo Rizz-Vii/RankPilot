@@ -12,7 +12,7 @@ const PROJECT = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'rankpilot-h3jpc'
 const FUNCTION_NAME = 'runSeoAudit';
 const FUNCTION_URL = `https://${REGION}-${PROJECT}.cloudfunctions.net/${FUNCTION_NAME}`;
 
-export const POST = withProvenance(async function POST(req: NextRequest) {
+export const POST = withProvenance(async function (req: NextRequest) {
     try {
         const body = await req.json();
 
