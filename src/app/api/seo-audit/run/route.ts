@@ -58,7 +58,9 @@ export const POST = withProvenance(async function (req: Request) {
         const base = NextResponse.json(enforceProvenance({ success: true, data, provenance: 'live' }, { path: 'seo-audit/run' }), { status: 200 });
         const rateHeaders = (req as any)._teamRateHeaders;
         if (rateHeaders) {
-            Object.entries(rateHeaders).forEach(([k, v]) => base.headers.set(k, v as string));
+            for (const [name, value] of Object.entries(rateHeaders)) {
+                base.headers.set(name, value as string);
+            }
         }
         return base;
     } catch (e: unknown) {
