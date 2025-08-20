@@ -5,9 +5,9 @@ import crypto from 'crypto';
 // Cleanup: scripts/cleanup-invites.ts prunes accepted/expired invites and orphan index docs.
 
 // Simple invariant helpers
-interface TeamMember { userId?: string; id?: string; email?: string; role?: string; status?: string; invitedAt?: any; lastActive?: any; joinedAt?: any; }
+interface TeamMember { userId?: string; id?: string; email?: string; role?: string; status?: string; invitedAt?: unknown; lastActive?: unknown; joinedAt?: unknown; }
 interface TeamDoc { memberIds?: string[]; members?: TeamMember[];[k: string]: unknown; }
-interface InviteData { emailLower: string; role: string; status: string; invitedAt: any; expiresAt?: any; tokenHash?: string; email?: string;[k: string]: unknown; }
+interface InviteData { emailLower: string; role: string; status: string; invitedAt?: unknown; expiresAt?: unknown; tokenHash?: string; email?: string;[k: string]: unknown; }
 
 async function getTeamForUser(uid: string) {
     // membership via memberIds
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         }
         return NextResponse.json({ success: true, inviteId, token: tokenPlain });
     } catch (e: unknown) {
-        console.error('Team invite error', e); const msg = typeof e === 'object' && e && 'message' in e ? (e as any).message : 'Internal error'; return NextResponse.json({ error: msg }, { status: 500 });
+        console.error('Team invite error', e); const msg = e instanceof Error ? e.message : (typeof e === 'string' ? e : 'Internal error'); return NextResponse.json({ error: msg }, { status: 500 });
     }
 }
 
@@ -155,7 +155,7 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
         });
         return NextResponse.json({ success: true, teamId: found.teamId });
     } catch (e: unknown) {
-        console.error('Accept invite error', e); const msg = typeof e === 'object' && e && 'message' in e ? (e as any).message : 'Internal error'; return NextResponse.json({ error: msg }, { status: 500 });
+        console.error('Accept invite error', e); const msg = e instanceof Error ? e.message : (typeof e === 'string' ? e : 'Internal error'); return NextResponse.json({ error: msg }, { status: 500 });
     }
 }
 
@@ -170,7 +170,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
         await adminDb.collection('teams').doc(teamId).collection('invites').doc(inviteId).update({ expiresAt });
         return NextResponse.json({ success: true, expiredAt: expiresAt.toISOString() });
     } catch (e: unknown) {
-        const msg = typeof e === 'object' && e && 'message' in e ? (e as any).message : 'Internal error';
+        const msg = e instanceof Error ? e.message : (typeof e === 'string' ? e : 'Internal error');
         return NextResponse.json({ error: msg }, { status: 500 });
     }
 }
@@ -203,6 +203,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         }
         return NextResponse.json({ invites: results, scope: 'self' });
     } catch (e: unknown) {
-        console.error('List invites error', e); const msg = typeof e === 'object' && e && 'message' in e ? (e as any).message : 'Internal error'; return NextResponse.json({ error: msg }, { status: 500 });
+        console.error('List invites error', e); const msg = e instanceof Error ? e.message : (typeof e === 'string' ? e : 'Internal error'); return NextResponse.json({ error: msg }, { status: 500 });
     }
 }
