@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useI18n } from '@/lib/i18n/internationalization-system';
 import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
@@ -25,9 +25,9 @@ function useRotatingPlaceholder(queries: string[], typingMs = 80, pauseMs = 3000
   const [placeholder, setPlaceholder] = useState(() => queries[0] || "");
   const indexRef = useRef(0);
   useEffect(() => {
-    let typingTimeout: NodeJS.Timeout | null = null;
-    let nextPlaceholderTimeout: NodeJS.Timeout | null = null;
-    let startTypingTimeout: NodeJS.Timeout | null = null;
+    let typingTimeout: number | null = null;
+    let nextPlaceholderTimeout: number | null = null;
+    let startTypingTimeout: number | null = null;
 
     const typeNextCharacter = (text: string, i: number) => {
       if (i <= text.length) {
