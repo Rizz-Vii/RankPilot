@@ -183,8 +183,13 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
             // If typecheck passes, no errors to fix
             return [];
         } catch (error: unknown) {
-            const stdout = (error && typeof error === 'object' && 'stdout' in error) ? String((error as any).stdout || '') : '';
-            const stderr = (error && typeof error === 'object' && 'stderr' in error) ? String((error as any).stderr || '') : '';
+            let stdout = '';
+            let stderr = '';
+            if (typeof error === 'object' && error !== null) {
+                const e = error as { stdout?: unknown; stderr?: unknown };
+                stdout = String(e.stdout ?? '');
+                stderr = String(e.stderr ?? '');
+            }
             const output = stdout || stderr;
             return this.parseTypeScriptErrors(output);
         }
@@ -442,8 +447,13 @@ class DataCorruptionError extends Error {
             await execAsync('npm run typecheck');
             return { success: true, errorCount: 0, previousErrorCount: 11 };
         } catch (error: unknown) {
-            const stdout = (error && typeof error === 'object' && 'stdout' in error) ? String((error as any).stdout || '') : '';
-            const stderr = (error && typeof error === 'object' && 'stderr' in error) ? String((error as any).stderr || '') : '';
+            let stdout = '';
+            let stderr = '';
+            if (typeof error === 'object' && error !== null) {
+                const e = error as { stdout?: unknown; stderr?: unknown };
+                stdout = String(e.stdout ?? '');
+                stderr = String(e.stderr ?? '');
+            }
             const output = stdout || stderr;
             const errors = this.parseTypeScriptErrors(output);
             return { success: false, errorCount: errors.length, previousErrorCount: 11 };
