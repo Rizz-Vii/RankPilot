@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { useAuth } from '@/context/AuthContext';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
