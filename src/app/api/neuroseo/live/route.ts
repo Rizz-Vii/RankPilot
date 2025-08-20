@@ -1,4 +1,4 @@
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { executeNeuroLive } from '@/lib/neuroseo/live-exec';
 import { enforceNeuroSeoRateLimit, NeuroSeoRateLimitError } from '@/lib/neuroseo/rate-limit';
@@ -17,8 +17,13 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
     const start = Date.now();
     if (!ENABLED) return NextResponse.json(enforceProvenance({ success: false, error: 'Live backend disabled', provenance: 'synthetic' }, { path: 'neuroseo/live', note: 'feature_gate' }), { status: 503 });
     try {
-        const body = await req.json().catch(() => ({}));
-        const { urls, analysisType, userId, forceRefresh, teamId } = body || {};
+        let body: unknown = {};
+        try {
+            body = await req.json();
+        } catch {
+            body = {};
+        }
+        const { urls, analysisType, userId, forceRefresh, teamId } = (body as any) || {};
         if (!Array.isArray(urls) || urls.length === 0) {
             return NextResponse.json(enforceProvenance({ success: false, error: 'urls[] required', provenance: 'synthetic' }, { path: 'neuroseo/live', note: 'validation' }), { status: 400 });
         }
@@ -43,9 +48,10 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         recordRouteLatency('neuroseo/live', Date.now() - start);
         return resp;
     } catch (err: unknown) {
-        logger.error('live.route.error', { message: (err as any)?.message });
+        const errMessage = err instanceof Error ? err.message : String(err);
+        logger.error('live.route.error', { message: errMessage });
         recordRouteLatency('neuroseo/live', Date.now() - start);
         recordError('neuroseo/live', '5xx_server');
-        return NextResponse.json(enforceProvenance({ error: (err as any)?.message || 'analysis failed', provenance: 'synthetic' }, { path: 'neuroseo/live' }), { status: 500 });
+        return NextResponse.json(enforceProvenance({ error: errMessage || 'analysis failed', provenance: 'synthetic' }, { path: 'neuroseo/live' }), { status: 500 });
     }
 }, { path: 'neuroseo/live' });
