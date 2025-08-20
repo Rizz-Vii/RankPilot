@@ -82,7 +82,7 @@ export class EnhancedDashboardService {
         totalAnalyses: analysesSnap.size,
         trackedKeywords: keywords.size,
         lastAnalysis: (() => {
-          const v = analysesSnap.docs[0]?.data()?.completedAt as unknown;
+          const v = analysesSnap.docs[0]?.data()?.completedAt;
           return toDateOptional(v);
         })(),
         averageScore: this.calculateAverageScore(analysesDocs),
@@ -117,7 +117,7 @@ export class EnhancedDashboardService {
         return {
           id: doc.id,
           name: String(d.name ?? "Untitled Team"),
-          members: Array.isArray(d.members) ? (d.members as unknown[]) : [],
+          members: Array.isArray(d.members) ? (d.members as UnknownRecord[]) : [],
           ...d
         };
       });
@@ -152,7 +152,7 @@ export class EnhancedDashboardService {
           name: team.name,
           role:
             (Array.isArray(team.members)
-              ? (team.members as unknown[]).find((m: unknown) =>
+              ? (team.members as UnknownRecord[]).find((m) =>
                   isRecord(m) ? (m as UnknownRecord).userId === userId : false
                 )
               : undefined)?.role ?? "member"
