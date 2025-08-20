@@ -3,6 +3,7 @@
  * Comprehensive testing for Firestore integration and security protocols
  */
 
+import type { APIResponse } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
 // Production URLs
@@ -594,7 +595,7 @@ test.describe('RankPilot Security Protocol Tests', () => {
             console.log('🚦 Testing Rate Limiting...');
 
             const rapidRequests = 100;
-            const promises: Promise<import('@playwright/test').APIResponse>[] = [];
+            const promises: Promise<APIResponse>[] = [];
 
             for (let i = 0; i < rapidRequests; i++) {
                 const promise = page.request.get(`${RANKPILOT_APP_URL}/api/health`, {
