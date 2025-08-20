@@ -386,7 +386,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
             throw new Error(`Insufficient tier access. Required: ${template.requiredTier}, Current: ${tier}`);
         }
 
-        const workflowId = `workflow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const workflowId = `workflow_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
         const workflow: ZapierWorkflow = {
             id: workflowId,
@@ -394,16 +394,16 @@ export class ZapierWorkflowBuilder extends EventEmitter {
             description: customizations.description || template.description,
             triggers: template.triggers.map(t => ({
                 ...t,
-                id: `trigger_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                id: `trigger_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
             })) as ZapierTrigger[],
             actions: template.actions.map(a => ({
                 ...a,
-                id: `action_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                id: `action_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
                 retryConfig: { maxRetries: 3, retryDelay: 5, backoffMultiplier: 2 }
             })) as ZapierAction[],
             conditions: template.conditions.map(c => ({
                 ...c,
-                id: `condition_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                id: `condition_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
             })) as ZapierCondition[],
             status: 'active',
             userId,
@@ -440,7 +440,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
             throw new Error('Rate limit exceeded');
         }
 
-        const runId = `run_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const runId = `run_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
         this.activeRuns.set(runId, { workflowId, startTime: Date.now() });
 
         try {
@@ -567,7 +567,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
         return {
             keywords: [
                 { keyword: 'seo optimization', position: 3, change: -2 },
-                { keyword: 'digital marketing', position: 7, change: +5 }
+                { keyword: 'digital marketing', position: 7, change: 5 }
             ],
             timestamp: Date.now()
         };
