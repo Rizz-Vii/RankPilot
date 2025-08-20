@@ -8,9 +8,6 @@ import {
   collection,
   getDocs,
   doc,
-  updateDoc,
-  query,
-  where,
   writeBatch,
 } from "firebase/firestore";
 import { db } from "../src/lib/firebase";
@@ -32,7 +29,7 @@ interface ActivityData {
   activityId: string;
   currentType: string;
   newType: string;
-  timestamp: any;
+  timestamp: unknown;
 }
 
 export async function fixActivitySchemaConflicts(): Promise<void> {
@@ -172,7 +169,7 @@ async function verifySchemaFix(): Promise<void> {
       .sort(([, a], [, b]) => b - a)
       .forEach(([type, count]) => {
         const isStandard = Object.values(ACTIVITY_TYPE_MIGRATION_MAP).includes(
-          type as any
+          type as string
         );
         const status = isStandard ? "✅" : "⚠️";
         console.log(`  ${status} ${type}: ${count} activities`);
