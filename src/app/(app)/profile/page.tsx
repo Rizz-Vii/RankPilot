@@ -23,7 +23,7 @@ import { ToolPageHeader } from "@/components/tool-page-header";
 export default function ProfilePage() {
   const { user, profile, activities, loading: authLoading } = useAuth();
   const [mounted, setMounted] = useState(false);
-  const [defaultTab, setDefaultTab] = useState("profile");
+  const [defaultTab, setDefaultTab] = useState<string>("profile");
   const router = useRouter();
 
   React.useEffect(() => {
@@ -99,7 +99,7 @@ export default function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="activity" className="space-y-6">
-          <SEOActivitiesTimeline activities={activities || []} />
+          <SEOActivitiesTimeline activities={normalizedActivities} />
         </TabsContent>
 
         <TabsContent value="achievements" className="space-y-6">
@@ -119,11 +119,11 @@ export default function ProfilePage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {activities?.filter((a) => a.type === "audit").length || 0}
+                  {(activities || []).filter((a) => a.type === "audit").length || 0}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   This month:{" "}
-                  {activities?.filter(
+                  {(activities || []).filter(
                     (a) => a.type === "audit" && toJsDate((a as any).timestamp).getMonth() === new Date().getMonth()
                   ).length || 0}
                 </p>
@@ -137,12 +137,11 @@ export default function ProfilePage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {activities?.filter((a) => a.type === "keyword-research")
-                    .length || 0}
+                  {(activities || []).filter((a) => a.type === "keyword-research").length || 0}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   This month:{" "}
-                  {activities?.filter(
+                  {(activities || []).filter(
                     (a) => a.type === "keyword-research" && toJsDate((a as any).timestamp).getMonth() === new Date().getMonth()
                   ).length || 0}
                 </p>
@@ -156,12 +155,11 @@ export default function ProfilePage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {activities?.filter((a) => a.type === "serp-analysis")
-                    .length || 0}
+                  {(activities || []).filter((a) => a.type === "serp-analysis").length || 0}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   This month:{" "}
-                  {activities?.filter(
+                  {(activities || []).filter(
                     (a) => a.type === "serp-analysis" && toJsDate((a as any).timestamp).getMonth() === new Date().getMonth()
                   ).length || 0}
                 </p>
