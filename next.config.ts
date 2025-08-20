@@ -32,12 +32,14 @@ const nextConfig: NextConfig = {
   // Webpack configuration
   webpack: (config, { isServer, dev }) => {
     // Handle Handlebars
-    config.resolve.alias.handlebars = "handlebars/dist/handlebars.min.js";
+    config.resolve = config.resolve || {};
+    config.resolve.alias = { ...(config.resolve.alias || {}), handlebars: "handlebars/dist/handlebars.min.js" };
 
     // Ignore specific Node.js only modules in browser
     if (!isServer) {
+      config.resolve = config.resolve || {};
       config.resolve.fallback = {
-        ...config.resolve.fallback,
+        ...(config.resolve.fallback || {}),
         fs: false,
         path: false,
         crypto: false, // Add other Node.js built-ins that might be used
@@ -46,8 +48,7 @@ const nextConfig: NextConfig = {
 
     // During development, ignore bulky folders that shouldn't trigger rebuilds
     if (dev) {
-      // @ts-ignore - watchOptions exists on webpack config
-      config.watchOptions = {
+      (config as any).watchOptions = {
         ...(config as any).watchOptions,
         ignored: [
           '**/.git/**',
@@ -59,7 +60,7 @@ const nextConfig: NextConfig = {
           'testing/results/**',
           'testing/reports/**'
         ],
-      } as any;
+      };
     }
 
     // Firebase deployment optimizations
