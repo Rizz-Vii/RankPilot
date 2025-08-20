@@ -3,7 +3,6 @@
 
 import type { SuggestKeywordsInput } from "@/ai/flows/keyword-suggestions";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { EnhancedButton } from "@/components/ui/enhanced-button";
@@ -26,7 +25,7 @@ import {
   EnhancedCardHeader,
   EnhancedCardTitle,
 } from "@/components/ui/enhanced-card";
-import { Loader2, Search, Sparkles } from "lucide-react";
+import { Search, Sparkles } from "lucide-react";
 import { useHydration } from "@/components/HydrationContext";
 import { useIsMobile } from "@/lib/mobile-responsive-utils";
 
