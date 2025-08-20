@@ -29,7 +29,7 @@ import type {
   NeuroSEOReport
 } from "@/lib/neuroseo";
 import { motion } from "framer-motion";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   AlertTriangle,
   ArrowDown,
