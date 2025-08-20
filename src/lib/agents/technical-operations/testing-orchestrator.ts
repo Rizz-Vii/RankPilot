@@ -8,7 +8,7 @@ import * as path from 'path';
 import { promisify } from 'util';
 import type { AgentCapability, RankPilotAgent, SafetyConstraint } from '../core/AgentFramework';
 
-const execAsync = promisify(exec);
+const execAsync = promisify(exec) as unknown as (command: string, opts?: { timeout?: number }) => Promise<{ stdout: string; stderr: string }>;
 
 /**
  * Testing Orchestrator Agent - Autonomous testing validation and optimization
@@ -65,7 +65,7 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
     };
 
     private backupPath = './.testing-orchestrator-backups';
-    private testResults: Array<{ name: string, passed: boolean, duration: number; }> = [];
+    private testResults: Array<{ name: string; passed: boolean; duration: number }> = [];
 
     /**
      * Main execution method - Phase 2 implementation
@@ -155,7 +155,7 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
 
                 const duration = Date.now() - startTime;
 
-                if (stdout.includes('passed') || !stderr.includes('failed')) {
+                if ((stdout || '').includes('passed') || !(stderr || '').includes('failed')) {
                     this.testResults.push({
                         name: `Role-based test: ${tier}`,
                         passed: true,
@@ -504,7 +504,9 @@ export default {
      * Validate fix implementation
      */
     async validateFix(): Promise<boolean> {
-        const successRate = this.testResults.filter(t => t.passed).length / this.testResults.length;
+        const total = this.testResults.length;
+        const passed = total > 0 ? this.testResults.filter(t => t.passed).length : 0;
+        const successRate = total > 0 ? (passed / total) : 0;
         return successRate >= 0.6; // 60% success rate threshold
     }
 
