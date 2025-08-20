@@ -1,4 +1,3 @@
-import type { NextRequest} from 'next/server';
 import { NextResponse } from 'next/server';
 import { withProvenance, enforceProvenance } from '@/lib/middleware/provenance';
 import Stripe from 'stripe';
@@ -13,7 +12,7 @@ const STRIPE_API_VERSION = '2025-07-30.basil' as const;
 const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: STRIPE_API_VERSION }) : null;
 
 export const GET = withProvenance(async function GET(req: Request) {
-    const nreq = req as NextRequest;
+    const nreq = req;
     const authHeader = nreq.headers.get('authorization') || nreq.headers.get('Authorization');
     if (!authHeader) {
         const res = NextResponse.json(enforceProvenance({ error: 'auth_required' }, { path: 'billing/payment-method', note: 'auth' }), { status: 401 });
