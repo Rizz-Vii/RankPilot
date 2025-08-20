@@ -16,16 +16,14 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarTrigger,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { AppLogo, AppName } from "@/constants/nav";
 import Link from "next/link";
 import LoadingScreen from "@/components/ui/loading-screen";
 import useProtectedRoute from "@/hooks/useProtectedRoute";
 import AppNav from "@/components/app-nav";
-import MobileNav from "@/components/mobile-nav";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Crown, Zap, Settings } from "lucide-react";
+import { LogOut, Crown, Zap, Settings } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { DevUserSwitcher } from "@/components/dev/DevUserSwitcher";
