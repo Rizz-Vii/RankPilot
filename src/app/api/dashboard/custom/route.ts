@@ -7,7 +7,7 @@ import { customDashboardBuilder } from '@/lib/dashboard/custom-dashboard-builder
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 // Initialize Firebase Admin if not already initialized
@@ -25,7 +25,6 @@ if (!getApps().length) {
     }
 }
 
-import type { DashboardWidget } from '@/lib/dashboard/custom-dashboard-builder';
 import { sanitizeWidgetCreate, sanitizeWidgetMutation, type WidgetCreateInput, type WidgetMutation } from '@/types/dashboard-widget-mutation';
 
 type WidgetPosition = { x: number; y: number; width: number; height: number; };
