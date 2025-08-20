@@ -1,4 +1,4 @@
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
 import { withProvenance, enforceProvenance } from '@/lib/middleware/provenance';
@@ -35,7 +35,7 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
                 return NextResponse.json(authBody, { status: 401 });
             }
         } else {
-            const idToken = authHeader.replace('Bearer ', '');
+            const idToken = authHeader.replace(/^Bearer\s+/i, '');
             decoded = await adminAuth.verifyIdToken(idToken);
             uid = (decoded as any).uid;
         }
@@ -47,7 +47,7 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         const status = statusParam === 'draft' ? 'draft' : 'paid';
         const now = new Date();
         const period = now.toISOString().slice(0, 7); // YYYY-MM
-        const doc: any = {
+        const doc: Record<string, unknown> = {
             userId: uid,
             period,
             amount,
@@ -59,13 +59,14 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
             planTier: 'starter'
         };
         const teamId = (decoded as any)?.teamId;
-        if (useTeam && teamId) { (doc as any).teamId = teamId; }
-        if (status === 'paid') (doc as any).paidAt = now;
+        if (useTeam && teamId) { (doc as Record<string, unknown>).teamId = teamId; }
+        if (status === 'paid') (doc as Record<string, unknown>).paidAt = now;
         await adminDb.collection('financeInvoices').add(doc);
         const okBody = enforceProvenance({ ok: true, period, status, amount }, { path: 'test/finance/seed-invoice', note: 'seeded' });
         return NextResponse.json(okBody);
     } catch (e: unknown) {
-        const errBody = enforceProvenance({ error: 'internal_error', message: (e as any)?.message }, { path: 'test/finance/seed-invoice', note: 'exception' });
+        const message = e instanceof Error ? e.message : String(e);
+        const errBody = enforceProvenance({ error: 'internal_error', message }, { path: 'test/finance/seed-invoice', note: 'exception' });
         return NextResponse.json(errBody, { status: 500 });
     }
 }, { path: 'test/finance/seed-invoice' });
