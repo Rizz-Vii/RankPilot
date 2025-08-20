@@ -88,14 +88,13 @@ function estimateTokens(text: string): number {
     return Math.ceil(words * 1.3);
 }
 
-export const POST = withProvenance(async function POST(request: Request) {
-    const nreq = request as NextRequest;
+export const POST = withProvenance(async function POST(request: NextRequest) {
     const start = Date.now();
     try {
         // Parse request body (defensive)
         let body: ChatRequest;
         try {
-            body = await nreq.json();
+            body = await request.json();
         } catch {
             return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
         }
@@ -107,7 +106,7 @@ export const POST = withProvenance(async function POST(request: Request) {
         }
 
         // Get user from authentication header
-        const authHeader = nreq.headers.get('authorization');
+        const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(
                 { error: 'Authentication required: missing Bearer token' },
