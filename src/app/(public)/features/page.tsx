@@ -1,7 +1,6 @@
 // src/app/(public)/features/page.tsx
 "use client";
 
-import React from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
@@ -235,12 +234,6 @@ const managementFeatures = [
     ],
   },
 ];
-const tierBadgeClasses: Record<string, string> = {
-  free: "bg-muted text-foreground",
-  starter: "bg-primary/10 text-primary",
-  agency: "bg-accent/10 text-accent-foreground",
-  enterprise: "bg-warning/10 text-warning-foreground",
-};
 
 export default function FeaturesPage() {
   return (
