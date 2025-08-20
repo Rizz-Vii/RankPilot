@@ -20,7 +20,7 @@ async function safeKillProcesses() {
     const result = execSync('ps aux | grep -E "(tsserver|typescript)" | grep -v grep', { 
       encoding: 'utf8', 
       stdio: 'pipe' 
-    }).toString();
+    });
     
     if (result.trim()) {
       console.log('   📋 Found TypeScript processes, terminating gracefully...');
