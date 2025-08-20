@@ -14,9 +14,9 @@ const safeMsg = (e: unknown): string => {
     }
     return 'Unknown error';
 };
-function asCfg<T extends keyof ActionConfigMap>(cfg: ActionConfigMap | undefined, key: T): ActionConfigMap[T] | undefined {
+const asCfg = <T extends keyof ActionConfigMap>(cfg: ActionConfigMap | undefined, key: T): ActionConfigMap[T] | undefined => {
     return cfg?.[key] as ActionConfigMap[T] | undefined;
-}
+};
 
 // Execute due automation recipes (server context)
 // Shape for optional per-action configuration stored on recipe.actionConfigs
@@ -75,7 +75,7 @@ function normalizeInvoice(raw: unknown): NormalizedInvoice | null {
     return { userId: typeof r.userId === 'string' ? r.userId : 'unknown', period, status: status as unknown as InvoiceRecord['status'], amount, paidAt, dueAt };
 }
 
-export async function runDueAutomationRecipes(userId: string, teamId?: string) {
+export async function runDueAutomationRecipes(userId: string, teamId?: string): Promise<AutomationRunResult[]> {
     const recipes = await listAutomationRecipes(userId, teamId);
     const now = new Date();
     const due = recipes.filter(r => r.active && r.nextRun && r.nextRun <= now) as AutomationRecipeLike[];
