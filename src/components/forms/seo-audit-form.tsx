@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import type { FormEvent, ChangeEvent } from 'react';
 import type { AuditUrlInput } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -17,14 +18,16 @@ export default function SeoAuditForm({ onSubmit, isLoading }: SeoAuditFormProps)
     const [checkMobile, setCheckMobile] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const validate = (value: string) => {
+    const validate = (value: string): boolean => {
         try {
             const u = new URL(value);
             return !!u.protocol && !!u.host;
-        } catch { return false; }
+        } catch {
+            return false;
+        }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
         if (!validate(url)) {
@@ -37,10 +40,10 @@ export default function SeoAuditForm({ onSubmit, isLoading }: SeoAuditFormProps)
             const payload: AuditUrlInput = { url, checkMobile, analysisDepth: 'standard' } as AuditUrlInput;
             await onSubmit(payload);
             toast.success('Audit requested', { description: url });
-        } catch (e: unknown) {
+        } catch (err: unknown) {
             let msg = 'Failed to start audit';
-            if (typeof e === 'object' && e && 'message' in e && typeof (e as any).message === 'string') {
-                msg = (e as any).message;
+            if (typeof err === 'object' && err && 'message' in err && typeof (err as any).message === 'string') {
+                msg = (err as any).message;
             }
             setError(msg);
             toast.error('Audit failed', { description: msg });
@@ -56,14 +59,19 @@ export default function SeoAuditForm({ onSubmit, isLoading }: SeoAuditFormProps)
                     type="url"
                     placeholder="https://example.com"
                     value={url}
-                    onChange={(e) => setUrl(e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setUrl(e.target.value)}
                     required
                     aria-invalid={!!error}
                 />
                 {error && <p className="text-xs text-red-500 mt-1" role="alert">{error}</p>}
             </div>
             <div className="flex items-center gap-2">
-                <input id="check-mobile" type="checkbox" checked={checkMobile} onChange={(e) => setCheckMobile(e.target.checked)} />
+                <input
+                    id="check-mobile"
+                    type="checkbox"
+                    checked={checkMobile}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setCheckMobile(e.target.checked)}
+                />
                 <Label htmlFor="check-mobile">Include mobile checks</Label>
             </div>
             <Button type="submit" disabled={isLoading}>
