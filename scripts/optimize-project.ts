@@ -20,7 +20,6 @@ import { EventEmitter } from "events";
 EventEmitter.defaultMaxListeners = 20;
 
 const execAsync = promisify(exec);
-void exec;
 
 interface CleanupTask {
   name: string;
