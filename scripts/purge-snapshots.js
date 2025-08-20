@@ -41,7 +41,7 @@ try {
     fs.rmSync(art, { force: true });
     console.log('[purge] removed empty artifacts/ directory');
   }
-} catch (err) {
+} catch (_err) {
   /* ignore */
 }
 console.log(`[purge] Completed. Removed ${removed} artifact(s).`);
