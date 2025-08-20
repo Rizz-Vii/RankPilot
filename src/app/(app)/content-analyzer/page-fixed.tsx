@@ -38,6 +38,22 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 
+/**
+ * Added a minimal ContentAnalysisResponse interface to resolve TS2304:
+ * "Cannot find name 'ContentAnalysisResponse'".
+ * This keeps typing narrow and safe for the local mock analyzer.
+ */
+interface ContentAnalysisResponse {
+    overallScore: number;
+    readability: { score: number; grade?: string; suggestions?: string[] };
+    seo: { score: number; keywordDensity?: number; suggestions?: string[] };
+    sentiment: { score: number; tone?: string; suggestions?: string[] };
+    readabilityScore?: number;
+    seoScore?: number;
+    sentimentScore?: number;
+    resultsSummary?: string;
+}
+
 // Mock analysis function - to be replaced with NeuroSEO integration
 async function analyzeContent(): Promise<ContentAnalysisResponse> {
     // Simulate API call delay
