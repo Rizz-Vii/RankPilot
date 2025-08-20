@@ -17,8 +17,8 @@ import { useEffect, useState } from 'react';
 
 export default function BillingOverviewPage() {
   const [months, setMonths] = useState(6);
-  const live = useFinanceInvoiceMetrics(months);
-  const { data: mock } = useMockDomainMetrics('finance', allowFinanceMocks());
+  const live = useFinanceInvoiceMetrics(months) as any;
+  const { data: mock } = useMockDomainMetrics('finance', allowFinanceMocks()) as any;
   interface FinanceKPI { key: string; label: string; value: number; delta?: number; trend?: number[]; intent?: 'success' | 'neutral' | 'warning' | 'danger' | 'accent'; }
   interface FinanceQuota { key: string; label: string; used: number; limit: number; }
   interface InvoiceLike { period: string; planTier: string; amount: number; status: string; issuedAt?: { toDate?: () => Date }; paidAt?: { toDate?: () => Date } | null }
@@ -80,7 +80,7 @@ export default function BillingOverviewPage() {
   </header>
   <ProvenanceLegend />
   {/* Banner: show whenever mocks are allowed AND either no KPIs loaded OR no invoice rows (mock fallback). */}
-  {allowFinanceMocks() && (!live.rows.length) && (
+  {allowFinanceMocks() && (!Array.isArray((live as any).rows) || (live as any).rows.length === 0) && (
           <Alert className="border-warning/30 bg-warning/15 text-warning-foreground dark:bg-warning/20 dark:text-warning-foreground" aria-live="polite" aria-label="Finance mock data banner">
             <div className="flex items-start gap-3 text-sm">
               <AlertTriangle className="h-4 w-4 mt-0.5" />
