@@ -1,5 +1,4 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import Stripe from 'stripe';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { withProvenance, enforceProvenance } from '@/lib/middleware/provenance';
@@ -20,8 +19,8 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         const uid = decoded.uid;
 
         const userSnap = await adminDb.collection('users').doc(uid).get();
-        const user = userSnap.data() as any | undefined;
-        const customerId = (user as any)?.stripeCustomerId as string | undefined;
+        const user = userSnap.data() as { stripeCustomerId?: string } | undefined;
+        const customerId = user?.stripeCustomerId;
         if (!customerId) {
             return NextResponse.json(enforceProvenance({ error: 'no_customer' }, { path: 'billing/portal', note: 'no_customer' }), { status: 404 });
         }
@@ -32,7 +31,7 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         logger.info('billing.portal.created', { uid });
         return NextResponse.json(enforceProvenance({ url: session.url }, { path: 'billing/portal', note: 'ok' }));
     } catch (e: unknown) {
-        const msg = (e as any)?.message || 'internal_error';
+        const msg = e instanceof Error ? e.message : String(e ?? 'internal_error');
         logger.error('billing.portal.error', { error: msg });
         return NextResponse.json(enforceProvenance({ error: 'internal_error' }, { path: 'billing/portal', note: 'exception' }), { status: 500 });
     }
