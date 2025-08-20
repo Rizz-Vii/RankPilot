@@ -12,7 +12,7 @@
 
 import { promises as fs } from "fs";
 import { join, resolve } from "path";
-import { exec } from "child_process"; // eslint-disable-line @typescript-eslint/no-unused-vars
+import { exec } from "child_process";
 import { promisify } from "util";
 import { EventEmitter } from "events";
 
