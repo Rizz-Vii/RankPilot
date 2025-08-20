@@ -1,5 +1,6 @@
 // src/app/(app)/competitors/page.tsx
 "use client";
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import CompetitorAnalysisForm from "@/components/competitor-analysis-form";
 import { FeatureGate } from '@/components/subscription/FeatureGate';
