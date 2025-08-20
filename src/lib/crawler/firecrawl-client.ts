@@ -55,8 +55,15 @@ export async function runFirecrawl(targetUrl: string, opts: FirecrawlCrawlOption
         if (!validation.success) { recordFallback('firecrawl:validation'); return { ...synthetic(targetUrl, 'validation'), elapsedMs }; }
         return { pages: validation.data.pages as FirecrawlPageResult[], elapsedMs };
     } catch (e: unknown) {
-        const elapsedMs = Date.now() - start; if (e && typeof e === 'object' && 'name' in e && (e as { name?: unknown }).name === 'AbortError') { recordFallback('firecrawl:timeout'); return { ...synthetic(targetUrl, 'timeout'), elapsedMs }; }
-        recordError('firecrawl/crawl', '5xx_server'); recordFallback('firecrawl:exception'); return { ...synthetic(targetUrl, 'exception'), elapsedMs };
+        const elapsedMs = Date.now() - start;
+        if (e instanceof Error && e.name === 'AbortError') {
+            recordFallback('firecrawl:timeout');
+            return { ...synthetic(targetUrl, 'timeout'), elapsedMs };
+        }
+        recordError('firecrawl/crawl', '5xx_server');
+        recordFallback('firecrawl:exception');
+        return { ...synthetic(targetUrl, 'exception'), elapsedMs };
+    } finally {
+        clearTimeout(t);
     }
-    finally { clearTimeout(t); }
 }
