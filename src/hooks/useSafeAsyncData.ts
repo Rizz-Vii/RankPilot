@@ -4,7 +4,7 @@
  * Prevents infinite loops, handles errors, provides loading states
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type DependencyList } from 'react';
 
 interface AsyncDataState<T> {
     data: T;
@@ -29,7 +29,7 @@ interface AsyncDataOptions<T> {
  */
 export function useSafeAsyncData<T>(
     fetchFn: () => Promise<T>,
-    dependencies: React.DependencyList,
+    dependencies: DependencyList,
     defaultValue: T,
     options: AsyncDataOptions<T> = {}
 ): AsyncDataState<T> {
@@ -114,7 +114,7 @@ export function useSafeAsyncData<T>(
         return () => {
             isMountedRef.current = false;
         };
-    }, [...dependencies, enabled, isStale]); // Carefully controlled dependencies
+    }, [fetchData, ...dependencies, enabled, isStale]); // Carefully controlled dependencies
 
     // Manual refetch function
     const refetch = useCallback(async () => {
@@ -150,7 +150,7 @@ export function useSafeAsyncData<T>(
  */
 export function useSafeFirestoreSubscription<T>(
     subscriptionFn: (callback: (data: T) => void) => () => void,
-    dependencies: React.DependencyList,
+    dependencies: DependencyList,
     defaultValue: T,
     options: Pick<AsyncDataOptions<T>, 'onError' | 'onSuccess' | 'enabled'> = {}
 ): Omit<AsyncDataState<T>, 'refetch'> {
@@ -199,7 +199,7 @@ export function useSafeFirestoreSubscription<T>(
             setLoading(false);
             onError?.(err instanceof Error ? err : new Error(errorMessage));
         }
-    }, [...dependencies, enabled]);
+    }, [subscriptionFn, ...dependencies, enabled, onError, onSuccess]);
 
     return { data, loading, error, isStale: false };
 }
