@@ -1,5 +1,9 @@
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, addDoc, collection, getDocs, query, where, getDoc, setDoc } from 'firebase/firestore';
+import { headers } from 'next/headers';
+import { NextResponse } from 'next/server';
+import { getLogger } from '@/lib/logging/app-logger';
+import Stripe from 'stripe';
 // NOTE: Functions env centralizes invoice persistence. For ISR / local dev parity we duplicate minimal upsert using client Firestore.
 async function upsertFinanceInvoiceClient(invoice: any) {
     try {
@@ -24,23 +28,26 @@ async function upsertFinanceInvoiceClient(invoice: any) {
         getLogger('stripe-webhook').degraded('invoice.upsert.client_failed', { invoiceId: (invoice as any)?.id, error: (e as Error).message });
     }
 }
-import { headers } from 'next/headers';
-import { NextRequest, NextResponse } from 'next/server';
-import { getLogger } from '@/lib/logging/app-logger';
-import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? '';
 
 export async function POST(request: Request) {
     const body = await request.text();
     const headersList = await headers();
-    const signature = headersList.get('stripe-signature')!;
+    const signature = headersList.get('stripe-signature');
+    const logger = getLogger('stripe-webhook');
+    if (!signature) {
+        logger.warn('signature.missing');
+        return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
+    }
+    if (!webhookSecret) {
+        logger.error('webhook.missing_secret');
+        return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+    }
 
     let event: Stripe.Event;
 
-    const logger = getLogger('stripe-webhook');
     try {
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err) {
