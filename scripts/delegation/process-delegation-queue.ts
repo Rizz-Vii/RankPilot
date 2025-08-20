@@ -61,11 +61,11 @@ const EXT_ALLOW = new Set(['.ts', '.tsx', '.js', '.mjs', '.cjs', '.json', '.md',
 
 // Extend task type at runtime with optional message support (not persisted in strict schema yet)
 type DelegationTask = ReturnType<typeof readQueue>[number] & { message?: string };
-let tasks = readQueue() as DelegationTask[];
+const tasks = readQueue() as DelegationTask[];
 let changed = false;
 
 const LOG_FILE = path.resolve('sessions/aider-log.jsonl');
-function appendLog(entry: any) {
+function appendLog(entry: unknown): void {
     try {
         if (!fs.existsSync(path.dirname(LOG_FILE))) fs.mkdirSync(path.dirname(LOG_FILE), { recursive: true });
         if (!fs.existsSync(LOG_FILE)) {
@@ -108,7 +108,7 @@ function computeLocDelta(files: string[]): { added: number; removed: number } {
     }
 }
 
-function validateFiles(files: string[]) {
+function validateFiles(files: string[]): { details: { file: string; size: number; ok: boolean; reason?: string }[]; aggregateBytes: number; aggregateTooLarge: boolean; risk: string } {
     const details: { file: string; size: number; ok: boolean; reason?: string }[] = [];
     let agg = 0;
     let anyLarge = false;
@@ -140,12 +140,12 @@ function validateFiles(files: string[]) {
  * working set size as the proportional byte span of those lines. This allows keeping
  * global size thresholds strict while still remediating large legacy files incrementally.
  */
-function validateTask(task: DelegationTask) {
+function validateTask(task: DelegationTask): any {
     const base = validateFiles(task.files);
     // Only attempt segment logic for single-file tasks that otherwise fail due to size.
     if (task.files.length === 1 && (base.risk === 'aggregate_too_large' || base.risk === 'large_file')) {
         const msg = (task.message || task.summary || '').toLowerCase();
-        const m = msg.match(/lines?\s+(\d+)\s*[-to]{1,3}\s*(\d+)/i);
+        const m = msg.match(/lines?\s+(\d+)\s*(?:-|to|–|—)\s*(\d+)/i);
         if (m) {
             const start = parseInt(m[1], 10);
             const end = parseInt(m[2], 10);
@@ -277,7 +277,7 @@ for (const task of tasks) {
         // Parse analytics log for token usage (latest line with token fields)
         try {
             /** Extract token stats from a raw analytics JSON object. */
-            const extractTokens = (raw: any) => {
+            const extractTokens = (raw: any): { input_tokens: number; output_tokens: number; tool_calls: number } | null => {
                 if (!raw || typeof raw !== 'object') return null;
                 const src = (raw.properties && typeof raw.properties === 'object') ? raw.properties : raw; // aide places fields under properties
                 const inTok = src.prompt_tokens ?? src.input_tokens ?? src.total_prompt_tokens ?? null;
