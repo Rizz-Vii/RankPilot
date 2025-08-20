@@ -3,7 +3,8 @@ import OpenAI from 'openai';
 import path from 'path';
 import type { Task } from '../../../types/brain';
 import { sampleContext } from '../core/contextSampler';
-import { NormalizedStep, normalizeSteps } from './stepSchema';
+import type { NormalizedStep } from './stepSchema';
+import { normalizeSteps } from './stepSchema';
 
 // Minimal shapes to avoid pervasive `any` usage.
 interface MissionDiagnostics { typecheck?: { errors?: number }; lint?: { errors?: number; warnings?: number }; }
