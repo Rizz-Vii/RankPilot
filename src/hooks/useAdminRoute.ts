@@ -4,7 +4,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import LoadingScreen from "@/components/ui/loading-screen";
 
 // Explicit return contract so downstream destructuring is strongly typed instead of widening to unknown.
 interface AdminRouteResult {
