@@ -16,11 +16,10 @@ import { generateChartExport, generateDashboardExport, persistExportArtifact, pe
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-export const POST = withProvenance(async function POST(request: Request) {
-    const nreq = request as NextRequest;
+export const POST = withProvenance(async function POST(request: NextRequest) {
     try {
         // Verify authentication
-        const authHeader = nreq.headers.get('authorization');
+        const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(enforceProvenance({ error: 'Unauthorized' }, { path: 'visualizations', note: 'auth' }), { status: 401 });
         }
@@ -43,7 +42,7 @@ export const POST = withProvenance(async function POST(request: Request) {
         if (!['agency', 'enterprise', 'admin'].includes(subscriptionTier)) {
             return NextResponse.json(enforceProvenance({ error: 'Advanced visualizations require Agency tier or higher' }, { path: 'visualizations', note: 'tier' }), { status: 403 });
         }
-        const body = await nreq.json().catch(() => ({}));
+        const body = await request.json().catch(() => ({}));
         const action: string | undefined = (body && typeof body === 'object') ? (body as { action?: unknown }).action as string | undefined : undefined;
         const data = (body && typeof body === 'object') ? (body as { data?: unknown }).data : undefined;
         switch (action) {
@@ -68,18 +67,17 @@ export const POST = withProvenance(async function POST(request: Request) {
     }
 }, { path: 'visualizations' });
 
-export const GET = withProvenance(async function GET(request: Request) {
-    const nreq = request as NextRequest;
+export const GET = withProvenance(async function GET(request: NextRequest) {
     try {
         // Verify authentication
-        const authHeader = nreq.headers.get('authorization');
+        const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(enforceProvenance({ error: 'Unauthorized' }, { path: 'visualizations', note: 'auth' }), { status: 401 });
         }
         const token = authHeader.split('Bearer ')[1];
         const decodedToken = await adminAuth.verifyIdToken(token);
         const userId = decodedToken.uid;
-        const url = new URL(nreq.url);
+        const url = new URL(request.url);
         const type = url.searchParams.get('type');
         const id = url.searchParams.get('id');
         switch (type) {
@@ -106,18 +104,17 @@ export const GET = withProvenance(async function GET(request: Request) {
     }
 }, { path: 'visualizations' });
 
-export const DELETE = withProvenance(async function DELETE(request: Request) {
-    const nreq = request as NextRequest;
+export const DELETE = withProvenance(async function DELETE(request: NextRequest) {
     try {
         // Verify authentication
-        const authHeader = nreq.headers.get('authorization');
+        const authHeader = request.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
             return NextResponse.json(enforceProvenance({ error: 'Unauthorized' }, { path: 'visualizations', note: 'auth' }), { status: 401 });
         }
         const token = authHeader.split('Bearer ')[1];
         const decodedToken = await adminAuth.verifyIdToken(token);
         const userId = decodedToken.uid;
-        const url = new URL(nreq.url);
+        const url = new URL(request.url);
         const type = url.searchParams.get('type');
         const id = url.searchParams.get('id');
         if (!type || !id) {
