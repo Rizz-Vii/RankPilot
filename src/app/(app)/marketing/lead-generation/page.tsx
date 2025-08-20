@@ -63,20 +63,46 @@ export default function LeadGenerationPage() {
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(() => { if(live.loading) return; if(live.kpis.length) markLive(); else markFallback(); }, [live.loading, live.kpis, markLive, markFallback]);
 
-  async function handleImport(raw: string){
-    try{
+  async function handleImport(raw: string): Promise<void> {
+    try {
       setBusy('import');
       const countPromise = importLeads(raw, userId, teamId);
       // optimistic synthetic row (approx leads count estimated by lines)
-      const est = raw.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).length;
-      if(est){
-        live.addOptimistic({ id: `tmp-${Date.now()}`, period: new Date().toISOString().slice(0,7), name: `Lead Import (${est})`, channel:'lead-gen', impressions:0, clicks:0, leads: est, spend:0, revenue:0, __provenance:'optimistic' } as any);
+      const est = raw
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean).length;
+      if (est) {
+        live.addOptimistic(
+          {
+            id: `tmp-${Date.now()}`,
+            period: new Date().toISOString().slice(0, 7),
+            name: `Lead Import (${est})`,
+            channel: 'lead-gen',
+            impressions: 0,
+            clicks: 0,
+            leads: est,
+            spend: 0,
+            revenue: 0,
+            __provenance: 'optimistic',
+          } as any
+        );
       }
       await countPromise;
-      toast({ title:'Leads imported', description:'Your leads were added and will appear in metrics shortly.' });
+      toast({
+        title: 'Leads imported',
+        description: 'Your leads were added and will appear in metrics shortly.',
+      });
       setImportOpen(false);
-    }catch(e:unknown){ toast({ title:'Import failed', description:(e instanceof Error ? e.message : String(e)) || 'Unknown error', variant:'destructive' }); }
-    finally{ setBusy(null); }
+    } catch (e: unknown) {
+      toast({
+        title: 'Import failed',
+        description: (e instanceof Error ? e.message : String(e)) || 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setBusy(null);
+    }
   }
   async function handleScore(): Promise<void> {
     try {
