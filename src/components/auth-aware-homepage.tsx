@@ -1,12 +1,11 @@
 // src/components/auth-aware-homepage.tsx
 "use client";
 
-import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, BarChart3, Users, Zap, Brain, Target, Link2 } from "lucide-react";
+import { ArrowRight, BarChart3, Link2, Target } from "lucide-react";
 import { useRealTimeDashboardData, useUserMetrics } from "@/hooks/use-dashboard-data";
 
 export function AuthAwareHero() {
@@ -30,9 +29,9 @@ export function AuthAwareHero() {
   // Logged-in user version
   if (user) {
     // Map to existing, real aggregated fields (avoid referencing non-existent properties)
-    // Map to existing, real aggregated fields (avoid referencing non-existent properties)
     const activeProjects = rtData?.activeProjects?.current ?? 0;
-    const avgSeoScore = metrics.seoScore || rtData?.seoScore?.current || 0;
+    const avgSeoScore = metrics?.seoScore ?? rtData?.seoScore?.current ?? 0;
+    const seoDisplay = typeof avgSeoScore === "number" ? `${avgSeoScore.toFixed(0)}%` : "—";
     const newBacklinks = rtData?.backlinks?.newLast30Days ?? 0;
     return (
       <motion.section
@@ -73,7 +72,7 @@ export function AuthAwareHero() {
           ))}
           { !(rtLoading || metricsLoading) && [
             { label: 'Active Projects', value: activeProjects, icon: Target },
-            { label: 'SEO Performance', value: avgSeoScore ? avgSeoScore.toFixed(0) + '%' : '—', icon: BarChart3 },
+            { label: 'SEO Performance', value: seoDisplay, icon: BarChart3 },
             { label: 'New Backlinks (30d)', value: newBacklinks, icon: Link2 },
           ].map(({ label, value, icon: Icon }) => (
             <div key={label} className="p-6 border rounded-lg flex flex-col items-center gap-2" role="group" aria-label={`${label} metric`}>
