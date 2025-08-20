@@ -178,6 +178,7 @@ async function createProperUserSubscription(): Promise<void> {
 // Function to get the actual UID when user logs in
 export async function captureRealUID(_email: string): Promise<string | null> {
   try {
+    void _email;
     // This would be called from the frontend when the user actually logs in
     // The frontend would then call this with the real UID
     console.log(`🔍 Waiting for real UID for ${_email}`);
