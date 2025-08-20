@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { AlertTriangle, Bug, Home, RefreshCw } from "lucide-react";
-import type { ErrorInfo, ReactNode } from "react";
-import React, { Component } from "react";
+import type { ErrorInfo, ReactNode, ComponentType } from "react";
+import { Component } from "react";
 
 interface Props {
   children: ReactNode;
@@ -44,8 +44,8 @@ class EnhancedErrorBoundary extends Component<Props, State> {
     };
   }
 
-  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    const eventId = `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    const eventId = `error_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
     this.setState({
       error,
@@ -69,7 +69,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
     }
   }
 
-  override componentDidUpdate(prevProps: Props) {
+  componentDidUpdate(prevProps: Props) {
     const { resetKeys, resetOnPropsChange } = this.props;
     const { hasError } = this.state;
 
@@ -135,7 +135,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
     );
   };
 
-  override render() {
+  render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
@@ -263,7 +263,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
 
 // Higher-order component for easier usage
 export function withErrorBoundary<P extends object>(
-  Component: React.ComponentType<P>,
+  Component: ComponentType<P>,
   errorBoundaryProps?: Omit<Props, "children">
 ) {
   const WrappedComponent = (props: P) => (
