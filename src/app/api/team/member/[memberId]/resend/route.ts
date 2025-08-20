@@ -46,9 +46,9 @@ export const POST: (req: NextRequest, context: { params: Promise<{ memberId: str
         // Simple cooldown enforcement using invitedAt timestamp
         const now = Date.now();
         const invitedAtValue = target.invitedAt ?? Date.now() - 60000;
-        const invitedAtTs = (invitedAtValue && typeof (invitedAtValue as any)?.toMillis === 'function')
-            ? (invitedAtValue as any).toMillis()
-            : new Date(invitedAtValue as any).getTime();
+        const invitedAtTs = (invitedAtValue && typeof (invitedAtValue as { toMillis?: unknown })?.toMillis === 'function')
+            ? (invitedAtValue as { toMillis: () => number }).toMillis()
+            : (typeof invitedAtValue === 'number' ? invitedAtValue : new Date(String(invitedAtValue)).getTime());
         if (now - invitedAtTs < 60_000) {
             return NextResponse.json({ error: "Please wait before resending" }, { status: 429 });
         }
