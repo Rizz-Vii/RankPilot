@@ -19,9 +19,10 @@
 // Use require to ensure CommonJS interop in ts-node NodeNext mode (matches other delegation scripts)
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const qu = require('./queue-utils.ts') || (globalThis as any).__QUEUE_UTILS__;
-const hoseTasks = qu.hoseTasks as typeof import('./queue-utils').hoseTasks;
-const purgeTasks = qu.purgeTasks as typeof import('./queue-utils').purgeTasks;
-const readQueue = qu.readQueue as typeof import('./queue-utils').readQueue;
+import type * as Q from './queue-utils';
+const hoseTasks = qu.hoseTasks as Q['hoseTasks'];
+const purgeTasks = qu.purgeTasks as Q['purgeTasks'];
+const readQueue = qu.readQueue as Q['readQueue'];
 
 interface Args { [k: string]: string | boolean | undefined; }
 function parseArgs(): Args {
