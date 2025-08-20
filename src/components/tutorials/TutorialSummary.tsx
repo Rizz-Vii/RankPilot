@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { useSubscription } from "@/hooks/useSubscription";
 import {
   Card,
@@ -15,8 +14,6 @@ import {
   BookOpen,
   Play,
   Clock,
-  Star,
-  ArrowRight,
   Crown,
   Zap,
   CheckCircle,
@@ -137,11 +134,13 @@ export function TutorialSummary({ className = "" }: TutorialSummaryProps) {
   ) => {
     switch (difficulty) {
       case "beginner":
-  return "bg-success/15 text-success";
+        return "bg-success/15 text-success";
       case "intermediate":
-  return "bg-warning/15 text-warning";
+        return "bg-warning/15 text-warning";
       case "advanced":
-  return "bg-destructive/15 text-destructive";
+        return "bg-destructive/15 text-destructive";
+      default:
+        return "";
     }
   };
 
