@@ -87,6 +87,7 @@ export function EnterpriseDashboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');
 
+
     const loadDashboardMetrics = useCallback(async () => {
         try {
             setIsLoading(true);
