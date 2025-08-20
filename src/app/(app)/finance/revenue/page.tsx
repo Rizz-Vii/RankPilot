@@ -20,21 +20,26 @@ import { computeRevenueMetrics } from '@/lib/finance/revenue-metrics';
 import { deriveSubscriptionEvents } from '@/lib/finance/derive-subscription-events';
 import { useProvenance } from '@/hooks/useProvenance';
 
+// Top-level types moved out of the component to avoid re-creation on each render.
+interface FinanceRevenueSnapshot { mrr: number; onTime: number; outstanding: number; ts: Date; period: string; }
+type MetricIntent = 'neutral' | 'success' | 'warning' | 'accent' | 'danger';
+interface KpiItem { key: string; label: string; value: number; delta: number; trend: number[]; intent?: MetricIntent }
+interface InvoiceRow { period:string; planTier:string; amount:number; status:string; issuedAt?:{ toDate?:()=>Date }; paidAt?:{ toDate?:()=>Date }|null }
+interface InvoiceMetrics { kpis: KpiItem[]; rows: InvoiceRow[]; loading: boolean }
+
 export default function RevenueAnalyticsPage() {
   const [months, setMonths] = useState(6);
   const live = useFinanceInvoiceMetrics(months);
   const { user } = useAuth();
-  const userId = user?.uid; const teamId = (user as any)?.teamId as string|undefined;
-  interface FinanceRevenueSnapshot { mrr: number; onTime: number; outstanding: number; ts: Date; period: string; }
+  const userId = user?.uid;
+  const teamId = (user as any)?.teamId as string|undefined;
+  // FinanceRevenueSnapshot moved to top-level
   const [revSnap, setRevSnap] = useState<FinanceRevenueSnapshot|null>(null);
   const [loadingSnap, setLoadingSnap] = useState(false);
   const { trigger, running } = useAutomationTrigger();
   useEffect(()=> { if(!userId) return; setLoadingSnap(true); void (async()=> { try { const r = await fetchRecentFinanceRevenueSnapshots(userId, teamId,1); if(r.length) { const first:any = r[0]; const ts = first.createdAt && typeof first.createdAt==='object' && first.createdAt.toDate? first.createdAt.toDate(): new Date(); setRevSnap({ mrr:first.mrr, onTime:first.onTimePct, outstanding:first.outstanding, ts, period:first.period }); } } finally { setLoadingSnap(false);} })(); }, [userId, teamId]);
   const { data: mock } = useMockDomainMetrics('finance', allowFinanceMocks());
-  type MetricIntent = 'neutral' | 'success' | 'warning' | 'accent' | 'danger';
-  interface KpiItem { key: string; label: string; value: number; delta: number; trend: number[]; intent?: MetricIntent }
-  interface InvoiceRow { period:string; planTier:string; amount:number; status:string; issuedAt?:{ toDate?:()=>Date }; paidAt?:{ toDate?:()=>Date }|null }
-  interface InvoiceMetrics { kpis: KpiItem[]; rows: InvoiceRow[]; loading: boolean }
+  // Metric and Invoice types moved to top-level to reduce allocations per render.
   const adaptInvoice = (r: any): InvoiceRow | null => {
     if(!r || typeof r !== 'object') return null;
     if(typeof r.period !== 'string' || typeof r.planTier !== 'string') return null;
