@@ -87,12 +87,6 @@ export function EnterpriseDashboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');
 
-    useEffect(() => {
-        loadDashboardMetrics();
-        const interval = setInterval(loadDashboardMetrics, 30000); // Update every 30 seconds
-        return () => clearInterval(interval);
-    }, [selectedTimeRange, loadDashboardMetrics]);
-
     const loadDashboardMetrics = useCallback(async () => {
         try {
             setIsLoading(true);
@@ -145,6 +139,13 @@ export function EnterpriseDashboard() {
             setIsLoading(false);
         }
     }, []);
+
+    useEffect(() => {
+        loadDashboardMetrics();
+        const interval = setInterval(loadDashboardMetrics, 30000); // Update every 30 seconds
+        return () => clearInterval(interval);
+    }, [selectedTimeRange, loadDashboardMetrics]);
+
 
     const performanceData = [
         { time: '00:00', latency: 150, throughput: 1200, errors: 2 },
