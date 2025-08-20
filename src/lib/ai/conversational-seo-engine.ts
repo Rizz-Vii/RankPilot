@@ -420,17 +420,17 @@ export class ConversationalSEOEngine {
      * Utility methods for conversation management
      */
     private generateSessionId(): string {
-        return `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        return `conv_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
     }
 
     private generateMessageId(): string {
-        return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        return `msg_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
     }
 
     private detectMessageIntent(message: string): string {
         for (const [intent, pattern] of Object.entries(this.seoPatterns)) {
             if (pattern.test(message)) {
-                return `${intent.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+                return intent;
             }
         }
         return 'general-question';
