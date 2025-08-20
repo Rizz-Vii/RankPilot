@@ -12,6 +12,8 @@
 
 import { useEffect, useState } from 'react';
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 // Web Speech API type definitions
 // Minimal Speech Recognition types (only what we use)
 interface MinimalSpeechRecognition {
