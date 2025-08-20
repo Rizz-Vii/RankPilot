@@ -14,9 +14,12 @@ interface AdminRouteResult {
 
 declare global {
   // Augment Window with optional __E2E__ flag used in tests.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface Window { __E2E__?: string; }
 }
+
+// Reference the declared global property at runtime so TypeScript/ESLint don't report it as unused.
+// This is a no-op that's safe in all environments.
+void (globalThis as any).__E2E__;
 
 export default function useAdminRoute(): AdminRouteResult {
   const { user, loading, role } = useAuth();
