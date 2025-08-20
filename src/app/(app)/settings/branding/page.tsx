@@ -52,7 +52,7 @@ interface ReportSettings {
 
 export default function WhiteLabelPage() {
   const { user, loading: authLoading } = useAuth();
-  const { subscription, canUseFeature } = useSubscription();
+  const { canUseFeature } = useSubscription();
   const [branding, setBranding] = useState<BrandingSettings>({
     companyName: "",
     logo: "",
