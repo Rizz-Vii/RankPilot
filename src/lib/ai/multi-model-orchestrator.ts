@@ -466,7 +466,7 @@ export class MultiModelOrchestrator {
      * Utility methods
      */
     private generateRequestId(): string {
-        return `multi-model-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        return `multi-model-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
     }
 
     private generateCacheKey(request: MultiModelRequest): string {
@@ -506,7 +506,7 @@ export class MultiModelOrchestrator {
 
     private async processBatchQueue(): Promise<void> {
         // Implementation for batch queue processing
-        for (const [_userId, requests] of this.batchQueue.entries()) {
+        for (const [, requests] of this.batchQueue.entries()) {
             if (requests.length >= 5) { // Process when batch reaches 5 requests
                 const batch = requests.splice(0, 5);
                 // Process batch in background
@@ -539,15 +539,17 @@ export class MultiModelOrchestrator {
      */
     getPerformanceAnalytics(): Record<string, { avgTime: number; successRate: number; usage: number; }> {
         const analytics: Record<string, { avgTime: number; successRate: number; usage: number; }> = {};
-
+    
         this.performanceMetrics.forEach((metrics, modelName) => {
+            const total = metrics.reduce((sum, time) => sum + time, 0);
+            const count = metrics.length;
             analytics[modelName] = {
-                avgTime: metrics.reduce((sum, time) => sum + time, 0) / metrics.length,
-                successRate: metrics.filter(time => time > 0).length / metrics.length,
-                usage: metrics.length
+                avgTime: count ? total / count : 0,
+                successRate: count ? (metrics.filter(time => time > 0).length / count) : 0,
+                usage: count
             };
         });
-
+    
         return analytics;
     }
 
