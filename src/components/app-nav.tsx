@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { useCallback } from "react";
 import { motion } from "framer-motion";
 import { useSidebar } from "@/components/ui/sidebar";
 import { EnhancedAppNav } from "@/components/enhanced-app-nav";
@@ -27,20 +27,23 @@ const menuItemVariants = {
 
 export default function AppNav(): JSX.Element {
   const { open, isMobile, setOpenMobile } = useSidebar();
-  const { user, role } = useAuth();
+  const { role } = useAuth();
   const { subscription } = useSubscription();
 
   const collapsed = !open && !isMobile;
 
-  const handleNavItemClick = (item: NavItem) => {
-    // Close mobile sidebar when nav item is clicked
-    if (isMobile) {
-      setOpenMobile(false);
-    }
+  const handleNavItemClick = useCallback(
+    (item: NavItem) => {
+      // Close mobile sidebar when nav item is clicked
+      if (isMobile) {
+        setOpenMobile(false);
+      }
 
-    // Track navigation analytics
-    console.log("Navigation clicked:", item.title, item.href);
-  };
+      // Intentionally avoid console logging in production code.
+      // Replace this with a telemetry/tracking call if needed.
+    },
+    [isMobile, setOpenMobile]
+  );
 
   return (
     <motion.div
