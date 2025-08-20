@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { BarChart3 } from 'lucide-react';
 
-interface HealthPayload { kpis?: unknown; alerts?: unknown[]; metrics?: unknown; }
+interface HealthPayload { kpis?: Record<string, any>; alerts?: any[]; metrics?: Record<string, any>; }
 
 export default function AdoptionDashboard() {
   const { provenance } = useProvenance();
@@ -29,7 +29,7 @@ export default function AdoptionDashboard() {
     }
   };
   useEffect(() => { load(); const id = setInterval(load, 8000); return () => clearInterval(id); }, []);
-  const kpis = data?.kpis as { [k: string]: unknown } | undefined;
+  const kpis = data?.kpis as Record<string, any> | undefined;
   const crawlerPct = (kpis?.crawlerAggregateAdoptionPct as number | undefined) ?? null;
   const smPct = (kpis?.semanticMapAggregateAdoptionPct as number | undefined) ?? null;
   const classify = (v: number | null | undefined) => (v === null || v === undefined) ? '' : (v < 50 ? 'critical' : v < 80 ? 'warn' : 'ok');
