@@ -96,26 +96,20 @@ export function PerformanceDashboard() {
     window.localStorage.setItem('perfAutoRefresh', autoRefresh ? '1' : '0');
   }, [autoRefresh]);
 
-  const refreshStats = async () => {
+  const refreshStats = React.useCallback(async () => {
     setIsRefreshing(true);
 
     try {
-      // Get time range in milliseconds
       const timeRangeMs = {
         "5m": 5 * 60 * 1000,
         "1h": 60 * 60 * 1000,
         "24h": 24 * 60 * 60 * 1000,
       }[selectedTimeRange];
 
-      // Get performance metrics
-      const aggregates = performanceMonitor.getAggregates(
-        undefined,
-        timeRangeMs
-      );
+      const aggregates = performanceMonitor.getAggregates(undefined, timeRangeMs);
       const healthStatus = performanceMonitor.getHealthStatus();
       const cacheStats = aiOptimizer.getCacheStats();
 
-      // Calculate overall cache hit rate
       type CacheStat = { entries: number; hitRate: number };
       const totalCacheOps = Object.values(cacheStats as Record<string, CacheStat>).reduce(
         (sum: number, stat: CacheStat) => sum + (stat?.entries || 0),
@@ -125,38 +119,41 @@ export function PerformanceDashboard() {
         (sum: number, stat: CacheStat) => sum + (((stat?.hitRate || 0) * (stat?.entries || 0)) / 100),
         0
       );
-      const overallCacheHitRate =
-        totalCacheOps > 0 ? (totalCacheHits / totalCacheOps) * 100 : 0;
+      const overallCacheHitRate = totalCacheOps > 0 ? (totalCacheHits / totalCacheOps) * 100 : 0;
 
-  const newStats: PerformanceStats = {
+      const newStats: PerformanceStats = {
         totalOperations: aggregates.totalOperations,
         successRate: aggregates.successRate,
         averageDuration: aggregates.averageDuration,
         p95Duration: aggregates.p95Duration,
         cacheHitRate: overallCacheHitRate,
-        activeOperations: 0, // This would come from real-time monitoring
+        activeOperations: 0,
         healthStatus: healthStatus.status,
         recentErrors: healthStatus.issues,
       };
       setStats(newStats);
-  setLatencySamples(performanceMonitor.getMetrics(undefined, timeRangeMs).map(m => m.duration || 0));
-      // Announce concise update
+      setLatencySamples(performanceMonitor.getMetrics(undefined, timeRangeMs).map(m => m.duration || 0));
+
       if (liveRegionRef.current) {
         liveRegionRef.current.textContent = `Updated: ops ${newStats.totalOperations}, success ${newStats.successRate.toFixed(1)} percent, p95 ${newStats.p95Duration.toFixed(0)} ms.`;
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Failed to refresh performance stats:", error);
     } finally {
       setIsRefreshing(false);
     }
-  };
+  }, [selectedTimeRange]);
 
   useEffect(() => {
-    refreshStats().then(() => setInitialLoading(false));
-    if (!autoRefresh) return; // Skip interval if paused
+    let mounted = true;
+    refreshStats().then(() => {
+      if (mounted) setInitialLoading(false);
+    });
+    if (!autoRefresh) return () => { mounted = false; }; // Skip interval if paused
     const interval = setInterval(() => { refreshStats(); }, 10000);
-    return () => clearInterval(interval);
-  }, [selectedTimeRange, autoRefresh]);
+    return () => { mounted = false; clearInterval(interval); };
+  }, [refreshStats, autoRefresh]);
 
   if (!stats && initialLoading) {
     return (
