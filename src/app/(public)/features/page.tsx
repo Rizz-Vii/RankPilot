@@ -18,7 +18,6 @@ import {
   TrendingUp,
   Users,
   Shield,
-  Zap,
   Target,
   BarChart3,
   Eye,
