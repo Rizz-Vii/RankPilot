@@ -628,10 +628,13 @@ export const getNavGroupByItemHref = (href: string): NavGroup | undefined => {
 
 // Tier display helpers
 export const getTierBadgeProps = (tier: SubscriptionTier | string) => {
+  // Include all SubscriptionTier keys to satisfy the exact Record<SubscriptionTier,...> type.
+  // Adding 'free' prevents a TS2741 ("Property 'free' is missing") diagnostic.
   const tierConfig: Record<
     SubscriptionTier,
     { color: string; icon: LucideIcon; label: string }
   > = {
+    free: { color: "gray", icon: User, label: "Free" },
     starter: { color: "blue", icon: Zap, label: "Starter" },
     agency: { color: "purple", icon: Target, label: "Agency" },
     enterprise: { color: "gold", icon: Rocket, label: "Enterprise" },
