@@ -343,7 +343,6 @@ export class AIDevAutomation extends EventEmitter {
         }
 
         const deploymentId = this.generateDeploymentId();
-        const startTime = Date.now();
 
         if (options.dry_run) {
             return this.simulateDeployment(plan, deploymentId);
@@ -414,7 +413,6 @@ export class AIDevAutomation extends EventEmitter {
         }
 
         const executionId = this.generateExecutionId();
-        const startTime = Date.now();
 
         const result = await this.executeWorkflowActions(workflow, executionId, context);
 
@@ -869,7 +867,7 @@ export class AIDevAutomation extends EventEmitter {
         // Check for workflows that should be triggered
         for (const workflow of this.workflows.values()) {
             if (workflow.enabled && this.shouldTriggerWorkflow(workflow)) {
-                this.executeWorkflow(workflow.id);
+                void this.executeWorkflow(workflow.id);
             }
         }
     }
@@ -991,15 +989,15 @@ export class AIDevAutomation extends EventEmitter {
     }
 
     private generateDeploymentId(): string {
-        return `deploy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        return `deploy_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
     }
 
     private generateExecutionId(): string {
-        return `exec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        return `exec_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
     }
 
     private generateInsightId(): string {
-        return `insight_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        return `insight_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
     }
 
     private initializeDefaultConfiguration(): void {
