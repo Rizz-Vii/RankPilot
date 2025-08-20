@@ -11,7 +11,13 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { recordCrawlerAggregateHit, recordCrawlerLegacyFallback, recordSemanticMapAggregateHit, recordSemanticMapLegacyFallback, getUnifiedMetricsSnapshot } from '@/lib/metrics/unified-metrics';
+import {
+    recordCrawlerAggregateHit,
+    recordCrawlerLegacyFallback,
+    recordSemanticMapAggregateHit,
+    recordSemanticMapLegacyFallback,
+    getUnifiedMetricsSnapshot,
+} from '@/lib/metrics/unified-metrics';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,19 +33,31 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         return NextResponse.json({ error: 'invalid domain' }, { status: 400 });
     }
     for (let i = 0; i < hits; i++) {
-        if (domain === 'crawler') recordCrawlerAggregateHit(); else recordSemanticMapAggregateHit();
+        if (domain === 'crawler') {
+            recordCrawlerAggregateHit();
+        } else {
+            recordSemanticMapAggregateHit();
+        }
     }
     for (let i = 0; i < fallbacks; i++) {
-        if (domain === 'crawler') recordCrawlerLegacyFallback(); else recordSemanticMapLegacyFallback();
+        if (domain === 'crawler') {
+            recordCrawlerLegacyFallback();
+        } else {
+            recordSemanticMapLegacyFallback();
+        }
     }
     const unified = getUnifiedMetricsSnapshot();
     const counters =
         domain === 'crawler'
-            ? ((unified as any).crawler ?? { aggregateHits: 0, legacyFallbacks: 0 })
-            : ((unified as any).semanticMap ?? { aggregateHits: 0, legacyFallbacks: 0 });
-    const aHits = (counters.aggregateHits as number) ?? 0;
-    const lFallbacks = (counters.legacyFallbacks as number) ?? 0;
+            ? (unified as any).crawler ?? { aggregateHits: 0, legacyFallbacks: 0 }
+            : (unified as any).semanticMap ?? { aggregateHits: 0, legacyFallbacks: 0 };
+    const aHits = Number(counters.aggregateHits ?? 0);
+    const lFallbacks = Number(counters.legacyFallbacks ?? 0);
     const denom = aHits + lFallbacks;
-    const adoptionPct = denom ? +((aHits / denom) * 100).toFixed(2) : null;
-    return NextResponse.json({ domain, added: { hits, fallbacks }, totals: { aggregateHits: aHits, legacyFallbacks: lFallbacks, adoptionPct } });
+    const adoptionPct = denom ? +( ((aHits / denom) * 100).toFixed(2) ) : null;
+    return NextResponse.json({
+        domain,
+        added: { hits, fallbacks },
+        totals: { aggregateHits: aHits, legacyFallbacks: lFallbacks, adoptionPct },
+    });
 }
