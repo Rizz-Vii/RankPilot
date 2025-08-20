@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars -- Some icons/types are exported for external consumers; keep imports for API stability */
 import type { LucideIcon } from "lucide-react";
 import { TIER_HIERARCHY, type SubscriptionTier } from "@/lib/access-control";
 import {
