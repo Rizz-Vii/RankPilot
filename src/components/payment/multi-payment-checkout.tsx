@@ -59,10 +59,13 @@ export default function MultiPaymentCheckout(): JSX.Element {
   const billingInterval = searchParams?.get("interval") || "monthly";
 
   const plan = STRIPE_PLANS[planId as keyof typeof STRIPE_PLANS];
-  const price = plan?.price[billingInterval as "monthly" | "yearly"];
+  const price =
+    plan && typeof plan.price === "object"
+      ? plan.price[billingInterval as "monthly" | "yearly"] ?? 0
+      : 0;
   const savings =
-    billingInterval === "yearly"
-      ? plan?.price.monthly * 12 - plan?.price.yearly
+    billingInterval === "yearly" && plan && typeof plan.price === "object"
+      ? Number(plan.price.monthly ?? 0) * 12 - Number(plan.price.yearly ?? 0)
       : 0;
 
   useEffect(() => {
@@ -402,7 +405,7 @@ export default function MultiPaymentCheckout(): JSX.Element {
                               throw new Error(msg);
                             }
                           }}
-                          onApprove={(data: any) => void handlePayPalApprove(data)}
+                          onApprove={(data: unknown) => void handlePayPalApprove(data as PayPalApproveData)}
                           onError={(error: unknown) => {
                             const msg = (error as { message?: string })?.message || 'PayPal error';
                             console.error("PayPal error:", error);
