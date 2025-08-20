@@ -10,9 +10,7 @@ import fs from 'node:fs';
 import { ESLint } from 'eslint';
 import { runMetrics, aggregate } from './metrics/eslint-metrics-api.mjs';
 
-function run(cmd){
-  return execSync(cmd,{stdio:'pipe',encoding:'utf8',maxBuffer:10*1024*1024});
-}
+const run = (cmd) => execSync(cmd, { stdio: 'pipe', encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 });
 
 async function main(){
   const start = Date.now();
@@ -27,28 +25,28 @@ async function main(){
     }
   }
   let parsed;
-  try { parsed = JSON.parse(raw); } catch { parsed = []; }
-  if(parsed.length===0){
-    try { parsed = await runMetrics(); } catch(e){ /* degraded */ }
+  try { parsed = JSON.parse(raw); } catch (err) { parsed = []; }
+  if (parsed.length === 0) {
+    try { parsed = await runMetrics(); } catch (err) { /* degraded */ }
   }
   const { errorCount, warningCount, ruleTally } = aggregate(parsed);
-  const topRules = Object.entries(ruleTally).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  const topRules = Object.entries(ruleTally).sort((a, b) => b[1] - a[1]).slice(0, 15);
   const snapshot = {
     ts: new Date().toISOString(),
-    durationMs: Date.now()-start,
+    durationMs: Date.now() - start,
     files: parsed.length,
     errors: errorCount,
     warnings: warningCount,
-  topRules,
-  ruleCounts: ruleTally
+    topRules,
+    ruleCounts: ruleTally,
   };
-  if(parsed.length===0){
+  if (parsed.length === 0) {
     snapshot.degraded = true;
     snapshot.note = 'ESLint patch failure encountered; metrics collection degraded (no files).';
   }
   const line = JSON.stringify(snapshot);
-  fs.appendFileSync('metrics-snapshots.log', line+"\n");
-  console.log('[eslint-snapshot] '+line);
+  fs.appendFileSync('metrics-snapshots.log', `${line}\n`);
+  console.log(`[eslint-snapshot] ${line}`);
 }
 
 main();
