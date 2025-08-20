@@ -140,7 +140,7 @@ class EnhancedErrorBoundary extends React.Component<Props, State> {
         return this.props.fallback;
       }
 
-      const { error, errorInfo, eventId } = this.state;
+      const { error, eventId } = this.state;
       const { showDetails = false } = this.props;
 
       return (
