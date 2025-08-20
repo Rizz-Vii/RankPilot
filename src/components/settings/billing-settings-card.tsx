@@ -13,8 +13,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   CreditCard,
   ExternalLink,
-  Crown,
-  Calendar,
   Loader2,
   Download,
   DollarSign,
@@ -23,9 +21,6 @@ import {
   CheckCircle,
   AlertTriangle,
   RefreshCw,
-  Zap,
-  Target,
-  Rocket,
 } from "lucide-react";
 import { TierChip, TierIcon } from "@/components/tiers/tier-icons";
 import type { User } from "firebase/auth";
@@ -33,7 +28,6 @@ import { useState, useEffect } from "react";
 import { httpsCallable } from "firebase/functions";
 import { doc, onSnapshot } from "firebase/firestore";
 import { functions, db } from "@/lib/firebase";
-import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -83,7 +77,6 @@ interface BillingData {
 
 interface BillingSettingsCardProps {
   user: User;
-  profile: unknown;
 }
 
 const planFeatures = {
@@ -115,11 +108,7 @@ const planFeatures = {
   },
 };
 
-export default function BillingSettingsCard({
-  user,
-  profile,
-}: BillingSettingsCardProps) {
-  const { toast: shadToast } = useToast();
+export default function BillingSettingsCard({ user }: BillingSettingsCardProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [billingData, setBillingData] = useState<BillingData | null>(null);
   const [isUpgrading, setIsUpgrading] = useState(false);
@@ -130,9 +119,9 @@ export default function BillingSettingsCard({
 
     const unsubscribe = onSnapshot(
       doc(db, "users", user.uid),
-      (doc) => {
-        if (doc.exists()) {
-          const data = doc.data();
+      (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
           setBillingData({
             subscriptionStatus: data.subscriptionStatus || "free",
             subscriptionTier: data.subscriptionTier || "free",
