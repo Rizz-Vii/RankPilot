@@ -8,8 +8,8 @@ const TTL_MS = 1000 * 60 * 5; // 5 minutes
 
 export const POST = withProvenance(async function POST(req: Request) {
     try {
-        const body = await req.json().catch(() => ({}));
-        const { url, query, targetAudience, analysisType = 'quick', userId } = body || {};
+        const body = (await req.json().catch(() => ({}))) ?? {};
+        const { url, query, targetAudience, analysisType = 'quick', userId } = body;
 
         if (!url || !query) {
             return NextResponse.json({ error: 'Missing url or query' }, { status: 400 });
@@ -44,7 +44,7 @@ export const POST = withProvenance(async function POST(req: Request) {
             }
         }));
 
-        const recommendations = report.recommendations.map(r => r.description).slice(0, 15);
+        const recommendations = (report.recommendations || []).map((r: any) => r?.description ?? '').filter(Boolean).slice(0, 15);
 
         const platforms = report.competitiveAnalysis.topCompetitors.slice(0, 8).map(comp => ({
             name: new URL(comp.url).hostname.replace('www.', ''),
@@ -65,7 +65,8 @@ export const POST = withProvenance(async function POST(req: Request) {
         cache.set(cacheKey, { ts: Date.now(), data: responsePayload });
         return NextResponse.json(responsePayload);
     } catch (error: unknown) {
-        console.error('[AI Visibility API] Failure', (error as any)?.message || error);
+        const errMessage = error instanceof Error ? error.message : String(error);
+        console.error('[AI Visibility API] Failure', errMessage);
         return NextResponse.json(enforceProvenance({ error: 'Internal server error' }, { path: 'neuroseo/ai-visibility', note: 'error' }), { status: 500 });
     }
 }, { path: 'neuroseo/ai-visibility' });
