@@ -1,10 +1,10 @@
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { enforceProvenance } from '@/lib/middleware/provenance';
 
-// Accepts PUT with JSON body containing preference fields; updates users/{uid}.preferences
-export async function PUT(req: NextRequest) {
+ // Accepts PUT with JSON body containing preference fields; updates users/{uid}.preferences
+ export async function PUT(req: NextRequest): Promise<NextResponse> {
   const started = Date.now();
   try {
     const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
