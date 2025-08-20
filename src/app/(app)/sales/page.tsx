@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
@@ -110,6 +110,15 @@ export default function SalesDashboardRoot() {
     return { totalPipeline, weightedForecast, winRate, velocityDays };
   }, [metrics, mock?.kpis, dataVersion]);
 
+  const extendedKpis = useMemo(() => {
+    type Ext = DomainMetricSet['kpis'][number] & { target?: number; invertTarget?: boolean };
+    const base = (metrics?.kpis || mock?.kpis || []);
+    const targetMap: Record<string, { target?: number; invertTarget?: boolean }> = {};
+    metrics?.kpis?.forEach(k => { (targetMap as any)[k.key] = { target: (k as any).target, invertTarget: (k as any).invertTarget }; });
+    const extended: Ext[] = base.map(k => ({ ...k, ...(targetMap[k.key] || {}) }));
+    return extended;
+  }, [metrics, mock?.kpis, dataVersion]);
+
   function handleRefresh() { setDataVersion(v => v + 1); }
 
   // Provenance classification: live when realtime metrics loaded, fallback when relying solely on mock
@@ -191,32 +200,25 @@ export default function SalesDashboardRoot() {
             {initialLoading && Array.from({ length: 4 }).map((_, i) => (
         <Skeleton key={i} className="h-32 rounded-xl" shimmer aria-label="Loading metric" />
             ))}
-            {!initialLoading && (() => {
-              type Ext = DomainMetricSet['kpis'][number] & { target?: number; invertTarget?: boolean };
-              const base = (metrics?.kpis || mock?.kpis || []);
-              const targetMap: Record<string, { target?: number; invertTarget?: boolean }> = {};
-              metrics?.kpis?.forEach(k => { (targetMap as any)[k.key] = { target: (k as any).target, invertTarget: (k as any).invertTarget }; });
-              const extended: Ext[] = base.map(k => ({ ...k, ...(targetMap[k.key] || {}) }));
-              return extended.map((k, i) => {
+            {!initialLoading && extendedKpis.map((k, i) => {
                 const pctToTarget = k.target ? (k.invertTarget ? (k.target / (k.value || 1)) * 100 : (k.value / k.target) * 100) : null;
                 const alertState = pctToTarget != null ? (k.invertTarget ? pctToTarget <= 100 : pctToTarget >= 100) : false;
                 return (
                   <motion.div variants={dashboardItemVariants} key={k.key}>
-                  <MetricCard
-                    key={k.key}
-                    label={k.label}
-                    value={k.value.toLocaleString()}
-                    delta={k.delta}
-                    deltaLabel="vs last period"
-                    trend={<TrendSparkline data={k.trend} />}
-                    intent={k.intent || (i === 0 ? 'accent' : 'neutral')}
-                    badge={k.target ? (<Badge variant={alertState ? 'default' : 'outline'} className="text-[10px]">{pctToTarget!.toFixed(0)}% target</Badge>) : undefined}
-                    footer={k.target ? <AdaptiveProgress value={Math.min(100, pctToTarget!)} invert={false} aria-label={`${k.label} target progress`} /> : undefined}
-                  />
+                    <MetricCard
+                      key={k.key}
+                      label={k.label}
+                      value={k.value.toLocaleString()}
+                      delta={k.delta}
+                      deltaLabel="vs last period"
+                      trend={<TrendSparkline data={k.trend} />}
+                      intent={k.intent || (i === 0 ? 'accent' : 'neutral')}
+                      badge={k.target ? (<Badge variant={alertState ? 'default' : 'outline'} className="text-[10px]">{pctToTarget!.toFixed(0)}% target</Badge>) : undefined}
+                      footer={k.target ? <AdaptiveProgress value={Math.min(100, pctToTarget!)} invert={false} aria-label={`${k.label} target progress`} /> : undefined}
+                    />
                   </motion.div>
                 );
-              });
-            })()}
+            })}
           </motion.section>
 
           <section className="grid gap-6 md:grid-cols-2" aria-label="Pipeline analytics modules">
