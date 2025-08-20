@@ -7,7 +7,7 @@ import type { PlanType } from "@/lib/stripe";
 import { FREE_PLAN, STRIPE_PLANS } from "@/lib/stripe";
 import type { SubscriptionData } from "@/lib/subscription";
 import { doc, getDoc } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 // Optional real-time subscription consolidation
 // We intentionally lazy-load onSnapshot only when realtime enabled to avoid bundling cost for static pages
 // Provide a narrowed signature instead of an overly broad unsafe type.
@@ -44,7 +44,7 @@ export function useSubscription(options: { realtime?: boolean } = {}) {
   const [loading, setLoading] = useState(true);
   const realtime = options.realtime === true; // default off to reduce duplicate listeners
   // Track active realtime listener (single consolidated)
-  const [unsubRef, setUnsubRef] = useState<null | (() => void)>(null);
+  const unsubRef = useRef<null | (() => void)>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -231,11 +231,11 @@ export function useSubscription(options: { realtime?: boolean } = {}) {
           };
           if (!cancelled) setSubscription(subscriptionInfo);
         }, (err: unknown) => console.error('[SubscriptionRealtime] snapshot error', err));
-        setUnsubRef(() => unsub);
+        unsubRef.current = unsub;
       })();
     }
-    return () => { cancelled = true; if (unsubRef) unsubRef(); };
-  }, [user?.uid, profile?.role, realtime, unsubRef]);
+    return () => { cancelled = true; if (unsubRef.current) unsubRef.current(); };
+  }, [user?.uid, profile?.role, realtime]);
 
   const canUseFeature = (featureName: string): boolean => {
     if (!subscription?.userAccess) return false;
