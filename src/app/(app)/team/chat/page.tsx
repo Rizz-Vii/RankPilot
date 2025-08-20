@@ -290,7 +290,10 @@ export default function TeamChatPage() {
         isTyping: false,
         typingIn: null,
       }, { merge: true });
-    } catch {}
+    } catch (e) {
+      // Log but don't surface presence failures to the user
+      console.warn('updateUserPresence failed', e);
+    }
   };
 
   // Load channel settings from localStorage when channel/team changes
@@ -308,7 +311,7 @@ export default function TeamChatPage() {
         setNotificationsEnabled(true);
       }
     } catch (e) {
-      // no-op on parse error
+      console.warn('Failed to load channel settings', e);
     }
   }, [teamId, activeChannel]);
 
@@ -322,7 +325,7 @@ export default function TeamChatPage() {
         notificationsEnabled,
       }));
     } catch (e) {
-      // ignore storage errors
+      console.warn('Failed to persist channel settings', e);
     }
   }, [teamId, activeChannel, channelMuted, notificationsEnabled]);
 
