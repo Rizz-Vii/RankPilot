@@ -1,10 +1,10 @@
 "use client";
 
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { toast as sonnerToast } from 'sonner';
 import { exportChartClient } from '@/lib/visualizations/export-client';
 // Optional Sentry: only import if available in runtime to avoid SSR issues
-let Sentry: { captureException?: (...args: any[]) => void } | null = null;
+let Sentry: { captureException?: (...args: unknown[]) => void } | null = null;
 try { Sentry = require('@sentry/nextjs'); } catch {}
 
 type Props = {
@@ -15,19 +15,21 @@ type Props = {
   onDone?: (url: string) => void;
 };
 
-export function ExportButton({ chartId, format, label, config, onDone }: Props) {
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+export function ExportButton({ chartId, format, label, config, onDone }: Props): JSX.Element {
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const onClick = async () => {
+  const onClick = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-  const res = await exportChartClient(chartId, { format, ...(config || {}) }, { openInNewTab: false });
+      const res = await exportChartClient(chartId, { format, ...(config || {}) }, { openInNewTab: false });
       sonnerToast.success('Export ready', { description: `${format.toUpperCase()} generated` });
       onDone?.(res.exportUrl);
       // Fallback: open in new tab if no handler
-      if (!onDone) window.open(res.exportUrl, '_blank', 'noopener,noreferrer');
+      if (!onDone) {
+        window.open(res.exportUrl, '_blank', 'noopener,noreferrer');
+      }
     } catch (e: unknown) {
       let msg = 'Export failed';
       if (typeof e === 'object' && e && 'message' in e && typeof (e as any).message === 'string') msg = (e as any).message;
@@ -37,7 +39,7 @@ export function ExportButton({ chartId, format, label, config, onDone }: Props) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [chartId, config, format, onDone]);
 
   return (
     <button
