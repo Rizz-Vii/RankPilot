@@ -172,11 +172,6 @@ export default function ObservabilityDashboard() {
     void fetchAlertHistory();
   }, [setHistory, setAlertHistory]);
 
-
-  const forceAdmin = typeof window !== 'undefined' && (localStorage.getItem('TEST_FORCE_ADMIN')==='1');
-  if (loading && !forceAdmin) return <LoadingScreen fullScreen text="Loading admin context..." />;
-  if ((!user || role !== 'admin') && !forceAdmin) return <LoadingScreen fullScreen text="Redirecting..." />;
-
   const k = (data?.kpis as KPIRecord) || {} as KPIRecord;
   const crawler = data?.crawler || {};
   // Align with stored KPI naming (cost estimate + token metrics may be absent)
@@ -295,6 +290,10 @@ export default function ObservabilityDashboard() {
   const [alertFilter, setAlertFilter] = useState<string>('all');
   const filteredAlertHistory = alertFilter==='all'? alertHistory : alertHistory.filter(a=> a.type===alertFilter);
   const uniqueAlertTypes = useMemo(()=> Array.from(new Set(alertHistory.map(a=> a.type))).sort(), [alertHistory]);
+
+  const forceAdmin = typeof window !== 'undefined' && (localStorage.getItem('TEST_FORCE_ADMIN')==='1');
+  if (loading && !forceAdmin) return <LoadingScreen fullScreen text="Loading admin context..." />;
+  if ((!user || role !== 'admin') && !forceAdmin) return <LoadingScreen fullScreen text="Redirecting..." />;
 
   interface CardDef { title: string; value: unknown; unit?: string; help?: string; icon: any; variant?: 'percent' | 'ms' | 'raw'; extra?: React.ReactNode }
   const renderCard = (c: CardDef) => {
