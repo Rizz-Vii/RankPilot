@@ -1,5 +1,6 @@
 "use client";
 import React from 'react';
+import type { SuiteAccent } from '@/context/SuiteAccentContext';
 import { cn } from '@/lib/utils';
 
 type SurfaceVariant = 'default' | 'subtle' | 'elevated';
@@ -27,7 +28,7 @@ export function DashboardSurface({ as: Tag = 'div', className, children, fullHei
       : 'bg-background/60';
   // Removed full-surface suite gradient; keep neutral subtle background.
   const suiteClasses = 'relative overflow-hidden';
-  const Element = Tag as any;
+  const Element = Tag as React.ElementType;
   return (
     <Element
       className={cn(
