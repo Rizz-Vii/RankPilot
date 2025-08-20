@@ -1,10 +1,15 @@
 // Stripe Webhook Handler - Enhanced Security
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: NextRequest) {
-  console.log('[Stripe Webhook] Processing event');
-  // Consume the request body so the `req` parameter is used (satisfies linters).
-  // In a real webhook handler you'd verify the Stripe signature header and parse the raw body.
-  await req.text();
+/**
+ * POST /api/webhooks/stripe
+ * Note: This handler intentionally consumes the raw request body.
+ * In production, verify the Stripe signature header and parse the raw body.
+ */
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  // Read raw body to satisfy linters and to allow signature verification downstream.
+  const _raw = await req.text();
+  void _raw; // explicitly mark intentionally unused
+
   return NextResponse.json({ received: true, enhanced: true });
 }
