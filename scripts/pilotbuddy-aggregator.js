@@ -73,7 +73,7 @@ function getScriptInventory() {
   const scripts = {};
   
   try {
-    const scriptFiles = fs.readdirSync('scripts');
+    const scriptFiles = fs.existsSync('scripts') ? fs.readdirSync('scripts') : [];
     
     scriptFiles.forEach(script => {
       let category = 'Utilities';
