@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+'use strict';
 
 /**
  * Firebase Hosting Deploy Wrapper
@@ -6,14 +7,15 @@
  */
 
 const { spawn } = require('child_process');
-const { writeFileSync } = require('fs');
 
 // Suppress console output during deployment
+/* eslint-disable no-console */
 const originalConsole = { ...console };
-console.log = () => { };
-console.warn = () => { };
-console.info = () => { };
-console.error = () => { };
+console.log = () => {};
+console.warn = () => {};
+console.info = () => {};
+console.error = () => {};
+/* eslint-enable no-console */
 
 async function deployToFirebase() {
     const args = [
