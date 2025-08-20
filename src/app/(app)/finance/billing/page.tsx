@@ -1,20 +1,19 @@
 "use client";
 // Finance - Billing Overview
-import React, { useEffect } from 'react';
-import { FeatureGate } from '@/components/subscription/FeatureGate';
-import { MetricCard } from '@/components/metrics/MetricCard';
-import { TrendSparkline } from '@/components/metrics/TrendSparkline';
-import { QuotaBar } from '@/components/metrics/QuotaBar';
-import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
-import { allowFinanceMocks } from '@/lib/flags/finance';
-import { Alert } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
-import { useState } from 'react';
-import { useFinanceInvoiceMetrics } from '@/hooks/useFinanceInvoiceMetrics';
-import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
-import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { MetricCard } from '@/components/metrics/MetricCard';
+import { PeriodSelector } from '@/components/metrics/PeriodSelector';
+import { QuotaBar } from '@/components/metrics/QuotaBar';
+import { TrendSparkline } from '@/components/metrics/TrendSparkline';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { Alert } from '@/components/ui/alert';
+import { useFinanceInvoiceMetrics } from '@/hooks/useFinanceInvoiceMetrics';
+import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
 import { useProvenance } from '@/hooks/useProvenance';
+import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { allowFinanceMocks } from '@/lib/flags/finance';
+import { AlertTriangle } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function BillingOverviewPage() {
   const [months, setMonths] = useState(6);
@@ -24,10 +23,11 @@ export default function BillingOverviewPage() {
   interface FinanceQuota { key: string; label: string; used: number; limit: number; }
   interface InvoiceLike { period: string; planTier: string; amount: number; status: string; issuedAt?: { toDate?: () => Date }; paidAt?: { toDate?: () => Date } | null }
   interface FinanceDataShape { kpis: FinanceKPI[]; quotas: FinanceQuota[]; rows: InvoiceLike[]; loading: boolean }
-  const adaptInvoice = (r: Record<string, unknown>): InvoiceLike | null => {
+  const adaptInvoice = (r: unknown): InvoiceLike | null => {
+    if (!r || typeof r !== 'object') return null;
     if (!r) return null;
-    if (typeof (r as Record<string, unknown>)['period'] !== 'string' || typeof (r as Record<string, unknown>)['planTier'] !== 'string') return null;
     const rec = r as Record<string, unknown>;
+    if (typeof rec['period'] !== 'string' || typeof rec['planTier'] !== 'string') return null;
     return {
       period: String(rec['period']),
       planTier: String(rec['planTier']),
@@ -38,7 +38,9 @@ export default function BillingOverviewPage() {
     };
   };
   const normalizeLive = (): FinanceDataShape => {
-    const kpis: FinanceKPI[] = (live.kpis || []).map((k: Record<string, unknown>) => {
+    // Accept SDK-provided metric objects (unknown shape) and narrow field-by-field.
+    const rawKpis: unknown[] = Array.isArray((live as any).kpis) ? (live as any).kpis as unknown[] : [];
+    const kpis: FinanceKPI[] = rawKpis.map((k: unknown) => {
       const rec = k as Record<string, unknown>;
       const key = typeof rec['key'] === 'string' ? rec['key'] : 'kpi';
       const label = typeof rec['label'] === 'string' ? rec['label'] : (typeof rec['key'] === 'string' ? rec['key'] : 'Metric');
@@ -51,7 +53,8 @@ export default function BillingOverviewPage() {
       })();
       return { key: String(key), label: String(label), value: Number(value), delta, trend, intent };
     });
-    const quotas: FinanceQuota[] = (live.quotas || []).map((q: Record<string, unknown>) => {
+    const quotasSrc: unknown[] = Array.isArray((live as any).quotas) ? (live as any).quotas as unknown[] : [];
+    const quotas: FinanceQuota[] = quotasSrc.map((q: unknown) => {
       const rec = q as Record<string, unknown>;
       const key = typeof rec['key'] === 'string' ? rec['key'] : 'quota';
       const label = typeof rec['label'] === 'string' ? rec['label'] : (typeof rec['key'] === 'string' ? rec['key'] : 'Quota');
@@ -59,13 +62,14 @@ export default function BillingOverviewPage() {
       const limit = typeof rec['limit'] === 'number' ? (rec['limit'] as number) : Number(rec['limit'] as unknown) || 0;
       return { key: String(key), label: String(label), used: Number(used), limit: Number(limit) };
     });
-    const rows: InvoiceLike[] = (live.rows || []).map(adaptInvoice).filter(Boolean) as InvoiceLike[];
+    const rowsSrc: unknown[] = Array.isArray((live as any).rows) ? (live as any).rows as unknown[] : [];
+    const rows: InvoiceLike[] = rowsSrc.map(adaptInvoice).filter(Boolean) as InvoiceLike[];
     return { kpis, quotas, rows, loading: !!live.loading };
   };
-  const data: FinanceDataShape = live.kpis.length ? normalizeLive() : { kpis: allowFinanceMocks() && mock ? (mock.kpis as FinanceKPI[]) : [], quotas: allowFinanceMocks() && mock && mock.quotas ? (mock.quotas as FinanceQuota[]) : [], rows: [], loading:false };
+  const data: FinanceDataShape = (live as any)?.kpis?.length ? normalizeLive() : { kpis: allowFinanceMocks() && mock ? (mock.kpis as FinanceKPI[]) : [], quotas: allowFinanceMocks() && mock && mock.quotas ? (mock.quotas as FinanceQuota[]) : [], rows: [], loading: false };
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(() => { trackDashboardView('finance'); }, []);
-  useEffect(()=> { if(live.kpis.length) markLive(); else markFallback(); }, [live.kpis.length, markLive, markFallback]);
+  useEffect(() => { if ((live as any)?.kpis?.length) markLive(); else markFallback(); }, [(live as any)?.kpis?.length, markLive, markFallback]);
   return (
     <FeatureGate feature="finance_billing_overview" requiredTier="starter" showUpgrade>
       <div className="p-6 space-y-8">
