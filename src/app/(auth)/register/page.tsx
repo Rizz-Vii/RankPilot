@@ -15,7 +15,7 @@ export default function RegisterPage() {
   // Auth guard - redirect authenticated users away from register page
   const { shouldRender } = useAuthGuard();
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
