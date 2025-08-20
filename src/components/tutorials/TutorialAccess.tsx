@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,7 +46,6 @@ export function TutorialAccess({
   className = "",
 }: TutorialAccessProps) {
   const { subscription, canUseFeature } = useSubscription();
-  const tier = subscription?.tier || "free";
 
   // Get relevant tutorials based on feature
   const getRelevantTutorials = () => {
