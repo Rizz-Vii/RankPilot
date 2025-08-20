@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState, ReactNode } from 'react';
 import { useAIComponentLoader, useProgressiveLoader } from '../../hooks/use-web-vitals';
 import { LoadingSpinner } from '../ui/loading-spinner';
 
@@ -26,7 +26,7 @@ export function AILazyWrapper({
     dependencies = [],
     minHeight = '200px',
     className = ''
-}: AILazyWrapperProps) {
+}: AILazyWrapperProps): JSX.Element {
     const { isVisible, setRef } = useAIComponentLoader();
     const { loadingStage, isReady } = useProgressiveLoader(dependencies);
 
@@ -55,7 +55,7 @@ export function AILazyWrapper({
 /**
  * Progressive loading indicator showing stages
  */
-function ProgressiveLoader({ stage = 0 }: { stage?: number }) {
+function ProgressiveLoader({ stage = 0 }: { stage?: number }): JSX.Element {
     const stages = [
         { label: 'Initializing', icon: '⚙️' },
         { label: 'Loading Resources', icon: '📦' },
@@ -86,7 +86,7 @@ function ProgressiveLoader({ stage = 0 }: { stage?: number }) {
 /**
  * Default AI loading fallback
  */
-function AILoadingFallback() {
+function AILoadingFallback(): JSX.Element {
     return (
         <div className="flex items-center justify-center py-12">
             <div className="text-center">
@@ -105,10 +105,10 @@ export function MemoryOptimizedAI({
     maxMemory = 100 * 1024 * 1024, // 100MB default
     onMemoryWarning,
 }: {
-    children: React.ReactNode;
+    children: ReactNode;
     maxMemory?: number;
     onMemoryWarning?: () => void;
-}) {
+}): JSX.Element {
     const [memoryUsage, setMemoryUsage] = useState(0);
 
     useEffect(() => {
@@ -149,10 +149,10 @@ interface AIErrorBoundaryState {
 }
 
 export class AIErrorBoundary extends React.Component<
-    { children: React.ReactNode; fallback?: React.ReactNode; },
+    { children: ReactNode; fallback?: ReactNode },
     AIErrorBoundaryState
 > {
-    constructor(props: { children: React.ReactNode; fallback?: React.ReactNode; }) {
+    constructor(props: { children: ReactNode; fallback?: ReactNode }) {
         super(props);
         this.state = { hasError: false };
     }
