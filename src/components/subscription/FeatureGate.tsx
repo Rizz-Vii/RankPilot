@@ -216,7 +216,7 @@ export function withSubscriptionAccess<P extends object>(
   Component: React.ComponentType<P>,
   requiredTier?: "starter" | "agency" | "enterprise"
 ) {
-  return function SubscriptionProtectedComponent(props: P): JSX.Element | null {
+  return function (props: P): JSX.Element | null {
     const { subscription, loading } = useSubscription();
 
     if (loading) {
