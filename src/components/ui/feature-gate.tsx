@@ -10,16 +10,15 @@ import { Button } from '@/components/ui/button';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
-import { canAccessFeature, canAccessCapability, FEATURE_ACCESS, TIER_HIERARCHY, type SubscriptionTier, type FeatureConfig } from '@/lib/access-control';
+import { canAccessCapability, FEATURE_ACCESS, TIER_HIERARCHY, type SubscriptionTier, type FeatureConfig } from '@/lib/access-control';
 import { Crown, Lock, Star, Zap } from 'lucide-react';
-import React from 'react';
+import type { ComponentType, ReactNode } from 'react';
 
 interface FeatureGateProps {
     feature: string;
-    children: React.ReactNode;
-    fallback?: React.ReactNode;
+    children: ReactNode;
+    fallback?: ReactNode;
     showUpgrade?: boolean;
     className?: string;
 }
@@ -35,8 +34,7 @@ export function FeatureGate({
     showUpgrade = true,
     className
 }: FeatureGateProps) {
-    const { user } = useAuth();
-    const { subscription, userAccess } = useSubscription();
+    const { userAccess } = useSubscription();
 
     // Get feature configuration
     const featureConfig = FEATURE_ACCESS[feature];
@@ -168,9 +166,9 @@ function UnknownFeatureCard({ feature }: { feature: string; }) {
  * Higher-order component version of FeatureGate
  */
 export function withFeatureGate<P extends object>(
-    Component: React.ComponentType<P>,
+    Component: ComponentType<P>,
     feature: string,
-    fallback?: React.ReactNode
+    fallback?: ReactNode
 ) {
     return function FeatureGatedComponent(props: P) {
         return (
@@ -189,8 +187,7 @@ export function useFeatureAccess(feature: string): {
     featureConfig: FeatureConfig | null;
     requiredTier: SubscriptionTier | null;
 } {
-    const { user } = useAuth();
-    const { subscription, userAccess } = useSubscription();
+    const { userAccess } = useSubscription();
 
     const featureConfig = FEATURE_ACCESS[feature];
 
