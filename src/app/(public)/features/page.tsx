@@ -287,13 +287,13 @@ export default function FeaturesPage() {
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {neuroSEOFeatures.map((feature, index) => (
+            {neuroSEOFeatures.map((feature, _index) => (
               <motion.div
                 key={feature.title}
                 initial="hidden"
                 animate="visible"
                 variants={fadeIn}
-                custom={index + 2}
+                custom={_index + 2}
               >
                 <Card className="h-full hover:shadow-lg transition-all duration-300 group">
                   <CardHeader>
