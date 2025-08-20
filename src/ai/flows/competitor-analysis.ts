@@ -37,7 +37,6 @@ const RankInfoSchema = z.object({
       "A brief explanation for the rank, especially if 'N/A' (e.g., 'Domain is a search engine', 'Lacks content on this topic')."
     ),
 });
-type RankInfo = z.infer<typeof RankInfoSchema>;
 
 const RankingDataItemSchema = z
   .object({
