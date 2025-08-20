@@ -170,7 +170,7 @@ export default function KeywordToolForm({
               leftIcon={
                 !isLoading ? <Sparkles className="h-4 w-4" /> : undefined
               }
-              disabled={!hydrated || isLoading || !form.watch("topic")}
+              disabled={!hydrated || isLoading || !topic}
               variant="gradient"
             >
               {isLoading ? "Analyzing Keywords..." : "Generate Keywords"}
