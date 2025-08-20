@@ -3,6 +3,8 @@
  * Tests the server warmup functionality specifically
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { chromium } from "@playwright/test";
 
 type RouteWarmResult = {
