@@ -262,15 +262,15 @@ export default function CompetitorsPage() {
 
       const interval = setInterval(() => {
         if (currentIndex < engines.length) {
-          setCurrentEngine(engines[currentIndex]);
-          setAnalysisProgress((currentIndex + 1) * 20);
+          _setCurrentEngine(engines[currentIndex]);
+          _setAnalysisProgress((currentIndex + 1) * 20);
           if (currentIndex > 0) {
-            setCompletedEngines(prev => [...prev, engines[currentIndex - 1]]);
+            _setCompletedEngines(prev => [...prev, engines[currentIndex - 1]]);
           }
           currentIndex++;
         } else {
-          setCompletedEngines(prev => [...prev, engines[engines.length - 1]]);
-          setCurrentEngine("");
+          _setCompletedEngines(prev => [...prev, engines[engines.length - 1]]);
+          _setCurrentEngine("");
         }
       }, 3000);
 
