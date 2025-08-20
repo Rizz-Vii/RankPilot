@@ -29,6 +29,7 @@ import type {
   NeuroSEOReport
 } from "@/lib/neuroseo";
 import { motion } from "framer-motion";
+import React, { useState } from "react";
 import {
   AlertTriangle,
   ArrowDown,
@@ -44,9 +45,10 @@ import {
   Star,
   Target,
   TrendingUp,
-  Zap
+  Zap,
+  XCircle,
+  Play,
 } from "lucide-react";
-import React, { useState } from "react";
 import {
   Cell,
   Legend,
@@ -61,7 +63,7 @@ import {
   Tooltip
 } from "recharts";
 import { useNeuroSeoStream, type NeuroSeoStreamSummary } from '@/lib/neuroseo/useNeuroSeoStream';
-import { XCircle, Play } from 'lucide-react';
+import type { BadgeProps } from "@/components/ui/badge";
 
 // Streaming wrapper component (NEU-01 UI)
 export function NeuroSEOStreamingRunner({ urls, analysisType = 'comprehensive' }: { urls: string[]; analysisType?: string }) {
@@ -333,7 +335,7 @@ export function NeuroSEOEngineOverview({ report }: { report: NeuroSEOReport; }) 
 // Enhanced insights visualization
 export function NeuroSEOInsightsPanel({ insights }: { insights: KeyInsight[]; }) {
   // Map impacts to existing badge variants (warning/success/destructive/secondary/outline)
-  const impactColors: Record<KeyInsight['impact'], import('../ui/badge').BadgeProps['variant']> = {
+  const impactColors: Record<KeyInsight['impact'], BadgeProps['variant']> = {
     critical: 'destructive',
     high: 'warning',
     medium: 'secondary',
@@ -427,7 +429,7 @@ export function NeuroSEOInsightsPanel({ insights }: { insights: KeyInsight[]; })
 export function NeuroSEOActionableTasks({ tasks }: { tasks: ActionableTask[]; }) {
   const [filter, setFilter] = useState<string>("all");
 
-  const priorityColors: Record<ActionableTask['priority'], import('../ui/badge').BadgeProps['variant']> = {
+  const priorityColors: Record<ActionableTask['priority'], BadgeProps['variant']> = {
     urgent: 'destructive',
     high: 'warning',
     medium: 'secondary',
