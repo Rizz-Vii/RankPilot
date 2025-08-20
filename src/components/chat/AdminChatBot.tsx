@@ -86,7 +86,7 @@ export default function AdminChatBot({ className }: AdminChatBotProps) {
     const isAdmin = userTier === 'admin' || userTier === 'enterprise';
 
     // Auto-scroll to bottom on new messages
-    const scrollToBottom = () => {
+    const scrollToBottom = (): void => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
@@ -133,7 +133,7 @@ What would you like to analyze today?`,
     }, [isOpen, messages.length, isAdmin]);
 
     // Send message to API
-    const sendMessage = async () => {
+    const sendMessage = async (): Promise<void> => {
         const messageToSend = inputValue.trim();
         if (!messageToSend || isLoading || !user || !isAdmin) return;
 
@@ -215,9 +215,9 @@ What would you like to analyze today?`,
     };
 
     // Handle Enter key press
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
         e.stopPropagation();
-        const nativeEvent = e.nativeEvent as any;
+        const nativeEvent = e.nativeEvent as KeyboardEvent & { isComposing?: boolean; stopImmediatePropagation?: () => void };
         if (nativeEvent && typeof nativeEvent.stopImmediatePropagation === 'function') {
             nativeEvent.stopImmediatePropagation();
         }
@@ -240,7 +240,7 @@ What would you like to analyze today?`,
     ];
 
     // Admin toggle button
-    const AdminToggleButton = () => (
+    const AdminToggleButton = (): JSX.Element => (
         <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -260,7 +260,7 @@ What would you like to analyze today?`,
     );
 
     // Admin chat window
-    const AdminChatWindow = () => (
+    const AdminChatWindow = (): JSX.Element => (
         <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{
