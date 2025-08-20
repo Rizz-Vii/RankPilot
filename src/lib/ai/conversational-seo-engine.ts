@@ -26,9 +26,7 @@ export interface SEOAnalysisResult {
     performance: SEOPerformance;
 }
 
-interface AIModelOutputPart { answer?: string; summary_text?: string; label?: string; score?: number }
-interface AIModelResultItem { output?: AIModelOutputPart | AIModelOutputPart[] | { answer?: string; summary_text?: string; label?: string; score?: number }; processingTime?: number }
-// Removed transitional AIModelResponse in favor of concrete MultiModelResponse
+/* pruned unused intermediary AI model types (AIModelOutputPart, AIModelResultItem) to reduce noise */
 
 interface KnowledgeBaseEntry { content: string; tips: string[]; priority: string }
 
@@ -711,9 +709,11 @@ Would you like me to suggest specific long-tail variations or analyze the compet
             userId: context.userId
         });
 
+        const answer = this.extractAnswer(aiResponse);
+
         return `Here's what I know about that technical SEO topic:
 
-${aiResponse.success ? (Array.isArray(aiResponse.results?.[0]?.output) ? (aiResponse.results?.[0]?.output as any)[0]?.answer : (aiResponse.results?.[0]?.output as any)?.answer) || 'Let me provide some guidance on this technical aspect.' : 'Let me help you with this technical SEO question.'}
+${aiResponse.success ? (answer || 'Let me provide some guidance on this technical aspect.') : 'Let me help you with this technical SEO question.'}
 
 For your ${context.userTier} plan, I recommend prioritizing the most impactful technical improvements first.
 
@@ -779,27 +779,40 @@ Would you like me to help with any specific optimization technique or review par
         }];
     }
 
-    // ---- Aggregated output extraction helpers -------------------------------------
-    private extractFirstOutput(result: MultiModelResponse): any | undefined {
-        if (!result?.results?.length) return undefined;
-        const out = result.results[0]?.output as any;
-        if (!out) return undefined;
-        if (Array.isArray(out) && out.length) return out[0];
-        return out;
+    // ---- Aggregated output extraction helpers (narrowed from `any` to `unknown` and safe-guarded) ---
+    private extractFirstOutput(result: MultiModelResponse): unknown | undefined {
+        const first = result?.results?.[0]?.output;
+        if (first === undefined || first === null) return undefined;
+        if (Array.isArray(first) && first.length) return first[0];
+        return first;
     }
+
     private extractSummaryText(result: MultiModelResponse): string | undefined {
         const first = this.extractFirstOutput(result);
-        return first?.summary_text || first?.summary || undefined;
+        if (first && typeof first === 'object') {
+            const obj = first as Record<string, unknown>;
+            const summaryText = typeof obj.summary_text === 'string' ? obj.summary_text : undefined;
+            const summary = typeof obj.summary === 'string' ? obj.summary : undefined;
+            return summaryText || summary;
+        }
+        return undefined;
     }
+
     private extractAnswer(result: MultiModelResponse): string | undefined {
         const first = this.extractFirstOutput(result);
-        return first?.answer || undefined;
+        if (first && typeof first === 'object') {
+            const obj = first as Record<string, unknown>;
+            return typeof obj.answer === 'string' ? obj.answer : undefined;
+        }
+        return undefined;
     }
+
     private extractClassificationInsight(result: MultiModelResponse): string | undefined {
         const first = this.extractFirstOutput(result);
-        if (!first) return undefined;
-        const label = first.label;
-        const score = typeof first.score === 'number' ? first.score : undefined;
+        if (!first || typeof first !== 'object') return undefined;
+        const obj = first as Record<string, unknown>;
+        const label = typeof obj.label === 'string' ? obj.label : undefined;
+        const score = typeof obj.score === 'number' ? obj.score : undefined;
         if (label) return `Top classification: ${label}${score ? ` (confidence ${(score * 100).toFixed(1)}%)` : ''}`;
         return undefined;
     }
@@ -834,7 +847,7 @@ Would you like me to help with any specific optimization technique or review par
             id: this.generateMessageId(),
             role: 'assistant',
             content: aiResponse.success
-                ? `${(Array.isArray(aiResponse.results?.[0]?.output) ? (aiResponse.results?.[0]?.output as any)[0]?.answer : (aiResponse.results?.[0]?.output as any)?.answer) || 'Let me help you with that SEO question.'}\n\nIs there anything specific you'd like to dive deeper into?`
+                ? `${(this.extractAnswer(aiResponse) || 'Let me help you with that SEO question.')}\n\nIs there anything specific you'd like to dive deeper into?`
                 : 'I\'m here to help with any SEO questions! Could you provide more details about what you\'re trying to achieve?',
             timestamp: Date.now()
         };
