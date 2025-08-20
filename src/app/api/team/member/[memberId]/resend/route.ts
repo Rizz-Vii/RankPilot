@@ -2,7 +2,7 @@ import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-interface TeamMember { userId?: string; id?: string; email?: string; role?: string; status?: string; invitedAt?: any; lastActive?: any; }
+interface TeamMember { userId?: string; id?: string; email?: string; role?: string; status?: string; invitedAt?: unknown; lastActive?: unknown; }
 interface TeamDoc { memberIds?: string[]; members?: TeamMember[];[k: string]: unknown; }
 
 async function getTeam(uid: string): Promise<{ id: string; data: TeamDoc } | null> {
@@ -24,7 +24,7 @@ async function getTeam(uid: string): Promise<{ id: string; data: TeamDoc } | nul
 export const POST: (req: NextRequest, context: { params: Promise<{ memberId: string }> }) => Promise<NextResponse> = async (req, context) => {
     const params = await context.params; // Next types expect a Promise; awaiting a plain object is fine.
     try {
-        const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
+        const authHeader = req.headers.get('authorization');
         if (!authHeader) return NextResponse.json({ error: 'Missing auth' }, { status: 401 });
         const token = authHeader.replace(/^Bearer\s+/i, '');
         const decoded = await adminAuth.verifyIdToken(token);
@@ -45,7 +45,10 @@ export const POST: (req: NextRequest, context: { params: Promise<{ memberId: str
 
         // Simple cooldown enforcement using invitedAt timestamp
         const now = Date.now();
-        const invitedAtTs = (target.invitedAt && target.invitedAt.toMillis) ? target.invitedAt.toMillis() : new Date(target.invitedAt || Date.now() - 60000).getTime();
+        const invitedAtValue = target.invitedAt ?? Date.now() - 60000;
+        const invitedAtTs = (invitedAtValue && typeof (invitedAtValue as any)?.toMillis === 'function')
+            ? (invitedAtValue as any).toMillis()
+            : new Date(invitedAtValue as any).getTime();
         if (now - invitedAtTs < 60_000) {
             return NextResponse.json({ error: "Please wait before resending" }, { status: 429 });
         }
@@ -54,12 +57,16 @@ export const POST: (req: NextRequest, context: { params: Promise<{ memberId: str
         target.invitedAt = new Date();
         await adminDb.collection('teams').doc(team.id).update({ members });
         try {
-            await adminDb.collection('emailQueue').add({
-                to: target.email,
-                template: 'team_invite_resend',
-                createdAt: new Date(),
-                payload: { teamId: team.id, role: target.role },
-            });
+            if (target.email) {
+                await adminDb.collection('emailQueue').add({
+                    to: target.email,
+                    template: 'team_invite_resend',
+                    createdAt: new Date(),
+                    payload: { teamId: team.id, role: target.role },
+                });
+            } else {
+                console.warn('Skipping enqueue: target has no email', target);
+            }
         } catch (err: unknown) {
             console.warn('Failed to enqueue resend email', err);
         }
