@@ -67,7 +67,23 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 
 interface TimestampLike { toDate: () => Date }
-const isTimestampLike = (v: unknown): v is TimestampLike => !!v && typeof v === 'object' && 'toDate' in v && typeof (v as any).toDate === 'function';
+
+type UserDoc = {
+  email?: unknown;
+  displayName?: unknown;
+  role?: unknown;
+  createdAt?: unknown;
+  lastSignIn?: unknown;
+  subscription?: { status?: unknown; tier?: unknown } | unknown;
+  activityCount?: unknown;
+  [k: string]: unknown;
+};
+
+const isTimestampLike = (v: unknown): v is TimestampLike =>
+  !!v &&
+  typeof v === "object" &&
+  "toDate" in v &&
+  typeof (v as TimestampLike).toDate === "function";
 
 interface User {
   id: string;
@@ -102,7 +118,7 @@ export default function AdminUserManagement(): JSX.Element {
         const qy = query(collection(db, "users"), orderBy("createdAt", "desc"), limit(200));
         const snap = await getDocs(qy);
         const list: User[] = snap.docs.map((d) => {
-          const data = d.data() as Record<string, any>;
+          const data = d.data() as UserDoc;
           return {
             id: d.id,
             email: typeof data.email === "string" ? data.email : "",
