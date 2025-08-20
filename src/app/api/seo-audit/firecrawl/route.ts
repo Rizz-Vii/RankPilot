@@ -5,12 +5,11 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { enforceFirecrawlQuota } from './firecrawl-quota';
 
-// GET /api/seo-audit/firecrawl?url=...&depth=1&limit=5
-export const GET = withProvenance(async function GET(req: Request) {
-    const nreq = req as NextRequest;
-    const started = Date.now();
+ // GET /api/seo-audit/firecrawl?url=...&depth=1&limit=5
+ export const GET = withProvenance(async function GET(req: NextRequest) {
+     const started = Date.now();
     try {
-        const urlObj = new URL(nreq.url);
+        const urlObj = new URL(req.url);
         const target = urlObj.searchParams.get('url');
         const depth = Number(urlObj.searchParams.get('depth') || '1');
         const limit = Number(urlObj.searchParams.get('limit') || '5');
@@ -23,8 +22,8 @@ export const GET = withProvenance(async function GET(req: Request) {
         // Quota enforcement (env override FIRECRAWL_HOURLY_LIMIT default 100). Scope: global (future: team/user scope keys)
         const quotaLimit = parseInt(process.env.FIRECRAWL_HOURLY_LIMIT || '100', 10) || 100;
         // Derive scope (team preferred > user > global) – expecting optional headers for now
-        const teamId = nreq.headers.get('x-team-id') || undefined;
-        const userId = nreq.headers.get('x-user-id') || undefined;
+        const teamId = req.headers.get('x-team-id') || undefined;
+        const userId = req.headers.get('x-user-id') || undefined;
         const scopeKey = teamId ? `team:${teamId}` : (userId ? `user:${userId}` : 'global');
         const quota = await enforceFirecrawlQuota(quotaLimit, scopeKey);
         const quotaTimeMs = Date.now() - phaseStart.quota;
