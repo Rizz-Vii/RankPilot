@@ -63,7 +63,7 @@ export default function BillingOverviewPage() {
       return { key: String(key), label: String(label), used: Number(used), limit: Number(limit) };
     });
     const rowsSrc: unknown[] = Array.isArray((live as any).rows) ? (live as any).rows as unknown[] : [];
-    const rows: InvoiceLike[] = rowsSrc.map(adaptInvoice).filter(Boolean) as InvoiceLike[];
+    const rows: InvoiceLike[] = rowsSrc.map(adaptInvoice).filter((x): x is InvoiceLike => x !== null);
     return { kpis, quotas, rows, loading: !!live.loading };
   };
   const data: FinanceDataShape = (live as any)?.kpis?.length ? normalizeLive() : { kpis: allowFinanceMocks() && mock ? (mock.kpis as FinanceKPI[]) : [], quotas: allowFinanceMocks() && mock && mock.quotas ? (mock.quotas as FinanceQuota[]) : [], rows: [], loading: false };
@@ -103,8 +103,8 @@ export default function BillingOverviewPage() {
               { key:'planTier', header:'Tier'},
               { key:'amount', header:'Amount'},
               { key:'status', header:'Status'},
-              { key:'issuedAt', header:'Issued', render:(r:InvoiceLike)=> r.issuedAt?.toDate ? r.issuedAt.toDate().toISOString().slice(0,10) : '-' },
-              { key:'paidAt', header:'Paid', render:(r:InvoiceLike)=> r.paidAt?.toDate ? r.paidAt.toDate().toISOString().slice(0,10) : '-' }
+              { key:'issuedAt', header:'Issued', render:(r:any)=> r.issuedAt?.toDate ? r.issuedAt.toDate().toISOString().slice(0,10) : '-' },
+              { key:'paidAt', header:'Paid', render:(r:any)=> r.paidAt?.toDate ? r.paidAt.toDate().toISOString().slice(0,10) : '-' }
             ]}
             rows={data.rows}
             loading={data.loading}
