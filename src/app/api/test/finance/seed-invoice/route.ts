@@ -16,9 +16,9 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'disabled' }, { status: 404 });
     }
     try {
-        const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
+        const authHeader = req.headers.get('authorization') ?? req.headers.get('Authorization');
         let uid: string | undefined;
-        let decoded: any | undefined;
+        let decoded: { uid?: string; teamId?: string } | undefined;
         if (!authHeader) {
             // Non-production test bypass: ?testUser=email@example.com seeds for that user without auth
             const testUserEmail = new URL(req.url).searchParams.get('testUser');
@@ -47,7 +47,20 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         const status = statusParam === 'draft' ? 'draft' : 'paid';
         const now = new Date();
         const period = now.toISOString().slice(0, 7); // YYYY-MM
-        const doc: Record<string, unknown> = {
+        interface InvoiceDoc {
+            userId?: string;
+            period: string;
+            amount: number;
+            status: string;
+            issuedAt: Date;
+            dueAt: Date;
+            createdAt: Date;
+            updatedAt: Date;
+            planTier: string;
+            teamId?: string;
+            paidAt?: Date;
+        }
+        const doc: InvoiceDoc = {
             userId: uid,
             period,
             amount,
@@ -58,9 +71,9 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
             updatedAt: now,
             planTier: 'starter'
         };
-        const teamId = (decoded as any)?.teamId;
-        if (useTeam && teamId) { (doc as Record<string, unknown>).teamId = teamId; }
-        if (status === 'paid') (doc as Record<string, unknown>).paidAt = now;
+        const teamId = decoded?.teamId;
+        if (useTeam && teamId) { doc.teamId = teamId; }
+        if (status === 'paid') doc.paidAt = now;
         await adminDb.collection('financeInvoices').add(doc);
         const okBody = enforceProvenance({ ok: true, period, status, amount }, { path: 'test/finance/seed-invoice', note: 'seeded' });
         return NextResponse.json(okBody);
