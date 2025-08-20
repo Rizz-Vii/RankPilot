@@ -121,7 +121,7 @@ export async function verifyDummyData(): Promise<DataSummary> {
 
     // 4. Detailed analysis check
     console.log("\n📊 Checking NeuroSEO analysis details...");
-    let analysisDetails: any[] = [];
+    const analysisDetails: Array<Record<string, unknown>> = [];
 
     const sampleAnalyses = analysesSnapshot.docs.slice(0, 3); // Check first 3 analyses
     for (const analysisDoc of sampleAnalyses) {
@@ -205,7 +205,7 @@ export async function verifyDummyData(): Promise<DataSummary> {
   }
 }
 
-export async function checkEndToEndFunctionality() {
+export async function checkEndToEndFunctionality(): Promise<void> {
   console.log("\n🧪 Testing End-to-End Functionality...\n");
 
   try {
@@ -310,24 +310,28 @@ export async function checkEndToEndFunctionality() {
     // Test 3: Verify user activity tracking
     console.log("\n📊 Testing Activity Tracking...");
     const sampleUser = usersSnapshot.docs[0];
-    const activitiesSnapshot = await db
-      .collection("users")
-      .doc(sampleUser.id)
-      .collection("activities")
-      .limit(5)
-      .get();
+    if (sampleUser) {
+      const activitiesSnapshot = await db
+        .collection("users")
+        .doc(sampleUser.id)
+        .collection("activities")
+        .limit(5)
+        .get();
 
-    if (activitiesSnapshot.size > 0) {
-      console.log(
-        `   ✅ Found ${activitiesSnapshot.size} recent activities for ${sampleUser.data().email}`
-      );
-
-      activitiesSnapshot.docs.forEach((activityDoc, index) => {
-        const activity = activityDoc.data();
+      if (activitiesSnapshot.size > 0) {
         console.log(
-          `     ${index + 1}. ${activity.type}: ${activity.description}`
+          `   ✅ Found ${activitiesSnapshot.size} recent activities for ${sampleUser.data().email}`
         );
-      });
+
+        activitiesSnapshot.docs.forEach((activityDoc, index) => {
+          const activity = activityDoc.data();
+          console.log(
+            `     ${index + 1}. ${activity.type}: ${activity.description}`
+          );
+        });
+      }
+    } else {
+      console.log("   ⚠️ No users found to test activity tracking.");
     }
 
     // Test 4: Verify payment history for paid users
