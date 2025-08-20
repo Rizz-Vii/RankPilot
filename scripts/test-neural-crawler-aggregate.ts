@@ -55,9 +55,8 @@ async function main() {
     if (!getApps().length) initializeApp();
     const url = `https://example.com/test-${randomUUID()}`;
     const { legacyDoc, aggregate } = await simulateClientCrawl(url);
-    const db = getFirestore();
     // Fetch one created aggregate doc (latest)
-    const snap = await db.collection('neuralCrawlerResultsAgg').orderBy('createdAt', 'desc').limit(1).get();
+    const snap = await getFirestore().collection('neuralCrawlerResultsAgg').orderBy('createdAt', 'desc').limit(1).get();
     assert.strictEqual(snap.size, 1, 'aggregate doc missing');
     const data = snap.docs[0].data();
     // Parity checks
