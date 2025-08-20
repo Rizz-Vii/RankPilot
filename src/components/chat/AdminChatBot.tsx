@@ -30,7 +30,7 @@ import {
     Users,
     X
 } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import DOMPurify from 'isomorphic-dompurify';
 
 // Types
@@ -217,14 +217,12 @@ What would you like to analyze today?`,
     // Handle Enter key press
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         e.stopPropagation();
-        // @ts-ignore
-        if (typeof e.nativeEvent?.stopImmediatePropagation === 'function') {
-            // @ts-ignore
-            e.nativeEvent.stopImmediatePropagation();
+        const nativeEvent = e.nativeEvent as any;
+        if (nativeEvent && typeof nativeEvent.stopImmediatePropagation === 'function') {
+            nativeEvent.stopImmediatePropagation();
         }
         // Avoid sending during IME composition
-    const nativeAny: any = e.nativeEvent as any;
-    const composing = nativeAny && typeof nativeAny === 'object' && nativeAny.isComposing ? true : isComposing;
+        const composing = !!(nativeEvent?.isComposing) || isComposing;
         if (composing) return;
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -449,7 +447,7 @@ What would you like to analyze today?`,
                                                 key={index}
                                                 variant="outline"
                                                 className="w-full justify-start gap-2 h-auto p-3"
-                                                onClick={async () => {
+                                                onClick={() => {
                                                     setInputValue(cmd.command);
                                                     setActiveTab('chat');
                                                     setTimeout(() => { void sendMessage(); }, 0);
