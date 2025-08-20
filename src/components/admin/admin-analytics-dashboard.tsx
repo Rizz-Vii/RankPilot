@@ -8,7 +8,7 @@
  * Dependencies: Enhanced auth service, dashboard service
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactElement } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { EnhancedAuthService, type UserAnalytics } from '@/lib/services/enhanced-auth.service';
@@ -17,9 +17,10 @@ interface AdminDashboardProps {
   className?: string;
 }
 
-export function AdminAnalyticsDashboard({ className }: AdminDashboardProps) {
+interface PlatformMetrics { growth?: { new_subscriptions?: number }; [key:string]: any }
+
+export function AdminAnalyticsDashboard({ className }: AdminDashboardProps): ReactElement {
   const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
-  interface PlatformMetrics { growth?: { new_subscriptions?: number }; [key:string]: any }
   const [platformMetrics, setPlatformMetrics] = useState<PlatformMetrics | null>(null);
   const [loading, setLoading] = useState(true);
 
