@@ -164,7 +164,7 @@ export default function NeuralCrawlerPage() {
               recordCrawlerLegacyFallback();
               console.warn('[neuralCrawler] legacy fallback (aggregate miss)', { url: latest.url });
               const docData: unknown = legacySnap.docs[0].data();
-              setCurrentResult((docData as any) as CrawlResult);
+              setCurrentResult(docData as CrawlResult);
             }
         }
       } catch (e) {
@@ -177,23 +177,23 @@ export default function NeuralCrawlerPage() {
 
   function legacyFromAggregate(a: unknown): CrawlResult {
     // Reconstruct a minimal pseudo-legacy object (omitting heavy arrays) for UI components already tolerant to partial data.
-    const x = a as any;
+    const x = a as Record<string, unknown>;
     return {
-      id: x?.historyId || x?.id || `agg_${x?.url}`,
-      url: x?.url || '',
-      title: x?.title || x?.url || '',
-      metaDescription: x?.metaDescription || '',
+      id: x?.historyId || x?.id || `agg_${(x as any)?.url}`,
+      url: (x as any)?.url || '',
+      title: (x as any)?.title || (x as any)?.url || '',
+      metaDescription: (x as any)?.metaDescription || '',
       content: '',
-      wordCount: x?.wordCount || 0,
-      readingTime: x?.readingTime || 0,
-      headings: normalizeHeadingCounts(x?.headings),
-      images: new Array(x?.imagesCount || 0).fill(0).map((_: unknown, i: number) => ({ src: '', alt: `Image ${i+1}` })),
-      links: buildLinkPlaceholders(x?.linksInternal, x?.linksExternal),
+      wordCount: (x as any)?.wordCount || 0,
+      readingTime: (x as any)?.readingTime || 0,
+      headings: normalizeHeadingCounts((x as any)?.headings),
+      images: new Array((x as any)?.imagesCount || 0).fill(0).map((_: unknown, i: number) => ({ src: '', alt: `Image ${i+1}` })),
+      links: buildLinkPlaceholders((x as any)?.linksInternal, (x as any)?.linksExternal),
       technicalData: { loadTime: 0, pageSize: 0, statusCode: 200, contentType: 'text/html' },
-      seoAnalysis: { titleLength: x?.titleLength || 0, metaDescriptionLength: x?.metaDescriptionLength || 0, headingStructure: 'Unknown', imageOptimization: 0, internalLinks: x?.linksInternal || 0, externalLinks: x?.linksExternal || 0 },
-      issues: new Array(x?.issuesCount || 0).fill(0).map((_: unknown, i: number) => ({ type: 'info', message: `Issue ${i+1}`, recommendation: '' })),
-      entities: new Array(x?.entitiesCount || 0).fill(0).map((_: unknown, i: number) => ({ text: `Entity ${i+1}`, type: 'concept', confidence: 0 })),
-      createdAt: toJsDate(x?.createdAt)
+      seoAnalysis: { titleLength: (x as any)?.titleLength || 0, metaDescriptionLength: (x as any)?.metaDescriptionLength || 0, headingStructure: 'Unknown', imageOptimization: 0, internalLinks: (x as any)?.linksInternal || 0, externalLinks: (x as any)?.linksExternal || 0 },
+      issues: new Array((x as any)?.issuesCount || 0).fill(0).map((_: unknown, i: number) => ({ type: 'info', message: `Issue ${i+1}`, recommendation: '' })),
+      entities: new Array((x as any)?.entitiesCount || 0).fill(0).map((_: unknown, i: number) => ({ text: `Entity ${i+1}`, type: 'concept', confidence: 0 })),
+      createdAt: toJsDate((x as any)?.createdAt)
     };
   }
 
@@ -354,7 +354,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
       setCurrentResult(result);
 
   // Save complete result (legacy full document)
-      const fullResult = {
+      const fullResult: CrawlResult & { userId: string; historyId: string } = {
         userId: currentUserId,
         historyId: historyDoc.id,
         ...result,
@@ -364,7 +364,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
         await addDoc(collection(db, 'neuralCrawlerResults'), fullResult);
       }
       // Dual-write compact aggregate (optional, non-blocking) still executed for monitoring until legacy fully retired
-      dualWriteNeuralCrawlerAggregate(fullResult as any);
+      dualWriteNeuralCrawlerAggregate(fullResult);
 
       await loadCrawlHistory();
       toast.success("Website analysis completed successfully!");
