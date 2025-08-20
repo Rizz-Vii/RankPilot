@@ -34,21 +34,21 @@ export default function AdminTierMigration() {
       // Capture console output into an array for UI display
       const capturedLogs: string[] = [];
 
-      (console as any).log = (...args: any[]): void => {
+      (console as Console).log = (...args: unknown[]) => {
         const message = args.join(" ");
         capturedLogs.push(`[LOG] ${message}`);
         setLogs([...capturedLogs]);
         originalLog.apply(console, args);
       };
 
-      (console as any).warn = (...args: any[]): void => {
+      (console as Console).warn = (...args: unknown[]) => {
         const message = args.join(" ");
         capturedLogs.push(`[WARN] ${message}`);
         setLogs([...capturedLogs]);
         originalWarn.apply(console, args);
       };
 
-      (console as any).error = (...args: any[]): void => {
+      (console as Console).error = (...args: unknown[]) => {
         const message = args.join(" ");
         capturedLogs.push(`[ERROR] ${message}`);
         setLogs([...capturedLogs]);
@@ -63,9 +63,9 @@ export default function AdminTierMigration() {
       originalError("Migration failed:", error);
     } finally {
       // Restore original console methods and stop spinner
-      (console as any).log = originalLog;
-      (console as any).warn = originalWarn;
-      (console as any).error = originalError;
+      (console as Console).log = originalLog;
+      (console as Console).warn = originalWarn;
+      (console as Console).error = originalError;
       setIsRunning(false);
     }
   };
