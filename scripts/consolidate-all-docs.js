@@ -52,7 +52,7 @@ function readFileContent(filePath) {
             return fs.readFileSync(fullPath, 'utf8');
         }
         return null;
-    } catch (error) {
+    } catch (_error) {
         console.warn(`⚠️ Could not read file: ${filePath}`);
         return null;
     }
