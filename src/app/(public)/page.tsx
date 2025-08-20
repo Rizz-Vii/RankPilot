@@ -1,14 +1,11 @@
 "use client";
 import React, { useEffect } from "react";
-import Script from "next/script";
 import Image from "next/image";
-import "dotenv/config";
 import { Button } from "@/components/ui/button";
-import { Rocket, Search, TrendingUp, Brain, Link2, BarChart3, Zap, Workflow, Users2, ShieldCheck, Coins, LineChart } from "lucide-react";
+import { Rocket, Search, TrendingUp, Brain, Link2, Zap, Workflow, Users2, Coins, LineChart } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { AuthAwareHero } from "@/components/auth-aware-homepage";
-import { LanguageSelector } from "@/components/i18n/LanguageSelector";
 import {
   Dialog,
   DialogContent,
