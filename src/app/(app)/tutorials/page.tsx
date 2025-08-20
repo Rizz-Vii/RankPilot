@@ -45,7 +45,7 @@ import {
   Zap
 } from "lucide-react";
 import Link from "next/link";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { isDemoContentEnabled } from "@/lib/flags/demo";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -434,7 +434,7 @@ export default function TutorialsPage() {
             className="space-y-6"
           >
             <div className="flex items-center gap-3 mb-6">
-              <category.icon className="h-6 w-6 text-primary" />
+              {React.createElement(category.icon, { className: "h-6 w-6 text-primary" })}
               <h2 className="text-2xl font-bold">{category.label}</h2>
             </div>
 
@@ -455,7 +455,7 @@ export default function TutorialsPage() {
             ) : (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
-                  <category.icon className="h-12 w-12 text-muted-foreground mb-4" />
+                  {React.createElement(category.icon, { className: "h-12 w-12 text-muted-foreground mb-4" })}
                   <h3 className="text-lg font-semibold mb-2">
                     No {category.label.toLowerCase()} tutorials
                   </h3>
