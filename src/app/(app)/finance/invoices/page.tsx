@@ -1,6 +1,6 @@
 "use client";
 // Finance - Invoices
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
@@ -19,13 +19,14 @@ import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 import { useProvenance } from '@/hooks/useProvenance';
 
-export default function InvoicesPage() {
+export default function InvoicesPage(): JSX.Element {
   const [months, setMonths] = useState(6);
   const live = useFinanceInvoiceMetrics(months);
   const { user } = useAuth();
-  const userId = user?.uid; const teamId = (user as any)?.teamId as string|undefined;
-  interface RevenueSnapshotLite { mrr:number; onTime:number; outstanding:number; ts:Date; period?:string }
-  const [revSnap, setRevSnap] = useState<RevenueSnapshotLite|null>(null);
+  const userId = user?.uid;
+  const teamId = (user as any)?.teamId as string | undefined;
+  interface RevenueSnapshotLite { mrr: number; onTime: number; outstanding: number; ts: Date; period?: string; }
+  const [revSnap, setRevSnap] = useState<RevenueSnapshotLite | null>(null);
   const [loadingSnap, setLoadingSnap] = useState(false);
   const { trigger, running } = useAutomationTrigger();
   useEffect(()=> { if(!userId) return; setLoadingSnap(true); void (async()=> { try { const r = await fetchRecentFinanceRevenueSnapshots(userId, teamId,1); if(r.length){ const first:any = r[0]; setRevSnap({ mrr:first.mrr, onTime:first.onTimePct, outstanding:first.outstanding, ts:first.createdAt?.toDate?.()||new Date(), period:first.period }); } } finally { setLoadingSnap(false);} })(); }, [userId, teamId]);
