@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, Calendar, User, Bot, TrendingUp } from "lucide-react";
+import { ArrowLeft, Calendar, User, Bot } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "AI SEO Tools: The Future of Search Optimization | RankPilot Blog",
