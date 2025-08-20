@@ -5,6 +5,8 @@
  * Resolves common TypeScript language server EPIPE errors
  */
 
+'use strict';
+
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -17,10 +19,11 @@ async function main() {
     // 1. Kill existing TypeScript processes (ignore if none found)
     console.log('1. Killing existing TypeScript processes...');
     try {
-      execSync('ps aux | grep -i typescript | grep -v grep | awk \'{print $2}\' | xargs kill -9 2>/dev/null || true', { stdio: 'ignore' });
-      console.log('   ✓ TypeScript processes checked and terminated if found');
-    } catch (error) {
-      console.log('   ℹ No TypeScript processes to terminate');
+      // Prefer pkill where available; fall back silently if not present.
+      execSync('pkill -f typescript || true', { stdio: 'ignore' });
+      console.log('   ✓ TypeScript processes checked and terminated if found (pkill used)');
+    } catch (err) {
+      console.log('   ℹ No TypeScript processes to terminate or pkill unavailable');
     }
 
   // 2. Clear TypeScript cache
@@ -53,7 +56,13 @@ async function main() {
   console.log('4. Verifying VS Code settings...');
   const vscodeSettingsPath = path.join(process.cwd(), '.vscode', 'settings.json');
   if (fs.existsSync(vscodeSettingsPath)) {
-    const settings = JSON.parse(fs.readFileSync(vscodeSettingsPath, 'utf8'));
+    let settings = {};
+    try {
+      settings = JSON.parse(fs.readFileSync(vscodeSettingsPath, 'utf8'));
+    } catch (err) {
+      console.warn(`   ⚠️ Could not parse ${vscodeSettingsPath} — proceeding with defaults`);
+      settings = {};
+    }
     
     // Check for EPIPE prevention settings
     const requiredSettings = {
@@ -85,7 +94,7 @@ async function main() {
     console.log('   ✓ TypeScript compilation successful');
   } catch (error) {
     console.log('   ❌ TypeScript compilation failed');
-    console.log('   Error:', error.message);
+    console.error('   Error:', error.message);
     process.exit(1);
   }
 
