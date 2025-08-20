@@ -8,11 +8,10 @@
  * Dependencies: Enhanced auth service, dashboard service
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { EnhancedAuthService, type UserAnalytics } from '@/lib/services/enhanced-auth.service';
-import { EnhancedDashboardService } from '@/lib/services/enhanced-dashboard.service';
 
 interface AdminDashboardProps {
   className?: string;
@@ -78,7 +77,7 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps) {
             <Badge variant="outline">Live</Badge>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics?.totalUsers.toLocaleString() || 0}</div>
+            <div className="text-2xl font-bold">{(analytics?.totalUsers ?? 0).toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               Active platform registrations
             </p>
@@ -141,7 +140,7 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {analytics?.subscriptionTrends.map((tier) => (
+              {(analytics?.subscriptionTrends ?? []).map((tier) => (
                 <div key={tier.tier} className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Badge 
