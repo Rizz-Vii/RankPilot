@@ -47,7 +47,7 @@ interface KeywordToolFormProps {
 export default function KeywordToolForm({
   onSubmit,
   isLoading,
-}: KeywordToolFormProps) {
+}: KeywordToolFormProps): JSX.Element {
   const hydrated = useHydration();
   const isMobile = useIsMobile();
 
@@ -59,7 +59,9 @@ export default function KeywordToolForm({
     },
   });
 
-  async function handleFormSubmit(values: KeywordFormValues) {
+  const topic = form.watch("topic");
+
+  async function handleFormSubmit(values: KeywordFormValues): Promise<void> {
     try {
       await onSubmit(values as SuggestKeywordsInput);
     } catch (error) {
