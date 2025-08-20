@@ -65,7 +65,7 @@ export function EnhancedAppNav({
   useEffect(() => {
     setMounted(true);
     try {
-  const groups = getVisibleNavGroups(userTier, isAdmin, { includeLocked: true });
+      const groups = getVisibleNavGroups(userTier, { isAdmin, includeLocked: true });
       setVisibleGroups(groups);
 
       // Restore persisted expanded groups (desktop only)
@@ -192,11 +192,11 @@ export function EnhancedAppNav({
     let highest: keyof typeof tierVisual | undefined;
     group.items.forEach((item) => {
       if (item.requiredTier && tierOrder.includes(item.requiredTier)) {
-  const userIndex = tierOrder.indexOf(userTier as any);
-        const reqIndex = tierOrder.indexOf(item.requiredTier);
+        const userIndex = tierOrder.indexOf(userTier as keyof typeof tierVisual);
+        const reqIndex = tierOrder.indexOf(item.requiredTier as keyof typeof tierVisual);
         if (userIndex === -1 || reqIndex > userIndex) {
           if (!highest) highest = item.requiredTier;
-          else if (tierOrder.indexOf(item.requiredTier) > tierOrder.indexOf(highest)) {
+          else if (tierOrder.indexOf(item.requiredTier as keyof typeof tierVisual) > tierOrder.indexOf(highest)) {
             highest = item.requiredTier;
           }
         }
@@ -354,7 +354,7 @@ export function EnhancedAppNav({
         >
           <Collapsible
             open={isExpanded}
-            onOpenChange={() => toggleGroup(group.id)}
+            onOpenChange={(open: boolean) => toggleGroup(group.id)}
           >
             <CollapsibleTrigger asChild>
               <Button
