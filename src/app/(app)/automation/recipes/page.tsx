@@ -150,17 +150,17 @@ export default function AutomationRecipesPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
-                <Input id="name" value={newName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewName(e.target.value)} placeholder="Weekly NeuroSEO Digest" disabled={hydrationDisabled} />
+                <Input id="name" value={newName} onChange={(e: ChangeEvent<HTMLInputElement>) => setNewName(e.target.value)} placeholder="Weekly NeuroSEO Digest" disabled={hydrationDisabled} />
               </div>
               <div className="space-y-3">
                 <div className="space-y-2">
                   <Label>Interval (minutes)</Label>
-                  <Input type="number" min={5} value={interval} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInterval(Number(e.target.value))} disabled={hydrationDisabled || !!cronExpr.trim()} />
+                  <Input type="number" min={5} value={interval} onChange={(e: ChangeEvent<HTMLInputElement>) => setInterval(Number(e.target.value))} disabled={hydrationDisabled || !!cronExpr.trim()} />
                   <p className="text-xs text-muted-foreground">1440 = daily, 10080 = weekly. Disabled if cron is set.</p>
                 </div>
                 <div className="space-y-2">
                   <Label>Cron Expression (optional)</Label>
-                  <Input placeholder="m h * * * or @daily" value={cronExpr} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCronExpr(e.target.value)} disabled={hydrationDisabled} />
+                  <Input placeholder="m h * * * or @daily" value={cronExpr} onChange={(e: ChangeEvent<HTMLInputElement>) => setCronExpr(e.target.value)} disabled={hydrationDisabled} />
                   <p className="text-xs text-muted-foreground">Supports m h * * * plus @daily / @hourly. Use instead of interval.</p>
                 </div>
                 {validationError && <p className="text-xs text-destructive">{validationError}</p>}
@@ -182,17 +182,17 @@ export default function AutomationRecipesPage() {
               {selectedActions.includes('runNeuroSEOAnalysis') && (
                 <div className="space-y-2">
                   <Label>Analysis URLs (one per line)</Label>
-                  <Textarea value={analysisUrls} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>)=>setAnalysisUrls(e.target.value)} rows={3} disabled={hydrationDisabled} />
+                  <Textarea value={analysisUrls} onChange={(e: ChangeEvent<HTMLTextAreaElement>)=>setAnalysisUrls(e.target.value)} rows={3} disabled={hydrationDisabled} />
                   <Label className="mt-2">Analysis Keywords (comma separated)</Label>
-                  <Input value={analysisKeywords} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setAnalysisKeywords(e.target.value)} disabled={hydrationDisabled} />
+                  <Input value={analysisKeywords} onChange={(e: ChangeEvent<HTMLInputElement>)=>setAnalysisKeywords(e.target.value)} disabled={hydrationDisabled} />
                 </div>
               )}
               {selectedActions.includes('sendDigestEmail') && (
                 <div className="space-y-2">
                   <Label>Digest Recipient</Label>
-                  <Input value={digestTo} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setDigestTo(e.target.value)} disabled={hydrationDisabled} />
+                  <Input value={digestTo} onChange={(e: ChangeEvent<HTMLInputElement>)=>setDigestTo(e.target.value)} disabled={hydrationDisabled} />
                   <Label className="mt-2">Digest Subject</Label>
-                  <Input value={digestSubject} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setDigestSubject(e.target.value)} disabled={hydrationDisabled} />
+                  <Input value={digestSubject} onChange={(e: ChangeEvent<HTMLInputElement>)=>setDigestSubject(e.target.value)} disabled={hydrationDisabled} />
                 </div>
               )}
               {selectedActions.includes('generateContentRewrite') && (
@@ -203,7 +203,7 @@ export default function AutomationRecipesPage() {
               {(selectedActions.includes('salesRefreshMetrics') || selectedActions.includes('salesPipelineDigest')) && (
                 <div className="space-y-2">
                   <Label>Sales Range</Label>
-                  <select className="border rounded px-2 py-1 text-sm" value={range} disabled={hydrationDisabled} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRange(e.target.value as '30d'|'90d'|'ytd')}>
+                  <select className="border rounded px-2 py-1 text-sm" value={range} disabled={hydrationDisabled} onChange={(e: ChangeEvent<HTMLSelectElement>) => setRange(e.target.value as '30d'|'90d'|'ytd')}>
                     <option value="30d">Last 30d</option>
                     <option value="90d">Last 90d</option>
                     <option value="ytd">Year to Date</option>
@@ -213,13 +213,13 @@ export default function AutomationRecipesPage() {
               {selectedActions.includes('salesPipelineDigest') && (
                 <div className="space-y-2">
                   <Label>Sales Digest Recipient</Label>
-                  <Input value={salesDigestTo} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSalesDigestTo(e.target.value)} disabled={hydrationDisabled} />
+                  <Input value={salesDigestTo} onChange={(e: ChangeEvent<HTMLInputElement>) => setSalesDigestTo(e.target.value)} disabled={hydrationDisabled} />
                 </div>
               )}
               {selectedActions.includes('financeInvoiceAgingDigest') && (
                 <div className="space-y-2">
                   <Label>Finance Aging Digest Recipient</Label>
-                  <Input value={financeAgingTo} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFinanceAgingTo(e.target.value)} disabled={hydrationDisabled} />
+                  <Input value={financeAgingTo} onChange={(e: ChangeEvent<HTMLInputElement>) => setFinanceAgingTo(e.target.value)} disabled={hydrationDisabled} />
                 </div>
               )}
               <Button onClick={() => void create()} disabled={hydrationDisabled}>Create</Button>
