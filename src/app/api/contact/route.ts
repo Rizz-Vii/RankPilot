@@ -1,4 +1,4 @@
-import type { NextRequest} from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getLogger } from '@/lib/logging/app-logger';
 import nodemailer from "nodemailer";
@@ -31,9 +31,9 @@ function getTransport() {
 
     // Development fallback: log emails to console
     return {
-        sendMail: async (opts: any) => {
+        sendMail: async (opts: nodemailer.SendMailOptions) => {
             getLogger('contact').warn('email.send.fallback', { to: opts?.to, subject: opts?.subject });
-            return { messageId: `dev-fallback-${Date.now()}` };
+            return { messageId: `dev-fallback-${Date.now()}` } as unknown as nodemailer.SentMessageInfo;
         },
     } as unknown as nodemailer.Transporter;
 }
@@ -52,19 +52,20 @@ export async function POST(req: NextRequest) {
         const { name, email, subject, message, category } = parsed.data;
 
         // Persist initial message for tracking
-        const headers = Object.fromEntries(req.headers);
+        const headers = Object.fromEntries(req.headers.entries()) as Record<string, string>;
         const ip = req.headers.get("x-forwarded-for") || headers["x-real-ip"] || "unknown";
         const userAgent = req.headers.get("user-agent") || "unknown";
 
-        const docRef = await adminDb.collection("supportMessages").add({
+        let docRef: { id: string } | null = null;
+        docRef = await adminDb.collection("supportMessages").add({
             name,
             email,
             subject,
             message,
             category,
             status: "received",
-            createdAt: (admin.firestore as any).FieldValue.serverTimestamp(),
-            updatedAt: (admin.firestore as any).FieldValue.serverTimestamp(),
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             meta: { ip, userAgent, source: "public-contact-form" },
         });
 
@@ -91,19 +92,20 @@ export async function POST(req: NextRequest) {
       `,
         });
         // Update Firestore with send status
-        await adminDb.collection("supportMessages").doc(docRef.id).update({
+        await adminDb.collection("supportMessages").doc(docRef!.id).update({
             emailStatus: "sent",
             emailMessageId: info.messageId,
-            updatedAt: (admin.firestore as any).FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
         return NextResponse.json({ success: true, id: info.messageId, docId: docRef.id });
     } catch (err: unknown) {
-        getLogger('contact').error('contact.error', { error: (err as any)?.message });
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        getLogger('contact').error('contact.error', { error: errorMessage });
         try {
             // Best-effort: mark latest doc as failed if available from context (not tracked here)
             // No-op: Without docRef, we can't update; in a more advanced setup, we'd correlate by timestamp
         } catch { }
-        return NextResponse.json({ message: (err as any)?.message || "Internal error" }, { status: 500 });
+        return NextResponse.json({ message: errorMessage || "Internal error" }, { status: 500 });
     }
 }
