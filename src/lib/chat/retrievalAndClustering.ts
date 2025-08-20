@@ -1,5 +1,4 @@
 import { adminDb } from '@/lib/firebase-admin';
-import OpenAI from 'openai';
 import { openAIEmbeddingOrNull, chatComplete } from '@/lib/ai/aiClient';
 
 export interface RetrievedContextItem { question: string; response: string; similarity: number; }
@@ -14,7 +13,7 @@ export async function buildQueryEmbedding(_apiKey: string, text: string): Promis
     return openAIEmbeddingOrNull(text);
 }
 
-interface ChatMessageDoc { question?: string; response?: string; embedding?: { question?: number[] }; timestamp?: any; }
+interface ChatMessageDoc { question?: string; response?: string; embedding?: { question?: number[] }; timestamp?: unknown; }
 export async function retrieveSimilarMessages(params: { uid: string; sessionId: string; queryEmbedding: number[]; limit?: number; topK?: number; }): Promise<RetrievedContextItem[]> {
     const { uid, sessionId, queryEmbedding, limit = 80, topK = 3 } = params;
     try {
@@ -29,7 +28,7 @@ export async function retrieveSimilarMessages(params: { uid: string; sessionId: 
             }
         });
         scored.sort((a, b) => b.similarity - a.similarity); return scored.slice(0, topK);
-    } catch { return []; }
+    } catch (err) { console.error('retrieveSimilarMessages error', err); return []; }
 }
 
 function kMeans(vectors: number[][], k: number, iters = 12): { assignments: number[]; centroids: number[][] } {
@@ -80,10 +79,10 @@ export async function maybeClusterKeywords(params: { uid: string; sessionId: str
                     ], maxTokens: 24, temperature: 0.3
                 });
                 label = (content || label).trim().replace(/^["']|["']$/g, '');
-            } catch { }
+            } catch (err) { console.error('cluster labeling error', err); }
             clusters.push({ label, size: indices.length, examples: sampleTexts });
         }
         await sessionRef.set({ clusters, lastClusteredAt: new Date() }, { merge: true });
         return true;
-    } catch { return false; }
+    } catch (err) { console.error('maybeClusterKeywords error', err); return false; }
 }
