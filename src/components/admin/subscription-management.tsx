@@ -69,7 +69,7 @@ const isTimestampLike = (v: unknown): v is TimestampLike =>
   v !== null &&
   typeof v === "object" &&
   "seconds" in v &&
-  typeof (v as any).seconds === "number";
+  typeof (v as { seconds?: unknown }).seconds === "number";
 
 interface SubscriptionStats {
   total: number;
@@ -123,7 +123,7 @@ export function SubscriptionManagement() {
       };
 
       usersSnapshot.forEach((d) => {
-        const data = d.data() as Record<string, any>;
+        const data = d.data() as Record<string, unknown>;
         const sub = data.subscription || { tier: 'free', status: 'inactive' };
         const user: SubscriptionUser = {
           id: d.id,
