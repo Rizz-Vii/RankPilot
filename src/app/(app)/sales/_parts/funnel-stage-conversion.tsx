@@ -36,7 +36,7 @@ export default function FunnelStageConversion({ onStageClick }: Props): JSX.Elem
               <LabelList
                 dataKey="conversion"
                 position="right"
-                formatter={(v: unknown) => `${String(v)}%`}
+                formatter={(v?: number | string | null) => `${String(v ?? '')}%`}
                 className="text-[10px] fill-current"
               />
               {funnel.map((f: FunnelEntry, i: number) => (
