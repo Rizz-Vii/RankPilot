@@ -60,8 +60,12 @@ export async function identifyAndCorrectUserTiers(): Promise<void> {
 
       userStats.total++;
 
-      const currentTier = userData.subscriptionTier || "free";
-      const email = userData.email || "unknown";
+      const currentTier =
+        typeof userData.subscriptionTier === "string"
+          ? userData.subscriptionTier
+          : "free";
+      const email =
+        typeof userData.email === "string" ? userData.email : "unknown";
 
       // Count current tier distribution
       switch (currentTier) {
@@ -81,7 +85,10 @@ export async function identifyAndCorrectUserTiers(): Promise<void> {
             id: userId,
             email,
             subscriptionTier: currentTier,
-            subscriptionStatus: userData.subscriptionStatus || "free",
+            subscriptionStatus:
+              typeof userData.subscriptionStatus === "string"
+                ? userData.subscriptionStatus
+                : "free",
           });
           break;
         case "agency":
@@ -91,7 +98,10 @@ export async function identifyAndCorrectUserTiers(): Promise<void> {
             id: userId,
             email,
             subscriptionTier: currentTier,
-            subscriptionStatus: userData.subscriptionStatus || "free",
+            subscriptionStatus:
+              typeof userData.subscriptionStatus === "string"
+                ? userData.subscriptionStatus
+                : "free",
           });
           break;
         default:
@@ -171,7 +181,10 @@ async function verifyTierCorrections(): Promise<void> {
 
     snapshot.forEach((docSnap) => {
       const userData = docSnap.data() as Record<string, unknown>;
-      const currentTier = userData.subscriptionTier || "free";
+      const currentTier =
+        typeof userData.subscriptionTier === "string"
+          ? userData.subscriptionTier
+          : "free";
 
       switch (currentTier) {
         case "free":
