@@ -7,12 +7,12 @@ export interface ValidationResult { ok: boolean; issues?: string[]; }
 
 export let currentPlan: BrainPlan | null = null;
 
-export async function invokeTool(t: ToolInvocation): Promise<UnknownObject> {
+export async function invokeTool(_t: ToolInvocation): Promise<UnknownObject> {
     // ...existing invocation logic...
-    return {}; // placeholder
+    return {} as UnknownObject;
 }
 
-export function validate(result: UnknownObject): ValidationResult {
+export function validate(_result: UnknownObject): ValidationResult {
     // ...existing validation...
     return { ok: true };
 }
