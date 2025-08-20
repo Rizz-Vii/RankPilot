@@ -1,10 +1,10 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getLogger } from '@/lib/logging/app-logger';
-import nodemailer from "nodemailer";
-import { z } from "zod";
-import { adminDb } from "@/lib/firebase-admin";
-import * as admin from "firebase-admin";
+import nodemailer from 'nodemailer';
+import { z } from 'zod';
+import { adminDb } from '@/lib/firebase-admin';
+import * as admin from 'firebase-admin';
 
 const replySchema = z.object({
     messageId: z.string().min(1),
@@ -22,8 +22,9 @@ function getTransport() {
         return nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } });
     }
     return {
-        sendMail: async (opts: { to?: string; subject?: string } = {}) => {
-            getLogger('support-reply').warn('email.send.fallback', { to: opts.to, subject: opts.subject });
+        sendMail: async (opts: unknown) => {
+            const details = (opts as nodemailer.SendMailOptions | undefined) ?? undefined;
+            getLogger('support-reply').warn('email.send.fallback', { to: details?.to, subject: details?.subject });
             return { messageId: `dev-fallback-${Date.now()}` };
         },
     } as unknown as nodemailer.Transporter;
