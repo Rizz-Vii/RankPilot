@@ -6,14 +6,14 @@ import { NextResponse } from "next/server";
 interface TeamMember { userId?: string; id?: string; email?: string; role?: string; status?: string; invitedAt?: unknown; lastActive?: unknown; }
 interface TeamDoc { memberIds?: string[]; members?: TeamMember[];[k: string]: unknown; }
 
-async function getTeam(uid: string) {
+async function getTeam(uid: string): Promise<{ id: string; data: TeamDoc } | null> {
     const snap = await adminDb.collection("teams").where("memberIds", 'array-contains', uid).limit(1).get();
-    if (!snap.empty) return { id: snap.docs[0].id, data: snap.docs[0].data() };
+    if (!snap.empty) return { id: snap.docs[0].id, data: snap.docs[0].data() as TeamDoc };
     const u = await adminDb.collection("users").doc(uid).get();
-    const teamId = u.exists ? u.data()?.teamId : undefined;
+    const teamId = u.exists ? (u.data() as any)?.teamId : undefined;
     if (teamId) {
         const t = await adminDb.collection("teams").doc(teamId).get();
-        if (t.exists) return { id: t.id, data: t.data() };
+        if (t.exists) return { id: t.id, data: t.data() as TeamDoc };
     }
     return null;
 }
@@ -27,7 +27,7 @@ export const DELETE: (req: NextRequest, context: { params: Promise<{ memberId: s
             return NextResponse.json(missingAuthBody, { status: 401 });
         }
         const token = authHeader.replace(/^Bearer\s+/i, "").trim();
-        const decoded = await adminAuth.verifyIdToken(token);
+        const decoded = await adminAuth.verifyIdToken(token) as { uid: string; email?: string | undefined; };
 
         const team = await getTeam(decoded.uid);
         if (!team) {
@@ -67,9 +67,9 @@ export const DELETE: (req: NextRequest, context: { params: Promise<{ memberId: s
         await adminDb.collection("teams").doc(team.id).update({ members });
         const okBody = enforceProvenance({ success: true }, { path: 'team/member', note: 'removed' });
         return NextResponse.json(okBody);
-    } catch (e: unknown) {
-        console.error("Remove member error", e);
-        const msg = e instanceof Error ? e.message : String(e);
+    } catch (err: unknown) {
+        console.error("Remove member error", err);
+        const msg = err instanceof Error ? err.message : String(err);
         const errBody = enforceProvenance({ error: msg }, { path: 'team/member', note: 'exception' });
         return NextResponse.json(errBody, { status: 500 });
     }
