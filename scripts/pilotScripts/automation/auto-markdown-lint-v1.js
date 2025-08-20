@@ -69,20 +69,21 @@ class AutoMarkdownLinter {
     const files = [];
     
     try {
-      const items = fs.readdirSync(dir);
+      if (!fs.existsSync(dir)) return files;
+      const dirents = fs.readdirSync(dir, { withFileTypes: true });
       
-      items.forEach(item => {
-        const fullPath = path.join(dir, item);
-        const stat = fs.statSync(fullPath);
-        
-        if (stat.isDirectory() && !this.excludePatterns.includes(item)) {
-          files.push(...this.findMarkdownFiles(fullPath));
-        } else if (item.endsWith('.md')) {
+      for (const dirent of dirents) {
+        const fullPath = path.join(dir, dirent.name);
+        if (dirent.isDirectory()) {
+          if (!this.excludePatterns.includes(dirent.name)) {
+            files.push(...this.findMarkdownFiles(fullPath));
+          }
+        } else if (dirent.isFile() && path.extname(dirent.name).toLowerCase() === '.md') {
           files.push(fullPath);
         }
-      });
+      }
     } catch (error) {
-      console.warn(`Warning: Could not read directory ${dir}`);
+      console.warn(`Warning: Could not read directory ${dir}: ${error.message}`);
     }
     
     return files;
