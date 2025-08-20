@@ -46,7 +46,6 @@ import {
   Folder,
   Plus,
   Search,
-  Filter,
   Calendar,
   Users,
   Target,
@@ -54,11 +53,9 @@ import {
   MoreVertical,
   Edit,
   Trash2,
-  Star,
   Clock,
   CheckCircle,
   AlertCircle,
-  ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import { db } from "@/lib/firebase";
@@ -101,7 +98,7 @@ const priorityConfig = {
 
 export default function TeamProjectsPage() {
   const { user, loading: authLoading } = useAuth();
-  const { subscription, canUseFeature } = useSubscription();
+  useSubscription(); // invoke hook without destructuring to avoid unused-variable lint warnings
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
