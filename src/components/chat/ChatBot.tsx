@@ -59,7 +59,6 @@ export default function ChatBot({ className }: ChatBotProps): JSX.Element | null
     );
 }
 
-// Export individual components for direct use
-export { default as AdminChatBot } from './AdminChatBot';
-export { default as CustomerChatBot } from './CustomerChatBot';
+ // Export individual components for direct use
+export { AdminChatBot, CustomerChatBot };
 
