@@ -7,7 +7,7 @@ import { customDashboardBuilder } from '@/lib/dashboard/custom-dashboard-builder
 import { extractErrorMessage } from '@/lib/errors/extract-error-message';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { getApps, initializeApp } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
+import { getAuth, type DecodedIdToken } from 'firebase-admin/auth';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
@@ -53,14 +53,14 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
             return NextResponse.json(enforceProvenance({ error: 'Unauthorized - Missing token' }, { path: 'dashboard/custom', note: 'auth' }), { status: 401 });
         }
         const token = authHeader.split('Bearer ')[1];
-        let user;
+        let user: DecodedIdToken | undefined;
         try {
             user = await getAuth().verifyIdToken(token);
         } catch (error) {
             console.error('[DashboardAPI] Token verification failed:', error);
             return NextResponse.json(enforceProvenance({ error: 'Unauthorized - Invalid token' }, { path: 'dashboard/custom', note: 'auth' }), { status: 401 });
         }
-        const userTier = user.customClaims?.subscriptionTier || 'free';
+        const userTier = user!.customClaims?.subscriptionTier || 'free';
         if (!['agency', 'enterprise', 'admin'].includes(userTier)) {
             return NextResponse.json(enforceProvenance({ error: 'Upgrade required - Custom dashboards available for Agency tier and above' }, { path: 'dashboard/custom', note: 'tier' }), { status: 403 });
         }
@@ -136,14 +136,14 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
             return NextResponse.json(enforceProvenance({ error: 'Unauthorized - Missing token' }, { path: 'dashboard/custom', note: 'auth' }), { status: 401 });
         }
         const token = authHeader.split('Bearer ')[1];
-        let user;
+        let user: DecodedIdToken | undefined;
         try {
             user = await getAuth().verifyIdToken(token);
         } catch (error) {
             console.error('[DashboardAPI] Token verification failed:', error);
             return NextResponse.json(enforceProvenance({ error: 'Unauthorized - Invalid token' }, { path: 'dashboard/custom', note: 'auth' }), { status: 401 });
         }
-        const userTier = user.customClaims?.subscriptionTier || 'free';
+        const userTier = user!.customClaims?.subscriptionTier || 'free';
         switch (action) {
             case 'templates':
                 const templates = customDashboardBuilder.getTemplates(userTier);
