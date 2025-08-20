@@ -1,4 +1,4 @@
-import type { NextRequest} from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { enforceProvenance } from "@/lib/middleware/provenance";
 import { adminDb } from "@/lib/firebase-admin";
@@ -91,9 +91,10 @@ async function fetchFromFirestore(opts: {
         // Try to get total via aggregation; fallback to rough count if unsupported
         let total = 0;
         try {
-            // @ts-ignore - count() may not be typed in some versions
-            const aggSnap = await (base as unknown).count().get();
-            total = aggSnap.data().count || 0;
+            // count() may not be typed in some Firestore SDK versions; use `any` to access it safely
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const aggSnap = await (base as any).count().get();
+            total = aggSnap?.data?.().count || 0;
         } catch {
             // Fallback: attempt to get first 1 with offset large to detect existence; otherwise assume 0
             // We won't scan entire collection for performance.
