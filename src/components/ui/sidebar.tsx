@@ -5,8 +5,8 @@ import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
 import { motion } from "framer-motion"; // value import
 import { PanelLeft } from "lucide-react";
-import type { ReactNode } from "react";
-import React, { createContext, forwardRef, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import type { ReactNode, ComponentProps, ComponentPropsWithoutRef } from "react";
+import { createContext, forwardRef, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -56,7 +56,7 @@ function useSidebar() {
 }
 
 // --- Provider ---
-type SidebarProviderProps = React.ComponentProps<"div"> & {
+type SidebarProviderProps = ComponentProps<"div"> & {
   defaultOpen?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -203,7 +203,7 @@ SidebarProvider.displayName = "SidebarProvider";
 
 const Sidebar = forwardRef<
   HTMLDivElement,
-  React.ComponentPropsWithoutRef<"div"> & {
+  ComponentPropsWithoutRef<"div"> & {
     // Use ComponentPropsWithoutRef to easily remove ref from the type
     side?: "left" | "right";
   }
@@ -279,7 +279,7 @@ Sidebar.displayName = "Sidebar";
 
 const SidebarTrigger = forwardRef<
   HTMLButtonElement,
-  React.ComponentPropsWithoutRef<"button"> // Use ComponentPropsWithoutRef
+  ComponentPropsWithoutRef<"button"> // Use ComponentPropsWithoutRef
 >(({ className, onClick, ...props }, ref) => {
   const { isMobile, openMobile, setOpenMobile, toggleSidebar } = useSidebar();
 
@@ -320,7 +320,7 @@ SidebarTrigger.displayName = "SidebarTrigger";
 
 const SidebarHeader = forwardRef<
   HTMLDivElement,
-  React.ComponentPropsWithoutRef<"div">
+  ComponentPropsWithoutRef<"div">
 >(({ className, ...props }, ref) => {
   // Use ComponentPropsWithoutRef
   return (
@@ -336,7 +336,7 @@ SidebarHeader.displayName = "SidebarHeader";
 
 const SidebarFooter = forwardRef<
   HTMLDivElement,
-  React.ComponentPropsWithoutRef<"div">
+  ComponentPropsWithoutRef<"div">
 >(({ className, ...props }, ref) => {
   // Use ComponentPropsWithoutRef
   return (
@@ -352,7 +352,7 @@ SidebarFooter.displayName = "SidebarFooter";
 
 const SidebarContent = forwardRef<
   HTMLDivElement,
-  React.ComponentPropsWithoutRef<"div">
+  ComponentPropsWithoutRef<"div">
 >(({ className, ...props }, ref) => {
   // Use ComponentPropsWithoutRef
   return (
@@ -394,7 +394,7 @@ const SidebarMenu = forwardRef<HTMLUListElement, SidebarMenuProps>(
 SidebarMenu.displayName = "SidebarMenu";
 
 const SidebarMenuItem = motion.create(
-  forwardRef<HTMLLIElement, React.ComponentPropsWithoutRef<"li">>(
+  forwardRef<HTMLLIElement, ComponentPropsWithoutRef<"li">>(
     ({ className, ...props }, ref) => (
       <li
         ref={ref}
@@ -430,13 +430,13 @@ const sidebarMenuButtonVariants = cva(
 );
 
 type SidebarMenuButtonProps = Omit<
-  React.ComponentPropsWithoutRef<"button">, // Omit ref, variant, and size
+  ComponentPropsWithoutRef<"button">, // Omit ref, variant, and size
   "ref" | "variant" | "size"
 > &
   VariantProps<typeof sidebarMenuButtonVariants> & {
     asChild?: boolean;
     isActive?: boolean;
-    tooltip?: string | React.ComponentProps<typeof TooltipContent>;
+    tooltip?: string | ComponentProps<typeof TooltipContent>;
   };
 
 const SidebarMenuButton = forwardRef<HTMLButtonElement, SidebarMenuButtonProps>(
@@ -498,12 +498,12 @@ SidebarMenuButton.displayName = "SidebarMenuButton";
 // Assuming SidebarMenuLink is also intended, as it was in previous versions.
 // If not, it can be removed. I'll include it with fixes for consistency.
 type SidebarMenuLinkProps = Omit<
-  React.ComponentPropsWithoutRef<"a">, // Omit ref, variant, and size
+  ComponentPropsWithoutRef<"a">, // Omit ref, variant, and size
   "ref" | "variant" | "size"
 > &
   VariantProps<typeof sidebarMenuButtonVariants> & {
     isActive?: boolean;
-    tooltip?: string | React.ComponentProps<typeof TooltipContent>;
+    tooltip?: string | ComponentProps<typeof TooltipContent>;
   };
 
 const SidebarMenuLink = forwardRef<HTMLAnchorElement, SidebarMenuLinkProps>(
