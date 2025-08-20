@@ -4,7 +4,6 @@ import assert from 'assert';
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { randomUUID } from 'crypto';
-import http from 'http';
 
 async function simulateClientCrawl(url: string) {
     // Direct write emulates client legacy + aggregate dual-write (flag must be on in app for real). Here we simulate both.
@@ -59,15 +58,15 @@ async function main() {
     const db = getFirestore();
     // Fetch one created aggregate doc (latest)
     const snap = await db.collection('neuralCrawlerResultsAgg').orderBy('createdAt', 'desc').limit(1).get();
-    assert.equal(snap.size, 1, 'aggregate doc missing');
+    assert.strictEqual(snap.size, 1, 'aggregate doc missing');
     const data = snap.docs[0].data();
     // Parity checks
-    assert.equal(data.wordCount, legacyDoc.wordCount, 'wordCount mismatch');
-    assert.equal(data.readingTime, legacyDoc.readingTime, 'readingTime mismatch');
-    assert.equal(data.imagesCount, legacyDoc.images.length, 'imagesCount mismatch');
-    assert.equal(data.linksInternal + data.linksExternal, legacyDoc.links.length, 'links total mismatch');
-    assert.equal(data.issuesCount, legacyDoc.issues.length, 'issuesCount mismatch');
-    assert.equal(data.entitiesCount, legacyDoc.entities.length, 'entitiesCount mismatch');
+    assert.strictEqual(data.wordCount, legacyDoc.wordCount, 'wordCount mismatch');
+    assert.strictEqual(data.readingTime, legacyDoc.readingTime, 'readingTime mismatch');
+    assert.strictEqual(data.imagesCount, legacyDoc.images.length, 'imagesCount mismatch');
+    assert.strictEqual(data.linksInternal + data.linksExternal, legacyDoc.links.length, 'links total mismatch');
+    assert.strictEqual(data.issuesCount, legacyDoc.issues.length, 'issuesCount mismatch');
+    assert.strictEqual(data.entitiesCount, legacyDoc.entities.length, 'entitiesCount mismatch');
     const size = Buffer.byteLength(JSON.stringify(data), 'utf8');
     assert(size < 2500, `aggregate doc too large: ${size}`);
     console.log('T14 neural crawler aggregate parity OK', { size });
