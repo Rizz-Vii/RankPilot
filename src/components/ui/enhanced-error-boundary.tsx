@@ -273,7 +273,7 @@ export function withErrorBoundary<P extends object>(
 
   (WrappedComponent as any).displayName = `withErrorBoundary(${Wrapped.displayName || Wrapped.name})`;
 
-  return WrappedComponent as ComponentType<P>;
+  return WrappedComponent as React.ComponentType<P>;
 }
 
 export default EnhancedErrorBoundary;
