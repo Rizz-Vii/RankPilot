@@ -7,7 +7,8 @@
 
 const { execSync } = require('child_process');
 const fs = require('fs');
-const path = require('path');
+
+'use strict';
 
 // Enhanced JavaScript implementation for all phases
 class ComprehensiveAgentExecutor {
