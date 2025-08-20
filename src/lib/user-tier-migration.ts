@@ -8,20 +8,13 @@ import {
   getDocs,
   doc,
   updateDoc,
-  query,
-  where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-// In-module diagnostics for migration query utilities
-const migrationQueryDiagnostics = {
-  hasQuery: !!query,
-  hasWhere: !!where,
-  queryLength: Array.isArray((query as unknown)) ? (query as unknown as unknown[]).length : undefined,
-};
+/* diagnostics removed during lint remediation */
 
 // Mapping from old tier names to new tier names
-const TIER_MIGRATION_MAP = {
+const TIER_MIGRATION_MAP: Record<string, string> = {
   starter: "professional",
   agency: "enterprise",
   // Keep existing valid tiers
@@ -61,9 +54,9 @@ export async function identifyAndCorrectUserTiers(): Promise<void> {
     console.log(`📊 Found ${snapshot.size} total users`);
 
     // Analyze all users
-    snapshot.forEach((doc) => {
-      const userData = doc.data();
-      const userId = doc.id;
+    snapshot.forEach((docSnap) => {
+      const userData = docSnap.data() as Record<string, unknown>;
+      const userId = docSnap.id;
 
       userStats.total++;
 
@@ -176,8 +169,8 @@ async function verifyTierCorrections(): Promise<void> {
       unknown: 0,
     };
 
-    snapshot.forEach((doc) => {
-      const userData = doc.data();
+    snapshot.forEach((docSnap) => {
+      const userData = docSnap.data() as Record<string, unknown>;
       const currentTier = userData.subscriptionTier || "free";
 
       switch (currentTier) {
