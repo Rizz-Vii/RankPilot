@@ -1,7 +1,7 @@
 "use client";
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-interface Column<T> { key: string; header: string; render?: (row: T) => React.ReactNode; className?: string; }
+interface Column<T> { key: string; header: string; render?: (row: T) => ReactNode; className?: string; }
 
 interface LazyDataTableProps<T> {
   columns: Column<T>[];
@@ -52,14 +52,16 @@ export function LazyDataTable<T extends Record<string, unknown>>({
     return () => {
       el.removeEventListener('scroll', onScroll);
     };
-  }, [rows.length, overscan]);
+  }, [rows.length, overscan, height]);
   const totalH = rows.length * ROW_HEIGHT;
   if (loading) return <div className="rounded-md border p-4 text-xs text-muted-foreground">Loading...</div>;
   if (!rows.length) return <div className="rounded-md border p-4 text-xs text-muted-foreground">{empty}</div>;
   return (
-    <div className={"border rounded-md overflow-hidden bg-background/50 " + (className||"")}> 
+    <div className={`border rounded-md overflow-hidden bg-background/50 ${className ?? ''}`}>
       <div className="flex text-[11px] uppercase tracking-wide bg-muted/50 border-b">
-        {columns.map(c => <div key={c.key} className={"px-2 py-2 flex-1 font-medium " + (c.className||"")}>{c.header}</div>)}
+        {columns.map((c) => (
+          <div key={c.key} className={`px-2 py-2 flex-1 font-medium ${c.className ?? ''}`}>{c.header}</div>
+        ))}
       </div>
       <div ref={containerRef} style={{ maxHeight: height }} className="relative overflow-auto text-xs">
         <div style={{ height: totalH }} className="relative">
