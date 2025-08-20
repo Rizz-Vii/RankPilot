@@ -3,15 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { AppLogo, AppName } from "@/constants/nav";
-import {
-  FaLinkedin,
-  FaTwitter,
-  FaYoutube,
-  FaEnvelope,
-  FaPhone,
-  FaMapMarkerAlt,
-  FaGithub,
-} from "react-icons/fa";
+import { FaLinkedin, FaTwitter, FaYoutube, FaGithub } from "react-icons/fa";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,7 +72,7 @@ export default function SiteFooter() {
   const [emailSubscription, setEmailSubscription] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
 
-  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+  const handleNewsletterSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubscribing(true);
 
