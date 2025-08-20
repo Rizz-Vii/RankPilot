@@ -25,10 +25,11 @@ export const POST: (req: NextRequest, context: { params: Promise<{ memberId: str
         const token = authHeader.replace("Bearer ", "");
         const decoded = await adminAuth.verifyIdToken(token);
 
-        const { role } = await req.json();
+        const body = await req.json();
+        const role = typeof body?.role === 'string' ? body.role : undefined;
         if (!role) return NextResponse.json({ error: 'Missing role' }, { status: 400 });
         const validRoles = ['owner', 'admin', 'member', 'viewer'] as const;
-        if (!validRoles.includes(role)) {
+        if (!(validRoles as readonly string[]).includes(role)) {
             return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
         }
 
@@ -38,7 +39,8 @@ export const POST: (req: NextRequest, context: { params: Promise<{ memberId: str
         const members: TeamMember[] = Array.isArray(data.members) ? [...data.members] : [];
 
         const acting = members.find((m) => m.userId === decoded.uid || m.id === decoded.uid || m.email === decoded.email);
-        if (!acting || !['owner', 'admin'].includes(acting.role || '')) {
+        const privilegedRoles = ['owner', 'admin'] as const;
+        if (!acting || !(privilegedRoles as readonly string[]).includes(acting.role || '')) {
             return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
         }
 
