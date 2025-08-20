@@ -10,7 +10,14 @@ import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 // Optional real-time subscription consolidation
 // We intentionally lazy-load onSnapshot only when realtime enabled to avoid bundling cost for static pages
-let _onSnapshot: ((...args: any[]) => any) | null = null;
+// Provide a narrowed signature instead of an overly broad unsafe type.
+// Use a loose reference type to avoid importing Firestore types here; we only need minimal shape.
+type FirestoreOnSnapshot = (
+  reference: unknown,
+  onNext: (snapshot: { exists: () => boolean; data: () => Record<string, unknown> }) => void,
+  onError?: (error: unknown) => void
+) => () => void;
+let _onSnapshot: FirestoreOnSnapshot | null = null;
 
 export interface PlanLimits {
   auditsPerMonth: number;
@@ -180,26 +187,35 @@ export function useSubscription(options: { realtime?: boolean } = {}) {
       }
     }
     // Initial fetch
-    fetchSubscription();
+    void fetchSubscription();
 
     // Optional realtime listener (single consolidated) only when enabled & user present
     if (realtime && user?.uid) {
-      (async () => {
+      void (async () => {
         if (!_onSnapshot) {
           const mod = await import('firebase/firestore');
-          _onSnapshot = mod.onSnapshot;
+          _onSnapshot = (mod.onSnapshot as unknown) as FirestoreOnSnapshot;
         }
         const ref = doc(db, 'users', user.uid);
-        const unsub = _onSnapshot(ref, (snap: { exists: () => boolean; data: () => any }) => {
+        if (!_onSnapshot) return; // safety
+        const unsub = _onSnapshot(ref, (snap) => {
           if (!snap.exists()) return;
-          const data = snap.data() as Record<string, any>;
+          const raw = snap.data();
+          const data: Record<string, unknown> = raw || {};
+          const statusValue = typeof data.subscriptionStatus === 'string' ? data.subscriptionStatus : 'free';
+          const tierValue = typeof data.subscriptionTier === 'string' ? data.subscriptionTier : 'free';
+          // Narrow to allowed unions at runtime
+          const allowedStatus = ['active', 'free', 'canceled', 'past_due'] as const;
+          const allowedTiers = ['free', 'starter', 'agency', 'enterprise'] as const;
+          const narrowedStatus = (allowedStatus as readonly string[]).includes(statusValue) ? (statusValue as SubscriptionData['status']) : 'free';
+          const narrowedTier = (allowedTiers as readonly string[]).includes(tierValue) ? (tierValue as SubscriptionData['tier']) : 'free';
           const subData: SubscriptionData = {
-            status: data.subscriptionStatus || 'free',
-            tier: data.subscriptionTier || 'free',
-            customerId: data.stripeCustomerId,
-            subscriptionId: data.stripeSubscriptionId,
-            currentPeriodEnd: data.nextBillingDate?.toDate?.() || data.nextBillingDate,
-            cancelAtPeriodEnd: data.cancelAtPeriodEnd || false,
+            status: narrowedStatus,
+            tier: narrowedTier,
+            customerId: typeof data.stripeCustomerId === 'string' ? data.stripeCustomerId : undefined,
+            subscriptionId: typeof data.stripeSubscriptionId === 'string' ? data.stripeSubscriptionId : undefined,
+            currentPeriodEnd: (data.nextBillingDate as { toDate?: () => Date } | undefined)?.toDate?.() || (data.nextBillingDate as Date | undefined),
+            cancelAtPeriodEnd: typeof data.cancelAtPeriodEnd === 'boolean' ? data.cancelAtPeriodEnd : false,
           };
           let planInfo = subData.tier === 'free' ? FREE_PLAN : STRIPE_PLANS[subData.tier as PlanType] || FREE_PLAN;
           if (subData.tier === ('admin' as unknown)) planInfo = STRIPE_PLANS.enterprise;
@@ -219,7 +235,7 @@ export function useSubscription(options: { realtime?: boolean } = {}) {
       })();
     }
     return () => { cancelled = true; if (unsubRef) unsubRef(); };
-  }, [user?.uid, profile?.role, realtime]);
+  }, [user?.uid, profile?.role, realtime, unsubRef]);
 
   const canUseFeature = (featureName: string): boolean => {
     if (!subscription?.userAccess) return false;
