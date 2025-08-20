@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, type ChangeEvent } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { auth } from '@/lib/firebase';
 
@@ -50,10 +50,10 @@ export default function SiteIngestionAdminPage() {
     <div className="p-6 space-y-4 max-w-2xl">
       <h1 className="text-xl font-semibold">Site Ingestion Admin</h1>
       <div className="space-y-2">
-        <input className="w-full border rounded px-2 py-1 text-sm" placeholder="https://example.com" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} />
+        <input className="w-full border rounded px-2 py-1 text-sm" placeholder="https://example.com" value={baseUrl} onChange={(e: ChangeEvent<HTMLInputElement>) => setBaseUrl(e.target.value)} />
         <div className="flex items-center gap-2">
           <label htmlFor="max-pages" className="text-xs text-muted-foreground">Max Pages</label>
-          <input id="max-pages" min={1} type="number" className="w-24 border rounded px-2 py-1 text-sm" value={maxPages} onChange={(e) => setMaxPages(Math.max(1, parseInt(e.target.value, 10) || 1))} />
+          <input id="max-pages" min={1} type="number" className="w-24 border rounded px-2 py-1 text-sm" value={maxPages} onChange={(e: ChangeEvent<HTMLInputElement>) => setMaxPages(Math.max(1, parseInt(e.target.value, 10) || 1))} />
         </div>
   <button type="button" onClick={() => { void runIngestion(); }} disabled={!baseUrl || status === 'Running'} className="px-3 py-1 rounded bg-primary text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50">Ingest</button>
   <div className="text-xs text-muted-foreground">Status: {status}</div>
