@@ -140,8 +140,9 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
                 return false;
             }
 
-        } catch (error) {
-            console.error('🚨 TypeScript Guardian execution failed:', error);
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            console.error('🚨 TypeScript Guardian execution failed:', err);
             await this.rollback();
             return false;
         }
@@ -235,13 +236,15 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
                     const backupFile = path.join(this.backupPath, `${timestamp}-${path.basename(file)}`);
                     await fs.writeFile(backupFile, content);
                     console.log(`📁 Backed up: ${file}`);
-                } catch (error) {
-                    console.warn(`⚠️  Could not backup ${file}:`, error);
+                } catch (error: unknown) {
+                    const err = error instanceof Error ? error : new Error(String(error));
+                    console.warn(`⚠️  Could not backup ${file}:`, err);
                 }
             }
-        } catch (error) {
-            console.error('Failed to create backup:', error);
-            throw error;
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            console.error('Failed to create backup:', err);
+            throw err;
         }
     }
 
@@ -280,8 +283,9 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
                     console.log(`🔍 Unknown file for auto-fix: ${error.file}`);
                     return false;
             }
-        } catch (error) {
-            console.error(`❌ Failed to apply fix:`, error);
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            console.error(`❌ Failed to apply fix:`, err);
             return false;
         }
     }
@@ -319,8 +323,9 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
             }
 
             return false;
-        } catch (error) {
-            console.error('Failed to fix polymorphic-card motion props:', error);
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            console.error('Failed to fix polymorphic-card motion props:', err);
             return false;
         }
     }
@@ -360,8 +365,9 @@ interface QueueItem {
             await fs.writeFile(filePath, content);
             this.fixedFiles.push(filePath);
             return true;
-        } catch (error) {
-            console.error('Failed to fix connection pool types:', error);
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            console.error('Failed to fix connection pool types:', err);
             return false;
         }
     }
@@ -409,8 +415,9 @@ class DataCorruptionError extends Error {
             await fs.writeFile(filePath, content);
             this.fixedFiles.push(filePath);
             return true;
-        } catch (error) {
-            console.error('Failed to fix security center types:', error);
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            console.error('Failed to fix security center types:', err);
             return false;
         }
     }
@@ -454,8 +461,9 @@ class DataCorruptionError extends Error {
             await execAsync('git checkout HEAD -- src/components/ui/polymorphic-card.tsx src/lib/scaling/connection-pool.ts src/lib/security/security-operations-center.ts');
             console.log('✅ Rollback completed via git checkout');
             return true;
-        } catch (error) {
-            console.error('❌ Rollback failed:', error);
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            console.error('❌ Rollback failed:', err);
             return false;
         }
     }
@@ -468,8 +476,9 @@ class DataCorruptionError extends Error {
             await execAsync(`git checkout HEAD -- ${filePath}`);
             console.log(`✅ Rolled back: ${filePath}`);
             return true;
-        } catch (error) {
-            console.error(`❌ Failed to rollback ${filePath}:`, error);
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            console.error(`❌ Failed to rollback ${filePath}:`, err);
             return false;
         }
     }
