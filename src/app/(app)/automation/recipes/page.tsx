@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
+import type { ChangeEvent } from 'react';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import type { AutomationRecipe, AutomationRunLog, AutomationActionType } from '@/lib/automation/recipes';
 import { createAutomationRecipe, listAutomationRecipes, updateAutomationRecipe, defaultRecipeTemplate, listRecentAutomationRuns, countPendingEmails } from '@/lib/automation/recipes';
