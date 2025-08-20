@@ -40,7 +40,7 @@ export function AuthAwareHero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-  <h2 className="text-4xl font-bold mb-4">Welcome back{user.displayName ? `, ${user.displayName}` : ""}! 👋</h2>
+      <h2 className="text-4xl font-bold mb-4">Welcome back{user.displayName ? `, ${user.displayName}` : ""}! 👋</h2>
         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
           Your unified growth intelligence hub is updating in real time—technical health, semantic opportunities & authority momentum all in one place.
         </p>
@@ -64,7 +64,7 @@ export function AuthAwareHero() {
         {/* Quick Stats or Recent Activity */}
         <div className="grid md:grid-cols-3 gap-6 mt-16">
           { (rtLoading || metricsLoading) && [0,1,2].map(i => (
-            <div key={i} className="p-6 border rounded-lg animate-pulse flex flex-col items-center gap-2" aria-busy="true" aria-label="Loading metric">
+            <div key={i} className="p-6 border rounded-lg animate-pulse flex flex-col items-center gap-2" aria-busy={true} aria-label="Loading metric">
               <div className="h-5 w-5 rounded bg-muted" />
               <div className="h-7 w-14 rounded bg-muted" />
               <div className="h-3 w-24 rounded bg-muted" />
