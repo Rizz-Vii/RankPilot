@@ -1,6 +1,6 @@
 "use client";
 // Enterprise Marketing - Email Campaigns
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
@@ -45,7 +45,7 @@ function CampaignDialog({ open, onClose, onCreate, loading }: CampaignDialogProp
 interface VariantDialogProps { open:boolean; base:string; onClose:()=>void; }
 function VariantDialog({ open, base, onClose }: VariantDialogProps){
   const [variants,setVariants]=useState<string[]>([]);
-  useEffect(()=> { if(open){ setVariants(generateSubjectVariants(base)); } }, [open, base]);
+  useEffect(()=> { if(open){ setVariants(generateSubjectVariants(base)); } }, [open, base, generateSubjectVariants]);
   if(!open) return null;
   return <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
     <div className="w-full max-w-lg rounded-xl border bg-card p-6 space-y-4 shadow-xl relative">
@@ -65,7 +65,7 @@ export default function EmailCampaignsPage() {
   interface MarketingQuota { key: string; label: string; used: number; limit: number }
   interface MarketingLive { kpis: MarketingMetric[]; rows: any[]; loading: boolean; addOptimistic: (row: any)=>void; quotas?: MarketingQuota[] }
   const data: MarketingLive = (live.kpis.length ? live : { kpis: (mock?.kpis || []), rows: [], loading: false, addOptimistic: live.addOptimistic }) as MarketingLive;
-  useEffect(() => { trackDashboardView('marketing'); }, []);
+  useEffect(() => { trackDashboardView('marketing'); }, [trackDashboardView]);
   const { toast } = useToast();
   const { user } = useAuth();
   const userId = user?.uid || 'dev-user';
