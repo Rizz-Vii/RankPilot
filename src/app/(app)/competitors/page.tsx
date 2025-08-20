@@ -228,7 +228,6 @@ const CompetitorResults = ({
 
 export default function CompetitorsPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [results] = useState<CompetitorAnalysisOutput | null>(null);
 
   const { user } = useAuth();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -481,9 +480,9 @@ export default function CompetitorsPage() {
                 </Card>
               </motion.div>
             )}
-            {results && (
+            {report && (
               <motion.div key="results">
-                <CompetitorResults results={results} />
+                <CompetitorResults results={report as unknown as CompetitorAnalysisOutput} />
               </motion.div>
             )}
           </AnimatePresence>
