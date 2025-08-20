@@ -81,7 +81,7 @@ export function PWAInstallPrompt({ className, showInAppHeader = false }: PWAInst
         }
     }, [isInstallable, isInstalled, showInAppHeader, dismissed, isIOS, isStandalone]);
 
-    const handleInstall = async () => {
+    const handleInstall = async (): Promise<void> => {
         setIsInstalling(true);
         try {
             const success = await installApp();
@@ -93,19 +93,20 @@ export function PWAInstallPrompt({ className, showInAppHeader = false }: PWAInst
         }
     };
 
-    const handleNotificationToggle = async (enabled: boolean) => {
+    const handleNotificationToggle = async (enabled: boolean): Promise<void> => {
         try {
             if (enabled) {
                 await enableNotifications();
             } else {
                 await disableNotifications();
             }
-        } catch (e) {
+        } catch (e: unknown) {
             // Silently ignore on unsupported devices
+            void e;
         }
     };
 
-    const handleUpdate = async () => {
+    const handleUpdate = async (): Promise<void> => {
         await updateApp();
         setShowUpdateAlert(false);
         window.location.reload();
@@ -258,7 +259,11 @@ export function PWAInstallPrompt({ className, showInAppHeader = false }: PWAInst
                                     variant="outline"
                                     onClick={() => {
                                         setShowPrompt(false);
-                                        try { localStorage.setItem('pwa_prompt_dismissed', 'true'); } catch {}
+                                        try {
+                                            localStorage.setItem('pwa_prompt_dismissed', 'true');
+                                        } catch (e: unknown) {
+                                            void e;
+                                        }
                                         setDismissed(true);
                                     }}
                                 >
@@ -377,11 +382,11 @@ export function usePWAInstallPrompt() {
     useEffect(() => {
         // Show prompt after user has been active for 30 seconds
         if (isInstallable && !isInstalled && !hasShownPrompt) {
-            const timer = setTimeout(() => {
+            const timer = window.setTimeout(() => {
                 setHasShownPrompt(true);
             }, 30000);
 
-            return () => clearTimeout(timer);
+            return () => window.clearTimeout(timer);
         }
     }, [isInstallable, isInstalled, hasShownPrompt]);
 
