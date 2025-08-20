@@ -3,10 +3,9 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 
 type SurfaceVariant = 'default' | 'subtle' | 'elevated';
-type SuiteAccent = 'seo' | 'sales' | 'marketing' | 'finance' | 'none';
 
 export interface DashboardSurfaceProps {
-  as?: keyof JSX.IntrinsicElements;
+  as?: React.ElementType;
   fullHeight?: boolean;
   bleed?: boolean;
   className?: string;
