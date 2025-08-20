@@ -16,7 +16,8 @@ interface BSFigures { assets:number; liabilities:number; equity:number; }
 
 export default function AccountingPage(){
   const { user } = useAuth();
-  const userId = user?.uid; const teamId = (user as any)?.teamId as string|undefined;
+  const userId = user?.uid;
+  const teamId = (user as { teamId?: string })?.teamId as string|undefined;
   const [loading, setLoading] = useState(false);
   interface BaseAccountingSnapshot { createdAt?: { toDate: () => Date }; }
   interface PnLSnapshot extends BaseAccountingSnapshot { type:'pnl'; figures: PnLFigures; }
@@ -31,7 +32,7 @@ export default function AccountingPage(){
   useEffect(()=> { void trackDashboardView('finance'); }, []);
 
   useEffect(()=> { if(!userId) return; setLoading(true); void (async()=> { try {
-  const rawSnaps = await fetchRecentAccountingSnapshots(userId, teamId, undefined, 8) as any[];
+  const rawSnaps = await fetchRecentAccountingSnapshots(userId, teamId, undefined, 8) as AccountingSnapshot[];
   // Narrow by presence of expected figure keys
   const pnl = rawSnaps.find(s=> s.type==='pnl' && s.figures && 'grossProfit' in s.figures);
   const bs = rawSnaps.find(s=> s.type==='balance_sheet' && s.figures && 'assets' in s.figures);
