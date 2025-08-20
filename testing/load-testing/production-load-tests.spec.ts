@@ -3,7 +3,8 @@
  * Comprehensive performance testing for deployed functions
  */
 
-import { expect, test, APIResponse } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import type { APIResponse } from '@playwright/test';
 
 // Production Firebase Functions URLs (australia-southeast2)
 const PRODUCTION_BASE_URL = 'https://australia-southeast2-rankpilot-h3jpc.cloudfunctions.net';
