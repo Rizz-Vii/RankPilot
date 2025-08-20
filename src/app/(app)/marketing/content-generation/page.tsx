@@ -1,6 +1,6 @@
 "use client";
 // Enterprise Marketing - Marketing Content Generation
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
@@ -14,7 +14,6 @@ import { useAuth } from '@/context/AuthContext';
 import { useMarketingCampaignMetrics } from '@/hooks/useMarketingCampaignMetrics';
 import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { ActionCard } from '@/components/shared/ActionCard';
-import { SkeletonOverlay } from '@/components/shared/SkeletonOverlay';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 import { useProvenance } from '@/hooks/useProvenance';
