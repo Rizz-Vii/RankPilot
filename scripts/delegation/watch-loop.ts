@@ -227,6 +227,8 @@ function processQueue() {
     const proc = spawn('npm', ['run', 'delegate:process'], { stdio: 'inherit', env: { ...process.env, AIDER_AUTORUN: '1', ACTIVE_PROFILE: activeProfile } });
     proc.on('exit', (code) => {
         const durMs = Date.now() - started;
+        // eslint-disable-next-line no-console
+        console.log(`[delegate:loop] delegate:process exited code=${code} duration=${durMs}ms`);
         if (process.env.TOKEN_LEDGER === '1') {
             try {
                 const metricsPath = path.resolve('.codex/tmp/last-token-stats.json');
