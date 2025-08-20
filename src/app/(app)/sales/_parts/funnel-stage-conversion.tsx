@@ -9,6 +9,7 @@ interface FunnelEntry {
   [key: string]: unknown;
 }
 interface Props { onStageClick?: (stage: string) => void }
+type ChartClickParam = { payload?: FunnelEntry } | FunnelEntry;
 export default function FunnelStageConversion({ onStageClick }: Props): JSX.Element {
   const { data } = useSalesContext();
   const funnel: FunnelEntry[] = data?.funnel || [];
@@ -25,7 +26,7 @@ export default function FunnelStageConversion({ onStageClick }: Props): JSX.Elem
               dataKey="count"
               radius={4}
               fill="hsl(var(--primary)/0.3)"
-              onClick={(d: unknown) => {
+              onClick={(d: ChartClickParam) => {
                 const payload = (d as { payload?: FunnelEntry }).payload ?? (d as FunnelEntry | undefined);
                 const stage = payload?.stage;
                 if (onStageClick && typeof stage === 'string') onStageClick(stage);
