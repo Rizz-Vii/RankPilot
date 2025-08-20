@@ -1,7 +1,7 @@
 #!/usr/bin/env ts-node
 /* NEU-02: Ensure compact persisted doc <5KB and stable hash key matches signature */
 import assert from 'assert';
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import http from 'http';
 
@@ -33,7 +33,7 @@ async function main() {
     const data = snap.data()!;
     const size = Buffer.byteLength(JSON.stringify(data), 'utf8');
     assert(size < 5000, `doc size exceeded: ${size}`);
-    assert.equal(data.hashKey, hashKey, 'hashKey mismatch');
+    assert.strictEqual(data.hashKey, hashKey, 'hashKey mismatch');
     console.log('NEU-02 persistence size/hash OK', { size, hashKey });
 }
 
