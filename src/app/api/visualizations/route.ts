@@ -13,7 +13,7 @@ import { adminAuth, adminDb } from '@/lib/firebase-admin';
 // Note: adminStorage will be imported after fixing corrupted code below.
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { generateChartExport, generateDashboardExport, persistExportArtifact, persistBufferToStorage } from '@/lib/visualizations/server-exports';
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 export const POST = withProvenance(async function POST(request: Request) {
@@ -149,7 +149,7 @@ function isObj(v: unknown): v is Record<string, unknown> { return !!v && typeof 
 async function createChart(userId: string, chartData: unknown) {
     const cd: ChartCreateInput = isObj(chartData) ? chartData as ChartCreateInput : {};
     const chartDoc: ChartDoc = {
-        id: cd.id || `chart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: cd.id || `chart_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
         userId,
         config: cd.config,
         data: Array.isArray(cd.data) ? cd.data : [],
@@ -340,7 +340,7 @@ type DashboardCreateInput = Partial<Omit<DashboardDoc, 'id' | 'userId' | 'settin
 async function createDashboard(userId: string, dashboardData: unknown) {
     const dd: DashboardCreateInput = isObj(dashboardData) ? dashboardData as DashboardCreateInput : {};
     const dashboardDoc: DashboardDoc = {
-        id: dd.id || `dashboard_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: dd.id || `dashboard_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
         userId,
         name: dd.name || 'Untitled Dashboard',
         description: dd.description,
