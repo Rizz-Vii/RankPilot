@@ -27,6 +27,7 @@ export interface ChatSession {
     metadata?: Record<string, unknown>;
 }
 
+/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 export interface ChatContext {
     auditData?: boolean;
     siteContent?: boolean;
