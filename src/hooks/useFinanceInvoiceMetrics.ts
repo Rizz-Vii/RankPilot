@@ -9,7 +9,7 @@ interface Result { loading: boolean; error?: string; kpis: Metric[]; rows: Array
 interface InvoiceDoc { id: string; period: string; status?: string; amount?: number; paidAt?: { toDate?: () => Date } | Date | null; dueAt?: { toDate?: () => Date } | Date | null }
 
 export function useFinanceInvoiceMetrics(monthWindow = 6): Result {
-    const { user } = useContext(AuthContext) as { user?: { uid: string } } | any;
+    const { user } = useContext(AuthContext) as { user?: { uid: string } };
     const [state, setState] = useState<Result>({ loading: true, kpis: [], rows: [] });
     useEffect(() => {
         if (!user) return; let cancelled = false; (async () => {
@@ -23,7 +23,7 @@ export function useFinanceInvoiceMetrics(monthWindow = 6): Result {
                         id: d.id,
                         period: String(raw.period || ''),
                         status: raw.status as string | undefined,
-                        amount: typeof raw.amount === 'number' ? raw.amount : Number(raw.amount || 0) || 0,
+                        amount: typeof raw.amount === 'number' ? raw.amount : Number(raw.amount ?? 0),
                         paidAt: (raw.paidAt as any) ?? null,
                         dueAt: (raw.dueAt as any) ?? null,
                     };
@@ -35,12 +35,14 @@ export function useFinanceInvoiceMetrics(monthWindow = 6): Result {
                 const byPeriod: Record<string, InvoiceDoc[]> = {};
                 for (const d of filtered) { (byPeriod[d.period] ||= []).push(d); }
                 const ordered = Object.keys(byPeriod).sort();
-                function sum(arr: InvoiceDoc[], f: (x: InvoiceDoc) => number) { return arr.reduce((s, x) => s + f(x), 0); }
-                const last = ordered.at(-1)!; const prev = ordered.at(-2);
+                const sum = (arr: InvoiceDoc[], f: (x: InvoiceDoc) => number): number => arr.reduce((s, x) => s + f(x), 0);
+                const last = ordered.at(-1);
+                const prev = ordered.at(-2);
+                if (!last) { setState({ loading: false, kpis: [], rows: [] }); return; }
                 const lastPaid = byPeriod[last].filter(i => i.status === 'paid');
                 const mrr = sum(lastPaid, i => i.amount || 0);
                 const prevMrr = prev ? sum((byPeriod[prev] || []).filter(i => i.status === 'paid'), i => i.amount || 0) : mrr;
-                const toDate = (v: any): Date | undefined => v instanceof Date ? v : (v?.toDate?.() || undefined);
+                const toDate = (v: unknown): Date | undefined => v instanceof Date ? v : ((v as any)?.toDate?.() ?? undefined);
                 const onTimePaid = lastPaid.filter(i => { const paidAt = toDate(i.paidAt); const due = toDate(i.dueAt); return paidAt && due && paidAt.getTime() <= due.getTime(); });
                 const onTimePct = lastPaid.length ? onTimePaid.length / lastPaid.length * 100 : 0;
                 const outstanding = byPeriod[last].filter(i => i.status !== 'paid').length;
@@ -49,7 +51,7 @@ export function useFinanceInvoiceMetrics(monthWindow = 6): Result {
                     { key: 'on_time', label: 'On-Time %', value: Number(onTimePct.toFixed(1)), delta: 0, trend: ordered.map(p => { const arr = (byPeriod[p] || []).filter(i => i.status === 'paid'); const ot = arr.filter(i => { const paidAt = toDate(i.paidAt); const due = toDate(i.dueAt); return paidAt && due && paidAt.getTime() <= due.getTime(); }); return arr.length ? ot.length / arr.length * 100 : 0; }), intent: onTimePct > 90 ? 'success' : 'warning' },
                     { key: 'outstanding', label: 'Outstanding', value: outstanding, delta: 0, trend: ordered.map(p => (byPeriod[p] || []).filter(i => i.status !== 'paid').length), intent: outstanding === 0 ? 'success' : 'warning' }
                 ];
-                setState({ loading: false, kpis, rows: filtered.slice(0, 200) as unknown as Array<Record<string, unknown>> });
+                setState({ loading: false, kpis, rows: filtered.slice(0, 200) as Array<Record<string, unknown>> });
             } catch (e: unknown) { if (cancelled) return; const err = e as { message?: string }; setState({ loading: false, kpis: [], rows: [], error: err.message }); }
         })(); return () => { cancelled = true; };
     }, [user, monthWindow]);
