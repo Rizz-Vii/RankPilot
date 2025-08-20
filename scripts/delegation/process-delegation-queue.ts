@@ -363,10 +363,26 @@ Rules Focus: infer rule id from summary; fix occurrences safely.
             task.notes = `exit ${res.status}`;
             appendLog({ taskId: task.taskId, filesChanged: task.files.length, locAdded: 0, locRemoved: 0, status: 'failed', ts: new Date().toISOString(), notes: task.notes });
         }
-    } catch (err: any) {
+    } catch (err: unknown) {
         task.status = 'failed';
+        // Safely extract message from unknown error
+        let errMsg = 'unknown error';
+        if (err && typeof err === 'object') {
+            if ('message' in err && typeof (err as any).message === 'string') {
+                errMsg = (err as any).message;
+            } else {
+                try {
+                    errMsg = JSON.stringify(err);
+                } catch {
+                    // fallback to String()
+                    try { errMsg = String(err); } catch { /* noop */ }
+                }
+            }
+        } else {
+            try { errMsg = String(err); } catch { /* noop */ }
+        }
         // @ts-ignore
-        task.notes = err.message;
+        task.notes = errMsg;
         appendLog({ taskId: task.taskId, filesChanged: task.files.length, locAdded: 0, locRemoved: 0, status: 'error', ts: new Date().toISOString(), notes: task.notes });
     }
     task.updatedAt = new Date().toISOString();
