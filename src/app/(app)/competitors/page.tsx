@@ -234,12 +234,9 @@ export default function CompetitorsPage() {
   const [report, setReport] = useState<NeuroSEOReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [, setAnalysisProgress] = useState(0);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [, setCurrentEngine] = useState<string>("");
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [, setCompletedEngines] = useState<string[]>([]);
+  const [_analysisProgress, setAnalysisProgress] = useState(0);
+  const [_currentEngine, setCurrentEngine] = useState<string>("");
+  const [_completedEngines, setCompletedEngines] = useState<string[]>([]);
   const { toast } = useToast();
 
   // Form state (managed by CompetitorAnalysisForm)
