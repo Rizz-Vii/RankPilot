@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import type { AutomationRecipe} from '@/lib/automation/recipes';
 import { createAutomationRecipe, listAutomationRecipes, updateAutomationRecipe, defaultRecipeTemplate, listRecentAutomationRuns, countPendingEmails } from '@/lib/automation/recipes';
@@ -27,6 +27,7 @@ const ACTIONS: { id: string; label: string; desc: string }[] = [
 
 export default function AutomationRecipesPage() {
   const { user } = useAuth();
+  const teamId = (user as any)?.teamId;
   const { toast } = useToast();
   const hydrated = useHydration();
   const [recipes, setRecipes] = useState<AutomationRecipe[]>([]);
@@ -52,7 +53,7 @@ export default function AutomationRecipesPage() {
     void (async () => {
       setLoading(true);
       try {
-  const list = await listAutomationRecipes(user.uid, (user as any)?.teamId);
+  const list = await listAutomationRecipes(user.uid, teamId);
         setRecipes(list);
         // Fetch run logs & pending emails for each recipe sequentially (small N expected)
         const logsMap: Record<string, import('@/lib/automation/recipes').AutomationRunLog[]> = {};
@@ -82,7 +83,7 @@ export default function AutomationRecipesPage() {
         setValidationError('Use either interval OR cron, not both.');
         return;
       }
-  const tpl = defaultRecipeTemplate(user.uid, (user as any)?.teamId);
+  const tpl = defaultRecipeTemplate(user.uid, teamId);
       tpl.name = newName || 'Automation Recipe';
       if (cronExpr.trim()) {
         tpl.schedule = { cron: cronExpr.trim() } as import('@/lib/automation/recipes').AutomationRecipe['schedule'];
@@ -148,17 +149,17 @@ export default function AutomationRecipesPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
-                <Input id="name" value={newName} onChange={e => setNewName(e.target.value)} placeholder="Weekly NeuroSEO Digest" disabled={hydrationDisabled} />
+                <Input id="name" value={newName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewName(e.target.value)} placeholder="Weekly NeuroSEO Digest" disabled={hydrationDisabled} />
               </div>
               <div className="space-y-3">
                 <div className="space-y-2">
                   <Label>Interval (minutes)</Label>
-                  <Input type="number" min={5} value={interval} onChange={e => setInterval(Number(e.target.value))} disabled={hydrationDisabled || !!cronExpr.trim()} />
+                  <Input type="number" min={5} value={interval} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInterval(Number(e.target.value))} disabled={hydrationDisabled || !!cronExpr.trim()} />
                   <p className="text-xs text-muted-foreground">1440 = daily, 10080 = weekly. Disabled if cron is set.</p>
                 </div>
                 <div className="space-y-2">
                   <Label>Cron Expression (optional)</Label>
-                  <Input placeholder="m h * * * or @daily" value={cronExpr} onChange={e => setCronExpr(e.target.value)} disabled={hydrationDisabled} />
+                  <Input placeholder="m h * * * or @daily" value={cronExpr} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCronExpr(e.target.value)} disabled={hydrationDisabled} />
                   <p className="text-xs text-muted-foreground">Supports m h * * * plus @daily / @hourly. Use instead of interval.</p>
                 </div>
                 {validationError && <p className="text-xs text-destructive">{validationError}</p>}
@@ -201,7 +202,7 @@ export default function AutomationRecipesPage() {
               {(selectedActions.includes('salesRefreshMetrics') || selectedActions.includes('salesPipelineDigest')) && (
                 <div className="space-y-2">
                   <Label>Sales Range</Label>
-                  <select className="border rounded px-2 py-1 text-sm" value={range} disabled={hydrationDisabled} onChange={e => setRange(e.target.value as '30d'|'90d'|'ytd')}>
+                  <select className="border rounded px-2 py-1 text-sm" value={range} disabled={hydrationDisabled} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRange(e.target.value as '30d'|'90d'|'ytd')}>
                     <option value="30d">Last 30d</option>
                     <option value="90d">Last 90d</option>
                     <option value="ytd">Year to Date</option>
@@ -211,13 +212,13 @@ export default function AutomationRecipesPage() {
               {selectedActions.includes('salesPipelineDigest') && (
                 <div className="space-y-2">
                   <Label>Sales Digest Recipient</Label>
-                  <Input value={salesDigestTo} onChange={e=>setSalesDigestTo(e.target.value)} disabled={hydrationDisabled} />
+                  <Input value={salesDigestTo} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSalesDigestTo(e.target.value)} disabled={hydrationDisabled} />
                 </div>
               )}
               {selectedActions.includes('financeInvoiceAgingDigest') && (
                 <div className="space-y-2">
                   <Label>Finance Aging Digest Recipient</Label>
-                  <Input value={financeAgingTo} onChange={e=>setFinanceAgingTo(e.target.value)} disabled={hydrationDisabled} />
+                  <Input value={financeAgingTo} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFinanceAgingTo(e.target.value)} disabled={hydrationDisabled} />
                 </div>
               )}
               <Button onClick={() => void create()} disabled={hydrationDisabled}>Create</Button>
