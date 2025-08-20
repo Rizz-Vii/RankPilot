@@ -234,9 +234,9 @@ export default function CompetitorsPage() {
   const [report, setReport] = useState<NeuroSEOReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const [, _setAnalysisProgress] = useState(0);
-  const [, _setCurrentEngine] = useState<string>("");
-  const [, _setCompletedEngines] = useState<string[]>([]);
+  const [, setAnalysisProgress] = useState(0);
+  const [, setCurrentEngine] = useState<string>("");
+  const [, setCompletedEngines] = useState<string[]>([]);
   const { toast } = useToast();
 
   // Form state (managed by CompetitorAnalysisForm)
@@ -262,15 +262,15 @@ export default function CompetitorsPage() {
 
       const interval = setInterval(() => {
         if (currentIndex < engines.length) {
-          _setCurrentEngine(engines[currentIndex]);
-          _setAnalysisProgress((currentIndex + 1) * 20);
+          setCurrentEngine(engines[currentIndex]);
+          setAnalysisProgress((currentIndex + 1) * 20);
           if (currentIndex > 0) {
-            _setCompletedEngines(prev => [...prev, engines[currentIndex - 1]]);
+            setCompletedEngines(prev => [...prev, engines[currentIndex - 1]]);
           }
           currentIndex++;
         } else {
-          _setCompletedEngines(prev => [...prev, engines[engines.length - 1]]);
-          _setCurrentEngine("");
+          setCompletedEngines(prev => [...prev, engines[engines.length - 1]]);
+          setCurrentEngine("");
         }
       }, 3000);
 
