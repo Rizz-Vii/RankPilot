@@ -8,11 +8,11 @@ const startedAt = Date.now();
 
 // Simple health probe: fast, lightweight readiness signal with minimal fields.
 // Adds version/build info for deployment diagnostics without heavy metrics cost.
-export async function GET() {
+export async function GET(): Promise<NextResponse> {
     try {
         const adminInitialized = getApps().length > 0;
-        const buildSha = process.env.BUILD_SHA || 'dev';
-        const version = (pkg as any).version || '0.0.0';
+        const buildSha = process.env.BUILD_SHA ?? 'dev';
+        const version = (pkg as { version?: string })?.version ?? '0.0.0';
         const now = Date.now();
         return NextResponse.json({
             ok: true,
@@ -22,7 +22,8 @@ export async function GET() {
             ts: now,
             uptimeMs: now - startedAt
         });
-    } catch (e) {
-        return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
+    } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        return NextResponse.json({ ok: false, error: errorMessage }, { status: 500 });
     }
 }
