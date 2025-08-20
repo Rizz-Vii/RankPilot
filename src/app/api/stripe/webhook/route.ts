@@ -5,9 +5,10 @@ import { NextResponse } from 'next/server';
 import { getLogger } from '@/lib/logging/app-logger';
 import Stripe from 'stripe';
 // NOTE: Functions env centralizes invoice persistence. For ISR / local dev parity we duplicate minimal upsert using client Firestore.
-async function upsertFinanceInvoiceClient(invoice: any) {
+async function upsertFinanceInvoiceClient(invoice: unknown) {
     try {
-        const customerId = invoice?.customer as string | undefined;
+        const invoiceObj = invoice as Stripe.Invoice;
+        const customerId = invoiceObj?.customer as string | undefined;
         if (!customerId) return;
         const usersQ = query(collection(db, 'users'), where('stripeCustomerId', '==', customerId));
         const snap = await getDocs(usersQ);
@@ -19,13 +20,14 @@ async function upsertFinanceInvoiceClient(invoice: any) {
         const issuedAt = new Date((invoice?.created as number) * 1000);
         const dueAt = invoice?.due_date ? new Date((invoice?.due_date as number) * 1000) : null;
         const paidAt = invoice?.status === 'paid' && invoice?.status_transitions?.paid_at ? new Date((invoice?.status_transitions?.paid_at as number) * 1000) : null;
-        const firstLine: any = invoice?.lines?.data?.[0];
+        const firstLine = (invoiceObj?.lines?.data?.[0]) as Record<string, unknown> | undefined;
         const planTier = firstLine?.price?.metadata?.planTier || invoice?.metadata?.planTier || null;
         const ref = doc(db, 'financeInvoices', invoice?.id as string);
         // merge keeps createdAt if exists
         await setDoc(ref, { userId, period, amount, status, issuedAt, dueAt, paidAt, planTier, currency: invoice?.currency, updatedAt: new Date(), createdAt: new Date() }, { merge: true });
     } catch (e) {
-        getLogger('stripe-webhook').degraded('invoice.upsert.client_failed', { invoiceId: (invoice as any)?.id, error: (e as Error).message });
+        const invoiceId = typeof invoice === 'object' && invoice !== null && 'id' in invoice && typeof (invoice as Record<string, unknown>).id === 'string' ? (invoice as Record<string, unknown>).id as string : undefined;
+        getLogger('stripe-webhook').degraded('invoice.upsert.client_failed', { invoiceId, error: (e as Error).message });
     }
 }
 
