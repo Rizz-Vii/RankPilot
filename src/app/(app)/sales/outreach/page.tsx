@@ -1,6 +1,6 @@
 "use client";
 // Sales - Outreach
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { fetchRecentSalesMetricsSnapshots } from '@/lib/services/sales-automation-snapshots';
 import { ActionCard } from '@/components/shared/action-card';
-import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAutomationTrigger } from '@/hooks/useAutomationTrigger';
 import { useProvenance } from '@/hooks/useProvenance';
@@ -19,11 +18,14 @@ import { NewSequenceModal } from '../_parts/new-sequence-modal';
 
 export default function SalesOutreachPage() {
   const { data } = useMockDomainMetrics('sales', true);
-  const { user } = useAuth(); const userId = user?.uid; const teamId = (user as any)?.teamId as string|undefined;
-  interface OutreachHistory { pipeline:number; ts:Date }
-  interface SalesMetricsSnapshot { pipeline:number; deals:number; won:number; ts:Date }
-  const [snapMetrics, setSnapMetrics] = useState<SalesMetricsSnapshot|null>(null); const [loadingSnap, setLoadingSnap] = useState(false); const [history, setHistory] = useState<OutreachHistory[]>([]);
-  const { toast } = useToast();
+  const { user } = useAuth();
+  const userId = user?.uid;
+  const teamId = (user as any)?.teamId as string | undefined;
+  interface OutreachHistory { pipeline: number; ts: Date }
+  interface SalesMetricsSnapshot { pipeline: number; deals: number; won: number; ts: Date }
+  const [snapMetrics, setSnapMetrics] = useState<SalesMetricsSnapshot | null>(null);
+  const [loadingSnap, setLoadingSnap] = useState<boolean>(false);
+  const [history, setHistory] = useState<OutreachHistory[]>([]);
   const { trigger, running } = useAutomationTrigger();
   const [seqOpen, setSeqOpen] = useState(false);
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
