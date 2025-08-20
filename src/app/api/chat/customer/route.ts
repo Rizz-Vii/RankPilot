@@ -59,9 +59,10 @@ async function checkAndIncrementMessageQuota(uid: string, tier: string) {
     const dateKey = new Date().toISOString().slice(0, 10);
     const ref = adminDb.collection('usageCounters').doc(`${uid}_${dateKey}`);
     await adminDb.runTransaction(async tx => {
+        type UsageData = { messages?: number; tokens?: number; tier?: string; date?: string };
         const snap = await tx.get(ref);
-        const data = snap.exists ? (snap.data() as any) : { messages: 0, tokens: 0, tier, date: dateKey };
-        if (data.messages >= limits.messages) throw new Error('Daily message quota reached');
+        const data = snap.exists ? (snap.data() as UsageData) : { messages: 0, tokens: 0, tier, date: dateKey };
+        if ((data.messages || 0) >= limits.messages) throw new Error('Daily message quota reached');
         tx.set(ref, { messages: FieldValue.increment(1), tokens: data.tokens || 0, tier, date: dateKey, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
     });
 }
@@ -72,8 +73,9 @@ async function incrementTokenUsage(uid: string, tier: string, tokens: number) {
     const ref = adminDb.collection('usageCounters').doc(`${uid}_${dateKey}`);
     const limits = QUOTA_LIMITS[tier] || QUOTA_LIMITS.free;
     await adminDb.runTransaction(async tx => {
+        type UsageData = { messages?: number; tokens?: number; tier?: string; date?: string };
         const snap = await tx.get(ref);
-        const data = snap.exists ? (snap.data() as any) : { messages: 0, tokens: 0, tier, date: dateKey };
+        const data = snap.exists ? (snap.data() as UsageData) : { messages: 0, tokens: 0, tier, date: dateKey };
         if ((data.tokens || 0) >= limits.tokens) return; // already capped
         const remaining = limits.tokens - (data.tokens || 0);
         const toAdd = Math.min(remaining, tokens);
@@ -129,8 +131,13 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         }
 
         // Load user doc (for teamId before any limiting)
-        let userDoc: FirebaseFirestore.DocumentSnapshot | null = null; let teamId: string | undefined;
-        try { userDoc = await adminDb.collection('users').doc(uid).get(); teamId = userDoc.exists ? (userDoc.data() as any)?.teamId : undefined; } catch { /* ignore */ }
+        let userDoc: FirebaseFirestore.DocumentSnapshot | null = null;
+        let teamId: string | undefined;
+        try {
+            userDoc = await adminDb.collection('users').doc(uid).get();
+            const ud = userDoc.exists ? (userDoc.data() as Record<string, unknown>) : undefined;
+            teamId = typeof ud?.teamId === 'string' ? ud.teamId : undefined;
+        } catch { /* ignore */ }
 
         // Team-aware rate limiting (Phase 1 PERF-01)
         if (teamId) {
@@ -236,8 +243,29 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         }
 
         if (!res.ok) {
-            const p: any = payload as any;
-            const errMsg = p?.error?.message || p?.error || p?.result?.error?.message || ((rawText || '').slice(0, 200) || 'Chat service unavailable');
+            const p = payload as unknown;
+            function extractErrorMessage(obj: unknown): string | undefined {
+                if (!obj || typeof obj !== 'object') return undefined;
+                const o = obj as Record<string, unknown>;
+                if ('error' in o) {
+                    const err = o.error;
+                    if (typeof err === 'string') return err;
+                    if (err && typeof err === 'object') {
+                        const em = (err as Record<string, unknown>).message;
+                        if (typeof em === 'string') return em;
+                    }
+                }
+                if ('result' in o && o.result && typeof o.result === 'object') {
+                    const r = o.result as Record<string, unknown>;
+                    if ('error' in r && r.error && typeof r.error === 'object') {
+                        const em = (r.error as Record<string, unknown>).message;
+                        if (typeof em === 'string') return em;
+                    }
+                }
+                return undefined;
+            }
+            const extracted = extractErrorMessage(p);
+            const errMsg = extracted || ((rawText || '').slice(0, 200) || 'Chat service unavailable');
             const code = res.status === 401 ? 401 : res.status === 403 ? 403 : res.status === 400 ? 400 : 503;
             // Provide helpful hints for common 401/403 causes during local dev
             const hint = code === 401
@@ -251,8 +279,18 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
             return resp;
         }
 
-        const anyPayload: any = payload as any;
-        let data: ChatResponse = anyPayload?.result || anyPayload?.data || anyPayload;
+        const anyPayload = payload as unknown;
+        let data: ChatResponse | undefined = undefined;
+        if (anyPayload && typeof anyPayload === 'object') {
+            const ap = anyPayload as Record<string, unknown>;
+            if (ap.result && typeof ap.result === 'object') {
+                data = ap.result as ChatResponse;
+            } else if (ap.data && typeof ap.data === 'object') {
+                data = ap.data as ChatResponse;
+            } else if (typeof ap.response === 'string' || typeof ap.sessionId === 'string') {
+                data = ap as ChatResponse;
+            }
+        }
         if (!data) {
             recordError('chat/customer', '5xx_server');
             recordRouteLatency('chat/customer', Date.now() - start);
@@ -264,11 +302,14 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         const metaMatch = data.response?.match?.(/<rp_meta>([\s\S]*?)<\/rp_meta>/);
         if (metaMatch) {
             try {
-                const parsed = JSON.parse(metaMatch[1].trim());
-                intent = parsed.intent;
-                actions = Array.isArray(parsed.actions) ? parsed.actions.slice(0, 5) : undefined;
-                priority = typeof parsed.priority === 'number' ? parsed.priority : undefined;
-                data = { ...data, response: data.response.replace(metaMatch[0], '').trim() };
+                const parsed: unknown = JSON.parse(metaMatch[1].trim());
+                if (parsed && typeof parsed === 'object') {
+                    const p = parsed as Record<string, unknown>;
+                    intent = typeof p.intent === 'string' ? p.intent : undefined;
+                    actions = Array.isArray(p.actions) ? p.actions.filter(a => typeof a === 'string').slice(0, 5) as string[] : undefined;
+                    priority = typeof p.priority === 'number' ? p.priority : undefined;
+                    data = { ...data, response: data.response.replace(metaMatch[0], '').trim() };
+                }
             } catch { /* ignore */ }
         }
 
@@ -326,9 +367,10 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
 
         // Handle Firebase Function errors
         if (error && typeof error === 'object' && 'code' in error) {
-            const firebaseError = error as any;
+            const fe = error as Record<string, unknown>;
+            const code = typeof fe.code === 'string' ? fe.code : undefined;
 
-            switch (firebaseError.code) {
+            switch (code) {
                 case 'unauthenticated':
                     recordError('chat/customer', '4xx_user');
                     return NextResponse.json(enforceProvenance({ error: 'Authentication required', provenance: 'synthetic' }, { path: 'chat/customer' }), { status: 401 });
@@ -419,21 +461,26 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
         // Reverse to chronological ascending (oldest first within this page)
         const orderedDocs = [...workingDocs].reverse();
         orderedDocs.forEach((doc) => {
-            const d = doc.data() as any;
-            const ts = d.timestamp?.toDate?.()?.toISOString?.() || new Date().toISOString();
+            const d = doc.data() as Record<string, unknown>;
+            let ts = new Date().toISOString();
+            if (d.timestamp && typeof d.timestamp === 'object' && 'toDate' in d.timestamp && typeof ((d.timestamp as { toDate?: unknown }).toDate) === 'function') {
+                try {
+                    ts = (d.timestamp as { toDate: () => Date }).toDate().toISOString();
+                } catch { ts = new Date().toISOString(); }
+            }
             if (d.isAttachment) {
                 messages.push({
                     id: `${doc.id}_att`,
-                    message: d.originalName || d.attachmentType,
+                    message: (typeof d.originalName === 'string' && d.originalName) || (typeof d.attachmentType === 'string' ? d.attachmentType : ''),
                     response: '',
                     timestamp: ts,
                     isUser: true,
-                    type: d.attachmentType,
-                    mediaUrl: d.mediaUrl,
+                    type: typeof d.attachmentType === 'string' ? d.attachmentType : undefined,
+                    mediaUrl: typeof d.mediaUrl === 'string' ? d.mediaUrl : undefined,
                 });
                 return; // skip pairing
             }
-            if (d.question) {
+            if (typeof d.question === 'string') {
                 messages.push({
                     id: `${doc.id}_user`,
                     message: d.question,
@@ -445,10 +492,10 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
             messages.push({
                 id: `${doc.id}_ai`,
                 message: '',
-                response: d.response || '',
+                response: typeof d.response === 'string' ? d.response : '',
                 timestamp: ts,
                 isUser: false,
-                tokensUsed: d.tokensUsed || 0,
+                tokensUsed: typeof d.tokensUsed === 'number' ? d.tokensUsed : 0,
             });
         });
         // hasMore already computed
@@ -458,11 +505,15 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
         try {
             const sessionDoc = await adminDb.collection(collectionName).doc(uid).collection('sessions').doc(currentSessionId).get();
             if (sessionDoc.exists) {
-                const sData = sessionDoc.data() as any;
-                sessionSummary = sData.sessionSummary;
-                pendingActions = sData.pendingActions;
-                keywords = sData.keywords;
-                summaryUpdatedAt = sData.summaryUpdatedAt?.toDate?.()?.toISOString?.();
+                const sData = sessionDoc.data() as Record<string, unknown>;
+                sessionSummary = typeof sData.sessionSummary === 'string' ? sData.sessionSummary : undefined;
+                pendingActions = Array.isArray(sData.pendingActions) ? sData.pendingActions.filter(a => typeof a === 'string') as string[] : undefined;
+                keywords = Array.isArray(sData.keywords) ? sData.keywords.filter(k => typeof k === 'string') as string[] : undefined;
+                if (sData.summaryUpdatedAt && typeof sData.summaryUpdatedAt === 'object' && 'toDate' in sData.summaryUpdatedAt && typeof ((sData.summaryUpdatedAt as { toDate?: unknown }).toDate) === 'function') {
+                    summaryUpdatedAt = (sData.summaryUpdatedAt as { toDate: () => Date }).toDate().toISOString();
+                } else {
+                    summaryUpdatedAt = undefined;
+                }
             }
         } catch { /* ignore */ }
 
