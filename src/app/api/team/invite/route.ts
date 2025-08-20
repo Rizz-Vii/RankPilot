@@ -1,6 +1,6 @@
-import type { NextRequest} from "next/server";
-import { NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import crypto from 'crypto';
 // NOTE: Global collection 'invites_index' provides O(1) inviteId -> teamId mapping.
 // Cleanup: scripts/cleanup-invites.ts prunes accepted/expired invites and orphan index docs.
@@ -25,7 +25,7 @@ async function getTeamForUser(uid: string) {
 }
 
 // Create invite (subcollection based)
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
     try {
         const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
         if (!authHeader) return NextResponse.json({ error: "Missing auth" }, { status: 401 });
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
 }
 
 // Accept invite
-export async function PUT(req: NextRequest) {
+export async function PUT(req: NextRequest): Promise<NextResponse> {
     try {
         const { inviteId, token } = await req.json();
         if (!inviteId || !token) return NextResponse.json({ error: 'Missing inviteId/token' }, { status: 400 });
@@ -140,7 +140,7 @@ export async function PUT(req: NextRequest) {
 }
 
 // Test-only helper: expire an invite early (development / test env). Not exposed in production.
-export async function PATCH(req: NextRequest) {
+export async function PATCH(req: NextRequest): Promise<NextResponse> {
     if (process.env.NODE_ENV === 'production') return NextResponse.json({ error: 'Disabled' }, { status: 403 });
     try {
         const { inviteId, teamId, minutesAgo } = await req.json();
@@ -156,7 +156,7 @@ export async function PATCH(req: NextRequest) {
 }
 
 // List pending invites: owner/admin sees all; invitee (email match) sees their pending invites across teams
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
     try {
         const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
         if (!authHeader) return NextResponse.json({ error: 'Missing auth' }, { status: 401 });
