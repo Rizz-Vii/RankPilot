@@ -53,7 +53,7 @@ export interface AccountSettingsFormProps {
 export default function AccountSettingsForm({
   user,
   profile,
-}: AccountSettingsFormProps) {
+}: AccountSettingsFormProps): JSX.Element {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const prof: UserProfile | undefined = asUserProfile(profile);
@@ -70,7 +70,7 @@ export default function AccountSettingsForm({
     },
   });
 
-  async function handleFormSubmit(values: AccountFormValues) {
+  async function handleFormSubmit(values: AccountFormValues): Promise<void> {
     setIsLoading(true);
     try {
       // Update email in Firebase Auth if changed
