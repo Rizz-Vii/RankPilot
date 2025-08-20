@@ -33,6 +33,8 @@ export interface FeatureConfig {
   description: string;
 }
 
+import { DEFAULT_ENTITLEMENTS } from './access/entitlements';
+
 // =============================================================================
 // TIER HIERARCHY & LIMITS
 // =============================================================================
@@ -322,7 +324,6 @@ export const FEATURE_ACCESS: Record<string, FeatureConfig> = {
 // Imported after FEATURE_ACCESS to preserve legacy ordering; not part of FEATURE_ACCESS
 // because they represent subscription metadata entitlements, not navigable features.
 // Entitlement metadata now resolved via dedicated helper (Phase 2 refactor)
-import { DEFAULT_ENTITLEMENTS } from './access/entitlements';
 
 // Track entitlement keys we've already warned about to avoid console spam
 const _warnedEntitlements = new Set<string>();
