@@ -41,8 +41,8 @@ export async function GET(req: NextRequest) {
         const activities = await fetchRecentActivities(uid);
 
         const encoder = new TextEncoder();
-        const stream = new ReadableStream({
-            async start(controller) {
+        const stream = new ReadableStream<Uint8Array>({
+            async start(controller: ReadableStreamDefaultController<Uint8Array>) {
                 let closed = false;
                 const safeEnqueue = (chunk: string) => {
                     if (closed) return;
