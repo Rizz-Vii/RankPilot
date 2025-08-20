@@ -93,7 +93,7 @@ const agentExecutor = new SimpleAgentExecutor();
       const mod = require(p);
       const fn = (mod && (mod.runBaseline || (mod.default && mod.default.runBaseline))) || null;
       if (typeof fn === 'function') { fn().catch(() => {}); break; }
-    } catch (_) { /* ignore */ }
+    } catch { /* ignore */ }
   }
 })();
 
