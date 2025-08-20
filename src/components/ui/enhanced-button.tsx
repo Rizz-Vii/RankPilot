@@ -102,12 +102,16 @@ const EnhancedButton = forwardRef<HTMLButtonElement, EnhancedButtonProps>(
   const childCount = React.Children.count(children);
   const isValidChildEl = React.isValidElement(children) && (children as any).type !== React.Fragment;
   const useSlot = !!asChild && childCount === 1 && isValidChildEl;
-  const Comp = useSlot ? Slot : motion.button;
+  const Comp = (useSlot ? Slot : motion.button) as unknown as React.ComponentType<any>;
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-      // Haptic feedback for mobile devices
-      if (hapticFeedback && "vibrate" in navigator) {
-        navigator.vibrate(10);
+      // Haptic feedback for mobile devices (guard for client-only navigator API)
+      if (
+        hapticFeedback &&
+        typeof navigator !== "undefined" &&
+        "vibrate" in (navigator as any)
+      ) {
+        (navigator as any).vibrate(10);
       }
 
       onClick?.(e);
@@ -117,8 +121,8 @@ const EnhancedButton = forwardRef<HTMLButtonElement, EnhancedButtonProps>(
       <>
         {loading ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            {loadingText || "Loading..."}
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+            <span aria-live="polite">{loadingText || "Loading..."}</span>
           </>
         ) : (
           <>
@@ -138,11 +142,11 @@ const EnhancedButton = forwardRef<HTMLButtonElement, EnhancedButtonProps>(
 
     // Separate HTML props from motion props
     const {
-      onDrag,
-      onDragStart,
-      onDragEnd,
-      onAnimationStart,
-      onAnimationEnd,
+      onDrag: _onDrag,
+      onDragStart: _onDragStart,
+      onDragEnd: _onDragEnd,
+      onAnimationStart: _onAnimationStart,
+      onAnimationEnd: _onAnimationEnd,
       ...htmlProps
     } = props;
 
