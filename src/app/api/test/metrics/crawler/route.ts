@@ -9,13 +9,13 @@
 // Response: JSON { domain, added: { hits, fallbacks }, totals: { aggregateHits, legacyFallbacks, adoptionPct } }
 // Adoption % = aggregateHits / (aggregateHits + legacyFallbacks) * 100 (null if denom=0)
 
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { recordCrawlerAggregateHit, recordCrawlerLegacyFallback, recordSemanticMapAggregateHit, recordSemanticMapLegacyFallback, getUnifiedMetricsSnapshot } from '@/lib/metrics/unified-metrics';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
     if (process.env.NODE_ENV === 'production') {
         return NextResponse.json({ error: 'disabled in production' }, { status: 404 });
     }
@@ -33,9 +33,12 @@ export async function GET(req: NextRequest) {
         if (domain === 'crawler') recordCrawlerLegacyFallback(); else recordSemanticMapLegacyFallback();
     }
     const unified = getUnifiedMetricsSnapshot();
-    const counters: any = domain === 'crawler' ? ((unified as any).crawler || { aggregateHits: 0, legacyFallbacks: 0 }) : ((unified as any).semanticMap || { aggregateHits: 0, legacyFallbacks: 0 });
-    const aHits = (counters as any).aggregateHits || 0;
-    const lFallbacks = (counters as any).legacyFallbacks || 0;
+    const counters =
+        domain === 'crawler'
+            ? ((unified as any).crawler ?? { aggregateHits: 0, legacyFallbacks: 0 })
+            : ((unified as any).semanticMap ?? { aggregateHits: 0, legacyFallbacks: 0 });
+    const aHits = (counters.aggregateHits as number) ?? 0;
+    const lFallbacks = (counters.legacyFallbacks as number) ?? 0;
     const denom = aHits + lFallbacks;
     const adoptionPct = denom ? +((aHits / denom) * 100).toFixed(2) : null;
     return NextResponse.json({ domain, added: { hits, fallbacks }, totals: { aggregateHits: aHits, legacyFallbacks: lFallbacks, adoptionPct } });
