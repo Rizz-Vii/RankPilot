@@ -1,10 +1,11 @@
 // src/app/(app)/content-brief/page.tsx
 "use client";
 
+import type { FC, ElementType, ReactNode } from "react";
 import ContentBriefForm from "@/components/content-brief-form";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
-import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { FeatureGate } from "@/components/subscription/FeatureGate";
 import { useProvenance } from "@/hooks/useProvenance";
 import {
   Card,
@@ -39,17 +40,12 @@ import {
   ResponsiveContainer
 } from "recharts";
 
-const ResultCard = ({
-  title,
-  icon: Icon,
-  children,
-  description,
-}: {
+const ResultCard: FC<{
   title: string;
-  icon: React.ElementType;
-  children: React.ReactNode;
+  icon: ElementType;
+  children: ReactNode;
   description?: string;
-}) => (
+}> = ({ title, icon: Icon, children, description }) => (
   <Card className="flex flex-col h-full">
     <CardHeader className="pb-4">
       <CardTitle className="font-headline text-lg flex items-center gap-2">
@@ -62,7 +58,7 @@ const ResultCard = ({
   </Card>
 );
 
-const SeoScoreGauge = ({ score }: { score: number; }) => {
+const SeoScoreGauge: FC<{ score: number }> = ({ score }) => {
   const data = [
     { name: "SEO Score", value: score, fill: "hsl(var(--primary))" },
   ];
@@ -101,7 +97,7 @@ const SeoScoreGauge = ({ score }: { score: number; }) => {
   );
 };
 
-const BriefResults = ({ briefResult }: { briefResult: ContentBriefOutput; }) => (
+const BriefResults: FC<{ briefResult: ContentBriefOutput }> = ({ briefResult }) => (
   <motion.div
     className="space-y-6"
     initial={{ opacity: 0, y: 20 }}
@@ -202,7 +198,7 @@ const BriefResults = ({ briefResult }: { briefResult: ContentBriefOutput; }) => 
   </motion.div>
 );
 
-export default function ContentBriefPage() {
+export default function ContentBriefPage(): JSX.Element {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [briefResult, setBriefResult] = useState<ContentBriefOutput | null>(
@@ -223,7 +219,7 @@ export default function ContentBriefPage() {
 
   const { provenance, setProvenance, markLive, markFallback } = useProvenance();
 
-  const handleSubmit = async (values: { keyword: string; }) => {
+  const handleSubmit = async (values: { keyword: string; }): Promise<void> => {
     setIsLoading(true);
     setSubmitted(true);
     setBriefResult(null);
