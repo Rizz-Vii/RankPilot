@@ -37,8 +37,8 @@ interface CompetitorRequestBody {
     };
 }
 
-export const POST = withProvenance(async function POST(request: Request) {
-    const nreq = request as NextRequest;
+export const POST = withProvenance(async function POST(request: NextRequest) {
+    const nreq = request;
     try {
         const authHeader = nreq.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
@@ -48,16 +48,16 @@ export const POST = withProvenance(async function POST(request: Request) {
         const token = authHeader.split('Bearer ')[1];
         const auth = getAuth();
 
-        let decodedToken: any;
+        let decodedToken: { uid: string; tier?: string } | null = null;
         try {
-            decodedToken = await auth.verifyIdToken(token);
+            decodedToken = await auth.verifyIdToken(token) as { uid: string; tier?: string };
         } catch (error) {
             console.error('[CompetitiveIntelligenceAPI] Token verification error:', error);
             return NextResponse.json(enforceProvenance({ success: false, error: 'Invalid authentication token', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'auth' }), { status: 401 });
         }
 
-        const userId = decodedToken.uid;
-        const userTier = (decodedToken as any)?.tier || 'free';
+        const userId = decodedToken!.uid;
+        const userTier = decodedToken!.tier || 'free';
 
         // Check tier access for competitive intelligence
         if (!['agency', 'enterprise', 'admin'].includes(userTier)) {
@@ -182,8 +182,8 @@ export const POST = withProvenance(async function POST(request: Request) {
     }
 }, { path: 'intelligence/competitive' });
 
-export const GET = withProvenance(async function GET(request: Request) {
-    const nreq = request as NextRequest;
+export const GET = withProvenance(async function GET(request: NextRequest) {
+    const nreq = request;
     try {
         const authHeader = nreq.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
@@ -193,16 +193,16 @@ export const GET = withProvenance(async function GET(request: Request) {
         const token = authHeader.split('Bearer ')[1];
         const auth = getAuth();
 
-        let decodedToken;
+        let decodedToken: { uid: string; tier?: string } | null = null;
         try {
-            decodedToken = await auth.verifyIdToken(token);
+            decodedToken = await auth.verifyIdToken(token) as { uid: string; tier?: string };
         } catch (error) {
             console.error('[CompetitiveIntelligenceAPI] Token verification error:', error);
             return NextResponse.json(enforceProvenance({ success: false, error: 'Invalid authentication token', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'auth' }), { status: 401 });
         }
 
-        const userId = decodedToken.uid;
-        const userTier = decodedToken.tier || 'free';
+        const userId = decodedToken!.uid;
+        const userTier = decodedToken!.tier || 'free';
 
         // Check tier access
         if (!['agency', 'enterprise', 'admin'].includes(userTier)) {
