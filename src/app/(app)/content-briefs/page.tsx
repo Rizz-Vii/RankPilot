@@ -1,6 +1,6 @@
 "use client";
 // Content Briefs Dashboard
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
@@ -13,15 +13,16 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
 
-export default function ContentBriefsPage() {
+interface BriefMetric { key: string; label: string; value: number; delta: number; trend: number[]; intent?: string }
+interface BriefLive { kpis: BriefMetric[]; rows: any[]; loading: boolean }
+
+export default function ContentBriefsPage(): JSX.Element {
   const [months, setMonths] = useState(6);
   const live = useContentBriefMetrics(months);
   const isMobile = useIsMobile();
   // Fallback to marketing mock metrics until dedicated content mocks are added
   const { data: mock } = useMockDomainMetrics('marketing', true);
-  interface BriefMetric { key: string; label: string; value: number; delta: number; trend: number[]; intent?: string }
-  interface BriefLive { kpis: BriefMetric[]; rows: any[]; loading: boolean }
-  const data: BriefLive = (live.kpis.length ? (live as unknown as BriefLive) : { kpis: (mock?.kpis as BriefMetric[] | undefined) || [], rows: [], loading: live.loading });
+  const data: BriefLive = live.kpis.length ? (live as unknown as BriefLive) : { kpis: (mock?.kpis as BriefMetric[]) ?? [], rows: [], loading: live.loading };
   // Track under marketing grouping for now (extend analytics taxonomy later)
   useEffect(() => { trackDashboardView('marketing'); }, []);
 
