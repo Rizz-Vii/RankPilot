@@ -228,7 +228,7 @@ const CompetitorResults = ({
 
 export default function CompetitorsPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<CompetitorAnalysisOutput | null>(null);
+  const [results] = useState<CompetitorAnalysisOutput | null>(null);
 
   const { user } = useAuth();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
