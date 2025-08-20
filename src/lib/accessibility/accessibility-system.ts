@@ -133,7 +133,7 @@ export class AccessibilityManager {
     }
 
     // Focus management
-    focusElement(element: HTMLElement, options: { scroll?: boolean; priority?: number; } = {}) {
+    focusElement(element: HTMLElement, options: { scroll?: boolean } = {}) {
         if (!element) return;
 
         // Add to focus history
