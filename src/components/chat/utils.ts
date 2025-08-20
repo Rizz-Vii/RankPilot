@@ -60,7 +60,7 @@ export const formatTimestamp = (timestamp: string): string => {
         if (diffDays < 7) return `${diffDays}d ago`;
 
         return date.toLocaleDateString();
-    } catch (error) {
+    } catch {
         return 'Unknown';
     }
 };
