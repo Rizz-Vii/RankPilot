@@ -12,10 +12,26 @@
 import type { Agent } from '@openai/agents';
 
 // Narrow helper types for usage metadata
+
+// Narrow runtime helpers to avoid pervasive `any` while preserving SDK flexibility.
+function errToString(e: unknown): string {
+    if (e === null || e === undefined) return String(e);
+    if (typeof e === 'string') return e;
+    if (e instanceof Error) return e.message;
+    try {
+        return (e as any).message ?? String(e);
+    } catch {
+        return String(e);
+    }
+}
+/** Cast a lazily-imported SDK value into a local typed shape. Keeps import flexible while limiting `any` spread. */
+function asSdk<T>(v: unknown): T {
+    return v as T;
+}
 interface UsageMeta {
     turns?: number;
     runId?: string;
-    toolCalls?: Array<{ name: string; args: any; result?: any; durationMs?: number; error?: string }>;
+    toolCalls?: Array<{ name: string; args: unknown; result?: unknown; durationMs?: number; error?: string }>;
     durationMs?: number;
     model?: string;
     inputTokens?: number;
@@ -38,8 +54,8 @@ export interface AgentToolDefinition {
     name: string;
     description: string;
     // zod schema provided as a lazy function to avoid hard dependency at import time
-    schema: () => any; // we purposefully type as any to avoid cross-version pin friction
-    execute: (input: Record<string, any>, ctx: { startTs: number; runId: string }) => Promise<any> | any;
+    schema: () => unknown; // lazy/opaque to avoid cross-version pin friction
+    execute: (input: Record<string, unknown>, ctx: { startTs: number; runId: string }) => Promise<unknown> | unknown;
 }
 
 export interface AgentRunOptions<TContext extends Record<string, unknown> = Record<string, unknown>> {
@@ -58,13 +74,13 @@ export interface AgentRunResult<TOutput = unknown> {
 export interface InputGuardrailDefinition {
     name: string;
     /** Returns tripwire boolean; any extra info for debugging. */
-    execute: (args: { input: string; context?: any }) => Promise<{ tripwire: boolean; info?: any }> | { tripwire: boolean; info?: any };
+    execute: (args: { input: string; context?: unknown }) => Promise<{ tripwire: boolean; info?: unknown }> | { tripwire: boolean; info?: unknown };
 }
 
 export interface OutputGuardrailDefinition {
     name: string;
     /** Returns tripwire boolean given agent output. */
-    execute: (args: { agentOutput: any; context?: any }) => Promise<{ tripwire: boolean; info?: any }> | { tripwire: boolean; info?: any };
+    execute: (args: { agentOutput: unknown; context?: unknown }) => Promise<{ tripwire: boolean; info?: unknown }> | { tripwire: boolean; info?: unknown };
 }
 
 function agentsEnabled(): boolean {
@@ -80,28 +96,29 @@ function agentsEnabled(): boolean {
 }
 
 /** Dynamically import SDK only when needed to keep baseline load minimal. */
-async function loadAgentsSdk(): Promise<any> { // SDK types are broad; keep generic
+async function loadAgentsSdk(): Promise<unknown> { // keep as opaque runtime import
     return import('@openai/agents');
 }
 
 /** Create an agent instance with optional tools + handoffs */
 export async function createSimpleAgent(def: SimpleAgentDefinition): Promise<Agent | null> {
     if (!agentsEnabled()) return null;
-    const { Agent, tool } = await loadAgentsSdk();
-    let tools: any[] | undefined;
-    if (def.tools && def.tools.length) {
+    const sdk = await loadAgentsSdk();
+    const { Agent: AgentCtor, tool } = asSdk<{ Agent: any; tool?: any }>(sdk);
+    let tools: unknown[] | undefined;
+    if (def.tools && def.tools.length && tool) {
         tools = def.tools.map(t => {
             const schema = t.schema();
             return tool({
                 name: t.name,
                 description: t.description,
                 parameters: schema,
-                execute: async (input: Record<string, any>) => {
+                execute: async (input: Record<string, unknown>) => {
                     const start = Date.now();
                     try {
                         return await t.execute(input, { startTs: start, runId: 'adhoc' });
                     } catch (e) {
-                        const msg = (e && typeof e === 'object' && 'message' in e) ? (e as any).message : String(e);
+                        const msg = errToString(e);
                         return { error: msg };
                     }
                 }
@@ -110,19 +127,19 @@ export async function createSimpleAgent(def: SimpleAgentDefinition): Promise<Age
     }
     const inputGuardrails = (def.inputGuardrails || []).map(g => ({
         name: g.name,
-        execute: async ({ input, context }: any) => {
+        execute: async ({ input, context }: { input: string; context?: unknown }) => {
             const res = await g.execute({ input, context });
-            return { outputInfo: res.info, tripwireTriggered: !!res.tripwire };
+            return { outputInfo: (res as any).info, tripwireTriggered: !!(res as any).tripwire };
         }
     }));
     const outputGuardrails = (def.outputGuardrails || []).map(g => ({
         name: g.name,
-        execute: async ({ agentOutput, context }: any) => {
+        execute: async ({ agentOutput, context }: { agentOutput: unknown; context?: unknown }) => {
             const res = await g.execute({ agentOutput, context });
-            return { outputInfo: res.info, tripwireTriggered: !!res.tripwire };
+            return { outputInfo: (res as any).info, tripwireTriggered: !!(res as any).tripwire };
         }
     }));
-    const baseConfig: any = {
+    const baseConfig: unknown = {
         name: def.name,
         instructions: def.instructions as any,
         model: def.model,
@@ -131,9 +148,9 @@ export async function createSimpleAgent(def: SimpleAgentDefinition): Promise<Age
         outputGuardrails: outputGuardrails.length ? outputGuardrails : undefined
     };
     if (def.handoffs && def.handoffs.length) {
-        return Agent.create({ ...baseConfig, handoffs: def.handoffs });
+        return (AgentCtor as any).create({ ...(baseConfig as any), handoffs: def.handoffs });
     }
-    return new Agent(baseConfig);
+    return new (AgentCtor as any)(baseConfig);
 }
 
 /** Run an agent for a single input returning the final output. */
@@ -144,26 +161,28 @@ export async function runAgentOnce<TContext extends Record<string, unknown> = Re
     if (!agent) {
         return { ok: false, error: 'agents_disabled' };
     }
-    const { run } = await loadAgentsSdk();
+    const sdk = asSdk<{ run: any }>(await loadAgentsSdk());
+    const { run } = sdk;
     try {
         const started = Date.now();
-        const result: any = await run(agent, opts.input, { context: opts.context, maxTurns: opts.maxTurns });
+        const result: unknown = await run(agent, opts.input, { context: opts.context, maxTurns: opts.maxTurns });
+        const resAny = result as any;
         return {
             ok: true,
-            output: result.finalOutput,
+            output: resAny.finalOutput,
             meta: {
-                turns: result.turns,
-                runId: result.runId,
-                toolCalls: result.toolCalls,
+                turns: resAny.turns,
+                runId: resAny.runId,
+                toolCalls: resAny.toolCalls as unknown[],
                 durationMs: Date.now() - started,
                 model: (agent as any).model,
-                inputTokens: (result as any).inputTokens ?? (result as any).promptTokens ?? (result as any).usage?.prompt_tokens,
-                outputTokens: (result as any).outputTokens ?? (result as any).completionTokens ?? (result as any).usage?.completion_tokens,
-                totalTokens: (result as any).totalTokens ?? (result as any).usage?.total_tokens
+                inputTokens: resAny.inputTokens ?? resAny.promptTokens ?? resAny.usage?.prompt_tokens,
+                outputTokens: resAny.outputTokens ?? resAny.completionTokens ?? resAny.usage?.completion_tokens,
+                totalTokens: resAny.totalTokens ?? resAny.usage?.total_tokens
             }
         };
     } catch (e) {
-        const msg = (e && typeof e === 'object' && 'message' in e) ? (e as any).message : String(e);
+        const msg = errToString(e);
         return { ok: false, error: msg };
     }
 }
@@ -177,17 +196,19 @@ export async function runAdHocSimpleAgent(input: string, instructions: string): 
 /** Streaming run: collects text + events; consumer can also attach to incremental callback. */
 export async function runAgentStream(
     agent: Agent | null,
-    opts: AgentRunOptions & { onToken?: (delta: string) => void; onEvent?: (ev: any) => void }
-): Promise<AgentRunResult & { events?: any[] }> {
+    opts: AgentRunOptions & { onToken?: (delta: string) => void; onEvent?: (ev: unknown) => void }
+): Promise<AgentRunResult & { events?: unknown[] }> {
     if (!agent) return { ok: false, error: 'agents_disabled' };
-    const { run } = await loadAgentsSdk();
+    const sdk = asSdk<{ run: any }>(await loadAgentsSdk());
+    const { run } = sdk;
     try {
         const started = Date.now();
-        const stream: any = await run(agent, opts.input, { context: opts.context, maxTurns: opts.maxTurns, stream: true });
-        const events: any[] = [];
+        const stream: unknown = await run(agent, opts.input, { context: opts.context, maxTurns: opts.maxTurns, stream: true });
+        const sAny = stream as any;
+        const events: unknown[] = [];
         // Text accumulation
         const chunks: string[] = [];
-        const textStream = stream.toTextStream({ compatibleWithNodeStreams: false });
+        const textStream = sAny.toTextStream({ compatibleWithNodeStreams: false });
         // toTextStream returns an async iterable of string chunks (or Node Readable when compatible flag true)
         for await (const chunk of textStream as any) {
             if (typeof chunk === 'string') {
@@ -195,11 +216,11 @@ export async function runAgentStream(
                 opts.onToken?.(chunk);
             }
         }
-        for await (const ev of stream as any) {
+        for await (const ev of sAny as any) {
             events.push(ev);
             opts.onEvent?.(ev);
         }
-        await stream.completed; // ensure flush
+        await sAny.completed; // ensure flush
         return {
             ok: true,
             output: chunks.join(''),
@@ -207,7 +228,7 @@ export async function runAgentStream(
             events
         } as any;
     } catch (e) {
-        const msg = (e && typeof e === 'object' && 'message' in e) ? (e as any).message : String(e);
+        const msg = errToString(e);
         return { ok: false, error: msg } as any;
     }
 }
