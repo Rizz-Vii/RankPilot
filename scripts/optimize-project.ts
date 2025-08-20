@@ -14,10 +14,10 @@ import { promises as fs } from "fs";
 import { join, resolve } from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
-import { EventEmitter } from "events";
+import { EventEmitter as _EventEmitter } from "events";
 
 // Increase max listeners to prevent memory leak warnings
-EventEmitter.defaultMaxListeners = 20;
+_EventEmitter.defaultMaxListeners = 20;
 
 const execAsync = promisify(exec);
 
