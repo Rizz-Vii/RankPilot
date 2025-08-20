@@ -41,15 +41,14 @@ export default function PrivacySettingsCard({
 }: PrivacySettingsCardProps): JSX.Element {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const prof: UserProfile | undefined = asUserProfile(profile);
   const [profileVisibility, setProfileVisibility] = useState(
-    prof?.privacy?.profileVisibility ?? false
+    asUserProfile(profile)?.privacy?.profileVisibility ?? false
   );
   const [dataCollection, setDataCollection] = useState(
-    prof?.privacy?.dataCollection ?? true
+    asUserProfile(profile)?.privacy?.dataCollection ?? true
   );
   const [activityTracking, setActivityTracking] = useState(
-    prof?.privacy?.activityTracking ?? true
+    asUserProfile(profile)?.privacy?.activityTracking ?? true
   );
 
   const handlePrivacyUpdate = async (setting: string, value: boolean): Promise<void> => {
