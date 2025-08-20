@@ -14,6 +14,7 @@ import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { generateChartExport, generateDashboardExport, persistExportArtifact, persistBufferToStorage } from '@/lib/visualizations/server-exports';
 import type { NextRequest } from 'next/server';
+import type { ExportFormat, ServerChartArtifactData, ServerDashboardArtifactData } from '@/types/visualization-exports';
 import { NextResponse } from 'next/server';
 
 export const POST = withProvenance(async function POST(request: NextRequest) {
@@ -242,11 +243,11 @@ async function exportChart(userId: string, exportData: unknown) {
     const safeFormat = (format && allowedFormats.has(format)) ? format : 'json';
     // Coerce safe format to ExportFormat subset used by server exporters
     const serverFormatRaw = (safeFormat === 'csv' || safeFormat === 'jpeg') ? 'json' : safeFormat; // fallback unsupported formats to json export path
-    function isExportFormat(v: string): v is import('@/types/visualization-exports').ExportFormat {
+    function isExportFormat(v: string): v is ExportFormat {
         return ['pdf', 'excel', 'json', 'png', 'svg'].includes(v);
     }
-    const serverFormat: import('@/types/visualization-exports').ExportFormat = isExportFormat(serverFormatRaw) ? serverFormatRaw : 'json';
-    const chartExportBase: import('@/types/visualization-exports').ServerChartArtifactData = {
+    const serverFormat: ExportFormat = isExportFormat(serverFormatRaw) ? serverFormatRaw : 'json';
+    const chartExportBase: ServerChartArtifactData = {
         id: exportBase.id,
         userId: exportBase.userId,
         config: isObj(exportBase.config) ? { type: (exportBase.config as { type?: unknown }).type as string | undefined } : undefined,
@@ -431,7 +432,7 @@ async function exportDashboard(userId: string, exportData: unknown) {
     const allowedDashFormats = new Set(['png', 'jpeg', 'json', 'csv', 'pdf']);
     const safeDashFormat = (format && allowedDashFormats.has(format)) ? format : 'json';
     const dashServerFormat = (safeDashFormat === 'csv' || safeDashFormat === 'jpeg') ? 'json' : safeDashFormat;
-    const dashboardExportObj: import('@/types/visualization-exports').ServerDashboardArtifactData = {
+    const dashboardExportObj: ServerDashboardArtifactData = {
         id: dashboardExportBase.id,
         userId: dashboardExportBase.userId,
         widgets: Array.isArray(dashboardExportBase.widgets) ? dashboardExportBase.widgets.map(w => ({
@@ -439,10 +440,10 @@ async function exportDashboard(userId: string, exportData: unknown) {
             type: (w as { type?: unknown }).type ? String((w as { type?: unknown }).type) : 'unknown'
         })) : []
     };
-    function isDashExportFormat(v: string): v is import('@/types/visualization-exports').ExportFormat {
+    function isDashExportFormat(v: string): v is ExportFormat {
         return ['pdf', 'excel', 'json', 'png', 'svg'].includes(v);
     }
-    const dashFormat: import('@/types/visualization-exports').ExportFormat = isDashExportFormat(dashServerFormat) ? dashServerFormat : 'json';
+    const dashFormat: ExportFormat = isDashExportFormat(dashServerFormat) ? dashServerFormat : 'json';
     const dashExportConfig = isObj(config) ? config as Partial<{ title?: string }> : undefined;
     const exportUrl = artifact
         ? await persistExportArtifact({ userId, kind: 'dashboard', id: dashboardId, format: safeDashFormat, artifact: String(artifact), metadata: { widgetCount: (dashboardExportObj.widgets?.length) || 0 } })
