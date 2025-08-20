@@ -3,41 +3,88 @@
 import http from 'http';
 import assert from 'assert';
 
-function get(path: string): Promise<any> { return new Promise((resolve, reject) => { http.get({ hostname: 'localhost', port: process.env.PORT || 3000, path }, res => { let b = ''; res.on('data', c => b += c); res.on('end', () => { try { resolve(JSON.parse(b)); } catch (e) { reject(e); } }); }).on('error', reject); }); }
-function postJson(path: string, body: any): Promise<any> {
+const get = (path: string): Promise<unknown> => {
     return new Promise((resolve, reject) => {
-        const data = JSON.stringify(body);
-        const req = http.request({
-            hostname: 'localhost',
-            port: process.env.PORT || 3000,
-            path,
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) }
-        }, res => {
-            let b = '';
-            res.on('data', c => b += c);
-            res.on('end', () => {
-                try { resolve(JSON.parse(b)); } catch (e) { resolve({}); }
-            });
-        });
-        req.on('error', reject);
-        req.write(data); req.end();
+        http.get(
+            { hostname: 'localhost', port: process.env.PORT || 3000, path },
+            (res) => {
+                let b = '';
+                res.on('data', (c) => { b += c; });
+                res.on('end', () => {
+                    try {
+                        resolve(JSON.parse(b));
+                    } catch (err) {
+                        reject(err);
+                    }
+                });
+            }
+        ).on('error', reject);
     });
-}
-
-function postStreamAwait(path: string, body: any, waitMs = 10000): Promise<void> {
+};
+const postJson = (path: string, body: unknown): Promise<unknown> => {
     return new Promise((resolve, reject) => {
         const data = JSON.stringify(body);
-        const req = http.request({ hostname: 'localhost', port: process.env.PORT || 3000, path, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } }, res => {
-            let buf = ''; const deadline = Date.now() + waitMs;
-            res.on('data', c => { buf += c; if (buf.includes('\n\nevent: end')) resolve(); });
-            res.on('end', () => resolve());
-        });
+        const req = http.request(
+            {
+                hostname: 'localhost',
+                port: process.env.PORT || 3000,
+                path,
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(data)
+                }
+            },
+            (res) => {
+                let b = '';
+                res.on('data', (c) => { b += c; });
+                res.on('end', () => {
+                    try {
+                        resolve(JSON.parse(b));
+                    } catch {
+                        resolve({});
+                    }
+                });
+            }
+        );
         req.on('error', reject);
-        req.write(data); req.end();
+        req.write(data);
+        req.end();
+    });
+};
+
+const postStreamAwait = (path: string, body: unknown, waitMs = 10000): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        const data = JSON.stringify(body);
+        const req = http.request(
+            {
+                hostname: 'localhost',
+                port: process.env.PORT || 3000,
+                path,
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(data)
+                }
+            },
+            (res) => {
+                let buf = '';
+                const deadline = Date.now() + waitMs;
+                res.on('data', (c) => {
+                    buf += c;
+                    if (buf.includes('\n\nevent: end')) {
+                        resolve();
+                    }
+                });
+                res.on('end', () => resolve());
+            }
+        );
+        req.on('error', reject);
+        req.write(data);
+        req.end();
         setTimeout(() => resolve(), waitMs + 50);
     });
-}
+};
 
 async function main() {
     const before = await get('/api/neuroseo/metrics');
