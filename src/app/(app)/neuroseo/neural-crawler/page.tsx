@@ -177,23 +177,55 @@ export default function NeuralCrawlerPage() {
 
   function legacyFromAggregate(a: unknown): CrawlResult {
     // Reconstruct a minimal pseudo-legacy object (omitting heavy arrays) for UI components already tolerant to partial data.
-    const x = a as Record<string, unknown>;
+    type Agg = Record<string, unknown>;
+    const x = a as Agg;
+
+    const getString = (key: string, fallback = ''): string => {
+      const v = x?.[key];
+      if (typeof v === 'string') return v;
+      if (typeof v === 'number') return String(v);
+      return fallback;
+    };
+
+    const getNumber = (key: string, fallback = 0): number => {
+      const v = x?.[key];
+      if (typeof v === 'number') return v;
+      if (typeof v === 'string') {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : fallback;
+      }
+      return fallback;
+    };
+
+    const imagesCount = getNumber('imagesCount', 0);
+    const issuesCount = getNumber('issuesCount', 0);
+    const entitiesCount = getNumber('entitiesCount', 0);
+    const linksInternal = getNumber('linksInternal', 0);
+    const linksExternal = getNumber('linksExternal', 0);
+
     return {
-      id: x?.historyId || x?.id || `agg_${(x as any)?.url}`,
-      url: (x as any)?.url || '',
-      title: (x as any)?.title || (x as any)?.url || '',
-      metaDescription: (x as any)?.metaDescription || '',
+      id: (typeof x?.historyId === 'string' ? x.historyId : undefined) || (typeof x?.id === 'string' ? x.id : undefined) || `agg_${getString('url')}`,
+      url: getString('url', ''),
+      title: getString('title', getString('url', '')),
+      metaDescription: getString('metaDescription', ''),
       content: '',
-      wordCount: (x as any)?.wordCount || 0,
-      readingTime: (x as any)?.readingTime || 0,
-      headings: normalizeHeadingCounts((x as any)?.headings),
-      images: new Array((x as any)?.imagesCount || 0).fill(0).map((_: unknown, i: number) => ({ src: '', alt: `Image ${i+1}` })),
-      links: buildLinkPlaceholders((x as any)?.linksInternal, (x as any)?.linksExternal),
+      wordCount: getNumber('wordCount', 0),
+      readingTime: getNumber('readingTime', 0),
+      headings: normalizeHeadingCounts(x?.headings),
+      images: new Array(imagesCount).fill(0).map((_, i: number) => ({ src: '', alt: `Image ${i+1}` })),
+      links: buildLinkPlaceholders(linksInternal, linksExternal),
       technicalData: { loadTime: 0, pageSize: 0, statusCode: 200, contentType: 'text/html' },
-      seoAnalysis: { titleLength: (x as any)?.titleLength || 0, metaDescriptionLength: (x as any)?.metaDescriptionLength || 0, headingStructure: 'Unknown', imageOptimization: 0, internalLinks: (x as any)?.linksInternal || 0, externalLinks: (x as any)?.linksExternal || 0 },
-      issues: new Array((x as any)?.issuesCount || 0).fill(0).map((_: unknown, i: number) => ({ type: 'info', message: `Issue ${i+1}`, recommendation: '' })),
-      entities: new Array((x as any)?.entitiesCount || 0).fill(0).map((_: unknown, i: number) => ({ text: `Entity ${i+1}`, type: 'concept', confidence: 0 })),
-      createdAt: toJsDate((x as any)?.createdAt)
+      seoAnalysis: {
+        titleLength: getNumber('titleLength', 0),
+        metaDescriptionLength: getNumber('metaDescriptionLength', 0),
+        headingStructure: (typeof x?.headingStructure === 'string' ? x.headingStructure : 'Unknown'),
+        imageOptimization: getNumber('imageOptimization', 0),
+        internalLinks: linksInternal,
+        externalLinks: linksExternal
+      },
+      issues: new Array(issuesCount).fill(0).map((_, i: number) => ({ type: 'info', message: `Issue ${i+1}`, recommendation: '' })),
+      entities: new Array(entitiesCount).fill(0).map((_, i: number) => ({ text: `Entity ${i+1}`, type: 'concept', confidence: 0 })),
+      createdAt: toJsDate(x?.createdAt)
     };
   }
 
