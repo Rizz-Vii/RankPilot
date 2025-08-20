@@ -51,7 +51,7 @@ const firestore = getFirestore();
 async function createUnifiedTestUsers() {
     console.log("🔧 Creating unified Firebase Auth and Firestore test users...");
 
-    const allUsers = [...Object.values(UNIFIED_TEST_USERS), DEV_USER];
+    const allUsers: UnifiedTestUser[] = [...(Object.values(UNIFIED_TEST_USERS) as UnifiedTestUser[]), DEV_USER];
 
     for (const user of allUsers) {
         try {
@@ -62,8 +62,9 @@ async function createUnifiedTestUsers() {
             try {
                 authUser = await auth.getUserByEmail(user.email);
                 console.log(`  ✅ Auth user already exists: ${user.email} (UID: ${authUser.uid})`);
-            } catch (error: any) {
-                if (error.code === 'auth/user-not-found') {
+            } catch (error: unknown) {
+                const err = error as { code?: string };
+                if (err.code === 'auth/user-not-found') {
                     // Create new auth user
                     try {
                         authUser = await auth.createUser({
@@ -74,8 +75,9 @@ async function createUnifiedTestUsers() {
                             emailVerified: true, // Mark as verified for testing
                         });
                         console.log(`  ✅ Created Auth user: ${user.email} (UID: ${authUser.uid})`);
-                    } catch (createError: any) {
-                        if (createError.code === 'auth/uid-already-exists') {
+                    } catch (createError: unknown) {
+                        const createErr = createError as { code?: string };
+                        if (createErr.code === 'auth/uid-already-exists') {
                             // UID exists but email doesn't match, get by UID
                             authUser = await auth.getUser(user.uid);
                             console.log(`  ✅ Found existing user by UID: ${user.uid}`);
@@ -162,8 +164,9 @@ async function createUnifiedTestUsers() {
                 console.error(`  ⚠️ Failed to create usage document for ${user.email}:`, usageError);
             }
 
-        } catch (error: any) {
-            console.error(`❌ Failed to process user ${user.email}:`, error.message);
+        } catch (error: unknown) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            console.error(`❌ Failed to process user ${user.email}:`, errMsg);
         }
     }
 
@@ -176,7 +179,7 @@ async function createUnifiedTestUsers() {
 async function cleanupExistingTestUsers() {
     console.log("🧹 Cleaning up existing test users...");
 
-    const allUsers = [...Object.values(UNIFIED_TEST_USERS), DEV_USER];
+    const allUsers: UnifiedTestUser[] = [...(Object.values(UNIFIED_TEST_USERS) as UnifiedTestUser[]), DEV_USER];
 
     for (const user of allUsers) {
         try {
@@ -184,9 +187,10 @@ async function cleanupExistingTestUsers() {
             try {
                 await auth.deleteUser(user.uid);
                 console.log(`  🗑️ Deleted Auth user: ${user.email}`);
-            } catch (error: any) {
-                if (error.code !== 'auth/user-not-found') {
-                    console.error(`  ⚠️ Failed to delete Auth user ${user.email}:`, error.message);
+            } catch (error: unknown) {
+                const err = error as { code?: string; message?: string };
+                if (err.code !== 'auth/user-not-found') {
+                    console.error(`  ⚠️ Failed to delete Auth user ${user.email}:`, err.message ?? String(error));
                 }
             }
 
@@ -201,8 +205,9 @@ async function cleanupExistingTestUsers() {
                 }
             }
 
-        } catch (error: any) {
-            console.error(`❌ Failed to cleanup user ${user.email}:`, error.message);
+        } catch (error: unknown) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            console.error(`❌ Failed to cleanup user ${user.email}:`, errMsg);
         }
     }
 
@@ -215,7 +220,7 @@ async function cleanupExistingTestUsers() {
 async function verifyTestUsers() {
     console.log("\n🔍 Verifying test user configuration...");
 
-    const allUsers = [...Object.values(UNIFIED_TEST_USERS), DEV_USER];
+    const allUsers: UnifiedTestUser[] = [...(Object.values(UNIFIED_TEST_USERS) as UnifiedTestUser[]), DEV_USER];
     let successCount = 0;
 
     for (const user of allUsers) {
@@ -235,8 +240,9 @@ async function verifyTestUsers() {
                 console.log(`  ❌ ${user.displayName}: Missing data (UID: ${actualUid})`);
             }
 
-        } catch (error: any) {
-            console.log(`  ❌ ${user.displayName}: ${error.message}`);
+        } catch (error: unknown) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            console.log(`  ❌ ${user.displayName}: ${errMsg}`);
         }
     }
 
@@ -274,8 +280,9 @@ async function main() {
                 console.log("Usage: npm run create-test-users [cleanup|create|verify|reset]");
                 break;
         }
-    } catch (error) {
-        console.error("❌ Script failed:", error);
+    } catch (error: unknown) {
+        const errMsg = error instanceof Error ? error.message : String(error);
+        console.error("❌ Script failed:", errMsg);
         process.exit(1);
     }
 }
