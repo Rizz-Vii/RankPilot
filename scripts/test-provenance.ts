@@ -8,7 +8,7 @@ import { adminDb } from '../src/lib/firebase-admin';
 
 async function testMarketingPreservesProvenance() {
     const cleaned = sanitizeMarketingCampaignDoc({ name: 'Test', channel: 'email', impressions: 0, clicks: 0, spend: 0, period: '2025-08', __provenance: 'synthetic' });
-    assert.equal(cleaned.__provenance, 'synthetic', 'marketing provenance preserved');
+    assert.strictEqual(cleaned.__provenance, 'synthetic', 'marketing provenance preserved');
 }
 
 async function testMarketingDoesNotInventProvenance() {
@@ -19,7 +19,7 @@ async function testMarketingDoesNotInventProvenance() {
 async function testNeuroAnalysisPersistenceProvenance() {
     const userId = 'prov_user';
     const urls = ['https://example.com/p'];
-    const res = await executeNeuroLive({ urls, userId });
+    await executeNeuroLive({ urls, userId });
     const hashKey = Buffer.from(JSON.stringify({ u: [...urls].sort(), t: 'comprehensive' })).toString('base64').replace(/[^A-Za-z0-9]/g, '').slice(0, 40);
     const doc = await adminDb.collection('neuroSeoAnalyses').doc(hashKey).get();
     if (!doc.exists) {
@@ -32,7 +32,10 @@ async function testNeuroAnalysisPersistenceProvenance() {
 
 async function testLiveRouteProvenance() {
     const res = await fetch('http://localhost:3000/api/neuroseo/live', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ urls: ['https://example.com'], userId: 'prov_user_cli' }) });
-    if (!res.ok) { console.warn('live route not reachable (dev server?) skipping'); return; }
+    if (!res.ok) {
+        console.warn('live route not reachable (dev server?) skipping');
+        return;
+    }
     const json: any = await res.json();
     if (!hasProvenance(json)) throw new Error('live route response missing provenance');
     console.log('Live route provenance:', provenanceTag(json));
@@ -40,7 +43,10 @@ async function testLiveRouteProvenance() {
 
 async function testStreamRouteProvenance() {
     const res = await fetch('http://localhost:3000/api/neuroseo/stream', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ urls: ['https://example.com'], userId: 'prov_user_cli' }) });
-    if (!res.ok || !res.body) { console.warn('stream route not reachable (dev server?) skipping'); return; }
+    if (!res.ok || !res.body) {
+        console.warn('stream route not reachable (dev server?) skipping');
+        return;
+    }
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let finalProv: string | undefined;
@@ -53,7 +59,12 @@ async function testStreamRouteProvenance() {
             const match = evt.match(/^event: (.*)\ndata: (.*)$/s);
             if (match) {
                 const eventName = match[1];
-                try { const data = JSON.parse(match[2]); if (data.provenance) finalProv = data.provenance; } catch { }
+                try {
+                    const data = JSON.parse(match[2]);
+                    if (data.provenance) finalProv = data.provenance;
+                } catch (err) {
+                    // ignore JSON parse errors from partial SSE chunks
+                }
                 if (eventName === 'end') break;
             }
         }
@@ -70,4 +81,7 @@ async function main() {
     await testStreamRouteProvenance();
     console.log('PROV-01 provenance tests completed');
 }
-main().catch(e => { console.error('PROV-01 provenance tests FAILED', e); process.exit(1); });
+main().catch((err) => {
+    console.error('PROV-01 provenance tests FAILED', err);
+    process.exit(1);
+});
