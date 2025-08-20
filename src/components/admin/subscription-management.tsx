@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -11,12 +11,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   doc,
-  getDoc,
   updateDoc,
   query,
   collection,
@@ -27,9 +25,7 @@ import { db } from "@/lib/firebase";
 import {
   CreditCard,
   Users,
-  TrendingUp,
   AlertTriangle,
-  Calendar,
   DollarSign,
   Search,
   MoreHorizontal,
@@ -69,7 +65,11 @@ interface SubscriptionUser {
 }
 
 interface TimestampLike { seconds: number }
-const isTimestampLike = (v: any): v is TimestampLike => v && typeof v === 'object' && typeof v.seconds === 'number';
+const isTimestampLike = (v: unknown): v is TimestampLike =>
+  v !== null &&
+  typeof v === "object" &&
+  "seconds" in v &&
+  typeof (v as any).seconds === "number";
 
 interface SubscriptionStats {
   total: number;
@@ -99,9 +99,9 @@ export function SubscriptionManagement() {
 
   useEffect(() => {
     fetchSubscriptionData();
-  }, []);
+  }, [fetchSubscriptionData]);
 
-  const fetchSubscriptionData = async () => {
+  const fetchSubscriptionData = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
 
@@ -113,7 +113,7 @@ export function SubscriptionManagement() {
 
       const usersSnapshot = await getDocs(usersQuery);
       const usersData: SubscriptionUser[] = [];
-      let tempStats = {
+      let tempStats: SubscriptionStats = {
         total: 0,
         active: 0,
         canceled: 0,
