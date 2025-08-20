@@ -48,8 +48,9 @@ const nextConfig: NextConfig = {
 
     // During development, ignore bulky folders that shouldn't trigger rebuilds
     if (dev) {
-      (config as any).watchOptions = {
-        ...(config as any).watchOptions,
+      const _cfg = config as { watchOptions?: Record<string, unknown> };
+      _cfg.watchOptions = {
+        ...(_cfg.watchOptions || {}),
         ignored: [
           '**/.git/**',
           '**/.next/**',
