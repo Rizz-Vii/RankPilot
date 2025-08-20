@@ -5,8 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { AlertTriangle, Bug, Home, RefreshCw } from "lucide-react";
-import type { ErrorInfo, ReactNode, ComponentType } from "react";
-import { Component } from "react";
+import React, { type ErrorInfo, type ReactNode, type ComponentType } from "react";
 
 interface Props {
   children: ReactNode;
@@ -24,7 +23,7 @@ interface State {
   eventId: string | null;
 }
 
-class EnhancedErrorBoundary extends Component<Props, State> {
+class EnhancedErrorBoundary extends React.Component<Props, State> {
   private resetTimeoutId: number | null = null;
 
   constructor(props: Props) {
@@ -263,16 +262,16 @@ class EnhancedErrorBoundary extends Component<Props, State> {
 
 // Higher-order component for easier usage
 export function withErrorBoundary<P extends object>(
-  Component: ComponentType<P>,
+  Wrapped: ComponentType<P>,
   errorBoundaryProps?: Omit<Props, "children">
 ) {
   const WrappedComponent = (props: P) => (
     <EnhancedErrorBoundary {...errorBoundaryProps}>
-      <Component {...props} />
+      <Wrapped {...props} />
     </EnhancedErrorBoundary>
   );
 
-  WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
+  WrappedComponent.displayName = `withErrorBoundary(${Wrapped.displayName || Wrapped.name})`;
 
   return WrappedComponent;
 }
