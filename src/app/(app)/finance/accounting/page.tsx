@@ -97,14 +97,19 @@ export default function AccountingPage(){
         </section>
         <section className="space-y-4">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Accounting Workbench</h2>
+          {(() => {
+            const runningMap = running as Record<string, boolean | undefined>;
+            return (
           <div className="grid gap-4 md:grid-cols-6">
-            <ActionCard title="Seed Journals" desc="Add sample ledger entries" action="Seed" onClick={()=> run('financeAccountingSeedSampleJournals')} loading={!!running['financeAccountingSeedSampleJournals']} loadingLabel="Seeding" />
-            <ActionCard title="Generate P&L" desc="Store latest P&L snapshot" action="Run" onClick={()=> run('financeAccountingGeneratePnL')} loading={!!running['financeAccountingGeneratePnL']} loadingLabel="Running" />
-            <ActionCard title="Balance Sheet" desc="Store balance sheet snapshot" action="Run" onClick={()=> run('financeAccountingGenerateBalanceSheet')} loading={!!running['financeAccountingGenerateBalanceSheet']} loadingLabel="Running" />
-            <ActionCard title="Reconcile" desc="Invoice vs payments diff" action="Run" onClick={()=> run('financeAccountingReconcile')} loading={!!running['financeAccountingReconcile']} loadingLabel="Reconciling" />
+            <ActionCard title="Seed Journals" desc="Add sample ledger entries" action="Seed" onClick={()=> run('financeAccountingSeedSampleJournals')} loading={!!runningMap['financeAccountingSeedSampleJournals']} loadingLabel="Seeding" />
+            <ActionCard title="Generate P&L" desc="Store latest P&L snapshot" action="Run" onClick={()=> run('financeAccountingGeneratePnL')} loading={!!runningMap['financeAccountingGeneratePnL']} loadingLabel="Running" />
+            <ActionCard title="Balance Sheet" desc="Store balance sheet snapshot" action="Run" onClick={()=> run('financeAccountingGenerateBalanceSheet')} loading={!!runningMap['financeAccountingGenerateBalanceSheet']} loadingLabel="Running" />
+            <ActionCard title="Reconcile" desc="Invoice vs payments diff" action="Run" onClick={()=> run('financeAccountingReconcile')} loading={!!runningMap['financeAccountingReconcile']} loadingLabel="Reconciling" />
             <ActionCard title="Export Journal" desc="Download journal CSV" action="Export" />
             <ActionCard title="Variance Scan" desc="Detect margin anomalies" action="Scan" />
           </div>
+            );
+          })()}
         </section>
         <div className="mt-6 text-xs text-muted-foreground">Phase 4 enabled: P&L / Balance Sheet derive from journal ledger when entries exist. Seed journals to begin.</div>
       </div>
