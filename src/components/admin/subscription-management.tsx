@@ -97,9 +97,7 @@ export function SubscriptionManagement() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
-    fetchSubscriptionData();
-  }, [fetchSubscriptionData]);
+  
 
   const fetchSubscriptionData = useCallback(async (): Promise<void> => {
     try {
@@ -180,7 +178,7 @@ export function SubscriptionManagement() {
 
   const updateUserSubscription = async (
     userId: string,
-    updates: Record<string, string>) => {
+    updates: Record<string, string>): Promise<void> => {
     try {
       const userRef = doc(db, "users", userId);
   const updateData: Record<string, string> = {};
