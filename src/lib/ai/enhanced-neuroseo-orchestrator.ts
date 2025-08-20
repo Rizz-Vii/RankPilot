@@ -352,23 +352,28 @@ export class EnhancedNeuroSEOOrchestrator {
      * Check memory usage and clear cache if needed
      */
     private async checkMemoryUsage(): Promise<void> {
-        if (typeof window !== 'undefined' && typeof (performance as any)?.memory === 'object') {
-            // Non‑standard: Chrome exposes performance.memory (mark as unsafe cast)
-            const memory = (performance as any).memory as { usedJSHeapSize: number; totalJSHeapSize: number; };
-            const memoryStats: MemoryStats = {
-                used: memory.usedJSHeapSize,
-                total: memory.totalJSHeapSize,
-                threshold: this.memoryThreshold,
-            };
+        // Narrowly check for the non-standard performance.memory shape without using `any`
+        type PerfWithMemory = { memory?: { usedJSHeapSize?: number; totalJSHeapSize?: number } };
+        const perf = globalThis as unknown as PerfWithMemory;
+        const mem = perf?.memory;
+        if (!mem || typeof mem.usedJSHeapSize !== 'number' || typeof mem.totalJSHeapSize !== 'number') {
+            return;
+        }
 
-            if (memoryStats.used > memoryStats.threshold) {
-                console.warn('High memory usage detected, clearing cache');
-                this.clearOldCache();
+        const memoryStats: MemoryStats = {
+            used: mem.usedJSHeapSize,
+            total: mem.totalJSHeapSize,
+            threshold: this.memoryThreshold,
+        };
 
-                // Force garbage collection if available
-                if (typeof (window as any).gc === 'function') {
-                    try { (window as any).gc(); } catch {/* ignore */ }
-                }
+        if (memoryStats.used > memoryStats.threshold) {
+            console.warn('High memory usage detected, clearing cache');
+            this.clearOldCache();
+
+            // Force garbage collection if available (some runtimes expose globalThis.gc)
+            const globalObj = globalThis as unknown as { gc?: () => void };
+            if (typeof globalObj.gc === 'function') {
+                try { globalObj.gc(); } catch {/* ignore */ }
             }
         }
     }
@@ -402,14 +407,22 @@ export class EnhancedNeuroSEOOrchestrator {
         requestSize: number;
         responseSize: number;
     }): void {
-        if (typeof window !== 'undefined' && typeof (window as any).gtag === 'function') {
-            (window as any).gtag('event', 'neuroseo_performance', {
-                event_category: 'AI Performance',
-                operation: metrics.operation,
-                duration: Math.round(metrics.duration),
-                request_size: metrics.requestSize,
-                response_size: metrics.responseSize,
-            });
+        // Use globalThis and a narrow type to avoid `any` casts while preserving runtime guard
+        const gobj = globalThis as unknown as { gtag?: (...args: unknown[]) => void };
+        const gtag = gobj.gtag;
+        if (typeof gtag === 'function') {
+            try {
+                gtag('event', 'neuroseo_performance', {
+                    event_category: 'AI Performance',
+                    operation: metrics.operation,
+                    duration: Math.round(metrics.duration),
+                    request_size: metrics.requestSize,
+                    response_size: metrics.responseSize,
+                });
+            } catch (e) {
+                // Don't allow analytics failures to bubble up
+                console.debug('gtag call failed', e);
+            }
         }
     }
 
