@@ -1,11 +1,9 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import {
   getFirestore,
   doc,
   getDoc,
   setDoc,
-  deleteDoc,
   serverTimestamp,
 } from "firebase/firestore";
 import * as dotenv from "dotenv";
@@ -34,10 +32,9 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
-const auth = getAuth(app);
 const db = getFirestore(app);
 
-async function fixUserSubscription() {
+async function fixUserSubscription(): Promise<void> {
   try {
     console.log(
       "🔍 Investigating user subscription issue for abba7254@gmail.com..."
@@ -53,10 +50,6 @@ async function fixUserSubscription() {
       console.log("❌ No hardcoded user document found");
     }
 
-    // Try to get the real Firebase Auth UID for this user
-    // Note: We can't directly get user by email from client SDK,
-    // so we'll create the subscription data with the actual pattern
-
     // For now, let's create a comprehensive solution
     await createProperUserSubscription();
   } catch (error) {
@@ -64,7 +57,7 @@ async function fixUserSubscription() {
   }
 }
 
-async function createProperUserSubscription() {
+async function createProperUserSubscription(): Promise<void> {
   console.log("🛠️ Creating proper user subscription data...");
 
   // Current date calculations
@@ -82,7 +75,7 @@ async function createProperUserSubscription() {
   threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
 
   // Create the user subscription data structure
-  const userSubscriptionData = {
+  const userSubscriptionData: Record<string, unknown> = {
     email: "abba7254@gmail.com",
     subscriptionStatus: "active",
     subscriptionTier: "starter",
