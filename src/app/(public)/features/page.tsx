@@ -1,6 +1,7 @@
 // src/app/(public)/features/page.tsx
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -234,6 +235,8 @@ const managementFeatures = [
     ],
   },
 ];
+
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 export default function FeaturesPage() {
   return (
