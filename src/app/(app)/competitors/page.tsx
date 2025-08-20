@@ -1,4 +1,5 @@
 // src/app/(app)/competitors/page.tsx
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
