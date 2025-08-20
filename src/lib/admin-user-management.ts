@@ -1,7 +1,5 @@
 import {
   doc,
-  getDoc,
-  setDoc,
   updateDoc,
   serverTimestamp,
   collection,
@@ -37,7 +35,7 @@ export async function adminUpdateUserSubscription(
 
     // Calculate dates
     const currentDate = new Date();
-    let nextBillingDate = new Date(currentDate);
+    const nextBillingDate = new Date(currentDate);
     if (update.monthsToAdd) {
       nextBillingDate.setMonth(nextBillingDate.getMonth() + update.monthsToAdd);
     }
@@ -106,7 +104,7 @@ export async function adminUpdateUserSubscription(
     );
 
     return;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("❌ Error updating user subscription:", error);
     throw error;
   }
@@ -126,7 +124,7 @@ async function findUserByEmail(email: string): Promise<string | null> {
     }
 
     return null;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error finding user by email:", error);
     return null;
   }
@@ -190,7 +188,7 @@ export async function fixAllTestUsers(): Promise<void> {
   for (const user of testUsers) {
     try {
       await adminUpdateUserSubscription(user);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`Failed to fix user ${user.email}:`, error);
     }
   }
