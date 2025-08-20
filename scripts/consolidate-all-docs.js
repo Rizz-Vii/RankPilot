@@ -5,11 +5,13 @@
  * Created: July 26, 2025
  */
 
+'use strict';
 const fs = require('fs');
 const path = require('path');
 
 const DOCS_DIR = './docs';
-const BACKUP_DIR = './docs-complete-backup-' + new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+const NOW = new Date();
+const BACKUP_DIR = './docs-complete-backup-' + NOW.toISOString().slice(0, 19).replace(/:/g, '-');
 
 // Get all subdirectories in docs
 function getDocsFolders() {
@@ -83,7 +85,7 @@ function consolidateFolder(folderName) {
 
     // Header for consolidated file
     consolidatedContent += `# ${folderName.charAt(0).toUpperCase() + folderName.slice(1)} Documentation Consolidated\n\n`;
-    consolidatedContent += `**Generated:** ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}\n`;
+    consolidatedContent += `**Generated:** ${NOW.toLocaleDateString()} ${NOW.toLocaleTimeString()}\n`;
     consolidatedContent += `**Folder:** \`docs/${folderName}\`\n`;
     consolidatedContent += `**Files Consolidated:** ${markdownFiles.length}\n`;
     consolidatedContent += `**Source Files:** ${markdownFiles.map(f => path.basename(f)).join(', ')}\n\n`;
@@ -189,7 +191,7 @@ function generateComprehensiveSummary(consolidationResults) {
 
     const summaryContent = `# Complete Documentation Consolidation Summary
 
-**Date:** ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
+**Date:** ${NOW.toLocaleDateString()} ${NOW.toLocaleTimeString()}
 **Total Folders Processed:** ${consolidationResults.length}
 **Successful Consolidations:** ${successfulConsolidations}
 **Total Files Consolidated:** ${totalFiles}
