@@ -176,6 +176,10 @@ export function SubscriptionManagement() {
     }
   };
 
+  useEffect(() => {
+    void fetchSubscriptionData();
+  }, [fetchSubscriptionData]);
+
   const updateUserSubscription = async (
     userId: string,
     updates: Record<string, string>): Promise<void> => {
