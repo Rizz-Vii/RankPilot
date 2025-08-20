@@ -11,7 +11,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 class CodeQualityImplementation {
   constructor(dryRun = false) {
@@ -51,7 +50,7 @@ class CodeQualityImplementation {
 
     for (const file of files) {
       const content = fs.readFileSync(file, 'utf8');
-      const consolePattern = /console\.(log|warn|error|debug)\([^)]*\);?/g;
+      const consolePattern = /console\.(log|warn|error|debug)\([\s\S]*?\);?/g;
       const matches = content.match(consolePattern) || [];
       
       if (matches.length > 0) {
@@ -192,7 +191,7 @@ class CodeQualityImplementation {
         
         if (stat.isDirectory()) {
           getAllFiles(filePath, files);
-        } else if (file.match(/\.(ts|tsx)$/) && !file.includes('.test.') && !file.includes('.spec.')) {
+        } else if (file.match(/\.(ts|tsx)$/i) && !file.includes('.test.') && !file.includes('.spec.')) {
           files.push(filePath);
         }
       }
