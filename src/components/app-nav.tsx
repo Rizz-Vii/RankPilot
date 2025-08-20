@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useSidebar } from "@/components/ui/sidebar";
 import { EnhancedAppNav } from "@/components/enhanced-app-nav";
 import { useAuth } from "@/context/AuthContext";
@@ -23,9 +23,9 @@ const menuItemVariants = {
       y: { stiffness: 1000 },
     },
   },
-};
+} as const;
 
-export default function AppNav() {
+export default function AppNav(): JSX.Element {
   const { open, isMobile, setOpenMobile } = useSidebar();
   const { user, role } = useAuth();
   const { subscription } = useSubscription();
