@@ -78,7 +78,7 @@ export default function RevenueAnalyticsPage() {
       paidAt: r.paidAt && typeof r.paidAt === 'object'? r.paidAt : undefined
     };
   };
-  const data: InvoiceMetrics = live.kpis.length ? ({ kpis: live.kpis as KpiItem[], rows: (Array.isArray(live.rows)? live.rows.map(adaptInvoice).filter(Boolean) as InvoiceRow[]: []), loading: live.loading }) : { kpis: allowFinanceMocks()? ((mock?.kpis as KpiItem[] | undefined) || []) : [], rows: [], loading:false };
+  const data: InvoiceMetrics = (Array.isArray(live.kpis) && live.kpis.length) ? ({ kpis: live.kpis as KpiItem[], rows: (Array.isArray(live.rows) ? live.rows.map(adaptInvoice).filter((x): x is InvoiceRow => x !== null) : []), loading: live.loading }) : { kpis: allowFinanceMocks()? ((mock?.kpis as KpiItem[] | undefined) || []) : [], rows: [], loading:false };
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   const [derived, setDerived] = useState<RevenueSnapshot|null>(null);
   useEffect(() => { trackDashboardView('finance'); }, []);
@@ -125,7 +125,7 @@ export default function RevenueAnalyticsPage() {
           <section className="grid gap-4 md:grid-cols-4" aria-label="Derived revenue metrics">
             <MetricCard key="mrr_formula" label="MRR (Derived)" value={derived.mrr.toLocaleString()} delta={0} deltaLabel="" trend={<TrendSparkline data={[derived.mrr]} />} intent="neutral" />
             <MetricCard key="arr_formula" label="ARR" value={derived.arr.toLocaleString()} delta={0} deltaLabel="" trend={<TrendSparkline data={[derived.arr]} />} intent="neutral" />
-            <MetricCard key="churn_formula" label="Churn %" value={derived.churnRatePct} delta={0} deltaLabel="" trend={<TrendSparkline data={[derived.churnRatePct]} />} intent={derived.churnRatePct < 5 ? 'success':'warning'} />
+            <MetricCard key="churn_formula" label="Churn %" value={derived.churnRatePct.toFixed(1) + '%'} delta={0} deltaLabel="" trend={<TrendSparkline data={[derived.churnRatePct]} />} intent={derived.churnRatePct < 5 ? 'success':'warning'} />
             <MetricCard key="ltv_formula" label="LTV" value={derived.ltv? derived.ltv.toLocaleString(): '—'} delta={0} deltaLabel="" trend={<TrendSparkline data={[derived.ltv||0]} />} intent={derived.ltv? 'accent':'neutral'} />
           </section>
         )}
@@ -137,8 +137,8 @@ export default function RevenueAnalyticsPage() {
                 { key:'planTier', header:'Tier'},
                 { key:'amount', header:'Amount'},
                 { key:'status', header:'Status'},
-                { key:'issuedAt', header:'Issued', render:(r:InvoiceRow)=> (r.issuedAt && typeof r.issuedAt === 'object' && r.issuedAt.toDate)? r.issuedAt.toDate().toISOString().slice(0,10): '-'},
-                { key:'paidAt', header:'Paid', render:(r:InvoiceRow)=> (r.paidAt && typeof r.paidAt === 'object' && r.paidAt.toDate)? r.paidAt.toDate().toISOString().slice(0,10): '-'}
+                { key:'issuedAt', header:'Issued', render:(r:InvoiceRow)=> (r.issuedAt && typeof r.issuedAt === 'object' && typeof (r.issuedAt as any).toDate === 'function')? (r.issuedAt as any).toDate().toISOString().slice(0,10): '-'},
+                { key:'paidAt', header:'Paid', render:(r:InvoiceRow)=> (r.paidAt && typeof r.paidAt === 'object' && typeof (r.paidAt as any).toDate === 'function')? (r.paidAt as any).toDate().toISOString().slice(0,10): '-'}
               ]}
             rows={data.rows}
             loading={data.loading}
