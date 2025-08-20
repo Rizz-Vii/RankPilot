@@ -100,18 +100,20 @@ const EnhancedButton = forwardRef<HTMLButtonElement, EnhancedButtonProps>(
   ) => {
   // Only use Slot when a single, non-Fragment React element is provided
   const childCount = React.Children.count(children);
-  const isValidChildEl = React.isValidElement(children) && (children as any).type !== React.Fragment;
+  const isValidChildEl = React.isValidElement(children) && (children as React.ReactElement).type !== React.Fragment;
   const useSlot = !!asChild && childCount === 1 && isValidChildEl;
-  const Comp = (useSlot ? Slot : motion.button) as unknown as React.ComponentType<any>;
+  const Comp: React.ElementType = useSlot ? Slot : motion.button;
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       // Haptic feedback for mobile devices (guard for client-only navigator API)
       if (
         hapticFeedback &&
-        typeof navigator !== "undefined" &&
-        "vibrate" in (navigator as any)
+        typeof navigator !== "undefined"
       ) {
-        (navigator as any).vibrate(10);
+        const nav = navigator as Navigator & { vibrate?: (pattern: number | number[]) => void };
+        if ("vibrate" in nav && typeof nav.vibrate === "function") {
+          nav.vibrate(10);
+        }
       }
 
       onClick?.(e);
