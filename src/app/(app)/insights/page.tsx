@@ -155,8 +155,8 @@ export default function InsightsPage() {
         }));
         const normalized: GenerateInsightsOutput = {
           insights: normalizedInsights,
-          summary: typeof raw?.summary === 'string' ? raw.summary : `Generated ${normalizedInsights.length} insights`,
-          score: typeof raw?.score === 'number' ? raw.score : 0,
+          summary: typeof raw.summary === 'string' ? raw.summary as string : `Generated ${normalizedInsights.length} insights`,
+          score: typeof raw.score === 'number' ? raw.score as number : 0,
         };
         result = normalized;
       } catch (e) {
