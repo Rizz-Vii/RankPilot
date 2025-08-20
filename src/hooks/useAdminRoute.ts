@@ -6,15 +6,8 @@
  import { useAuth } from "@/context/AuthContext";
 
 
-declare global {
-  // Augment Window with optional __E2E__ flag used in tests.
-  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-  interface Window { __E2E__?: string; }
-}
-
-// Reference the declared global property at runtime so TypeScript/ESLint don't report it as unused.
-// This is a no-op that's safe in all environments.
-void (globalThis as any).__E2E__;
+/* Access __E2E__ at runtime via (window as any).__E2E__ to avoid a file-level type augmentation
+   that can be reported as an unused declaration by @typescript-eslint/no-unused-vars. */
 
 export default function useAdminRoute(): { user: ReturnType<typeof useAuth>["user"]; loading: boolean; role: string | null } {
   const { user, loading, role } = useAuth();
@@ -33,7 +26,7 @@ export default function useAdminRoute(): { user: ReturnType<typeof useAuth>["use
   // Moved below hook calls to keep hooks usage unconditional (fixes react-hooks/rules-of-hooks).
   if (typeof window !== 'undefined') {
     try {
-      const allowE2E = (process.env.NEXT_PUBLIC_E2E === '1') || window.__E2E__ === '1';
+      const allowE2E = (process.env.NEXT_PUBLIC_E2E === '1') || (window as any).__E2E__ === '1';
       if (allowE2E && localStorage.getItem('TEST_FORCE_ADMIN') === '1') {
         // Provide deterministic admin override object; keep shape consistent with AdminRouteResult.
         return { user: (user || { uid: 'test-admin-override' }) as typeof user, loading: false, role: 'admin' };
