@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,8 +27,7 @@ export function TutorialBanner({
   className = "",
 }: TutorialBannerProps) {
   const [isDismissed, setIsDismissed] = useState(false);
-  const { subscription } = useSubscription();
-  const tier = subscription?.tier || "free";
+  useSubscription();
 
   // Auto-generate content based on feature if not provided
   const getFeatureContent = () => {
