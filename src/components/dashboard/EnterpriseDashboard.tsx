@@ -23,7 +23,7 @@ import {
     Users,
     Zap
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { allowEnterpriseMocks } from '@/lib/flags/demo';
 import {
     Area,
@@ -91,9 +91,9 @@ export function EnterpriseDashboard() {
         loadDashboardMetrics();
         const interval = setInterval(loadDashboardMetrics, 30000); // Update every 30 seconds
         return () => clearInterval(interval);
-    }, [selectedTimeRange]);
+    }, [selectedTimeRange, loadDashboardMetrics]);
 
-    const loadDashboardMetrics = async () => {
+    const loadDashboardMetrics = useCallback(async () => {
         try {
             setIsLoading(true);
             // Mock data for demonstration
@@ -144,7 +144,7 @@ export function EnterpriseDashboard() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     const performanceData = [
         { time: '00:00', latency: 150, throughput: 1200, errors: 2 },
@@ -322,8 +322,8 @@ export function EnterpriseDashboard() {
                                             <YAxis />
                                             <Tooltip />
                                             <Legend />
-                                            <Line type="monotone" dataKey="latency" stroke="hsl(var(--chart-1))" name="Latency (ms)" />
-                                            <Line type="monotone" dataKey="throughput" stroke="hsl(var(--chart-2))" name="Throughput" />
+                                            <Line type="monotone" dataKey="latency" stroke={chartColors[0]} name="Latency (ms)" />
+                                            <Line type="monotone" dataKey="throughput" stroke={chartColors[1]} name="Throughput" />
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </CardContent>
@@ -408,7 +408,7 @@ export function EnterpriseDashboard() {
                                             <YAxis />
                                             <Tooltip />
                                             <Legend />
-                                            <Area type="monotone" dataKey="latency" stackId="1" stroke="hsl(var(--chart-1))" fill="hsl(var(--chart-1))" />
+                                            <Area type="monotone" dataKey="latency" stackId="1" stroke={chartColors[0]} fill={chartColors[0]} />
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 </CardContent>
@@ -530,8 +530,8 @@ export function EnterpriseDashboard() {
                                             <YAxis />
                                             <Tooltip />
                                             <Legend />
-                                            <Bar dataKey="revenue" fill="hsl(var(--chart-1))" name="Revenue ($)" />
-                                            <Bar dataKey="users" fill="hsl(var(--chart-2))" name="Users" />
+                                            <Bar dataKey="revenue" fill={chartColors[0]} name="Revenue ($)" />
+                                            <Bar dataKey="users" fill={chartColors[1]} name="Users" />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </CardContent>
