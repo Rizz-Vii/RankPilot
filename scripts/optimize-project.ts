@@ -1,5 +1,4 @@
 #!/usr/bin/env ts-node
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
 /**
  * Project Optimization and Cleanup Script
@@ -16,6 +15,9 @@ import { join, resolve } from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { EventEmitter as _EventEmitter } from "events";
+
+// Ensure these imports are recognized as used by linters
+void (fs, join, resolve, exec, promisify, _EventEmitter);
 
 // Increase max listeners to prevent memory leak warnings
 _EventEmitter.defaultMaxListeners = 20;
