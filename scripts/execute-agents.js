@@ -5,6 +5,8 @@
  * Priority: CRITICAL - Foundation Stabilization
  */
 
+"use strict";
+
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -44,7 +46,7 @@ class SimpleAgentExecutor {
             console.log(`${success ? '✅' : '❌'} ${agentName} completed in ${duration}ms`);
             return success;
         } catch (error) {
-            console.error(`🚨 ${agentName} failed:`, error.message);
+            console.error(`🚨 ${agentName} failed:`, error && error.message ? error.message : error);
             return false;
         }
     }
@@ -184,7 +186,7 @@ interface SecurityError extends Error {
         }
 
     } catch (error) {
-        console.error('🚨 TypeScript Guardian execution failed:', error);
+        console.error('🚨 TypeScript Guardian execution failed:', error && error.stack ? error.stack : error);
         return false;
     }
 }
@@ -288,7 +290,7 @@ exit 1
         return true;
 
     } catch (error) {
-        console.error('🚨 Build System Agent execution failed:', error);
+        console.error('🚨 Build System Agent execution failed:', error && error.stack ? error.stack : error);
         return false;
     }
 }
@@ -343,7 +345,7 @@ async function mainExecution() {
             process.exit(success ? 0 : 1);
         }
     } catch (error) {
-        console.error('🚨 Agent execution failed:', error);
+        console.error('🚨 Agent execution failed:', error && error.stack ? error.stack : error);
         process.exit(1);
     }
 }
