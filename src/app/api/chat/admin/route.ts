@@ -4,7 +4,7 @@
  */
 
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { recordRouteLatency, recordError, recordRateLimitRejection } from '@/lib/metrics/unified-metrics';
@@ -27,8 +27,8 @@ interface ChatResponse {
     };
 }
 
-export const POST = withProvenance(async function POST(request: Request) {
-    const nreq = request as NextRequest;
+export const POST = withProvenance(async function POST(request: NextRequest) {
+    const nreq = request;
     const start = Date.now();
     try {
         // Parse request body
@@ -79,7 +79,7 @@ export const POST = withProvenance(async function POST(request: Request) {
                     }
                 }
             }
-        } catch { /* ignore */ }
+        } catch (err) { void err; /* ignore */ }
 
         const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'rankpilot-h3jpc';
         const region = 'australia-southeast2';
@@ -112,7 +112,7 @@ export const POST = withProvenance(async function POST(request: Request) {
         let payload: unknown = null;
         try {
             payload = rawText ? JSON.parse(rawText) : null;
-        } catch { }
+        } catch (err) { void err; }
         if (!res.ok) {
             const p: any = (payload as any) || {};
             const errMsg = p?.error?.message || p?.error || p?.result?.error?.message || ((rawText || '').slice(0, 200) || 'Admin chat service unavailable');
@@ -173,8 +173,8 @@ export const POST = withProvenance(async function POST(request: Request) {
 }, { path: 'chat/admin' });
 
 // GET endpoint for admin chat history
-export const GET = withProvenance(async function GET(request: Request) {
-    const nreq = request as NextRequest;
+export const GET = withProvenance(async function GET(request: NextRequest) {
+    const nreq = request;
     const start = Date.now();
     try {
         const { searchParams } = new URL(nreq.url);
