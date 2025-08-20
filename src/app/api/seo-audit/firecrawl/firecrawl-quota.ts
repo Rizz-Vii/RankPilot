@@ -5,19 +5,19 @@
 const FIRECRAWL_WINDOW_MS = 60 * 60 * 1000; // 1h
 let memWindowStart = Date.now();
 let memCount = 0;
-let cachedAdminDb: any = null; // eslint-disable-line @typescript-eslint/no-explicit-any
+let cachedAdminDb: unknown = null;
 
-export function __resetFirecrawlQuotaTestOnly() { // test-only, safe to export here
+export function __resetFirecrawlQuotaTestOnly(): void { // test-only, safe to export here
     memWindowStart = Date.now();
     memCount = 0;
     cachedAdminDb = null;
 }
 
-export async function enforceFirecrawlQuota(limit: number, scopeKey: string) {
+export async function enforceFirecrawlQuota(limit: number, scopeKey: string): Promise<{ allowed: boolean; remaining: number; resetAt: Date; retryAfterSeconds: number }> {
     try {
         if (!cachedAdminDb) {
-            const mod: any = (global as any).adminDb ? { adminDb: (global as any).adminDb } : await import('@/lib/firebase-admin').catch(() => import('../../../../lib/firebase-admin'));
-            cachedAdminDb = mod.adminDb;
+            const mod: unknown = (global as any).adminDb ? { adminDb: (global as any).adminDb } : await import('@/lib/firebase-admin').catch(() => import('../../../../lib/firebase-admin'));
+            cachedAdminDb = (mod as { adminDb?: unknown }).adminDb;
         }
         const adminDb: any = cachedAdminDb as any;
         const docRef = adminDb.collection('firecrawlQuota').doc(scopeKey);
@@ -39,8 +39,9 @@ export async function enforceFirecrawlQuota(limit: number, scopeKey: string) {
             return { allowed: true, remaining: Math.max(0, limit - data.count), resetAt: new Date(windowStartMs + FIRECRAWL_WINDOW_MS), retryAfterSeconds: 0 };
         });
         return res;
-    } catch {
+    } catch (err: unknown) {
         // Fallback to in-memory (single-instance) if Firestore unavailable
+        void err;
         const now = Date.now();
         if (now - memWindowStart >= FIRECRAWL_WINDOW_MS) { memWindowStart = now; memCount = 0; }
         memCount += 1;
