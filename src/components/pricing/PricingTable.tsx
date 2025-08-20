@@ -6,7 +6,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Check, Crown } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { TierIcon, TierChip } from '@/components/tiers/tier-icons';
 import { useState } from 'react';
 import { STRIPE_PLANS } from '@/lib/stripe';
@@ -23,6 +23,8 @@ export function PricingTable({ currentTier = 'free', onUpgrade }: PricingTablePr
         if (tier === 'free' || tier === currentTier) return;
 
         setLoading(tier);
+        if (onUpgrade) onUpgrade(tier);
+
         try {
             const response = await fetch('/api/stripe/checkout', {
                 method: 'POST',
