@@ -17,14 +17,7 @@ export default function useAdminRoute(): { user: ReturnType<typeof useAuth>["use
 
   // Prevent false-positive unused variable lint errors.
   // Reference variables in a no-op so @typescript-eslint/no-unused-vars doesn't trigger.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  void user;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  void loading;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  void role;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  void router;
+  void (user, loading, role, router);
 
   useEffect(() => {
     // Redirect if not loading and user is not authenticated or role is not 'admin'
