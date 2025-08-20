@@ -1,5 +1,4 @@
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import crypto from 'crypto';
 // NOTE: Global collection 'invites_index' provides O(1) inviteId -> teamId mapping.
@@ -55,8 +54,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         };
         await invitesCol.doc(inviteId).set(inviteDoc);
         // Create global index doc for O(1) acceptance lookup
-        adminDb.collection('invites_index').doc(inviteId).set({ teamId: team.id, emailLower: email.toLowerCase(), status: 'pending', createdAt: new Date() }).catch(() => { });
-        try { await adminDb.collection('emailQueue').add({ to: email, template: 'team_invite_v2', createdAt: new Date(), payload: { inviter: decoded.uid, teamId: team.id, role: inviteDoc.role, token: tokenPlain } }); } catch { }
+        void adminDb
+          .collection('invites_index')
+          .doc(inviteId)
+          .set({ teamId: team.id, emailLower: email.toLowerCase(), status: 'pending', createdAt: new Date() })
+          .catch(() => {
+            console.warn('invites_index write failed');
+          });
+        try {
+          await adminDb.collection('emailQueue').add({
+            to: email,
+            template: 'team_invite_v2',
+            createdAt: new Date(),
+            payload: { inviter: decoded.uid, teamId: team.id, role: inviteDoc.role, token: tokenPlain }
+          });
+        } catch (err) {
+          console.warn('emailQueue enqueue failed', err);
+        }
         return NextResponse.json({ success: true, inviteId, token: tokenPlain });
     } catch (e: unknown) {
         console.error('Team invite error', e); const msg = typeof e === 'object' && e && 'message' in e ? (e as any).message : 'Internal error'; return NextResponse.json({ error: msg }, { status: 500 });
@@ -97,7 +111,13 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
                 if (inv.exists) {
                     found = { teamId: t.id, inviteDoc: inv };
                     // Fire and forget index creation
-                    adminDb.collection('invites_index').doc(inviteId).set({ teamId: t.id, createdAt: new Date() }).catch(() => { });
+                    void adminDb
+                      .collection('invites_index')
+                      .doc(inviteId)
+                      .set({ teamId: t.id, createdAt: new Date() })
+                      .catch((err) => {
+                        console.warn('invites_index backfill failed', err);
+                      });
                     break;
                 }
             }
