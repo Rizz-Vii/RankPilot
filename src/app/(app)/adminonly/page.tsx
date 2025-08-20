@@ -1,22 +1,14 @@
 // src/app/(app)/adminonly/page.tsx
 "use client";
 
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import useAdminRoute from "@/hooks/useAdminRoute";
 import LoadingScreen from "@/components/ui/loading-screen";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ShieldCheck, Users, BarChart3, Settings, Database } from "lucide-react";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import AdminUserManagement from "@/components/admin/admin-user-management";
 import AdminSystemMetrics from "@/components/admin/admin-system-metrics";
-import AdminAnalytics from "@/components/admin/admin-analytics";
 import { AdminAnalyticsDashboard } from "@/components/admin/admin-analytics-dashboard";
 import AdminSettings from "@/components/admin/admin-settings";
 import AdminSupport from "@/components/admin/admin-support";
@@ -26,7 +18,7 @@ export default function AdminOnlyPage() {
   const { user, loading, role } = useAdminRoute();
   const [mounted, setMounted] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setMounted(true);
   }, []);
 
