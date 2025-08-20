@@ -81,8 +81,15 @@ export class AccessibilityManager {
     private listeners: Set<(announcement: AccessibilityAnnouncement) => void> = new Set();
 
     private constructor() {
-        this.initializeKeyboardNavigation();
-        this.initializeVoiceRecognition();
+        // Defer DOM/window dependent initialization during SSR.
+        if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+            this.initializeKeyboardNavigation();
+            this.initializeVoiceRecognition();
+        } else {
+            // Initialization will be performed on first client-side access if needed.
+        }
+
+        // Register default shortcuts regardless of environment (no DOM access).
         this.setupDefaultShortcuts();
     }
 
@@ -240,6 +247,8 @@ export class AccessibilityManager {
 
     // Keyboard navigation
     private initializeKeyboardNavigation() {
+        if (typeof document === 'undefined') return;
+
         document.addEventListener('keydown', (e) => {
             const target = e.target as HTMLElement | null;
             if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
@@ -266,6 +275,17 @@ export class AccessibilityManager {
         } as KeyboardEvent);
 
         this.shortcuts.set(key, shortcut);
+    }
+
+    unregisterShortcut(shortcut: KeyboardShortcut) {
+        const key = this.createShortcutKey({
+            key: shortcut.key,
+            ctrlKey: shortcut.modifiers.includes('ctrl'),
+            altKey: shortcut.modifiers.includes('alt'),
+            shiftKey: shortcut.modifiers.includes('shift'),
+            metaKey: shortcut.modifiers.includes('meta'),
+        } as KeyboardEvent);
+        this.shortcuts.delete(key);
     }
 
     private createShortcutKey(e: KeyboardEvent | { key: string; ctrlKey: boolean; altKey: boolean; shiftKey: boolean; metaKey: boolean; }): string {
@@ -362,22 +382,43 @@ export class AccessibilityManager {
 
     startListening() {
         if (this.recognition && !this.isListening) {
-            this.recognition.start();
-            this.isListening = true;
-            this.announce('Voice commands enabled', 'polite', 'status');
+            try {
+                this.recognition.start();
+                this.isListening = true;
+                this.announce('Voice commands enabled', 'polite', 'status');
+            } catch (err) {
+                // Surface a friendly error while avoiding crashes in edge environments.
+                // E.g. start() may throw if permissions are denied.
+                // eslint-disable-next-line no-console
+                console.error('Failed to start voice recognition', err);
+                this.announceError('Failed to start voice recognition');
+            }
         }
     }
 
     stopListening() {
         if (this.recognition && this.isListening) {
-            this.recognition.stop();
-            this.isListening = false;
-            this.announce('Voice commands disabled', 'polite', 'status');
+            try {
+                this.recognition.stop();
+                this.isListening = false;
+                this.announce('Voice commands disabled', 'polite', 'status');
+            } catch (err) {
+                // eslint-disable-next-line no-console
+                console.error('Failed to stop voice recognition', err);
+                this.announceError('Failed to stop voice recognition');
+            }
         }
     }
 
     registerVoiceCommand(command: VoiceCommand) {
         this.voiceCommands.push(command);
+    }
+
+    unregisterVoiceCommand(command: VoiceCommand) {
+        const idx = this.voiceCommands.indexOf(command);
+        if (idx >= 0) {
+            this.voiceCommands.splice(idx, 1);
+        }
     }
 
     private processVoiceCommand(transcript: string) {
@@ -525,6 +566,11 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
         shortcuts.forEach(shortcut => {
             accessibilityManager.registerShortcut(shortcut);
         });
+        return () => {
+            shortcuts.forEach(shortcut => {
+                accessibilityManager.unregisterShortcut(shortcut);
+            });
+        };
     }, [shortcuts]);
 }
 
@@ -534,5 +580,10 @@ export function useVoiceCommands(commands: VoiceCommand[]) {
         commands.forEach(command => {
             accessibilityManager.registerVoiceCommand(command);
         });
+        return () => {
+            commands.forEach(command => {
+                accessibilityManager.unregisterVoiceCommand(command);
+            });
+        };
     }, [commands]);
 }
