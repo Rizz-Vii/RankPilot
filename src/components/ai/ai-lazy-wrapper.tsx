@@ -55,7 +55,7 @@ export function AILazyWrapper({
 /**
  * Progressive loading indicator showing stages
  */
-function ProgressiveLoader({ stage }: { stage: number; }) {
+function ProgressiveLoader({ stage = 0 }: { stage?: number }) {
     const stages = [
         { label: 'Initializing', icon: '⚙️' },
         { label: 'Loading Resources', icon: '📦' },
@@ -63,18 +63,20 @@ function ProgressiveLoader({ stage }: { stage: number; }) {
         { label: 'Ready', icon: '✅' },
     ];
 
+    const index = Math.max(0, Math.min(stage, stages.length - 1));
+
     return (
         <div className="flex flex-col items-center justify-center py-8">
             <div className="text-4xl mb-4 animate-spin">
-                {stages[stage]?.icon || '🔄'}
+                {stages[index]?.icon || '🔄'}
             </div>
             <div className="text-muted-foreground">
-                {stages[stage]?.label || 'Loading...'}
+                {stages[index]?.label || 'Loading...'}
             </div>
             <div className="w-48 bg-muted rounded-full h-2 mt-4">
                 <div
                     className="bg-primary h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${((stage + 1) / stages.length) * 100}%` }}
+                    style={{ width: `${((index + 1) / stages.length) * 100}%` }}
                 />
             </div>
         </div>
@@ -111,11 +113,14 @@ export function MemoryOptimizedAI({
 
     useEffect(() => {
         const checkMemory = () => {
-            const perf: any = performance as any;
-            if (perf && perf.memory && typeof perf.memory.usedJSHeapSize === 'number') {
-                const usage = perf.memory.usedJSHeapSize as number;
-                setMemoryUsage(usage);
-                if (usage > maxMemory && onMemoryWarning) onMemoryWarning();
+            if (typeof performance === 'undefined') return;
+            const perf = performance as unknown as { memory?: { usedJSHeapSize?: number } };
+            const used = perf.memory?.usedJSHeapSize;
+            if (typeof used === 'number') {
+                setMemoryUsage(used);
+                if (used > maxMemory && typeof onMemoryWarning === 'function') {
+                    onMemoryWarning();
+                }
             }
         };
 
@@ -156,7 +161,7 @@ export class AIErrorBoundary extends React.Component<
         return { hasError: true, error };
     }
 
-    override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
         console.error('AI Component Error:', error, errorInfo);
 
         // Send to monitoring service
@@ -169,7 +174,7 @@ export class AIErrorBoundary extends React.Component<
         }
     }
 
-    override render() {
+    render() {
         if (this.state.hasError) {
             return this.props.fallback || (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
