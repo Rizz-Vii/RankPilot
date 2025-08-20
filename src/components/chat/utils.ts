@@ -39,7 +39,7 @@ export interface ChatContext {
 export const generateSessionId = (type: 'customer' | 'admin' = 'customer'): string => {
     const prefix = type === 'admin' ? 'admin_session' : 'session';
     const timestamp = Date.now();
-    const random = Math.random().toString(36).substr(2, 9);
+    const random = Math.random().toString(36).slice(2, 11);
     return `${prefix}_${timestamp}_${random}`;
 };
 
@@ -92,7 +92,7 @@ export const validateMessage = (message: string): { isValid: boolean; error?: st
 export const getErrorMessage = (error: unknown): string => {
     if (typeof error === 'string') return error;
     if (error && typeof error === 'object') {
-        const anyErr = error as { message?: unknown; error?: unknown };
+        const anyErr = error as Record<string, unknown> & { message?: unknown; error?: unknown };
         if (typeof anyErr.message === 'string') return anyErr.message;
         if (typeof anyErr.error === 'string') return anyErr.error;
     }
@@ -131,7 +131,7 @@ export const formatAIResponse = (response: string): string => {
 export const extractCommands = (message: string): string[] => {
     const commandPattern = /\/([a-zA-Z]+(?:\s+[a-zA-Z]+)*)/g;
     const commands: string[] = [];
-    let match;
+    let match: RegExpExecArray | null = null;
 
     while ((match = commandPattern.exec(message)) !== null) {
         commands.push(match[1]);
@@ -172,7 +172,7 @@ export const loadChatHistory = (sessionId: string): ChatMessage[] => {
             const key = `chat_history_${sessionId}`;
             const stored = localStorage.getItem(key);
             if (stored) {
-                const data = JSON.parse(stored);
+                const data = JSON.parse(stored) as { messages?: ChatMessage[] };
                 return data.messages || [];
             }
         }
@@ -206,7 +206,7 @@ export const checkRateLimit = (userId: string): { allowed: boolean; resetTime?: 
             const stored = localStorage.getItem(key);
 
             if (stored) {
-                const data = JSON.parse(stored);
+                const data = JSON.parse(stored) as { count: number; timestamp: number };
                 const now = Date.now();
 
                 // Reset if hour has passed
@@ -251,7 +251,7 @@ export const trackChatEvent = (event: string, data?: Record<string, unknown>): v
         console.log('Chat Event:', event, data);
 
         // Example: Google Analytics
-        const w = typeof window !== 'undefined' ? window as any : undefined;
+        const w = typeof window !== 'undefined' ? (window as unknown as { gtag?: (...args: unknown[]) => void }) : undefined;
         if (w?.gtag) {
             w.gtag('event', event, {
                 event_category: 'chat',
