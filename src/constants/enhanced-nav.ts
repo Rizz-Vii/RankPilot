@@ -45,7 +45,7 @@ export interface NavItem {
   label?: string;
   disabled?: boolean;
   adminOnly?: boolean;
-  requiredTier?: "starter" | "agency" | "enterprise";
+  requiredTier?: SubscriptionTier;
   feature?: string;
   badge?: string;
   description?: string;
@@ -58,7 +58,7 @@ export interface NavGroup {
   description?: string;
   badge?: string;
   items: NavItem[];
-  requiredTier?: "starter" | "agency" | "enterprise";
+  requiredTier?: SubscriptionTier;
   collapsible?: boolean;
   defaultExpanded?: boolean;
 }
@@ -627,14 +627,20 @@ export const getNavGroupByItemHref = (href: string): NavGroup | undefined => {
 };
 
 // Tier display helpers
-export const getTierBadgeProps = (tier: string) => {
-  const tierConfig = {
+export const getTierBadgeProps = (tier: SubscriptionTier | string) => {
+  const tierConfig: Record<
+    SubscriptionTier,
+    { color: string; icon: LucideIcon; label: string }
+  > = {
     starter: { color: "blue", icon: Zap, label: "Starter" },
     agency: { color: "purple", icon: Target, label: "Agency" },
     enterprise: { color: "gold", icon: Rocket, label: "Enterprise" },
   };
 
-  return tierConfig[tier as keyof typeof tierConfig] || null;
+  if (tier in tierConfig) {
+    return tierConfig[tier as SubscriptionTier];
+  }
+  return null;
 };
 
 // App constants
@@ -672,7 +678,7 @@ export const handleNavError = (error: Error, context: string) => {
 
 // Navigation analytics
 export const trackNavigation = (itemHref: string, groupId?: string) => {
-  if (typeof window !== "undefined" && 'gtag' in window && typeof (window as any).gtag === 'function') {
+  if (typeof window !== "undefined" && typeof (window as any).gtag === "function") {
     (window as any).gtag("event", "navigation_click", {
       event_category: "navigation",
       event_label: itemHref,
