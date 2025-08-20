@@ -7,9 +7,9 @@ const fs = require('fs');
 const path = require('path');
 
 const COLORS = {
-  PRIMARY: '#6699CC',
-  WHITE: '#FFFFFF',
-  FLAME: '#ff6b6b'
+  PRIMARY: 'rgb(102,153,204)',
+  WHITE: 'rgb(255,255,255)',
+  FLAME: 'rgb(255,107,107)'
 };
 
 // Create a simple canvas-like drawing system using ASCII art as a placeholder
