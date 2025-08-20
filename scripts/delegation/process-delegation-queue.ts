@@ -187,6 +187,18 @@ function isDirectDeleteTask(task: any): boolean {
 
 for (const task of tasks) {
     if (task.status !== 'pending') continue;
+    // Defensive: some tasks (e.g. Brain generic plan steps) may enqueue without a concrete files list.
+    if (!Array.isArray((task as any).files) || !(task as any).files.length) {
+        // Mark them failed (or skipped) so they don't stall the queue endlessly.
+        const note = 'no_files_attached';
+        console.log(`[delegation] skipping ${task.taskId} (${task.summary || ''}) – ${note}`);
+        (task as any).notes = note;
+        task.status = 'failed';
+        task.updatedAt = new Date().toISOString();
+        appendLog({ taskId: task.taskId, filesChanged: 0, status: 'failed', ts: new Date().toISOString(), notes: note });
+        changed = true;
+        continue;
+    }
     task.status = 'running';
     task.updatedAt = new Date().toISOString();
     changed = true;
