@@ -462,24 +462,6 @@ function PrimaryCta() {
   );
 }
 
-function Feature({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Card className="h-full">
-      <CardHeader>
-        <CardTitle className="text-xl">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground">{children}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 function PricingCard({
   title,
