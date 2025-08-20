@@ -1,4 +1,4 @@
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withProvenance } from '@/lib/middleware/provenance';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
@@ -40,7 +40,7 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
 
         // Fetch current pendingActions for analytics
         const sessionSnap = await sessionRef.get();
-        interface SessionData { pendingActions?: unknown }
+        interface SessionData { pendingActions?: unknown[] }
         const sData: SessionData = sessionSnap.exists ? (sessionSnap.data() as SessionData) : {};
         const pendingActions: string[] = Array.isArray(sData.pendingActions) ? (sData.pendingActions as string[]) : [];
         const totalCompleted = Object.values(progress).filter(v => !!v).length;
@@ -64,8 +64,9 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
 
         return NextResponse.json({ __provenance: { source: 'chat-actions', kind: 'mutation' }, success: true, actionStats: { totalCompleted, totalPending, completionRate } });
     } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
         return NextResponse.json(
-            { error: (e as any)?.message || 'Failed to update actions' },
+            { error: message || 'Failed to update actions' },
             { status: 500 }
         );
     }
