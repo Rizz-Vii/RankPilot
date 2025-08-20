@@ -1,8 +1,8 @@
-import type { NextRequest} from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 
-async function getTeam(uid: string) {
+async function getTeam(uid: string): Promise<{ id: string; data: unknown } | null> {
     const snap = await adminDb.collection("teams").where("memberIds", 'array-contains', uid).limit(1).get();
     if (!snap.empty) return { id: snap.docs[0].id, data: snap.docs[0].data() };
     const u = await adminDb.collection("users").doc(uid).get();
@@ -17,17 +17,19 @@ async function getTeam(uid: string) {
 export async function POST(req: NextRequest) {
     try {
         const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
-        if (!authHeader) return NextResponse.json({ error: "Missing auth" }, { status: 401 });
-        const token = authHeader.replace("Bearer ", "");
+        if (!authHeader) {
+            return NextResponse.json({ error: "Missing auth" }, { status: 401 });
+        }
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
         const decoded = await adminAuth.verifyIdToken(token);
 
-        const { targetMemberId } = await req.json();
+        const { targetMemberId } = (await req.json()) as { targetMemberId?: string };
         if (!targetMemberId) return NextResponse.json({ error: "Missing targetMemberId" }, { status: 400 });
 
         const team = await getTeam(decoded.uid);
         if (!team) return NextResponse.json({ error: "Team not found" }, { status: 404 });
-        const data: any = team.data || {};
-        const members: any[] = Array.isArray(data.members) ? [...data.members] : [];
+        const data = (team.data ?? {}) as Record<string, unknown>;
+        const members = Array.isArray((data as any).members) ? [...(data as any).members] : [];
 
         const ownerIndex = members.findIndex((m: any) => m?.role === 'owner' && (m?.userId === decoded.uid || m?.id === decoded.uid || m?.email === decoded.email));
         if (ownerIndex === -1) return NextResponse.json({ error: "Only current owner can transfer" }, { status: 403 });
@@ -39,8 +41,8 @@ export async function POST(req: NextRequest) {
         // Perform transfer (retain traceability)
         const prevOwnerId = members[ownerIndex]?.userId || members[ownerIndex]?.id;
         const newOwnerId = members[targetIndex]?.userId || members[targetIndex]?.id;
-        members[ownerIndex] = { ...members[ownerIndex], role: 'admin', ownershipTransferredAt: new Date(), transferredTo: newOwnerId };
-        members[targetIndex] = { ...members[targetIndex], role: 'owner', ownershipReceivedAt: new Date(), transferredFrom: prevOwnerId };
+        members[ownerIndex] = { ...members[ownerIndex], role: 'admin', ownershipTransferredAt: new Date().toISOString(), transferredTo: newOwnerId };
+        members[targetIndex] = { ...members[targetIndex], role: 'owner', ownershipReceivedAt: new Date().toISOString(), transferredFrom: prevOwnerId };
 
         await adminDb.collection("teams").doc(team.id).update({ members });
 
@@ -49,12 +51,13 @@ export async function POST(req: NextRequest) {
             type: 'ownership_transfer',
             from: prevOwnerId,
             to: newOwnerId,
-            at: new Date()
+            at: new Date().toISOString()
         });
 
         return NextResponse.json({ success: true });
     } catch (e: unknown) {
         console.error("Transfer ownership error", e);
-        return NextResponse.json({ error: (e as any)?.message || 'Internal error' }, { status: 500 });
+        const message = e instanceof Error ? e.message : String(e);
+        return NextResponse.json({ error: message || 'Internal error' }, { status: 500 });
     }
 }
