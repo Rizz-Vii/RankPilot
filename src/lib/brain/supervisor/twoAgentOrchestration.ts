@@ -19,23 +19,28 @@ interface QueueShim {
         appendTask?: (t: DelegationQueueTask) => void;
     };
 }
-let readQueue: () => DelegationQueueTask[];
-let appendTask: (t: DelegationQueueTask) => void;
-try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const qu = require(path.resolve('scripts/delegation/queue-utils.ts'));
-    readQueue = qu.readQueue;
-    appendTask = (t: DelegationQueueTask) => qu.appendTask(t as unknown as GenericQueueTask);
-} catch {
-    readQueue = () => {
-        const g = globalThis as QueueShim;
-        return g.__QUEUE_UTILS__?.readQueue?.() || [];
-    };
-    appendTask = (t: DelegationQueueTask) => {
-        const g = globalThis as QueueShim;
-        g.__QUEUE_UTILS__?.appendTask?.(t as unknown as GenericQueueTask);
-    };
-}
+let readQueue: () => DelegationQueueTask[] = () => {
+    const g = globalThis as QueueShim;
+    return g.__QUEUE_UTILS__?.readQueue?.() || [];
+};
+let appendTask: (t: DelegationQueueTask) => void = (t: DelegationQueueTask) => {
+    const g = globalThis as QueueShim;
+    g.__QUEUE_UTILS__?.appendTask?.(t as unknown as GenericQueueTask);
+};
+
+// Attempt dynamic import of the queue utils to override the global shim when available.
+const queueUtilsPath = path.resolve('scripts/delegation/queue-utils.ts');
+import(queueUtilsPath).then((mod) => {
+    const m: any = mod;
+    const read = m.readQueue ?? m.default?.readQueue;
+    const append = m.appendTask ?? m.default?.appendTask;
+    if (typeof read === 'function') readQueue = read;
+    if (typeof append === 'function') {
+        appendTask = (t: DelegationQueueTask) => append(t as unknown as GenericQueueTask);
+    }
+}).catch(() => {
+    // Keep the global shim defaults if dynamic import fails.
+});
 
 interface AnalysisIssue {
     file: string;
