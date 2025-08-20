@@ -24,7 +24,7 @@ interface State {
 }
 
 class EnhancedErrorBoundary extends React.Component<Props, State> {
-  private resetTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private _resetTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   constructor(props: Props) {
     super(props);
@@ -88,11 +88,11 @@ class EnhancedErrorBoundary extends React.Component<Props, State> {
   }
 
   resetErrorBoundary = () => {
-    if (this.resetTimeoutId) {
-      clearTimeout(this.resetTimeoutId);
+    if (this._resetTimeoutId) {
+      clearTimeout(this._resetTimeoutId);
     }
 
-    this.resetTimeoutId = setTimeout(() => {
+    this._resetTimeoutId = setTimeout(() => {
       this.setState({
         hasError: false,
         error: null,
