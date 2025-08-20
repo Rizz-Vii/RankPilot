@@ -103,7 +103,7 @@ export default function TeamReportsPage() {
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingReport, setEditingReport] = useState<Report | null>(null);
+  const [, setEditingReport] = useState<Report | null>(null);
 
   const [reportForm, setReportForm] = useState({
     title: "",
