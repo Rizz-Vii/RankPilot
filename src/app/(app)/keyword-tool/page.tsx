@@ -1,11 +1,10 @@
 ﻿// src/app/(app)/keyword-tool/page.tsx
 "use client";
 
-import Breadcrumb from "@/components/breadcrumb";
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { KeywordToolForm } from "@/components/forms/seo-forms";
 import LoadingState from "@/components/loading-state";
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   MobileResultsCard,
   MobileToolCard,
@@ -33,11 +32,10 @@ import { useToast } from "@/hooks/use-toast";
 import { getDemoData } from "@/lib/demo-data";
 import { db } from "@/lib/firebase";
 import { TimeoutError, withTimeout } from "@/lib/timeout";
-import { cn, copyToClipboard, safeErrorMessage, asError } from "@/lib/utils";
+import { cn, copyToClipboard, safeErrorMessage } from "@/lib/utils";
 // Use production AI service (with caching, quota, persistence)
 import type { KeywordSuggestionsResponse } from "@/lib/services/ai-service";
 import { fetchKeywordSuggestions } from "@/lib/services/ai-service";
-import { Badge } from "@/components/ui/badge";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import { useProvenance } from "@/hooks/useProvenance";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
@@ -119,7 +117,10 @@ const DesktopSkeletonTable = () => (
 
 const KeywordResults = ({ results }: { results: { suggestions: EnhancedKeywordData[]; relatedQueries?: string[] } }) => {
   const { toast } = useToast();
-  const copyAll = () => copyToClipboard(results.suggestions.map(k => k.keyword).join(", "));
+  const copyAll = () => {
+    copyToClipboard(results.suggestions.map(k => k.keyword).join(", "));
+    toast?.({ title: "Copied keywords", description: "Keywords copied to clipboard." });
+  };
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
       {/* Mobile */}
