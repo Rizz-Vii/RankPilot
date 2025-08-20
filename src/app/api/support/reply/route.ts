@@ -1,4 +1,4 @@
-import type { NextRequest} from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getLogger } from '@/lib/logging/app-logger';
 import nodemailer from "nodemailer";
@@ -22,8 +22,8 @@ function getTransport() {
         return nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } });
     }
     return {
-        sendMail: async (opts: any) => {
-            getLogger('support-reply').warn('email.send.fallback', { to: opts?.to, subject: opts?.subject });
+        sendMail: async (opts: { to?: string; subject?: string } = {}) => {
+            getLogger('support-reply').warn('email.send.fallback', { to: opts.to, subject: opts.subject });
             return { messageId: `dev-fallback-${Date.now()}` };
         },
     } as unknown as nodemailer.Transporter;
