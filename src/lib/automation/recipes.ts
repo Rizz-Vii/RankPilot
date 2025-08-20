@@ -2,7 +2,6 @@
 // Minimal scaffolding for Automation Phase – deterministic friendly & Firebase aware
 import { Timestamp, addDoc, collection, doc, getDoc, getDocs, limit, orderBy, query, updateDoc, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { fetchRewriteSourceContents } from './content-fetch';
 
 export type AutomationActionType =
     | 'runNeuroSEOAnalysis'
