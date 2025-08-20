@@ -63,7 +63,14 @@ const TEST_USERS = {
   }
 };
 
-async function seedUserProfile(user: any) {
+interface SeedUser {
+  email: string;
+  uid: string;
+  tier: string;
+  displayName: string;
+}
+
+async function seedUserProfile(user: SeedUser): Promise<void> {
   console.log(`🌱 Seeding user profile: ${user.email}`);
   
   try {
@@ -112,7 +119,7 @@ async function seedUserProfile(user: any) {
   }
 }
 
-async function seedUserData(user: any) {
+async function seedUserData(user: SeedUser): Promise<void> {
   const now = Timestamp.now();
   const pastMonth = Timestamp.fromDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
   
@@ -248,7 +255,7 @@ function getTierLinkCount(tier: string) {
   return counts[tier as keyof typeof counts] || 1;
 }
 
-async function main() {
+async function main(): Promise<void> {
   console.log(`
 🚀 RankPilot Complete Database Reset & Seeding
 ==============================================
