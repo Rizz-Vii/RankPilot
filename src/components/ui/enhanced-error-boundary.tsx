@@ -24,7 +24,7 @@ interface State {
 }
 
 class EnhancedErrorBoundary extends React.Component<Props, State> {
-  private resetTimeoutId: number | null = null;
+  private resetTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   constructor(props: Props) {
     super(props);
@@ -89,10 +89,10 @@ class EnhancedErrorBoundary extends React.Component<Props, State> {
 
   resetErrorBoundary = () => {
     if (this.resetTimeoutId) {
-      window.clearTimeout(this.resetTimeoutId);
+      clearTimeout(this.resetTimeoutId);
     }
 
-    this.resetTimeoutId = window.setTimeout(() => {
+    this.resetTimeoutId = setTimeout(() => {
       this.setState({
         hasError: false,
         error: null,
@@ -264,16 +264,16 @@ class EnhancedErrorBoundary extends React.Component<Props, State> {
 export function withErrorBoundary<P extends object>(
   Wrapped: ComponentType<P>,
   errorBoundaryProps?: Omit<Props, "children">
-) {
+): ComponentType<P> {
   const WrappedComponent = (props: P) => (
     <EnhancedErrorBoundary {...errorBoundaryProps}>
       <Wrapped {...props} />
     </EnhancedErrorBoundary>
   );
 
-  WrappedComponent.displayName = `withErrorBoundary(${Wrapped.displayName || Wrapped.name})`;
+  (WrappedComponent as any).displayName = `withErrorBoundary(${Wrapped.displayName || Wrapped.name})`;
 
-  return WrappedComponent;
+  return WrappedComponent as ComponentType<P>;
 }
 
 export default EnhancedErrorBoundary;
