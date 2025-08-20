@@ -1,8 +1,8 @@
-import "@/styles/globals.css";
-import { AuthProvider } from "@/context/AuthContext";
-import { cookies } from "next/headers";
 import { ClientLayout } from "@/components/client-layout";
+import { AuthProvider } from "@/context/AuthContext";
+import "@/styles/globals.css";
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
   title: "RankPilot - AI-Powered SEO Platform",
@@ -114,6 +114,11 @@ export default async function RootLayout({
         <AuthProvider>
           <ClientLayout>
             {children}
+            {/* Dev-only Agents feature toggle */}
+            {process.env.NODE_ENV === 'development' ? (
+              // dynamic import avoided; lightweight component
+              <div suppressHydrationWarning>{require('@/components/dev/AgentsToggle').AgentsToggle({})}</div>
+            ) : null}
             {/* DevListenerBadge temporarily disabled in server layout (dynamic ssr:false not allowed). Reintroduce inside a client component if needed. */}
           </ClientLayout>
         </AuthProvider>
