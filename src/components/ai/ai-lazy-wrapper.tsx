@@ -5,7 +5,8 @@
 
 'use client';
 
-import React, { Suspense, useEffect, useState, ReactNode } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { useAIComponentLoader, useProgressiveLoader } from '../../hooks/use-web-vitals';
 import { LoadingSpinner } from '../ui/loading-spinner';
 
