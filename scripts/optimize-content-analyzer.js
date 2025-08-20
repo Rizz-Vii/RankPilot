@@ -9,8 +9,6 @@
  * Target: Reduce 52s load time to under 30s
  */
 
-const { execSync } = require('child_process');
-
 console.log('🧠 Optimizing Content Analyzer performance...');
 
 // Step 1: Check AI component lazy loading
