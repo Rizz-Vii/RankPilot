@@ -24,12 +24,14 @@ export default function InvoicesPage(): JSX.Element {
   const live = useFinanceInvoiceMetrics(months);
   const { user } = useAuth();
   const userId = user?.uid;
-  const teamId = (user as any)?.teamId as string | undefined;
+  type UserWithTeam = { teamId?: string };
+  const teamId = (user as UserWithTeam | null | undefined)?.teamId;
   interface RevenueSnapshotLite { mrr: number; onTime: number; outstanding: number; ts: Date; period?: string; }
+  interface InvoiceRowLite { issuedAt?: { toDate?: () => Date }; paidAt?: { toDate?: () => Date } }
   const [revSnap, setRevSnap] = useState<RevenueSnapshotLite | null>(null);
   const [loadingSnap, setLoadingSnap] = useState(false);
   const { trigger, running } = useAutomationTrigger();
-  useEffect(()=> { if(!userId) return; setLoadingSnap(true); void (async()=> { try { const r = await fetchRecentFinanceRevenueSnapshots(userId, teamId,1); if(r.length){ const first:any = r[0]; setRevSnap({ mrr:first.mrr, onTime:first.onTimePct, outstanding:first.outstanding, ts:first.createdAt?.toDate?.()||new Date(), period:first.period }); } } finally { setLoadingSnap(false);} })(); }, [userId, teamId]);
+  useEffect(()=> { if(!userId) return; setLoadingSnap(true); void (async()=> { try { const r = await fetchRecentFinanceRevenueSnapshots(userId, teamId,1); if(r.length){ type InvoiceSnapshot = { mrr: number; onTimePct: number; outstanding: number; createdAt?: { toDate?: () => Date }; period?: string }; const first = r[0] as InvoiceSnapshot; setRevSnap({ mrr:first.mrr, onTime:first.onTimePct, outstanding:first.outstanding, ts:first.createdAt?.toDate?.()||new Date(), period:first.period }); } } finally { setLoadingSnap(false);} })(); }, [userId, teamId]);
   const { data: mock } = useMockDomainMetrics('finance', allowFinanceMocks());
   const data = (live.kpis.length ? live : { kpis: allowFinanceMocks()? (mock?.kpis || []) : [], rows: [], loading: false });
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
