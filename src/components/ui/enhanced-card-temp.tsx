@@ -26,7 +26,7 @@ import {
   EnhancedCardHeader,
   EnhancedCardTitle,
 } from "@/components/ui/enhanced-card";
-import { Loader2, Search, Sparkles } from "lucide-react";
+import { Search, Sparkles } from "lucide-react";
 import { useHydration } from "@/components/HydrationContext";
 import { useIsMobile } from "@/lib/mobile-responsive-utils";
 
