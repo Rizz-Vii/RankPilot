@@ -14,19 +14,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   Search, 
-  Globe, 
   Clock, 
   FileText, 
   AlertCircle, 
-  CheckCircle, 
-  Brain,
   Download,
   RefreshCw,
   Zap,
   Link as LinkIcon,
-  Image as ImageIcon,
-  Code,
-  BarChart3
+  Image as ImageIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
@@ -130,9 +125,7 @@ export default function NeuralCrawlerPage() {
     }
   }, [user]);
 
-  // lightweight counters for aggregate vs legacy resolution (dev telemetry only)
-  let aggHits = 0;
-  let legacyFallbacks = 0;
+  // lightweight counters for aggregate vs legacy resolution (dev telemetry only) - omitted (previously unused)
 
   // When a currentResult is not yet set but we have history and read-cutover flag on, attempt to hydrate
   useEffect(() => {
