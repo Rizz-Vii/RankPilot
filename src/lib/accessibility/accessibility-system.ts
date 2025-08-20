@@ -45,12 +45,6 @@ export interface AccessibilityAnnouncement {
     timestamp: number;
 }
 
-// Focus management interface
-export interface FocusTarget {
-    element: HTMLElement;
-    priority: number;
-    context?: string;
-}
 
 // Voice command interface
 export interface VoiceCommand {
