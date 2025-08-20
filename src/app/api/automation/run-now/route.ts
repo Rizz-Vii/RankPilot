@@ -22,11 +22,20 @@ interface JournalEntryDoc { period?: string; lines?: JournalLine[]; }
 
 type ActionResult = { action: string; status: 'ok' | 'error' | 'skipped'; message?: string };
 
-function errMsg(e: unknown, fallback = 'error') { return (typeof e === 'object' && e && 'message' in e) ? String((e as any).message) : fallback; }
+function errMsg(e: unknown, fallback = 'error'): string {
+    if (e && typeof e === 'object' && 'message' in e) {
+        try {
+            return String((e as any).message);
+        } catch {
+            return fallback;
+        }
+    }
+    return fallback;
+}
 
-export const POST = withProvenance(async function POST(req: Request) {
+export const POST = withProvenance(async function POST(req: Request): Promise<NextResponse> {
     try {
-        const body = await req.json().catch(() => ({}));
+        const body = (await req.json().catch(() => ({}))) as { recipeId?: string | undefined };
         const { recipeId } = body;
         if (!recipeId) return NextResponse.json(enforceProvenance({ success: false, error: 'recipeId required', provenance: 'synthetic' }, { path: 'automation/run-now', note: 'validation' }), { status: 400 });
         const ref = adminDb.collection('automationRecipes').doc(recipeId);
