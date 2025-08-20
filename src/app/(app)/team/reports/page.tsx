@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { useAuth } from "@/context/AuthContext";
-import { useSubscription } from "@/hooks/useSubscription";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -46,13 +45,10 @@ import {
   Download,
   Share2,
   Calendar,
-  TrendingUp,
   MoreVertical,
   Edit,
   Trash2,
   Eye,
-  ArrowLeft,
-  BarChart3,
   Users,
   Clock,
 } from "lucide-react";
@@ -100,7 +96,6 @@ const statusConfig = {
 
 export default function TeamReportsPage() {
   const { user, loading: authLoading } = useAuth();
-  const { subscription, canUseFeature } = useSubscription();
   const router = useRouter();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
