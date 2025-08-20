@@ -99,7 +99,7 @@ export const getErrorMessage = (error: unknown): string => {
     return 'An unexpected error occurred';
 };
 
-export const showChatError = (error: unknown) => {
+export const showChatError = (error: unknown): void => {
     const message = getErrorMessage(error);
     console.error('Chat Error:', message);
     // toast({
@@ -109,7 +109,7 @@ export const showChatError = (error: unknown) => {
     // });
 };
 
-export const showChatSuccess = (message: string) => {
+export const showChatSuccess = (message: string): void => {
     console.log('Chat Success:', message);
     // toast({
     //   title: 'Success',
