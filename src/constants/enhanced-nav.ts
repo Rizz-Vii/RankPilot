@@ -32,7 +32,6 @@ import {
   PenTool,
   Briefcase,
   DollarSign,
-  Receipt,
   CreditCard,
   FileText,
   Activity,
