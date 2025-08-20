@@ -1,4 +1,3 @@
-import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { TeamRateLimitError, applyTeamRateLimit } from '@/lib/rate-limit/team-rate-limit';
@@ -12,7 +11,7 @@ const PROJECT = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'rankpilot-h3jpc'
 const FUNCTION_NAME = 'runSeoAudit';
 const FUNCTION_URL = `https://${REGION}-${PROJECT}.cloudfunctions.net/${FUNCTION_NAME}`;
 
-export const POST = withProvenance(async function (req: NextRequest) {
+export const POST = withProvenance(async function (req: Request) {
     try {
         const body = await req.json();
 
