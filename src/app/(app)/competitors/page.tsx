@@ -234,9 +234,9 @@ export default function CompetitorsPage() {
   const [report, setReport] = useState<NeuroSEOReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const [, setAnalysisProgress] = useState(0);
-  const [, setCurrentEngine] = useState<string>("");
-  const [, setCompletedEngines] = useState<string[]>([]);
+  const [, _setAnalysisProgress] = useState(0);
+  const [, _setCurrentEngine] = useState<string>("");
+  const [, _setCompletedEngines] = useState<string[]>([]);
   const { toast } = useToast();
 
   // Form state (managed by CompetitorAnalysisForm)
