@@ -18,7 +18,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toJsDate } from '@/lib/utils';
 import { ToolPageHeader } from '@/components/tool-page-header';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -44,7 +44,7 @@ export default function SettingsPage() {
 
     const formatRelative = (date: Date) => formatDistanceToNow(date, { addSuffix: true });
 
-    React.useEffect(() => {
+    useEffect(() => {
         setHydrated(true);
         if (typeof window !== 'undefined') {
             const searchParams = new URLSearchParams(window.location.search);
@@ -53,7 +53,7 @@ export default function SettingsPage() {
         }
     }, []);
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (typeof window === 'undefined') return;
         const url = new URL(window.location.href);
         url.searchParams.set('tab', activeTab);
@@ -61,7 +61,7 @@ export default function SettingsPage() {
     }, [activeTab]);
 
         // Initialize preference toggles & theme from profile once hydrated
-        React.useEffect(() => {
+        useEffect(() => {
             if (!hydrated || !profile?.preferences) return;
             const prefs = (profile.preferences as Partial<ThemePreferences>) || {};
             const initPrefs: Partial<ThemePreferences> = {};
@@ -80,7 +80,7 @@ export default function SettingsPage() {
         }, [hydrated, profile, setPreferences, setIsVoiceEnabled, setTheme]);
 
         // Persist accessibility/theme preferences & voice commands (debounced) via API with offline queue fallback
-        React.useEffect(() => {
+        useEffect(() => {
             if (!user || !hydrated) return;
             const timeout = setTimeout(async () => {
                 try {
@@ -123,7 +123,7 @@ export default function SettingsPage() {
     }, [preferences.highContrast, preferences.reducedMotion, preferences.fontSize, preferences.colorBlindnessSupport, theme, isVoiceEnabled, user, hydrated]);
 
             // Persist language preference via API with offline queue fallback
-            React.useEffect(() => {
+            useEffect(() => {
                 if (!user || !hydrated) return;
                 const timeout = setTimeout(async () => {
                     try {
