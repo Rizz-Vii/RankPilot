@@ -1,4 +1,4 @@
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import OpenAI from 'openai';
@@ -100,9 +100,9 @@ function recordOpenAIFailure() {
     }
 }
 
-const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
+const sleep = (ms: number): Promise<void> => new Promise((res) => setTimeout(res, ms));
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<Response> {
     const start = Date.now();
     try {
         const authHeader = req.headers.get('authorization');
