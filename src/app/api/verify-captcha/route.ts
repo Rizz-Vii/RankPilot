@@ -3,7 +3,12 @@ import { NextResponse, type NextRequest } from 'next/server';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-export async function POST(request: NextRequest) {
+interface RecaptchaVerifyResponse {
+  success?: boolean;
+  'error-codes'?: string[];
+}
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body = await request.json();
     const token = body?.token as string | undefined;
@@ -26,7 +31,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'captcha_provider_error' }, { status: resp.status });
     }
 
-    const data = (await resp.json()) as { success?: boolean; 'error-codes'?: string[] };
+    const data = (await resp.json()) as RecaptchaVerifyResponse;
     if (!data?.success) {
       return NextResponse.json(
         { error: 'captcha_verification_failed', details: data?.['error-codes'] ?? null },
@@ -35,8 +40,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: 'invalid_request', message }, { status: 400 });
   }
 }
