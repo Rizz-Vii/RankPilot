@@ -66,8 +66,6 @@ export function Phase5IntegrationHub(): JSX.Element {
 
     // Enterprise system instances
     const [apm] = useState(() => new EnterpriseAPM());
-    const [_anomalyDetector] = useState(() => new AIAnomalyDetector());
-    const [_globalOptimizer] = useState(() => new GlobalInfrastructureOptimizer());
     const [devAutomation] = useState(() => new AIDevAutomation());
 
     const initializeEnterpriseSystems = useCallback(async () => {
