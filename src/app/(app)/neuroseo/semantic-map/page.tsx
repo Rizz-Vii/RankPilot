@@ -90,7 +90,7 @@ export default function SemanticMapPage() {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [currentResult, setCurrentResult] = useState<SemanticMapResult | null>(null);
   const [selectedTab, setSelectedTab] = useState("overview");
-  const { provenance, setProvenance, markLive, markFallback } = useProvenance();
+  const { provenance, markLive, markFallback } = useProvenance();
   const [adoptionPct, setAdoptionPct] = useState<number | null>(null);
   const [adoptionLoading, setAdoptionLoading] = useState(false);
   useEffect(() => {
