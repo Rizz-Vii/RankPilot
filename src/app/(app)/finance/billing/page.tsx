@@ -17,8 +17,10 @@ import { useEffect, useState } from 'react';
 
 export default function BillingOverviewPage() {
   const [months, setMonths] = useState(6);
-  const live = useFinanceInvoiceMetrics(months) as any;
-  const { data: mock } = useMockDomainMetrics('finance', allowFinanceMocks()) as any;
+  type LiveRaw = { kpis?: unknown[]; quotas?: unknown[]; rows?: unknown[]; loading?: boolean };
+  type MockResp = { kpis?: unknown[]; quotas?: unknown[]; [k: string]: unknown } | undefined;
+  const live = useFinanceInvoiceMetrics(months) as unknown as LiveRaw;
+  const { data: mock } = useMockDomainMetrics('finance', allowFinanceMocks()) as unknown as { data?: MockResp };
   interface FinanceKPI { key: string; label: string; value: number; delta?: number; trend?: number[]; intent?: 'success' | 'neutral' | 'warning' | 'danger' | 'accent'; }
   interface FinanceQuota { key: string; label: string; used: number; limit: number; }
   interface InvoiceLike { period: string; planTier: string; amount: number; status: string; issuedAt?: { toDate?: () => Date }; paidAt?: { toDate?: () => Date } | null }
@@ -39,7 +41,7 @@ export default function BillingOverviewPage() {
   };
   const normalizeLive = (): FinanceDataShape => {
     // Accept SDK-provided metric objects (unknown shape) and narrow field-by-field.
-    const rawKpis: unknown[] = Array.isArray((live as any).kpis) ? (live as any).kpis as unknown[] : [];
+    const rawKpis: unknown[] = Array.isArray(live.kpis) ? (live.kpis as unknown[]) : [];
     const kpis: FinanceKPI[] = rawKpis.map((k: unknown) => {
       const rec = k as Record<string, unknown>;
       const key = typeof rec['key'] === 'string' ? rec['key'] : 'kpi';
@@ -53,7 +55,7 @@ export default function BillingOverviewPage() {
       })();
       return { key: String(key), label: String(label), value: Number(value), delta, trend, intent };
     });
-    const quotasSrc: unknown[] = Array.isArray((live as any).quotas) ? (live as any).quotas as unknown[] : [];
+    const quotasSrc: unknown[] = Array.isArray(live.quotas) ? (live.quotas as unknown[]) : [];
     const quotas: FinanceQuota[] = quotasSrc.map((q: unknown) => {
       const rec = q as Record<string, unknown>;
       const key = typeof rec['key'] === 'string' ? rec['key'] : 'quota';
@@ -62,14 +64,14 @@ export default function BillingOverviewPage() {
       const limit = typeof rec['limit'] === 'number' ? (rec['limit'] as number) : Number(rec['limit'] as unknown) || 0;
       return { key: String(key), label: String(label), used: Number(used), limit: Number(limit) };
     });
-    const rowsSrc: unknown[] = Array.isArray((live as any).rows) ? (live as any).rows as unknown[] : [];
+    const rowsSrc: unknown[] = Array.isArray(live.rows) ? (live.rows as unknown[]) : [];
     const rows: InvoiceLike[] = rowsSrc.map(adaptInvoice).filter((x): x is InvoiceLike => x !== null);
     return { kpis, quotas, rows, loading: !!live.loading };
   };
-  const data: FinanceDataShape = (live as any)?.kpis?.length ? normalizeLive() : { kpis: allowFinanceMocks() && mock ? (mock.kpis as FinanceKPI[]) : [], quotas: allowFinanceMocks() && mock && mock.quotas ? (mock.quotas as FinanceQuota[]) : [], rows: [], loading: false };
+  const data: FinanceDataShape = Array.isArray(live.kpis) && live.kpis.length ? normalizeLive() : { kpis: allowFinanceMocks() && mock ? (mock.kpis as FinanceKPI[]) : [], quotas: allowFinanceMocks() && mock && mock.quotas ? (mock.quotas as FinanceQuota[]) : [], rows: [], loading: false };
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(() => { trackDashboardView('finance'); }, []);
-  useEffect(() => { if ((live as any)?.kpis?.length) markLive(); else markFallback(); }, [(live as any)?.kpis?.length, markLive, markFallback]);
+  useEffect(() => { if (Array.isArray(live.kpis) && live.kpis.length) markLive(); else markFallback(); }, [live.kpis?.length, markLive, markFallback]);
   return (
     <FeatureGate feature="finance_billing_overview" requiredTier="starter" showUpgrade>
       <div className="p-6 space-y-8">
@@ -103,8 +105,8 @@ export default function BillingOverviewPage() {
               { key:'planTier', header:'Tier'},
               { key:'amount', header:'Amount'},
               { key:'status', header:'Status'},
-              { key:'issuedAt', header:'Issued', render:(r:any)=> r.issuedAt?.toDate ? r.issuedAt.toDate().toISOString().slice(0,10) : '-' },
-              { key:'paidAt', header:'Paid', render:(r:any)=> r.paidAt?.toDate ? r.paidAt.toDate().toISOString().slice(0,10) : '-' }
+              { key:'issuedAt', header:'Issued', render:(r: InvoiceLike)=> r.issuedAt?.toDate ? r.issuedAt.toDate().toISOString().slice(0,10) : '-' },
+              { key:'paidAt', header:'Paid', render:(r: InvoiceLike)=> r.paidAt?.toDate ? r.paidAt.toDate().toISOString().slice(0,10) : '-' }
             ]}
             rows={data.rows}
             loading={data.loading}
