@@ -17,9 +17,11 @@
  * Integrates: Existing enterprise-grade code quality framework from technical analysis sessions
  */
 
+'use strict';
+
+/* LINT: added 'use strict' and removed unused execSync import for lint/unused-vars */
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 // Color codes for console output
 const colors = {
