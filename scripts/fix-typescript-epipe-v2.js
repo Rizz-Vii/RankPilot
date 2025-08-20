@@ -5,7 +5,7 @@
  * Enhanced version with better process handling and error recovery
  */
 
-const { execSync, spawn } = require('child_process');
+const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
