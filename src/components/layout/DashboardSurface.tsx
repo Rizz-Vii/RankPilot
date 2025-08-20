@@ -1,6 +1,5 @@
 "use client";
 import React from 'react';
-import { useSuiteAccent } from '@/context/SuiteAccentContext';
 import { cn } from '@/lib/utils';
 
 type SurfaceVariant = 'default' | 'subtle' | 'elevated';
@@ -20,8 +19,7 @@ export interface DashboardSurfaceProps {
   [key: string]: unknown; // allow passing arbitrary DOM props
 }
 
-export function DashboardSurface({ as:Tag='div', className, children, fullHeight, bleed, ariaLabel, variant='default', suite, ...rest }: DashboardSurfaceProps){
-
+export function DashboardSurface({ as: Tag = 'div', className, children, fullHeight, bleed, ariaLabel, variant = 'default', suite: _suite, ...rest }: DashboardSurfaceProps) {
 
   const variantClasses = variant === 'subtle'
     ? 'bg-background/50'
@@ -30,21 +28,22 @@ export function DashboardSurface({ as:Tag='div', className, children, fullHeight
       : 'bg-background/60';
   // Removed full-surface suite gradient; keep neutral subtle background.
   const suiteClasses = 'relative overflow-hidden';
-  return React.createElement(
-  Tag as any,
-    {
-      className: cn(
-    'rounded-xl backdrop-blur-sm supports-[backdrop-filter]:bg-background/50 shadow-sm',
+  const Element = Tag as any;
+  return (
+    <Element
+      className={cn(
+        'rounded-xl backdrop-blur-sm supports-[backdrop-filter]:bg-background/50 shadow-sm',
         variantClasses,
         suiteClasses,
         'transition-colors',
         fullHeight && 'min-h-[calc(100vh-8rem)]',
         bleed && '-mx-4 md:mx-0',
         className
-      ),
-      'aria-label': ariaLabel,
-      ...rest
-    },
-    children
+      )}
+      aria-label={ariaLabel}
+      {...(rest as Record<string, unknown>)}
+    >
+      {children}
+    </Element>
   );
 }
