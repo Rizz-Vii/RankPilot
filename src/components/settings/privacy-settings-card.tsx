@@ -38,7 +38,7 @@ export interface PrivacySettingsCardProps {
 export default function PrivacySettingsCard({
   user,
   profile,
-}: PrivacySettingsCardProps) {
+}: PrivacySettingsCardProps): JSX.Element {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const prof: UserProfile | undefined = asUserProfile(profile);
@@ -52,7 +52,7 @@ export default function PrivacySettingsCard({
     prof?.privacy?.activityTracking ?? true
   );
 
-  const handlePrivacyUpdate = async (setting: string, value: boolean) => {
+  const handlePrivacyUpdate = async (setting: string, value: boolean): Promise<void> => {
     setIsLoading(true);
     try {
       const userDocRef = doc(db, "users", user.uid);
@@ -76,7 +76,7 @@ export default function PrivacySettingsCard({
     }
   };
 
-  const handleDataExport = async () => {
+  const handleDataExport = async (): Promise<void> => {
     try {
       setIsLoading(true);
       const functions = getFunctions();
@@ -109,7 +109,7 @@ export default function PrivacySettingsCard({
     }
   };
 
-  const handleAccountDeletion = async () => {
+  const handleAccountDeletion = async (): Promise<void> => {
     try {
       setIsLoading(true);
       const functions = getFunctions();
