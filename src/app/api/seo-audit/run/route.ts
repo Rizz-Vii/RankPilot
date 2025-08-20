@@ -1,4 +1,4 @@
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { enforceTeamRateLimit, TeamRateLimitError, applyTeamRateLimit } from '@/lib/rate-limit/team-rate-limit';
@@ -12,10 +12,9 @@ const PROJECT = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'rankpilot-h3jpc'
 const FUNCTION_NAME = 'runSeoAudit';
 const FUNCTION_URL = `https://${REGION}-${PROJECT}.cloudfunctions.net/${FUNCTION_NAME}`;
 
-export const POST = withProvenance(async function POST(req: Request) {
-    const nreq = req as NextRequest;
+export const POST = withProvenance(async function POST(req: NextRequest) {
     try {
-        const body = await nreq.json();
+        const body = await req.json();
 
         // Basic validation
         if (!body || typeof body.url !== 'string') {
@@ -28,7 +27,7 @@ export const POST = withProvenance(async function POST(req: Request) {
             try {
                 const res = await applyTeamRateLimit(teamId);
                 if (res && res.allowed) {
-                    (nreq as any)._teamRateHeaders = { ...res.headers, 'X-RateLimit-Policy': 'bucket' };
+                    (req as any)._teamRateHeaders = { ...res.headers, 'X-RateLimit-Policy': 'bucket' };
                 } else if (res && !res.allowed) {
                     return NextResponse.json(enforceProvenance({ success: false, error: 'rate_limited', retryAfter: res.retryAfterSeconds, provenance: 'synthetic' }, { path: 'seo-audit/run', note: 'rate_limit' }), { status: 429, headers: { ...res.headers, 'X-RateLimit-Policy': 'bucket' } });
                 }
@@ -39,7 +38,7 @@ export const POST = withProvenance(async function POST(req: Request) {
             }
         }
         // Forward request in callable format ({data: {...}})
-        const token = nreq.headers.get('authorization');
+        const token = req.headers.get('authorization');
         const cfResp = await fetch(FUNCTION_URL, {
             method: 'POST',
             headers: {
@@ -58,7 +57,7 @@ export const POST = withProvenance(async function POST(req: Request) {
         const json = await cfResp.json();
         const data = json?.result || json;
         const base = NextResponse.json(enforceProvenance({ success: true, data, provenance: 'live' }, { path: 'seo-audit/run' }), { status: 200 });
-        const rateHeaders = (nreq as any)._teamRateHeaders;
+        const rateHeaders = (req as any)._teamRateHeaders;
         if (rateHeaders) {
             Object.entries(rateHeaders).forEach(([k, v]) => base.headers.set(k, v as string));
         }
