@@ -1,5 +1,4 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { enforceProvenanceOnChunk } from '@/lib/middleware/provenance';
@@ -17,7 +16,7 @@ function estimateTokens(text: string): number {
     return Math.ceil(words * 1.3);
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<Response> {
     const start = Date.now();
     try {
         const authHeader = req.headers.get('authorization');
@@ -54,7 +53,7 @@ export async function POST(req: NextRequest) {
                     }
                 }
             }
-        } catch { /* ignore */ }
+        } catch (_err) { /* ignore */ }
 
         // Determine session
         let currentSessionId = sessionId || '';
