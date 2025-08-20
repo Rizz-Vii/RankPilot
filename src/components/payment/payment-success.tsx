@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { updateUserSubscription } from "@/lib/subscription";
 import confetti from "canvas-confetti";
 
-export default function PaymentSuccess() {
+export default function PaymentSuccess(): JSX.Element {
   const [emailSent, setEmailSent] = useState(false);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
 
@@ -72,7 +72,7 @@ export default function PaymentSuccess() {
     return () => clearTimeout(timer);
   }, [user, plan, emailSent, sendConfirmationEmail]);
 
-  const downloadInvoice = async () => {
+  const downloadInvoice = useCallback(async () => {
     try {
       setInvoiceLoading(true);
       // Generate and download invoice
@@ -83,17 +83,22 @@ export default function PaymentSuccess() {
     } finally {
       setInvoiceLoading(false);
     }
-  };
+  }, []);
 
   // Semantic color mapping (replaces raw palette utilities)
   const planDetails = {
     starter: { name: "Starter", color: "bg-primary text-primary-foreground" },
-    agency: { name: "agency", color: "bg-accent text-accent-foreground" },
+    agency: { name: "Agency", color: "bg-accent text-accent-foreground" },
     enterprise: { name: "Enterprise", color: "bg-warning text-warning-foreground" },
   } as const;
 
-  const currentPlan =
-    planDetails[plan as keyof typeof planDetails] || planDetails.agency;
+  const planKey = plan as keyof typeof planDetails;
+  const currentPlan = planDetails[planKey] ?? planDetails.agency;
+
+  const nextBillingDate = useMemo(() => {
+    const days = cycle === "yearly" ? 365 : 30;
+    return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toLocaleDateString();
+  }, [cycle]);
 
   return (
   <div className="min-h-screen bg-gradient-to-br from-success/10 via-background to-success/10 py-8">
@@ -203,14 +208,7 @@ export default function PaymentSuccess() {
                     <div>
                       <p className="font-medium">Next Billing Date</p>
                       <p className="text-sm text-muted-foreground">
-                        {new Date(
-                          Date.now() +
-                            (cycle === "yearly" ? 365 : 30) *
-                              24 *
-                              60 *
-                              60 *
-                              1000
-                        ).toLocaleDateString()}
+                        {nextBillingDate}
                       </p>
                     </div>
                   </div>
