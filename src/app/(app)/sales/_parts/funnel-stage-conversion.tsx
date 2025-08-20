@@ -2,10 +2,16 @@
 import { useSalesContext } from './sales-context';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LabelList, Cell } from 'recharts';
 
+interface FunnelEntry {
+  stage: string;
+  count: number;
+  conversion?: number | string | null;
+  [key: string]: unknown;
+}
 interface Props { onStageClick?: (stage: string) => void }
 export default function FunnelStageConversion({ onStageClick }: Props): JSX.Element {
   const { data } = useSalesContext();
-  const funnel = data?.funnel || [];
+  const funnel: FunnelEntry[] = data?.funnel || [];
   return (
     <div className="rounded-xl border p-4 bg-gradient-to-br from-background to-muted/30 h-[260px] flex flex-col">
       <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Stage Conversion Funnel</h3>
@@ -19,8 +25,9 @@ export default function FunnelStageConversion({ onStageClick }: Props): JSX.Elem
               dataKey="count"
               radius={4}
               fill="hsl(var(--primary)/0.3)"
-              onClick={(d: any) => {
-                const stage = d?.payload?.stage ?? d?.stage;
+              onClick={(d: unknown) => {
+                const payload = (d as { payload?: FunnelEntry }).payload ?? (d as FunnelEntry | undefined);
+                const stage = payload?.stage;
                 if (onStageClick && typeof stage === 'string') onStageClick(stage);
               }}
               cursor={onStageClick ? 'pointer' : 'default'}
@@ -31,7 +38,7 @@ export default function FunnelStageConversion({ onStageClick }: Props): JSX.Elem
                 formatter={(v: unknown) => `${String(v)}%`}
                 className="text-[10px] fill-current"
               />
-              {funnel.map((f: any, i: number) => (
+              {funnel.map((f: FunnelEntry, i: number) => (
                 <Cell
                   key={f?.stage ?? i}
                   fill={`hsl(var(--primary)/${0.15 + (0.6 * (1 - i / funnel.length))})`}
