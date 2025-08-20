@@ -269,17 +269,17 @@ export default function ContentAnalyzerPage() {
 
       // Save to Firestore (sanitize undefined nested fields)
       if (user) {
-        const sanitize = (obj: any): any => {
+        const sanitize = (obj: unknown): unknown => {
           if (obj === null || typeof obj !== 'object') return obj;
           if (Array.isArray(obj)) return obj.map(sanitize);
-          const out: Record<string, any> = {};
-          Object.entries(obj).forEach(([k, v]) => {
+          const out: Record<string, unknown> = {};
+          Object.entries(obj as Record<string, unknown>).forEach(([k, v]) => {
             if (v === undefined) return; // skip undefined
             out[k] = sanitize(v);
           });
           return out;
         };
-        const safeReport: any = sanitize(mockReport);
+        const safeReport: Record<string, unknown> = sanitize(mockReport) as Record<string, unknown>;
         await addDoc(collection(db, "seoAudits"), {
           userId: user.uid,
           url: url,
@@ -509,7 +509,7 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
               />
               <XAxis dataKey="score" type="number" hide />
               <ChartTooltip
-                content={(props: any) => <ChartTooltipContent {...(props as any)} />}
+                content={(props: unknown) => <ChartTooltipContent {...(props as unknown as Record<string, unknown>)} />}
               />
               <Bar dataKey="score" radius={5} />
             </BarChart>
@@ -529,8 +529,8 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
             >
               <PieChart>
                 <ChartTooltip
-                  content={(props: any) => (
-                    <ChartTooltipContent {...(props as any)} nameKey="name" hideLabel />
+                  content={(props: unknown) => (
+                    <ChartTooltipContent {...(props as unknown as Record<string, unknown>)} nameKey="name" hideLabel />
                   )}
                 />
                 <Pie data={imageData} dataKey="value">
