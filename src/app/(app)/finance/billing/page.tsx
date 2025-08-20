@@ -35,8 +35,8 @@ export default function BillingOverviewPage() {
       planTier: String(rec['planTier']),
       amount: typeof rec['amount'] === 'number' ? (rec['amount'] as number) : 0,
       status: typeof rec['status'] === 'string' ? String(rec['status']) : 'pending',
-      issuedAt: rec['issuedAt'] && typeof rec['issuedAt'] === 'object' ? (rec['issuedAt'] as any) : undefined,
-      paidAt: rec['paidAt'] && typeof rec['paidAt'] === 'object' ? (rec['paidAt'] as any) : undefined
+      issuedAt: rec['issuedAt'] && typeof rec['issuedAt'] === 'object' ? (rec['issuedAt'] as { toDate?: () => Date }) : undefined,
+      paidAt: rec['paidAt'] && typeof rec['paidAt'] === 'object' ? (rec['paidAt'] as { toDate?: () => Date }) : undefined
     };
   };
   const normalizeLive = (): FinanceDataShape => {
