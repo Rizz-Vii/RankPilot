@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { UNIFIED_TEST_USERS } from "./unified-test-users";
 import { EnhancedAuth } from "./enhanced-auth";
+import { UNIFIED_TEST_USERS } from "./unified-test-users";
 
 /**
  * User Experience - Authentication & Access Tests
@@ -46,8 +46,9 @@ test.describe('User Experience - Authentication & Access', () => {
             // Free users should not access premium features
             await page.goto('/neuroseo/advanced');
             await expect(page.locator('[data-testid="upgrade-prompt"]')).toBeVisible();
-        } catch (error: any) {
-            console.warn('Free tier access test failed:', error.message);
+        } catch (error: unknown) {
+            const msg = (error && typeof error === 'object' && 'message' in error) ? (error as { message: string }).message : String(error);
+            console.warn('Free tier access test failed:', msg);
         }
     });
 
@@ -59,8 +60,9 @@ test.describe('User Experience - Authentication & Access', () => {
             await page.goto('/profile');
             await expect(page.locator('[data-testid="user-profile"]')).toBeVisible();
             await expect(page.locator('[data-testid="subscription-info"]')).toBeVisible();
-        } catch (error: any) {
-            console.warn('Profile test failed:', error.message);
+        } catch (error: unknown) {
+            const msg = (error && typeof error === 'object' && 'message' in error) ? (error as { message: string }).message : String(error);
+            console.warn('Profile test failed:', msg);
         }
     });
 
@@ -71,8 +73,9 @@ test.describe('User Experience - Authentication & Access', () => {
 
             await page.click('[data-testid="logout-button"]');
             await expect(page.url()).toContain('login');
-        } catch (error: any) {
-            console.warn('Logout test failed:', error.message);
+        } catch (error: unknown) {
+            const msg = (error && typeof error === 'object' && 'message' in error) ? (error as { message: string }).message : String(error);
+            console.warn('Logout test failed:', msg);
         }
     });
 
@@ -84,8 +87,9 @@ test.describe('User Experience - Authentication & Access', () => {
             await page.goto('/upgrade');
             await expect(page.locator('[data-testid="pricing-plans"]')).toBeVisible();
             await expect(page.locator('[data-testid="upgrade-buttons"]')).toBeVisible();
-        } catch (error: any) {
-            console.warn('Upgrade test failed:', error.message);
+        } catch (error: unknown) {
+            const msg = (error && typeof error === 'object' && 'message' in error) ? (error as { message: string }).message : String(error);
+            console.warn('Upgrade test failed:', msg);
         }
     });
 });

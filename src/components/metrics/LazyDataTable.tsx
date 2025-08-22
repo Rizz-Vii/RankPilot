@@ -17,7 +17,8 @@ interface LazyDataTableProps<T> {
 const ROW_HEIGHT = 40;
 
 // Simple virtual scroll table (fixed row height) to avoid large DOM
-export function LazyDataTable<T extends Record<string, unknown>>({
+// Relax generic constraint; caller may pass unknown records (we only index by key for fallback render)
+export function LazyDataTable<T extends unknown>({
   columns,
   rows,
   loading,

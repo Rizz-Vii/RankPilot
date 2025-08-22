@@ -1,6 +1,5 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -8,30 +7,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query } from "firebase/firestore";
 import {
-  BarChart,
+  Activity,
+  FileText,
+  Search,
+  Users,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import {
   Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
-import {
-  TrendingUp,
-  Search,
-  FileText,
-  Users,
-  Calendar,
-  Activity,
-} from "lucide-react";
-import { collection, query, orderBy, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 
 interface MonthlyActivity { name: string; users: number; activities: number }
 interface ToolUsage { name: string; value: number; color: string }
@@ -52,7 +50,7 @@ export default function AdminAnalytics() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchAnalytics();
+    void fetchAnalytics();
   }, []);
 
   async function fetchAnalytics() {
@@ -101,7 +99,7 @@ export default function AdminAnalytics() {
         toolUsage,
         userGrowth
       });
-    } catch (e) {
+    } catch {
       // Silent fallback – keep deterministic for admin view
       setAnalytics({
         totalUsers: 0,

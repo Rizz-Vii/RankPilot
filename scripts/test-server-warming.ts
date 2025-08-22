@@ -3,8 +3,6 @@
  * Tests the server warmup functionality specifically
  */
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import { chromium } from "@playwright/test";
 
 type RouteWarmResult = {
@@ -128,7 +126,7 @@ async function testServerWarming(): Promise<WarmingSummary> {
       });
       performanceTestTime = Date.now() - performanceTestStart;
       console.log(`⚡ Performance test completed in ${performanceTestTime}ms`);
-    } catch (error: unknown) {
+  } catch {
       console.log("⚠️  Performance test timed out, but warming data is still valid");
       performanceTestTime = -1; // Indicate timeout
     }
@@ -195,8 +193,8 @@ if (require.main === module) {
       console.log("\n✨ Warming test execution completed.");
       process.exit(results.success ? 0 : 1);
     })
-    .catch((error) => {
-      console.error("\n💥 Warming test failed:", error);
+    .catch((_error) => {
+      console.error("\n💥 Warming test failed:", _error);
       process.exit(1);
     });
 }

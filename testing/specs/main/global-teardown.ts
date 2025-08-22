@@ -22,12 +22,18 @@ export default async function globalTeardown() {
           try {
             process.kill(pid, 'SIGTERM');
             console.log('✅ Sent SIGTERM to dev server.');
-          } catch (e: any) {
-            console.warn('⚠️ Failed to SIGTERM dev server:', e.message);
+          } catch (e: unknown) {
+            const msg = (e && typeof e === 'object' && 'message' in e)
+              ? String((e as { message?: unknown }).message)
+              : String(e);
+            console.warn('⚠️ Failed to SIGTERM dev server:', msg);
           }
         }
-      } catch (e: any) {
-        console.warn('⚠️ Could not parse dev server PID file:', e.message);
+      } catch (e: unknown) {
+        const msg = (e && typeof e === 'object' && 'message' in e)
+          ? String((e as { message?: unknown }).message)
+          : String(e);
+        console.warn('⚠️ Could not parse dev server PID file:', msg);
       }
     }
   }

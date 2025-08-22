@@ -6,6 +6,44 @@ Date: 2025-08-19
 
 Deliver a production-hardened AI-native SEO platform with multi-agent developer acceleration, full provenance governance, data integrity enforcement, and scalable observability.
 
+## Focus Guardrails (Scope Contract)
+
+This repository is in a convergence phase. Only work that directly advances Phase 1 exit criteria or the minimal Phase 2 foundations (Dev Supervisor loop, BI snapshot, metrics breadth) is permissible until Phase 1 is GREEN for 3 consecutive days.
+
+Do NOW:
+
+- Phase 1 governance (provenance, forbidden-field guard, team rate limit, logger coverage)
+- Queue reliability & minimal metrics (queue depth, task success ratio, provenance coverage)
+- BI snapshot endpoint returning core platform health
+- Finance metrics test stabilization (mock vs live toggle)
+
+Defer (create TODO but DO NOT implement):
+
+- Predictive KPI forecasting
+- Advanced adaptive planner heuristics / risk scoring
+- Additional agent loop variants / experimental runners
+- Prometheus/export adapters (keep in-memory counters only)
+- Design system enhancements unrelated to SEO/AI value
+- UI polish / animation / theming changes
+
+PR Acceptance Hard Rules:
+
+1. Each diff MUST map to a listed deliverable ID (add ID in CHANGE_LOG line).
+2. Net new LOC (prod code) ≤200 (excluding tests & docs) unless explicitly tagged `#EXEMPT:STRUCTURAL`.
+3. No introduction of new ESLint rule violations or TypeScript errors (run lint + typecheck pre-commit).
+4. If work is defensive refactor (e.g., remove unused vars) include `Refactor-Only:` tag and zero behavior changes claim.
+5. Any enhancement outside scope: close or convert to an issue labeled `deferred-phase-3`.
+
+Fast Path Checklist (Author Pre-merge):
+
+- [ ] Mapped Deliverable ID(s): \_\_\_\_
+- [ ] Governance untouched or improved
+- [ ] Lint & typecheck clean (no new errors)
+- [ ] Tests added/updated (happy + edge) OR N/A (explain)
+- [ ] CHANGE_LOG updated with rollback & scope note
+
+Failure Gate: If queue task failure streak >2 or provenance coverage <100% after a merge, HALT new feature PRs until resolved.
+
 ## Phase Summary
 
 | Phase                   | Goal                               | Key Deliverables                                                                            | Exit Criteria                                                           |

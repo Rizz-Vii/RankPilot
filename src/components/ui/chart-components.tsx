@@ -26,12 +26,13 @@ export interface SimpleTooltipPayload {
   value?: string | number;
 }
 
+type ChartValue = string | number | (string | number)[];
 export const ChartTooltip: React.FC<{
-  content: (props: TooltipProps<any, any>) => React.ReactNode;
+  content: (props: TooltipProps<ChartValue, string | number>) => React.ReactNode;
   className?: string;
-}> = ({ content, className = '' }) => {
-  return <RechartsTooltip content={content} wrapperClassName={className} />;
-};
+}> = ({ content, className = '' }) => (
+  <RechartsTooltip content={content} wrapperClassName={className} />
+);
 
 export const ChartTooltipContent = (raw: unknown): JSX.Element => {
   const props = raw as { payload?: Array<{ value?: unknown }>; label?: React.ReactNode } | undefined;

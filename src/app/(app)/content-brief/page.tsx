@@ -1,12 +1,9 @@
 // src/app/(app)/content-brief/page.tsx
 "use client";
 
-import type { FC, ElementType, ReactNode } from "react";
 import ContentBriefForm from "@/components/content-brief-form";
-import { ToolPageHeader } from "@/components/tool-page-header";
-import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import { FeatureGate } from "@/components/subscription/FeatureGate";
-import { useProvenance } from "@/hooks/useProvenance";
+import { ToolPageHeader } from "@/components/tool-page-header";
 import {
   Card,
   CardContent,
@@ -16,7 +13,9 @@ import {
 } from "@/components/ui/card";
 import LoadingScreen from "@/components/ui/loading-screen";
 import { useAuth } from "@/context/AuthContext";
+import { useProvenance } from "@/hooks/useProvenance";
 import { db } from "@/lib/firebase";
+import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import { cn } from "@/lib/utils";
 import { generateContentBrief } from "@/lib/utils/content-functions";
 import type {
@@ -32,6 +31,7 @@ import {
   FileText,
   Users
 } from "lucide-react";
+import type { ElementType, FC, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import {
   PolarGrid,
@@ -257,7 +257,9 @@ export default function ContentBriefPage(): JSX.Element {
         });
       }
     } catch (e: unknown) {
-      const msg = (e && typeof e === 'object' && 'message' in e) ? (e as any).message : 'An unexpected error occurred.';
+      const msg = (e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string')
+        ? (e as { message: string }).message
+        : 'An unexpected error occurred.';
       setError(msg);
       if (!briefResult) markFallback();
     } finally {

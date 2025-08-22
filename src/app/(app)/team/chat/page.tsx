@@ -51,7 +51,7 @@ import {
   Video,
   Zap
 } from "lucide-react"; // Pruned unused icons (lint cleanup)
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface ChatMessage {
@@ -95,8 +95,59 @@ interface UserPresence {
   typingIn?: string;
 }
 
+// Stable default channels extracted outside component to avoid effect dependency churn
+const DEFAULT_CHANNELS: ChatChannel[] = [
+  {
+    id: "general",
+    name: "General",
+    description: "General team discussions",
+    type: "general",
+    members: [],
+    isPrivate: false,
+    unreadCount: 0
+  },
+  {
+    id: "support",
+    name: "Support",
+    description: "Customer support coordination",
+    type: "support",
+    members: [],
+    isPrivate: false,
+    unreadCount: 0
+  },
+  {
+    id: "development",
+    name: "Development",
+    description: "Technical discussions and updates",
+    type: "development",
+    members: [],
+    isPrivate: false,
+    unreadCount: 0
+  },
+  {
+    id: "announcements",
+    name: "Announcements",
+    description: "Important team announcements",
+    type: "announcements",
+    members: [],
+    isPrivate: false,
+    unreadCount: 0
+  },
+  {
+    id: "random",
+    name: "Random",
+    description: "Off-topic conversations",
+    type: "random",
+    members: [],
+    isPrivate: false,
+    unreadCount: 0
+  }
+];
+
 export default function TeamChatPage() {
   const { user } = useAuth();
+  const userUid = user?.uid;
+  const userTeamId = (user as unknown as { teamId?: string })?.teamId;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [channels, setChannels] = useState<ChatChannel[]>([]);
   const [channelsLoading, setChannelsLoading] = useState(true);
@@ -106,7 +157,8 @@ export default function TeamChatPage() {
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   // Removed unused isTyping state (could be reintroduced when implementing live typing notices)
-  const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  // Typing users displayed; setter currently unused (future enhancement). Avoid unused var warning.
+  const [typingUsers] = useState<string[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -117,82 +169,37 @@ export default function TeamChatPage() {
   // Removed unused messagesEndRef
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Initialize default channels
-  const defaultChannels: ChatChannel[] = [
-    {
-      id: "general",
-      name: "General",
-      description: "General team discussions",
-      type: "general",
-      members: [],
-      isPrivate: false,
-      unreadCount: 0
-    },
-    {
-      id: "support",
-      name: "Support",
-      description: "Customer support coordination",
-      type: "support",
-      members: [],
-      isPrivate: false,
-      unreadCount: 0
-    },
-    {
-      id: "development",
-      name: "Development",
-      description: "Technical discussions and updates",
-      type: "development",
-      members: [],
-      isPrivate: false,
-      unreadCount: 0
-    },
-    {
-      id: "announcements",
-      name: "Announcements",
-      description: "Important team announcements",
-      type: "announcements",
-      members: [],
-      isPrivate: false,
-      unreadCount: 0
-    },
-    {
-      id: "random",
-      name: "Random",
-      description: "Off-topic conversations",
-      type: "random",
-      members: [],
-      isPrivate: false,
-      unreadCount: 0
-    }
-  ];
+  // default channels now referenced from constant outside component (DEFAULT_CHANNELS)
 
   // Resolve teamId for scoping chat
   const [teamId, setTeamId] = useState<string | null>(null);
 
   useEffect(() => {
-    (async () => {
-      if (!user?.uid) return;
+    void (async () => {
+      const uid = userUid;
+      if (!uid) return;
       // Try memberIds lookup first
-      const tQ = query(collection(db, 'teams'), where('memberIds', 'array-contains', user.uid));
+      const tQ = query(collection(db, 'teams'), where('memberIds', 'array-contains', uid));
       const tSnap = await getDocs(tQ);
       if (!tSnap.empty) {
         setTeamId(tSnap.docs[0].id);
         return;
       }
       // Fallback to users/{uid}.teamId
-      const uSnap = await getDoc(doc(db, 'users', user.uid));
+      const uSnap = await getDoc(doc(db, 'users', uid));
       let tId: string | undefined;
       if (uSnap.exists()) {
         const raw = uSnap.data() as Record<string, unknown>;
         if (typeof raw.teamId === 'string') tId = raw.teamId;
       }
       // Legacy fallback (user object patched with teamId client side)
-      if (!tId && typeof (user as unknown as { teamId?: unknown })?.teamId === 'string') {
-        tId = (user as unknown as { teamId?: string }).teamId;
+      if (!tId && typeof userTeamId === 'string') {
+        tId = userTeamId;
       }
       if (typeof tId === 'string') setTeamId(tId);
     })();
-  }, [user?.uid]);
+    // Dependency reasoning: we scope to user.uid only. Including full `user` object causes unnecessary re-runs when unrelated fields mutate.
+  }, [userUid, userTeamId]);
 
   // Set up real-time listeners
   useEffect(() => {
@@ -264,22 +271,8 @@ export default function TeamChatPage() {
     };
   }, [user, teamId, activeChannel]);
 
-  // Initialize channels and user presence
-  useEffect(() => {
-    if (!user || !teamId) return;
-
-  setChannels(defaultChannels);
-  setChannelsLoading(false);
-    // Update user presence to online
-    updateUserPresence('online');
-
-    return () => {
-      updateUserPresence('offline');
-    };
-  }, [user, teamId]);
-
-  // Simple presence updater; merges into presence/{uid}
-  const updateUserPresence = async (status: UserPresence['status']) => {
+  // User presence updater wrapped in useCallback for stable dependency
+  const updateUserPresence = useCallback(async (status: UserPresence['status']) => {
     try {
       if (!user) return;
       await setDoc(doc(db, 'presence', user.uid), {
@@ -291,10 +284,21 @@ export default function TeamChatPage() {
         typingIn: null,
       }, { merge: true });
     } catch (e) {
-      // Log but don't surface presence failures to the user
       console.warn('updateUserPresence failed', e);
     }
-  };
+  }, [user]);
+
+  // Initialize channels and user presence
+  useEffect(() => {
+    if (!user || !teamId) return;
+    setChannels(DEFAULT_CHANNELS);
+    setChannelsLoading(false);
+    void updateUserPresence('online');
+    return () => { void updateUserPresence('offline'); };
+  }, [user, teamId, updateUserPresence]);
+  // NOTE: First teamId resolution effect intentionally depends on user.uid only (see comment there) to limit churn.
+
+  // (updateUserPresence moved & memoized above)
 
   // Load channel settings from localStorage when channel/team changes
   useEffect(() => {
@@ -369,7 +373,7 @@ export default function TeamChatPage() {
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      void sendMessage();
     }
   };
 
@@ -575,10 +579,10 @@ export default function TeamChatPage() {
                     className="pl-10 w-64"
                   />
                 </div>
-                <Button size="sm" variant="ghost" onClick={() => startCall('audio')}>
+                  <Button size="sm" variant="ghost" onClick={() => { void startCall('audio'); }}>
                   <Phone className="h-4 w-4" />
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => startCall('video')}>
+                  <Button size="sm" variant="ghost" onClick={() => { void startCall('video'); }}>
                   <Video className="h-4 w-4" />
                 </Button>
                 <Button size="sm" variant="ghost" onClick={() => setIsSettingsOpen(true)}>
@@ -656,7 +660,7 @@ export default function TeamChatPage() {
                                     size="sm"
                                     variant="outline"
                                     className="h-6 px-2 text-xs"
-                                    onClick={() => addReaction(message.id, emoji)}
+                                    onClick={() => { void addReaction(message.id, emoji); }}
                                   >
                                     {emoji} {userIds.length}
                                   </Button>
@@ -746,7 +750,7 @@ export default function TeamChatPage() {
                   <Smile className="h-4 w-4" />
                 </Button>
                   <Button
-                  onClick={sendMessage}
+                    onClick={() => { void sendMessage(); }}
                   disabled={!newMessage.trim()}
                   className="px-4"
                 >

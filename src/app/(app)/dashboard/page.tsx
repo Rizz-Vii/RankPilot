@@ -1,25 +1,19 @@
 // src/app/(app)/dashboard/page.tsx - Complete Dynamic Database Integration
 "use client";
-import React, { useEffect, useState } from "react";
 import { CoreWebVitalsWidget } from "@/components/performance/core-web-vitals-monitor";
-import { ToolPageHeader } from "@/components/tool-page-header";
-import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import ToolGrid from "@/components/tool-grid";
+import { ToolPageHeader } from "@/components/tool-page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
+import React, { useEffect, useState } from "react";
 // Chart UI primitives consumed inside dynamically imported chart components (removed local heavy usage)
 import LoadingScreen from "@/components/ui/loading-screen";
 import { useAuth } from "@/context/AuthContext";
 import { useRealTimeDashboardData } from "@/hooks/use-dashboard-data";
 import { useIsMobile } from "@/hooks/use-mobile";
-import type { Variants} from "framer-motion";
+import type { Variants } from "framer-motion";
 import { motion } from "framer-motion";
 import {
   Activity,
@@ -31,13 +25,12 @@ import {
   Sparkles
 } from "lucide-react";
 // Dynamic import of heavy recharts-based components
-import dynamic from "next/dynamic";
 import SeoScoreTrend from "@/components/dashboard/seo-score-trend";
-import styles from "./dashboard.module.css";
 import { Skeleton } from "@/components/ui/skeleton";
+import dynamic from "next/dynamic";
+import styles from "./dashboard.module.css";
 
-// Local prop type mirrors for dynamically imported charts
-type SeoScoreTrendProps = { data: Array<{ date: string; score: number }>; rangeLabel?: string };
+// Local prop type mirrors for dynamically imported charts (only those needed for dynamic imports)
 type TrafficSourcesChartProps = { data: Array<{ name: string; value: number; fill: string }> };
 type KeywordVisibilityChartProps = { visibility: { score: number; top3: number; top10: number; top100: number } | undefined };
 type BacklinksChartProps = { data: { history: Array<{ month: string; new: number; lost: number }> } | undefined };
@@ -114,6 +107,7 @@ const DashboardMetricCard: React.FC<{
   })();
   const progressBarId = testId ? `${testId}-progress` : undefined;
   const titleId = testId ? `${testId}-title` : undefined;
+
   return (
     <Card className={styles.metricCard + " focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 transition-shadow hover:shadow-sm"} data-testid={testId} role="group" aria-labelledby={titleId}>
       <CardContent className="p-6">
@@ -192,68 +186,57 @@ const DashboardMetricCard: React.FC<{
 export default function DashboardPage() {
   const { user, profile, loading: authLoading } = useAuth();
   const isMobile = useIsMobile();
+  // Always invoke data hook (user may be null) to satisfy hooks ordering
+  const { data: dashboardData, loading: dataLoading, error: dataError, refresh } = useRealTimeDashboardData(user?.uid || null);
 
-  // Use dynamic dashboard data
-  const {
-    data: dashboardData,
-    loading: dataLoading,
-    error: dataError,
-    refresh
-  } = useRealTimeDashboardData(user?.uid || null);
-
-  // Freshness timestamp (moved above to comply with hooks rules)
+  // Synchronous wrappers for async refresh action to satisfy no-misused-promises (event handlers must not return a Promise)
+  const handleRefreshClick = (): void => { void refresh(); };
+  const handleRetryClick = (): void => { void refresh(); };
 
   // Trend range selection with localStorage persistence
   const [trendRange, setTrendRange] = useState<"30d" | "90d" | "ytd">("30d");
   useEffect(() => {
     if (typeof window === "undefined") return;
     const stored = window.localStorage.getItem("dashboardTrendRange");
-    if (stored === "30d" || stored === "90d" || stored === "ytd") {
-      setTrendRange(stored);
-    }
+    if (stored === "30d" || stored === "90d" || stored === "ytd") setTrendRange(stored);
   }, []);
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem("dashboardTrendRange", trendRange);
   }, [trendRange]);
 
-  if (authLoading || !user) return <LoadingScreen />;
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  useEffect(() => { if (dashboardData) setLastUpdated(new Date()); }, [dashboardData]);
 
-  if (dataError) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <Alert className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {dataError}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={refresh}
-              className="ml-2"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Retry
-            </Button>
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
+  if (authLoading || !user) return <LoadingScreen />; // safe early return (hooks above already executed)
+
+  if (dataError) return (
+    <div className="container mx-auto py-8 px-4">
+      <Alert className="mb-6">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          {dataError}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRetryClick}
+            className="ml-2"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </AlertDescription>
+      </Alert>
+    </div>
+  );
 
   // Derive improved change metrics (avoid hard-coded baselines)
   const domainHistory = dashboardData?.domainAuthority.history || [];
   const domainPrev = domainHistory.length > 1 ? domainHistory[domainHistory.length - 2].score : dashboardData?.domainAuthority.score || 0;
   const domainChange = (dashboardData?.domainAuthority.score || 0) - domainPrev;
 
-  const seoScorePrev = (dashboardData?.seoScoreTrend || []).slice(-2)[0]?.score ?? dashboardData?.seoScore.current ?? 0; // use trend previous if available
+  const seoScorePrev = (dashboardData?.seoScoreTrend || []).slice(-2)[0]?.score ?? dashboardData?.seoScore.current ?? 0; // previous trend point fallback
   const seoScoreChange = (dashboardData?.seoScore.current || 0) - seoScorePrev;
-
-  // Freshness timestamp
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  useEffect(() => {
-    if (dashboardData) setLastUpdated(new Date());
-  }, [dashboardData]);
 
   const relativeUpdated = (() => {
     if (!lastUpdated) return "—";
@@ -392,7 +375,7 @@ export default function DashboardPage() {
       >
         <div className="flex items-center gap-2">
           <div className="text-xs text-muted-foreground" data-testid="last-updated" aria-label={`Last updated ${relativeUpdated}`}>Updated {relativeUpdated}</div>
-          <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={dataLoading} data-testid="refresh-dashboard">
+          <Button variant="outline" size="sm" onClick={handleRefreshClick} disabled={dataLoading} data-testid="refresh-dashboard">
             <RefreshCw className={`h-4 w-4 mr-1 ${dataLoading ? "animate-spin" : ""}`} />
             {dataLoading ? "Refreshing" : "Refresh"}
           </Button>

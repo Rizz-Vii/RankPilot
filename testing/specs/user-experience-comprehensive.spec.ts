@@ -321,7 +321,9 @@ test.describe('User Experience - Performance & Loading', () => {
     test('progressive enhancement', async ({ page }) => {
         // Disable JavaScript and test basic functionality
         await page.addInitScript(() => {
-            delete (window as any).addEventListener;
+            // simulate degraded JS env without broad any
+            const w = window as unknown as { addEventListener?: unknown };
+            delete (w as { addEventListener?: unknown }).addEventListener;
         });
 
         await page.goto('/', { timeout: 30000 });

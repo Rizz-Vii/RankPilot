@@ -4,7 +4,7 @@
  * Prevents infinite loops, handles errors, provides loading states
  */
 
-import { useCallback, useEffect, useRef, useState, type DependencyList } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type DependencyList } from 'react';
 
 interface AsyncDataState<T> {
     data: T;
@@ -78,9 +78,9 @@ export function useSafeAsyncData<T>(
                 retryCountRef.current++;
                 console.warn(`Retrying request (${retryCountRef.current}/${retryCount}):`, errorMessage);
 
-                setTimeout(() => {
+                window.setTimeout(() => {
                     if (isMountedRef.current) {
-                        fetchData();
+                        void fetchData();
                     }
                 }, retryDelay * Math.pow(2, retryCountRef.current - 1)); // Exponential backoff
             } else {
@@ -94,27 +94,24 @@ export function useSafeAsyncData<T>(
         }
     }, [fetchFn, retryCount, retryDelay, onError, onSuccess, enabled]);
 
+    // Memoized key for dependency list to satisfy exhaustive-deps without spreading
+    const depsKey = useMemo(() => JSON.stringify(dependencies), [dependencies]);
+
     // Effect with proper dependency management - prevents infinite loops
     useEffect(() => {
         isMountedRef.current = true;
 
-        // Check if data is stale
         const now = Date.now();
         const dataAge = now - lastFetchRef.current;
-
-        if (dataAge > staleTime) {
-            setIsStale(true);
-        }
+        if (dataAge > staleTime) setIsStale(true);
 
         // Only fetch if enabled and (no data or data is stale)
         if (enabled && (data === defaultValue || isStale)) {
-            fetchData();
+            void fetchData();
         }
 
-        return () => {
-            isMountedRef.current = false;
-        };
-    }, [fetchData, ...dependencies, enabled, isStale]); // Carefully controlled dependencies
+        return () => { isMountedRef.current = false; };
+    }, [fetchData, enabled, isStale, staleTime, defaultValue, depsKey, data]);
 
     // Manual refetch function
     const refetch = useCallback(async () => {
@@ -126,7 +123,7 @@ export function useSafeAsyncData<T>(
     // Mark data as stale after staleTime
     useEffect(() => {
         if (!isStale) {
-            const timer = setTimeout(() => {
+            const timer = window.setTimeout(() => {
                 setIsStale(true);
             }, staleTime);
 
@@ -162,6 +159,8 @@ export function useSafeFirestoreSubscription<T>(
     const unsubscribeRef = useRef<(() => void) | null>(null);
 
     const { onError, onSuccess, enabled = true } = options;
+
+    const subscriptionDepsKey = useMemo(() => JSON.stringify(dependencies), [dependencies]);
 
     useEffect(() => {
         if (!enabled) return;
@@ -199,7 +198,7 @@ export function useSafeFirestoreSubscription<T>(
             setLoading(false);
             onError?.(err instanceof Error ? err : new Error(errorMessage));
         }
-    }, [subscriptionFn, ...dependencies, enabled, onError, onSuccess]);
+    }, [subscriptionFn, subscriptionDepsKey, enabled, onError, onSuccess]);
 
     return { data, loading, error, isStale: false };
 }
@@ -213,10 +212,10 @@ export const safeAccess = {
     property: <T>(obj: unknown, path: string, fallback: T): T => {
         if (obj == null) return fallback;
         const parts = path.split('.');
-        let curr: any = obj as any; // deliberate narrow to indexed container
+        let curr: unknown = obj;
         for (const key of parts) {
-            if (curr && typeof curr === 'object' && key in curr) {
-                curr = curr[key];
+            if (curr && typeof curr === 'object' && key in (curr as Record<string, unknown>)) {
+                curr = (curr as Record<string, unknown>)[key];
             } else {
                 return fallback;
             }

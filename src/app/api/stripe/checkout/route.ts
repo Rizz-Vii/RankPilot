@@ -5,7 +5,8 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
 const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', { apiVersion: '2022-11-15' });
+// Use the currently generated union literal accepted by Stripe typings; avoid hard‑coding an outdated version.
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', { apiVersion: '2025-07-30.basil' });
 
 export async function POST(request: NextRequest) {
     try {

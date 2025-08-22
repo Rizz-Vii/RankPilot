@@ -10,11 +10,11 @@
  * - Optimizing build artifacts
  */
 
+import { exec } from "child_process";
+import { EventEmitter as _EventEmitter } from "events";
 import { promises as fs } from "fs";
 import { join, resolve } from "path";
-import { exec } from "child_process";
 import { promisify } from "util";
-import { EventEmitter as _EventEmitter } from "events";
 
  // Ensure these imports are recognized as used by linters
 // Some imported symbols may be flagged by @typescript-eslint/no-unused-vars in certain configs.
@@ -112,7 +112,7 @@ class ProjectOptimizer {
             resolve(result);
           }
         })
-        .catch((error) => {
+        .catch((error: unknown) => {
           if (!completed) {
             completed = true;
             clearTimeout(timeout);
@@ -299,7 +299,7 @@ class ProjectOptimizer {
           try {
             await fs.access(docsPath);
             console.log(`✓ Documentation directory exists and organized`);
-          } catch (error) {
+          } catch {
             console.log(`⚠ Documentation directory missing`);
           }
         },

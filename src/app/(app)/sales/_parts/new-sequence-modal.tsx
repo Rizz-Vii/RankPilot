@@ -1,13 +1,13 @@
 "use client";
-import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState } from 'react';
 
 interface Props {
   open: boolean;
@@ -86,7 +86,7 @@ export function NewSequenceModal({ open, onOpenChange, onCreated }: Props): JSX.
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={saving}>
               Cancel
             </Button>
-            <Button size="sm" onClick={save} disabled={saving}>
+            <Button size="sm" onClick={() => void save()} disabled={saving}>
               {saving ? 'Saving...' : 'Create Sequence'}
             </Button>
           </div>

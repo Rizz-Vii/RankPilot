@@ -1,6 +1,7 @@
+import { extractErrorMessage } from '@/lib/errors/extract-error-message';
 import { expect, test } from "@playwright/test";
-import { UNIFIED_TEST_USERS } from "./unified-test-users";
 import { EnhancedAuth } from "./enhanced-auth";
+import { UNIFIED_TEST_USERS } from "./unified-test-users";
 
 /**
  * Feature Test: cache-management
@@ -17,8 +18,8 @@ test.describe('Feature - cache-management', () => {
         try {
             const testUser = UNIFIED_TEST_USERS.agency;
             await auth.loginAndGoToDashboard(testUser);
-        } catch (error: any) {
-            console.warn('Login failed, using fallback:', error.message);
+        } catch (error: unknown) {
+            console.warn('Login failed, using fallback:', extractErrorMessage(error));
             await page.goto('/dashboard');
             await page.waitForTimeout(2000);
         }

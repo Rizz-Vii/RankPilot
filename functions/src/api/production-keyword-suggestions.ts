@@ -4,13 +4,13 @@
  */
 
 import { logger } from "firebase-functions";
-import type { HttpsOptions} from "firebase-functions/v2/https";
+import type { HttpsOptions } from "firebase-functions/v2/https";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 // Use consolidated AI memory manager (path adjusted for actual location)
-import { getAI as getMockAI } from "../lib/ai-memory-manager";
+import { getApps, initializeApp } from "firebase-admin/app";
+import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { getAI as getGenkitAI } from "../ai/genkit"; // real AI engine
-import { initializeApp, getApps } from "firebase-admin/app";
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { getAI as getMockAI } from "../lib/ai-memory-manager";
 
 // Ensure Admin SDK initialized
 try {
@@ -318,7 +318,7 @@ OUTPUT REQUIREMENTS:
 5. STRICT JSON ONLY: { "keywords": [ ... ] }`;
 
     const useReal = context?.forceReal || (process.env.USE_REAL_AI === "true");
-    let rawOutput: any;
+    let rawOutput: unknown;
     if (useReal) {
       try {
         const ai = getGenkitAI();
@@ -331,14 +331,17 @@ OUTPUT REQUIREMENTS:
     if (!rawOutput) {
       rawOutput = await getMockAI(prompt, undefined, { temperature: 0.7, maxOutputTokens: 1000 });
     }
-    let parsedResult: any = {};
+    let parsedResult: unknown = {};
     try {
-      parsedResult = JSON.parse(rawOutput);
+      parsedResult = typeof rawOutput === 'string' ? JSON.parse(rawOutput) : {};
     } catch {
-      logger.warn("AI returned non-JSON content, using fallback generation", { snippet: rawOutput?.slice(0, 120) });
+      const snippet = typeof rawOutput === 'string' ? rawOutput.slice(0, 120) : undefined;
+      logger.warn("AI returned non-JSON content, using fallback generation", { snippet });
       return getFallbackKeywords(query, count);
     }
-    const raw: KeywordSuggestion[] = Array.isArray(parsedResult.keywords) ? parsedResult.keywords : [];
+    const raw: KeywordSuggestion[] = (parsedResult && typeof parsedResult === 'object' && Array.isArray((parsedResult as Record<string, unknown>).keywords))
+      ? (parsedResult as Record<string, unknown>).keywords as unknown as KeywordSuggestion[]
+      : [];
     if (!raw.length) {
       logger.warn("AI returned empty keywords array, using fallback generation");
       return getFallbackKeywords(query, count);
@@ -363,7 +366,7 @@ OUTPUT REQUIREMENTS:
 async function generateRelatedQueries(query: string, language: string, ctx?: { corpusSummary?: string }): Promise<string[]> {
   try {
     const prompt = `Generate 5 related search queries for "${query}" in ${language} considering corpus: ${ctx?.corpusSummary || 'none'}. Return JSON array of strings.`;
-    let output: any;
+    let output: unknown;
     try {
       if (process.env.USE_REAL_AI === "true") {
         const ai = getGenkitAI();
@@ -377,7 +380,7 @@ async function generateRelatedQueries(query: string, language: string, ctx?: { c
       output = await getMockAI(prompt, undefined, { temperature: 0.8, maxOutputTokens: 200 });
     }
     try {
-      return JSON.parse(output);
+      return typeof output === 'string' ? JSON.parse(output) : [];
     } catch {
       return [];
     }
@@ -414,7 +417,7 @@ function getFallbackKeywords(query: string, count: number): KeywordSuggestion[] 
     searchVolume: Math.floor(Math.random() * 10000) + 100,
     competition: ["low", "medium", "high"][index % 3] as "low" | "medium" | "high",
     difficulty: Math.floor(Math.random() * 100) + 1,
-    intent: ["informational", "commercial", "transactional", "navigational"][index % 4] as any,
+    intent: ["informational", "commercial", "transactional", "navigational"][index % 4] as "informational" | "commercial" | "transactional" | "navigational",
     semanticCluster: deriveCluster(keyword),
     topicalRelevance: Math.floor(Math.random() * 100),
     opportunities: ["Improve CTR", "Capture long-tail"].slice(0, Math.floor(Math.random() * 2) + 1),

@@ -43,7 +43,7 @@ class EnhancedErrorBoundary extends React.Component<Props, State> {
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     const eventId = `error_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
     this.setState({
@@ -68,7 +68,7 @@ class EnhancedErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  componentDidUpdate(prevProps: Props) {
+  override componentDidUpdate(prevProps: Props) {
     const { resetKeys, resetOnPropsChange } = this.props;
     const { hasError } = this.state;
 
@@ -126,15 +126,14 @@ class EnhancedErrorBoundary extends React.Component<Props, State> {
     console.log("Error Report:", errorReport);
 
     // For now, just copy to clipboard
-    navigator.clipboard?.writeText(JSON.stringify(errorReport, null, 2));
+    void navigator.clipboard?.writeText(JSON.stringify(errorReport, null, 2));
 
     // You could show a toast notification here
-    alert(
-      "Error details copied to clipboard. Please send this to our support team."
-    );
+    // 'alert' is synchronous; retain for UX but explicit comment for lint clarity
+    alert("Error details copied to clipboard. Please send this to our support team.");
   };
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
@@ -271,7 +270,8 @@ export function withErrorBoundary<P extends object>(
     </EnhancedErrorBoundary>
   );
 
-  (WrappedComponent as any).displayName = `withErrorBoundary(${Wrapped.displayName || Wrapped.name})`;
+  // Assign a descriptive displayName without using an 'any' cast
+  (WrappedComponent as unknown as { displayName?: string }).displayName = `withErrorBoundary(${Wrapped.displayName || Wrapped.name || 'Component'})`;
 
   return WrappedComponent as React.ComponentType<P>;
 }

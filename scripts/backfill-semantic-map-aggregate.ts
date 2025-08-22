@@ -7,15 +7,16 @@
  *   DRY_RUN=1 npm run backfill:semantic-map-agg    # dry run (counts only)
  *   BATCH_SIZE=200 npm run backfill:semantic-map-agg
  */
-import { initializeApp, getApps } from 'firebase-admin/app';
-import type { QueryDocumentSnapshot} from 'firebase-admin/firestore';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getApps, initializeApp } from 'firebase-admin/app';
+import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import type { SemanticMapFullDoc } from './scan-neuroseo-large-docs';
 import { deriveSemanticMapAggregate } from './scan-neuroseo-large-docs';
 
 interface LegacySemanticDoc {
     userId?: string; url?: string; overallScore?: number;
-    topicClusters?: any[]; keywordAnalysis?: any[]; contentAnalysis?: any;
-    semanticGraph?: { nodes?: any[]; edges?: any[] }; recommendations?: any[]; createdAt?: any;
+    topicClusters?: unknown[]; keywordAnalysis?: unknown[]; contentAnalysis?: unknown;
+    semanticGraph?: { nodes?: unknown[]; edges?: unknown[] }; recommendations?: unknown[]; createdAt?: Date | { toDate?: () => Date } | null;
 }
 
 async function aggregateExists(db: FirebaseFirestore.Firestore, legacy: LegacySemanticDoc): Promise<boolean> {
@@ -35,7 +36,7 @@ async function processBatch(db: FirebaseFirestore.Firestore, snaps: QueryDocumen
         oversizedConsidered++;
         const exists = await aggregateExists(db, data);
         if (exists) { skipped++; continue; }
-        const agg = deriveSemanticMapAggregate(data);
+        const agg = deriveSemanticMapAggregate(data as unknown as SemanticMapFullDoc);
         if (!dryRun) {
             await db.collection('semanticMapResultsAgg').add({ ...agg, createdAt: agg.createdAt || FieldValue.serverTimestamp() });
         }

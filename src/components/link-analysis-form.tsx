@@ -21,6 +21,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { asVoidHandler } from '@/lib/react/handlers';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -63,7 +64,7 @@ export default function LinkAnalysisForm({
     const submissionValues: LinkAnalysisInput = {
       url: normalizeUrl(values.url),
     };
-    onFormSubmitAction(submissionValues);
+    void onFormSubmitAction(submissionValues);
   }
   const isFormReady = hydrated && !isLoading;
 
@@ -76,7 +77,7 @@ export default function LinkAnalysisForm({
         </CardDescription>
       </CardHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleFormSubmit)}>
+        <form onSubmit={asVoidHandler(form.handleSubmit(handleFormSubmit))}>
           <CardContent>
             <FormField
               control={form.control}

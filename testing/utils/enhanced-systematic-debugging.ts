@@ -33,7 +33,7 @@ export class EnhancedTestOrchestrator {
     async debugTestFailure(
         testName: string,
         error: Error,
-        context: any = {}
+        context: unknown = {}
     ): Promise<string> {
         console.log(`🔍 Starting systematic debugging for test failure: ${testName}`);
 
@@ -46,21 +46,21 @@ export class EnhancedTestOrchestrator {
             await this.autoCompleteStep(
                 'config-validation',
                 'Automated configuration validation for test environment',
-                context
+                context as Record<string, unknown>
             );
 
             // Step 2: Error analysis (automated)
             await this.autoCompleteStep(
                 'error-analysis',
                 `Error: ${error.message}\nStack: ${error.stack}\nContext: ${JSON.stringify(context)}`,
-                context
+                context as Record<string, unknown>
             );
 
             // Step 3: Recent changes (automated)
             await this.autoCompleteStep(
                 'recent-changes',
                 'Automated recent changes analysis',
-                context
+                context as Record<string, unknown>
             );
 
             // Step 4: Environment consistency check
@@ -68,7 +68,7 @@ export class EnhancedTestOrchestrator {
                 await this.autoCompleteStep(
                     'environment',
                     'Test environment validation completed',
-                    context
+                    context as Record<string, unknown>
                 );
             }
 
@@ -92,7 +92,7 @@ export class EnhancedTestOrchestrator {
     private async autoCompleteStep(
         stepId: string,
         analysis: string,
-        context: any
+        context: Record<string, unknown>
     ): Promise<void> {
         const result = await this.performAutomatedAnalysis(stepId, analysis, context);
         this.debugger.completeStep(stepId, result);
@@ -104,7 +104,7 @@ export class EnhancedTestOrchestrator {
     private async performAutomatedAnalysis(
         stepId: string,
         analysis: string,
-        context: any
+        context: Record<string, unknown>
     ): Promise<string> {
         switch (stepId) {
             case 'config-validation':
@@ -127,7 +127,7 @@ export class EnhancedTestOrchestrator {
     /**
      * Validate test configuration
      */
-    private validateTestConfiguration(context: any): string {
+    private validateTestConfiguration(context: Record<string, unknown>): string {
         const issues: string[] = [];
 
         // Check environment variables
@@ -139,12 +139,12 @@ export class EnhancedTestOrchestrator {
         }
 
         // Check test context
-        if (context.page && !context.page.url()) {
+        if (context.page && typeof (context.page as { url?: () => string }).url === 'function' && !(context.page as { url: () => string }).url()) {
             issues.push('Page context invalid - no URL available');
         }
 
         // Check browser context
-        if (context.browser && context.browser.contexts().length === 0) {
+        if (context.browser && typeof (context.browser as { contexts?: () => unknown[] }).contexts === 'function' && (context.browser as { contexts: () => unknown[] }).contexts().length === 0) {
             issues.push('Browser context invalid - no contexts available');
         }
 
@@ -158,7 +158,7 @@ export class EnhancedTestOrchestrator {
     /**
      * Analyze test error for patterns
      */
-    private analyzeTestError(analysis: string, context: any): string {
+    private analyzeTestError(analysis: string, _context: Record<string, unknown>): string {
         const errorPatterns = [
             { pattern: /timeout|infinite.*retry/i, type: 'infinite-retry-loop' },
             { pattern: /url.*mismatch|localhost.*firebase/i, type: 'config-url-mismatch' },
@@ -188,7 +188,7 @@ export class EnhancedTestOrchestrator {
     /**
      * Validate test environment consistency
      */
-    private validateTestEnvironment(context: any): string {
+    private validateTestEnvironment(_context: Record<string, unknown>): string {
         const environment = {
             nodeVersion: process.version,
             platform: process.platform,
@@ -225,7 +225,7 @@ export class EnhancedTestOrchestrator {
 }
 
 // Integration with existing test framework
-export function withSystematicDebugging<T extends any[]>(
+export function withSystematicDebugging<T extends unknown[]>(
     testFunction: (...args: T) => Promise<void>
 ): (...args: T) => Promise<void> {
     return async (...args: T) => {

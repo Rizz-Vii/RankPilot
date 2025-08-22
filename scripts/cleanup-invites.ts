@@ -25,22 +25,28 @@ async function run() {
     for (const t of teams.docs) {
         const invitesSnap = await adminDb.collection('teams').doc(t.id).collection('invites').get();
         for (const inv of invitesSnap.docs) {
-            const data: any = inv.data();
-            const expiresAt = data.expiresAt?.toDate ? data.expiresAt.toDate().getTime() : (data.expiresAt instanceof Date ? data.expiresAt.getTime() : undefined);
+            const data = inv.data() as Record<string, unknown>;
+            const expiresAt = (data.expiresAt && typeof data.expiresAt === 'object' && 'toDate' in (data.expiresAt as Record<string, unknown>) && typeof (data.expiresAt as { toDate?: unknown }).toDate === 'function')
+                ? (data.expiresAt as { toDate: () => Date }).toDate().getTime()
+                : (data.expiresAt instanceof Date ? data.expiresAt.getTime() : undefined);
             if (data.status === 'pending' && expiresAt && expiresAt < now) {
                 await inv.ref.update({ status: 'expired', expiredAt: new Date() });
                 await adminDb.collection('invites_index').doc(inv.id).set({ status: 'expired', updatedAt: new Date() }, { merge: true });
                 markedExpired++;
             }
             if (data.status === 'accepted') {
-                const acceptedAt = data.acceptedAt?.toDate ? data.acceptedAt.toDate().getTime() : (data.acceptedAt instanceof Date ? data.acceptedAt.getTime() : 0);
+                const acceptedAt = (data.acceptedAt && typeof data.acceptedAt === 'object' && 'toDate' in (data.acceptedAt as Record<string, unknown>) && typeof (data.acceptedAt as { toDate?: unknown }).toDate === 'function')
+                    ? (data.acceptedAt as { toDate: () => Date }).toDate().getTime()
+                    : (data.acceptedAt instanceof Date ? data.acceptedAt.getTime() : 0);
                 if (acceptedAt && days(now - acceptedAt) > ACCEPTED_RETENTION_DAYS) {
                     await inv.ref.delete();
                     await adminDb.collection('invites_index').doc(inv.id).delete().catch(() => { });
                     deletedAccepted++;
                 }
             } else if (data.status === 'expired') {
-                const expiredAt = data.expiredAt?.toDate ? data.expiredAt.toDate().getTime() : (data.expiredAt instanceof Date ? data.expiredAt.getTime() : (expiresAt || 0));
+                const expiredAt = (data.expiredAt && typeof data.expiredAt === 'object' && 'toDate' in (data.expiredAt as Record<string, unknown>) && typeof (data.expiredAt as { toDate?: unknown }).toDate === 'function')
+                    ? (data.expiredAt as { toDate: () => Date }).toDate().getTime()
+                    : (data.expiredAt instanceof Date ? data.expiredAt.getTime() : (expiresAt || 0));
                 if (expiredAt && days(now - expiredAt) > EXPIRED_RETENTION_DAYS) {
                     await inv.ref.delete();
                     await adminDb.collection('invites_index').doc(inv.id).delete().catch(() => { });
@@ -52,7 +58,8 @@ async function run() {
     // Orphan indexes
     const indexSnap = await adminDb.collection('invites_index').get();
     for (const idx of indexSnap.docs) {
-        const teamId = (idx.data() as any).teamId;
+        const raw = idx.data() as Record<string, unknown>;
+        const teamId = typeof raw.teamId === 'string' ? raw.teamId : undefined;
         if (!teamId) { orphanIndexes++; await idx.ref.delete().catch(() => { }); continue; }
         const invDoc = await adminDb.collection('teams').doc(teamId).collection('invites').doc(idx.id).get();
         if (!invDoc.exists) { await idx.ref.delete().catch(() => { }); orphanIndexes++; }

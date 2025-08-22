@@ -1,6 +1,6 @@
-import { NextResponse, type NextRequest } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import crypto from 'crypto';
+import { NextResponse, type NextRequest } from 'next/server';
 // NOTE: Global collection 'invites_index' provides O(1) inviteId -> teamId mapping.
 // Cleanup: scripts/cleanup-invites.ts prunes accepted/expired invites and orphan index docs.
 
@@ -128,7 +128,17 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
         const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
         if (tokenHash !== invData.tokenHash) return NextResponse.json({ error: 'Invalid token' }, { status: 403 });
         if (invData.emailLower !== (decoded.email || '').toLowerCase()) return NextResponse.json({ error: 'Email mismatch' }, { status: 403 });
-        if ((invData.expiresAt?.toDate && invData.expiresAt.toDate().getTime() < Date.now())) return NextResponse.json({ error: 'Invite expired' }, { status: 410 });
+        // Guard Firestore Timestamp-like object safely
+        const exp = invData.expiresAt as unknown;
+        if (exp && typeof exp === 'object') {
+            const maybeFn = (exp as { toDate?: unknown }).toDate;
+            if (typeof maybeFn === 'function') {
+                try {
+                    const dt = (maybeFn as () => Date)();
+                    if (dt.getTime() < Date.now()) return NextResponse.json({ error: 'Invite expired' }, { status: 410 });
+                } catch { /* ignore invalid toDate */ }
+            }
+        }
 
         // Append member to team doc arrays & memberIds; also create subcollection member doc
         const teamRef = adminDb.collection('teams').doc(found.teamId);

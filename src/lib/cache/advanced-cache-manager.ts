@@ -1,7 +1,7 @@
 /**
  * Advanced Distributed Caching System
  * Implements Priority 1 Advanced Caching Strategies from DevReady Phase 3
- * 
+ *
  * Features:
  * - Multi-layer caching (Memory, Redis-like distributed, CDN)
  * - Intelligent cache invalidation and warming
@@ -336,7 +336,8 @@ export class AdvancedCacheManager {
     private setupCacheWarming(): void {
         // Warm cache every 10 minutes with frequently accessed data
         setInterval(() => {
-            this.performPeriodicWarming();
+            // Fire-and-forget periodic warming (intentionally not awaited)
+            void this.performPeriodicWarming();
         }, 600000); // 10 minutes
     }
 
@@ -523,12 +524,12 @@ export class AdvancedCacheManager {
 
     private async compressLargeEntries(): Promise<void> {
         // Compress entries larger than 100KB if not already compressed
-        for (const [key, entry] of this.distributedCache.entries()) {
+        for (const [_key, entry] of this.distributedCache.entries()) {
             if (entry.size > 100 * 1024 && !entry.compressed) {
                 const existing = typeof entry.value === 'string' ? entry.value : this.serializeValue(entry.value);
                 const compressed = this.compressValue(existing);
                 if (compressed.length < existing.length) {
-                    entry.value = compressed as any;
+                    entry.value = compressed; // already a string
                     entry.compressed = true;
                     entry.size = this.calculateSize(compressed);
                 }

@@ -1,7 +1,8 @@
+import { extractErrorMessage } from '@/lib/errors/extract-error-message';
 import * as dotenv from "dotenv";
 import * as admin from "firebase-admin";
-import { OpenAI } from "openai";
 import fetch from "node-fetch";
+import { OpenAI } from "openai";
 import { z } from "zod";
 
 // Define environment variable schema
@@ -76,7 +77,7 @@ class EnvironmentVerifier {
     } catch (error: unknown) {
       console.error(
         "❌ Firebase Admin SDK:",
-        error instanceof Error ? error.message : "Unknown error"
+        extractErrorMessage(error) || "Unknown error"
       );
       throw error;
     }
@@ -92,7 +93,7 @@ class EnvironmentVerifier {
     } catch (error: unknown) {
       console.error(
         "❌ OpenAI API:",
-        error instanceof Error ? error.message : "Unknown error"
+        extractErrorMessage(error) || "Unknown error"
       );
       throw error;
     }
@@ -110,7 +111,7 @@ class EnvironmentVerifier {
     } catch (error: unknown) {
       console.error(
         "❌ Google AI API:",
-        error instanceof Error ? error.message : "Unknown error"
+        extractErrorMessage(error) || "Unknown error"
       );
       throw error;
     }
@@ -123,7 +124,7 @@ class EnvironmentVerifier {
     } catch (error: unknown) {
       console.error(
         "❌ Test User:",
-        error instanceof Error ? error.message : "Unknown error"
+        extractErrorMessage(error) || "Unknown error"
       );
       throw error;
     }
@@ -134,7 +135,7 @@ class EnvironmentVerifier {
     } catch (error: unknown) {
       console.error(
         "❌ Admin User:",
-        error instanceof Error ? error.message : "Unknown error"
+        extractErrorMessage(error) || "Unknown error"
       );
       throw error;
     }
@@ -149,7 +150,7 @@ class EnvironmentVerifier {
       await this.verifyGoogleAI();
       await this.verifyTestUsers();
       console.log("\n✅ All verifications completed successfully");
-    } catch (error: unknown) {
+    } catch {
       console.error("\n❌ Verification failed. Please check the errors above.");
       process.exit(1);
     }
@@ -159,7 +160,7 @@ class EnvironmentVerifier {
 // Run the verification
 const verifier = new EnvironmentVerifier();
 verifier.verifyAll().catch((error: unknown) => {
-  const msg = error instanceof Error ? error.message : String(error);
+  const msg = extractErrorMessage(error);
   console.error("Unexpected error:", msg);
   process.exit(1);
 });

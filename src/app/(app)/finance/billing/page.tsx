@@ -70,8 +70,11 @@ export default function BillingOverviewPage() {
   };
   const data: FinanceDataShape = Array.isArray(live.kpis) && live.kpis.length ? normalizeLive() : { kpis: allowFinanceMocks() && mock ? (mock.kpis as FinanceKPI[]) : [], quotas: allowFinanceMocks() && mock && mock.quotas ? (mock.quotas as FinanceQuota[]) : [], rows: [], loading: false };
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
+  // Run once on mount; imported function is stable and not a reactive dep
   useEffect(() => { trackDashboardView('finance'); }, []);
-  useEffect(() => { if (Array.isArray(live.kpis) && live.kpis.length) markLive(); else markFallback(); }, [live.kpis?.length, markLive, markFallback]);
+  // React to live KPI presence; compute length in a local const for dep clarity
+  const kpiLen = Array.isArray(live.kpis) ? live.kpis.length : 0;
+  useEffect(() => { if (kpiLen > 0) markLive(); else markFallback(); }, [kpiLen, markLive, markFallback]);
   return (
     <FeatureGate feature="finance_billing_overview" requiredTier="starter" showUpgrade>
       <div className="p-6 space-y-8">
@@ -99,16 +102,17 @@ export default function BillingOverviewPage() {
         </section>
         <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Invoices</h2>
+          {/* Use generic-agnostic table; cast rows to Record for table while keeping internal InvoiceLike typing */}
           <LazyDataTable
             columns={[
               { key:'period', header:'Period'},
               { key:'planTier', header:'Tier'},
               { key:'amount', header:'Amount'},
               { key:'status', header:'Status'},
-              { key:'issuedAt', header:'Issued', render:(r: InvoiceLike)=> r.issuedAt?.toDate ? r.issuedAt.toDate().toISOString().slice(0,10) : '-' },
-              { key:'paidAt', header:'Paid', render:(r: InvoiceLike)=> r.paidAt?.toDate ? r.paidAt.toDate().toISOString().slice(0,10) : '-' }
+              { key: 'issuedAt', header: 'Issued', render: (r) => { const rec = r as unknown as InvoiceLike; return rec.issuedAt?.toDate ? rec.issuedAt.toDate().toISOString().slice(0, 10) : '-'; } },
+              { key: 'paidAt', header: 'Paid', render: (r) => { const rec = r as unknown as InvoiceLike; return rec.paidAt?.toDate ? rec.paidAt.toDate().toISOString().slice(0, 10) : '-'; } }
             ]}
-            rows={data.rows}
+            rows={data.rows as unknown as Record<string, unknown>[]}
             loading={data.loading}
             empty="No invoice data"
           />

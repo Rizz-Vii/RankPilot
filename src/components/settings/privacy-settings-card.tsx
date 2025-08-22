@@ -1,24 +1,6 @@
 "use client";
 
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Lock, Download, Trash2, AlertTriangle } from "lucide-react";
-import type { User } from "firebase/auth";
-import { asUserProfile, type UserProfile } from "../../../types/user-profile";
-import { useState } from "react";
-import { getFunctions, httpsCallable } from "firebase/functions";
-import { useToast } from "@/hooks/use-toast";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -29,6 +11,25 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
+import { db } from "@/lib/firebase";
+import { asVoidHandler } from "@/lib/react/handlers";
+import type { User } from "firebase/auth";
+import { doc, updateDoc } from "firebase/firestore";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { AlertTriangle, Download, Lock, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { asUserProfile } from "../../../types/user-profile";
 
 export interface PrivacySettingsCardProps {
   user: User;
@@ -64,7 +65,7 @@ export default function PrivacySettingsCard({
         title: "Privacy Settings Updated",
         description: "Your privacy preferences have been saved.",
       });
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Update Failed",
@@ -89,7 +90,7 @@ export default function PrivacySettingsCard({
         console.warn('Failed to record lastExportAt', e);
       }
       // Trigger download locally
-  const data = (res && typeof res === 'object' && 'data' in res) ? (res as any).data : res;
+      const data = (res && typeof res === 'object' && 'data' in res) ? (res as { data?: unknown }).data : res;
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -101,7 +102,7 @@ export default function PrivacySettingsCard({
       URL.revokeObjectURL(url);
       toast({ title: 'Export Ready', description: 'Your data export has downloaded.' });
     } catch (e: unknown) {
-      const msg = (e && typeof e === 'object' && 'message' in e) ? (e as any).message : undefined;
+      const msg = (e && typeof e === 'object' && 'message' in e) ? (e as { message?: string }).message : undefined;
       toast({ variant: 'destructive', title: 'Export Failed', description: msg || 'Unable to export data.' });
     } finally {
       setIsLoading(false);
@@ -123,7 +124,7 @@ export default function PrivacySettingsCard({
       }
       toast({ variant: 'destructive', title: 'Deletion Scheduled', description: 'Your account has been scheduled for deletion.' });
     } catch (e: unknown) {
-      const msg = (e && typeof e === 'object' && 'message' in e) ? (e as any).message : undefined;
+      const msg = (e && typeof e === 'object' && 'message' in e) ? (e as { message?: string }).message : undefined;
       toast({ variant: 'destructive', title: 'Deletion Failed', description: msg || 'Unable to schedule deletion.' });
     } finally {
       setIsLoading(false);
@@ -154,10 +155,10 @@ export default function PrivacySettingsCard({
             <Switch
               id="profile-visibility"
               checked={profileVisibility}
-              onCheckedChange={(checked) => {
+              onCheckedChange={asVoidHandler((checked: boolean) => {
                 setProfileVisibility(checked);
-                handlePrivacyUpdate("profileVisibility", checked);
-              }}
+                return handlePrivacyUpdate("profileVisibility", checked);
+              })}
               disabled={isLoading}
             />
           </div>
@@ -172,10 +173,10 @@ export default function PrivacySettingsCard({
             <Switch
               id="data-collection"
               checked={dataCollection}
-              onCheckedChange={(checked) => {
+              onCheckedChange={asVoidHandler((checked: boolean) => {
                 setDataCollection(checked);
-                handlePrivacyUpdate("dataCollection", checked);
-              }}
+                return handlePrivacyUpdate("dataCollection", checked);
+              })}
               disabled={isLoading}
             />
           </div>
@@ -190,10 +191,10 @@ export default function PrivacySettingsCard({
             <Switch
               id="activity-tracking"
               checked={activityTracking}
-              onCheckedChange={(checked) => {
+              onCheckedChange={asVoidHandler((checked: boolean) => {
                 setActivityTracking(checked);
-                handlePrivacyUpdate("activityTracking", checked);
-              }}
+                return handlePrivacyUpdate("activityTracking", checked);
+              })}
               disabled={isLoading}
             />
           </div>
@@ -221,7 +222,7 @@ export default function PrivacySettingsCard({
               </p>
               <Button
                 variant="outline"
-                onClick={handleDataExport}
+                onClick={asVoidHandler(() => handleDataExport())}
                 className="flex items-center gap-2"
               >
                 <Download className="h-4 w-4" />
@@ -269,7 +270,7 @@ export default function PrivacySettingsCard({
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={handleAccountDeletion}
+                      onClick={asVoidHandler(() => handleAccountDeletion())}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
                       Yes, delete my account

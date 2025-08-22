@@ -1,8 +1,7 @@
 "use client";
 
-import { useSubscription } from "@/hooks/useSubscription";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -18,13 +17,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useSubscription } from "@/hooks/useSubscription";
 import {
-  BookOpen,
-  Play,
-  Lock,
-  ExternalLink,
   ArrowRight,
+  BookOpen,
+  ExternalLink,
   HelpCircle,
+  Lock,
+  Play,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -45,7 +45,8 @@ export function TutorialAccess({
   variant = "button",
   className = "",
 }: TutorialAccessProps) {
-  const { subscription, canUseFeature } = useSubscription();
+  // Rename unused subscription to _subscription to satisfy no-unused-vars while preserving future intent
+  const { subscription: _subscription, canUseFeature } = useSubscription();
 
   // Get relevant tutorials based on feature
   const getRelevantTutorials = () => {

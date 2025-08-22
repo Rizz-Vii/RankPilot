@@ -3,10 +3,10 @@
 
 // Prefer real AI flow; fallback to stub util if needed
 import { generateInsights as generateInsightsFlow } from "@/ai/flows/generate-insights";
-import { canAccessFeature } from "@/lib/access-control";
 import type { GenerateInsightsOutput } from "@/types";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { ToolPageHeader } from "@/components/tool-page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import LoadingScreen from "@/components/ui/loading-screen";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -26,10 +26,8 @@ import {
 } from "@/components/ui/tooltip";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
-import { AlertTriangle, ArrowRight, Lightbulb, RefreshCw, Radio } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { AlertTriangle, ArrowRight, Lightbulb, Radio, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import { ToolPageHeader } from "@/components/tool-page-header";
 import styles from "./insights.module.css";
 
 // Activity & preview interfaces (narrow, avoids unknown property accesses)
@@ -74,7 +72,7 @@ export default function InsightsPage() {
     };
   }), [activities]);
 
-  const derivedKeywords = useMemo(() => {
+  const _derivedKeywords = useMemo(() => {
     const kwSet = new Set<string>();
     simplifiedActivities.forEach(a => {
       if (a.details?.keywords) {
@@ -89,7 +87,7 @@ export default function InsightsPage() {
     return list.length ? list : ['seo','content','optimization'];
   }, [simplifiedActivities]);
 
-  const derivedUrls = useMemo(() => {
+  const _derivedUrls = useMemo(() => {
     const urlSet = new Set<string>();
     simplifiedActivities.forEach(a => {
       if (a.details?.url) urlSet.add(a.details.url);
@@ -103,18 +101,19 @@ export default function InsightsPage() {
   // react-hooks/exhaustive-deps (they referenced component-scope values like user,
   // cacheKey, maxInsights and would force fetchInsights to change every render).
 
-  const saveCache = (data: GenerateInsightsOutput) => {
+  const _saveCache = (data: GenerateInsightsOutput) => {
     try {
       if (!user) return;
       localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data }));
     } catch {}
   };
 
+  const memoCacheKey = useMemo(() => cacheKey, [cacheKey]);
   const fetchInsights = useCallback(async (opts: { force?: boolean } = {}) => {
     const loadFromCacheLocal = () => {
       try {
         if (!user) return false;
-        const raw = localStorage.getItem(cacheKey);
+        const raw = localStorage.getItem(memoCacheKey);
         if (!raw) return false;
         const parsed = JSON.parse(raw);
         if (Date.now() - parsed.timestamp > cacheTTLms) return false;
@@ -126,7 +125,7 @@ export default function InsightsPage() {
     const saveCacheLocal = (data: GenerateInsightsOutput) => {
       try {
         if (!user) return;
-        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data }));
+        localStorage.setItem(memoCacheKey, JSON.stringify({ timestamp: Date.now(), data }));
       } catch {}
     };
     if (authLoading || !user) { setIsLoading(false); return; }
@@ -140,23 +139,45 @@ export default function InsightsPage() {
         const aiResult = await generateInsightsFlow({ activities: simplifiedActivities });
         // Normalize to expected GenerateInsightsOutput shape (if flow returns partial)
         const raw = aiResult as Record<string, unknown> | null | undefined;
-        const rawInsights = Array.isArray(raw?.insights) ? (raw!.insights as unknown[]) : [];
-        const normalizedInsights: GenerateInsightsOutput['insights'] = rawInsights.map((i: Record<string, unknown>) => ({
-          id: String(i['id'] ?? Math.random().toString(36).slice(2)),
-          title: String(i['title'] ?? 'Untitled Insight'),
-          description: String(i['description'] ?? ''),
-          category: String(i['category'] ?? 'general'),
-          priority: String(i['priority'] ?? 'low'),
-          estimatedImpact: typeof i['estimatedImpact'] === 'number' ? (i['estimatedImpact'] as number) : 0,
-          actionItems: Array.isArray(i['actionItems']) ? (i['actionItems'] as unknown[]).map(x => String(x)) : [],
-          metrics: typeof i['metrics'] === 'object' && i['metrics'] ? (i['metrics'] as Record<string, unknown>) : undefined,
-          actionLink: typeof i['actionLink'] === 'string' ? (i['actionLink'] as string) : undefined,
-          actionText: typeof i['actionText'] === 'string' ? (i['actionText'] as string) : undefined,
-        }));
+        const rawInsights = Array.isArray(raw?.insights) ? (raw.insights as unknown[]) : [];
+        const normalizedInsights: GenerateInsightsOutput['insights'] = rawInsights.map((val: unknown) => {
+          const i = (val && typeof val === 'object') ? val as Record<string, unknown> : {};
+          const typeAllowed = ['warning', 'success', 'opportunity'] as const;
+          const impactAllowed = ['high', 'medium', 'low'] as const;
+          const type = typeAllowed.includes(i['type'] as unknown as typeof typeAllowed[number]) ? (i['type'] as unknown as typeof typeAllowed[number]) : 'opportunity';
+          const impact = impactAllowed.includes(i['impact'] as unknown as typeof impactAllowed[number]) ? (i['impact'] as unknown as typeof impactAllowed[number]) : 'low';
+          return {
+            id: String(i['id'] ?? Math.random().toString(36).slice(2)),
+            title: String(i['title'] ?? 'Untitled Insight'),
+            description: String(i['description'] ?? ''),
+            category: String(i['category'] ?? 'general'),
+            priority: (['high', 'medium', 'low'] as const).includes(i['priority'] as unknown as 'high' | 'medium' | 'low') ? (i['priority'] as unknown as 'high' | 'medium' | 'low') : 'low',
+            type,
+            impact,
+            // Normalize estimatedImpact to string to satisfy current output contract (was number causing TS mismatch)
+            estimatedImpact: typeof i['estimatedImpact'] === 'string'
+              ? i['estimatedImpact'] as string
+              : (typeof i['estimatedImpact'] === 'number' ? String(i['estimatedImpact']) : '0'),
+            actionItems: Array.isArray(i['actionItems']) ? (i['actionItems'] as unknown[]).map(x => String(x)) : [],
+            metrics: (() => {
+              const rawM = i['metrics'];
+              if (rawM && typeof rawM === 'object') {
+                const out: Record<string, number> = {};
+                Object.entries(rawM as Record<string, unknown>).forEach(([k, v]) => {
+                  if (typeof v === 'number' && isFinite(v)) out[k] = v;
+                });
+                return out;
+              }
+              return {} as Record<string, number>;
+            })(),
+            actionLink: typeof i['actionLink'] === 'string' ? i['actionLink'] as string : undefined,
+            actionText: typeof i['actionText'] === 'string' ? i['actionText'] as string : undefined,
+          };
+        });
         const normalized: GenerateInsightsOutput = {
           insights: normalizedInsights,
-          summary: typeof raw.summary === 'string' ? raw.summary as string : `Generated ${normalizedInsights.length} insights`,
-          score: typeof raw.score === 'number' ? raw.score as number : 0,
+          summary: (raw && typeof raw.summary === 'string') ? raw.summary as string : `Generated ${normalizedInsights.length} insights`,
+          score: (raw && typeof raw.score === 'number') ? raw.score as number : 0,
         };
         result = normalized;
       } catch (e) {
@@ -180,9 +201,9 @@ export default function InsightsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [authLoading, user, simplifiedActivities, maxInsights, cacheTTLms, generateInsightsFlow]);
+  }, [authLoading, user, simplifiedActivities, maxInsights, cacheTTLms, memoCacheKey]);
 
-  useEffect(() => { fetchInsights(); }, [fetchInsights]);
+  useEffect(() => { void fetchInsights(); }, [fetchInsights]);
 
   const priorityColors: Record<string, string> = {
     high: "bg-destructive",

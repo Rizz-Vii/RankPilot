@@ -1,7 +1,7 @@
+import { adminDb } from "@/lib/firebase-admin";
+import { enforceProvenance } from "@/lib/middleware/provenance";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { enforceProvenance } from "@/lib/middleware/provenance";
-import { adminDb } from "@/lib/firebase-admin";
 
 type SortBy = "metric" | "value" | "change";
 type Direction = "asc" | "desc";
@@ -91,10 +91,14 @@ async function fetchFromFirestore(opts: {
         // Try to get total via aggregation; fallback to rough count if unsupported
         let total = 0;
         try {
-            // count() may not be typed in some Firestore SDK versions; use `any` to access it safely
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const aggSnap = await (base as any).count().get();
-            total = aggSnap?.data?.().count || 0;
+            // count() may not be typed; access via indexed lookup to avoid explicit any
+            const maybeCountFn: unknown = (base as unknown as Record<string, unknown>)["count"]; // Firestore aggregate query extension
+            if (typeof maybeCountFn === "function") {
+                const aggSnap = await (maybeCountFn as () => { get: () => Promise<{ data: () => { count?: number } }> })().get();
+                const dataFn = typeof aggSnap?.data === 'function' ? aggSnap.data() : {};
+                const c = (dataFn as { count?: unknown }).count;
+                if (typeof c === 'number') total = c;
+            }
         } catch {
             // Fallback: attempt to get first 1 with offset large to detect existence; otherwise assume 0
             // We won't scan entire collection for performance.
@@ -163,7 +167,7 @@ async function fetchFromFirestore(opts: {
 
         const rows = docs.map((d) => normalizeRow(d.data()));
         return { rows, total };
-    } catch (e) {
+    } catch {
         // Firestore might not be configured in this environment; fall back to mock
         return null;
     }
@@ -241,7 +245,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         const provenance = teamId || userId ? (result ? "live" : "live") : (result ? "live" : "synthetic");
         return NextResponse.json(enforceProvenance({ rows: outRows, total, provenance }, { path: 'table-data' }), { status: 200 });
     } catch (err: unknown) {
-        const message = typeof err === 'object' && err && 'message' in err ? (err as any).message : 'Unknown error';
+        const message = ((): string => {
+            if (typeof err === 'object' && err && 'message' in err) {
+                const m = (err as Record<string, unknown>).message;
+                return typeof m === 'string' ? m : 'Unknown error';
+            }
+            return 'Unknown error';
+        })();
         return NextResponse.json(enforceProvenance({ error: message, provenance: 'synthetic' }, { path: 'table-data', note: 'exception' }), { status: 500 });
     }
 }

@@ -3,9 +3,9 @@
  * Build-safe implementation
  */
 
-import type { NextRequest} from "next/server";
-import { NextResponse } from "next/server";
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 // Note: defer importing NeuroSEOSuite until runtime to avoid build-time
 // evaluation of modules that may touch Firebase client SDK.
 
@@ -27,10 +27,10 @@ export const POST = withProvenance(async function POST(request: Request) {
     // Initialize suite (lazy import to prevent build-time side effects)
     // Import directly from TS module (proxy neuroseo.js removed 2025-08-11; Bundler resolution handles .ts).
     const { NeuroSEOSuite, NeuroSEOReportSchema } = await import("../../../lib/neuroseo");
-    const neuroSEO = new NeuroSEOSuite();
+    const _neuroSEO = new NeuroSEOSuite(); // instance required to execute runAnalysis below (unused variable prefixed)
 
     // Run comprehensive analysis instead of returning mocks
-    const report = await neuroSEO.runAnalysis({
+    const report = await _neuroSEO.runAnalysis({
       urls: Array.isArray(urls) ? urls : [urls],
       targetKeywords: targetKeywords || [],
       competitorUrls: Array.isArray(competitorUrls) ? competitorUrls : (competitorUrls ? [competitorUrls] : undefined),
@@ -45,9 +45,10 @@ export const POST = withProvenance(async function POST(request: Request) {
     return NextResponse.json(enforceProvenance({ success: true, data: validated.data, provenance: 'live' }, { path: 'neuroseo', note: 'analysis' }));
   } catch (error: unknown) {
     // Surface error details for debugging (mask stack in production)
-    const err = error as { message?: string; stack?: string };
-    console.error('[NeuroSEO API] POST error', err);
-    return NextResponse.json(enforceProvenance({ success: false, error: err?.message || "Failed to process analysis request", details: process.env.NODE_ENV !== 'production' ? (err?.stack || String(err)) : undefined, provenance: 'synthetic' }, { path: 'neuroseo', note: 'exception' }), { status: 500 });
+    const errObj = (error && typeof error === 'object') ? error as { message?: string; stack?: string } : {};
+    const message = errObj.message || 'Failed to process analysis request';
+    console.error('[NeuroSEO API] POST error', { message });
+    return NextResponse.json(enforceProvenance({ success: false, error: message, details: process.env.NODE_ENV !== 'production' ? (errObj.stack || String(error)) : undefined, provenance: 'synthetic' }, { path: 'neuroseo', note: 'exception' }), { status: 500 });
   }
 }, { path: 'neuroseo' });
 
@@ -58,8 +59,8 @@ export const GET = withProvenance(async function GET(request: Request) {
     const _userId = searchParams.get("userId") || "anonymous";
 
     // Initialize suite (lazy import to prevent build-time side effects)
-    const { NeuroSEOSuite } = await import("../../../lib/neuroseo");
-    const neuroSEO = new NeuroSEOSuite();
+    // Lazy import retained for future live usage stats integration (suite instance not required presently)
+    await import("../../../lib/neuroseo");
 
     // Get actual usage statistics from quota manager
     const usageStats = {
@@ -85,6 +86,10 @@ export const GET = withProvenance(async function GET(request: Request) {
 
     return NextResponse.json(enforceProvenance({ success: true, data: usageStats, provenance: 'live' }, { path: 'neuroseo', note: 'usage' }));
   } catch (error: unknown) {
-    return NextResponse.json(enforceProvenance({ success: false, error: "Failed to load usage statistics", provenance: 'synthetic' }, { path: 'neuroseo', note: 'usage_error' }), { status: 500 });
+    const msg = (error && typeof error === 'object' && 'message' in error && typeof (error as { message?: unknown }).message === 'string')
+      ? (error as { message: string }).message
+      : 'Failed to load usage statistics';
+    console.error('[NeuroSEO API] GET usage error', { message: msg });
+    return NextResponse.json(enforceProvenance({ success: false, error: msg, provenance: 'synthetic' }, { path: 'neuroseo', note: 'usage_error' }), { status: 500 });
   }
 }, { path: 'neuroseo' });

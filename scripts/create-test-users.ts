@@ -5,19 +5,19 @@
  * and access permissions in Firebase Authentication and Firestore.
  */
 
-import { initializeApp, getApps } from "firebase/app";
+import { getApps, initializeApp } from "firebase/app";
 import {
-  getAuth,
   createUserWithEmailAndPassword,
+  getAuth,
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
 import {
-  getFirestore,
-  doc,
-  setDoc,
-  collection,
   addDoc,
+  collection,
+  doc,
+  getFirestore,
+  setDoc,
 } from "firebase/firestore";
 import { TEST_USERS } from "../testing/utils/enhanced-auth";
 
@@ -172,8 +172,9 @@ async function createTestUser(userKey: string) {
       role: user.tier,
       success: true,
     };
-  } catch (error: any) {
-    if (error.code === "auth/email-already-in-use") {
+  } catch (error: unknown) {
+    const code = (error && typeof error === 'object' && 'code' in error) ? String((error as { code?: unknown }).code) : '';
+    if (code === "auth/email-already-in-use") {
       console.log(`⚠️ User ${user.email} already exists, updating profile...`);
 
       try {
@@ -213,10 +214,13 @@ async function createTestUser(userKey: string) {
           role: user.tier,
           success: true,
         };
-      } catch (updateError) {
+      } catch (updateError: unknown) {
+        const updateMsg = (updateError && typeof updateError === 'object' && 'message' in updateError)
+          ? String((updateError as { message?: unknown }).message)
+          : String(updateError);
         console.error(
           `❌ Failed to update existing user ${user.email}:`,
-          updateError
+          updateMsg
         );
         return {
           email: user.email,
@@ -226,7 +230,10 @@ async function createTestUser(userKey: string) {
         };
       }
     } else {
-      console.error(`❌ Failed to create user ${user.email}:`, error);
+      const msg = (error && typeof error === 'object' && 'message' in error)
+        ? String((error as { message?: unknown }).message)
+        : String(error);
+      console.error(`❌ Failed to create user ${user.email}:`, msg);
       return {
         email: user.email,
         role: user.tier,

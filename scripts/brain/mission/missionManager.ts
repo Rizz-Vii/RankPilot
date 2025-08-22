@@ -100,7 +100,17 @@ export function runMissionCycle(): Mission {
                 fs.writeFileSync(queueFile, JSON.stringify({ meta: 'delegation queue (JSON Lines). Each line: pending task.' }) + '\n');
             }
             const existing = fs.readFileSync(queueFile, 'utf8').trim().split(/\n/).slice(1).map((l: string) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
-            const existingIds = new Set(existing.map((t: any) => t.taskId));
+            const existingIds = new Set(
+                (existing as unknown[])
+                    .map((t) => {
+                        if (t && typeof t === 'object' && 'taskId' in (t as Record<string, unknown>)) {
+                            const v = (t as { taskId?: unknown }).taskId;
+                            return typeof v === 'string' ? v : '';
+                        }
+                        return '';
+                    })
+                    .filter((id): id is string => id.length > 0)
+            );
             const lineage = 'MISSION-' + mission.ts;
             const newLines: string[] = [];
             mission.immediateSteps.forEach((step, idx) => {

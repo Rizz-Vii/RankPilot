@@ -1,7 +1,7 @@
 // Script to verify dummy data was populated correctly
-import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
 import * as dotenv from "dotenv";
+import { cert, getApps, initializeApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 
 // Load environment variables
 dotenv.config({ path: ".env.test" });
@@ -163,7 +163,6 @@ export async function verifyDummyData(): Promise<DataSummary> {
 
     // Check if all users have the expected subcollections
     const usersWithoutActivities = totalActivities > 0 ? 0 : userCount;
-    const usersWithoutUsage = userCount - totalUsage;
 
     console.log(
       `   ✅ Users with activities: ${userCount - usersWithoutActivities}`

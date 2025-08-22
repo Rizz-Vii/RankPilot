@@ -1,7 +1,5 @@
-import { test, expect } from '@playwright/test'
-import type { TestContext } from '../../types/test-context'
-
-const ctx: TestContext = {}
+import { expect, test } from '@playwright/test'
+// Removed unused TestContext placeholder (was causing unused var lint warning)
 
 test.describe('Finance Metrics Mode', () => {
     test('mock mode emits mock header', async ({ request }) => {

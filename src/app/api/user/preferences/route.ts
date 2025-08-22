@@ -1,7 +1,7 @@
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { enforceProvenance } from '@/lib/middleware/provenance';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 // Accepts PUT with JSON body containing preference fields; updates users/{uid}.preferences
 export async function PUT(req: NextRequest): Promise<NextResponse> {
@@ -11,7 +11,9 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
     const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
     const payload = await req.json().catch(() => ({}));
     // Support auth token provided in body for offline/queued sync by service worker
-    const bodyToken: string | undefined = (payload as any)?.authToken;
+    const bodyToken = (payload && typeof payload === 'object' && 'authToken' in (payload as Record<string, unknown>) && typeof (payload as Record<string, unknown>).authToken === 'string')
+      ? (payload as Record<string, unknown>).authToken as string
+      : undefined;
 
     if (!authHeader && !bodyToken) {
       const unauthorizedBody = enforceProvenance(
@@ -26,7 +28,9 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
     const uid = decoded.uid as string;
 
     // Allow either direct preferences object or flat fields
-    const prefs = (payload as any).preferences ?? payload;
+    const prefs = (payload && typeof payload === 'object' && 'preferences' in (payload as Record<string, unknown>))
+      ? (payload as Record<string, unknown>).preferences
+      : payload;
     if (!prefs || typeof prefs !== 'object') {
       const invalidBody = enforceProvenance(
         { success: false, error: 'invalid_payload', provenance: 'synthetic' },

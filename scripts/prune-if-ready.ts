@@ -12,9 +12,9 @@
  *   SUSTAIN_DAYS=3       (override consecutive day requirement)
  *   DRY_RUN=0            (alias for CONFIRM=1)
  */
+import { spawnSync } from 'child_process';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { spawnSync } from 'child_process';
 import fs from 'fs';
 
 interface Adoption { crawler: number | null; semantic: number | null; }
@@ -26,10 +26,17 @@ async function currentAdoption(): Promise<Adoption> {
         const today = new Date().toISOString().slice(0, 10);
         const doc = await db.collection('unifiedMetricsDaily').doc(today).get();
         if (doc.exists) {
-            const d: any = doc.data();
+            const d = doc.data() as unknown;
+            const getNum = (obj: unknown, key: string): number | null => {
+                if (obj && typeof obj === 'object' && key in (obj as Record<string, unknown>)) {
+                    const v = (obj as Record<string, unknown>)[key];
+                    return typeof v === 'number' ? v : null;
+                }
+                return null;
+            };
             return {
-                crawler: typeof d.crawlerAggregateAdoptionPct === 'number' ? d.crawlerAggregateAdoptionPct : null,
-                semantic: typeof d.semanticMapAggregateAdoptionPct === 'number' ? d.semanticMapAggregateAdoptionPct : null
+                crawler: getNum(d, 'crawlerAggregateAdoptionPct'),
+                semantic: getNum(d, 'semanticMapAggregateAdoptionPct')
             };
         }
     } catch { }

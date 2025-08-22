@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 async function waitForServer(page: Page, timeoutMs = 15000) {
     const start = Date.now();
@@ -38,8 +38,11 @@ async function pollInvoicesCount(page: Page, token: string | null, timeoutMs = 2
             const url = token ? '/api/finance/metrics' : '/api/finance/metrics?testUser=admin@rankpilot.com';
             const res = await page.request.get(url, { headers: token ? { Authorization: `Bearer ${token}` } : undefined });
             if (res.ok()) {
-                const json: any = await res.json();
-                if (json.invoicesCount && json.invoicesCount > 0) return true;
+                const json: unknown = await res.json();
+                if (json && typeof json === 'object' && 'invoicesCount' in json) {
+                    const count = (json as { invoicesCount?: unknown }).invoicesCount;
+                    if (typeof count === 'number' && count > 0) return true;
+                }
             } else if (res.status() === 401) {
                 // auth not ready yet; keep backing off
             }

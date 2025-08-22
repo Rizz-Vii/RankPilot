@@ -62,9 +62,16 @@ function extractCSPFromFirebase(): CSPConfig {
     const content = readFileSync('/workspaces/studio/firebase.json', 'utf-8');
     const config = JSON.parse(content);
 
-    const cspHeader = config.hosting?.headers?.[0]?.headers?.find(
-        (h: any) => h.key === 'Content-Security-Policy'
-    )?.value || '';
+    const headersUnknown = (config?.hosting?.headers?.[0]?.headers ?? []) as unknown;
+    let cspHeader = '';
+    if (Array.isArray(headersUnknown)) {
+        const found = headersUnknown.find((h: unknown): h is { key: unknown; value: unknown } => (
+            typeof h === 'object' && h !== null && 'key' in h && 'value' in h
+        ));
+        if (found && typeof found.key === 'string' && found.key === 'Content-Security-Policy' && typeof found.value === 'string') {
+            cspHeader = found.value;
+        }
+    }
 
     return {
         file: 'firebase.json',

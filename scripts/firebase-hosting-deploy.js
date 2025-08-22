@@ -9,13 +9,13 @@
 const { spawn } = require('child_process');
 
 // Suppress console output during deployment
-/* eslint-disable no-console */
+ 
 const originalConsole = { ...console };
 console.log = () => {};
 console.warn = () => {};
 console.info = () => {};
 console.error = () => {};
-/* eslint-enable no-console */
+ 
 
 async function deployToFirebase() {
     const args = [

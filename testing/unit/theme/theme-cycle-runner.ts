@@ -1,14 +1,15 @@
 // Minimal standalone runner to validate ThemeSystem cycle without mocha.
-import path from 'path';
 import Module from 'module';
+import path from 'path';
 
 // Mock classListManager alias resolution before importing theme system
-const originalResolve = (Module as any)._resolveFilename;
-(Module as any)._resolveFilename = function (request: string, parent: any, isMain: boolean, options: any) {
+const originalResolve = (Module as unknown as { _resolveFilename: (...args: unknown[]) => string })._resolveFilename;
+(Module as unknown as { _resolveFilename: (...args: unknown[]) => string })._resolveFilename = function (...args: unknown[]) {
+    const [request] = args as [string, ...unknown[]];
     if (request === '@/lib/dom/classListManager') {
         return path.join(process.cwd(), 'testing/unit/theme/__classListManagerMock__.ts');
     }
-    return originalResolve.call(this, request, parent, isMain, options);
+    return originalResolve.apply(this, args as []);
 };
 
 // Provide minimal DOM if absent
@@ -16,7 +17,7 @@ if (typeof document === 'undefined') {
     const styleStore: Record<string, string> = {};
     const style = { setProperty: (k: string, v: string) => { styleStore[k] = v; } };
     const classSet = new Set<string>();
-    const body: any = {
+    const body = {
         className: '',
         classList: {
             add: (c: string) => { classSet.add(c); body.className = Array.from(classSet).join(' '); },
@@ -25,7 +26,7 @@ if (typeof document === 'undefined') {
         }
     };
     // @ts-ignore
-    global.document = { documentElement: { style }, body } as any;
+    global.document = { documentElement: { style }, body } as unknown;
     // @ts-ignore
     global.__styleStore = styleStore;
     // Mock localStorage & document.cookie for persistence calls
@@ -44,7 +45,7 @@ if (typeof document !== 'undefined' && !document.body) {
 import type { ThemeMode } from '../../../src/lib/themes/theme-system';
 import { themeSystem } from '../../../src/lib/themes/theme-system';
 
-function assert(cond: any, msg: string) { if (!cond) throw new Error(msg); }
+function assert(cond: unknown, msg: string) { if (!cond) throw new Error(msg); }
 
 try {
     const order: ThemeMode[] = ['light', 'dark', 'high-contrast', 'auto'];
@@ -72,7 +73,8 @@ try {
         assert(Object.keys(vars).some(k => k === '--background'), 'Expected --background variable to be set');
     }
     console.log('Theme cycle runner: PASS');
-} catch (e: any) {
-    console.error('Theme cycle runner: FAIL ->', e.message);
+} catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error('Theme cycle runner: FAIL ->', msg);
     process.exitCode = 1;
 }

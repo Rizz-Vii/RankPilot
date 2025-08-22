@@ -21,9 +21,10 @@ function withAnalytics(cb: (a: Analytics) => void): void {
   try {
     cb(a);
   } catch (err) {
-    // Non-critical — swallow errors; show debug info in non-production environments
-    // eslint-disable-next-line no-console
-    if (process.env.NODE_ENV !== "production") console.debug("analytics error", err);
+    // Non-critical — swallow errors; show debug info in non-production environments (guard console)
+    if (process.env.NODE_ENV !== "production" && typeof console !== "undefined" && console.debug) {
+      console.debug("analytics error", err);
+    }
   }
 }
 

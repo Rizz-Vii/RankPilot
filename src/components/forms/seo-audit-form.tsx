@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from 'react';
-import type { FormEvent, ChangeEvent } from 'react';
-import type { AuditUrlInput } from '@/types';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { asVoidHandler } from '@/lib/react/handlers';
+import type { AuditUrlInput } from '@/types';
+import type { ChangeEvent, FormEvent } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 interface SeoAuditFormProps {
@@ -42,16 +43,18 @@ export default function SeoAuditForm({ onSubmit, isLoading }: SeoAuditFormProps)
             toast.success('Audit requested', { description: url });
         } catch (err: unknown) {
             let msg = 'Failed to start audit';
-            if (typeof err === 'object' && err && 'message' in err && typeof (err as any).message === 'string') {
-                msg = (err as any).message;
-            }
+            if (isErrorWithMessage(err)) msg = err.message;
             setError(msg);
             toast.error('Audit failed', { description: msg });
         }
     };
 
+    function isErrorWithMessage(e: unknown): e is { message: string } {
+        return typeof e === 'object' && !!e && 'message' in e && typeof (e as { message: unknown }).message === 'string';
+    }
+
     return (
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={asVoidHandler(handleSubmit)} className="space-y-3">
             <div>
                 <Label htmlFor="audit-url">Website URL</Label>
                 <Input

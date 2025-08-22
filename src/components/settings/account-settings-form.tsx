@@ -1,9 +1,15 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -14,23 +20,18 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Loader2, Mail, AlertTriangle } from "lucide-react";
-import { useState } from "react";
-import { doc, updateDoc } from "firebase/firestore";
-import { updateEmail } from "firebase/auth";
-import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { db } from "@/lib/firebase";
+import { asVoidHandler } from "@/lib/react/handlers";
+import { zodResolver } from "@hookform/resolvers/zod";
 import type { User } from "firebase/auth";
+import { updateEmail } from "firebase/auth";
+import { doc, updateDoc } from "firebase/firestore";
+import { AlertTriangle, Loader2, Mail } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { asUserProfile, type UserProfile } from "../../../types/user-profile";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -94,7 +95,9 @@ export default function AccountSettingsForm({
         description: "Your account information has been successfully updated.",
       });
     } catch (error: unknown) {
-      const msg = (error && typeof error === 'object' && 'message' in error) ? (error as any).message : undefined;
+      const msg = (error && typeof error === 'object' && 'message' in error)
+        ? String((error as { message?: unknown }).message)
+        : undefined;
       toast({
         variant: "destructive",
         title: "Update Failed",
@@ -119,7 +122,7 @@ export default function AccountSettingsForm({
       </CardHeader>
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(handleFormSubmit)}
+          onSubmit={asVoidHandler(form.handleSubmit(handleFormSubmit))}
           className="space-y-6"
         >
           <CardContent className="space-y-4">

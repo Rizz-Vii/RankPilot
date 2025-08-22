@@ -1,20 +1,21 @@
+import type { InvoiceRecord } from '@/lib/finance/derive-subscription-events';
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
-import type { InvoiceRecord } from '@/lib/finance/derive-subscription-events';
 
 const PERIOD_REGEX = /^[0-9]{4}-(0[1-9]|1[0-2])$/;
 
-function normalizeInvoice(raw: any): (InvoiceRecord & { paidAt?: Date; dueAt?: Date }) | null {
+function normalizeInvoice(raw: unknown): (InvoiceRecord & { paidAt?: Date; dueAt?: Date }) | null {
+    const r = (raw && typeof raw === 'object') ? raw as Record<string, unknown> : {};
     let period: string;
-    if (typeof raw?.period === 'string') {
-        period = PERIOD_REGEX.test(raw.period) ? raw.period : raw.period.slice(0, 7);
+    if (typeof r.period === 'string') {
+        period = PERIOD_REGEX.test(r.period) ? r.period : r.period.slice(0, 7);
     } else period = new Date().toISOString().slice(0, 7);
     if (!PERIOD_REGEX.test(period)) return null;
     return {
-        userId: typeof raw?.userId === 'string' ? raw.userId : 'unknown',
+        userId: typeof r.userId === 'string' ? r.userId : 'unknown',
         period,
-        status: typeof raw?.status === 'string' ? raw.status : 'unknown',
-        amount: typeof raw?.amount === 'number' ? raw.amount : 0
+        status: typeof r.status === 'string' ? r.status : 'unknown',
+        amount: typeof r.amount === 'number' ? r.amount : 0
     };
 }
 

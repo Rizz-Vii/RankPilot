@@ -19,9 +19,11 @@ describe('Daily AI usage endpoint (range)', () => {
     it('returns both days in range', async () => {
         const res = await fetch(`http://localhost:3000/api/admin/ai-usage/daily?start=${day1}&end=${day2}`);
         expect(res.ok).to.equal(true);
-        const body: any = await res.json();
-        expect(body.count).to.be.greaterThan(0);
-        const dates = body.rows.map((r: any) => r.date).sort();
+        const body = await res.json() as Record<string, unknown>;
+        const count = typeof body.count === 'number' ? body.count : 0;
+        expect(count).to.be.greaterThan(0);
+        const rows = Array.isArray(body.rows) ? (body.rows as unknown[]) : [];
+        const dates = rows.map((r: unknown) => (r && typeof r === 'object' && 'date' in (r as Record<string, unknown>) ? String((r as Record<string, unknown>).date) : '')).filter(Boolean).sort();
         expect(dates).to.include(day1);
         expect(dates).to.include(day2);
     });

@@ -38,7 +38,12 @@ interface Summary { mrr: number; churn: number; ltv: number; onTime?: number; }
 export default function FinanceDashboardRoot() {
   const { data: mock } = useMockDomainMetrics('finance', allowFinanceMocks());
   const { user, loading: authLoading } = useAuth();
-  const userId = user?.uid; const teamId = (user as any)?.teamId as string|undefined;
+  const userId: string | undefined = (user && typeof user === 'object' && 'uid' in (user as unknown as Record<string, unknown>) && typeof (user as unknown as Record<string, unknown>).uid === 'string')
+    ? ((user as unknown as Record<string, unknown>).uid as string)
+    : undefined;
+  const teamId = (user && typeof user === 'object' && 'teamId' in (user as unknown as Record<string, unknown>) && typeof (user as unknown as Record<string, unknown>).teamId === 'string')
+    ? ((user as unknown as Record<string, unknown>).teamId as string)
+    : undefined;
   const [months, setMonths] = useState(6);
   const [metrics, setMetrics] = useState<AggregatedFinanceMetrics | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -50,7 +55,7 @@ export default function FinanceDashboardRoot() {
   const [agingSnap, setAgingSnap] = useState<{ buckets: Record<string, number>; ts: Date } | null>(null);
   const { trigger, running } = useAutomationTrigger();
 
-  useEffect(()=> { void trackDashboardView('finance'); }, [trackDashboardView]);
+  useEffect(() => { void trackDashboardView('finance'); }, []);
 
   // Persist months selection
   useEffect(()=> { if(typeof window==='undefined') return; const stored = window.localStorage.getItem('financeMonths'); if(stored) { const num = parseInt(stored,10); if([3,6,9,12].includes(num)) setMonths(num as 3|6|9|12); } }, []);
@@ -93,7 +98,7 @@ export default function FinanceDashboardRoot() {
       unsub = subscribeFinanceMetrics(userId, months, (m)=> { setMetrics(m); setInitialLoading(false); }, teamId);
     })();
     return ()=> { active=false; if(unsub) unsub(); };
-  }, [userId, user, teamId, months, dataVersion, authLoading, fetchFinanceMetrics, subscribeFinanceMetrics]);
+  }, [userId, user, teamId, months, dataVersion, authLoading]);
 
   // Load latest automation snapshots (finance)
   useEffect(()=> {
@@ -115,7 +120,7 @@ export default function FinanceDashboardRoot() {
         }
       } catch { /* silent */ }
     })();
-  }, [userId, teamId, dataVersion, fetchRecentFinanceRevenueSnapshots, fetchLatestFinanceInvoiceAging]);
+  }, [userId, teamId, dataVersion]);
 
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   const summary: Summary = useMemo(()=> {
@@ -127,7 +132,7 @@ export default function FinanceDashboardRoot() {
       ltv: ks.find(k=> /ltv/i.test(k.key))?.value || 0,
       onTime: ks.find(k=> k.key==='on_time')?.value
     };
-  }, [metrics, mock, allowFinanceMocks]);
+  }, [metrics, mock]);
 
   function handleRefresh(){ setDataVersion(v=> v+1); }
   function exportSnapshot(format: 'json'|'csv'){
@@ -174,8 +179,8 @@ export default function FinanceDashboardRoot() {
               <Button size="sm" onClick={handleRefresh} disabled={refreshing} className={cn('gap-1', refreshing && 'animate-pulse')} aria-live="polite" aria-busy={refreshing}><RefreshCw className={cn('h-4 w-4', refreshing && 'animate-spin')} />{refreshing? 'Refreshing':'Refresh'}</Button>
             </div>
           </ToolPageHeader>
-          {/* Banner: show whenever mocks are allowed AND we either have no metrics yet OR metrics resolved but contain no invoices (mock fallback). */}
-          {allowFinanceMocks() && (!metrics || ((metrics as any)?.invoicesCount ?? (metrics as any)?.invoices?.length) === 0) && (
+            {/* Banner: show whenever mocks are allowed AND we either have no metrics yet OR metrics loaded but no KPI rows (indicates mock fallback). */}
+            {allowFinanceMocks() && (!metrics || !((metrics.kpis && metrics.kpis.length > 0))) && (
             <Alert className="border-warning/30 bg-warning/15 text-warning-foreground dark:bg-warning/20 dark:text-warning-foreground" aria-live="polite" aria-label="Finance mock data banner">
               <div className="flex items-start gap-3 text-sm">
                 <AlertTriangle className="h-4 w-4 mt-0.5" />
@@ -215,14 +220,11 @@ export default function FinanceDashboardRoot() {
           <motion.section aria-label="Key performance indicators" className="grid gap-4 md:grid-cols-4" variants={dashboardContainerVariants} initial="hidden" animate="visible">
             {initialLoading && Array.from({length:4}).map((_,i)=> (<Skeleton key={i} className="h-32 rounded-xl" shimmer aria-label="Loading metric" />))}
             {!initialLoading && (()=> {
-                const mockKpis = (allowFinanceMocks() && mock) ? mock.kpis : [];
-                type Ext = (typeof mockKpis extends Array<infer T> ? T : never) & { target?: number; invertTarget?: boolean };
-                const live = metrics?.kpis as typeof mockKpis | undefined;
-                const base = (live && live.length > 0 ? live : mockKpis);
-              const targetMap: Record<string,{target?:number; invertTarget?:boolean}> = {};
-                metrics?.kpis?.forEach(k => { targetMap[k.key] = { target: (k as any).target, invertTarget: (k as any).invertTarget }; });
-                const extended: Ext[] = base.map(k => ({ ...k, ...(targetMap[k.key] || {}) }));
-                return extended.map((k, i) => {
+                const liveKpis = metrics?.kpis;
+                const baseKpis: AggregatedFinanceMetrics['kpis'] = (liveKpis && liveKpis.length > 0)
+                  ? liveKpis
+                  : ((allowFinanceMocks() && mock) ? (mock.kpis as AggregatedFinanceMetrics['kpis']) : []);
+                return baseKpis.map((k, i) => {
                 const pctToTarget = k.target!=null? (k.invertTarget? (k.target / (k.value||1))*100 : (k.value / (k.target||1))*100): null;
                 const alertState = pctToTarget!=null? (k.invertTarget? pctToTarget <= 100 : pctToTarget >= 100): false;
                 return (

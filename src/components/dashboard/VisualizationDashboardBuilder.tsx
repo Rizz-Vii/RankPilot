@@ -2,7 +2,7 @@
 /**
  * Enhanced Dashboard Builder with D3.js Visualizations
  * Integrates Priority 2 Enterprise Features from DevReady Phase 3
- * 
+ *
  * Features:
  * - D3.js visualization engine integration
  * - Advanced chart export capabilities
@@ -14,6 +14,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ExportButton } from '@/components/ui/ExportButton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -21,18 +22,23 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type {
-    BatchExportConfig} from '@/lib/visualizations/chart-export-manager';
+    BatchExportConfig
+} from '@/lib/visualizations/chart-export-manager';
 import {
     chartExportManager
 } from '@/lib/visualizations/chart-export-manager';
 import type {
     ChartConfig,
-    ChartDataPoint} from '@/lib/visualizations/d3-visualization-engine';
+    ChartDataPoint
+} from '@/lib/visualizations/d3-visualization-engine';
 import {
     d3VisualizationEngine
 } from '@/lib/visualizations/d3-visualization-engine';
 import {
+    ArrowUpDown,
     BarChart3,
+    ChevronLeft,
+    ChevronRight,
     Download,
     Edit,
     Eye,
@@ -46,20 +52,11 @@ import {
     Share2,
     Trash2,
     TrendingUp,
-    ArrowUpDown,
-    ChevronLeft,
-    ChevronRight,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ExportButton } from '@/components/ui/ExportButton';
 // NOTE: Server-side canonical dashboard types live in lib/dashboard/custom-dashboard-builder.
 // We intentionally alias them to avoid clashing with the legacy builder shapes below.
 // Follow-up: unify these (client) widget shapes with server `DashboardWidget` subset (dataSource, visualization, styling, permissions) via a thin mapper.
-import type { DashboardWidget as ServerDashboardWidget, DashboardLayout as ServerDashboardLayout } from '@/lib/dashboard/custom-dashboard-builder';
-// Shared safe error message extractor (mirrors server util pattern)
-const errMsg = (e: unknown): string => (typeof e === 'string' ? e : (e && typeof e === 'object' && 'message' in e && typeof (e as any).message === 'string') ? (e as any).message : 'Unknown error');
-import { toServerCreate, toServerMutation, mergeServerWidget, serverToClientWidget } from '@/lib/dashboard/widget-mapping';
-import { toast as sonnerToast } from 'sonner';
 import {
     Table,
     TableBody,
@@ -68,6 +65,18 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import type { DashboardWidget as ServerDashboardWidget } from '@/lib/dashboard/custom-dashboard-builder';
+import { mergeServerWidget, serverToClientWidget, toServerCreate, toServerMutation } from '@/lib/dashboard/widget-mapping';
+import { toast as sonnerToast } from 'sonner';
+// Shared safe error message extractor (mirrors server util pattern)
+const errMsg = (e: unknown): string => {
+    if (typeof e === 'string') return e;
+    if (e && typeof e === 'object' && 'message' in e) {
+        const msg = (e as { message?: unknown }).message;
+        if (typeof msg === 'string') return msg;
+    }
+    return 'Unknown error';
+};
 
 // Legacy client widget (will be converged into server shape). Kept minimal for current UI interactions.
 export interface DashboardWidget {
@@ -126,7 +135,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
     );
     // remote dashboard id (set after first successful server create)
     const [serverDashboardId, setServerDashboardId] = useState<string | null>(null);
-    const [persisting, setPersisting] = useState(false);
+    // const [persisting, setPersisting] = useState(false); // reserved for future persistence spinner
     // Initialize server dashboard id from localStorage if present
     useEffect(() => {
         try {
@@ -138,25 +147,35 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
     useEffect(() => {
         if (!serverDashboardId) return;
         let cancelled = false;
-        (async () => {
+        function hydrate(): void {
             try {
                 const token = (typeof window !== 'undefined') ? localStorage.getItem('authToken') : null;
                 if (!token) return;
-                const res = await fetch('/api/dashboard/custom?action=dashboards', { headers: { 'Authorization': `Bearer ${token}` } });
-                if (!res.ok) return;
-                const json = await res.json();
-                const dashboards: any[] = json?.dashboards || [];
-                const serverDash = dashboards.find(d => d.id === serverDashboardId);
-                if (!serverDash || cancelled) return;
-                const serverWidgets: ServerDashboardWidget[] = serverDash.widgets || [];
-                setLayout(prev => {
-                    const existing = new Set(prev.widgets.map(w => w.serverId || w.id));
-                    const additions = serverWidgets.filter(sw => !existing.has(sw.id)).map(sw => serverToClientWidget(sw));
-                    if (additions.length === 0) return prev;
-                    return { ...prev, widgets: [...prev.widgets, ...additions], updated: new Date() };
-                });
-            } catch {/* silent */}
-        })();
+                void fetch('/api/dashboard/custom?action=dashboards', { headers: { 'Authorization': `Bearer ${token}` } })
+                    .then(res => {
+                        if (!res.ok) return null;
+                        return res.json();
+                    })
+                    .then(json => {
+                        if (!json) return;
+                        const dashboardsUnknown: unknown = json?.dashboards;
+                        const dashboards: Array<{ id: string; widgets?: ServerDashboardWidget[] }> = Array.isArray(dashboardsUnknown)
+                            ? dashboardsUnknown.filter(d => d && typeof d === 'object' && 'id' in d) as Array<{ id: string; widgets?: ServerDashboardWidget[] }>
+                            : [];
+                        const serverDash = dashboards.find(d => d.id === serverDashboardId);
+                        if (!serverDash || cancelled) return;
+                        const serverWidgets: ServerDashboardWidget[] = serverDash.widgets || [];
+                        setLayout(prev => {
+                            const existing = new Set(prev.widgets.map(w => w.serverId || w.id));
+                            const additions = serverWidgets.filter(sw => !existing.has(sw.id)).map(sw => serverToClientWidget(sw));
+                            if (additions.length === 0) return prev;
+                            return { ...prev, widgets: [...prev.widgets, ...additions], updated: new Date() };
+                        });
+                    })
+                    .catch(() => { /* silent */ });
+            } catch { /* silent */ }
+        }
+        hydrate();
         return () => { cancelled = true; };
     }, [serverDashboardId]);
     const [selectedWidget, setSelectedWidget] = useState<string | null>(null);
@@ -218,18 +237,6 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
         setSampleData(data);
     }, []);
 
-    // Render charts when widgets change
-    useEffect(() => {
-        layout.widgets.forEach(widget => {
-            if (widget.type === 'chart' && widget.chartConfig) {
-                const chartElement = chartRefs.current.get(widget.id);
-                if (chartElement) {
-                    renderChart(widget);
-                }
-            }
-        });
-    }, [layout.widgets, sampleData]);
-
     const renderChart = useCallback((widget: DashboardWidget) => {
         if (!widget.chartConfig) return;
 
@@ -275,6 +282,16 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
             chartElement.innerHTML = `<div class=\"p-4 text-destructive-foreground\">Error rendering chart: ${String(error)}</div>`;
         }
     }, [sampleData]);
+
+    // Render charts when widgets or sample data change (renderChart declared above)
+    useEffect(() => {
+        layout.widgets.forEach(widget => {
+            if (widget.type === 'chart' && widget.chartConfig) {
+                const chartElement = chartRefs.current.get(widget.id);
+                if (chartElement) renderChart(widget);
+            }
+        });
+    }, [layout.widgets, sampleData, renderChart]);
 
     const addWidget = (type: DashboardWidget['type']) => {
         const newWidget: DashboardWidget = {
@@ -357,26 +374,9 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
     };
 
     // Table helpers
-    const getDefaultTableState = (): { sortBy: TableSortBy; direction: TableDirection; page: number; pageSize: number } => ({ sortBy: 'metric', direction: 'asc', page: 0, pageSize: 5 });
+    const getDefaultTableState = useCallback((): { sortBy: TableSortBy; direction: TableDirection; page: number; pageSize: number } => ({ sortBy: 'metric', direction: 'asc', page: 0, pageSize: 5 }), []);
 
-    const getTableRows = (widgetId: string): TableRowType[] => {
-        // Sample rows; in a real app, rows would come from widget.data
-        return [
-            { metric: 'Revenue', value: '$200,000', change: '+12%' },
-            { metric: 'Costs', value: '$160,000', change: '+5%' },
-            { metric: 'Profit', value: '$40,000', change: '+22%' },
-            { metric: 'Visitors', value: '120,450', change: '+8%' },
-            { metric: 'Conversion', value: '3.2%', change: '+0.4%' },
-            { metric: 'Bounce Rate', value: '42%', change: '-3%' },
-            { metric: 'LTV', value: '$1,240', change: '+2%' },
-            { metric: 'AOV', value: '$89', change: '+1%' },
-        ];
-    };
-
-    const parseNumericValue = (val: string): number => {
-        if (val.endsWith('%')) return parseFloat(val.replace(/%/g, ''));
-        return parseFloat(val.replace(/[$,]/g, ''));
-    };
+    // Removed unused table helper functions previously defined here (cleanup for lint).
 
     const handleSort = (widgetId: string, column: 'metric' | 'value' | 'change') => {
         setTableState(prev => {
@@ -408,7 +408,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
     };
 
     // Build query string for server API
-    const buildTableQuery = (widgetId: string, state: { sortBy: TableSortBy; direction: TableDirection; page: number; pageSize: number }, opts?: { all?: boolean; format?: 'json' | 'csv' }) => {
+    const buildTableQuery = useCallback((widgetId: string, state: { sortBy: TableSortBy; direction: TableDirection; page: number; pageSize: number }, opts?: { all?: boolean; format?: 'json' | 'csv' }) => {
         const params = new URLSearchParams();
         params.set('widgetId', widgetId);
         params.set('sortBy', state.sortBy);
@@ -418,9 +418,10 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
         if (opts?.all) params.set('all', '1');
         if (opts?.format) params.set('format', opts.format);
         return params.toString();
-    };
+    }, []);
 
     // Fetch server-side table data for all table widgets when relevant state changes
+    const widgetsKey = React.useMemo(() => layout.widgets.map(w => `${w.id}:${w.type}`).join('|'), [layout.widgets]);
     useEffect(() => {
         const controllers: AbortController[] = [];
         const widgets = layout.widgets.filter(w => w.type === 'table');
@@ -458,8 +459,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                 });
         });
         return () => controllers.forEach(c => c.abort());
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [layout.widgets, tableState]);
+    }, [widgetsKey, tableState, buildTableQuery, getDefaultTableState, layout.widgets]);
 
     const updateWidget = (widgetId: string, updates: Partial<DashboardWidget>) => {
         setLayout(prev => ({
@@ -820,7 +820,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={saveDashboard}
+                                        onClick={() => { saveDashboard(); }}
                                     >
                                         <Save className="w-4 h-4 mr-2" />
                                         Save
@@ -832,7 +832,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => exportDashboard('pdf')}
+                                    onClick={() => { void exportDashboard('pdf'); }}
                                     disabled={isExporting}
                                 >
                                     <Download className="w-4 h-4 mr-2" />
@@ -841,7 +841,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => exportDashboard('excel')}
+                                    onClick={() => { void exportDashboard('excel'); }}
                                     disabled={isExporting}
                                 >
                                     <Download className="w-4 h-4 mr-2" />
@@ -850,7 +850,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => exportDashboard('json')}
+                                    onClick={() => { void exportDashboard('json'); }}
                                     disabled={isExporting}
                                 >
                                     <Download className="w-4 h-4 mr-2" />
@@ -1045,7 +1045,7 @@ const WidgetPropertiesPanel: React.FC<WidgetPropertiesPanelProps> = ({ widget, o
             </div>
             <div>
                 <Label className="text-xs uppercase tracking-wide">Type</Label>
-                <Select value={widget.type} onValueChange={val => onUpdate({ type: val as DashboardWidget['type'] })}>
+                <Select value={widget.type} onValueChange={(val: DashboardWidget['type']) => onUpdate({ type: val })}>
                     <SelectTrigger className="h-8 text-sm" />
                     <SelectContent>
                         <SelectItem value="chart">Chart</SelectItem>
@@ -1058,7 +1058,7 @@ const WidgetPropertiesPanel: React.FC<WidgetPropertiesPanelProps> = ({ widget, o
             {widget.type === 'chart' && (
                 <div>
                     <Label className="text-xs uppercase tracking-wide">Chart Type</Label>
-                    <Select value={widget.chartConfig?.type || 'line'} onValueChange={val => onUpdate({ chartConfig: { id: widget.chartConfig?.id || `chart_${widget.id}`, width: widget.chartConfig?.width || 400, height: widget.chartConfig?.height || 300, margin: widget.chartConfig?.margin || { top: 10, right: 10, bottom: 30, left: 40 }, data: widget.chartConfig?.data || [], options: widget.chartConfig?.options || {}, styling: widget.chartConfig?.styling || {}, type: val as any } })}>
+                    <Select value={widget.chartConfig?.type || 'line'} onValueChange={(val: ChartConfig['type']) => onUpdate({ chartConfig: { id: widget.chartConfig?.id || `chart_${widget.id}`, width: widget.chartConfig?.width || 400, height: widget.chartConfig?.height || 300, margin: widget.chartConfig?.margin || { top: 10, right: 10, bottom: 30, left: 40 }, data: widget.chartConfig?.data || [], options: widget.chartConfig?.options || {}, styling: widget.chartConfig?.styling || {}, type: val } })}>
                         <SelectTrigger className="h-8 text-sm" />
                         <SelectContent>
                             <SelectItem value="line">Line</SelectItem>

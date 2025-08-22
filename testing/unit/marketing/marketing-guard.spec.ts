@@ -20,8 +20,9 @@ describe('MKT-01 sanitizeMarketingCampaignDoc', () => {
     });
 
     it('normalizes numeric-like strings and leaves numbers unchanged', () => {
-        const raw = { impressions: '1000', clicks: '250', spend: '89.5', roi: 4, period: '2025-08-11T12:00:00Z' } as any;
-        const cleaned = sanitizeMarketingCampaignDoc(raw);
+        interface RawCampaign extends Record<string, unknown> { impressions?: unknown; clicks?: unknown; spend?: unknown; roi?: unknown; period?: unknown; }
+        const rawCampaign: RawCampaign = { impressions: '1000', clicks: '250', spend: '89.5', roi: 4, period: '2025-08-11T12:00:00Z' };
+        const cleaned = sanitizeMarketingCampaignDoc(rawCampaign);
         expect(cleaned.impressions).to.equal(1000);
         expect(cleaned.clicks).to.equal(250);
         expect(cleaned.spend).to.equal(89.5);
@@ -30,8 +31,9 @@ describe('MKT-01 sanitizeMarketingCampaignDoc', () => {
     });
 
     it('falls back to 0 for unparsable numeric fields', () => {
-        const raw = { impressions: 'abc', clicks: 'xyz', spend: 'NaN', ctr: 0.5 } as any;
-        const cleaned = sanitizeMarketingCampaignDoc(raw);
+        interface RawCampaign2 extends Record<string, unknown> { impressions?: unknown; clicks?: unknown; spend?: unknown; ctr?: unknown; }
+        const rawBad: RawCampaign2 = { impressions: 'abc', clicks: 'xyz', spend: 'NaN', ctr: 0.5 };
+        const cleaned = sanitizeMarketingCampaignDoc(rawBad);
         expect(cleaned.impressions).to.equal(0);
         expect(cleaned.clicks).to.equal(0);
         expect(cleaned.spend).to.equal(0);

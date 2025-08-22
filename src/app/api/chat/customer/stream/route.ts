@@ -1,16 +1,16 @@
+import { fallbackOneShot } from '@/lib/ai/aiClient';
+import { maybeEmbedMessage } from '@/lib/chat/embedding';
+import { buildQueryEmbedding, maybeClusterKeywords, retrieveSimilarMessages } from '@/lib/chat/retrievalAndClustering';
+import { maybeSummarizeSession } from '@/lib/chat/sessionSummarizer';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { recordError, recordFallback, recordRateLimitRejection, recordRouteLatency } from '@/lib/metrics/unified-metrics';
+import { enforceProvenanceOnChunk } from '@/lib/middleware/provenance';
+import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
+import { retrieveSiteChunks } from '@/lib/site-ingestion/retrieval';
+import { FieldValue } from 'firebase-admin/firestore';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import OpenAI from 'openai';
-import { FieldValue } from 'firebase-admin/firestore';
-import { maybeSummarizeSession } from '@/lib/chat/sessionSummarizer';
-import { maybeEmbedMessage } from '@/lib/chat/embedding';
-import { buildQueryEmbedding, retrieveSimilarMessages, maybeClusterKeywords } from '@/lib/chat/retrievalAndClustering';
-import { retrieveSiteChunks } from '@/lib/site-ingestion/retrieval';
-import { fallbackOneShot } from '@/lib/ai/aiClient';
-import { enforceProvenanceOnChunk } from '@/lib/middleware/provenance';
-import { recordRouteLatency, recordError, recordFallback, recordRateLimitRejection } from '@/lib/metrics/unified-metrics';
-import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
 
 // Quota limits by tier (daily)
 const QUOTA_LIMITS: Record<string, { messages: number; tokens: number }> = {
@@ -179,7 +179,8 @@ export async function POST(req: NextRequest): Promise<Response> {
         try { await checkAndIncrementMessageQuota(uid, tier); } catch (qErr: unknown) {
             recordError('chat/customer/stream', '4xx_user');
             recordRouteLatency('chat/customer/stream', Date.now() - start);
-            return NextResponse.json({ error: (qErr as any)?.message || 'Quota exceeded' }, { status: 429 });
+            const msg = qErr instanceof Error ? qErr.message : 'Quota exceeded';
+            return NextResponse.json({ error: msg }, { status: 429 });
         }
 
         // Retrieval augmentation (if embeddings enabled)
@@ -257,7 +258,7 @@ export async function POST(req: NextRequest): Promise<Response> {
                     provider = 'openai';
                     recordOpenAISuccess();
                     break;
-                } catch (e) {
+                } catch {
                     recordOpenAIFailure();
                     if (attempt < maxAttempts - 1) {
                         const delay = 100 * Math.pow(3, attempt); // 100, 300, 900
@@ -338,7 +339,7 @@ export async function POST(req: NextRequest): Promise<Response> {
                             const dateKey = new Date().toISOString().slice(0, 10);
                             await adminDb.collection('usageCounters').doc(`${uid}_${dateKey}`).set({ [`providerCounts.${provider}`]: FieldValue.increment(1) }, { merge: true });
                         } catch { }
-                        maybeSummarizeSession({ uid, sessionId: currentSessionId, latestUserMessage: message, latestAIResponse: fullResponse })
+                        void maybeSummarizeSession({ uid, sessionId: currentSessionId, latestUserMessage: message, latestAIResponse: fullResponse })
                             .then(r => { if (r.updated) { controller.enqueue(encoder.encode(`data: ${JSON.stringify({ info: 'summary_updated' })}\n\n`)); } })
                             .catch(() => { });
                         maybeEmbedMessage({ uid, sessionId: currentSessionId, messageDocId: addedRef.id, question: message })
@@ -348,9 +349,10 @@ export async function POST(req: NextRequest): Promise<Response> {
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ final: true, sessionId: currentSessionId, timestamp: new Date().toISOString(), tokensUsed, provider, fallback: provider !== 'openai', openaiCircuitOpen: openAICircuitOpen(), provenance: provider === 'openai' ? 'live' : 'synthetic' }, { path: 'chat/customer/stream' }))}\n\n`));
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
-                } catch (e: unknown) {
+                } catch (err: unknown) {
                     recordError('chat/customer/stream', '5xx_server');
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ error: e instanceof Error ? e.message : String(e ?? 'stream_error'), providerTried: provider, openaiCircuitOpen: openAICircuitOpen(), provenance: 'synthetic' }, { path: 'chat/customer/stream' }))}\n\n`));
+                    const msg = err instanceof Error ? err.message : 'stream_error';
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ error: msg, providerTried: provider, openAICircuitOpen: openAICircuitOpen(), provenance: 'synthetic' }, { path: 'chat/customer/stream' }))}\n\n`));
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
                 }

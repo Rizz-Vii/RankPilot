@@ -4,10 +4,10 @@
 import {
   collection,
   doc,
-  setDoc,
-  updateDoc,
   getDocs,
   query,
+  setDoc,
+  updateDoc,
   where,
 } from "firebase/firestore";
 import { db } from "../src/lib/firebase";
@@ -19,7 +19,7 @@ interface UserProfile {
   subscriptionTier: string;
   subscriptionStatus: string;
   displayName?: string;
-  createdAt?: any;
+  createdAt?: Date | { toDate?: () => Date } | string | number | null;
 }
 
 export async function diagnoseAdminUsers() {
@@ -66,7 +66,7 @@ export async function diagnoseAdminUsers() {
       );
 
       adminTierSnapshot.forEach((doc) => {
-        const userData = doc.data();
+        const userData = doc.data() as Record<string, unknown>;
         console.log(`👤 User with admin tier: ${userData.email}`);
         console.log(`   - UID: ${doc.id}`);
         console.log(`   - Role: ${userData.role || "not set"}`);
@@ -206,7 +206,7 @@ export async function quickFixKnownAdmins() {
 
 // Export for console usage
 if (typeof window !== "undefined") {
-  (window as any).adminUserUtils = {
+  (window as unknown as { adminUserUtils?: unknown }).adminUserUtils = {
     diagnoseAdminUsers,
     fixAdminUserConfiguration,
     createAdminUser,

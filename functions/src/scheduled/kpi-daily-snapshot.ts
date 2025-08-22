@@ -1,7 +1,7 @@
-import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { logger } from 'firebase-functions/v2';
 import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import { logger } from 'firebase-functions/v2';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 
 /**
  * Daily KPI Snapshot Function (T16)
@@ -68,7 +68,7 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
             aiCost += (data.costEstimate as number) || 0;
         });
     } catch (e) {
-        logger.warn('kpiDailySnapshot.aiUsageQueryFailed', (e as any)?.message);
+        logger.warn('kpiDailySnapshot.aiUsageQueryFailed', e instanceof Error ? e.message : String(e));
     }
     aiCost = +aiCost.toFixed(4);
 
@@ -80,15 +80,15 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
         if (!revSnap.empty) {
             const paid: Record<string, unknown>[] = []; const all: Record<string, unknown>[] = [];
             revSnap.docs.forEach(d => { const data = d.data() as Record<string, unknown>; all.push(data); if (data.status === 'paid') paid.push(data); });
-            revenueMrr = paid.reduce((s, i) => s + ((i as any).amount || 0), 0);
-            revenueOutstanding = all.filter(i => (i as any).status !== 'paid').length;
+            revenueMrr = paid.reduce((s, i) => s + (typeof i.amount === 'number' ? i.amount : 0), 0);
+            revenueOutstanding = all.filter(i => i.status !== 'paid').length;
             if (paid.length) {
-                const onTime = paid.filter(i => { const paidAt = (i as any).paidAt?.toDate?.(); const due = (i as any).dueAt?.toDate?.(); return paidAt && due && paidAt.getTime() <= due.getTime(); });
+                const onTime = paid.filter(i => { const paidAt = (i as { paidAt?: { toDate?: () => Date } }).paidAt?.toDate?.(); const due = (i as { dueAt?: { toDate?: () => Date } }).dueAt?.toDate?.(); return paidAt && due && paidAt.getTime() <= due.getTime(); });
                 revenueOnTimePct = +(onTime.length / paid.length * 100).toFixed(1);
             } else revenueOnTimePct = 0;
         }
     } catch (e) {
-        logger.warn('kpiDailySnapshot.revenueAggregationFailed', (e as any)?.message);
+        logger.warn('kpiDailySnapshot.revenueAggregationFailed', e instanceof Error ? e.message : String(e));
     }
 
     const ref = db.collection('kpiDaily').doc(dateKey);
@@ -107,20 +107,23 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
     try {
         const uDoc = await db.collection('unifiedMetricsDaily').doc(dateKey).get();
         if (uDoc.exists) {
-            const u = uDoc.data() as Record<string, unknown> | undefined;
-            provenanceCoveragePct = typeof (u as any)?.provenanceCoveragePct === 'number' ? (u as any).provenanceCoveragePct : null;
-            p90LatencyOverall = typeof (u as any)?.p90LatencyOverall === 'number' ? (u as any).p90LatencyOverall : null;
-            p95LatencyOverall = typeof (u as any)?.p95LatencyOverall === 'number' ? (u as any).p95LatencyOverall : null;
-            p99LatencyOverall = typeof (u as any)?.p99LatencyOverall === 'number' ? (u as any).p99LatencyOverall : null;
-            crawlerAggregateAdoptionPct = typeof (u as any)?.crawlerAggregateAdoptionPct === 'number' ? (u as any).crawlerAggregateAdoptionPct : null;
-            semanticMapAggregateAdoptionPct = typeof (u as any)?.semanticMapAggregateAdoptionPct === 'number' ? (u as any).semanticMapAggregateAdoptionPct : null;
-            teamRateLimitUtilizationPct = typeof (u as any)?.teamRateLimitUtilizationPct === 'number' ? (u as any).teamRateLimitUtilizationPct : null;
-            fallbackRatePct = typeof (u as any)?.fallbackRate === 'number' ? (u as any).fallbackRate : (typeof (u as any)?.fallbackRatePct === 'number' ? (u as any).fallbackRatePct : null);
-            cacheHitRatio = typeof (u as any)?.cacheHitRatio === 'number' ? (u as any).cacheHitRatio : null;
-            rateLimitRejectionRate = typeof (u as any)?.rateLimitRejectionRate === 'number' ? (u as any).rateLimitRejectionRate : null;
+            const raw = uDoc.data() as unknown;
+            const u = (raw && typeof raw === 'object') ? raw as Record<string, unknown> : undefined;
+            const readNum = (o: Record<string, unknown> | undefined, k: string): number | null => (o && typeof o[k] === 'number') ? o[k] as number : null;
+            provenanceCoveragePct = readNum(u, 'provenanceCoveragePct');
+            p90LatencyOverall = readNum(u, 'p90LatencyOverall');
+            p95LatencyOverall = readNum(u, 'p95LatencyOverall');
+            p99LatencyOverall = readNum(u, 'p99LatencyOverall');
+            crawlerAggregateAdoptionPct = readNum(u, 'crawlerAggregateAdoptionPct');
+            semanticMapAggregateAdoptionPct = readNum(u, 'semanticMapAggregateAdoptionPct');
+            teamRateLimitUtilizationPct = readNum(u, 'teamRateLimitUtilizationPct');
+            fallbackRatePct = readNum(u, 'fallbackRate');
+            if (fallbackRatePct === null) fallbackRatePct = readNum(u, 'fallbackRatePct');
+            cacheHitRatio = readNum(u, 'cacheHitRatio');
+            rateLimitRejectionRate = readNum(u, 'rateLimitRejectionRate');
         }
     } catch (e) {
-        logger.warn('kpiDailySnapshot.unifiedMetricsLoadFailed', (e as any)?.message);
+        logger.warn('kpiDailySnapshot.unifiedMetricsLoadFailed', e instanceof Error ? e.message : String(e));
     }
     // Normalize undefined numeric fields to 0/null to satisfy Firestore serializer
     if (revenueOnTimePct === undefined) revenueOnTimePct = 0;
@@ -193,17 +196,17 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
             const recentSnap = await db.collection('kpiDaily').orderBy('date', 'desc').limit(7).get();
             const rows = recentSnap.docs.map(d => d.data() as Record<string, unknown>);
             const avg = (arr: number[]) => arr.length ? +(arr.reduce((s, v) => s + v, 0) / arr.length).toFixed(2) : null;
-            ma7Provenance = avg(rows.map(r => (r as any).provenanceCoveragePct).filter((v: number) => typeof v === 'number'));
-            ma7CrawlerAdoption = avg(rows.map(r => (r as any).crawlerAggregateAdoptionPct).filter((v: number) => typeof v === 'number'));
-            ma7SemanticAdoption = avg(rows.map(r => (r as any).semanticMapAggregateAdoptionPct).filter((v: number) => typeof v === 'number'));
-            ma7FallbackRate = avg(rows.map(r => (r as any).fallbackRatePct ?? (r as any).fallbackRate).filter((v: number) => typeof v === 'number'));
-            ma7LatencyP95 = avg(rows.map(r => (r as any).p95LatencyOverall).filter((v: number) => typeof v === 'number'));
-            ma7CacheHitRatio = avg(rows.map(r => (r as any).cacheHitRatio).filter((v: number) => typeof v === 'number'));
-            ma7RateLimitRejectionRate = avg(rows.map(r => (r as any).rateLimitRejectionRate).filter((v: number) => typeof v === 'number'));
+            ma7Provenance = avg(rows.map(r => (r as { provenanceCoveragePct?: number }).provenanceCoveragePct).filter((v: number | undefined): v is number => typeof v === 'number'));
+            ma7CrawlerAdoption = avg(rows.map(r => (r as { crawlerAggregateAdoptionPct?: number }).crawlerAggregateAdoptionPct).filter((v: number | undefined): v is number => typeof v === 'number'));
+            ma7SemanticAdoption = avg(rows.map(r => (r as { semanticMapAggregateAdoptionPct?: number }).semanticMapAggregateAdoptionPct).filter((v: number | undefined): v is number => typeof v === 'number'));
+            ma7FallbackRate = avg(rows.map(r => (r as { fallbackRatePct?: number; fallbackRate?: number }).fallbackRatePct ?? (r as { fallbackRatePct?: number; fallbackRate?: number }).fallbackRate).filter((v: number | undefined): v is number => typeof v === 'number'));
+            ma7LatencyP95 = avg(rows.map(r => (r as { p95LatencyOverall?: number }).p95LatencyOverall).filter((v: number | undefined): v is number => typeof v === 'number'));
+            ma7CacheHitRatio = avg(rows.map(r => (r as { cacheHitRatio?: number }).cacheHitRatio).filter((v: number | undefined): v is number => typeof v === 'number'));
+            ma7RateLimitRejectionRate = avg(rows.map(r => (r as { rateLimitRejectionRate?: number }).rateLimitRejectionRate).filter((v: number | undefined): v is number => typeof v === 'number'));
             // Exponential smoothing (alpha=0.3) using existing kpiDaily order (rows newest->oldest)
             const alpha = 0.3;
-            const provenanceSeries = rows.map(r => r.provenanceCoveragePct).filter((v: any) => typeof v === 'number').slice().reverse(); // oldest->newest
-            const latencySeries = rows.map(r => r.p95LatencyOverall).filter((v: any) => typeof v === 'number').slice().reverse();
+            const provenanceSeries = rows.map(r => (r as { provenanceCoveragePct?: number }).provenanceCoveragePct).filter((v: number | undefined): v is number => typeof v === 'number').slice().reverse(); // oldest->newest
+            const latencySeries = rows.map(r => (r as { p95LatencyOverall?: number }).p95LatencyOverall).filter((v: number | undefined): v is number => typeof v === 'number').slice().reverse();
             const smooth = (series: number[]) => {
                 if (!series.length) return null;
                 let s = series[0];
@@ -212,20 +215,20 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
             };
             const smoothedProvenance = smooth(provenanceSeries);
             const smoothedLatencyP95 = smooth(latencySeries);
-            const crawlerSeries = rows.map(r => r.crawlerAggregateAdoptionPct).filter((v: any) => typeof v === 'number').slice().reverse();
-            const semanticSeries = rows.map(r => r.semanticMapAggregateAdoptionPct).filter((v: any) => typeof v === 'number').slice().reverse();
+            const crawlerSeries = rows.map(r => (r as { crawlerAggregateAdoptionPct?: number }).crawlerAggregateAdoptionPct).filter((v: number | undefined): v is number => typeof v === 'number').slice().reverse();
+            const semanticSeries = rows.map(r => (r as { semanticMapAggregateAdoptionPct?: number }).semanticMapAggregateAdoptionPct).filter((v: number | undefined): v is number => typeof v === 'number').slice().reverse();
             const smoothedCrawlerAdoption = smooth(crawlerSeries);
             const smoothedSemanticAdoption = smooth(semanticSeries);
             // Persist smoothing onto kpiDaily doc alongside MA7
             try {
                 await db.collection('kpiDaily').doc(dateKey).update({ smoothedProvenance, smoothedLatencyP95, smoothedCrawlerAdoption, smoothedSemanticAdoption, updatedAt: FieldValue.serverTimestamp() });
             } catch (e) {
-                logger.warn('kpiDailySnapshot.smoothingPersistFailed', (e as unknown as { message?: string })?.message);
+                logger.warn('kpiDailySnapshot.smoothingPersistFailed', e instanceof Error ? e.message : String(e));
             }
             // Include smoothing fields when writing alerts snapshot below
             (globalThis as unknown as Record<string, unknown>).__SMOOTHING = { smoothedProvenance, smoothedLatencyP95, smoothedCrawlerAdoption, smoothedSemanticAdoption };
         } catch (e) {
-            logger.warn('kpiAlertsDaily.movingAverageFailed', (e as any)?.message);
+            logger.warn('kpiAlertsDaily.movingAverageFailed', e instanceof Error ? e.message : String(e));
         }
         const alertsRef = db.collection('kpiAlertsDaily').doc(dateKey);
         // Persist MA7 overlays onto kpiDaily (update only – doc already written earlier)
@@ -241,7 +244,7 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
                 updatedAt: FieldValue.serverTimestamp()
             });
         } catch (e) {
-            logger.warn('kpiDailySnapshot.ma7PersistFailed', (e as unknown as { message?: string })?.message);
+            logger.warn('kpiDailySnapshot.ma7PersistFailed', e instanceof Error ? e.message : String(e));
         }
         await db.runTransaction(async tx => {
             const aSnap = await tx.get(alertsRef);
@@ -259,10 +262,10 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
                 await batch.commit();
             }
         } catch (e) {
-            logger.warn('kpiAlertsDaily.retentionFailed', (e as unknown as { message?: string })?.message);
+            logger.warn('kpiAlertsDaily.retentionFailed', e instanceof Error ? e.message : String(e));
         }
     } catch (e) {
-        logger.warn('kpiAlertsDaily.persistFailed', (e as unknown as { message?: string })?.message);
+        logger.warn('kpiAlertsDaily.persistFailed', e instanceof Error ? e.message : String(e));
     }
 
     // Retention purge (older than RETENTION_DAYS)
@@ -274,7 +277,7 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
         oldSnap.docs.forEach(d => batch.delete(d.ref));
         if (!oldSnap.empty) await batch.commit();
     } catch (e) {
-        logger.warn('kpiDailySnapshot.retentionFailed', (e as unknown as { message?: string })?.message);
+        logger.warn('kpiDailySnapshot.retentionFailed', e instanceof Error ? e.message : String(e));
     }
 
     logger.info('kpiDailySnapshot.complete', { date: dateKey, aiTokensIn, aiTokensOut, aiCostEstimate: aiCost });

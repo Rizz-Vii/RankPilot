@@ -505,25 +505,35 @@ export function validateUserAccess(userAccess: unknown): userAccess is UserAcces
 /**
  * Normalize user data from database
  */
-export function normalizeUserAccess(dbUser: any): UserAccess {
+interface PartialDbUser {
+  subscriptionTier?: string;
+  tier?: string;
+  role?: string;
+  subscriptionStatus?: string;
+}
+
+export function normalizeUserAccess(dbUser: unknown): UserAccess {
+  const u = (dbUser && typeof dbUser === 'object') ? dbUser as PartialDbUser : {};
   // Handle admin tier mapping - admin tier gets enterprise features with admin role
   let mappedTier: SubscriptionTier;
   let mappedRole: UserRole;
 
-  if (dbUser?.subscriptionTier === "admin" || dbUser?.tier === "admin") {
+  if (u.subscriptionTier === "admin" || u.tier === "admin") {
     mappedTier = "enterprise"; // Admin gets enterprise-level features
     mappedRole = "admin"; // But with admin role for special permissions
   } else {
-    mappedRole = (dbUser?.role === "admin" ? "admin" : "user") as UserRole;
-    mappedTier = (TIER_HIERARCHY.includes(dbUser?.subscriptionTier)
-      ? dbUser.subscriptionTier
+    mappedRole = (u.role === "admin" ? "admin" : "user") as UserRole;
+    mappedTier = (TIER_HIERARCHY.includes(u.subscriptionTier as SubscriptionTier)
+      ? u.subscriptionTier
       : "free") as SubscriptionTier;
   }
 
   return {
     role: mappedRole,
     tier: mappedTier,
-    status: dbUser?.subscriptionStatus || "free",
+    status: (u.subscriptionStatus === 'active' || u.subscriptionStatus === 'canceled' || u.subscriptionStatus === 'past_due' || u.subscriptionStatus === 'free'
+      ? u.subscriptionStatus
+      : 'free'),
   };
 }
 

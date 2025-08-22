@@ -4,9 +4,9 @@
  * Purpose: Automate prompt engineering & task routing between Codex (backend), Aider (frontend), and OpenAI (planning layer).
  * Safety: Dry-run by default (RUN=1 to execute). Never logs secret values.
  */
+import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import { spawnSync } from 'child_process';
 
 const ROOT = process.cwd();
 const CHECKLIST_FILE = path.resolve(ROOT, 'checkList.txt');
@@ -77,8 +77,16 @@ async function planPrompt(kind: 'backend' | 'frontend', tasks: ParsedTask[], rep
             })
         });
         if (!resp.ok) throw new Error('planner_http_' + resp.status);
-        const json: any = await resp.json();
-        const content = json.choices?.[0]?.message?.content?.trim();
+        const json: unknown = await resp.json();
+        let content: string = '';
+        if (json && typeof json === 'object') {
+            const obj = json as Record<string, unknown>;
+            const choices = Array.isArray(obj.choices) ? obj.choices as Array<unknown> : [];
+            const first = choices.length > 0 && choices[0] && typeof choices[0] === 'object' ? choices[0] as Record<string, unknown> : undefined;
+            const message = first && first.message && typeof first.message === 'object' ? first.message as Record<string, unknown> : undefined;
+            const c = message && typeof message.content === 'string' ? message.content : '';
+            content = String(c).trim();
+        }
         if (content) return content;
         return heuristicPlan(kind, tasks);
     } catch {
@@ -145,22 +153,33 @@ async function main() {
 }
 
 // Polyfill fetch if needed
- 
+
 // @ts-ignore
 if (typeof fetch === 'undefined') {
-     
+
     const https = require('https');
-     
+
     // @ts-ignore
-    global.fetch = function (url: string, opts: any) {
+    global.fetch = function (url: string, opts: unknown) {
         return new Promise((resolve, reject) => {
-            const u = new URL(url); const req = https.request({ method: opts?.method || 'GET', hostname: u.hostname, path: u.pathname + u.search, headers: opts?.headers }, (res: any) => {
-                const chunks: any[] = []; res.on('data', (d: any) => chunks.push(d)); res.on('end', () => {
+            const u = new URL(url);
+            const o = (opts && typeof opts === 'object') ? (opts as Record<string, unknown>) : {};
+            const method = typeof o.method === 'string' ? o.method : 'GET';
+            const headers = (o.headers && typeof o.headers === 'object') ? (o.headers as Record<string, string>) : undefined;
+            const bodyVal = ((): string | Buffer | undefined => {
+                if (typeof (o as { body?: unknown }).body === 'string') return (o as { body?: unknown }).body as string;
+                const maybeBuf = (o as { body?: unknown }).body as unknown;
+                return (typeof Buffer !== 'undefined' && Buffer.isBuffer(maybeBuf)) ? (maybeBuf as Buffer) : undefined;
+            })();
+            const req = https.request({ method, hostname: u.hostname, path: u.pathname + u.search, headers }, (res: unknown) => {
+                const r = res as { statusCode?: number; on: (ev: string, cb: (d: Buffer) => void) => void };
+                const chunks: Buffer[] = []; r.on('data', (d: Buffer) => chunks.push(d)); r.on('end', () => {
                     const body = Buffer.concat(chunks).toString('utf8');
                     // @ts-ignore - minimal Response-like object for planner usage
-                    resolve({ ok: res.statusCode >= 200 && res.statusCode < 300, status: res.statusCode, json: async () => { try { return JSON.parse(body); } catch { return {}; } }, text: async () => body });
+                    const code = typeof r.statusCode === 'number' ? r.statusCode : 0;
+                    resolve({ ok: code >= 200 && code < 300, status: code, json: async () => { try { return JSON.parse(body); } catch { return {}; } }, text: async () => body } as unknown as Response);
                 });
-            }); req.on('error', reject); if (opts?.body) req.write(opts.body); req.end();
+            }); req.on('error', reject); if (bodyVal) req.write(bodyVal); req.end();
         });
     };
 }

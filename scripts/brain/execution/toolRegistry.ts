@@ -1,12 +1,12 @@
-import type { ToolRunner } from '../../../types/brain';
 import { spawnSync } from 'child_process';
+import type { ToolRunner } from '../../../types/brain';
 import { loadPlugins } from '../plugins';
 
 function mk(name: string, supportsDomains: string[] = []): ToolRunner {
   return {
     name,
     supports: (domain: string) => supportsDomains.length ? supportsDomains.includes(domain) : true,
-    run: async (_plan: any, _opts: any) => ({ ok: true, note: `${name}: stub` })
+    run: async (_plan: unknown, _opts: unknown) => ({ ok: true, note: `${name}: stub` })
   };
 }
 
@@ -23,7 +23,9 @@ function runShell(cmd: string, args: string[]) {
   if (process.env.PB_BRAIN_FORCE_SKIP_BIN === '1') return { ok: false, note: 'skipped:forced' };
   try {
     const r = spawnSync(cmd, args, { stdio: 'ignore' });
-    if (r.error && (r.error as any).code === 'ENOENT') return { ok: false, note: 'skipped:missing-binary' };
+    const err: unknown = r.error;
+    const code = (err && typeof err === 'object' && 'code' in (err as { code?: unknown })) ? (err as { code?: unknown }).code : undefined;
+    if (code === 'ENOENT') return { ok: false, note: 'skipped:missing-binary' };
     return { ok: r.status === 0, note: r.status === 0 ? 'ok' : `fail:${r.status}` };
   } catch { return { ok: false, note: 'skipped:error' }; }
 }
@@ -58,16 +60,17 @@ export function getRegistry(): ToolRunner[] {
   return base;
 }
 
-export function getRunnersFor(domain: string, cfg?: any): ToolRunner[] {
+export function getRunnersFor(domain: string, cfg?: unknown): ToolRunner[] {
   const base = getRegistry();
   const byToggle = (r: ToolRunner) => {
-    if (!cfg || !cfg.tools) return true;
+    const c = cfg as { tools?: Record<string, unknown> };
+    if (!c || !c.tools) return true;
     const map: Record<string, string> = {
       OpenAIPlanner: 'openaiPlanner', CodexRunner: 'codex', AiderRunner: 'aider', MCPFirecrawl: 'firecrawl', MCPSequential: 'sequential', MCPGitHub: 'github', MCPZapier: 'zapier', TerminalRunner: 'terminal',
       TypecheckRunner: 'typecheck', ESLintRunner: 'eslint', PlaywrightRunner: 'playwright'
     };
     const key = map[r.name as keyof typeof map];
-    return typeof key === 'string' ? cfg.tools[key] !== false : true;
+    return typeof key === 'string' ? c.tools[key] !== false : true;
   };
   return base.filter((r) => r.supports(domain)).filter(byToggle).slice(0, 10);
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import LoadingScreen from "@/components/ui/loading-screen";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function LogoutPage() {
   const router = useRouter();
@@ -31,7 +31,7 @@ export default function LogoutPage() {
       }
     };
 
-    performLogout();
+    void performLogout();
   }, [router]);
 
   return <LoadingScreen fullScreen text="Logging out..." />;

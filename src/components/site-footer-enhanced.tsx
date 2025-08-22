@@ -1,18 +1,18 @@
 "use client";
 
-import Link from "next/link";
-import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { AppLogo, AppName } from "@/constants/nav";
+import { motion } from "framer-motion";
+import { ChevronUp } from "lucide-react";
+import Link from "next/link";
+import { useState, type FormEvent } from "react";
 import {
+  FaGithub,
   FaLinkedin,
   FaTwitter,
   FaYoutube,
-  FaGithub,
 } from "react-icons/fa";
-import { useState, type FormEvent } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ChevronUp } from "lucide-react";
 
 const footerSections = {
   services: {
@@ -131,7 +131,7 @@ export default function SiteFooter() {
               delivered to your inbox.
             </p>
             <form
-              onSubmit={handleNewsletterSubmit}
+              onSubmit={(e) => { void handleNewsletterSubmit(e); }}
               className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
             >
               <Input

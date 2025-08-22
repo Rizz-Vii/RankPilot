@@ -1,7 +1,7 @@
 // Script to check existing Firebase Auth users
-import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
 import * as dotenv from "dotenv";
+import { cert, getApps, initializeApp } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 
 // Load environment variables
 dotenv.config({ path: ".env.test" });
@@ -55,10 +55,16 @@ async function listExistingUsers() {
         "   🔗 Go to: https://console.firebase.google.com/project/rankpilot-h3jpc/authentication/users"
       );
     }
-  } catch (error: any) {
-    console.error("❌ Error listing users:", error.message);
+  } catch (error: unknown) {
+    const msg = (error && typeof error === 'object' && 'message' in error)
+      ? String((error as { message?: unknown }).message)
+      : String(error);
+    console.error("❌ Error listing users:", msg);
 
-    if (error.code === "auth/insufficient-permission") {
+    const code = (error && typeof error === 'object' && 'code' in error)
+      ? String((error as { code?: unknown }).code)
+      : undefined;
+    if (code === "auth/insufficient-permission") {
       console.log(
         "💡 Suggestion: Check Firebase Admin permissions or create users manually in Firebase Console"
       );

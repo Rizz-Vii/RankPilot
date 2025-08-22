@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, documentId } from "firebase/firestore";
 import { useAuth } from "@/context/AuthContext";
+import { db } from "@/lib/firebase";
+import { collection, doc, documentId, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { useCallback, useEffect, useState } from "react";
 
 export default function TeamSettingsPage() {
   const { user } = useAuth();
@@ -31,7 +31,7 @@ export default function TeamSettingsPage() {
   useEffect(() => {
     if (!user) return;
     setLoading(true);
-    (async () => {
+    void (async () => {
       try {
         // 1) Prefer teams where current user's UID is in scalar memberIds array
         //    (array-contains works on primitives, not nested objects)
@@ -94,14 +94,16 @@ export default function TeamSettingsPage() {
             integrations: Array.isArray(td.integrations) ? (td.integrations as Team['integrations']) : [],
           });
         }
-      } catch (e: unknown) {
-        console.error("TeamSettings load error:", e);
+      } catch (err: unknown) {
+        // Keeping error logged for diagnostics (lint: variable intentionally used)
+        console.error("TeamSettings load error:", err);
         setError("Failed to load team data.");
       } finally {
         setLoading(false);
       }
     })();
-  }, [user?.uid]);
+    // Including full user object ensures refetch on auth context change beyond UID.
+  }, [user]);
 
   // Handlers for editing
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -125,7 +127,7 @@ export default function TeamSettingsPage() {
       };
     });
   };
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!team) return;
     setSaving(true);
     setError(null);
@@ -139,12 +141,12 @@ export default function TeamSettingsPage() {
         integrations: editState.integrations,
       });
   setTeam({ ...team, ...editState } as Team);
-    } catch (e: unknown) {
+    } catch {
       setError("Failed to save changes.");
     } finally {
       setSaving(false);
     }
-  };
+  }, [team, editState]);
 
   return (
     <FeatureGate feature="team_management" requiredTier="agency" showUpgrade>
@@ -331,7 +333,7 @@ export default function TeamSettingsPage() {
 
           {/* Save Button */}
           <div className="flex justify-end">
-            <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+              <button className="btn btn-primary" onClick={() => { void handleSave(); }} disabled={saving}>
               {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>

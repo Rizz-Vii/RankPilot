@@ -10,7 +10,8 @@ async function getTeam(uid: string): Promise<{ id: string; data: TeamDoc } | nul
     const snap = await adminDb.collection("teams").where("memberIds", 'array-contains', uid).limit(1).get();
     if (!snap.empty) return { id: snap.docs[0].id, data: snap.docs[0].data() as TeamDoc };
     const u = await adminDb.collection("users").doc(uid).get();
-    const teamId = u.exists ? (u.data() as any)?.teamId : undefined;
+    const uData = u.exists ? (u.data() as { teamId?: string }) : undefined;
+    const teamId = uData?.teamId;
     if (teamId) {
         const t = await adminDb.collection("teams").doc(teamId).get();
         if (t.exists) return { id: t.id, data: t.data() as TeamDoc };

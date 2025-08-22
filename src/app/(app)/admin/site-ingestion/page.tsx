@@ -39,7 +39,7 @@ export default function SiteIngestionAdminPage() {
       setResult(json);
       setStatus(res.ok ? 'Completed' : 'Failed');
     } catch (e: unknown) {
-      // eslint-disable-next-line no-console
+       
       console.error(e);
       setStatus('Error');
     }

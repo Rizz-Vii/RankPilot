@@ -18,7 +18,7 @@ const appDir = path.join(projectRoot, 'src/app/(app)');
 
 type NavItem = { title: string; href: string; requiredTier?: string; feature?: string; adminOnly?: boolean; };
 
-interface Finding { severity: 'ERROR' | 'WARN' | 'INFO'; code: string; message: string; context?: any; }
+interface Finding { severity: 'ERROR' | 'WARN' | 'INFO'; code: string; message: string; context?: unknown; }
 
 const findings: Finding[] = [];
 

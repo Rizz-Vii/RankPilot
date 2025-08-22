@@ -1,10 +1,10 @@
-import { NextResponse, type NextRequest } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
-import { enforceProvenanceOnChunk } from '@/lib/middleware/provenance';
-import { recordRouteLatency, recordError, recordFallback, recordRateLimitRejection } from '@/lib/metrics/unified-metrics';
-import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
 import { fallbackOneShot } from '@/lib/ai/aiClient';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { recordError, recordFallback, recordRateLimitRejection, recordRouteLatency } from '@/lib/metrics/unified-metrics';
+import { enforceProvenanceOnChunk } from '@/lib/middleware/provenance';
+import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
+import { FieldValue } from 'firebase-admin/firestore';
+import { NextResponse, type NextRequest } from 'next/server';
 import OpenAI from 'openai';
 
 export const dynamic = 'force-dynamic';
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest): Promise<Response> {
         // Optional team-aware rate limiting
         try {
             const userDoc = await adminDb.collection('users').doc(uid).get();
-            const udata = userDoc.exists ? userDoc.data() as any : undefined;
+            const udata = userDoc.exists ? (userDoc.data() as Record<string, unknown>) : undefined;
             const teamId = typeof udata?.teamId === 'string' ? udata.teamId : undefined;
             if (teamId) {
                 try { await enforceTeamRateLimit(adminDb, teamId, { routeKey: 'chat/admin/stream' }); }
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest): Promise<Response> {
                     }
                 }
             }
-        } catch (_err) { /* ignore */ }
+        } catch { /* ignore */ }
 
         // Determine session
         let currentSessionId = sessionId || '';
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest): Promise<Response> {
                             }
                             // reset CB on success
                             cb.fail = 0; cb.until = 0;
-                        } catch (e) {
+                        } catch {
                             // trip circuit after repeated failures
                             cb.fail = (cb.fail || 0) + 1;
                             if (cb.fail >= 4) { cb.until = Date.now() + 120000; cb.fail = 0; }
@@ -154,7 +154,8 @@ export async function POST(req: NextRequest): Promise<Response> {
                     controller.close();
                 } catch (e: unknown) {
                     recordError('chat/admin/stream', '5xx_server');
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ error: (e as any)?.message || 'stream_error', provenance: 'synthetic' }, { path: 'chat/admin/stream' }))}\n\n`));
+                    const msg = e instanceof Error ? e.message : typeof e === 'string' ? e : 'stream_error';
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ error: msg, provenance: 'synthetic' }, { path: 'chat/admin/stream' }))}\n\n`));
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
                 }
@@ -174,6 +175,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     } catch (e: unknown) {
         recordError('chat/admin/stream', '5xx_server');
         recordRouteLatency('chat/admin/stream', Date.now() - start);
-        return NextResponse.json({ error: (e as any)?.message || 'Stream init failed' }, { status: 500 });
+        const msg = e instanceof Error ? e.message : typeof e === 'string' ? e : 'Stream init failed';
+        return NextResponse.json({ error: msg }, { status: 500 });
     }
 }

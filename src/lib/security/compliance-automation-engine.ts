@@ -1,7 +1,7 @@
 /**
  * Compliance Automation Engine
  * DevNext Part III Step 3: Advanced Security Hardening
- * 
+ *
  * Implements comprehensive compliance automation:
  * - SOC2 Type II continuous monitoring
  * - GDPR data protection automation
@@ -1039,8 +1039,8 @@ export class ComplianceAutomationEngine extends EventEmitter {
     }
 
     private startContinuousMonitoring(): void {
-        this.monitoringInterval = setInterval(async () => {
-            try {
+        this.monitoringInterval = setInterval(() => {
+            void (async () => {
                 // Check for overdue actions
                 const overdueActions = Array.from(this.actions.values())
                     .filter(action => action.dueDate < Date.now() && action.status !== 'completed');
@@ -1065,10 +1065,9 @@ export class ComplianceAutomationEngine extends EventEmitter {
 
                 // Emit regular metrics
                 this.emit('compliance-metrics', metrics);
-
-            } catch (error) {
+            })().catch(error => {
                 console.error('[ComplianceAutomationEngine] Monitoring error:', error);
-            }
+            });
         }, 300000); // Run every 5 minutes
 
         console.log('[ComplianceAutomationEngine] Continuous monitoring started');

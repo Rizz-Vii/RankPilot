@@ -62,8 +62,8 @@ function processFile(file){
       let occurrences = 0;
       if (refs.has(name)) {
         const occRe = new RegExp('\\b' + name + '\\b', 'g');
-        let mm;
-        while ((mm = occRe.exec(original))) {
+        // Count up to 2 occurrences without storing the match variable
+        while (occRe.exec(original)) {
           occurrences++;
           if (occurrences > 1) break;
         }

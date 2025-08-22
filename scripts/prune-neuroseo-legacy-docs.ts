@@ -28,7 +28,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 interface Candidate { collection: string; id: string; size: number; userId?: string; url?: string; historyId?: string; hasAggregate: boolean; }
 interface Summary { generatedAt: string; threshold: number; dryRun: boolean; confirm: boolean; targetCrawler?: number; targetSemantic?: number; adoption?: { crawler?: number | null; semantic?: number | null }; counts: Record<string, { scanned: number; candidates: number; deleted: number }>; }
 
-function approxSize(d: any) { try { return Buffer.byteLength(JSON.stringify(d)); } catch { return 0; } }
+function approxSize(d: unknown) { try { return Buffer.byteLength(JSON.stringify(d)); } catch { return 0; } }
 
 async function adoptionSnapshot(db: FirebaseFirestore.Firestore) {
     const [crawlerLegacy, crawlerAgg, semanticLegacy, semanticAgg] = await Promise.all([
@@ -49,9 +49,12 @@ async function buildAggregateKeyIndex(db: FirebaseFirestore.Firestore, collectio
     const snap = await db.collection(collection).select('userId', 'url', 'historyId').get();
     const set = new Set<string>();
     snap.forEach(d => {
-        const data: any = d.data();
-        if (data.historyId) set.add('h:' + data.historyId);
-        else if (data.userId && data.url) set.add('u:' + data.userId + '|' + data.url);
+        const data = d.data() as unknown as Record<string, unknown>;
+        const historyId = typeof data.historyId === 'string' ? data.historyId : undefined;
+        const userId = typeof data.userId === 'string' ? data.userId : undefined;
+        const url = typeof data.url === 'string' ? data.url : undefined;
+        if (historyId) set.add('h:' + historyId);
+        else if (userId && url) set.add('u:' + userId + '|' + url);
     });
     return set;
 }
@@ -66,14 +69,17 @@ async function collectCandidates(db: FirebaseFirestore.Firestore, legacyCol: str
         const snap = await q.get(); if (snap.empty) break;
         for (const doc of snap.docs) {
             scanned++;
-            const data: any = doc.data();
+            const data = doc.data() as unknown as Record<string, unknown>;
             const size = approxSize(data);
             if (size <= threshold) continue;
-            const key = data.historyId ? ('h:' + data.historyId) : (data.userId && data.url ? 'u:' + data.userId + '|' + data.url : null);
+            const historyId = typeof data.historyId === 'string' ? data.historyId : undefined;
+            const userId = typeof data.userId === 'string' ? data.userId : undefined;
+            const url = typeof data.url === 'string' ? data.url : undefined;
+            const key = historyId ? ('h:' + historyId) : (userId && url ? 'u:' + userId + '|' + url : null);
             if (!key) continue;
             const hasAggregate = keyIndex.has(key);
             if (hasAggregate) {
-                candidates.push({ collection: legacyCol, id: doc.id, size, userId: data.userId, url: data.url, historyId: data.historyId, hasAggregate });
+                candidates.push({ collection: legacyCol, id: doc.id, size, userId, url, historyId, hasAggregate });
                 if (candidates.length >= max) break;
             }
         }
@@ -102,7 +108,7 @@ async function main() {
         { legacy: 'neuralCrawlerResults', agg: 'neuralCrawlerResultsAgg' },
     ];
     const allCandidates: Candidate[] = [];
-    const counts: Summary['counts'] = {} as any;
+    const counts: Summary['counts'] = {} as Record<string, { scanned: number; candidates: number; deleted: number }>;
     for (const pair of colPairs) {
         const { candidates, scanned } = await collectCandidates(db, pair.legacy, pair.agg, threshold, maxDelete);
         counts[pair.legacy] = { scanned, candidates: candidates.length, deleted: 0 };
@@ -124,8 +130,9 @@ async function main() {
             fs.mkdirSync(require('path').dirname(out), { recursive: true });
             fs.writeFileSync(out, JSON.stringify({ summary, candidates: allCandidates }, null, 2));
             console.log('[prune] wrote', out);
-        } catch (e) {
-            console.error('[prune] failed write', (e as any)?.message);
+        } catch (e: unknown) {
+            const msg = e && typeof e === 'object' && 'message' in e ? String((e as { message?: unknown }).message) : String(e);
+            console.error('[prune] failed write', msg);
         }
     }
     process.exit(0);

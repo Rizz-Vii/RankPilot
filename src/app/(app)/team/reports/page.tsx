@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from "@/components/tool-page-header";
-import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,17 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -37,24 +25,36 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import LoadingScreen from "@/components/ui/loading-screen";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAuth } from "@/context/AuthContext";
+import { db } from "@/lib/firebase";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, serverTimestamp, where } from "firebase/firestore";
+import {
+  Calendar,
+  Clock,
+  Download,
+  Edit,
+  Eye,
   FileText,
+  MoreVertical,
   Plus,
   Search,
-  Download,
   Share2,
-  Calendar,
-  MoreVertical,
-  Edit,
   Trash2,
-  Eye,
   Users,
-  Clock,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { db } from "@/lib/firebase";
-import { collection, addDoc, getDocs, query, where, orderBy, doc, deleteDoc, serverTimestamp, getDoc } from "firebase/firestore";
 
 interface Report {
   id: string;
@@ -97,13 +97,16 @@ const statusConfig = {
 export default function TeamReportsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const userUid = user?.uid;
+  const userTeamId = (user as unknown as { teamId?: string })?.teamId;
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [, setEditingReport] = useState<Report | null>(null);
+  // editingReport reserved for future inline edit flow (currently unused value)
+  const [_editingReport, setEditingReport] = useState<Report | null>(null);
 
   const [reportForm, setReportForm] = useState({
     title: "",
@@ -124,53 +127,52 @@ export default function TeamReportsPage() {
   const [teamId, setTeamId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user?.uid) return;
-    (async () => {
-      // Resolve teamId
-      const tQ = query(collection(db, 'teams'), where('memberIds', 'array-contains', user.uid));
+    const uid = userUid;
+    if (!uid) return;
+    void (async () => {
+      const tQ = query(collection(db, 'teams'), where('memberIds', 'array-contains', uid));
       const tSnap = await getDocs(tQ);
-      if (!tSnap.empty) setTeamId(tSnap.docs[0].id);
-      else {
-        const uSnap = await getDoc(doc(db, 'users', user.uid));
-        const uData = uSnap.exists() ? (uSnap.data() as any) : undefined;
-        const tId = typeof uData?.teamId === 'string' ? uData.teamId : (user as any)?.teamId;
+      if (!tSnap.empty) setTeamId(tSnap.docs[0].id); else {
+        const uSnap = await getDoc(doc(db, 'users', uid));
+        const uData = uSnap.exists() ? (uSnap.data() as Record<string, unknown>) : undefined;
+        const tId = typeof uData?.teamId === 'string' ? uData.teamId : userTeamId;
         if (typeof tId === 'string') setTeamId(tId);
       }
     })();
-  }, [user?.uid]);
+    // Intentionally depend only on user.uid (not full user object) to avoid effect churn on unrelated auth object reference changes
+  }, [userUid, userTeamId]);
 
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     try {
       setLoading(true);
       if (!teamId) { setReports([]); return; }
       const q = query(collection(db, 'teams', teamId, 'reports'), orderBy('lastModified', 'desc'));
       const snap = await getDocs(q);
       const items: Report[] = snap.docs.map(d => {
-        const data = d.data() as any;
+        const raw = d.data() as Record<string, unknown>;
+        const toDate = (v: unknown): Date | undefined => (v && typeof v === 'object' && 'toDate' in (v as Record<string, unknown>) && typeof (v as { toDate?: unknown }).toDate === 'function') ? (v as { toDate: () => Date }).toDate() : undefined;
         return {
           id: d.id,
-          title: data.title,
-          description: data.description,
-          type: data.type,
-          status: data.status,
-          createdBy: data.createdBy,
-          createdAt: data.createdAt?.toDate?.() || new Date(),
-          lastModified: data.lastModified?.toDate?.() || new Date(),
-          scheduledDate: data.scheduledDate?.toDate?.(),
-          metrics: data.metrics || { totalViews: 0, downloads: 0, shares: 0 },
-          content: data.content || { keywordTracking: true, competitorAnalysis: true, contentPerformance: true, technicalSEO: false },
-          recipients: data.recipients || [],
-          tags: data.tags || [],
+          title: typeof raw.title === 'string' ? raw.title : '',
+          description: typeof raw.description === 'string' ? raw.description : '',
+          type: ['weekly', 'monthly', 'quarterly', 'custom'].includes(String(raw.type)) ? raw.type as Report['type'] : 'monthly',
+          status: ['draft', 'published', 'scheduled'].includes(String(raw.status)) ? raw.status as Report['status'] : 'draft',
+          createdBy: typeof raw.createdBy === 'string' ? raw.createdBy : '',
+          createdAt: toDate(raw.createdAt) || new Date(),
+          lastModified: toDate(raw.lastModified) || new Date(),
+          scheduledDate: toDate(raw.scheduledDate),
+          metrics: (raw.metrics && typeof raw.metrics === 'object') ? raw.metrics as Report['metrics'] : { totalViews: 0, downloads: 0, shares: 0 },
+          content: (raw.content && typeof raw.content === 'object') ? raw.content as Report['content'] : { keywordTracking: true, competitorAnalysis: true, contentPerformance: true, technicalSEO: false },
+          recipients: Array.isArray(raw.recipients) ? raw.recipients.filter(r => typeof r === 'string') as string[] : [],
+          tags: Array.isArray(raw.tags) ? raw.tags.filter(t => typeof t === 'string') as string[] : [],
         } as Report;
       });
       setReports(items);
     } catch (error) {
       console.error("Error fetching reports:", error);
       toast.error("Failed to load reports");
-    } finally {
-      setLoading(false);
-    }
-  };
+    } finally { setLoading(false); }
+  }, [teamId]);
 
   const handleCreateReport = async () => {
     try {
@@ -250,7 +252,7 @@ export default function TeamReportsPage() {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  useEffect(() => { if (teamId) fetchReports(); }, [teamId]);
+  useEffect(() => { if (teamId) { void fetchReports(); } }, [teamId, fetchReports]); // refresh when teamId or callback changes
 
   if (authLoading || loading) {
     return <LoadingScreen fullScreen text="Loading team reports..." />;
@@ -400,7 +402,7 @@ export default function TeamReportsPage() {
               >
                 Cancel
               </Button>
-              <Button onClick={handleCreateReport}>Create Report</Button>
+                <Button onClick={() => { void handleCreateReport(); }}>Create Report</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -468,7 +470,7 @@ export default function TeamReportsPage() {
                       View
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleDownloadReport()}
+                      onClick={() => { void handleDownloadReport(); }}
                     >
                       <Download className="h-4 w-4 mr-2" />
                       Download
@@ -484,7 +486,7 @@ export default function TeamReportsPage() {
                       Edit
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleDeleteReport(report.id)}
+                      onClick={() => { void handleDeleteReport(report.id); }}
                       className="text-destructive-foreground"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />

@@ -1,33 +1,33 @@
 "use client";
-import React, { useEffect, useMemo, useState } from 'react';
-import dynamic from 'next/dynamic';
-import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { dashboardContainerVariants, dashboardItemVariants } from '@/components/dashboard/animation-variants';
+import { DashboardSurface } from '@/components/layout/DashboardSurface';
+import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { MetricCard } from '@/components/metrics/MetricCard';
-import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { QuotaBar } from '@/components/metrics/QuotaBar';
-import { getMockMetrics } from '@/lib/domain/mockMetrics';
-import type { DomainMetricSet } from '@/lib/domain/mockMetrics';
+import { TrendSparkline } from '@/components/metrics/TrendSparkline';
+import { ActionCard } from '@/components/shared/action-card';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { ToolPageHeader } from '@/components/tool-page-header';
+import { AdaptiveProgress } from '@/components/ui/adaptive-progress';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/context/AuthContext';
+import { SuiteAccentProvider } from '@/context/SuiteAccentContext';
+import { useProvenance } from '@/hooks/useProvenance';
 import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import type { DomainMetricSet } from '@/lib/domain/mockMetrics';
+import { getMockMetrics } from '@/lib/domain/mockMetrics';
 import type { AggregatedMarketingMetrics } from '@/lib/services/marketing-metrics.service';
 import { fetchMarketingMetrics, subscribeMarketingMetrics } from '@/lib/services/marketing-metrics.service';
-import { MarketingContextProvider } from './_parts/marketing-context';
-import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/button';
-import { DashboardSurface } from '@/components/layout/DashboardSurface';
-import { dashboardContainerVariants, dashboardItemVariants } from '@/components/dashboard/animation-variants';
-import { motion } from 'framer-motion';
-import { ToolPageHeader } from '@/components/tool-page-header';
-import { SuiteAccentProvider } from '@/context/SuiteAccentContext';
-import { DownloadCloud, RefreshCw, BarChart3 } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import { ActionCard } from '@/components/shared/action-card';
-import { AdaptiveProgress } from '@/components/ui/adaptive-progress';
-import { LazyDataTable } from '@/components/metrics/LazyDataTable';
+import { motion } from 'framer-motion';
+import { BarChart3, DownloadCloud, RefreshCw } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { useEffect, useMemo, useState } from 'react';
 import { CampaignDetailModal } from './_parts/campaign-detail-modal';
 import { ChannelBreakdownModal } from './_parts/channel-breakdown-modal';
-import { useProvenance } from '@/hooks/useProvenance';
+import { MarketingContextProvider } from './_parts/marketing-context';
 
 // NOTE: Removed explicit .js extensions so Next/TypeScript can resolve the .tsx source files correctly.
 const ImpressionsLeadsTrend = dynamic(()=> import('./_parts/impressions-leads-trend').then(m=> m.default), { ssr:false, loading: ()=> <Skeleton shimmer className="h-[260px] w-full" /> });
@@ -38,7 +38,12 @@ interface Summary { impr:number; leads:number; ctr:number; roi:number; }
 export default function MarketingDashboardRoot(){
   const [mock, setMock] = useState<DomainMetricSet | null>(null);
   const { user, loading: authLoading } = useAuth();
-  const userId = user?.uid; const teamId = (user as any)?.teamId as string|undefined;
+  const userId = user?.uid;
+  const teamId: string | undefined = ((): string | undefined => {
+    if (!user || typeof user !== 'object') return undefined;
+    const possible = (user as unknown as { teamId?: unknown }).teamId;
+    return typeof possible === 'string' ? possible : undefined;
+  })();
   const [months, setMonths] = useState(6);
   const [metrics, setMetrics] = useState<AggregatedMarketingMetrics | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -49,7 +54,7 @@ export default function MarketingDashboardRoot(){
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
 
   useEffect(()=> { trackDashboardView('marketing'); }, []);
-  useEffect(()=> { let active = true; getMockMetrics('marketing').then(m => { if(active) setMock(m); }).catch(() => { if(active) setMock({ kpis: [] }); }); return () => { active = false; }; }, []);
+  useEffect(() => { let active = true; void getMockMetrics('marketing').then(m => { if (active) setMock(m); }).catch(() => { if (active) setMock({ kpis: [] }); }); return () => { active = false; }; }, []);
   useEffect(()=> { if(typeof window==='undefined') return; const stored = window.localStorage.getItem('marketingMonths'); if(stored){ const n = parseInt(stored,10); if([3,6,9,12].includes(n)) setMonths(n); } }, []);
   useEffect(()=> { if(typeof window!=='undefined') window.localStorage.setItem('marketingMonths', String(months)); }, [months]);
 
@@ -58,10 +63,10 @@ export default function MarketingDashboardRoot(){
     if(!userId) return;
     setRefreshing(true);
     let unsub: (()=>void)|undefined; let active = true;
-    (async ()=> {
+    void (async () => {
       try { const res = await fetchMarketingMetrics(userId, months, teamId); if(active){ setMetrics(res); setInitialLoading(false);} } catch{} finally { if(active) setRefreshing(false); }
       unsub = subscribeMarketingMetrics(userId, months, (m)=> { setMetrics(m); setInitialLoading(false); }, teamId);
-    })();
+  })();
     return ()=> { active=false; if(unsub) unsub(); };
   }, [userId, teamId, months, dataVersion, authLoading]);
 
@@ -99,9 +104,9 @@ export default function MarketingDashboardRoot(){
             showBreadcrumb
           >
             <div className="flex gap-2 flex-wrap">
-              {[3,6,9,12].map(m=> (<Button key={m} size="sm" variant={months===m? 'default':'outline'} onClick={()=> setMonths(m)} aria-pressed={months===m}>{m}m</Button>))}
-              <Button size="sm" variant="outline" onClick={()=> exportSnapshot('json')} className="gap-1" aria-label="Export marketing snapshot JSON"><DownloadCloud className="h-4 w-4" />JSON</Button>
-              <Button size="sm" variant="outline" onClick={()=> exportSnapshot('csv')} className="gap-1" aria-label="Export marketing snapshot CSV"><DownloadCloud className="h-4 w-4" />CSV</Button>
+                {[3, 6, 9, 12].map(m => (<Button key={m} size="sm" variant={months === m ? 'default' : 'outline'} onClick={() => setMonths(m)} aria-pressed={months === m}>{m}m</Button>))}
+                <Button size="sm" variant="outline" onClick={() => exportSnapshot('json')} className="gap-1" aria-label="Export marketing snapshot JSON"><DownloadCloud className="h-4 w-4" />JSON</Button>
+                <Button size="sm" variant="outline" onClick={() => exportSnapshot('csv')} className="gap-1" aria-label="Export marketing snapshot CSV"><DownloadCloud className="h-4 w-4" />CSV</Button>
               <Button size="sm" onClick={handleRefresh} disabled={refreshing} className={cn('gap-1', refreshing && 'animate-pulse')} aria-live="polite" aria-busy={refreshing}><RefreshCw className={cn('h-4 w-4', refreshing && 'animate-spin')} />{refreshing? 'Refreshing':'Refresh'}</Button>
               <Button size="sm" variant="outline" onClick={()=> setCampaignModal(true)} className="gap-1" aria-label="Open campaign detail"><BarChart3 className="h-4 w-4"/>Campaigns</Button>
               <Button size="sm" variant="outline" onClick={()=> setChannelModal(true)} className="gap-1" aria-label="Open channel breakdown"><BarChart3 className="h-4 w-4"/>Channels</Button>
@@ -114,8 +119,15 @@ export default function MarketingDashboardRoot(){
             {!initialLoading && (()=> {
               type Ext = DomainMetricSet['kpis'][number] & { target?: number; invertTarget?: boolean };
               const base = (metrics?.kpis || mock?.kpis || []);
-              const targetMap: Record<string,{target?:number; invertTarget?:boolean}> = {};
-              metrics?.kpis?.forEach(k=> { (targetMap as any)[k.key] = { target: (k as any).target, invertTarget: (k as any).invertTarget }; });
+                const targetMap: Record<string, { target?: number; invertTarget?: boolean }> = {};
+                metrics?.kpis?.forEach(k => {
+                  const maybe = k as unknown as { target?: unknown; invertTarget?: unknown };
+                  const target = typeof maybe.target === 'number' ? maybe.target : undefined;
+                  const invertTarget = typeof maybe.invertTarget === 'boolean' ? maybe.invertTarget : undefined;
+                  if (target !== undefined || invertTarget !== undefined) {
+                    targetMap[k.key] = { target, invertTarget };
+                  }
+                });
               const extended: Ext[] = base.map(k=> ({ ...k, ...(targetMap[k.key]||{}) }));
               return extended.map((k,i)=> { const pct = k.target? (k.invertTarget? (k.target/(k.value||1))*100 : (k.value/(k.target||1))*100): null; const good = pct!=null? (k.invertTarget? pct<=100 : pct>=100): false; return (
                 <motion.div variants={dashboardItemVariants} key={k.key}>
@@ -127,7 +139,7 @@ export default function MarketingDashboardRoot(){
 
           <section className="grid gap-6 md:grid-cols-2" aria-label="Marketing analytics modules">
             <div className="space-y-3"><h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Impressions & Leads</h2><ImpressionsLeadsTrend key={dataVersion} /></div>
-            <div className="space-y-3"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Channel Performance</h2><Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" onClick={()=> setChannelModal(true)}>Details</Button></div><ChannelPerformance key={dataVersion} /></div>
+              <div className="space-y-3"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Channel Performance</h2><Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" onClick={() => setChannelModal(true)}>Details</Button></div><ChannelPerformance key={dataVersion} /></div>
           </section>
 
           <section className="space-y-3" aria-label="Recent campaigns table">

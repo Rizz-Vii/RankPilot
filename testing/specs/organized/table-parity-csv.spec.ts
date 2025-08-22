@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const WIDGET_ID = 'default' // adjust if contract script uses different id
 
@@ -15,9 +15,18 @@ function parseCsv(csv: string) {
         })
 }
 
-function normalizeRows(rows: any[]) {
+interface RowLike { metric?: unknown; value?: unknown; change?: unknown }
+function isRowLike(r: unknown): r is RowLike {
+    return !!r && typeof r === 'object';
+}
+function normalizeRows(rows: unknown[]) {
     return rows
-        .map(r => ({ metric: r.metric, value: r.value, change: r.change }))
+        .filter(isRowLike)
+        .map(r => ({
+            metric: String(r.metric ?? ''),
+            value: r.value as unknown as string | number | undefined,
+            change: r.change as unknown as string | number | undefined
+        }))
         .sort((a, b) => (a.metric < b.metric ? -1 : a.metric > b.metric ? 1 : 0))
 }
 
@@ -35,7 +44,7 @@ test('table JSON / CSV export parity', async ({ request }) => {
         change: (r.change || r.Change || '').replace(/^"|"$/g, ''),
     }))
 
-    const normJson = normalizeRows(jsonData.rows || [])
+    const normJson = normalizeRows((jsonData.rows || []) as unknown[])
     const normCsv = normalizeRows(csvData)
     expect(normCsv).toEqual(normJson)
 })

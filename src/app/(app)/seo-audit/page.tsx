@@ -1,20 +1,20 @@
 // src/app/(app)/seo-audit/page.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from "@/components/tool-page-header";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
+import { useEffect, useRef, useState } from "react";
 
 import { SeoAuditForm } from "@/components/forms/seo-forms";
-import { MobileToolCard, MobileResultsCard } from "@/components/mobile-tool-layout";
 import LoadingState from "@/components/loading-state";
+import { MobileResultsCard, MobileToolCard } from "@/components/mobile-tool-layout";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 import {
   Bar,
@@ -31,10 +31,11 @@ import {
   YAxis
 } from "@/components/ui/chart-components";
 import { useAuth } from "@/context/AuthContext";
-import { getDemoData } from "@/lib/demo-data";
-import { runSEOAudit } from "@/lib/services/ai-service";
+import { useProvenance } from "@/hooks/useProvenance";
 import { adaptSEOAuditResponse, type SEOAuditUnifiedResponse } from "@/lib/adapters/seo-audit-adapter";
+import { getDemoData } from "@/lib/demo-data";
 import { db } from "@/lib/firebase";
+import { runSEOAudit } from "@/lib/services/ai-service";
 import { TimeoutError, withTimeout } from "@/lib/timeout";
 import { cn } from "@/lib/utils";
 import type {
@@ -56,7 +57,6 @@ import {
   AlertTriangle,
   ListChecks
 } from "lucide-react";
-import { useProvenance } from "@/hooks/useProvenance";
 
 // Enhanced SEO Audit with NeuroSEO™ Integration
 
@@ -118,7 +118,9 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
               />
               <XAxis dataKey="score" type="number" hide />
               <ChartTooltip
-                content={(props: any) => <ChartTooltipContent {...props} />}
+                content={(props: unknown) => (
+                  <ChartTooltipContent {...(props as Record<string, unknown>)} />
+                )}
               />
               <Bar dataKey="score" radius={5} />
             </BarChart>
@@ -138,8 +140,8 @@ const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
             >
               <PieChart>
                 <ChartTooltip
-                  content={(props: any) => (
-                    <ChartTooltipContent {...props} nameKey="name" hideLabel />
+                  content={(props: unknown) => (
+                    <ChartTooltipContent {...(props as Record<string, unknown>)} />
                   )}
                 />
                 <Pie data={imageData} dataKey="value">
@@ -225,22 +227,35 @@ const AuditLoadingSkeleton = () => (
 );
 
 // Map unified adapter output back into legacy AuditUrlOutput shape for existing UI until full refactor.
+interface UnifiedItemLike { id?: string; name?: string; details?: string; status?: string; score?: number; impact?: string; }
 function mapUnifiedToLegacy(r: SEOAuditUnifiedResponse): AuditUrlOutput {
   return {
     url: r.url || '',
     overallScore: r.overallScore,
     summary: r.summary,
-    items: r.items.map(it => ({
-      id: it.id,
-      name: it.name,
-      title: it.name,
-      description: it.details,
-      details: it.details,
-  status: it.status === 'good' ? 'pass' : it.status === 'error' ? 'fail' : 'warning',
-  score: it.score,
-  impact: (it as any)?.impact || (it.status === 'error' ? 'high' : it.status === 'warning' ? 'medium' : 'low'),
-      recommendation: ''
-    })),
+    items: r.items.map(raw => {
+      const it: UnifiedItemLike = raw as UnifiedItemLike;
+      const status = it.status === 'good' ? 'pass' : it.status === 'error' ? 'fail' : 'warning';
+      type Impact = 'high' | 'medium' | 'low';
+      const impact: Impact = ((): Impact => {
+        if (typeof it.impact === 'string') {
+          const val = it.impact.toLowerCase();
+          if (val === 'high' || val === 'medium' || val === 'low') return val;
+        }
+        return status === 'fail' ? 'high' : status === 'warning' ? 'medium' : 'low';
+      })();
+      return {
+        id: it.id || it.name || 'issue',
+        name: it.name || 'Unnamed Issue',
+        title: it.name || 'Unnamed Issue',
+        description: it.details || '',
+        details: it.details || '',
+        status,
+        score: typeof it.score === 'number' ? it.score : 0,
+        impact,
+        recommendation: ''
+      };
+    }),
     performance: { lcp: 0, fid: 0, cls: 0, ttfb: 0 },
     accessibility: { score: 0, issues: 0 },
     seo: { score: 0, metaTitle: true, metaDescription: true, headings: true }
@@ -467,7 +482,7 @@ export default function SeoAuditPage() {
         console.warn("SEO audit using demo fallback due to:", msg);
           const demoData = getDemoData("seo-audit");
           if (demoData) {
-            setResults(demoData as any as AuditUrlOutput);
+            setResults(demoData as AuditUrlOutput);
             setProvenance('fallback');
           } else {
             setError("Audit failed and no demo data available.");

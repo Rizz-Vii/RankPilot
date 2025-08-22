@@ -1,13 +1,13 @@
-import { strict as assert } from 'assert';
-import React from 'react';
-import { createRoot } from 'react-dom/client';
+import CustomerChatBot from '@/components/chat/CustomerChatBot';
 import type { AuthContextType } from '@/context/AuthContext';
 import { AuthContext } from '@/context/AuthContext';
-import CustomerChatBot from '@/components/chat/CustomerChatBot';
+import { strict as assert } from 'assert';
+import { createRoot } from 'react-dom/client';
 
+interface FetchInitLike { method?: string; body?: unknown }
 function mockFetchEmpty(counter: { calls: number }) {
   // @ts-ignore
-  global.fetch = async (url: string, init?: any) => {
+  global.fetch = async (url: string, init?: FetchInitLike) => {
   counter.calls++;
     const method = (init && init.method) || 'GET';
     if (typeof url === 'string' && url.startsWith('/api/chat/customer')) {
@@ -24,7 +24,7 @@ function mockFetchEmpty(counter: { calls: number }) {
             controller.close();
           }
         });
-        return new Response(stream as any, { status: 200, headers: { 'content-type': 'text/event-stream' } });
+    return new Response(stream as unknown as BodyInit, { status: 200, headers: { 'content-type': 'text/event-stream' } });
       }
       if (method === 'POST') {
         // Return a minimal ChatResponse to exercise Enter submission
@@ -51,7 +51,7 @@ describe('CustomerChatBot suggestions + Enter', () => {
   // Ensure the chat starts open to simplify DOM queries
   try { localStorage.setItem('rp_chat_isOpen', '1'); localStorage.setItem('rp_chat_isMin', '0'); } catch {}
     const authValue: AuthContextType = {
-      user: { uid: 'u1', getIdToken: async () => 't' } as any,
+      user: { uid: 'u1', getIdToken: async () => 't' } as unknown as AuthContextType['user'],
       loading: false,
       role: 'user',
       profile: { subscriptionTier: 'starter' },
@@ -80,7 +80,7 @@ describe('CustomerChatBot suggestions + Enter', () => {
     mockFetchEmpty(counter);
     try { localStorage.setItem('rp_chat_isOpen', '1'); localStorage.setItem('rp_chat_isMin', '0'); } catch {}
     const authValue: AuthContextType = {
-      user: { uid: 'u2', getIdToken: async () => 't' } as any,
+      user: { uid: 'u2', getIdToken: async () => 't' } as unknown as AuthContextType['user'],
       loading: false,
       role: 'user',
       profile: { subscriptionTier: 'starter' },
@@ -96,8 +96,8 @@ describe('CustomerChatBot suggestions + Enter', () => {
     );
     const input = await waitFor(() => container.querySelector('input[placeholder="Ask about your SEO performance..."]')) as HTMLInputElement;
     input.value = 'Hello via Enter';
-    input.dispatchEvent(new (window as any).Event('input', { bubbles: true }));
-    input.dispatchEvent(new (window as any).KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    input.dispatchEvent(new (window as unknown as { Event: typeof Event }).Event('input', { bubbles: true }));
+    input.dispatchEvent(new (window as unknown as { KeyboardEvent: typeof KeyboardEvent }).KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     await delay(0);
     assert.ok(counter.calls > 0, 'fetch called on Enter submit');
   });

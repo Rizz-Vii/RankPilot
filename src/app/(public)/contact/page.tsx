@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,22 +8,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { motion } from "framer-motion";
 import {
-  Mail,
-  Phone,
-  MessageSquare,
-  HelpCircle,
   CheckCircle,
+  HelpCircle,
+  Mail,
+  MessageSquare,
+  Phone,
   Users,
 } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
+import { z } from "zod";
 
 const contactSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -112,6 +112,10 @@ export default function ContactPage() {
     }
   };
 
+  // Stable submit handler (explicitly depends on handleSubmit & onSubmit for exhaustive-deps compliance)
+  // Inline wrapper removes need for useCallback (avoids dependency warning while still voiding promise)
+  const submitHandler = (e: React.FormEvent) => { void handleSubmit(onSubmit)(e); };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="max-w-7xl mx-auto px-4 py-16">
@@ -141,7 +145,7 @@ export default function ContactPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <form onSubmit={submitHandler} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="name">Name</Label>
@@ -294,4 +298,4 @@ export default function ContactPage() {
     </div>
   );
 }
- 
+

@@ -14,7 +14,7 @@ export interface ErrorDetails {
   code?: string;
   message: string;
   stack?: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 interface ErrorContext {
@@ -27,7 +27,7 @@ interface ErrorContext {
     responseStatusCode?: number;
     remoteIp?: string;
   };
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export function logError(error: Error | ErrorDetails, context?: ErrorContext) {
@@ -56,8 +56,8 @@ export function logError(error: Error | ErrorDetails, context?: ErrorContext) {
   }
 }
 
-export function wrapAsync<T>(fn: (...args: any[]) => Promise<T>) {
-  return async (...args: any[]): Promise<T> => {
+export function wrapAsync<T>(fn: (...args: unknown[]) => Promise<T>) {
+  return async (...args: unknown[]): Promise<T> => {
     try {
       return await fn(...args);
     } catch (error) {

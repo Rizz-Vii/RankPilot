@@ -13,7 +13,6 @@
         },
         "background": {
           "activeOnStart": true,
-          // Next.js dev output is noisy; use a more specific begin/end to avoid flaps
           "beginsPattern": "^(?:.*ready - started server on|.*Starting local development server)",
           "endsPattern": "^(?:.*ready - Local|.*ready - on http|.*Compiled successfully)"
         }
@@ -115,7 +114,6 @@
         },
         "background": {
           "activeOnStart": true,
-          // Heuristic patterns; adjust if scripts log different markers
           "beginsPattern": "^Starting delegation processing",
           "endsPattern": "^Delegation queue idle"
         }
@@ -161,8 +159,7 @@
         "lint:report:json",
         "quality:fast"
       ]
-    }
-    ,
+    },
     {
       "label": "delegation:loop",
       "type": "shell",
@@ -176,9 +173,84 @@
         "background": {
           "activeOnStart": true,
           "beginsPattern": "^\\[delegate:loop] queue snapshot",
-          "endsPattern": "^$" // never marks done; manual stop
+          "endsPattern": "^$"
         }
       }
+    },
+    {
+      "label": "two-agent:plan-loop",
+      "type": "shell",
+      "command": "npm run brain:two-agent:plan-loop",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "two-agent-plan-loop",
+        "pattern": {
+          "regexp": "."
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^\\[two-agent:plan-loop] start",
+          "endsPattern": "^\\[two-agent:plan-loop] finished"
+        }
+      }
+    },
+    {
+      "label": "delegation:triggered-runner",
+      "type": "shell",
+      "command": "npm run delegate:triggered-runner",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "delegation-triggered-runner",
+        "pattern": {
+          "regexp": "."
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^\\[triggered-runner] watching",
+          "endsPattern": "^$"
+        }
+      }
+    },
+    {
+      "label": "aider:concurrent-loop",
+      "type": "shell",
+      "command": "npm run aider:concurrent-loop",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "aider-concurrent-loop",
+        "pattern": {
+          "regexp": "."
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^\\[aider:loop",
+          "endsPattern": "^$"
+        }
+      }
+    },
+    {
+      "label": "codex:concurrent-loop",
+      "type": "shell",
+      "command": "CODEX_SELECTIVE=1 npm run codex:loop",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "codex-concurrent-loop",
+        "pattern": {
+          "regexp": "."
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^\\[codex:loop",
+          "endsPattern": "^$"
+        }
+      }
+    },
+    {
+      "label": "two-agent:unified-suite",
+      "type": "shell",
+      "command": "bash scripts/run-two-agent-suite.sh",
+      "problemMatcher": [],
+      "detail": "Starts aider & codex concurrent loops + delegation + triggered runner then runs planner loop"
     }
   ]
 }

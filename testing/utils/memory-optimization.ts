@@ -36,8 +36,9 @@ export class MemoryOptimizer {
         try {
             await this.page.evaluate(() => {
                 // Force garbage collection if available
-                if (typeof window !== 'undefined' && (window as any).gc) {
-                    (window as any).gc();
+                if (typeof window !== 'undefined') {
+                    const gcFn = (window as unknown as { gc?: () => void }).gc;
+                    if (typeof gcFn === 'function') gcFn();
                 }
 
                 // Clear intervals and timeouts
@@ -70,8 +71,11 @@ export class MemoryOptimizer {
             document.head.appendChild(meta);
 
             // Optimize memory for AI processing
-            if ('performance' in window && 'memory' in (window.performance as any)) {
-                console.log('Memory usage before optimization:', (window.performance as any).memory);
+            if (typeof window !== 'undefined' && 'performance' in window) {
+                const perf = window.performance as unknown as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } };
+                if (perf.memory) {
+                    console.log('Memory usage before optimization:', perf.memory);
+                }
             }
         });
     }
@@ -123,13 +127,16 @@ export class MemoryOptimizer {
     async monitorMemory(): Promise<void> {
         try {
             const memoryInfo = await this.page.evaluate(() => {
-                if ('performance' in window && 'memory' in (window.performance as any)) {
-                    const memory = (window.performance as any).memory;
-                    return {
-                        usedJSHeapSize: memory.usedJSHeapSize,
-                        totalJSHeapSize: memory.totalJSHeapSize,
-                        jsHeapSizeLimit: memory.jsHeapSizeLimit
-                    };
+                if (typeof window !== 'undefined' && 'performance' in window) {
+                    const perf = window.performance as unknown as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } };
+                    const memory = perf.memory;
+                    if (memory) {
+                        return {
+                            usedJSHeapSize: memory.usedJSHeapSize,
+                            totalJSHeapSize: memory.totalJSHeapSize,
+                            jsHeapSizeLimit: memory.jsHeapSizeLimit
+                        };
+                    }
                 }
                 return null;
             });

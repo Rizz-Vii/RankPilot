@@ -15,14 +15,14 @@ const RULES_FOCUS = new Set([
 
 function run(cmd){
   try { return execSync(cmd,{stdio:'pipe',encoding:'utf8',maxBuffer:10*1024*1024}); }
-  catch(e){ return e.stdout || ''; }
+  catch { return ''; }
 }
 
 let raw = run("npx eslint -c scripts/eslint-metrics.flat.mjs 'src/**/*.{ts,tsx,js,jsx}' -f json --no-error-on-unmatched-pattern");
 let parsed = [];
 try { parsed = JSON.parse(raw); } catch { parsed = []; }
 if(parsed.length===0){
-  try { parsed = await runMetrics(); } catch(e){ /* degraded heatmap */ }
+  try { parsed = await runMetrics(); } catch { /* degraded heatmap */ }
 }
 
 const fileAgg = [];

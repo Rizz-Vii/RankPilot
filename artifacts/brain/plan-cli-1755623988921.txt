@@ -1,0 +1,1683 @@
+{
+  "steps": [
+    {
+      "taskId": "CLF-0",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Orphan feature suppression + entitlement extraction",
+      "files": []
+    },
+    {
+      "taskId": "CLF-1",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Alias map + unified export_formats capability",
+      "files": []
+    },
+    {
+      "taskId": "CLF-2",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Deprecated/entitlement FeatureGate usage test",
+      "files": []
+    },
+    {
+      "taskId": "CLF-3",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Gating Alignment",
+      "files": []
+    },
+    {
+      "taskId": "CLF-4",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "frontend",
+      "reason": "Navigation & Tests",
+      "files": []
+    },
+    {
+      "taskId": "CLF-5",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Finance Mock Transparency",
+      "files": []
+    },
+    {
+      "taskId": "CLF-6",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Env guard already present via NEXT_PUBLIC_ALLOW_FINANCE_MOCKS",
+      "files": []
+    },
+    {
+      "taskId": "CLF-7",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Documentation",
+      "files": []
+    },
+    {
+      "taskId": "CLF-8",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "CHANGE_LOG entry “Phase 1 Gating Hardening”",
+      "files": [
+        "docs/CHANGE_LOG.md"
+      ]
+    },
+    {
+      "taskId": "CLF-9",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Acceptance",
+      "files": []
+    },
+    {
+      "taskId": "CLF-10",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "frontend",
+      "reason": "audit:nav-gates PASS 0 findings",
+      "files": []
+    },
+    {
+      "taskId": "CLF-11",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "Revenue Analytics MVP",
+      "files": []
+    },
+    {
+      "taskId": "CLF-12",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "Compute MRR, ARR, churn rate, LTV",
+      "files": []
+    },
+    {
+      "taskId": "CLF-13",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "AI Usage & Cost",
+      "files": []
+    },
+    {
+      "taskId": "CLF-14",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Add token accounting hooks",
+      "files": []
+    },
+    {
+      "taskId": "CLF-15",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Expose aggregate usage in /api/health KPIs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-16",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Subtool Usage Telemetry",
+      "files": []
+    },
+    {
+      "taskId": "CLF-17",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Add per-feature counter recording",
+      "files": []
+    },
+    {
+      "taskId": "CLF-18",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Subscription Entitlement Metadata",
+      "files": []
+    },
+    {
+      "taskId": "CLF-19",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Synthetic Page Refactor (Start)",
+      "files": []
+    },
+    {
+      "taskId": "CLF-20",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "frontend",
+      "reason": "Replace semantic-map simulate function",
+      "files": []
+    },
+    {
+      "taskId": "CLF-21",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Acceptance",
+      "files": []
+    },
+    {
+      "taskId": "CLF-22",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "KPIs show new fields",
+      "files": []
+    },
+    {
+      "taskId": "CLF-23",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "audit.ts Modernization",
+      "files": []
+    },
+    {
+      "taskId": "CLF-24",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Integrate Firecrawl",
+      "files": []
+    },
+    {
+      "taskId": "CLF-25",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "Introduce Zod schemas for AI JSON output",
+      "files": []
+    },
+    {
+      "taskId": "CLF-26",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Multi-phase pipeline instrumentation",
+      "files": []
+    },
+    {
+      "taskId": "CLF-27",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Quota & Rate Controls",
+      "files": []
+    },
+    {
+      "taskId": "CLF-28",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Shared crawler quota per team",
+      "files": []
+    },
+    {
+      "taskId": "CLF-29",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Load & Contract Tests",
+      "files": []
+    },
+    {
+      "taskId": "CLF-30",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Implement concurrency stress test for audit route",
+      "files": []
+    },
+    {
+      "taskId": "CLF-31",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Acceptance",
+      "files": []
+    },
+    {
+      "taskId": "CLF-32",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "Contract test verifies schema",
+      "files": []
+    },
+    {
+      "taskId": "CLF-33",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Data Minimization Migration",
+      "files": []
+    },
+    {
+      "taskId": "CLF-34",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Migrate large semanticMapResults",
+      "files": []
+    },
+    {
+      "taskId": "CLF-35",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "ops",
+      "reason": "Observability Dashboard",
+      "files": []
+    },
+    {
+      "taskId": "CLF-36",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "New admin page summarizing KPIs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-37",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "Daily KPI Snapshot Function",
+      "files": []
+    },
+    {
+      "taskId": "CLF-38",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "Persist day aggregates for charting",
+      "files": []
+    },
+    {
+      "taskId": "CLF-39",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Alias Retirement",
+      "files": []
+    },
+    {
+      "taskId": "CLF-40",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Remove alias keys after verifying zero usages",
+      "files": []
+    },
+    {
+      "taskId": "CLF-41",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Marketing Campaign CRUD & Ingestion",
+      "files": []
+    },
+    {
+      "taskId": "CLF-42",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Firestore CRUD + validation",
+      "files": []
+    },
+    {
+      "taskId": "CLF-43",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Channel performance dashboard",
+      "files": []
+    },
+    {
+      "taskId": "CLF-44",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Sales Pipeline Enhancements",
+      "files": []
+    },
+    {
+      "taskId": "CLF-45",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Stage customization + probability weighting",
+      "files": []
+    },
+    {
+      "taskId": "CLF-46",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "infra",
+      "reason": "Outreach Sequencing Spec + Skeleton",
+      "files": []
+    },
+    {
+      "taskId": "CLF-47",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Define data model; implement scheduler stub + test",
+      "files": []
+    },
+    {
+      "taskId": "CLF-48",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "security_center (rename advanced_security)",
+      "files": []
+    },
+    {
+      "taskId": "CLF-49",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "frontend",
+      "reason": "Spec + minimal UI",
+      "files": []
+    },
+    {
+      "taskId": "CLF-50",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Audit Log Service",
+      "files": []
+    },
+    {
+      "taskId": "CLF-51",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Firestore collection auditLogs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-52",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "SSO / SAML Skeleton",
+      "files": []
+    },
+    {
+      "taskId": "CLF-53",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Config hooks & placeholder route",
+      "files": []
+    },
+    {
+      "taskId": "CLF-54",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "PII Scan & Retention Script",
+      "files": []
+    },
+    {
+      "taskId": "CLF-55",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Script scanning common fields",
+      "files": []
+    },
+    {
+      "taskId": "CLF-56",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "Canonical Event Schema & Publisher",
+      "files": []
+    },
+    {
+      "taskId": "CLF-57",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Add /src/lib/events/publishEvent.ts",
+      "files": []
+    },
+    {
+      "taskId": "CLF-58",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Event Type Registry & Lint",
+      "files": []
+    },
+    {
+      "taskId": "CLF-59",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Central enum + pre-commit check",
+      "files": []
+    },
+    {
+      "taskId": "CLF-60",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Firestore Rules Update (IMMUTABLE EVENTS)",
+      "files": []
+    },
+    {
+      "taskId": "CLF-61",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Read for org members; create only",
+      "files": []
+    },
+    {
+      "taskId": "CLF-62",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Pub/Sub & BigQuery Mirror",
+      "files": []
+    },
+    {
+      "taskId": "CLF-63",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Stream new events for analytics",
+      "files": []
+    },
+    {
+      "taskId": "CLF-64",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Event Explorer Admin Page",
+      "files": []
+    },
+    {
+      "taskId": "CLF-65",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Filter by type/source/date",
+      "files": []
+    },
+    {
+      "taskId": "CLF-66",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Automation Event Triggers",
+      "files": []
+    },
+    {
+      "taskId": "CLF-67",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Extend automation run-now/run-due",
+      "files": []
+    },
+    {
+      "taskId": "CLF-68",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Simulation Sandbox (Spec Only in this Phase)",
+      "files": []
+    },
+    {
+      "taskId": "CLF-69",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Define API contract for historical replay",
+      "files": []
+    },
+    {
+      "taskId": "CLF-70",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Event writes present & immutable",
+      "files": []
+    },
+    {
+      "taskId": "CLF-71",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Data Join Service",
+      "files": []
+    },
+    {
+      "taskId": "CLF-72",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Correlate events -> deals/invoices/campaigns",
+      "files": []
+    },
+    {
+      "taskId": "CLF-73",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Attribution Explainer Module",
+      "files": []
+    },
+    {
+      "taskId": "CLF-74",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Generates top factor list with % contribution",
+      "files": []
+    },
+    {
+      "taskId": "CLF-75",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Deal Probability Enhancer",
+      "files": []
+    },
+    {
+      "taskId": "CLF-76",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Combine stage + finance risk + engagement signals",
+      "files": []
+    },
+    {
+      "taskId": "CLF-77",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Anomaly Detector (Batch Job / Function)",
+      "files": []
+    },
+    {
+      "taskId": "CLF-78",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Daily scan for metric deviations",
+      "files": []
+    },
+    {
+      "taskId": "CLF-79",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "frontend",
+      "reason": "Revenue Truth UI Panel",
+      "files": []
+    },
+    {
+      "taskId": "CLF-80",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Surfaces causality narrative + anomaly badges",
+      "files": []
+    },
+    {
+      "taskId": "CLF-81",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "At least one anomaly event emitted during seeded test",
+      "files": []
+    },
+    {
+      "taskId": "CLF-82",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Template Entity & Firestore Path",
+      "files": []
+    },
+    {
+      "taskId": "CLF-83",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "/global/templates; fields: kind, version, checksum",
+      "files": []
+    },
+    {
+      "taskId": "CLF-84",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Template Validation Pipeline (Dry-Run Executor)",
+      "files": []
+    },
+    {
+      "taskId": "CLF-85",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Simulate automation template steps without side effects",
+      "files": []
+    },
+    {
+      "taskId": "CLF-86",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "infra",
+      "reason": "Publishing Workflow",
+      "files": []
+    },
+    {
+      "taskId": "CLF-87",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Revenue Share Ledger Stub",
+      "files": []
+    },
+    {
+      "taskId": "CLF-88",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "/orgs/{orgId}/templateEarnings",
+      "files": []
+    },
+    {
+      "taskId": "CLF-89",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "frontend",
+      "reason": "Discovery UI",
+      "files": []
+    },
+    {
+      "taskId": "CLF-90",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Usage Telemetry Events",
+      "files": []
+    },
+    {
+      "taskId": "CLF-91",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Apply template clones into org",
+      "files": []
+    },
+    {
+      "taskId": "CLF-92",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Side Panel Manifest Spec",
+      "files": []
+    },
+    {
+      "taskId": "CLF-93",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Document postMessage API",
+      "files": []
+    },
+    {
+      "taskId": "CLF-94",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Scoped Token Endpoint",
+      "files": []
+    },
+    {
+      "taskId": "CLF-95",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Issues short-lived JWT",
+      "files": []
+    },
+    {
+      "taskId": "CLF-96",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Presence Channel Skeleton",
+      "files": []
+    },
+    {
+      "taskId": "CLF-97",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "In-memory or Firestore-based",
+      "files": []
+    },
+    {
+      "taskId": "CLF-98",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "frontend",
+      "reason": "Quick Action Palette Spec",
+      "files": []
+    },
+    {
+      "taskId": "CLF-99",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Command taxonomy + minimal invocation endpoint",
+      "files": []
+    },
+    {
+      "taskId": "CLF-100",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Embed Usage Metrics",
+      "files": []
+    },
+    {
+      "taskId": "CLF-101",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Counters for activePanels, commandsExecuted",
+      "files": []
+    },
+    {
+      "taskId": "CLF-102",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Token endpoint issues valid expiring token",
+      "files": []
+    },
+    {
+      "taskId": "CLF-103",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Provider Registry & Health Scoring",
+      "files": []
+    },
+    {
+      "taskId": "CLF-104",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Store latency, successRate, costFactor snapshots",
+      "files": []
+    },
+    {
+      "taskId": "CLF-105",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Adaptive Routing Integration",
+      "files": []
+    },
+    {
+      "taskId": "CLF-106",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Choose provider per invocation",
+      "files": []
+    },
+    {
+      "taskId": "CLF-107",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Cost Ledger Persistence",
+      "files": []
+    },
+    {
+      "taskId": "CLF-108",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Enrich aiUsageDaily with per-call cost + model",
+      "files": []
+    },
+    {
+      "taskId": "CLF-109",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Prompt Versioning",
+      "files": []
+    },
+    {
+      "taskId": "CLF-110",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Registry with hash/version",
+      "files": []
+    },
+    {
+      "taskId": "CLF-111",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "ops",
+      "reason": "Latency & Error SLO Dashboard Widgets",
+      "files": []
+    },
+    {
+      "taskId": "CLF-112",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "ops",
+      "reason": "Integrate into observability page",
+      "files": []
+    },
+    {
+      "taskId": "CLF-113",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Alerting Events on Error Spikes",
+      "files": []
+    },
+    {
+      "taskId": "CLF-114",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Emit ai.provider.anomaly when threshold exceeded",
+      "files": []
+    },
+    {
+      "taskId": "CLF-115",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "infra",
+      "reason": "Routing decisions logged",
+      "files": []
+    },
+    {
+      "taskId": "CLF-116",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Architecture Delta Doc",
+      "files": []
+    },
+    {
+      "taskId": "CLF-117",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "Event Schema Reference",
+      "files": []
+    },
+    {
+      "taskId": "CLF-118",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "PR Template Upgrade",
+      "files": []
+    },
+    {
+      "taskId": "CLF-119",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Aider Context Index Generator Job",
+      "files": []
+    },
+    {
+      "taskId": "CLF-120",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "CHANGE_LOG Enforcement Hook",
+      "files": []
+    },
+    {
+      "taskId": "CLF-121",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Onboarding Validation Script",
+      "files": []
+    },
+    {
+      "taskId": "CLF-122",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "infra",
+      "reason": "Docs merged; onboarding script passes in CI",
+      "files": []
+    },
+    {
+      "taskId": "CLF-123",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "frontend",
+      "reason": "Phase1 complete when: All mismatches resolved",
+      "files": []
+    },
+    {
+      "taskId": "CLF-124",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Phase2 complete when: Revenue page live",
+      "files": []
+    },
+    {
+      "taskId": "CLF-125",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Phase3 complete when: Audit contract test passes",
+      "files": []
+    },
+    {
+      "taskId": "CLF-126",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Real crawler requires API key & rate budgeting",
+      "files": []
+    },
+    {
+      "taskId": "CLF-127",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Token accounting needs consistent provider token counts",
+      "files": []
+    },
+    {
+      "taskId": "CLF-128",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Data minimization migration must run before retention policy enforcement",
+      "files": []
+    },
+    {
+      "taskId": "CLF-129",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Alias keys removed end of Phase2 + 1 release buffer",
+      "files": []
+    },
+    {
+      "taskId": "CLF-130",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "ops",
+      "reason": "Deprecated umbrella/admin keys fully removed",
+      "files": []
+    },
+    {
+      "taskId": "CLF-131",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "T14 migration",
+      "files": []
+    },
+    {
+      "taskId": "CLF-132",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "T15 Observability Dashboard",
+      "files": []
+    },
+    {
+      "taskId": "CLF-133",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Prepare alias retirement",
+      "files": []
+    },
+    {
+      "taskId": "CLF-134",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "frontend",
+      "reason": "Add memory leak guard to stress test suite",
+      "files": []
+    },
+    {
+      "taskId": "CLF-135",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Test metrics seeding endpoint",
+      "files": []
+    },
+    {
+      "taskId": "CLF-136",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "infra",
+      "reason": "Semantic adoption parity test added",
+      "files": []
+    },
+    {
+      "taskId": "CLF-137",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "Alert history persistence",
+      "files": []
+    },
+    {
+      "taskId": "CLF-138",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "ops",
+      "reason": "Alert parity extended",
+      "files": []
+    },
+    {
+      "taskId": "CLF-139",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "MA7 extended to fallbackRate & p95LatencyOverall",
+      "files": []
+    },
+    {
+      "taskId": "CLF-140",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "ops",
+      "reason": "Added MA7 + sparklines for cacheHitRatio",
+      "files": []
+    },
+    {
+      "taskId": "CLF-141",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Finance live metrics stabilization",
+      "files": []
+    },
+    {
+      "taskId": "CLF-142",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Lightweight health probe",
+      "files": []
+    },
+    {
+      "taskId": "CLF-143",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "NEXTAUTH_SECRET configured to remove auth warning",
+      "files": []
+    },
+    {
+      "taskId": "CLF-144",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "DQ1 (T29) Event explorer page scaffold",
+      "files": []
+    },
+    {
+      "taskId": "CLF-145",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "DQ2 (T36) Template entity Firestore path doc stub",
+      "files": []
+    },
+    {
+      "taskId": "CLF-146",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "frontend",
+      "reason": "DQ3 (T40) Marketplace discovery UI skeleton",
+      "files": []
+    },
+    {
+      "taskId": "CLF-147",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "DQ4 (T53/T54) Architecture delta + event schema docs addition",
+      "files": []
+    },
+    {
+      "taskId": "CLF-148",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "DQ5 (T55) PR template risk checklist insertion",
+      "files": []
+    },
+    {
+      "taskId": "CLF-149",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "DQ6 (T56) Context index generator stub script",
+      "files": []
+    },
+    {
+      "taskId": "CLF-150",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "DQ7 (T57) CHANGE_LOG enforcement hook stub",
+      "files": []
+    },
+    {
+      "taskId": "CLF-151",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Firestore security rule changes",
+      "files": []
+    },
+    {
+      "taskId": "CLF-152",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Pub/Sub + BigQuery function",
+      "files": []
+    },
+    {
+      "taskId": "CLF-153",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Adaptive routing logic",
+      "files": []
+    },
+    {
+      "taskId": "CLF-154",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Anomaly detection algorithm",
+      "files": []
+    },
+    {
+      "taskId": "CLF-155",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Scoped token endpoint auth",
+      "files": []
+    },
+    {
+      "taskId": "CLF-156",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Each delegated diff ≤180 LOC",
+      "files": []
+    },
+    {
+      "taskId": "CLF-157",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "frontend",
+      "reason": "Must add FeatureGate & nav simultaneously for new pages",
+      "files": []
+    },
+    {
+      "taskId": "CLF-158",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "No Firestore rule or server secret edits in delegated tasks",
+      "files": []
+    },
+    {
+      "taskId": "CLF-159",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Update CHANGE_LOG only if runtime behavior changes",
+      "files": []
+    },
+    {
+      "taskId": "CLF-160",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Phases 7–12 appended to integrate Business OS Graph",
+      "files": []
+    },
+    {
+      "taskId": "CLF-161",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Existing Phases 1–6 remain unchanged",
+      "files": []
+    },
+    {
+      "taskId": "CLF-162",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Backlog IDs extended mapping to new epics",
+      "files": []
+    },
+    {
+      "taskId": "CLF-163",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "frontend",
+      "reason": "Delegation candidate list prepared",
+      "files": []
+    },
+    {
+      "taskId": "CLF-164",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "frontend",
+      "reason": "Script alias test:unit:observability-mocked added",
+      "files": []
+    },
+    {
+      "taskId": "CLF-165",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "ops",
+      "reason": "Enhanced seed-alert endpoint supports batch",
+      "files": []
+    },
+    {
+      "taskId": "CLF-166",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "MA7 precedence helper exported & unit-tested",
+      "files": []
+    }
+  ],
+  "strategy": "openai",
+  "meta": {
+    "model": "gpt-4o-mini",
+    "promptTokens": 5101,
+    "completionTokens": 6902,
+    "totalTokens": 12003
+  }
+}

@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { UNIFIED_TEST_USERS } from './unified-test-users';
-import type { EnhancedAuth } from './enhanced-auth';
+// Removed unused imports (UNIFIED_TEST_USERS, EnhancedAuth) during lint cleanup
 
 /**
  * Feature Test: observability smoothing (T15 acceptance)
@@ -8,13 +7,12 @@ import type { EnhancedAuth } from './enhanced-auth';
  */
 
 test.describe('Feature - observability smoothing', () => {
-    let auth: EnhancedAuth;
 
     test.beforeAll(async () => { /* no-op: using forced admin override */ });
 
     test('shows smoothed delta badges', async ({ page }) => {
         // Force admin override + E2E flag early
-        await page.addInitScript(() => { try { (window as any).__E2E__ = '1'; localStorage.setItem('TEST_FORCE_ADMIN', '1'); } catch { } });
+        await page.addInitScript(() => { try { (window as unknown as { __E2E__?: string }).__E2E__ = '1'; localStorage.setItem('TEST_FORCE_ADMIN', '1'); } catch { /* ignore */ } });
         await page.goto('/admin/observability');
         // Basic wait to allow health fetch + (if any) history load
         await page.waitForTimeout(3500);

@@ -20,13 +20,12 @@ import { AnimatePresence, motion } from 'framer-motion';
 import DOMPurify from 'isomorphic-dompurify';
 import { Bot, Loader2, Maximize2, MessageCircle, Minimize2, Send, User, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import rehypeStringify from 'rehype-stringify';
-import remarkGfm from 'remark-gfm';
-import remarkParse from 'remark-parse';
-import remarkRehype from 'remark-rehype';
-import { unified } from 'unified';
+import { renderMarkdownToHtml } from './markdown-render';
 
 // Types
+type ChatMessageType = 'text' | 'image' | 'audio' | 'system';
+const CHAT_MESSAGE_TYPES: readonly ChatMessageType[] = ['text', 'image', 'audio', 'system'] as const;
+
 interface ChatMessage {
     id: string;
     message: string;
@@ -34,7 +33,7 @@ interface ChatMessage {
     timestamp: string;
     isUser: boolean;
     tokensUsed?: number;
-        type?: 'text' | 'image' | 'audio' | 'system';
+    type?: ChatMessageType; // Optional because historical records may lack the field
     mediaUrl?: string;
     intent?: string;
 }
@@ -204,7 +203,8 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
         if (!userScrolledUpRef.current || isNearBottom()) {
             scrollToBottom(!streaming);
         }
-    }, [messages, streaming]);
+        // messagesViewportRef not included intentionally; isNearBottom reads it dynamically
+    }, [messages, streaming, scrolledAway]);
     const handleManualScroll: React.UIEventHandler<HTMLDivElement> = (e) => {
         const el = e.currentTarget;
         const away = el.scrollHeight - el.scrollTop - el.clientHeight > 240;
@@ -217,7 +217,8 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
             setScrolledAway(false);
             userScrolledUpRef.current = false;
         }
-    }, [messages]);
+        // Explicitly depend on messages to satisfy exhaustive-deps without over-triggering (acceptable trade-off given lightweight body)
+    }, [messages, scrolledAway]);
 
     // Focus input when opened
     useEffect(() => {
@@ -227,12 +228,12 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
     }, [isOpen, isMinimized]);
 
     // Seed suggestions if provided (e.g., in unit tests) when chat opens
+    const initSugKey = Array.isArray(initialSuggestions) ? initialSuggestions.join('|') : '';
     useEffect(() => {
         if (isOpen && Array.isArray(initialSuggestions) && initialSuggestions.length && suggestions.length === 0) {
             setSuggestions(initialSuggestions.slice(0, 4));
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen, Array.isArray(initialSuggestions) ? initialSuggestions.join('|') : initialSuggestions]);
+    }, [isOpen, initSugKey, initialSuggestions, suggestions.length]);
 
     // Initialize with welcome message
     useEffect(() => {
@@ -247,12 +248,19 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
             };
             setMessages([welcomeMessage]);
         }
-    }, [isOpen, messages.length]);
+    }, [isOpen, messages.length, restoring]);
+
+    // Helper to safely coerce an arbitrary raw type value into a permitted ChatMessage['type'] union.
+    const coerceMsgType = (val: unknown): ChatMessage['type'] => {
+        return typeof val === 'string' && (CHAT_MESSAGE_TYPES as readonly string[]).includes(val)
+            ? (val as ChatMessageType)
+            : undefined;
+    };
 
     // Restore last session from Firestore via API GET when opening
     useEffect(() => {
         const restore = async () => {
-            if (!isOpen || !user || messages.length > 0) return;
+            if (!isOpen || !user || messages.length > 0 || restoring) return;
             setRestoring(true);
             try {
                 const token = await (auth.currentUser || user as AuthUserLike)?.getIdToken?.();
@@ -261,21 +269,22 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                 if (res.ok) {
                     const data = await res.json();
                     if (Array.isArray(data.messages) && data.messages.length) {
-                        setSessionId(data.sessionId || sessionId);
-                        const mapped = (data.messages as unknown[]).map((m: unknown) => {
+                        setSessionId(prev => data.sessionId || prev);
+                        const mapped: ChatMessage[] = (data.messages as unknown[]).map((m: unknown): ChatMessage => {
                             const mm = m as RawMessage;
-                            return {
+                            const msg: ChatMessage = {
                                 id: String(mm.id || ''),
                                 message: mm.isUser ? (mm.message || '') : '',
                                 response: !mm.isUser ? (mm.response || '') : '',
                                 timestamp: String(mm.timestamp || new Date().toISOString()),
                                 isUser: !!mm.isUser,
-                                tokensUsed: mm.tokensUsed,
-                                type: mm.type,
-                                mediaUrl: mm.mediaUrl,
+                                tokensUsed: typeof mm.tokensUsed === 'number' ? mm.tokensUsed : undefined,
+                                type: coerceMsgType(mm.type),
+                                mediaUrl: typeof mm.mediaUrl === 'string' ? mm.mediaUrl : undefined,
                             };
+                            return msg;
                         });
-                        setMessages(mapped);
+                        setMessages(() => mapped);
                         oldestMessageTsRef.current = mapped[0]?.timestamp || null;
                         setHasMore(data.hasMore ?? false);
                         if (data.sessionSummary) setSessionSummary(data.sessionSummary);
@@ -294,15 +303,14 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                         }
                     }
                 }
-            } catch (e) {
+            } catch {
                 // silent
             } finally {
                 setRestoring(false);
             }
         };
-        restore();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen, user]);
+        void restore();
+    }, [isOpen, user, messages.length, restoring]);
 
     // Local cache persistence (simple recent snapshot)
     useEffect(() => {
@@ -334,20 +342,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
         sendCooldownRef.current = setTimeout(() => setCanSend(true), 1200); // 1.2s cooldown
     };
 
-    const renderMarkdown = async (text: string) => {
-        try {
-            // unified() may not have precise ESM types here; use unknown and narrow to the Process interface we need
-            const processor = (unified() as unknown)
-                .use(remarkParse)
-                .use(remarkGfm)
-                .use(remarkRehype)
-                .use(rehypeStringify);
-            const file = await (processor as { process(input: string): Promise<unknown> }).process(text);
-            return String(file);
-        } catch {
-            return text.replace(/</g, '&lt;');
-        }
-    };
+    const renderMarkdown = (text: string) => renderMarkdownToHtml(text);
 
     // Highlight new pending actions that appear after updates
     useEffect(() => {
@@ -358,7 +353,6 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
             const updatedSet = new Set(newActionHighlights);
             newlyAdded.forEach(a => updatedSet.add(a));
             setNewActionHighlights(updatedSet);
-            // Remove highlight after 8s
             if (newActionTimeoutRef.current) clearTimeout(newActionTimeoutRef.current);
             newActionTimeoutRef.current = setTimeout(() => {
                 setNewActionHighlights(prevSet => {
@@ -369,41 +363,40 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
             }, 8000);
         }
         setPreviousActions(new Set(pendingActions));
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pendingActions.join('|')]);
+    }, [pendingActions, newActionHighlights, previousActions, newActionTimeoutRef]);
 
     // Add copy buttons to code blocks (progressive enhancement)
     useEffect(() => {
         const container = messagesViewportRef.current;
         if (!container) return;
         const pres = container.querySelectorAll('pre');
-        pres.forEach(pre => {
-            if ((pre as any)._rpCopyBtn) return;
-            const wrapper = pre as HTMLElement;
-            wrapper.classList.add('relative');
+        interface AugmentedPre extends HTMLPreElement { _rpCopyBtn?: boolean }
+        pres.forEach(node => {
+            const pre = node as AugmentedPre;
+            if (pre._rpCopyBtn) return; // already augmented
+            pre.classList.add('relative');
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.setAttribute('aria-label', 'Copy code');
             btn.className = 'absolute top-1 right-1 rounded-md bg-black/50 text-white text-[10px] px-2 py-1 hover:bg-black/70 transition focus:outline-none focus:ring-2 focus:ring-primary';
             btn.textContent = 'Copy';
             btn.onclick = () => {
-                const code = wrapper.querySelector('code');
-                if (code) {
-                    navigator.clipboard.writeText(code.textContent || '');
-                    btn.textContent = 'Copied';
-                    setTimeout(() => { btn.textContent = 'Copy'; }, 1600);
-                }
+                const code = pre.querySelector('code');
+                if (!code) return;
+                void navigator.clipboard.writeText(code.textContent || '');
+                btn.textContent = 'Copied';
+                setTimeout(() => { btn.textContent = 'Copy'; }, 1600);
             };
-            wrapper.appendChild(btn);
-            (pre as any)._rpCopyBtn = true;
+            pre.appendChild(btn);
+            pre._rpCopyBtn = true;
         });
-    }, [messages]);
+    }, [messages.length]);
 
     // Compute attachment count after restore
     useEffect(() => {
         const count = messages.filter(m => m.type === 'image' || m.type === 'audio').length;
         setAttachmentsUsed(count);
-    }, [messages.length]);
+    }, [messages]);
 
     const getAttachmentLimit = (tier?: string) => {
         switch (tier) {
@@ -506,7 +499,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                                         }
                                         // Derive suggestions from rp_meta if present
                                         try {
-                                            const { meta } = extractRpMeta(accumulated) as any;
+                                            const { meta } = extractRpMeta(accumulated);
                                             const nextSugg: string[] = [];
                                             if (meta?.actions?.length) nextSugg.push(...meta.actions);
                                             if (nextSugg.length) setSuggestions(nextSugg.slice(0,4));
@@ -521,7 +514,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                     // Final markdown render
                     try {
                         // Clean rp_meta before rendering
-                        const { cleaned, meta } = extractRpMeta(accumulated) as any;
+                        const { cleaned, meta } = extractRpMeta(accumulated);
                         let html = await renderMarkdown(cleaned);
                         html = DOMPurify.sanitize(html);
                         // Generate suggestions based on accumulated + user intent
@@ -608,7 +601,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
 
             // Add AI response
             // Extract rp_meta for suggestions
-            const { cleaned, meta } = extractRpMeta(data.response) as any;
+        const { cleaned, meta } = extractRpMeta(data.response);
             let html = await renderMarkdown(cleaned);
             html = DOMPurify.sanitize(html);
             const aiMessage: ChatMessage = {
@@ -682,7 +675,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                     body: JSON.stringify({ attachments: [{ type: 'image', mediaUrl: url, name: pendingImage.name }] })
                 });
             } catch { /* ignore */ }
-        } catch (e) {
+        } catch {
             setError('Image upload failed');
             setMessages(m => [...m, { id: `sys_${Date.now()}`, message: '', response: 'Image upload failed', timestamp: new Date().toISOString(), isUser: false, type: 'system' }]);
             setAnnouncements(a => [...a.slice(-3), 'Image upload failed']);
@@ -694,7 +687,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
     };
 
     // Voice note recorder: records audio, uploads to Firebase Storage, then persists attachment via backend API
-    const [micBlocked, setMicBlocked] = useState(false);
+    // Removed unused micBlocked state (wasn't surfaced in UI; errors announced instead)
     const startRecording = async () => {
         if (!navigator.mediaDevices?.getUserMedia) { setError('Microphone not supported in this browser'); return; }
         try {
@@ -713,7 +706,6 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
             audioRecorderRef.current = recorder;
             setAnnouncements(a => [...a.slice(-3), 'Recording started']);
         } catch (e: unknown) {
-            setMicBlocked(true);
             let msg = 'Unable to access microphone';
             if (typeof e === 'object' && e !== null) {
                 const anyErr = e as { name?: unknown; message?: unknown };
@@ -782,47 +774,49 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
     };
 
     // Infinite scroll / load older messages when scrolled to top
-    const onScrollAreaScroll: React.UIEventHandler<HTMLDivElement> = async (e) => {
+    const onScrollAreaScroll: React.UIEventHandler<HTMLDivElement> = (e) => {
         const target = e.currentTarget;
         const now = Date.now();
         if (now - lastScrollFetchRef.current < 400) return; // debounce ~400ms
         if (target.scrollTop < 40 && !loadingMore && hasMore && user) {
             setLoadingMore(true);
             lastScrollFetchRef.current = now;
-            try {
-                const token = await (auth.currentUser || user as AuthUserLike)?.getIdToken?.();
-                const before = oldestMessageTsRef.current;
-                const url = before ? `/api/chat/customer?limit=25&before=${encodeURIComponent(before)}` : `/api/chat/customer?limit=25`;
-                const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (Array.isArray(data.messages) && data.messages.length) {
-                        const mapped = (data.messages as unknown[]).map((m: unknown) => {
-                            const mm = m as RawMessage;
-                            return {
-                                id: String(mm.id || ''),
-                                message: mm.isUser ? (mm.message || '') : '',
-                                response: !mm.isUser ? (mm.response || '') : '',
-                                timestamp: String(mm.timestamp || new Date().toISOString()),
-                                isUser: !!mm.isUser,
-                                tokensUsed: mm.tokensUsed,
-                                type: mm.type,
-                                mediaUrl: mm.mediaUrl,
-                            };
-                        });
-                        oldestMessageTsRef.current = mapped[0]?.timestamp || oldestMessageTsRef.current;
-                        setHasMore(data.hasMore ?? false);
-                        setMessages(prev => [...mapped, ...prev]);
-                        // Maintain scroll position after prepending
-                        requestAnimationFrame(() => {
-                            target.scrollTop = target.scrollHeight / 4; // heuristic
-                        });
-                    } else {
-                        setHasMore(false);
+            void (async () => {
+                try {
+                    const token = await (auth.currentUser || user as AuthUserLike)?.getIdToken?.();
+                    const before = oldestMessageTsRef.current;
+                    const url = before ? `/api/chat/customer?limit=25&before=${encodeURIComponent(before)}` : `/api/chat/customer?limit=25`;
+                    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data.messages) && data.messages.length) {
+                            const mapped: ChatMessage[] = (data.messages as unknown[]).map((m: unknown): ChatMessage => {
+                                const mm = m as RawMessage;
+                                const msg: ChatMessage = {
+                                    id: String(mm.id || ''),
+                                    message: mm.isUser ? (mm.message || '') : '',
+                                    response: !mm.isUser ? (mm.response || '') : '',
+                                    timestamp: String(mm.timestamp || new Date().toISOString()),
+                                    isUser: !!mm.isUser,
+                                    tokensUsed: typeof mm.tokensUsed === 'number' ? mm.tokensUsed : undefined,
+                                    type: coerceMsgType(mm.type),
+                                    mediaUrl: typeof mm.mediaUrl === 'string' ? mm.mediaUrl : undefined,
+                                };
+                                return msg;
+                            });
+                            oldestMessageTsRef.current = mapped[0]?.timestamp || oldestMessageTsRef.current;
+                            setHasMore(data.hasMore ?? false);
+                            setMessages((prev: ChatMessage[]) => [...mapped, ...prev]);
+                            requestAnimationFrame(() => {
+                                target.scrollTop = target.scrollHeight / 4; // heuristic
+                            });
+                        } else {
+                            setHasMore(false);
+                        }
                     }
-                }
-            } catch {}
-            setLoadingMore(false);
+                } catch { /* ignore */ }
+                setLoadingMore(false);
+            })();
         }
     };
 
@@ -837,7 +831,9 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
             e.nativeEvent.stopImmediatePropagation();
         }
         // Avoid sending during IME composition
-        const composing = (e.nativeEvent as any)?.isComposing || isComposing;
+        // Narrow nativeEvent for IME composition flag without using any
+        const nativeEvt: unknown = e.nativeEvent;
+        const composing = (typeof nativeEvt === 'object' && nativeEvt !== null && 'isComposing' in nativeEvt && (nativeEvt as { isComposing?: unknown }).isComposing === true) || isComposing;
         if (composing) return;
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -944,7 +940,8 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                                                     onChange={() => {
                                                         setCompletedActions(prev => ({ ...prev, [a]: !prev[a] }));
                                                         if (actionUpdateDebounceRef.current) clearTimeout(actionUpdateDebounceRef.current);
-                                                        actionUpdateDebounceRef.current = setTimeout(async () => {
+                                                        actionUpdateDebounceRef.current = setTimeout(() => {
+                                                            void (async () => {
                                                             try {
                                                                 const token = await (auth.currentUser || user as AuthUserLike)?.getIdToken?.();
                                                                 if (!token || !sessionId) return;
@@ -964,6 +961,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                                                                     }
                                                                 }
                                                             } catch { /* ignore */ }
+                                                            })();
                                                         }, 600);
                                                     }}
                                                 />
@@ -1105,8 +1103,8 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                                 {/* Pending attachments preview */}
                 {(pendingImage || pendingAudio || uploading) && (
                                     <div className="flex flex-col gap-2 text-xs text-muted-foreground bg-muted p-2 rounded">
-                                        {pendingImage && <div>Image ready: {pendingImage.name} <button onClick={attachImage} className="underline text-primary">attach</button></div>}
-                                        {pendingAudio && <div>Voice note ready <button onClick={attachAudio} className="underline text-primary">attach</button></div>}
+                                        {pendingImage && <div>Image ready: {pendingImage.name} <button onClick={() => { void attachImage(); }} className="underline text-primary">attach</button></div>}
+                                        {pendingAudio && <div>Voice note ready <button onClick={() => { void attachAudio(); }} className="underline text-primary">attach</button></div>}
                     {uploading && <div>Uploading…</div>}
                                     </div>
                                 )}
@@ -1160,7 +1158,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="6" width="12" height="12"/></svg>
                                     </Button>
                                 ) : (
-                                    <Button variant="ghost" size="icon" className={cn('h-10 w-10', isMobile && 'h-9 w-9')} onClick={startRecording} aria-label="Record voice note">
+                                        <Button variant="ghost" size="icon" className={cn('h-10 w-10', isMobile && 'h-9 w-9')} onClick={() => { void startRecording(); }} aria-label="Record voice note">
                                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1v14"/><path d="M8 5v6a4 4 0 0 0 8 0V5"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
                                     </Button>
                                 )}
@@ -1176,7 +1174,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                                     className={cn('flex-1', isMobile && 'h-11 text-sm')}
                                 />
                                 <Button
-                                    onClick={sendMessage}
+                                    onClick={() => { void sendMessage(); }}
                                     disabled={!inputValue.trim() || isLoading || streaming || !user || !canSend}
                                     size="sm"
                                     className={cn('relative bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 disabled:opacity-60 disabled:cursor-not-allowed', isMobile && 'px-3')}

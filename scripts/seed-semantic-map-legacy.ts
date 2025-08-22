@@ -12,17 +12,17 @@
  * Safe: Idempotent-ish – generates random URLs; repeated runs just add more samples.
  * NOTE: Run only in local/dev or staging. Do NOT run in production without review.
  */
-import { initializeApp, getApps } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getApps, initializeApp } from 'firebase-admin/app';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 
 interface LargeSemanticDoc {
     userId: string; url: string; overallScore: number;
     topicClusters: Array<{ topic: string; semanticScore: number; opportunity: string }>;
     keywordAnalysis: Array<{ keyword: string; semanticRelevance: number }>;
     contentAnalysis: { readabilityScore: number; contentDepth: number; topicCoverage: number; semanticRichness: number; expertiseSignals: number };
-    semanticGraph: { nodes: any[]; edges: any[] };
+    semanticGraph: { nodes: unknown[]; edges: unknown[] };
     recommendations: Array<{ type: string; priority: string; title: string; description: string; impact: string }>;
-    createdAt: any;
+    createdAt: unknown;
 }
 
 function makeLargeDoc(i: number, userId: string): LargeSemanticDoc {
@@ -75,7 +75,7 @@ async function main() {
     for (let i = 0; i < count; i++) {
         const doc = makeLargeDoc(i, userId);
         const sizeBytes = Buffer.byteLength(JSON.stringify(doc));
-        await db.collection('semanticMapResults').add(doc as any);
+        await db.collection('semanticMapResults').add(doc as unknown as Record<string, unknown>);
         written++;
         console.log(`[seed] #${i + 1} size=${sizeBytes} bytes url=${doc.url}`);
     }

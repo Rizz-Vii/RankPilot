@@ -14,9 +14,9 @@
  */
 import { getApps, initializeApp } from 'firebase-admin/app';
 import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 
-interface SemanticMapFullDoc {
+export interface SemanticMapFullDoc {
     userId?: string;
     url?: string;
     overallScore?: number;
@@ -25,15 +25,15 @@ interface SemanticMapFullDoc {
     contentAnalysis?: {
         readabilityScore?: number; contentDepth?: number; topicCoverage?: number; semanticRichness?: number; expertiseSignals?: number;
     };
-    semanticGraph?: { nodes?: any[]; edges?: any[] };
-    recommendations?: any[];
-    createdAt?: any;
+    semanticGraph?: { nodes?: unknown[]; edges?: unknown[] };
+    recommendations?: unknown[];
+    createdAt?: unknown;
 }
 
-interface NeuralCrawlerFullDoc {
+export interface NeuralCrawlerFullDoc {
     userId?: string; url?: string; historyId?: string; wordCount?: number; readingTime?: number;
-    images?: any[]; links?: Array<{ type: 'internal' | 'external' }>; seoAnalysis?: { titleLength?: number; metaDescriptionLength?: number };
-    issues?: any[]; entities?: any[]; headings?: Record<string, string[]>; createdAt?: any;
+    images?: unknown[]; links?: Array<{ type: 'internal' | 'external' }>; seoAnalysis?: { titleLength?: number; metaDescriptionLength?: number };
+    issues?: unknown[]; entities?: unknown[]; headings?: Record<string, string[]>; createdAt?: unknown;
 }
 
 function approxSize(obj: unknown): number {
@@ -100,29 +100,44 @@ interface ScanResultEntry {
     reductionPct: number | null;
     userId: string | null;
     url: string | null;
-    aggregatePreview: any;
+    aggregatePreview: unknown;
     wrote?: boolean;
     skippedWriteReason?: string;
 }
 
-async function ensureAggregateDoc(db: FirebaseFirestore.Firestore, collection: string, legacy: any, aggregate: any): Promise<{ wrote: boolean; reason?: string }> {
+async function ensureAggregateDoc(
+    db: FirebaseFirestore.Firestore,
+    collection: string,
+    legacy: Record<string, unknown>,
+    aggregate: Record<string, unknown>
+): Promise<{ wrote: boolean; reason?: string }> {
     // Duplicate avoidance: match by historyId if present else userId+url
     try {
-        if (legacy.historyId) {
-            const q = await db.collection(collection).where('historyId', '==', legacy.historyId).limit(1).get();
+        const historyId = typeof legacy.historyId === 'string' ? legacy.historyId : undefined;
+        const userId = typeof legacy.userId === 'string' ? legacy.userId : undefined;
+        const url = typeof legacy.url === 'string' ? legacy.url : undefined;
+        if (historyId) {
+            const q = await db.collection(collection).where('historyId', '==', historyId).limit(1).get();
             if (!q.empty) return { wrote: false, reason: 'exists_historyId' };
-        } else if (legacy.userId && legacy.url) {
-            const q2 = await db.collection(collection).where('userId', '==', legacy.userId).where('url', '==', legacy.url).limit(1).get();
+        } else if (userId && url) {
+            const q2 = await db.collection(collection).where('userId', '==', userId).where('url', '==', url).limit(1).get();
             if (!q2.empty) return { wrote: false, reason: 'exists_user_url' };
         }
-        await db.collection(collection).add({ ...aggregate, createdAt: aggregate.createdAt || FieldValue.serverTimestamp() });
+        await db.collection(collection).add({ ...aggregate, createdAt: (aggregate as { createdAt?: unknown }).createdAt || FieldValue.serverTimestamp() });
         return { wrote: true };
     } catch (e) {
-        return { wrote: false, reason: 'write_error' };
+        const msg = e && typeof e === 'object' && 'message' in e ? String((e as { message?: unknown }).message) : String(e);
+        return { wrote: false, reason: `write_error:${msg.slice(0, 120)}` };
     }
 }
 
-async function scanCollection(db: FirebaseFirestore.Firestore, name: string, threshold: number, derive: (d: any) => any, opts: { write: boolean; output: ScanResultEntry[] }): Promise<{ scanned: number; oversized: number }> {
+async function scanCollection(
+    db: FirebaseFirestore.Firestore,
+    name: string,
+    threshold: number,
+    derive: (d: unknown) => Record<string, unknown>,
+    opts: { write: boolean; output: ScanResultEntry[] }
+): Promise<{ scanned: number; oversized: number }> {
     const batchSize = parseInt(process.env.BATCH_SIZE || '100', 10);
     console.log(`[scan] collection=${name} threshold=${threshold} batchSize=${batchSize}`);
     let last: QueryDocumentSnapshot | undefined;
@@ -138,22 +153,23 @@ async function scanCollection(db: FirebaseFirestore.Firestore, name: string, thr
             const size = approxSize(data);
             if (size > threshold) {
                 oversized++;
-                const aggregate = derive(data);
+                const aggregate = derive(data as unknown);
                 const aggSize = approxSize(aggregate);
                 let wrote = false; let skippedWriteReason: string | undefined;
                 if (opts.write) {
                     const targetCollection = name === 'semanticMapResults' ? 'semanticMapResultsAgg' : (name === 'neuralCrawlerResults' ? 'neuralCrawlerResultsAgg' : `${name}Agg`);
-                    const res = await ensureAggregateDoc(db, targetCollection, data, aggregate);
+                    const res = await ensureAggregateDoc(db, targetCollection, data as Record<string, unknown>, aggregate);
                     wrote = res.wrote; skippedWriteReason = res.reason;
                 }
+                const rec = (data || {}) as Record<string, unknown>;
                 const entry: ScanResultEntry = {
                     collection: name,
                     id: doc.id,
                     size,
                     proposedAggregateSize: aggSize,
                     reductionPct: aggSize ? +(((1 - (aggSize / size)) * 100).toFixed(2)) : null,
-                    userId: (data as any).userId || null,
-                    url: (data as any).url || null,
+                    userId: typeof rec.userId === 'string' ? rec.userId : null,
+                    url: typeof rec.url === 'string' ? rec.url : null,
                     aggregatePreview: aggregate,
                     wrote,
                     skippedWriteReason
@@ -177,16 +193,17 @@ async function main(): Promise<void> {
     const outputFile = process.env.OUTPUT_FILE;
     const results: ScanResultEntry[] = [];
     console.log(`[scan] starting neuroseo large document scan write=${write} threshold=${threshold}`);
-    const semantic = await scanCollection(db, 'semanticMapResults', threshold, deriveSemanticMapAggregate, { write, output: results });
-    const crawler = await scanCollection(db, 'neuralCrawlerResults', threshold, deriveNeuralCrawlerAggregate, { write, output: results });
+    const semantic = await scanCollection(db, 'semanticMapResults', threshold, (d) => deriveSemanticMapAggregate(d as SemanticMapFullDoc), { write, output: results });
+    const crawler = await scanCollection(db, 'neuralCrawlerResults', threshold, (d) => deriveNeuralCrawlerAggregate(d as NeuralCrawlerFullDoc), { write, output: results });
     console.log('[scan] summary', { threshold, semantic, crawler, write });
     if (outputFile) {
         try {
             const fs = await import('fs');
             fs.writeFileSync(outputFile, JSON.stringify({ generatedAt: new Date().toISOString(), threshold, write, semantic, crawler, entries: results }, null, 2));
             console.log(`[scan] wrote summary JSON -> ${outputFile}`);
-        } catch (e) {
-            console.error('[scan] failed to write OUTPUT_FILE', (e as any)?.message);
+        } catch (e: unknown) {
+            const msg = e && typeof e === 'object' && 'message' in e ? String((e as { message?: unknown }).message) : String(e);
+            console.error('[scan] failed to write OUTPUT_FILE', msg);
         }
     }
     if (!write) console.log('[scan] DRY RUN – no aggregate documents written. Enable WRITE=1 to persist.');

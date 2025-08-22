@@ -8,15 +8,15 @@
  * Indexes Used: All collections with userId+status+createdAt patterns
  */
 
+import { db } from "@/lib/firebase";
 import {
   collection,
-  query,
-  where,
-  orderBy,
+  getDocs,
   limit,
-  getDocs
+  orderBy,
+  query,
+  where
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 
 /**
  * NOTE: This file underwent mechanical lint remediation:
@@ -91,9 +91,10 @@ export class EnhancedDashboardService {
         )
       };
     } catch (error) {
-      // preserve original behavior: log and return null on error
-      // eslint-disable-next-line no-console
-      console.error("Error fetching user insights:", error);
+      // preserve original behavior: log and return null on error (guard console for SSR)
+      if (typeof console !== "undefined" && console.error) {
+        console.error("Error fetching user insights:", error);
+      }
       return null;
     }
   }
@@ -159,8 +160,9 @@ export class EnhancedDashboardService {
         }))
       };
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching team metrics:", error);
+      if (typeof console !== "undefined" && console.error) {
+        console.error("Error fetching team metrics:", error);
+      }
       return { memberOf: 0, teamProjects: 0, teamAnalyses: 0, teams: [] };
     }
   }
@@ -216,8 +218,9 @@ export class EnhancedDashboardService {
         monthlyTrend: this.calculateCompetitorTrend(analyses)
       };
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching competitor insights:", error);
+      if (typeof console !== "undefined" && console.error) {
+        console.error("Error fetching competitor insights:", error);
+      }
       return { totalCompetitors: 0, averageGap: 0, topOpportunity: null };
     }
   }
@@ -262,8 +265,9 @@ export class EnhancedDashboardService {
         recentTrend: this.calculateContentTrend(analyses)
       };
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching content metrics:", error);
+      if (typeof console !== "undefined" && console.error) {
+        console.error("Error fetching content metrics:", error);
+      }
       return { totalContent: 0, averageScore: 0, topPerformer: null };
     }
   }

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 /**
  * Consolidated Mobile Navigation Test Suite
@@ -57,7 +57,7 @@ test.describe("Mobile Navigation - Comprehensive Suite", () => {
             await hamburger.click({ force: true, timeout: 10000 });
             await page.waitForTimeout(800); // Animation time
             console.log(`✅ ${viewport.name}: Hamburger clicked successfully`);
-          } catch (clickError) {
+          } catch {
             console.log(`⚠️ ${viewport.name}: Click failed, trying alternative approach`);
             // Alternative: use keyboard activation
             await hamburger.focus();
@@ -260,7 +260,6 @@ test.describe("Mobile Navigation - Comprehensive Suite", () => {
 
             // Test Tab navigation within drawer
             await page.keyboard.press("Tab");
-            const focusedElement = page.locator(":focus");
             const isFocusInDrawer = (await drawer.locator(":focus").count()) > 0;
 
             if (isFocusInDrawer) {

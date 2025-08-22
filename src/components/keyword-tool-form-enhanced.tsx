@@ -2,12 +2,17 @@
 "use client";
 
 import type { SuggestKeywordsInput } from "@/ai/flows/keyword-suggestions";
-import { zodResolver } from "@hookform/resolvers/zod";
-import React from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { EnhancedButton } from "@/components/ui/enhanced-button";
+import { useHydration } from "@/components/HydrationContext";
 import { Checkbox } from "@/components/ui/checkbox";
+import { EnhancedButton } from "@/components/ui/enhanced-button";
+import {
+  EnhancedCard,
+  EnhancedCardContent,
+  EnhancedCardDescription,
+  EnhancedCardFooter,
+  EnhancedCardHeader,
+  EnhancedCardTitle,
+} from "@/components/ui/enhanced-card";
 import {
   Form,
   FormControl,
@@ -18,17 +23,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  EnhancedCard,
-  EnhancedCardContent,
-  EnhancedCardDescription,
-  EnhancedCardFooter,
-  EnhancedCardHeader,
-  EnhancedCardTitle,
-} from "@/components/ui/enhanced-card";
-import { Loader2, Search, Sparkles } from "lucide-react";
-import { useHydration } from "@/components/HydrationContext";
 import { useIsMobile } from "@/lib/mobile-responsive-utils";
+import { asVoidHandler } from '@/lib/react/handlers';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Search, Sparkles } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const formSchema = z.object({
   topic: z
@@ -84,7 +84,7 @@ export default function KeywordToolForm({
 
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(handleFormSubmit)}
+          onSubmit={asVoidHandler(form.handleSubmit(handleFormSubmit))}
           className="space-y-6"
           aria-busy={isLoading}
           aria-disabled={isLoading}

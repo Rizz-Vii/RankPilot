@@ -9,14 +9,17 @@ export function ListenerBadge() {
   useEffect(() => {
     if (process.env.NODE_ENV !== 'development') return;
     let mounted = true;
-    async function fetchSummary() {
-      try {
-        const res = await fetch('/api/diagnostics/listeners');
-        if (!res.ok) return;
-        const json = await res.json();
-        if (mounted) setSummary(json.listeners);
-      } catch { /* swallow */ }
-    }
+    const fetchSummary = () => {
+      // Internal async IIFE; fire & forget (network read only, state set guarded by mounted flag)
+      void (async () => {
+        try {
+          const res = await fetch('/api/diagnostics/listeners');
+          if (!res.ok) return;
+          const json = await res.json();
+          if (mounted) setSummary(json.listeners);
+        } catch { /* swallow */ }
+      })();
+    };
     fetchSummary();
     const id = setInterval(fetchSummary, 4000);
     return () => { mounted = false; clearInterval(id); };

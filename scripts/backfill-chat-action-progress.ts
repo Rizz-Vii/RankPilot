@@ -11,8 +11,8 @@
  * 4. Stores actionStats { totalCompleted, totalPending, completionRate, lastBackfill }.
  */
 import 'dotenv/config';
-import { adminDb } from '../src/lib/firebase-admin';
 import { maybeSummarizeSession } from '../src/lib/chat/sessionSummarizer';
+import { adminDb } from '../src/lib/firebase-admin';
 
 async function run() {
     const argv = process.argv.slice(2);
@@ -26,11 +26,12 @@ async function run() {
             examined++;
             const snap = await sRef.get();
             if (!snap.exists) continue;
-            const data = snap.data() as any;
-            const pending: string[] = Array.isArray(data?.pendingActions) ? data.pendingActions : [];
-            const progress = data?.actionProgress || {};
+            const data = snap.data() as Record<string, unknown>;
+            const pendingRaw = data?.pendingActions;
+            const pending: string[] = Array.isArray(pendingRaw) ? pendingRaw.map(String) : [];
+            const progress = (data?.actionProgress && typeof data.actionProgress === 'object') ? data.actionProgress as Record<string, unknown> : {};
             if (!pending.length || !progress || typeof progress !== 'object') continue;
-            const completedSet = new Set(Object.entries(progress).filter(([, v]) => !!v).map(([k]) => k.toLowerCase().trim()));
+            const completedSet = new Set(Object.entries(progress).filter(([, v]) => Boolean(v)).map(([k]) => String(k).toLowerCase().trim()));
             if (!completedSet.size) continue;
             const filtered = pending.filter(p => !completedSet.has(String(p).toLowerCase().trim()));
             let changed = filtered.length !== pending.length;
@@ -50,7 +51,8 @@ async function run() {
                 }, { merge: true });
                 modified++;
             }
-            if (doFull && data.messageCount >= 6) { // respect summarizer interval (MESSAGE_INTERVAL)
+            const msgCount = typeof data.messageCount === 'number' ? data.messageCount : 0;
+            if (doFull && msgCount >= 6) { // respect summarizer interval (MESSAGE_INTERVAL)
                 try {
                     await maybeSummarizeSession({ uid: userDoc.id, sessionId: sRef.id });
                     summarized++;

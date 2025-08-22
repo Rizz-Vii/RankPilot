@@ -1,7 +1,7 @@
 import { expect } from 'chai';
-import { describe, it } from 'mocha';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { describe, it } from 'mocha';
 import { runKpiDailySnapshot } from '../scheduled/kpi-daily-snapshot';
 
 // Ensures that for a 7-day window, MA7 fields on kpiDaily docs are either numeric or null (never undefined)
@@ -30,11 +30,12 @@ describe('kpiDailySnapshot MA7 contract', () => {
             'ma7RateLimitRejectionRate'
         ];
         snap.docs.forEach(doc => {
-            const data: any = doc.data();
+            const data = doc.data() as Record<string, unknown>;
             required.forEach(f => {
                 expect(f in data, `${f} missing on ${doc.id}`).to.be.true;
-                if (data[f] !== null) {
-                    expect(typeof data[f]).to.equal('number');
+                const v = data[f];
+                if (v !== null) {
+                    expect(typeof v).to.equal('number');
                 }
             });
         });

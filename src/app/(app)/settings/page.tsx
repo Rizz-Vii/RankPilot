@@ -3,31 +3,31 @@
 import { AccessibilityAnnouncer } from '@/components/accessibility/AccessibilityAnnouncer';
 import { LanguageSelector } from '@/components/i18n/LanguageSelector';
 import { ThemeConfiguration } from '@/components/theme/ThemeConfiguration';
+import { ToolPageHeader } from '@/components/tool-page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthContext';
 import { useAccessibility } from '@/lib/accessibility/accessibility-system';
+import { db } from '@/lib/firebase';
 import { useI18n } from '@/lib/i18n/internationalization-system';
-import { useTheme, type ThemePreferences, type ThemeMode } from '@/lib/themes/theme-system';
-import { Accessibility, Bell, CreditCard, ExternalLink, Globe, Lock, Palette, Shield, User } from 'lucide-react';
+import { useTheme, type ThemeMode, type ThemePreferences } from '@/lib/themes/theme-system';
+import { toJsDate } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { Accessibility, Bell, CreditCard, ExternalLink, Globe, Lock, Palette, Shield, User } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { toJsDate } from '@/lib/utils';
-import { ToolPageHeader } from '@/components/tool-page-header';
-import { Skeleton } from '@/components/ui/skeleton';
 
 import AccountSettingsForm from '@/components/settings/account-settings-form';
 import NotificationSettingsForm from '@/components/settings/notification-settings-form';
 import PrivacySettingsCard from '@/components/settings/privacy-settings-card';
 import SecuritySettingsForm from '@/components/settings/security-settings-form';
-import { submitOrQueue, queuePreferenceUpdate } from '@/lib/offline-queue';
+import { queuePreferenceUpdate, submitOrQueue } from '@/lib/offline-queue';
 
 export default function SettingsPage() {
     const { user, profile, loading: authLoading } = useAuth();
@@ -85,8 +85,9 @@ export default function SettingsPage() {
         // Persist accessibility/theme preferences & voice commands (debounced) via API with offline queue fallback
         useEffect(() => {
             if (!user || !hydrated) return;
-            const timeout = setTimeout(async () => {
-                try {
+            const timeout = setTimeout(() => {
+                void (async () => {
+                    try {
                     const token = await user.getIdToken?.();
                     const prefPayload = {
                         preferences: {
@@ -117,10 +118,11 @@ export default function SettingsPage() {
                         return queuePreferenceUpdate({ ...prefPayload, authToken: token });
                     };
 
-                    await submitOrQueue({ submit, fallbackQueue });
-                } catch (e) {
-                    console.warn('Failed to persist accessibility/theme preferences', e);
-                }
+                        await submitOrQueue({ submit, fallbackQueue });
+                    } catch (e) {
+                        console.warn('Failed to persist accessibility/theme preferences', e);
+                    }
+                })();
             }, 500); // debounce 500ms
             return () => clearTimeout(timeout);
     }, [preferences.highContrast, preferences.reducedMotion, preferences.fontSize, preferences.colorBlindnessSupport, theme, isVoiceEnabled, user, hydrated]);
@@ -128,8 +130,9 @@ export default function SettingsPage() {
             // Persist language preference via API with offline queue fallback
             useEffect(() => {
                 if (!user || !hydrated) return;
-                const timeout = setTimeout(async () => {
-                    try {
+                const timeout = setTimeout(() => {
+                    void (async () => {
+                        try {
                         const token = await user.getIdToken?.();
                         const prefPayload = { preferences: { language } };
 
@@ -151,10 +154,11 @@ export default function SettingsPage() {
                             return queuePreferenceUpdate({ ...prefPayload, authToken: token });
                         };
 
-                        await submitOrQueue({ submit, fallbackQueue });
-                    } catch (e) {
-                        console.warn('Failed to persist language preference', e);
-                    }
+                            await submitOrQueue({ submit, fallbackQueue });
+                        } catch (e) {
+                            console.warn('Failed to persist language preference', e);
+                        }
+                    })();
                 }, 400);
                 return () => clearTimeout(timeout);
             }, [language, user, hydrated]);
@@ -174,7 +178,7 @@ export default function SettingsPage() {
             <div role="status" aria-live="polite" className="sr-only">
                 {loadingState ? tr('status.loading', 'Loading settings…') : tr('status.ready', 'Settings ready')}
             </div>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6" aria-label={tr('settings.tabs.label', 'Account settings sections')}>
+            <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); }} className="space-y-6" aria-label={tr('settings.tabs.label', 'Account settings sections')}>
                 <TabsList className="grid w-full grid-cols-8 lg:grid-cols-8">
                     <TabsTrigger value="account" className="flex items-center gap-2" aria-label={tr('settings.tabs.account', 'Account')}>
                         <User className="h-4 w-4" />
@@ -235,14 +239,14 @@ export default function SettingsPage() {
                                             <Label>{tr('settings.accessibility.highContrast', 'High Contrast Mode')}</Label>
                                             <p className="text-sm text-muted-foreground">{tr('settings.accessibility.highContrastDesc', 'Enhanced visibility for users with visual impairments')}</p>
                                         </div>
-                                        <Switch checked={preferences.highContrast} onCheckedChange={(c) => setPreferences({ highContrast: c })} />
+                                        <Switch checked={preferences.highContrast} onCheckedChange={(c) => { setPreferences({ highContrast: c }); }} />
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <Label>{tr('settings.accessibility.reducedMotion', 'Reduced Motion')}</Label>
                                             <p className="text-sm text-muted-foreground">{tr('settings.accessibility.reducedMotionDesc', 'Minimize animations for motion-sensitive users')}</p>
                                         </div>
-                                        <Switch checked={preferences.reducedMotion} onCheckedChange={(c) => setPreferences({ reducedMotion: c })} />
+                                        <Switch checked={preferences.reducedMotion} onCheckedChange={(c) => { setPreferences({ reducedMotion: c }); }} />
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <div>
@@ -250,7 +254,7 @@ export default function SettingsPage() {
                                             <p className="text-sm text-muted-foreground">{tr('settings.accessibility.voiceCommandsDesc', 'Use voice commands to navigate the interface')}</p>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <Switch checked={isVoiceEnabled} onCheckedChange={setIsVoiceEnabled} disabled={!isVoiceSupported} />
+                                            <Switch checked={isVoiceEnabled} onCheckedChange={(c) => { setIsVoiceEnabled(c); }} disabled={!isVoiceSupported} />
                                             {!isVoiceSupported && <Badge variant="secondary">Unsupported</Badge>}
                                         </div>
                                     </div>
@@ -371,15 +375,17 @@ export default function SettingsPage() {
                                                     variant="outline"
                                                     size="sm"
                                                     className="self-end h-7 text-xs"
-                                                    onClick={async () => {
-                                                        const confirmMsg = tr('settings.privacy.cancelDeletionConfirm','Cancel scheduled deletion and keep your account?');
-                                                        if (!window.confirm(confirmMsg)) return;
-                                                        try {
-                                                            const userRef = doc(db, 'users', user.uid);
-                                                            await updateDoc(userRef, { deletionRequestedAt: null, status: 'active', updatedAt: new Date() });
-                                                        } catch (e) {
-                                                            console.warn('Failed to cancel deletion', e);
-                                                        }
+                                            onClick={() => {
+                                                void (async () => {
+                                                    const confirmMsg = tr('settings.privacy.cancelDeletionConfirm', 'Cancel scheduled deletion and keep your account?');
+                                                    if (!window.confirm(confirmMsg)) return;
+                                                    try {
+                                                        const userRef = doc(db, 'users', user.uid);
+                                                        await updateDoc(userRef, { deletionRequestedAt: null, status: 'active', updatedAt: new Date() });
+                                                    } catch (e) {
+                                                        console.warn('Failed to cancel deletion', e);
+                                                    }
+                                                })();
                                                     }}
                                                 >{tr('settings.privacy.cancelDeletion','Cancel Deletion')}</Button>
                                             </div>

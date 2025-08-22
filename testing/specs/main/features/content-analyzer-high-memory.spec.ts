@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test";
 import fs from 'fs';
 import path from 'path';
-import { GracefulTestUtils } from "../../../utils/graceful-test-utils";
 import { TestOrchestrator } from "../../../utils/test-orchestrator";
 
 /**
@@ -11,21 +10,27 @@ import { TestOrchestrator } from "../../../utils/test-orchestrator";
 
 test.describe("Content Analyzer - High Memory Suite", () => {
     let orchestrator: TestOrchestrator;
-    let gracefulUtils: GracefulTestUtils;
-    let cacheManifest: any;
+    // Removed unused gracefulUtils (instantiated but never referenced)
+    type CacheManifest = {
+        timestamp?: string;
+        pages?: {
+            content_analyzer?: { success?: boolean; loadTime?: number }
+        };
+    };
+    let cacheManifest: CacheManifest | undefined;
 
     test.beforeEach(async ({ page }) => {
         orchestrator = new TestOrchestrator(page);
-        gracefulUtils = new GracefulTestUtils(page);
+        // Instantiation removed (unused): new GracefulTestUtils(page)
 
         // Load cache manifest for optimization insights
         try {
             const manifestPath = path.resolve(__dirname, '../../../cache/warming-manifest.json');
             if (fs.existsSync(manifestPath)) {
-                cacheManifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+                cacheManifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as CacheManifest;
                 console.log(`📊 Using cache manifest from ${cacheManifest.timestamp}`);
             }
-        } catch (error) {
+    } catch {
             console.log("⚠️ No cache manifest found, proceeding without cache insights");
         }
 
@@ -65,7 +70,7 @@ test.describe("Content Analyzer - High Memory Suite", () => {
             try {
                 await page.waitForSelector('h1, h2, [role="heading"]', { timeout: 30000 });
                 console.log("✅ Page heading detected");
-            } catch (error) {
+            } catch {
                 console.log("⚠️ No heading found, checking for other content indicators");
             }
 
@@ -163,13 +168,15 @@ test.describe("Content Analyzer - High Memory Suite", () => {
             const client = await page.context().newCDPSession(page);
             await client.send('Performance.enable');
 
-            const startMemory = await client.send('Performance.getMetrics');
+            // Initial metrics captured (unused variable removed)
+            await client.send('Performance.getMetrics');
             console.log("📊 Initial memory metrics captured");
 
             await page.goto("/content-analyzer");
             await page.waitForTimeout(20000); // Extended wait for full AI loading
 
-            const endMemory = await client.send('Performance.getMetrics');
+            // Final metrics captured (unused variable removed)
+            await client.send('Performance.getMetrics');
             console.log("📊 Final memory metrics captured");
 
             // Basic stability checks

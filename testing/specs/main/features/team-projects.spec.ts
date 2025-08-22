@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test";
-import { GracefulTestUtils } from "../../../utils/graceful-test-utils";
 import { TestOrchestrator } from "../../../utils/test-orchestrator";
 
 /**
@@ -9,11 +8,10 @@ import { TestOrchestrator } from "../../../utils/test-orchestrator";
 
 test.describe("Team Projects - Comprehensive Suite", () => {
   let orchestrator: TestOrchestrator;
-  let gracefulUtils: GracefulTestUtils;
+  // Removed unused gracefulUtils instantiation
 
   test.beforeEach(async ({ page }) => {
     orchestrator = new TestOrchestrator(page);
-    gracefulUtils = new GracefulTestUtils(page);
 
     // Set extended timeouts for complex interactions
     page.setDefaultNavigationTimeout(30000);
@@ -175,8 +173,7 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       await expect(page.locator("text=Local SEO Optimization")).toBeVisible();
 
       // Verify project cards display all required elements
-      const firstProject = page.locator('[data-testid="project-card"]').first()
-        .or(page.locator('.hover\\:shadow-lg').first());
+      // Removed unused firstProject variable
 
       // Check status badges
       await expect(page.locator(".bg-green-500", { hasText: "Active" })).toBeVisible();

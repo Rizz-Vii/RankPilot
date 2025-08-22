@@ -85,16 +85,27 @@ function main() {
         if (existingIds.has(spec.taskId)) continue;
         // Basic file presence filter: skip if none of the target dir/files exist yet (prevents noise)
         if (!spec.files.some(f => fileExists(f) || f.endsWith('/'))) continue;
-        queue.push({
+        const toPush = {
             taskId: spec.taskId,
             summary: spec.summary,
             files: spec.files,
-            status: 'pending',
+            status: 'pending' as const,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            // @ts-ignore
-            message: spec.message
-        } as any);
+            ...(spec.message ? { notes: spec.message } : {})
+        };
+        // queue utils expects DelegationQueueTask; notes is allowed and matches shape
+        type DelegationQueueTask = {
+            taskId: string;
+            summary: string;
+            files: string[];
+            status: 'pending' | 'running' | 'done' | 'failed';
+            createdAt: string;
+            updatedAt: string;
+            aideModel?: string;
+            notes?: string;
+        };
+        queue.push(toPush as unknown as DelegationQueueTask);
         added++;
     }
     if (added) writeQueue(queue);

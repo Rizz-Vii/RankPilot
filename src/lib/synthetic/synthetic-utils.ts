@@ -20,7 +20,11 @@ export function createDeterministicRng(seedParts: Array<string | number | undefi
     const seed = seedParts.filter(Boolean).join('::');
     // Lazy async init; we return a closure that queues until seedrandom loaded
     let realRng: (() => number) | null = null;
-    getSeedRandom().then(factory => { realRng = factory(seed || 'synthetic-default'); });
+    // Fire-and-forget async initialization wrapped in IIFE; explicit void marks intentional unawaited start
+    void (async () => {
+        const factory = await getSeedRandom();
+        realRng = factory(seed || 'synthetic-default');
+    })();
     return function rand() {
         if (realRng) return realRng();
         // Fallback deterministic hash while loading

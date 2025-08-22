@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -12,20 +11,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { severityButtonClasses, severityClasses } from '@/lib/ui/status-colors';
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  MessageSquare,
-  Clock,
   AlertTriangle,
-  CheckCircle,
-  Star,
+  Clock,
+  MessageSquare,
   Send,
+  Star,
   X,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { motion, AnimatePresence } from "framer-motion";
-import { severityButtonClasses, severityClasses } from '@/lib/ui/status-colors';
+import { useEffect, useState, type ChangeEvent } from "react";
 
 // Map severity to semantic token-based classes (success|warning|destructive)
 type SeverityLevel = 'critical' | 'high' | 'medium' | 'low';
@@ -126,7 +124,7 @@ export function PerformanceFeedback({
   setFeedback("");
   setCategory('performance');
   setSeverity('medium');
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Submission failed",
@@ -273,14 +271,14 @@ export function PerformanceFeedback({
               <Textarea
                 placeholder="Tell us about your experience..."
                 value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setFeedback(e.target.value)}
                 className="mt-1 min-h-[80px]"
               />
             </div>
 
             <div className="flex gap-2">
               <Button
-                onClick={handleSubmit}
+                onClick={() => { void handleSubmit(); }}
                 disabled={isSubmitting || rating === 0}
                 className="flex-1"
               >
@@ -432,6 +430,24 @@ export function FeedbackSummary() {
                 <span className="text-sm font-medium">{count}</span>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Feedback Categories</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {Object.entries(categoryBreakdown).map(([cat, count]) => (
+              <div key={cat} className="flex items-center justify-between">
+                <span className="text-xs font-medium capitalize">{cat}</span>
+                <span className="text-sm font-medium">{count}</span>
+              </div>
+            ))}
+            {Object.keys(categoryBreakdown).length === 0 && (
+              <div className="text-xs text-muted-foreground">No feedback yet</div>
+            )}
           </div>
         </CardContent>
       </Card>

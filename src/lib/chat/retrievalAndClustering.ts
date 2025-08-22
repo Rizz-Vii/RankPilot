@@ -1,5 +1,5 @@
+import { chatComplete, openAIEmbeddingOrNull } from '@/lib/ai/aiClient';
 import { adminDb } from '@/lib/firebase-admin';
-import { openAIEmbeddingOrNull, chatComplete } from '@/lib/ai/aiClient';
 
 export interface RetrievedContextItem { question: string; response: string; similarity: number; }
 
@@ -13,7 +13,12 @@ export async function buildQueryEmbedding(_apiKey: string, text: string): Promis
     return openAIEmbeddingOrNull(text);
 }
 
-interface ChatMessageDoc { question?: string; response?: string; embedding?: { question?: number[] }; timestamp?: unknown; }
+interface ChatMessageDoc {
+    question?: string;
+    response?: string;
+    embedding?: { question?: number[] };
+    timestamp?: unknown;
+}
 export async function retrieveSimilarMessages(params: { uid: string; sessionId: string; queryEmbedding: number[]; limit?: number; topK?: number; }): Promise<RetrievedContextItem[]> {
     const { uid, sessionId, queryEmbedding, limit = 80, topK = 3 } = params;
     try {
@@ -45,12 +50,13 @@ function kMeans(vectors: number[][], k: number, iters = 12): { assignments: numb
 }
 
 export async function maybeClusterKeywords(params: { uid: string; sessionId: string; apiKey: string; clusteringInterval?: number; }): Promise<boolean> {
-    const { uid, sessionId, apiKey, clusteringInterval = 12 } = params;
+    const { uid, sessionId, clusteringInterval = 12 } = params; // apiKey unused currently
     if (process.env.RANKPILOT_ENABLE_CLUSTERING !== '1') return false;
     try {
         const sessionRef = adminDb.collection('chatLogs').doc(uid).collection('sessions').doc(sessionId);
         const sessSnap = await sessionRef.get();
-        const data = (sessSnap.data() as any) || {};
+        const rawData = sessSnap.data() as Partial<{ messageCount: unknown }> | undefined;
+        const data = rawData || {};
         const msgCount = typeof data.messageCount === 'number' ? data.messageCount : 0;
         if (msgCount < clusteringInterval || msgCount % clusteringInterval !== 0) return false;
         const msgsSnap = await sessionRef.collection('messages').orderBy('timestamp', 'desc').limit(120).get();

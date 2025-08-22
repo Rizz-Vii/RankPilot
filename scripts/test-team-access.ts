@@ -1,7 +1,7 @@
 import { computeEffectiveTier } from '../src/lib/access-control';
 import { resolveEffectiveTier } from '../src/lib/team/team-access';
 
-function assert(cond: any, msg: string) { if (!cond) { console.error('Assertion failed:', msg); process.exitCode = 1; } }
+function assert(cond: unknown, msg: string) { if (!cond) { console.error('Assertion failed:', msg); process.exitCode = 1; } }
 
 function testEffectiveTier() {
     assert(computeEffectiveTier('free', 'starter') === 'starter', 'team higher overrides');

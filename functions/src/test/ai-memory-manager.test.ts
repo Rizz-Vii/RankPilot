@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { describe, it, beforeEach, afterEach } from "mocha";
+import { afterEach, beforeEach, describe, it } from "mocha";
 import sinon from "sinon";
 
 type OpenAIResult = { ok: boolean; content?: string; usage?: { in: number; out: number }; retriable?: boolean; status?: number; error?: Error };
@@ -61,8 +61,8 @@ describe("AI Memory Manager", () => {
         try {
             await aiModule.getAI("Fail fully", "gpt-4o");
             expect.fail("should have thrown");
-        } catch (e: any) {
-            expect(e).to.be.instanceOf(Error);
+        } catch (e: unknown) {
+            expect(e instanceof Error).to.be.true;
         }
         expect(stub.callCount).to.be.greaterThan(1);
     });

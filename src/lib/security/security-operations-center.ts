@@ -1,7 +1,7 @@
 /**
  * Security Operations Center (SOC)
  * DevNext Part III Step 3: Advanced Security Hardening
- * 
+ *
  * Implements enterprise-grade security monitoring and incident response:
  * - Real-time threat detection and analysis
  * - Automated incident response workflows
@@ -284,7 +284,8 @@ export class SecurityOperationsCenter extends EventEmitter {
     constructor() {
         super();
         this.initializePlaybooks();
-        this.loadThreatIntelligence();
+        // Fire-and-forget threat intelligence load with explicit handling to satisfy lint rules
+        void this.loadThreatIntelligence().catch(err => console.error('[SecurityOperationsCenter] loadThreatIntelligence error', err));
         this.startMonitoring();
         console.log('[SecurityOperationsCenter] SOC initialized and monitoring started');
     }
@@ -327,7 +328,8 @@ export class SecurityOperationsCenter extends EventEmitter {
 
             // Start processing if not already running
             if (!this.isProcessingAlerts) {
-                this.processAlertQueue();
+                // Fire-and-forget alert queue processing with error handling
+                void this.processAlertQueue().catch(err => console.error('[SecurityOperationsCenter] processAlertQueue error', err));
             }
 
             // Emit alert event
@@ -1044,17 +1046,18 @@ export class SecurityOperationsCenter extends EventEmitter {
         this.monitoringInterval = setInterval(() => {
             try {
                 // Clean up old alerts and incidents
-                this.cleanupOldData();
+                this.cleanupOldData(); // synchronous
 
                 // Update threat intelligence
-                this.updateThreatIntelligence();
+                this.updateThreatIntelligence(); // synchronous
 
                 // Emit SOC metrics
                 this.emit('soc-metrics', this.getSOCMetrics());
 
                 // Process any pending alerts
                 if (this.alertProcessingQueue.length > 0 && !this.isProcessingAlerts) {
-                    this.processAlertQueue();
+                    // Explicitly detach alert queue processing
+                    void this.processAlertQueue().catch(err => console.error('[SecurityOperationsCenter] processAlertQueue error', err));
                 }
 
             } catch (error) {

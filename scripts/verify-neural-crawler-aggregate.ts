@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 /* Verification: Sample legacy vs aggregate parity (counts). */
-import { initializeApp, getApps } from 'firebase-admin/app';
+import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 function sample<T>(arr: T[], n: number): T[] { return arr.sort(() => Math.random() - 0.5).slice(0, n); }
@@ -14,24 +14,35 @@ async function main() {
     const picks = sample(legacySnap.docs, Math.min(limit, legacySnap.size));
     let mismatches = 0;
     for (const d of picks) {
-        const data: any = d.data();
-        const hist = data.historyId;
-        let aggQuery = db.collection('neuralCrawlerResultsAgg').where('historyId', '==', hist || null).limit(1);
-        if (!hist) aggQuery = db.collection('neuralCrawlerResultsAgg').where('userId', '==', data.userId).where('url', '==', data.url).limit(1);
+        const dataUnknown = d.data() as unknown;
+        const data = (dataUnknown && typeof dataUnknown === 'object') ? dataUnknown as Record<string, unknown> : {};
+        const hist = typeof data.historyId === 'string' ? data.historyId : null;
+        let aggQuery = db.collection('neuralCrawlerResultsAgg').where('historyId', '==', hist).limit(1);
+        if (!hist) {
+            const userId = typeof data.userId === 'string' ? data.userId : '';
+            const url = typeof data.url === 'string' ? data.url : '';
+            aggQuery = db.collection('neuralCrawlerResultsAgg').where('userId', '==', userId).where('url', '==', url).limit(1);
+        }
         const aggSnap = await aggQuery.get();
         if (aggSnap.empty) { console.warn('Missing aggregate for', d.id); mismatches++; continue; }
-        const agg = aggSnap.docs[0].data();
+        const aggUnknown = aggSnap.docs[0].data() as unknown;
+        const agg = (aggUnknown && typeof aggUnknown === 'object') ? aggUnknown as Record<string, unknown> : {};
+        const images = Array.isArray((data as Record<string, unknown>).images) ? (data as Record<string, unknown>).images as unknown[] : [];
+        const links = Array.isArray((data as Record<string, unknown>).links) ? (data as Record<string, unknown>).links as unknown[] : [];
+        const issues = Array.isArray((data as Record<string, unknown>).issues) ? (data as Record<string, unknown>).issues as unknown[] : [];
+        const entities = Array.isArray((data as Record<string, unknown>).entities) ? (data as Record<string, unknown>).entities as unknown[] : [];
         const expected = {
-            wordCount: data.wordCount || 0,
-            readingTime: data.readingTime || 0,
-            imagesCount: (data.images || []).length,
-            linksInternal: (data.links || []).filter((l: any) => l.type === 'internal').length,
-            linksExternal: (data.links || []).filter((l: any) => l.type === 'external').length,
-            issuesCount: (data.issues || []).length,
-            entitiesCount: (data.entities || []).length
+            wordCount: typeof data.wordCount === 'number' ? data.wordCount : 0,
+            readingTime: typeof data.readingTime === 'number' ? data.readingTime : 0,
+            imagesCount: images.length,
+            linksInternal: links.filter((l: unknown) => (l && typeof l === 'object' && (l as Record<string, unknown>).type === 'internal')).length,
+            linksExternal: links.filter((l: unknown) => (l && typeof l === 'object' && (l as Record<string, unknown>).type === 'external')).length,
+            issuesCount: issues.length,
+            entitiesCount: entities.length
         };
         for (const k of Object.keys(expected) as (keyof typeof expected)[]) {
-            if ((agg as any)[k] !== expected[k]) { console.error('Mismatch', k, 'legacy=', expected[k], 'agg=', (agg as any)[k]); mismatches++; break; }
+            const aggVal = (agg as Record<string, unknown>)[k as string];
+            if (aggVal !== expected[k]) { console.error('Mismatch', k, 'legacy=', expected[k], 'agg=', aggVal); mismatches++; break; }
         }
     }
     if (mismatches) {

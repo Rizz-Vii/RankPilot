@@ -6,16 +6,16 @@
 
 "use client";
 
-import "./integration-example.css";
-import React, { useEffect, useState } from "react";
-import { useProgressiveOnboarding } from "./progressive-onboarding";
-import {
-  useAnalysisMicroInteractions,
-  triggerMicroInteraction,
-} from "./micro-interactions";
+import React, { useEffect, useRef, useState } from "react";
 import { useEmotionalUXMapping } from "./emotional-ux-mapping";
 import { useGamification } from "./gamification-system";
+import "./integration-example.css";
+import {
+  triggerMicroInteraction,
+  useAnalysisMicroInteractions,
+} from "./micro-interactions";
 import { useMobileRetention } from "./mobile-retention-optimizer";
+import { useProgressiveOnboarding } from "./progressive-onboarding";
 
 interface UXEnhancedComponentProps {
   userId: string;
@@ -48,22 +48,24 @@ export const UXEnhancedComponent: React.FC<UXEnhancedComponentProps> = ({
     "curiosity" | "confidence"
   >("curiosity");
 
+  // Idempotent mount-semantics effect: runs once even if dependencies change identity.
+  const initRef = useRef(false);
   useEffect(() => {
-    // Apply mobile optimizations on component mount
+    if (initRef.current) return; // guard to ensure single execution semantics
+    initRef.current = true;
+
     mobileOptimization.applyMobileOptimizations();
 
-    // Check if onboarding should be shown
     if (onboarding.nextStep && !onboarding.isComplete) {
       setIsOnboardingVisible(true);
     }
 
-    // Track initial emotional state
     emotionalMapping.trackEmotion("curiosity", {
       feature,
       userTier,
       timestamp: new Date().toISOString(),
     });
-  }, []);
+  }, [mobileOptimization, onboarding, emotionalMapping, feature, userTier]);
 
   const handleActionComplete = (
     action: string,

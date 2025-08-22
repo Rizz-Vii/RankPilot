@@ -22,7 +22,8 @@ export function classifyBatch(tasks: Task[]): Task[] {
 }
 
 export function classify(text: string): string {
-  return classifyTask({ id: 'x', title: text, raw: text, domain: '', status: 'TODO' } as any);
+  const t: Task = { id: 'x', title: text, raw: text, domain: '', status: 'TODO' };
+  return classifyTask(t);
 }
 
 export default { classifyTask, classifyBatch, classify };

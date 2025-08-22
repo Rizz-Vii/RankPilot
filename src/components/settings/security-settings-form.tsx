@@ -1,9 +1,15 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -14,24 +20,18 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Loader2, Shield, Eye, EyeOff, AlertTriangle } from "lucide-react";
-import { useState } from "react";
-import {
-  updatePassword,
-  reauthenticateWithCredential,
-  EmailAuthProvider,
-} from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
 import type { User } from "firebase/auth";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
+} from "firebase/auth";
+import { AlertTriangle, Eye, EyeOff, Loader2, Shield } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const passwordSchema = z
   .object({
@@ -143,7 +143,11 @@ export default function SecuritySettingsForm({
         </CardHeader>
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(handlePasswordUpdate)}
+            onSubmit={(e) => {
+              e.preventDefault();
+              // invoke handler via react-hook-form submit pipeline; ignore returned promise explicitly
+              void form.handleSubmit(handlePasswordUpdate)(e);
+            }}
             className="space-y-6"
           >
             <CardContent className="space-y-4">

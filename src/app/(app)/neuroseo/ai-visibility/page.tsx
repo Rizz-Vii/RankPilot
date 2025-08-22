@@ -1,26 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardSurface } from '@/components/layout/DashboardSurface';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from "@/components/tool-page-header";
-import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
-import { useProvenance } from "@/hooks/useProvenance";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bot, Search, TrendingUp, AlertCircle, CheckCircle2, ExternalLink, Copy, Download } from "lucide-react";
-import { DashboardSurface } from '@/components/layout/DashboardSurface';
-import { SuiteAccentProvider } from '@/context/SuiteAccentContext';
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
+import { SuiteAccentProvider } from '@/context/SuiteAccentContext';
 import { useToast } from "@/hooks/use-toast";
-import { submitOrQueue, queueAnalysisRequest } from "@/lib/offline-queue";
+import { useProvenance } from "@/hooks/useProvenance";
+import { queueAnalysisRequest, submitOrQueue } from "@/lib/offline-queue";
+import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import { motion } from "framer-motion";
-import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { AlertCircle, Bot, CheckCircle2, Copy, Download, ExternalLink, Search, TrendingUp } from "lucide-react";
+import { useState } from "react";
 
 interface AIVisibilityResult {
   citation: {
@@ -54,7 +54,7 @@ export default function AIVisibilityEnginePage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { provenance, setProvenance } = useProvenance();
-  
+
   const [url, setUrl] = useState("");
   const [query, setQuery] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
@@ -121,7 +121,7 @@ export default function AIVisibilityEnginePage() {
   };
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+    void navigator.clipboard.writeText(text);
     toast({
       title: "Copied",
       description: "Content copied to clipboard",
@@ -130,14 +130,14 @@ export default function AIVisibilityEnginePage() {
 
   const exportResults = () => {
     if (!results) return;
-    
+
     const exportData = {
       url,
       query,
       results,
       exportedAt: new Date().toISOString()
     };
-    
+
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
     const url_export = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -161,7 +161,7 @@ export default function AIVisibilityEnginePage() {
   <SuiteAccentProvider value="seo">
   <DashboardSurface as="section" className="space-y-8 p-6">
       {/* Analysis Form */}
-      <motion.div 
+            <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
@@ -225,8 +225,8 @@ export default function AIVisibilityEnginePage() {
               </Select>
             </div>
 
-            <Button 
-              onClick={analyzeAIVisibility} 
+                  <Button
+                    onClick={() => void analyzeAIVisibility()}
               disabled={loading || !url || !query}
               className="w-full"
               size="lg"
@@ -265,7 +265,7 @@ export default function AIVisibilityEnginePage() {
         </motion.div>
       )}
   {results && (
-        <motion.div 
+              <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -317,7 +317,7 @@ export default function AIVisibilityEnginePage() {
                 <TabsTrigger value="platforms">Platforms</TabsTrigger>
                 <TabsTrigger value="recommendations">Optimize</TabsTrigger>
               </TabsList>
-              
+
               <Button variant="outline" onClick={exportResults} className="flex items-center gap-2">
                 <Download className="h-4 w-4" />
                 Export Report
@@ -365,21 +365,21 @@ export default function AIVisibilityEnginePage() {
                             </span>
                           </div>
                         </div>
-                        
+
                         <p className="text-sm bg-muted/50 p-3 rounded">"{item.citation.snippet}"</p>
-                        
+
                         <div className="flex items-center justify-between">
-                          <a 
-                            href={item.citation.url} 
-                            target="_blank" 
+                          <a
+                            href={item.citation.url}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="text-sm text-primary hover:underline flex items-center gap-1"
                           >
                             View Source <ExternalLink className="h-3 w-3" />
                           </a>
-                          
-                          <Button 
-                            variant="ghost" 
+
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => copyToClipboard(item.citation.snippet)}
                           >
@@ -413,12 +413,12 @@ export default function AIVisibilityEnginePage() {
                             </p>
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center gap-3">
                           <Badge variant="outline">
                             Avg Position: #{platform.position}
                           </Badge>
-                          <Badge 
+                          <Badge
                             variant={
                               platform.trend === "up" ? "default" :
                               platform.trend === "down" ? "destructive" : "secondary"
@@ -460,7 +460,7 @@ export default function AIVisibilityEnginePage() {
                           <Progress value={item.optimization.impact} className="w-32" />
                           <span className="text-sm font-medium">{item.optimization.impact}%</span>
                         </div>
-                        
+
                         {item.optimization.recommendations.map((rec, recIndex) => (
                           <div key={recIndex} className="flex items-start gap-2">
                             <CheckCircle2 className="h-4 w-4 text-success-foreground mt-0.5 flex-shrink-0" />

@@ -7,7 +7,7 @@ if (typeof document === 'undefined') {
     const styleStore: Record<string, string> = {};
     const style = { setProperty: (k: string, v: string) => { styleStore[k] = v; } };
     const classSet = new Set<string>();
-    const body: any = {
+    const body = {
         className: '',
         classList: {
             add: (c: string) => { classSet.add(c); body.className = Array.from(classSet).join(' '); },
@@ -16,13 +16,13 @@ if (typeof document === 'undefined') {
         }
     };
     // @ts-ignore
-    global.document = { documentElement: { style }, body } as any;
+    global.document = { documentElement: { style }, body } as unknown;
     // expose for assertions
     // @ts-ignore
     global.__styleStore = styleStore;
 }
 
-declare const __styleStore: Record<string, string> | undefined;
+// __styleStore is attached to global in the setup block when needed
 
 describe('ThemeSystem basic cycle', () => {
     it('cycles through themes updating classes & CSS vars', () => {
@@ -41,7 +41,7 @@ describe('ThemeSystem basic cycle', () => {
             }
         });
         // validate a representative CSS var applied
-        const bg = (document.documentElement as any).style.getPropertyValue('--background');
+        const bg = (document.documentElement as unknown as { style: { getPropertyValue(k: string): string } }).style.getPropertyValue('--background');
         expect(bg).to.be.a('string');
     });
 });

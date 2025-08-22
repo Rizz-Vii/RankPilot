@@ -1,14 +1,14 @@
 "use client";
-import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState } from 'react';
 
-interface Props { open: boolean; onOpenChange: (open: boolean)=>void; onCreated?: (deal: unknown)=>void; }
+interface Props { open: boolean; onOpenChange: (open: boolean) => void; onCreated?: (deal: { id: string; name: string; amount: number; stage: string; status: string; userId: string; teamId: string | null; period: string; createdAt: unknown; updatedAt: unknown }) => void; }
 
 export function AddDealModal({ open, onOpenChange, onCreated }: Props): JSX.Element {
   const { user } = useAuth();
@@ -25,7 +25,11 @@ export function AddDealModal({ open, onOpenChange, onCreated }: Props): JSX.Elem
     setSaving(true);
     try {
       const period = new Date().toISOString().slice(0,7);
-      const deal = { name: name.trim(), amount: amt, stage, status: 'Open', userId: user.uid, teamId: (user as any)?.teamId ?? null, period, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
+      const teamId: string | null = (() => {
+        const possible = (user as unknown as { teamId?: unknown }).teamId;
+        return typeof possible === 'string' ? possible : null;
+      })();
+      const deal = { name: name.trim(), amount: amt, stage, status: 'Open', userId: user.uid, teamId, period, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
       const ref = await addDoc(collection(db, 'salesDeals'), deal);
       const full = { id: ref.id, ...deal };
       onCreated?.(full);
@@ -66,7 +70,7 @@ export function AddDealModal({ open, onOpenChange, onCreated }: Props): JSX.Elem
           </div>
           <div className="pt-2 flex justify-end gap-2">
             <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
-            <Button type="button" size="sm" onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save Deal'}</Button>
+            <Button type="button" size="sm" onClick={() => void save()} disabled={saving}>{saving ? 'Saving...' : 'Save Deal'}</Button>
           </div>
         </div>
       </DialogContent>

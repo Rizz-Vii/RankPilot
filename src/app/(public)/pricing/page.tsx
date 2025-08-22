@@ -1,7 +1,7 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -9,21 +9,21 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/context/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
+import { conversionFunnel, trackPaymentEvents } from "@/lib/analytics";
+import { STRIPE_PLANS, type PlanType } from "@/lib/stripe";
+import { motion } from "framer-motion";
 import {
 	Check,
-	Crown,
 	CreditCard,
-	TrendingUp,
+	Crown,
 	Rocket,
+	TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
-import { useSubscription } from "@/hooks/useSubscription";
-import { trackPaymentEvents, conversionFunnel } from "@/lib/analytics";
-import { STRIPE_PLANS, type PlanType } from "@/lib/stripe";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 
 // Presentation metadata not stored in STRIPE_PLANS
 const PLAN_ORDER: PlanType[] = ["starter", "agency", "enterprise"];
@@ -167,7 +167,11 @@ function PricingContent() {
 	const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
 
 	// Initialize preselected plan from query (?plan=starter|agency|enterprise)
+	const initFromQueryOnce = useRef(false);
 	useEffect(() => {
+		if (initFromQueryOnce.current) return;
+		initFromQueryOnce.current = true;
+
 		const q = (searchParams?.get("plan") || "").toLowerCase();
 		const allowed: PlanType[] = ["starter", "agency", "enterprise"];
 		if (allowed.includes(q as PlanType)) {
@@ -182,8 +186,7 @@ function PricingContent() {
 				});
 			});
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [searchParams]);
 
 	// Track pricing page view on mount
 	useEffect(() => {
@@ -429,7 +432,7 @@ function PricingContent() {
 															{item.starter}
 														</td>
 														<td className="p-4 text-center text-sm">
-																{(item as any).agency}
+															{(item as { agency: string }).agency}
 														</td>
 														<td className="p-4 text-center text-sm">
 															{item.enterprise}

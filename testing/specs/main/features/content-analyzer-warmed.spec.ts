@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test";
-import { GracefulTestUtils } from "../../../utils/graceful-test-utils";
 import { TestOrchestrator } from "../../../utils/test-orchestrator";
 
 /**
@@ -10,11 +9,10 @@ import { TestOrchestrator } from "../../../utils/test-orchestrator";
 
 test.describe("Content Analyzer - Warmed Suite", () => {
     let orchestrator: TestOrchestrator;
-    let gracefulUtils: GracefulTestUtils;
+    // Removed unused gracefulUtils instantiation
 
     test.beforeEach(async ({ page }) => {
         orchestrator = new TestOrchestrator(page);
-        gracefulUtils = new GracefulTestUtils(page);
 
         // Reduced timeouts since pages are pre-warmed
         page.setDefaultNavigationTimeout(20000); // Reduced from 45s

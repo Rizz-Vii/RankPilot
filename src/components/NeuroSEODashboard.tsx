@@ -29,9 +29,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
-import { useIsMobile, useNetworkStatus } from "@/lib/mobile-responsive-utils";
+import { useToast } from "@/hooks/use-toast";
+import { extractErrorMessage } from "@/lib/errors/extract-error-message";
+import { useNetworkStatus } from "@/lib/mobile-responsive-utils";
 import type { NeuroSEOAnalysisRequest, NeuroSEOReport } from "@/lib/neuroseo";
-import { submitOrQueue, queueAnalysisRequest } from "@/lib/offline-queue";
+import { queueAnalysisRequest, submitOrQueue } from "@/lib/offline-queue";
 import {
   AlertTriangle,
   Brain,
@@ -44,9 +46,8 @@ import {
   TrendingUp,
   Zap
 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Sparkline } from "./charts/Sparkline";
-import { useEffect, useRef, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
 
 interface NeuroSEODashboardProps {
   className?: string;
@@ -58,7 +59,7 @@ export default function NeuroSEODashboard({
   const { user } = useAuth();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [report, setReport] = useState<NeuroSEOReport | null>(null);
-  interface UsageStats { used: number; limit: number; periodStart?: string; periodEnd?: string; [key:string]: any }
+  interface UsageStats { used: number; limit: number; periodStart?: string; periodEnd?: string }
   const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
@@ -79,11 +80,32 @@ export default function NeuroSEODashboard({
     "comprehensive" | "seo-focused" | "content-focused" | "competitive"
   >("comprehensive");
 
+  const loadUsageStats = useCallback(async () => {
+    if (!user) return;
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/neuroseo", {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: networkStatus.downlink < 5 ? "force-cache" : "default",
+      });
+      if (response.ok) {
+        const stats: UsageStats = await response.json();
+        setUsageStats(stats);
+      } else {
+        throw new Error(`Failed to load usage stats: ${response.statusText}`);
+      }
+    } catch (err) {
+      const msg = extractErrorMessage(err);
+      console.error("Failed to load usage stats:", msg);
+      setError(`Could not load usage statistics: ${msg}`);
+    }
+  }, [user, networkStatus.downlink]);
+
   useEffect(() => {
     if (hydrated) {
-      loadUsageStats();
+      void loadUsageStats();
     }
-  }, [hydrated, user]);
+  }, [hydrated, loadUsageStats]);
 
   // Scroll to results when analysis completes
   useEffect(() => {
@@ -110,32 +132,7 @@ export default function NeuroSEODashboard({
     return () => clearInterval(interval);
   }, [isAnalyzing]);
 
-  const loadUsageStats = async () => {
-    if (!user) return;
-
-    try {
-      const token = await user.getIdToken();
-      const response = await fetch("/api/neuroseo", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        // Add cache control for network efficiency
-        cache: networkStatus.downlink < 5 ? "force-cache" : "default",
-      });
-
-      if (response.ok) {
-        const stats = await response.json();
-        setUsageStats(stats);
-      } else {
-        throw new Error(`Failed to load usage stats: ${response.statusText}`);
-      }
-    } catch (error) {
-      console.error("Failed to load usage stats:", error);
-      setError(
-        `Could not load usage statistics: ${error instanceof Error ? error.message : "Unknown error"}`
-      );
-    }
-  };
+  // (Previous loadUsageStats implementation replaced by useCallback above)
 
   const runAnalysis = async () => {
     if (!user) {
@@ -179,7 +176,8 @@ export default function NeuroSEODashboard({
           ? competitorUrls.split("\n").filter((url) => url.trim())
           : undefined,
         analysisType,
-        userPlan: (user as any)?.subscriptionTier || 'free',
+        // Narrow subscription tier without pervasive any – treat unknown extra property with optional chaining
+        userPlan: (user as unknown as { subscriptionTier?: string })?.subscriptionTier || 'free',
         userId: user.uid,
       };
 
@@ -213,9 +211,10 @@ export default function NeuroSEODashboard({
           let errorMessage = "Analysis failed";
           try {
             const errorData = await response.json();
-            errorMessage = errorData.error || errorMessage;
-          } catch (e) {
-            errorMessage = `HTTP Error ${response.status}: ${response.statusText}`;
+            errorMessage = (errorData as { error?: string })?.error || errorMessage;
+          } catch (err) {
+            const parsed = err instanceof Error ? err.message : String(err);
+            errorMessage = `HTTP Error ${response.status}: ${response.statusText} (${parsed})`;
           }
           throw new Error(errorMessage);
         }
@@ -239,9 +238,10 @@ export default function NeuroSEODashboard({
         return;
       }
 
-      setReport(result as any);
+      // Result is expected to conform to NeuroSEOReport shape
+      setReport(result as NeuroSEOReport);
       toast({ title: 'Analysis complete', description: 'NeuroSEO report is ready.' });
-      loadUsageStats(); // Refresh usage stats
+      void loadUsageStats(); // Refresh usage stats (fire-and-forget)
 
       // Announce completion for screen readers
       const announcement = document.createElement("div");
@@ -252,7 +252,7 @@ export default function NeuroSEODashboard({
       document.body.appendChild(announcement);
       setTimeout(() => document.body.removeChild(announcement), 3000);
     } catch (error) {
-      console.error("Analysis error:", error);
+      console.error("Analysis error:", extractErrorMessage(error));
 
       // Clear any running timers
       clearTimeout(timeoutId);
@@ -291,6 +291,8 @@ export default function NeuroSEODashboard({
       setLoadingProgress(0);
     }
   };
+
+  const handleRunClick = () => { void runAnalysis(); };
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-success";
@@ -411,7 +413,7 @@ export default function NeuroSEODashboard({
               </Label>
               <Select
                 value={analysisType}
-                onValueChange={(value) => setAnalysisType(value as any)}
+                onValueChange={(value) => setAnalysisType(value as NeuroSEOAnalysisRequest['analysisType'])}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -440,7 +442,7 @@ export default function NeuroSEODashboard({
           )}
 
           <Button
-            onClick={runAnalysis}
+            onClick={handleRunClick}
             disabled={isAnalyzing || !urls.trim() || !targetKeywords.trim()}
             className="w-full"
           >
@@ -458,6 +460,13 @@ export default function NeuroSEODashboard({
           </Button>
         </CardContent>
       </Card>
+
+      {isAnalyzing && (
+        <div>
+          <Progress value={loadingProgress} className="h-2" />
+          <p className="text-xs text-muted-foreground mt-1">Analyzing... {Math.round(loadingProgress)}%</p>
+        </div>
+      )}
 
       {/* Analysis Results */}
       {report && (
@@ -582,10 +591,9 @@ export default function NeuroSEODashboard({
                       <span className="text-sm font-medium">SEO Score</span>
                     </div>
                     <div
-                      className={`text-2xl font-bold ${getScoreColor((report.crawlResults[0] as any)?.seoMetrics?.overallScore || 0)}`}
+                      className={`text-2xl font-bold ${getScoreColor(report.crawlResults[0]?.seoMetrics?.overallScore || 0)}`}
                     >
-                      {(report.crawlResults[0] as any)?.seoMetrics
-                        ?.overallScore || 0}
+                      {report.crawlResults[0]?.seoMetrics?.overallScore || 0}
                       /100
                     </div>
                   </CardContent>
@@ -631,10 +639,9 @@ export default function NeuroSEODashboard({
                       </span>
                     </div>
                     <div
-                      className={`text-2xl font-bold ${getScoreColor((report as any).semanticAnalysis?.[0]?.overallRelevanceScore || 0)}`}
+                      className={`text-2xl font-bold ${getScoreColor(report.semanticAnalysis?.[0]?.overallRelevanceScore || 0)}`}
                     >
-                      {(report as any).semanticAnalysis?.[0]
-                        ?.overallRelevanceScore || 0}
+                      {report.semanticAnalysis?.[0]?.overallRelevanceScore || 0}
                       /100
                     </div>
                   </CardContent>
@@ -684,57 +691,57 @@ export default function NeuroSEODashboard({
                       <div>
                         <div className="text-sm text-muted-foreground">Overall SEO</div>
                         <div
-                          className={`text-xl font-bold ${getScoreColor((result as any).seoMetrics?.overallScore || 0)}`}
+                          className={`text-xl font-bold ${getScoreColor(result.seoMetrics?.overallScore || 0)}`}
                         >
-                          {(result as any).seoMetrics?.overallScore || 0}/100
+                          {result.seoMetrics?.overallScore || 0}/100
                         </div>
                       </div>
                       <div>
                         <div className="text-sm text-muted-foreground">Technical</div>
                         <div
-                          className={`text-xl font-bold ${getScoreColor((result as any).seoMetrics?.technicalScore || 0)}`}
+                          className={`text-xl font-bold ${getScoreColor(result.seoMetrics?.technicalScore || 0)}`}
                         >
-                          {(result as any).seoMetrics?.technicalScore || 0}/100
+                          {result.seoMetrics?.technicalScore || 0}/100
                         </div>
                       </div>
                       <div>
                         <div className="text-sm text-muted-foreground">Content</div>
                         <div
-                          className={`text-xl font-bold ${getScoreColor((result as any).seoMetrics?.contentScore || 0)}`}
+                          className={`text-xl font-bold ${getScoreColor(result.seoMetrics?.contentScore || 0)}`}
                         >
-                          {(result as any).seoMetrics?.contentScore || 0}/100
+                          {result.seoMetrics?.contentScore || 0}/100
                         </div>
                       </div>
                       <div>
                         <div className="text-sm text-muted-foreground">Performance</div>
                         <div
-                          className={`text-xl font-bold ${getScoreColor((result as any).performance?.overallScore || 0)}`}
+                          className={`text-xl font-bold ${getScoreColor(result.performance?.overallScore || 0)}`}
                         >
-                          {(result as any).performance?.overallScore || 0}/100
+                          {result.performance?.overallScore || 0}/100
                         </div>
                       </div>
                     </div>
-                    { (result as any).technicalData && (
+                    {result.technicalData && (
                       <div className="mt-4 border-t pt-4">
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                           <div>
                             <div className="text-muted-foreground">Load Time</div>
-                            <div className="font-medium">{(result as any).technicalData.loadTime} ms</div>
+                            <div className="font-medium">{result.technicalData.loadTime} ms</div>
                           </div>
                           <div>
                             <div className="text-muted-foreground">Word Count</div>
-                            <div className="font-medium">{(result as any).technicalData.wordCount}</div>
+                            <div className="font-medium">{result.technicalData.wordCount}</div>
                           </div>
                           <div>
                             <div className="text-muted-foreground">Title Len</div>
-                            <div className="font-medium">{(result as any).technicalData.titleLength}</div>
+                            <div className="font-medium">{result.technicalData.titleLength}</div>
                           </div>
                           <div>
                             <div className="text-muted-foreground">Meta Desc Len</div>
-                            <div className="font-medium">{(result as any).technicalData.metaDescriptionLength}</div>
+                            <div className="font-medium">{result.technicalData.metaDescriptionLength}</div>
                           </div>
                           <div className="flex items-center gap-2">
-                            {(result as any).technicalData.canonicalMismatch ? (
+                            {result.technicalData.canonicalMismatch ? (
                               <Badge variant="destructive" className="text-xs">Canonical Mismatch</Badge>
                             ) : (
                               <Badge variant="outline" className="text-xs">Canonical OK</Badge>

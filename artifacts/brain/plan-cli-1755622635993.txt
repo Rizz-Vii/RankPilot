@@ -1,0 +1,767 @@
+{
+  "steps": [
+    {
+      "taskId": "CLF-0",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Resolve orphan feature suppression and entitlement extraction."
+    },
+    {
+      "taskId": "CLF-1",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Implement alias map and unified export_formats capability."
+    },
+    {
+      "taskId": "CLF-2",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Conduct deprecated/entitlement FeatureGate usage test."
+    },
+    {
+      "taskId": "CLF-3",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Align gating."
+    },
+    {
+      "taskId": "CLF-4",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "frontend",
+      "reason": "Develop navigation and tests."
+    },
+    {
+      "taskId": "CLF-5",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Ensure finance mock transparency."
+    },
+    {
+      "taskId": "CLF-6",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Verify existing environment guard for finance mocks."
+    },
+    {
+      "taskId": "CLF-7",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Create documentation."
+    },
+    {
+      "taskId": "CLF-8",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Add CHANGE_LOG entry for Phase 1 Gating Hardening."
+    },
+    {
+      "taskId": "CLF-9",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Conduct acceptance testing."
+    },
+    {
+      "taskId": "CLF-10",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "frontend",
+      "reason": "Audit navigation gates and ensure all targeted pages show FeatureGate."
+    },
+    {
+      "taskId": "CLF-11",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "Develop Revenue Analytics MVP."
+    },
+    {
+      "taskId": "CLF-12",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "Compute MRR, ARR, churn rate, LTV in-memory and add finance revenue page."
+    },
+    {
+      "taskId": "CLF-13",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Implement AI usage and cost tracking."
+    },
+    {
+      "taskId": "CLF-14",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Add token accounting hooks in ai-memory-manager."
+    },
+    {
+      "taskId": "CLF-15",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Expose aggregate usage in /api/health KPIs."
+    },
+    {
+      "taskId": "CLF-16",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Add per-feature counter recording for subtool usage telemetry."
+    },
+    {
+      "taskId": "CLF-17",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Implement subscription entitlement metadata."
+    },
+    {
+      "taskId": "CLF-18",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Start synthetic page refactor."
+    },
+    {
+      "taskId": "CLF-19",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Replace semantic-map simulate function with orchestrator call."
+    },
+    {
+      "taskId": "CLF-20",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "frontend",
+      "reason": "Conduct acceptance testing for synthetic page refactor."
+    },
+    {
+      "taskId": "CLF-21",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Ensure KPIs show new fields and tests pass."
+    },
+    {
+      "taskId": "CLF-22",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "Modernize audit.ts."
+    },
+    {
+      "taskId": "CLF-23",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Integrate Firecrawl and add env gating."
+    },
+    {
+      "taskId": "CLF-24",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Introduce Zod schemas for AI JSON output."
+    },
+    {
+      "taskId": "CLF-25",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "Implement multi-phase pipeline instrumentation."
+    },
+    {
+      "taskId": "CLF-26",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Implement quota and rate controls."
+    },
+    {
+      "taskId": "CLF-27",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Conduct load and contract tests."
+    },
+    {
+      "taskId": "CLF-28",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Implement data minimization migration."
+    },
+    {
+      "taskId": "CLF-29",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Create observability dashboard."
+    },
+    {
+      "taskId": "CLF-30",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Implement daily KPI snapshot function."
+    },
+    {
+      "taskId": "CLF-31",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Conduct acceptance testing for observability dashboard."
+    },
+    {
+      "taskId": "CLF-32",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "Implement marketing campaign CRUD and ingestion."
+    },
+    {
+      "taskId": "CLF-33",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Enhance sales pipeline."
+    },
+    {
+      "taskId": "CLF-34",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Define outreach sequencing spec."
+    },
+    {
+      "taskId": "CLF-35",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "ops",
+      "reason": "Implement security center."
+    },
+    {
+      "taskId": "CLF-36",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "Create audit log service."
+    },
+    {
+      "taskId": "CLF-37",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "Implement SSO/SAML skeleton."
+    },
+    {
+      "taskId": "CLF-38",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "Create PII scan and retention script."
+    },
+    {
+      "taskId": "CLF-39",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Implement canonical event schema and publisher."
+    },
+    {
+      "taskId": "CLF-40",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Create event type registry and lint."
+    },
+    {
+      "taskId": "CLF-41",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Update Firestore rules for immutable events."
+    },
+    {
+      "taskId": "CLF-42",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Implement Pub/Sub and BigQuery mirror."
+    },
+    {
+      "taskId": "CLF-43",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Create event explorer admin page."
+    },
+    {
+      "taskId": "CLF-44",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Implement automation event triggers."
+    },
+    {
+      "taskId": "CLF-45",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Define simulation sandbox."
+    },
+    {
+      "taskId": "CLF-46",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "infra",
+      "reason": "Implement data join service."
+    },
+    {
+      "taskId": "CLF-47",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Create attribution explainer module."
+    },
+    {
+      "taskId": "CLF-48",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Enhance deal probability."
+    },
+    {
+      "taskId": "CLF-49",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "frontend",
+      "reason": "Implement anomaly detector."
+    },
+    {
+      "taskId": "CLF-50",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Create revenue truth UI panel."
+    },
+    {
+      "taskId": "CLF-51",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Implement template entity and Firestore path."
+    },
+    {
+      "taskId": "CLF-52",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Create template validation pipeline."
+    },
+    {
+      "taskId": "CLF-53",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Implement publishing workflow."
+    },
+    {
+      "taskId": "CLF-54",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Create revenue share ledger stub."
+    },
+    {
+      "taskId": "CLF-55",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Implement discovery UI."
+    },
+    {
+      "taskId": "CLF-56",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "data",
+      "reason": "Create usage telemetry events."
+    },
+    {
+      "taskId": "CLF-57",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Define side panel manifest spec."
+    },
+    {
+      "taskId": "CLF-58",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Implement scoped token endpoint."
+    },
+    {
+      "taskId": "CLF-59",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Create presence channel skeleton."
+    },
+    {
+      "taskId": "CLF-60",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Define quick action palette spec."
+    },
+    {
+      "taskId": "CLF-61",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Implement embed usage metrics."
+    },
+    {
+      "taskId": "CLF-62",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Create provider registry and health scoring."
+    },
+    {
+      "taskId": "CLF-63",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Integrate adaptive routing."
+    },
+    {
+      "taskId": "CLF-64",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Implement cost ledger persistence."
+    },
+    {
+      "taskId": "CLF-65",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Create prompt versioning."
+    },
+    {
+      "taskId": "CLF-66",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Implement latency and error SLO dashboard widgets."
+    },
+    {
+      "taskId": "CLF-67",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Create alerting events on error spikes."
+    },
+    {
+      "taskId": "CLF-68",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Ensure routing decisions are logged."
+    },
+    {
+      "taskId": "CLF-69",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Create architecture delta documentation."
+    },
+    {
+      "taskId": "CLF-70",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Define event schema reference."
+    },
+    {
+      "taskId": "CLF-71",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Upgrade PR template."
+    },
+    {
+      "taskId": "CLF-72",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Implement Aider context index generator job."
+    },
+    {
+      "taskId": "CLF-73",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Create CHANGE_LOG enforcement hook."
+    },
+    {
+      "taskId": "CLF-74",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Implement onboarding validation script."
+    },
+    {
+      "taskId": "CLF-75",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Ensure all mismatches are resolved."
+    },
+    {
+      "taskId": "CLF-76",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Conduct navigation gating matrix test."
+    },
+    {
+      "taskId": "CLF-77",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Define link_view key and ensure it is gated."
+    },
+    {
+      "taskId": "CLF-78",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Ensure revenue page is live."
+    },
+    {
+      "taskId": "CLF-79",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "frontend",
+      "reason": "Ensure AI usage and cost fields appear in /api/health."
+    },
+    {
+      "taskId": "CLF-80",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Ensure semantic-map uses orchestrator path."
+    },
+    {
+      "taskId": "CLF-81",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Ensure audit contract test passes with real crawl fallback."
+    },
+    {
+      "taskId": "CLF-82",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "backend",
+      "reason": "Ensure stress test is stable with less than 5% error."
+    },
+    {
+      "taskId": "CLF-83",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Ensure all tasks are completed for remediation."
+    }
+  ],
+  "strategy": "openai",
+  "meta": {
+    "model": "gpt-4o-mini",
+    "promptTokens": 5017,
+    "completionTokens": 2684,
+    "totalTokens": 7701
+  }
+}

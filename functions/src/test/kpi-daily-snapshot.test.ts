@@ -1,8 +1,8 @@
 import { expect } from 'chai';
-import { describe, it } from 'mocha';
-import { runKpiDailySnapshot } from '../scheduled/kpi-daily-snapshot';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { describe, it } from 'mocha';
+import { runKpiDailySnapshot } from '../scheduled/kpi-daily-snapshot';
 
 // Contract test: ensures kpiDailySnapshot persists provenance & latency percentile fields (even null) without throwing.
 
@@ -15,11 +15,11 @@ describe('kpiDailySnapshot contract', () => {
         expect(res).to.have.property('date');
         const doc = await db.collection('kpiDaily').doc(res.date).get();
         expect(doc.exists).to.be.true;
-        const data: any = doc.data();
-        expect(data).to.have.property('provenanceCoveragePct');
-        expect(data).to.have.property('p95LatencyOverall');
-        expect(data).to.have.property('p99LatencyOverall');
-        expect(data).to.have.property('ma7Provenance');
+        const data = doc.data() as Record<string, unknown>;
+        expect('provenanceCoveragePct' in data).to.be.true;
+        expect('p95LatencyOverall' in data).to.be.true;
+        expect('p99LatencyOverall' in data).to.be.true;
+        expect('ma7Provenance' in data).to.be.true;
         // Accept null values; presence is the contract.
         expect('provenanceCoveragePct' in data).to.be.true;
     });

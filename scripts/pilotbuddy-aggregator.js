@@ -20,27 +20,27 @@ function listFilesRecursive(dir) {
       }
     });
     return result;
-  } catch (err) {
+  } catch {
     return [];
   }
 }
 
 function getProjectMetrics() {
   const metrics = {};
-  
+
   try {
     // Count test files (recursive)
     const testFiles = listFilesRecursive('tests').filter(f => f.endsWith('.spec.ts'));
     metrics.testFiles = testFiles.length;
-    
+
     // Count components (recursive)
     const componentFiles = listFilesRecursive('src/components').filter(f => f.endsWith('.tsx'));
     metrics.components = componentFiles.length;
-    
+
     // Count documentation (recursive)
     const docFiles = listFilesRecursive('docs').filter(f => f.endsWith('.md'));
     metrics.documentationFiles = docFiles.length;
-    
+
     // Count scripts (non-recursive)
     const scriptFiles = fs.existsSync('scripts') ? fs.readdirSync('scripts').filter(f => f.endsWith('.js') || f.endsWith('.ps1') || f.endsWith('.sh')) : [];
     metrics.scripts = scriptFiles.length;
@@ -48,41 +48,41 @@ function getProjectMetrics() {
     // Count pilotScripts
     let pilotScriptCount = 0;
     try {
-      const pilotScriptFiles = listFilesRecursive('pilotScripts').filter(f => 
+      const pilotScriptFiles = listFilesRecursive('pilotScripts').filter(f =>
         f.endsWith('.js') || f.endsWith('.ps1') || f.endsWith('.sh') || f.endsWith('.ts'));
       pilotScriptCount = pilotScriptFiles.length;
-    } catch (error) {
+    } catch {
       // pilotScripts directory may not exist yet
       pilotScriptCount = 0;
     }
     metrics.pilotScripts = pilotScriptCount;
-    
-  } catch (error) {
-    console.log('Warning: Could not read some directories:', error.message);
+
+  } catch {
+    console.log('Warning: Could not read some directories');
     metrics.testFiles = 0;
     metrics.components = 0;
     metrics.documentationFiles = 0;
     metrics.scripts = 0;
     metrics.pilotScripts = 0;
   }
-  
+
   return metrics;
 }
 
 function getScriptInventory() {
   const scripts = {};
-  
+
   try {
     const scriptFiles = fs.existsSync('scripts') ? fs.readdirSync('scripts') : [];
-    
+
     scriptFiles.forEach(script => {
       let category = 'Utilities';
-      
+
       if (script.includes('test')) category = 'Testing';
       else if (script.includes('build')) category = 'Build';
       else if (script.includes('fix')) category = 'Fixes';
       else if (script.includes('pilotbuddy')) category = 'PilotBuddy';
-      
+
       if (!scripts[category]) scripts[category] = [];
       scripts[category].push(script);
     });
@@ -91,7 +91,7 @@ function getScriptInventory() {
     try {
       const pilotDirs = ['automation', 'solutions', 'utilities'];
       scripts['PilotScripts'] = [];
-      
+
       pilotDirs.forEach(dir => {
         const fullPath = path.join('pilotScripts', dir);
         if (fs.existsSync(fullPath)) {
@@ -101,15 +101,15 @@ function getScriptInventory() {
           });
         }
       });
-    } catch (error) {
+  } catch {
       // pilotScripts directory may not exist yet
       scripts['PilotScripts'] = [];
     }
-    
-  } catch (error) {
-    console.log('Warning: Could not read scripts directory:', error.message);
+
+  } catch {
+    console.log('Warning: Could not read scripts directory');
   }
-  
+
   return scripts;
 }
 
@@ -118,7 +118,7 @@ function getPackageJsonScripts() {
     const packagePath = path.join(process.cwd(), 'package.json');
     const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf-8'));
     return packageJson.scripts || {};
-  } catch (error) {
+  } catch {
     console.warn('Warning: Could not read package.json scripts');
     return {};
   }
@@ -129,18 +129,18 @@ function generateDynamicContent() {
   const metrics = getProjectMetrics();
   const scripts = getScriptInventory();
   const packageScripts = getPackageJsonScripts();
-  
+
   let content = `# PilotBuddy Dynamic Development Assistant v5.0
 
-**Auto-Generated:** ${timestamp} UTC  
-**Project:** RankPilot (Studio) - AI-First SEO SaaS Platform  
-**Status:** Phase 4 - Production Readiness with Continuous Evolution  
+**Auto-Generated:** ${timestamp} UTC
+**Project:** RankPilot (Studio) - AI-First SEO SaaS Platform
+**Status:** Phase 4 - Production Readiness with Continuous Evolution
 
 ## Live Project Metrics
 
 ### Current State
 - **Test Files**: ${metrics.testFiles} Playwright test specifications
-- **Components**: ${metrics.components} React/TypeScript components  
+- **Components**: ${metrics.components} React/TypeScript components
 - **Documentation**: ${metrics.documentationFiles} markdown files
 - **Scripts**: ${metrics.scripts} automation and utility scripts
 - **PilotScripts**: ${metrics.pilotScripts} auto-generated solution scripts
@@ -196,7 +196,7 @@ function generateDynamicContent() {
   const pilotScripts = Object.entries(packageScripts)
     .filter(([key, value]) => key.includes('pilot') || key.includes('pilotbuddy'))
     .sort();
-  
+
   pilotScripts.forEach(([key, value]) => {
     content += `- \`${key}\` - ${value}\n`;
   });
@@ -204,11 +204,11 @@ function generateDynamicContent() {
   content += `
 ### Development Scripts (${Object.keys(packageScripts).filter(k => k.includes('dev')).length} commands)
 `;
-  
+
   const devScripts = Object.entries(packageScripts)
     .filter(([key, value]) => key.includes('dev') && !key.includes('pilot'))
     .slice(0, 5); // Show top 5
-  
+
   devScripts.forEach(([key, value]) => {
     content += `- \`${key}\` - Primary development server\n`;
   });
@@ -216,11 +216,11 @@ function generateDynamicContent() {
   content += `
 ### Testing Scripts (${Object.keys(packageScripts).filter(k => k.includes('test')).length} commands)
 `;
-  
+
   const testScripts = Object.entries(packageScripts)
     .filter(([key, value]) => key.includes('test'))
     .slice(0, 5); // Show top 5
-  
+
   testScripts.forEach(([key, value]) => {
     content += `- \`${key}\` - Testing automation\n`;
   });
@@ -228,11 +228,11 @@ function generateDynamicContent() {
   content += `
 ### Build & Deploy Scripts (${Object.keys(packageScripts).filter(k => k.includes('build')).length} commands)
 `;
-  
+
   const buildScripts = Object.entries(packageScripts)
     .filter(([key, value]) => key.includes('build'))
     .slice(0, 3); // Show top 3
-  
+
   buildScripts.forEach(([key, value]) => {
     content += `- \`${key}\` - Build pipeline\n`;
   });
@@ -247,9 +247,9 @@ function generateDynamicContent() {
 
 ---
 
-**Last Updated:** ${timestamp}  
-**Auto-Refresh:** Every development session  
-**Memory Persistence:** Continuous learning enabled  
+**Last Updated:** ${timestamp}
+**Auto-Refresh:** Every development session
+**Memory Persistence:** Continuous learning enabled
 **Growth Model:** Pattern recognition with autonomous improvement
 `;
 
@@ -265,16 +265,16 @@ try {
   const outputPath = '.github/pilotbuddy-dynamic.md';
   // Ensure output directory exists
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-  
+
   fs.writeFileSync(outputPath, dynamicContent, 'utf8');
-  
+
   console.log(`✅ Dynamic content generated: ${outputPath}`);
-  
+
   const metrics = getProjectMetrics();
   console.log('\n📋 Project Summary:');
   console.log(`   Tests: ${metrics.testFiles} | Components: ${metrics.components} | Docs: ${metrics.documentationFiles}`);
   console.log(`   Scripts: ${metrics.scripts}`);
-  
+
 } catch (error) {
   console.error('Failed to generate dynamic content:', error.message);
   process.exit(1);

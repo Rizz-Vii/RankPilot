@@ -1,7 +1,7 @@
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { adminDb, adminAuth } from '@/lib/firebase-admin';
-import { withProvenance, enforceProvenance } from '@/lib/middleware/provenance';
 
 /**
  * Test-only endpoint: seeds a single financeInvoices doc for the authenticated user (or team) to drive live metrics.
@@ -37,7 +37,7 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         } else {
             const idToken = authHeader.replace(/^Bearer\s+/i, '');
             decoded = await adminAuth.verifyIdToken(idToken);
-            uid = (decoded as any).uid;
+            uid = decoded.uid;
         }
         const url = new URL(req.url);
         const amountParam = url.searchParams.get('amount');

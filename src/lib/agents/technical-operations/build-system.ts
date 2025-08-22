@@ -12,7 +12,7 @@ const execAsync = promisify(execCb) as (command: string, options?: { timeout?: n
 
 /**
  * Build System Agent - Autonomous build optimization and error resolution
- * 
+ *
  * Targets:
  * 1. Firebase configuration issues in API routes
  * 2. Memory optimization for build processes
@@ -216,10 +216,10 @@ try {
 } catch (error) {
     console.warn('[Visualizations API] Firebase initialization failed, using mock data:', error);
     // Return mock response for development
-    return NextResponse.json({ 
-        error: 'Firebase not configured', 
+    return NextResponse.json({
+        error: 'Firebase not configured',
         mock: true,
-        data: [] 
+        data: []
     });
 }`
                     );
@@ -367,8 +367,12 @@ exit 1
             return { success: true, output: stdout + stderr };
         } catch (error: unknown) {
             // Build might fail due to Firebase, but that's expected
-            const stdout = (error && typeof error === 'object' && 'stdout' in error) ? String((error as any).stdout || '') : '';
-            const stderr = (error && typeof error === 'object' && 'stderr' in error) ? String((error as any).stderr || '') : '';
+            const stdout = (error && typeof error === 'object' && 'stdout' in error)
+                ? String((error as { stdout?: unknown }).stdout ?? '')
+                : '';
+            const stderr = (error && typeof error === 'object' && 'stderr' in error)
+                ? String((error as { stderr?: unknown }).stderr ?? '')
+                : '';
             const output = stdout + stderr;
             if (output.includes('✓ Compiled successfully')) {
                 return { success: true, output };

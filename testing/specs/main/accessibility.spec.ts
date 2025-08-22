@@ -1,7 +1,5 @@
-import { test, expect } from "@playwright/test";
-import { DashboardPage } from "./pages/dashboard-page";
-import { LinkViewPage } from "./pages/link-view-page";
 import AxeBuilder from "@axe-core/playwright";
+import { expect, test } from "@playwright/test";
 
 test.describe("Accessibility Tests", () => {
   test("dashboard page meets WCAG standards", async ({ page }) => {
@@ -53,7 +51,7 @@ test.describe("Accessibility Tests", () => {
     const contrastErrors = results.violations.filter(
       (violation: { id: string }) => violation.id === "color-contrast"
     );
-    
+
     // For development environment, we'll check that contrast issues are documented
     // but not fail the test as these need design system updates
     if (contrastErrors.length > 0) {
@@ -70,14 +68,14 @@ test.describe("Accessibility Tests", () => {
     // Check if aria-live regions exist on the page
     const liveRegions = page.locator('[aria-live]');
     const liveRegionCount = await liveRegions.count();
-    
+
     // Verify that there are aria-live regions for screen reader announcements
     expect(liveRegionCount).toBeGreaterThanOrEqual(0);
-    
+
     // Check that important interactive elements have proper aria attributes
     const buttons = page.locator('button');
     const buttonCount = await buttons.count();
-    
+
     if (buttonCount > 0) {
       // At least some buttons should have accessible names
       const accessibleButtons = page.locator('button[aria-label], button:has-text("")');
@@ -92,12 +90,12 @@ test.describe("Accessibility Tests", () => {
     // Look for forms on the page
     const forms = page.locator('form');
     const formCount = await forms.count();
-    
+
     if (formCount > 0) {
       // Check that forms have proper structure
       const inputs = page.locator('input, textarea, select');
       const inputCount = await inputs.count();
-      
+
       if (inputCount > 0) {
         // Check for proper labeling
         const labelledInputs = page.locator('input[aria-label], input[aria-labelledby], label input');
@@ -105,7 +103,7 @@ test.describe("Accessibility Tests", () => {
         expect(labelledCount).toBeGreaterThanOrEqual(0);
       }
     }
-    
+
     // Check for any error regions that might exist
     const errorRegions = page.locator('[role="alert"], [aria-live="assertive"]');
     const errorRegionCount = await errorRegions.count();

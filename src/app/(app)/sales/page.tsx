@@ -1,32 +1,32 @@
 "use client";
-import { useEffect, useMemo, useState } from 'react';
-import dynamic from 'next/dynamic';
-import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { dashboardContainerVariants, dashboardItemVariants } from '@/components/dashboard/animation-variants';
+import { DashboardSurface } from '@/components/layout/DashboardSurface';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
-import { getMockMetrics } from '@/lib/domain/mockMetrics';
-import type { DomainMetricSet } from '@/lib/domain/mockMetrics';
-import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
-import { ToolPageHeader } from '@/components/tool-page-header';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { DownloadCloud, RefreshCw } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { AggregatedSalesMetrics, SalesDealDoc, ForecastSnapshotDoc } from '@/lib/services/sales-metrics.service';
-import { fetchSalesMetrics, subscribeSalesMetrics } from '@/lib/services/sales-metrics.service';
-import { fetchRecentSalesMetricsSnapshots, fetchRecentSalesForecastSnapshots } from '@/lib/services/sales-automation-snapshots';
-import { SalesContextProvider } from './_parts/sales-context';
-import { Badge } from '@/components/ui/badge';
-import { AdaptiveProgress } from '@/components/ui/adaptive-progress';
 import { ActionCard } from '@/components/shared/action-card';
-import { StageDrilldownModal } from './_parts/stage-drilldown-modal';
-import { ForecastVarianceModal } from './_parts/forecast-variance-modal';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { ToolPageHeader } from '@/components/tool-page-header';
+import { AdaptiveProgress } from '@/components/ui/adaptive-progress';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
-import { DashboardSurface } from '@/components/layout/DashboardSurface';
-import { dashboardContainerVariants, dashboardItemVariants } from '@/components/dashboard/animation-variants';
-import { motion } from 'framer-motion';
-import { useProvenance } from '@/hooks/useProvenance';
 import { SuiteAccentProvider } from '@/context/SuiteAccentContext';
+import { useProvenance } from '@/hooks/useProvenance';
+import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import type { DomainMetricSet } from '@/lib/domain/mockMetrics';
+import { getMockMetrics } from '@/lib/domain/mockMetrics';
+import { fetchRecentSalesForecastSnapshots, fetchRecentSalesMetricsSnapshots } from '@/lib/services/sales-automation-snapshots';
+import type { AggregatedSalesMetrics, ForecastSnapshotDoc, SalesDealDoc } from '@/lib/services/sales-metrics.service';
+import { fetchSalesMetrics, subscribeSalesMetrics } from '@/lib/services/sales-metrics.service';
+import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
+import { DownloadCloud, RefreshCw } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { useEffect, useMemo, useState } from 'react';
+import { ForecastVarianceModal } from './_parts/forecast-variance-modal';
+import { SalesContextProvider } from './_parts/sales-context';
+import { StageDrilldownModal } from './_parts/stage-drilldown-modal';
 
 const FunnelChart = dynamic(() => import('./_parts/funnel-stage-conversion').then(m => m.default), { ssr: false, loading: () => <Skeleton shimmer className="h-[260px] w-full" /> });
 const ForecastVariance = dynamic(() => import('./_parts/forecast-variance').then(m => m.default), { ssr: false, loading: () => <Skeleton shimmer className="h-[260px] w-full" /> });
@@ -46,14 +46,25 @@ export default function SalesDashboardRoot() {
   const [forecast, setForecast] = useState<ForecastSnapshotDoc[] | undefined>();
   const { user, loading: authLoading } = useAuth();
   const userId = user?.uid;
-  const teamId = (user as any)?.teamId as string | undefined;
+  // Narrow potential teamId off user object without using any
+  const teamId: string | undefined = ((): string | undefined => {
+    if (!user || typeof user !== 'object') return undefined;
+    const possible = (user as unknown as { teamId?: unknown }).teamId;
+    return typeof possible === 'string' ? possible : undefined;
+  })();
   const [selectedStage, setSelectedStage] = useState<string | null>(null);
   const [varianceOpen, setVarianceOpen] = useState(false);
   const [snapMetrics, setSnapMetrics] = useState<{ pipeline: number; closedWon: number; ts: Date } | null>(null);
   const [snapForecast, setSnapForecast] = useState<{ forecast: number; period: string; ts: Date } | null>(null);
 
   useEffect(() => { trackDashboardView('sales'); }, []);
-  useEffect(() => { let active = true; getMockMetrics('sales').then(m => { if(active) setMock(m); }).catch(() => { if(active) setMock({ kpis: [] }); }); return () => { active = false; }; }, []);
+  useEffect(() => {
+    let active = true;
+    void getMockMetrics('sales')
+      .then(m => { if (active) setMock(m); })
+      .catch(() => { if (active) setMock({ kpis: [] }); });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -62,13 +73,26 @@ export default function SalesDashboardRoot() {
   }, []);
   useEffect(() => { if (typeof window !== 'undefined') window.localStorage.setItem('salesRange', range); }, [range]);
 
+  // Helper to coerce unknown Firestore timestamp-like values to Date
+  function toDateLike(v: unknown): Date {
+    if (v instanceof Date) return v;
+    if (v && typeof v === 'object' && 'toDate' in (v as Record<string, unknown>)) {
+      const fn = (v as { toDate?: () => unknown }).toDate;
+      if (typeof fn === 'function') {
+        const d = fn();
+        if (d instanceof Date) return d;
+      }
+    }
+    return new Date();
+  }
+
   useEffect(() => {
     if (!userId && !authLoading) { setInitialLoading(false); return; }
     if (!userId) return;
     setRefreshing(true);
     let unsub: (() => void) | undefined;
     let active = true;
-    (async () => {
+    void (async () => {
       try {
         const res = await fetchSalesMetrics(userId, range, teamId);
         if (active) { setMetrics(res); setInitialLoading(false); }
@@ -84,17 +108,19 @@ export default function SalesDashboardRoot() {
   // Load latest automation snapshots (lightweight, not realtime)
   useEffect(() => {
     if (!userId) return;
-    (async () => {
+    void (async () => {
       try {
         const [metricsSnaps, forecastSnaps] = await Promise.all([
           fetchRecentSalesMetricsSnapshots(userId, teamId, 1),
           fetchRecentSalesForecastSnapshots(userId, teamId, 1)
         ]);
         if (metricsSnaps.length) {
-          setSnapMetrics({ pipeline: metricsSnaps[0].pipeline, closedWon: metricsSnaps[0].closedWon, ts: ((metricsSnaps[0].createdAt as any)?.toDate?.() || metricsSnaps[0].createdAt || new Date()) });
+          const created = toDateLike((metricsSnaps[0] as unknown as { createdAt?: unknown }).createdAt);
+          setSnapMetrics({ pipeline: metricsSnaps[0].pipeline, closedWon: metricsSnaps[0].closedWon, ts: created });
         }
         if (forecastSnaps.length) {
-          setSnapForecast({ forecast: forecastSnaps[0].forecast, period: forecastSnaps[0].period, ts: ((forecastSnaps[0].createdAt as any)?.toDate?.() || forecastSnaps[0].createdAt || new Date()) });
+          const createdF = toDateLike((forecastSnaps[0] as unknown as { createdAt?: unknown }).createdAt);
+          setSnapForecast({ forecast: forecastSnaps[0].forecast, period: forecastSnaps[0].period, ts: createdF });
         }
       } catch { /* silent */ }
     })();
@@ -108,16 +134,22 @@ export default function SalesDashboardRoot() {
     const winRate = ksource.find(k => /win/i.test(k.key))?.value || 27;
     const velocityDays = ksource.find(k => /velocity|cycle|avg_cycle/i.test(k.key))?.value || 34;
     return { totalPipeline, weightedForecast, winRate, velocityDays };
-  }, [metrics, mock?.kpis, dataVersion]);
+  }, [metrics, mock?.kpis]);
 
   const extendedKpis = useMemo(() => {
-    type Ext = DomainMetricSet['kpis'][number] & { target?: number; invertTarget?: boolean };
-    const base = (metrics?.kpis || mock?.kpis || []);
+    type Base = DomainMetricSet['kpis'][number];
+    type Ext = Base & { target?: number; invertTarget?: boolean };
+    const base: Base[] = metrics?.kpis || mock?.kpis || [];
     const targetMap: Record<string, { target?: number; invertTarget?: boolean }> = {};
-    metrics?.kpis?.forEach(k => { (targetMap as any)[k.key] = { target: (k as any).target, invertTarget: (k as any).invertTarget }; });
-    const extended: Ext[] = base.map(k => ({ ...k, ...(targetMap[k.key] || {}) }));
-    return extended;
-  }, [metrics, mock?.kpis, dataVersion]);
+    metrics?.kpis?.forEach(k => {
+      const maybe = k as unknown as { target?: unknown; invertTarget?: unknown };
+      targetMap[k.key] = {
+        target: typeof maybe.target === 'number' ? maybe.target : undefined,
+        invertTarget: typeof maybe.invertTarget === 'boolean' ? maybe.invertTarget : undefined
+      };
+    });
+    return base.map(k => ({ ...k, ...(targetMap[k.key] || {}) })) as Ext[];
+  }, [metrics, mock?.kpis]);
 
   function handleRefresh() { setDataVersion(v => v + 1); }
 

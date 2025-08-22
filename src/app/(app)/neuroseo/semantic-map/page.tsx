@@ -1,37 +1,37 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useProvenance } from "@/hooks/useProvenance";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from "@/components/tool-page-header";
-import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/context/AuthContext";
+import { useProvenance } from "@/hooks/useProvenance";
+import { db } from "@/lib/firebase";
+import { createDeterministicRng, randomFloat, randomInt, tagSynthetic } from '@/lib/synthetic/synthetic-utils';
+import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
+import { addDoc, collection } from "firebase/firestore";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  FileText,
-  Target,
-  TrendingUp,
+  BarChart3,
+  BookOpen,
   Brain,
   Download,
-  RefreshCw,
-  BarChart3,
+  FileText,
+  Lightbulb,
   Network,
+  RefreshCw,
   Search,
-  BookOpen,
-  Lightbulb
+  Target,
+  TrendingUp
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { createDeterministicRng, randomInt, randomFloat, tagSynthetic } from '@/lib/synthetic/synthetic-utils';
-import { useAuth } from "@/context/AuthContext";
-import { FeatureGate } from '@/components/subscription/FeatureGate';
-import { db } from "@/lib/firebase";
-import { collection, addDoc } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { toast } from "sonner";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Progress } from '@/components/ui/progress';
 
 interface TopicCluster {
   id: string;
@@ -104,8 +104,8 @@ export default function SemanticMapPage() {
         if (!cancelled) setAdoptionPct(data?.kpis?.semanticMapAggregateAdoptionPct ?? null);
       } catch { /* noop */ } finally { if (!cancelled) setAdoptionLoading(false); }
     };
-    load();
-    const id = setInterval(load, 8000); // light poll for live changes
+    void load();
+    const id = setInterval(() => { void load(); }, 8000); // light poll for live changes
     return () => { cancelled = true; clearInterval(id); };
   }, []);
 
@@ -207,7 +207,6 @@ export default function SemanticMapPage() {
     setIsAnalyzing(true);
     setAnalysisProgress(0);
     setCurrentResult(null);
-    setProvenance(null);
 
     try {
   const keywords = targetKeywords.split(',').map(k => k.trim()).filter(Boolean);
@@ -304,7 +303,7 @@ export default function SemanticMapPage() {
             }
           }
         }
-      } catch (e) {
+      } catch {
         // swallow and fallback
       }
       if (!result) {
@@ -327,13 +326,13 @@ export default function SemanticMapPage() {
 
   const exportResults = () => {
     if (!currentResult) return;
-    
+
     const exportData = {
       url: currentResult.url,
       analysis: currentResult,
       exportedAt: new Date().toISOString()
     };
-    
+
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -343,7 +342,7 @@ export default function SemanticMapPage() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
+
     toast.success("Results exported successfully!");
   };
 
@@ -429,8 +428,8 @@ export default function SemanticMapPage() {
           </div>
 
           <div className="flex justify-end">
-            <Button 
-              onClick={handleAnalyze}
+              <Button
+                onClick={() => void handleAnalyze()}
               disabled={isAnalyzing || !analysisUrl}
               className="min-w-[140px]"
             >
@@ -599,7 +598,7 @@ export default function SemanticMapPage() {
                             {cluster.topic}
                           </CardTitle>
                           <Badge variant={
-                            cluster.opportunity === 'high' ? 'default' : 
+                            cluster.opportunity === 'high' ? 'default' :
                             cluster.opportunity === 'medium' ? 'secondary' : 'outline'
                           }>
                             {cluster.opportunity} opportunity
@@ -626,7 +625,7 @@ export default function SemanticMapPage() {
                             </Badge>
                           </div>
                         </div>
-                        
+
                         <div className="space-y-2">
                           <Label className="text-sm font-medium">Keywords</Label>
                           <div className="flex flex-wrap gap-1">
@@ -635,7 +634,7 @@ export default function SemanticMapPage() {
                             ))}
                           </div>
                         </div>
-                        
+
                         <div className="space-y-2">
                           <Label className="text-sm font-medium">Content Gaps</Label>
                           <ul className="text-sm space-y-1">
@@ -668,7 +667,7 @@ export default function SemanticMapPage() {
                               {keyword.density.toFixed(2)}% density
                             </Badge>
                           </div>
-                          
+
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                               <Label className="text-sm">Prominence</Label>
@@ -717,7 +716,7 @@ export default function SemanticMapPage() {
                             How easy your content is to read and understand
                           </p>
                         </div>
-                        
+
                         <div>
                           <div className="flex justify-between mb-2">
                             <span>Content Depth</span>
@@ -728,7 +727,7 @@ export default function SemanticMapPage() {
                             Comprehensiveness and detail level of content
                           </p>
                         </div>
-                        
+
                         <div>
                           <div className="flex justify-between mb-2">
                             <span>Topic Coverage</span>
@@ -739,7 +738,7 @@ export default function SemanticMapPage() {
                             How well you cover related topics and subtopics
                           </p>
                         </div>
-                        
+
                         <div>
                           <div className="flex justify-between mb-2">
                             <span>Expertise Signals</span>
@@ -770,14 +769,14 @@ export default function SemanticMapPage() {
                             showing relationships between topics and concepts.
                           </p>
                         </div>
-                        
+
                         <div className="space-y-2">
                           <Label className="text-sm font-medium">Topic Connections</Label>
                           {currentResult.semanticGraph.edges.map((edge, index) => (
                             <div key={index} className="flex items-center justify-between text-sm p-2 bg-muted rounded">
                               <span>
-                                {currentResult.semanticGraph.nodes.find(n => n.id === edge.source)?.label} 
-                                → 
+                                {currentResult.semanticGraph.nodes.find(n => n.id === edge.source)?.label}
+                                →
                                 {currentResult.semanticGraph.nodes.find(n => n.id === edge.target)?.label}
                               </span>
                               <Badge variant="outline">
@@ -808,7 +807,7 @@ export default function SemanticMapPage() {
                             <div className="flex items-center gap-2 mb-2">
                               <h4 className="font-semibold">{rec.title}</h4>
                               <Badge variant={
-                                rec.priority === 'high' ? 'destructive' : 
+                                rec.priority === 'high' ? 'destructive' :
                                 rec.priority === 'medium' ? 'default' : 'secondary'
                               }>
                                 {rec.priority} priority

@@ -1,8 +1,8 @@
 import { randomInt } from "crypto";
-import { adminAuth } from "../src/lib/firebase-admin";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
+import { adminAuth } from "../src/lib/firebase-admin";
 
 // Load environment variables
 dotenv.config({ path: ".env.test" });
@@ -35,7 +35,7 @@ async function rotateTestUsers(): Promise<void> {
     }
 
     // Create new test users
-    const testUser = await adminAuth.createUser({
+    await adminAuth.createUser({
       email: newTestUser.email,
       password: newTestUser.password,
     });

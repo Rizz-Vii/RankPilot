@@ -5,7 +5,7 @@ import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
 import { motion } from "framer-motion"; // value import
 import { PanelLeft } from "lucide-react";
-import type { ReactNode, ComponentProps, ComponentPropsWithoutRef } from "react";
+import type { ComponentProps, ComponentPropsWithoutRef, ReactNode } from "react";
 import { createContext, forwardRef, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -80,7 +80,7 @@ const SidebarProvider = forwardRef<HTMLDivElement, SidebarProviderProps>(
     const [open, setOpen] = useState(defaultOpen && !isMobile);
     const [pinned, setPinned] = useState(defaultOpen && !isMobile);
     const [isUserMenuOpen, setUserMenuOpen] = useState(false);
-    const [hydrated, setHydrated] = useState(false);
+    const [hydrated, setHydrated] = useState(false); // used in context; keep
 
     useEffect(() => {
       try {
@@ -98,7 +98,7 @@ const SidebarProvider = forwardRef<HTMLDivElement, SidebarProviderProps>(
           setPinned(initialPinned);
           setOpen(initialPinned);
         }
-      } catch (error) {
+      } catch {
         const initialPinned = defaultOpen && !isMobile;
         setPinned(initialPinned);
         setOpen(initialPinned);
@@ -216,7 +216,6 @@ const Sidebar = forwardRef<
     setOpenMobile,
     pinned,
     isUserMenuOpen,
-    hydrated,
   } = useSidebar();
 
   // Prevent hydration mismatch

@@ -24,11 +24,12 @@ async function tryFetchHealth(url: string): Promise<{ crawler: number | null; se
     try {
         const res = await fetch(url, { headers: { Accept: 'application/json' } });
         if (!res.ok) return null;
-        const data: any = await res.json();
-        const kpis = data?.kpis || data;
+        const data: unknown = await res.json();
+        const obj = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
+        const kpis = obj.kpis && typeof obj.kpis === 'object' ? (obj.kpis as Record<string, unknown>) : obj;
         return {
-            crawler: typeof kpis?.crawlerAggregateAdoptionPct === 'number' ? kpis.crawlerAggregateAdoptionPct : null,
-            semantic: typeof kpis?.semanticMapAggregateAdoptionPct === 'number' ? kpis.semanticMapAggregateAdoptionPct : null,
+            crawler: typeof (kpis as Record<string, unknown>)?.crawlerAggregateAdoptionPct === 'number' ? (kpis as Record<string, unknown>).crawlerAggregateAdoptionPct as number : null,
+            semantic: typeof (kpis as Record<string, unknown>)?.semanticMapAggregateAdoptionPct === 'number' ? (kpis as Record<string, unknown>).semanticMapAggregateAdoptionPct as number : null,
         };
     } catch {
         return null;
@@ -76,8 +77,9 @@ async function main() {
             fs.mkdirSync(require('path').dirname(out), { recursive: true });
             fs.writeFileSync(out, JSON.stringify(summary, null, 2));
             console.log(`[adoption] wrote ${out}`);
-        } catch (e) {
-            console.error('[adoption] failed to write OUTPUT_FILE', (e as any)?.message);
+        } catch (e: unknown) {
+            const msg = e && typeof e === 'object' && 'message' in e ? String((e as { message?: unknown }).message) : String(e);
+            console.error('[adoption] failed to write OUTPUT_FILE', msg);
         }
     }
     let code = 0;

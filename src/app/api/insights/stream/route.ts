@@ -1,7 +1,7 @@
-import type { NextRequest } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { generateInsights as aiGenerateInsights } from '@/ai/flows/generate-insights';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { enforceProvenanceOnChunk } from '@/lib/middleware/provenance';
+import type { NextRequest } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -22,7 +22,7 @@ async function fetchRecentActivities(uid: string, limit = 25): Promise<ActivityL
                   typeof data?.['resultsSummary'] === 'string' ? (data?.['resultsSummary'] as string) : undefined,
             };
         });
-    } catch (e: unknown) {
+    } catch {
         // On any failure return an empty list (caller handles empty state)
         return [];
     }

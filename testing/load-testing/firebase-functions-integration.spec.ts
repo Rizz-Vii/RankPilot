@@ -3,6 +3,7 @@
  * Comprehensive testing for all deployed Firebase Functions
  */
 
+import type { APIResponse } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
 // Lightweight diagnostics aggregator to consume caught errors without altering test semantics
@@ -354,7 +355,8 @@ test.describe('RankPilot Firebase Functions - Security Tests', () => {
 
     test('Rate Limiting - Multiple Rapid Requests', async ({ page }) => {
         const rapidRequests = 50;
-        const promises: Promise<any>[] = [];
+        // Collect APIResponse promises (not nested Promises)
+        const promises: Promise<APIResponse>[] = [];
 
         console.log(`🚦 Testing rate limiting with ${rapidRequests} rapid requests...`);
 

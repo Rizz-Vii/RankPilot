@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface ConfettiProps {
   duration?: number;
@@ -20,20 +20,20 @@ export function Confetti({
     }>
   >([]);
 
-  const colors = [
-    "rgb(255,107,107)",
-    "rgb(78,205,196)",
-    "rgb(69,183,209)",
-    "rgb(150,206,180)",
-    "rgb(255,234,167)",
-    "rgb(221,160,221)",
-    "rgb(152,216,200)",
-    "rgb(247,220,111)",
-    "rgb(187,143,206)",
-    "rgb(133,193,233)",
-  ];
-
   useEffect(() => {
+  // Define color palette inside effect to avoid recreating array each render (exhaustive-deps warning)
+    const colors = [
+      "rgb(255,107,107)",
+      "rgb(78,205,196)",
+      "rgb(69,183,209)",
+      "rgb(150,206,180)",
+      "rgb(255,234,167)",
+      "rgb(221,160,221)",
+      "rgb(152,216,200)",
+      "rgb(247,220,111)",
+      "rgb(187,143,206)",
+      "rgb(133,193,233)",
+    ];
     const newParticles = Array.from({ length: particleCount }, (_, i) => ({
       id: i,
       left: Math.random() * 100,

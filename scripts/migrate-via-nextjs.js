@@ -4,7 +4,7 @@
       console.log("✅ MIGRATION COMPLETED SUCCESSFULLY!");
       console.log("  Total activities scanned: " + result.totalScanned);
       console.log("  Activities updated: " + result.updated);
-      
+
       if (result.migrations.length > 0) {
         console.log("🔄 Migration details:");
         result.migrations.forEach(m => {
@@ -28,7 +28,7 @@ import { collection, getDocs, doc, writeBatch } from 'firebase/firestore';
 
 const ACTIVITY_TYPE_MIGRATION_MAP = {
   "SEO Audit": "audit",
-  "Keyword Search": "keyword-research", 
+  "Keyword Search": "keyword-research",
   "SERP View": "serp-analysis",
   "Competitor Analysis": "competitor-analysis",
   "Content Analysis": "content-analysis",
@@ -39,21 +39,21 @@ const ACTIVITY_TYPE_MIGRATION_MAP = {
 export async function POST() {
   try {
     console.log("🚨 Starting activity schema migration...");
-    
+
     const usersSnapshot = await getDocs(collection(db, "users"));
     const activitiesToUpdate = [];
     let totalActivitiesScanned = 0;
-    
+
     for (const userDoc of usersSnapshot.docs) {
       const userId = userDoc.id;
       const activitiesSnapshot = await getDocs(collection(db, "users", userId, "activities"));
-      
+
       for (const activityDoc of activitiesSnapshot.docs) {
         totalActivitiesScanned++;
         const activityData = activityDoc.data();
         const currentType = activityData.type;
         const newType = ACTIVITY_TYPE_MIGRATION_MAP[currentType];
-        
+
         if (newType && newType !== currentType) {
           activitiesToUpdate.push({
             userId,
@@ -64,10 +64,10 @@ export async function POST() {
         }
       }
     }
-    
+
     if (activitiesToUpdate.length > 0) {
       const batch = writeBatch(db);
-      
+
       for (const activity of activitiesToUpdate) {
         const activityRef = doc(db, "users", activity.userId, "activities", activity.activityId);
         batch.update(activityRef, {
@@ -76,17 +76,17 @@ export async function POST() {
           schemaMigrationDate: new Date(),
         });
       }
-      
+
       await batch.commit();
     }
-    
+
     return NextResponse.json({
       success: true,
       totalScanned: totalActivitiesScanned,
       updated: activitiesToUpdate.length,
       migrations: activitiesToUpdate,
     });
-    
+
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -104,9 +104,9 @@ export async function POST() {
         fs.writeFileSync(apiPath, migrationRoute);
         console.log("📝 Created temporary migration API route");
 
-        // Start Next.js dev server in background
+      // Start Next.js dev server in background
         console.log("🚀 Starting Next.js server...");
-        const devServer = execSync('npm run dev -- --port 3001 &', {
+      void execSync('npm run dev -- --port 3001 &', {
             cwd: process.cwd(),
             stdio: 'pipe'
         });
@@ -142,7 +142,8 @@ export async function POST() {
         console.log("🧹 Cleaned up temporary files");
 
     } catch (error) {
-        console.error("❌ Migration failed:", error.message);
+      const msg = error && typeof error === 'object' && 'message' in error ? error.message : String(error);
+      console.error("❌ Migration failed:", msg);
         process.exit(1);
     }
 }

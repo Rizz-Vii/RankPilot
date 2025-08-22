@@ -1,6 +1,5 @@
 import type { Page } from "@playwright/test";
 import {
-  DEV_USER,
   UNIFIED_TEST_USERS,
   type UnifiedTestUser,
   type UserTier,
@@ -93,7 +92,7 @@ export class EnhancedAuth {
           waitUntil: 'domcontentloaded'
         });
         console.log(`✅ Navigation to ${expectedPath} successful`);
-      } catch (navError) {
+      } catch {
         // Check current URL if navigation fails
         const currentUrl = this.page.url();
         console.log(`⚠️ Navigation timeout. Current URL: ${currentUrl}`);
@@ -136,7 +135,7 @@ export class EnhancedAuth {
           ? '[data-testid="admin-content"], [data-testid="dashboard-content"], main, .main-content'
           : '[data-testid="dashboard-content"], main, .main-content';
         await this.gracefulUtils.waitForElementGracefully(contentSelector, { timeout: 4000, retries: 1 });
-      } catch (waitErr) {
+      } catch {
         console.log('⚠️ Dashboard content verification timed out, continuing as auth already verified.');
       }
 
@@ -164,7 +163,7 @@ export class EnhancedAuth {
             }).catch(() => { });
           }
         }
-      } catch (screenshotErr) {
+      } catch {
         console.warn('⚠️ Failed to capture failure screenshot (page may have crashed).');
       }
 
@@ -181,12 +180,13 @@ export class EnhancedAuth {
       if (!hadForm) return false;
 
       // Use requestSubmit when available to trigger native submit with validation
-      await this.page.locator('form').first().evaluate((form: any) => {
-        if (form && typeof form.requestSubmit === 'function') {
-          form.requestSubmit();
+      await this.page.locator('form').first().evaluate((form) => {
+        const f = form as HTMLFormElement | undefined;
+        if (f && typeof f.requestSubmit === 'function') {
+          f.requestSubmit();
           return true;
         }
-        form?.submit?.();
+        f?.submit?.();
         return true;
       });
       return true;
@@ -222,8 +222,8 @@ export class EnhancedAuth {
         const blockers = Array.from(document.querySelectorAll(
           '.fixed.inset-0, .backdrop, .backdrop-blur-sm, [data-testid="global-overlay"]'
         ));
-        blockers.forEach((el: any) => {
-          const style = window.getComputedStyle(el);
+        blockers.forEach((el) => {
+          const style = window.getComputedStyle(el as Element);
           // Only remove very high z-index overlays likely used as backdrops
           const z = parseInt(style.zIndex || '0', 10);
           if (z >= 50 && (style.position === 'fixed' || style.position === 'absolute')) {
@@ -320,7 +320,7 @@ export class EnhancedAuth {
       );
 
       console.log("✅ Body is now visible");
-    } catch (error) {
+    } catch {
       console.log("⚠️ Body visibility check failed, continuing anyway");
       await this.page.screenshot({
         path: `test-results/body-visibility-debug-${Date.now()}.png`,
@@ -363,7 +363,7 @@ export class EnhancedAuth {
       await this.page.waitForURL(/\/(login|$)/, { timeout: 10000 });
       console.log("✅ Successfully logged out");
 
-    } catch (error) {
+    } catch {
       console.log("⚠️ Logout may have failed, continuing...");
     }
   }

@@ -4,7 +4,8 @@ import { stripForbiddenDerivedFields } from '@/lib/guards/forbidden-derived-fiel
 import { getUnifiedMetricsSnapshot } from '@/lib/metrics/unified-metrics';
 
 const before = getUnifiedMetricsSnapshot().governance?.forbiddenFieldStrips || 0;
-const doc = { id: 'x1', roi: 1.23, ctr: 0.5, clicks: 10, ltv: 999 } as any;
+type Doc = { id: string; roi?: unknown; ctr?: unknown; clicks?: number; ltv?: unknown };
+const doc: Doc = { id: 'x1', roi: 1.23, ctr: 0.5, clicks: 10, ltv: 999 };
 const res = stripForbiddenDerivedFields(doc);
 const after = getUnifiedMetricsSnapshot().governance?.forbiddenFieldStrips || 0;
 

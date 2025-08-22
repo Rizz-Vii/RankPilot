@@ -4,11 +4,11 @@
  */
 
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { recordError, recordRateLimitRejection, recordRouteLatency } from '@/lib/metrics/unified-metrics';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
+import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
-import { recordRouteLatency, recordError, recordRateLimitRejection } from '@/lib/metrics/unified-metrics';
-import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
 
 // Types
 interface AdminChatRequest {
@@ -57,7 +57,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         try {
             const decoded = await adminAuth.verifyIdToken(idToken);
             uid = decoded.uid;
-        } catch (e) {
+        } catch {
             recordError('chat/admin', '4xx_user');
             recordRouteLatency('chat/admin', Date.now() - start);
             return NextResponse.json(enforceProvenance({ error: 'Invalid or expired token. Try reloading to refresh your session.', provenance: 'synthetic' }, { path: 'chat/admin' }), { status: 401 });
@@ -102,7 +102,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
                     data: { uid, message, sessionId, chatType: 'admin' }
                 }),
             });
-        } catch (e) {
+        } catch {
             recordError('chat/admin', '5xx_server');
             recordRouteLatency('chat/admin', Date.now() - start);
             return NextResponse.json(enforceProvenance({ error: 'Admin chat service unreachable', provenance: 'synthetic' }, { path: 'chat/admin' }), { status: 503 });
@@ -231,9 +231,13 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
         messagesSnap.docs.forEach((doc) => {
             const d = doc.data() as Partial<RawMsg> | undefined;
             const tsRaw = d?.timestamp;
-            const ts = tsRaw && typeof tsRaw === 'object' && 'toDate' in tsRaw && typeof (tsRaw as any).toDate === 'function'
-                ? (tsRaw as any).toDate().toISOString()
-                : new Date().toISOString();
+            let ts = new Date().toISOString();
+            if (tsRaw && typeof tsRaw === 'object' && 'toDate' in tsRaw) {
+                const maybe = (tsRaw as { toDate?: unknown }).toDate;
+                if (typeof maybe === 'function') {
+                    try { ts = (maybe as () => Date)().toISOString(); } catch { /* ignore */ }
+                }
+            }
             if (typeof d?.question === 'string') {
                 messages.push({
                     id: `${doc.id}_user`,

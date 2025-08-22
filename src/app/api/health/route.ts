@@ -42,6 +42,17 @@ export async function GET() {
     crawlP99: crawlerRaw.crawlP99 ?? null,
     analysisP99: crawlerRaw.analysisP99 ?? null
   };
+  // Queue metrics (DEV-QUEUE-01): flatten key health indicators for dashboards without needing full unified payload traversal
+  const queueRaw = unified.queue;
+  const queueMetrics = queueRaw ? {
+    enqueued: queueRaw.enqueued,
+    started: queueRaw.started,
+    completed: queueRaw.completed,
+    failed: queueRaw.failed,
+    running: queueRaw.running,
+    depth: queueRaw.depth,
+    successRatio: queueRaw.successRatio
+  } : undefined;
   // Aggregate team quota usage for today (lightweight; limit query to 200 docs)
   let teamQuota: { totalTeams: number; totalUsed: number; totalLimit: number; totalRejections: number } | null = null;
   try {
@@ -155,6 +166,7 @@ export async function GET() {
     subtoolUsage24h: subtoolUsage,
     crawler: crawlerMetrics,
     teamCrawlerQuota: teamQuota,
+    queue: queueMetrics,
     metrics: {
       neuro,
       unified

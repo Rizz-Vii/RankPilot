@@ -1,21 +1,21 @@
 "use client";
 // Enterprise Marketing - Lead Generation
-import React, { useEffect, useState } from 'react';
-import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { MetricCard } from '@/components/metrics/MetricCard';
+import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
-import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
-import { useToast } from '@/hooks/use-toast';
-import { importLeads, scoreLeads, routeLeads } from '@/lib/ai/marketing-automation';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import { ActionCard } from '@/components/shared/ActionCard';
 import { SkeletonOverlay } from '@/components/shared/SkeletonOverlay';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 import { useMarketingCampaignMetrics } from '@/hooks/useMarketingCampaignMetrics';
-import { PeriodSelector } from '@/components/metrics/PeriodSelector';
-import { LazyDataTable } from '@/components/metrics/LazyDataTable';
-import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
 import { useProvenance } from '@/hooks/useProvenance';
+import { importLeads, routeLeads, scoreLeads } from '@/lib/ai/marketing-automation';
+import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import React, { useEffect, useState } from 'react';
 
 interface ImportDialogProps {
   open: boolean;
@@ -39,7 +39,7 @@ function ImportDialog({ open, onClose, onImport, loading }: ImportDialogProps){
         />
         <div className="flex justify-end gap-2">
           <Button variant="ghost" size="sm" onClick={onClose} disabled={loading}>Cancel</Button>
-          <Button size="sm" onClick={()=> onImport(raw)} disabled={loading}>{loading? 'Importing…':'Import'}</Button>
+          <Button size="sm" onClick={() => { void onImport(raw); }} disabled={loading}>{loading ? 'Importing…' : 'Import'}</Button>
         </div>
       </div>
     </div>
@@ -51,7 +51,8 @@ export default function LeadGenerationPage() {
   const live = useMarketingCampaignMetrics(months);
   const { data: mock } = useMockDomainMetrics('marketing', true);
   interface MarketingMetric { key: string; label: string; value: number; delta: number; trend: number[]; intent?: string }
-  interface MarketingLive { kpis: MarketingMetric[]; rows: any[]; loading: boolean; addOptimistic?: (row: any)=>void }
+  interface MarketingRow { id: string; period: string; name?: string; channel?: string; impressions?: number; clicks?: number; leads?: number; spend?: number; revenue?: number; __provenance?: string;[k: string]: unknown }
+  interface MarketingLive { kpis: MarketingMetric[]; rows: MarketingRow[]; loading: boolean; addOptimistic?: (row: MarketingRow) => void }
   const data: MarketingLive = (live.kpis.length ? live : { kpis: (mock?.kpis || []), rows: [], loading:false, addOptimistic: live.addOptimistic }) as MarketingLive;
   useEffect(() => { trackDashboardView('marketing'); }, []);
   const { toast } = useToast();
@@ -85,7 +86,7 @@ export default function LeadGenerationPage() {
             spend: 0,
             revenue: 0,
             __provenance: 'optimistic',
-          } as any
+          }
         );
       }
       await countPromise;
@@ -119,7 +120,7 @@ export default function LeadGenerationPage() {
           spend: 0,
           revenue: 0,
           __provenance: 'optimistic',
-        } as any
+        }
       );
       const res = await scoreLeads(userId, teamId);
       toast({ title: 'Scoring complete', description: `Updated ${res.updated} leads.` });
@@ -148,7 +149,7 @@ export default function LeadGenerationPage() {
           spend: 0,
           revenue: 0,
           __provenance: 'optimistic',
-        } as any
+        }
       );
       const res = await routeLeads(userId, teamId);
       toast({ title: 'Routing complete', description: `Routed ${res.routed} leads.` });
@@ -197,8 +198,8 @@ export default function LeadGenerationPage() {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Lead Actions</h2>
           <div className="grid gap-4 md:grid-cols-3">
             <ActionCard title="Import List" desc="Bulk import + enrich leads." action={()=> setImportOpen(true)} label={busy==='import'? 'Working…':'Import'} disabled={!!busy} />
-            <ActionCard title="Score Leads" desc="Run AI scoring model." action={handleScore} label={busy==='score'? 'Scoring…':'Score'} disabled={!!busy} />
-            <ActionCard title="Route Leads" desc="Distribute to sales teams." action={handleRoute} label={busy==='route'? 'Routing…':'Route'} disabled={!!busy} />
+            <ActionCard title="Score Leads" desc="Run AI scoring model." action={() => { void handleScore(); }} label={busy === 'score' ? 'Scoring…' : 'Score'} disabled={!!busy} />
+            <ActionCard title="Route Leads" desc="Distribute to sales teams." action={() => { void handleRoute(); }} label={busy === 'route' ? 'Routing…' : 'Route'} disabled={!!busy} />
           </div>
         </section>
         <ImportDialog open={importOpen} onClose={()=> setImportOpen(false)} onImport={handleImport} loading={busy==='import'} />

@@ -17,12 +17,16 @@
  *  --dry            Dry run (show counts, no mutation)
  */
 // Use require to ensure CommonJS interop in ts-node NodeNext mode (matches other delegation scripts)
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const qu = require('./queue-utils.ts') || (globalThis as any).__QUEUE_UTILS__;
-import type * as Q from './queue-utils';
-const hoseTasks = qu.hoseTasks as Q['hoseTasks'];
-const purgeTasks = qu.purgeTasks as Q['purgeTasks'];
-const readQueue = qu.readQueue as Q['readQueue'];
+
+const qu = require('./queue-utils.ts') || (globalThis as unknown as { __QUEUE_UTILS__?: unknown }).__QUEUE_UTILS__;
+type QueueModuleShape = {
+    hoseTasks: (predicate: (t: { taskId: string; summary: string; status: string; updatedAt: string }) => boolean) => number;
+    purgeTasks: (predicate: (t: { taskId: string; summary: string; status: string; updatedAt: string }) => boolean) => number;
+    readQueue: () => Array<{ taskId: string; summary: string; status: string; updatedAt: string }>;
+};
+const hoseTasks = (qu as unknown as QueueModuleShape).hoseTasks;
+const purgeTasks = (qu as unknown as QueueModuleShape).purgeTasks;
+const readQueue = (qu as unknown as QueueModuleShape).readQueue;
 
 interface Args { [k: string]: string | boolean | undefined; }
 function parseArgs(): Args {
@@ -55,11 +59,14 @@ const dry = !!args.dry;
 
 const now = Date.now();
 const queue = readQueue();
-const predicate = (t: any) => {
+type TaskLike = { taskId?: string; summary?: string; status?: string; updatedAt?: string };
+const predicate = (t: TaskLike) => {
     if (all) return true;
-    if (match && !(t.taskId.includes(match) || (t.summary || '').includes(match))) return false;
+    const taskId = typeof t.taskId === 'string' ? t.taskId : '';
+    const summary = typeof t.summary === 'string' ? t.summary : '';
+    if (match && !(taskId.includes(match) || summary.includes(match))) return false;
     if (status && t.status !== status) return false;
-    if (olderMinutes && (now - new Date(t.updatedAt).getTime()) < olderMinutes * 60_000) return false;
+    if (olderMinutes && t.updatedAt && (now - new Date(t.updatedAt).getTime()) < olderMinutes * 60_000) return false;
     return true;
 };
 

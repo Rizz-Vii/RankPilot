@@ -1,5 +1,5 @@
-import { onCall } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
+import { onCall } from "firebase-functions/v2/https";
 
 if (!admin.apps.length) {
     admin.initializeApp();
@@ -8,7 +8,7 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 async function collectUserData(userId: string) {
-    const exportPayload: Record<string, any[]> = {};
+    const exportPayload: Record<string, unknown[]> = {};
     const collections = [
         { path: `users/${userId}`, single: true },
         { path: `users/${userId}/activities` },
@@ -20,16 +20,16 @@ async function collectUserData(userId: string) {
     for (const c of collections) {
         if (c.single) {
             const docSnap = await db.doc(c.path).get();
-            exportPayload["profile"] = docSnap.exists ? [{ id: docSnap.id, ...docSnap.data() }] : [];
+            exportPayload["profile"] = docSnap.exists ? [{ id: docSnap.id, ...(docSnap.data() as Record<string, unknown> | undefined) }] : [];
         } else {
             const snap = await db.collection(c.path).limit(500).get();
-            exportPayload[c.path.split("/").pop() || c.path] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            exportPayload[c.path.split("/").pop() || c.path] = snap.docs.map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) }));
         }
     }
     return exportPayload;
 }
 
-export const exportUserData = onCall<{ userId?: string }, any>(async (req) => {
+export const exportUserData = onCall<{ userId?: string }>(async (req) => {
     const authUid = req.auth?.uid;
     const targetUserId = req.data?.userId || authUid;
     if (!authUid || !targetUserId || authUid !== targetUserId) {
@@ -39,7 +39,7 @@ export const exportUserData = onCall<{ userId?: string }, any>(async (req) => {
     return { generatedAt: new Date().toISOString(), data: payload };
 });
 
-export const requestAccountDeletion = onCall<{ userId?: string }, any>(async (req) => {
+export const requestAccountDeletion = onCall<{ userId?: string }>(async (req) => {
     const authUid = req.auth?.uid;
     const targetUserId = req.data?.userId || authUid;
     if (!authUid || !targetUserId || authUid !== targetUserId) {

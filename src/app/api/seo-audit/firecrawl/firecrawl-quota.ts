@@ -25,7 +25,7 @@ export async function enforceFirecrawlQuota(limit: number, scopeKey: string): Pr
             runTransaction: (fn: (tx: {
                 get: (ref: unknown) => Promise<{ exists: boolean; data(): unknown }>;
                 set: (ref: unknown, data: unknown, opts?: { merge?: boolean }) => unknown;
-            }) => Promise<unknown>);
+            }) => Promise<unknown>) => Promise<unknown>;
         };
         const docRef = adminDb.collection('firecrawlQuota').doc(scopeKey);
         const now = Date.now();
@@ -36,7 +36,16 @@ export async function enforceFirecrawlQuota(limit: number, scopeKey: string): Pr
             }) => {
             const snap = await tx.get(docRef);
             let data: { count?: number; windowStart?: unknown } = snap.exists ? (snap.data() as { count?: number; windowStart?: unknown }) : { count: 0, windowStart: (global as unknown as { Timestamp?: { fromMillis: (ms: number) => unknown } }).Timestamp?.fromMillis(now) || new Date(now) };
-            const windowStartMs = data?.windowStart?.toMillis ? data.windowStart.toMillis() : (data?.windowStart?.seconds ? data.windowStart.seconds * 1000 : now);
+        const ws = data?.windowStart as unknown;
+        let windowStartMs = now;
+        if (ws && typeof ws === 'object') {
+            const maybeTs = ws as { toMillis?: () => number; seconds?: number };
+            if (typeof maybeTs.toMillis === 'function') {
+                try { windowStartMs = maybeTs.toMillis(); } catch { windowStartMs = now; }
+            } else if (typeof maybeTs.seconds === 'number') {
+                windowStartMs = maybeTs.seconds * 1000;
+            }
+        }
             if (now - windowStartMs >= FIRECRAWL_WINDOW_MS) {
                 data.count = 0; data.windowStart = (global as unknown as { Timestamp?: { fromMillis: (ms: number) => unknown } }).Timestamp?.fromMillis(now) || new Date(now);
             }
@@ -47,7 +56,7 @@ export async function enforceFirecrawlQuota(limit: number, scopeKey: string): Pr
             data.count = (data.count || 0) + 1;
             tx.set(docRef, data, { merge: true });
             return { allowed: true, remaining: Math.max(0, limit - data.count), resetAt: new Date(windowStartMs + FIRECRAWL_WINDOW_MS), retryAfterSeconds: 0 };
-        });
+    }) as { allowed: boolean; remaining: number; resetAt: Date; retryAfterSeconds: number };
         return res;
     } catch (err: unknown) {
         // Fallback to in-memory (single-instance) if Firestore unavailable

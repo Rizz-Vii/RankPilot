@@ -1,8 +1,8 @@
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { getLogger } from '@/lib/logging/app-logger';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { getLogger } from '@/lib/logging/app-logger';
-import { adminDb, adminAuth } from '@/lib/firebase-admin';
-import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 
 // Composite cursor pagination over financeInvoices
 // Refinement (FIN-02): order by period desc, then createdAt desc to avoid skipping invoices when multiple share the same period.
@@ -75,7 +75,8 @@ export const GET = withProvenance(async function GET(req: Request) {
         res.headers.set('x-billing-diagnostics', `auth=ok; items=${docs.length}; hasMore=${hasMore}`);
         return res;
     } catch (e: unknown) {
-        logger.error('billing-invoices.error', { error: (e as any)?.message });
+        const msg = e instanceof Error ? e.message : (e && typeof e === 'object' && 'message' in (e as Record<string, unknown>) && typeof (e as { message?: unknown }).message === 'string' ? String((e as { message?: unknown }).message) : 'unknown_error');
+        logger.error('billing-invoices.error', { error: msg });
         const res = NextResponse.json(enforceProvenance({ error: 'internal_error' }, { path: 'billing/invoices', note: 'exception' }), { status: 500 });
         res.headers.set('x-billing-diagnostics', 'auth=unknown; error=exception');
         return res;

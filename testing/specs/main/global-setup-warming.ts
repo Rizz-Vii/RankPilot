@@ -20,7 +20,7 @@ async function globalSetup(config: FullConfig) {
         console.log("🔍 Checking development server...");
         await page.goto(baseURL, { timeout: 10000 });
         console.log("✅ Development server is running");
-    } catch (error) {
+    } catch {
         console.log("❌ Development server not running. Please start with: npm run dev-no-turbopack");
         throw new Error("Development server not available");
     }
@@ -65,8 +65,11 @@ async function globalSetup(config: FullConfig) {
         await page.waitForURL('**/dashboard', { timeout: 25000 });
         isAuthenticated = true;
         console.log("✅ Authentication successful");
-    } catch (authError: any) {
-        console.log(`⚠️ Authentication failed: ${authError.message || authError}`);
+    } catch (authError: unknown) {
+        const authMsg = (authError && typeof authError === 'object' && 'message' in authError)
+            ? String((authError as { message?: unknown }).message)
+            : String(authError);
+        console.log(`⚠️ Authentication failed: ${authMsg}`);
         console.log("   Will skip protected pages during warming");
     }
 
@@ -100,8 +103,11 @@ async function globalSetup(config: FullConfig) {
             const loadTime = Date.now() - startTime;
             console.log(`   ✅ ${pageInfo.name} warmed in ${loadTime}ms`);
 
-        } catch (error: any) {
-            console.log(`   ⚠️ ${pageInfo.name} warming failed: ${error?.message || error}`);
+        } catch (error: unknown) {
+            const msg = (error && typeof error === 'object' && 'message' in error)
+                ? String((error as { message?: unknown }).message)
+                : String(error);
+            console.log(`   ⚠️ ${pageInfo.name} warming failed: ${msg}`);
             // Continue with other pages
         }
     }

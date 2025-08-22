@@ -9,7 +9,7 @@ function getInitial(): boolean {
   try {
     const raw = window.localStorage.getItem(LS_KEY);
     if (raw === 'true') return true;
-  } catch (_err) {
+  } catch {
     // ignore
   }
   return false;
@@ -27,7 +27,7 @@ export const AgentsToggle = (): JSX.Element | null => {
     if (!mounted) return;
     try {
       window.localStorage.setItem(LS_KEY, String(enabled));
-    } catch (_err) {
+    } catch {
       // ignore
     }
 
@@ -35,7 +35,7 @@ export const AgentsToggle = (): JSX.Element | null => {
       try {
         const method = enabled ? 'POST' : 'DELETE';
         await fetch('/api/agents/enable', { method });
-      } catch (_err) {
+      } catch {
         // swallow
       }
     };

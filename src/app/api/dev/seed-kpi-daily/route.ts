@@ -1,6 +1,6 @@
+import { adminDb } from '@/lib/firebase-admin';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,8 +38,8 @@ export async function POST(_req: NextRequest): Promise<NextResponse> {
         ma7SemanticAdoption: 68,
       };
 
-      // Use a narrow any cast only for the Firestore write to satisfy the client typings.
-      tx.set(ref, doc as any);
+      // Narrow write: Firestore accepts a plain object map; retain unknown values as-is.
+      tx.set(ref, doc as Record<string, unknown>);
     });
 
     return NextResponse.json({ ok: true, seeded: true, date: today });

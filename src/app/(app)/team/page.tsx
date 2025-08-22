@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 // Removed full-screen LoadingScreen in favor of inline skeleton rows
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -41,6 +42,10 @@ import {
 } from "@/components/ui/table";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
+import { isDemoContentEnabled } from "@/lib/flags/demo";
+import type { TeamMember } from "@/lib/services/team.service";
+import { removeTeamMember as apiRemoveMember, updateTeamMemberRole as apiUpdateRole, canModifyMember, canRemoveMember, inviteTeamMember, resendTeamInvite, subscribeToTeamMembers, transferTeamOwnership } from "@/lib/services/team.service";
+import { safeErrorMessage } from "@/lib/utils";
 import {
   AlertCircle,
   BarChart3,
@@ -55,13 +60,8 @@ import {
   Users
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { isDemoContentEnabled } from "@/lib/flags/demo";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { safeErrorMessage } from "@/lib/utils";
-import type { TeamMember} from "@/lib/services/team.service";
-import { subscribeToTeamMembers, inviteTeamMember, updateTeamMemberRole as apiUpdateRole, removeTeamMember as apiRemoveMember, resendTeamInvite, transferTeamOwnership, canModifyMember, canRemoveMember } from "@/lib/services/team.service";
 // Old one-off Firestore fetch utilities removed now that realtime subscription is stable
 // TeamMember now imported from service layer
 
@@ -101,29 +101,46 @@ export default function TeamManagementPage() {
   const [isInviting, setIsInviting] = useState(false);
   const [transferLoadingId, setTransferLoadingId] = useState<string | null>(null);
 
-  const initSubscription = useCallback(() => {
-    if (!user?.uid) return;
-    const unsubscribePromise = subscribeToTeamMembers({
-      userId: user.uid,
+  // Hold latest unsubscribe function once subscription promise resolves
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    if (!(user && canUseFeature("team_management"))) return;
+    let active = true;
+    // Fire subscription promise and capture unsubscribe when ready
+    void subscribeToTeamMembers({
+      userId: user.uid!,
       onData: (members) => {
+        if (!active) return; // guard against late emission after unmount
         setTeamMembers(members);
         setLoading(false);
       },
       onError: (err) => {
+        if (!active) return;
         console.error("Team subscription error", err);
         toast.error("Team updates failed");
         setLoading(false);
       }
+    }).then((unsub) => {
+      if (!active) {
+        try { unsub(); } catch { /* noop */ }
+        return;
+      }
+      unsubscribeRef.current = unsub;
+    }).catch((err) => {
+      // already surfaced via onError, only log if active (diagnostic)
+      if (active) console.error("Team subscription setup failed", err);
     });
-    return unsubscribePromise;
-  }, [user?.uid]);
 
-  useEffect(() => {
-    if (user && canUseFeature("team_management")) {
-      const maybeUnsub = initSubscription();
-      return () => { maybeUnsub?.then?.(u => u()); };
-    }
-  }, [user, canUseFeature, initSubscription]);
+    return () => {
+      active = false;
+      const u = unsubscribeRef.current;
+      if (u) {
+        try { u(); } catch { /* noop */ }
+      }
+      unsubscribeRef.current = null;
+    };
+  }, [user, canUseFeature]);
 
   const sendInvite = async () => {
     if (!inviteForm.email) {
@@ -316,7 +333,7 @@ export default function TeamManagementPage() {
                 </div>
                 <div className="flex gap-3 pt-4">
                   <Button
-                    onClick={sendInvite}
+                    onClick={() => { void sendInvite(); }}
                     disabled={isInviting}
                     className="flex-1"
                   >
@@ -338,7 +355,7 @@ export default function TeamManagementPage() {
         <div className="grid gap-4 md:grid-cols-3">
           <Card
             className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => router.push("/team/chat")}
+            onClick={() => { void router.push("/team/chat"); }}
           >
             <CardContent className="flex items-center gap-4 p-6">
               <div className="rounded-full bg-primary/10 p-3">
@@ -355,7 +372,7 @@ export default function TeamManagementPage() {
 
           <Card
             className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => router.push("/team/projects")}
+            onClick={() => { void router.push("/team/projects"); }}
           >
             <CardContent className="flex items-center gap-4 p-6">
               <div className="rounded-full bg-success/10 p-3">
@@ -372,7 +389,7 @@ export default function TeamManagementPage() {
 
           <Card
             className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => router.push("/team/reports")}
+            onClick={() => { void router.push("/team/reports"); }}
           >
             <CardContent className="flex items-center gap-4 p-6">
               <div className="rounded-full bg-accent/10 p-3">
@@ -463,7 +480,7 @@ export default function TeamManagementPage() {
               <TableBody>
                 {isLoading && (
                   [...Array(5)].map((_, i) => (
-                    <TableRow key={`skeleton-${i}`} data-testid={`team-member-skeleton-${i}`}> 
+                    <TableRow key={`skeleton-${i}`} data-testid={`team-member-skeleton-${i}`}>
                       <TableCell colSpan={5} className="py-4">
                         <div className="flex items-center gap-4 animate-pulse">
                           <div className="h-8 w-8 rounded-full bg-muted" />
@@ -534,7 +551,7 @@ export default function TeamManagementPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => resendInvite(member.id)}
+                            onClick={() => { void resendInvite(member.id); }}
                             data-testid={`resend-invite-${member.id}`}
                           >
                             Resend
@@ -544,9 +561,7 @@ export default function TeamManagementPage() {
                         {member.role !== "owner" && (
                           <Select
                             value={member.role}
-                            onValueChange={(value: TeamMember["role"]) =>
-                              updateMemberRole(member.id, value)
-                            }
+                            onValueChange={(value: TeamMember["role"]) => { void updateMemberRole(member.id, value); }}
                           >
                             <SelectTrigger className="w-[100px]" data-testid={`role-select-${member.id}`}>
                               <SelectValue />
@@ -564,7 +579,8 @@ export default function TeamManagementPage() {
                             variant="outline"
                             size="sm"
                             disabled={transferLoadingId === member.id}
-                            onClick={async () => {
+                            onClick={() => {
+                              void (async () => {
                               if (!window.confirm(`Transfer ownership to ${member.name}? This will reduce your permissions.`)) return;
                               setTransferLoadingId(member.id);
                               try {
@@ -575,6 +591,7 @@ export default function TeamManagementPage() {
                               } finally {
                                 setTransferLoadingId(null);
                               }
+                              })();
                             }}
                             className="text-accent-foreground hover:text-accent-foreground/80"
                             data-testid={`transfer-ownership-${member.id}`}
@@ -587,7 +604,7 @@ export default function TeamManagementPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => removeMember(member.id)}
+                            onClick={() => { void removeMember(member.id); }}
                             className="text-destructive-foreground hover:text-destructive-foreground/80"
                             aria-label={`Remove ${member.name}`}
                             data-testid={`remove-member-${member.id}`}

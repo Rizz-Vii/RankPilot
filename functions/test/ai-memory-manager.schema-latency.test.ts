@@ -2,11 +2,27 @@ import { expect } from 'chai';
 import { z } from 'zod';
 import { aiMemoryManager } from '../src/lib/ai-memory-manager';
 
+type ProviderConfig = {
+    model: string;
+    apiKey: string;
+    baseUrl?: string;
+    timeout?: number;
+    maxTokens?: number;
+    temperature?: number;
+};
+
+type AIMemoryManagerPrivate = {
+    makeAIRequest: (...args: unknown[]) => Promise<unknown> | unknown;
+    services: Map<string, ProviderConfig>;
+    processRequest: (arg: { prompt: string; model: string; options?: Record<string, unknown> }) => Promise<{ content: string } & Record<string, unknown>>;
+};
+
 describe('AI Memory Manager - schema validation and latency budget', () => {
-    const origEnv = { ...process.env } as any;
+    const origEnv: NodeJS.ProcessEnv = { ...process.env };
+    const mm = aiMemoryManager as unknown as AIMemoryManagerPrivate;
 
     beforeEach(() => {
-        process.env = { ...origEnv } as any;
+        process.env = { ...origEnv } as NodeJS.ProcessEnv;
         // Ensure no real providers are hit during these tests
         delete process.env.OPENAI_API_KEY;
         delete process.env.GEMINI_API_KEY;
@@ -14,10 +30,9 @@ describe('AI Memory Manager - schema validation and latency budget', () => {
     });
 
     it('throws when strictSchema=true and content does not satisfy schema (JSON parse fails)', async () => {
-        const stub = (aiMemoryManager as any).makeAIRequest as Function;
         // Temporarily replace makeAIRequest for this test
-        const originalImpl = stub.bind(aiMemoryManager);
-        (aiMemoryManager as any).makeAIRequest = async () => 'not json';
+        const originalImpl = mm.makeAIRequest;
+        (mm as unknown as { makeAIRequest: (...args: unknown[]) => Promise<string> | string }).makeAIRequest = async () => 'not json';
         let threw = false;
         try {
             await aiMemoryManager.processRequest({
@@ -28,22 +43,21 @@ describe('AI Memory Manager - schema validation and latency budget', () => {
                     strictSchema: true,
                     expectJson: true,
                 },
-            } as any);
-        } catch (e) {
+            });
+        } catch {
             threw = true;
         } finally {
             // restore
-            (aiMemoryManager as any).makeAIRequest = originalImpl;
+            (mm as unknown as { makeAIRequest: AIMemoryManagerPrivate['makeAIRequest'] }).makeAIRequest = originalImpl;
         }
         expect(threw).to.equal(true);
     });
 
     it('returns response when strictSchema=false even if schema parsing fails', async () => {
-        const stub = (aiMemoryManager as any).makeAIRequest as Function;
-        const originalImpl = stub.bind(aiMemoryManager);
-        (aiMemoryManager as any).makeAIRequest = async () => 'still not json';
+        const originalImpl = mm.makeAIRequest;
+        (mm as unknown as { makeAIRequest: (...args: unknown[]) => Promise<string> | string }).makeAIRequest = async () => 'still not json';
         // Ensure a provider is configured on the singleton services map
-        const services: Map<string, any> = (aiMemoryManager as any).services;
+        const services: AIMemoryManagerPrivate['services'] = mm.services;
         const snapshot = new Map(services);
         services.set('openai', { model: 'gpt-4o', apiKey: 'test', baseUrl: 'http://localhost', timeout: 5000, maxTokens: 128, temperature: 0 });
         try {
@@ -55,13 +69,16 @@ describe('AI Memory Manager - schema validation and latency budget', () => {
                     strictSchema: false,
                     expectJson: true,
                 },
-            } as any);
+            });
             expect(res.content).to.equal('still not json');
-            expect((res as any).structured).to.equal(undefined);
+            const structured = (res && typeof res === 'object' && 'structured' in res)
+                ? (res as { structured: unknown }).structured
+                : undefined;
+            expect(structured).to.equal(undefined);
         } finally {
-            (aiMemoryManager as any).makeAIRequest = originalImpl;
+            (mm as unknown as { makeAIRequest: AIMemoryManagerPrivate['makeAIRequest'] }).makeAIRequest = originalImpl;
             // restore services
-            (aiMemoryManager as any).services = snapshot;
+            (mm as unknown as { services: AIMemoryManagerPrivate['services'] }).services = snapshot as AIMemoryManagerPrivate['services'];
         }
     });
 
@@ -69,14 +86,13 @@ describe('AI Memory Manager - schema validation and latency budget', () => {
         // Ensure mock flag is not driving this behavior
         process.env.AI_MOCK_FALLBACK = 'false';
 
-        const stub = (aiMemoryManager as any).makeAIRequest as Function;
-        const originalImpl = stub.bind(aiMemoryManager);
-        (aiMemoryManager as any).makeAIRequest = async () => {
+        const originalImpl = mm.makeAIRequest;
+        (mm as unknown as { makeAIRequest: (...args: unknown[]) => Promise<string> | string }).makeAIRequest = async () => {
             await new Promise(r => setTimeout(r, 50));
             return 'late content';
         };
         // Ensure a provider is configured
-        const services: Map<string, any> = (aiMemoryManager as any).services;
+        const services: AIMemoryManagerPrivate['services'] = mm.services;
         const snapshot = new Map(services);
         services.set('openai', { model: 'gpt-4o', apiKey: 'test', baseUrl: 'http://localhost', timeout: 5000, maxTokens: 128, temperature: 0 });
 
@@ -84,12 +100,12 @@ describe('AI Memory Manager - schema validation and latency budget', () => {
             const res = await aiMemoryManager.processRequest({
                 prompt: 'Budget test prompt',
                 model: 'gpt-4o',
-                options: { latencyBudgetMs: 1 },
-            } as any);
+                options: { latencyBudgetMs: 1 } as Record<string, unknown>,
+            });
             expect(res.content).to.match(/\[mock-ai:.*\] Budget test prompt/);
         } finally {
-            (aiMemoryManager as any).makeAIRequest = originalImpl;
-            (aiMemoryManager as any).services = snapshot;
+            (mm as unknown as { makeAIRequest: AIMemoryManagerPrivate['makeAIRequest'] }).makeAIRequest = originalImpl;
+            (mm as unknown as { services: AIMemoryManagerPrivate['services'] }).services = snapshot as AIMemoryManagerPrivate['services'];
         }
     });
 });

@@ -1,10 +1,10 @@
 #!/usr/bin/env ts-node
 // PROV-01 provenance enforcement smoke tests
 import assert from 'assert';
-import { sanitizeMarketingCampaignDoc } from '../src/lib/firebase/marketing-write-guard';
-import { executeNeuroLive } from '../src/lib/neuroseo/live-exec';
-import { hasProvenance, provenanceTag } from '../src/lib/middleware/provenance';
 import { adminDb } from '../src/lib/firebase-admin';
+import { sanitizeMarketingCampaignDoc } from '../src/lib/firebase/marketing-write-guard';
+import { hasProvenance, provenanceTag } from '../src/lib/middleware/provenance';
+import { executeNeuroLive } from '../src/lib/neuroseo/live-exec';
 
 async function testMarketingPreservesProvenance() {
     const cleaned = sanitizeMarketingCampaignDoc({ name: 'Test', channel: 'email', impressions: 0, clicks: 0, spend: 0, period: '2025-08', __provenance: 'synthetic' });
@@ -36,7 +36,7 @@ async function testLiveRouteProvenance() {
         console.warn('live route not reachable (dev server?) skipping');
         return;
     }
-    const json: any = await res.json();
+    const json = await res.json();
     if (!hasProvenance(json)) throw new Error('live route response missing provenance');
     console.log('Live route provenance:', provenanceTag(json));
 }
@@ -61,8 +61,8 @@ async function testStreamRouteProvenance() {
                 const eventName = match[1];
                 try {
                     const data = JSON.parse(match[2]);
-                    if (data.provenance) finalProv = data.provenance;
-                } catch (err) {
+                    if (data && typeof data === 'object' && 'provenance' in data) finalProv = String((data as Record<string, unknown>).provenance);
+                } catch {
                     // ignore JSON parse errors from partial SSE chunks
                 }
                 if (eventName === 'end') break;
@@ -81,7 +81,7 @@ async function main() {
     await testStreamRouteProvenance();
     console.log('PROV-01 provenance tests completed');
 }
-main().catch((err) => {
-    console.error('PROV-01 provenance tests FAILED', err);
+main().catch(() => {
+    console.error('PROV-01 provenance tests FAILED');
     process.exit(1);
 });

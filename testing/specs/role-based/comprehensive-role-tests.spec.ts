@@ -1,24 +1,24 @@
 /**
  * Comprehensive Role-Based Tests - Resolves Missing Test Files
- * 
+ *
  * Creates the role-based test files referenced in Playwright configs.
  * Tests tier-based access control with our unified test users.
- * 
+ *
  * Generated: July 26, 2025
  * Integration: Unified test users, enhanced auth service, access control
  */
 
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import {
+    // getTiersWithAccess, // unused
+    // getTiersWithoutAccess, // unused
+    TEST_FEATURE_ACCESS,
+    UNIFIED_TEST_USERS
+} from '../../config/unified-test-users';
 import {
     EnhancedAuth,
     type UserTier
 } from '../../utils/enhanced-auth';
-import {
-    UNIFIED_TEST_USERS,
-    getTiersWithAccess,
-    getTiersWithoutAccess,
-    TEST_FEATURE_ACCESS
-} from '../../config/unified-test-users';
 
 test.describe('Role-Based Access Control - Free Tier', () => {
     let auth: EnhancedAuth;

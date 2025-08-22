@@ -1,6 +1,5 @@
 // TRACKD-GENERATED: consolidated unsafe dynamic types into single alias (defer precise modeling)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type Unsafe = any; // TODO:TRACKD-DEFER:typing refine dynamic execution context & plan/result types
+export type Unsafe = unknown; // TODO:TRACKD-DEFER:typing refine dynamic execution context & plan/result types
 
 export interface Task {
   id: string;

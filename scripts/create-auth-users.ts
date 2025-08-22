@@ -1,7 +1,7 @@
 // Script to create Firebase Auth users for testing
-import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
 import * as dotenv from "dotenv";
+import { cert, getApps, initializeApp } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 
 // Load environment variables
 dotenv.config({ path: ".env.test" });
@@ -83,9 +83,12 @@ async function createTestUsers() {
           `   ✅ User ${user.email} already exists (UID: ${existingUser.uid})`
         );
         continue;
-      } catch (error: any) {
-        // User doesn't exist, we can create it
-        if (error.code !== "auth/user-not-found") {
+      } catch (error: unknown) {
+        // User doesn't exist, we can create it (only swallow not-found)
+        const code = (error && typeof error === 'object' && 'code' in error)
+          ? String((error as { code?: unknown }).code)
+          : undefined;
+        if (code !== "auth/user-not-found") {
           throw error;
         }
       }
@@ -100,10 +103,13 @@ async function createTestUsers() {
       });
 
       console.log(`   ✅ Created user: ${user.email} (UID: ${userRecord.uid})`);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const msg = (error && typeof error === 'object' && 'message' in error)
+        ? String((error as { message?: unknown }).message)
+        : String(error);
       console.error(
         `   ❌ Failed to create user ${user.email}:`,
-        error.message
+        msg
       );
     }
   }

@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { useSubscription } from "@/hooks/useSubscription";
-import LoadingScreen from "@/components/ui/loading-screen";
 import { FeatureGate } from "@/components/subscription/FeatureGate";
+import { TutorialBanner } from "@/components/tutorials/TutorialBanner";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,23 +10,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import LoadingScreen from "@/components/ui/loading-screen";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/context/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 import {
-  Palette,
-  Upload,
-  Eye,
   Download,
+  Eye,
   FileText,
   Monitor,
+  Palette,
   Smartphone,
+  Upload,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { TutorialBanner } from "@/components/tutorials/TutorialBanner";
 
 interface BrandingSettings {
   companyName: string;
@@ -80,7 +80,8 @@ export default function WhiteLabelPage() {
 
   useEffect(() => {
     if (user && canUseFeature("white_label")) {
-      fetchBrandingSettings();
+      // Explicit void to mark fire-and-forget settings load
+      void fetchBrandingSettings();
     }
   }, [user, canUseFeature]);
 
@@ -255,7 +256,8 @@ export default function WhiteLabelPage() {
                         id="logo"
                         type="file"
                         accept="image/*"
-                        onChange={handleLogoUpload}
+                        // Wrap async handler so returned Promise not passed to React synthetic event system
+                        onChange={(e) => { void handleLogoUpload(e); }}
                         className="cursor-pointer"
                       />
                       <p className="text-xs text-muted-foreground">
@@ -375,7 +377,7 @@ export default function WhiteLabelPage() {
                   </p>
                 </div>
 
-                <Button onClick={saveBrandingSettings} disabled={isSaving}>
+                <Button onClick={() => { void saveBrandingSettings(); }} disabled={isSaving}>
                   {isSaving ? "Saving..." : "Save Branding Settings"}
                 </Button>
               </CardContent>
@@ -475,7 +477,7 @@ export default function WhiteLabelPage() {
                   />
                 </div>
 
-                <Button onClick={saveReportSettings} disabled={isSaving}>
+                <Button onClick={() => { void saveReportSettings(); }} disabled={isSaving}>
                   {isSaving ? "Saving..." : "Save Report Settings"}
                 </Button>
               </CardContent>

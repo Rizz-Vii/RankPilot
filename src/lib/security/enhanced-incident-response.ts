@@ -424,7 +424,8 @@ export class EnhancedIncidentResponseSystem extends EventEmitter {
      */
     private startResponseProcessors(): void {
         for (let i = 0; i < this.processors; i++) {
-            this.processResponseQueue();
+            // Fire-and-forget queue processor with error logging
+            void this.processResponseQueue().catch(err => console.error('[EnhancedIncidentResponse] processResponseQueue error', err));
         }
     }
 

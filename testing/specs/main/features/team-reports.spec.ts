@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test";
-import { GracefulTestUtils } from "../../../utils/graceful-test-utils";
 import { TestOrchestrator } from "../../../utils/test-orchestrator";
 
 /**
@@ -9,11 +8,9 @@ import { TestOrchestrator } from "../../../utils/test-orchestrator";
 
 test.describe("Team Reports - Comprehensive Suite", () => {
   let orchestrator: TestOrchestrator;
-  let gracefulUtils: GracefulTestUtils;
 
   test.beforeEach(async ({ page }) => {
     orchestrator = new TestOrchestrator(page);
-    gracefulUtils = new GracefulTestUtils(page);
 
     // Set extended timeouts for complex interactions
     page.setDefaultNavigationTimeout(30000);

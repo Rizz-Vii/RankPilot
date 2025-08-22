@@ -1,19 +1,21 @@
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
-import { computeNextRun as computeNextRunPublic } from '../../../src/lib/automation/recipes';
+import { computeNextRun as computeNextRunPublic, type AutomationRecipe } from '../../../src/lib/automation/recipes';
 
 // We can't import computeNextFromCron directly (private), so we test via computeNextRun with cron.
 
-function withCron(cron: string) {
+function withCron(cron: string): AutomationRecipe {
     return {
         userId: 'u',
         name: 't',
         active: true,
         schedule: { cron },
-        actions: [],
+        actions: ['runNeuroSEOAnalysis'],
         createdAt: new Date(),
         updatedAt: new Date(),
-    } as any;
+        lastRun: null,
+        nextRun: null,
+    };
 }
 
 describe('Cron scheduling (subset)', () => {

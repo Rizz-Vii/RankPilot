@@ -15,9 +15,9 @@ function isIso(s: string) { return /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/
     const origWarn = console.warn;
     const origErr = console.error;
     // capture
-    (console as any).info = (l: string) => { lines.push(l); };
-    (console as any).warn = (l: string) => { lines.push(l); };
-    (console as any).error = (l: string) => { lines.push(l); };
+    console.info = (l: string, ..._args: unknown[]) => { lines.push(String(l)); };
+    console.warn = (l: string, ..._args: unknown[]) => { lines.push(String(l)); };
+    console.error = (l: string, ..._args: unknown[]) => { lines.push(String(l)); };
 
     logger.info('regular.event', { a: 1 });
     logger.audit('audit.event', { entity: 'user', id: 'u1' });
@@ -33,10 +33,15 @@ function isIso(s: string) { return /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/
     parsed.forEach((p, idx) => {
         if (!p) failures.push(`Line ${idx} not JSON`);
         else {
-            if (!isIso(p.timestamp)) failures.push(`Line ${idx} timestamp not ISO`);
-            if (!p.level) failures.push(`Line ${idx} missing level`);
-            if (p.message === 'audit.event' && p.audit !== true) failures.push('Audit flag missing');
-            if (p.message === 'fallback.applied' && p.degraded !== true) failures.push('Degraded flag missing');
+            const ts = (p as Record<string, unknown>).timestamp;
+            if (typeof ts !== 'string' || !isIso(ts)) failures.push(`Line ${idx} timestamp not ISO`);
+            const level = (p as Record<string, unknown>).level;
+            if (typeof level !== 'string' || !level) failures.push(`Line ${idx} missing level`);
+            const msg = (p as Record<string, unknown>).message;
+            const audit = (p as Record<string, unknown>).audit;
+            const degraded = (p as Record<string, unknown>).degraded;
+            if (msg === 'audit.event' && audit !== true) failures.push('Audit flag missing');
+            if (msg === 'fallback.applied' && degraded !== true) failures.push('Degraded flag missing');
         }
     });
     if (failures.length) {

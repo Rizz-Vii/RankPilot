@@ -1,21 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from "firebase/auth";
-import { auth, db } from "@/lib/firebase";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import LoadingScreen from "@/components/ui/loading-screen";
 import { useAuth } from "@/context/AuthContext";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 import { EnhancedAuthService } from "@/lib/services/enhanced-auth.service";
-import { Eye, EyeOff } from "lucide-react";
-import LoadingScreen from "@/components/ui/loading-screen";
 import { safeErrorMessage } from "@/lib/utils";
+import {
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+} from "firebase/auth";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { Eye, EyeOff } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 const GoogleIcon = () => (
   <svg
     className="mr-2 h-4 w-4"
@@ -97,14 +97,14 @@ export default function LoginPage() {
         email,
         password
       );
-      
+
       // Update login tracking with enhanced auth service
       try {
         await EnhancedAuthService.updateLoginTracking(userCredential.user.uid);
       } catch (trackingError) {
         console.warn("Login tracking update failed:", trackingError);
       }
-      
+
       // Redirection is handled by the useEffect hook after auth state updates
     } catch (error: unknown) {
       setErrors({ form: safeErrorMessage(error) || "Login failed. Please try again." });
@@ -144,7 +144,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md p-8 space-y-6 rounded-1xl shadow-xl border bg-card text-card-foreground">
   <h2 className="text-2xl font-bold text-center mb-2">Welcome Back</h2>
   <p className="text-sm text-muted-foreground text-center -mt-2 mb-4">Access your unified NeuroSEO™ workspace.</p>
-        <form onSubmit={handleLogin} className="space-y-4" noValidate>
+        <form onSubmit={(e) => { void handleLogin(e); }} className="space-y-4" noValidate>
           <div>
             <label
               htmlFor="email"
@@ -221,7 +221,7 @@ export default function LoginPage() {
         </div>
 
         <button
-          onClick={handleGoogleSignIn}
+          onClick={() => { void handleGoogleSignIn(); }}
           className="w-full inline-flex items-center justify-center py-2 border border-input rounded-lg shadow-sm bg-card text-sm font-medium text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background"
           disabled={loading}
         >

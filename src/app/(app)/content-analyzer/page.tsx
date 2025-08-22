@@ -1,9 +1,9 @@
 // src/app/(app)/content-analyzer/page.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from "@/components/tool-page-header";
+import { useEffect, useRef, useState } from "react";
 
 import {
   NeuroSEOActionableTasks,
@@ -21,41 +21,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  AlertCircle,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  Pie,
-  PieChart,
-  Progress,
-  XAxis,
-  YAxis
-} from "@/components/ui/chart-components";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
+import { allowContentAnalyzerMocks } from "@/lib/flags/demo";
 import {
   type NeuroSEOAnalysisRequest,
   type NeuroSEOReport
 } from "@/lib/neuroseo";
-import type {
-  AuditUrlOutput
-} from "@/types";
-import {
-  containerVariants,
-  imageChartConfig,
-  itemVariants,
-  scoreChartConfig,
-  statusColors,
-  statusIcons
-} from "@/types/charts";
+import { queueAnalysisRequest, submitOrQueue } from "@/lib/offline-queue";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { motion } from "framer-motion";
 import {
@@ -64,9 +41,6 @@ import {
   RefreshCw,
   Search
 } from "lucide-react";
-import { submitOrQueue, queueAnalysisRequest } from "@/lib/offline-queue";
-import { useToast } from "@/hooks/use-toast";
-import { allowContentAnalyzerMocks } from "@/lib/flags/demo";
 
 // Enhanced SEO Audit with NeuroSEO™ Integration
 export default function ContentAnalyzerPage() {
@@ -89,7 +63,9 @@ export default function ContentAnalyzerPage() {
 
   // Get user subscription tier for feature gating
   // Derive a crude tier (profile likely supplies subscriptionTier elsewhere; fallback to free)
-  const userTier: string = (user as any)?.subscriptionTier || "free";
+  const userTier: string = (user && typeof user === 'object' && 'subscriptionTier' in (user as unknown as Record<string, unknown>) && typeof (user as unknown as Record<string, unknown>).subscriptionTier === 'string')
+    ? ((user as unknown as Record<string, unknown>).subscriptionTier as string)
+    : 'free';
 
   // Scroll to results when analysis completes
   useEffect(() => {
@@ -183,7 +159,8 @@ export default function ContentAnalyzerPage() {
         return;
       }
 
-  const data = result as unknown; // retained for future real result typing
+      // result reserved for future live typing; keep as unknown locally
+      const _data = result as unknown;
 
       // Only allow mock report when demo content is enabled
       if (!allowContentAnalyzerMocks()) {
@@ -451,100 +428,6 @@ export default function ContentAnalyzerPage() {
     </FeatureGate>
   );
 }
-
-const AuditCharts = ({ items }: { items: AuditUrlOutput["items"]; }) => {
-  const chartData = items.map((item) => ({
-    name: item.name,
-    score: item.score,
-    fill:
-      item.score > 85
-        ? "hsl(var(--chart-1))"
-        : item.score > 60
-          ? "hsl(var(--chart-2))"
-          : "hsl(var(--chart-5))",
-  }));
-
-  const imageAuditItem = items.find((item) => item.id === "image-alts");
-  let imageData = null;
-  if (imageAuditItem) {
-    // A simple regex to extract numbers, assuming a format like "Found X images, Y are missing alt text"
-    const match = imageAuditItem.details.match(
-      /(\d+)\s*images.*(\d+)\s*are\s*missing/
-    );
-    if (match) {
-      const total = parseInt(match[1], 10);
-      const missing = parseInt(match[2], 10);
-      imageData = [
-        { name: "withAlt", value: total - missing },
-        { name: "missingAlt", value: missing },
-      ];
-    }
-  }
-
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline">Score Breakdown</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer
-            config={scoreChartConfig}
-            className="h-[250px] w-full"
-          >
-            <BarChart
-              accessibilityLayer
-              data={chartData}
-              layout="vertical"
-              margin={{ left: 10 }}
-            >
-              <CartesianGrid horizontal={false} />
-              <YAxis
-                dataKey="name"
-                type="category"
-                tickLine={false}
-                tickMargin={10}
-                axisLine={false}
-                className="text-xs"
-              />
-              <XAxis dataKey="score" type="number" hide />
-              <ChartTooltip
-                content={(props: unknown) => <ChartTooltipContent {...(props as unknown as Record<string, unknown>)} />}
-              />
-              <Bar dataKey="score" radius={5} />
-            </BarChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
-
-      {imageData && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline">Image Alt Text</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer
-              config={imageChartConfig}
-              className="mx-auto aspect-square h-[200px]"
-            >
-              <PieChart>
-                <ChartTooltip
-                  content={(props: unknown) => (
-                    <ChartTooltipContent {...(props as unknown as Record<string, unknown>)} nameKey="name" hideLabel />
-                  )}
-                />
-                <Pie data={imageData} dataKey="value">
-                  <Cell key="withAlt" fill="var(--color-withAlt)" />
-                  <Cell key="missingAlt" fill="var(--color-missingAlt)" />
-                </Pie>
-              </PieChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
-};
 
 // (Removed orphaned JSX block that duplicated audit results outside component scope)
 

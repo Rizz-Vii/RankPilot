@@ -1,7 +1,7 @@
 // Script to retrieve all users from Firestore
-import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
 import * as dotenv from "dotenv";
+import { cert, getApps, initializeApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 
 // Load environment variables
 dotenv.config({ path: ".env.test" });
@@ -42,7 +42,7 @@ interface UserData {
   updatedAt?: Date;
   lastLoginAt?: Date;
   nextBillingDate?: Date;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export async function getAllUsers() {

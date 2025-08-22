@@ -5,10 +5,10 @@
  * 2. Member cannot self-escalate to admin/owner.
  * 3. Ownership transfer succeeds when invoked by current owner (if rules permit).
  */
-import fs from 'fs';
-import type { RulesTestEnvironment} from '@firebase/rules-unit-testing';
-import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
+import type { RulesTestEnvironment } from '@firebase/rules-unit-testing';
+import { assertFails, assertSucceeds, initializeTestEnvironment } from '@firebase/rules-unit-testing';
 import { setLogLevel } from 'firebase/firestore';
+import fs from 'fs';
 
 if (!process.env.FIRESTORE_EMULATOR_HOST) {
     console.warn('TEAM-01 ownership tests skipped (FIRESTORE_EMULATOR_HOST not set).');
@@ -33,10 +33,10 @@ if (!process.env.FIRESTORE_EMULATOR_HOST) {
 
         // Seed team with owner only
         const teamId = 'teamOwn';
-        await assertSucceeds(ownerDb.collection('teams').doc(teamId).set({ ownerId: 'ownerUser', memberIds: ['ownerUser'], name: 'Owner Team', createdAt: new Date(), updatedAt: new Date() } as any));
+        await assertSucceeds(ownerDb.collection('teams').doc(teamId).set({ ownerId: 'ownerUser', memberIds: ['ownerUser'], name: 'Owner Team', createdAt: new Date(), updatedAt: new Date() }));
 
         // Owner adds member subcollection record
-        await assertSucceeds(ownerDb.collection('teams').doc(teamId).collection('members').doc('memberUser').set({ userId: 'memberUser', role: 'member', status: 'active', joinedAt: new Date() } as any));
+        await assertSucceeds(ownerDb.collection('teams').doc(teamId).collection('members').doc('memberUser').set({ userId: 'memberUser', role: 'member', status: 'active', joinedAt: new Date() }));
 
         // Negative: member attempts to escalate own role to admin
         await assertFails(memberDb.collection('teams').doc(teamId).collection('members').doc('memberUser').update({ role: 'admin' }));

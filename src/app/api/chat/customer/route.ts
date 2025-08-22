@@ -3,17 +3,16 @@
  * Verifies auth and proxies to Firebase Functions HTTPS endpoint
  */
 
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
-import { buildQueryEmbedding, retrieveSimilarMessages } from '@/lib/chat/retrievalAndClustering';
 import { maybeEmbedMessage } from '@/lib/chat/embedding';
 import { maybeSummarizeSession } from '@/lib/chat/sessionSummarizer';
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
-import { safeErrorMessage } from '@/lib/utils';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { recordError, recordRateLimitRejection, recordRouteLatency } from '@/lib/metrics/unified-metrics';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
-import { recordRouteLatency, recordError, recordRateLimitRejection } from '@/lib/metrics/unified-metrics';
 import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
+import { safeErrorMessage } from '@/lib/utils';
+import { FieldValue } from 'firebase-admin/firestore';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 // Force dynamic to avoid any accidental caching of auth state in edge/runtime
 export const dynamic = 'force-dynamic';
@@ -36,6 +35,16 @@ interface ChatResponse {
         type: string;
         dataUsed: string[];
     };
+}
+
+function isChatResponse(v: unknown): v is ChatResponse {
+    if (!v || typeof v !== 'object') return false;
+    const o = v as Record<string, unknown>;
+    if (typeof o.response !== 'string' || typeof o.sessionId !== 'string' || typeof o.timestamp !== 'string' || typeof o.tokensUsed !== 'number') return false;
+    const ctx = (o as { context?: unknown }).context;
+    if (!ctx || typeof ctx !== 'object') return false;
+    const c = ctx as { type?: unknown; dataUsed?: unknown };
+    return typeof c.type === 'string' && Array.isArray(c.dataUsed);
 }
 
 // Shared quota limits (align with streaming route)
@@ -108,15 +117,15 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         }
 
         // Get user from authentication header
-        const authHeader = request.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
+        const authHeaderRaw = request.headers.get('authorization') || '';
+        if (!authHeaderRaw.startsWith('Bearer ')) {
             return NextResponse.json(
                 { error: 'Authentication required: missing Bearer token' },
                 { status: 401 }
             );
         }
 
-        const idToken = authHeader.split(' ')[1];
+        const idToken = authHeaderRaw.split(' ')[1];
         if (!idToken) {
             return NextResponse.json({ error: 'Authentication required: empty token' }, { status: 401 });
         }
@@ -142,7 +151,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         // Team-aware rate limiting (Phase 1 PERF-01)
         if (teamId) {
             try {
-                await enforceTeamRateLimit(adminDb as any, teamId, { routeKey: 'chat/customer' });
+                await enforceTeamRateLimit(adminDb, teamId, { routeKey: 'chat/customer' });
             } catch (e: unknown) {
                 if (e instanceof TeamRateLimitError) {
                     recordRateLimitRejection('chat/customer');
@@ -280,16 +289,14 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         }
 
         const anyPayload = payload as unknown;
-        let data: ChatResponse | undefined = undefined;
+        let data: ChatResponse | undefined;
         if (anyPayload && typeof anyPayload === 'object') {
             const ap = anyPayload as Record<string, unknown>;
-            if (ap.result && typeof ap.result === 'object') {
-                data = ap.result as ChatResponse;
-            } else if (ap.data && typeof ap.data === 'object') {
-                data = ap.data as ChatResponse;
-            } else if (typeof ap.response === 'string' || typeof ap.sessionId === 'string') {
-                data = ap as ChatResponse;
-            }
+            const candidates: unknown[] = [];
+            if (ap.result && typeof ap.result === 'object') candidates.push(ap.result);
+            if (ap.data && typeof ap.data === 'object') candidates.push(ap.data);
+            candidates.push(ap);
+            for (const c of candidates) { if (isChatResponse(c)) { data = c; break; } }
         }
         if (!data) {
             recordError('chat/customer', '5xx_server');
@@ -327,13 +334,14 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
                     chatType: 'customer',
                     metadata: { streamed: false, intent, actions, priority }
                 });
-                sessionDocRef.set({
+                void sessionDocRef.set({
                     lastMessage: data.response.slice(0, 100),
                     lastActivity: FieldValue.serverTimestamp(),
                     messageCount: FieldValue.increment(1),
                     chatType: 'customer'
                 }, { merge: true });
-                maybeEmbedMessage({ uid, sessionId: data.sessionId, messageDocId: msgRef.id, question: message }).catch(() => { });
+                // Fire-and-forget embedding (explicit void for lint rule compliance)
+                void maybeEmbedMessage({ uid, sessionId: data.sessionId, messageDocId: msgRef.id, question: message }).catch(() => { /* swallow embedding errors */ });
             } catch { /* ignore */ }
         }
 
@@ -349,8 +357,8 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         }
 
         if (data.sessionId) {
-            // Fire-and-forget summarization
-            maybeSummarizeSession({ uid, sessionId: data.sessionId, latestUserMessage: body.message, latestAIResponse: data.response }).catch(() => { });
+            // Fire-and-forget summarization (explicit void to satisfy no-floating-promises)
+            void maybeSummarizeSession({ uid, sessionId: data.sessionId, latestUserMessage: body.message, latestAIResponse: data.response }).catch(() => { });
         }
 
         if (quotaWarning) {
@@ -407,8 +415,11 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
             recordError('chat/customer', '4xx_user');
             return NextResponse.json(enforceProvenance({ error: 'Authentication required', provenance: 'synthetic' }, { path: 'chat/customer' }), { status: 401 });
         }
-
-        const idToken = authHeader.split(' ')[1];
+        const idToken = authHeader.split(' ')[1] || '';
+        if (!idToken) {
+            recordError('chat/customer', '4xx_user');
+            return NextResponse.json(enforceProvenance({ error: 'Authentication required', provenance: 'synthetic' }, { path: 'chat/customer' }), { status: 401 });
+        }
         const decoded = await adminAuth.verifyIdToken(idToken);
         const uid = decoded.uid;
 
@@ -441,7 +452,7 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
             .orderBy('timestamp', 'desc');
 
         if (before) {
-            const beforeDate = new Date(before);
+            const beforeDate = new Date(before as string);
             if (!isNaN(beforeDate.getTime())) {
                 queryRef = queryRef.where('timestamp', '<', beforeDate);
             }
@@ -505,14 +516,13 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
         try {
             const sessionDoc = await adminDb.collection(collectionName).doc(uid).collection('sessions').doc(currentSessionId).get();
             if (sessionDoc.exists) {
-                const sData = sessionDoc.data() as Record<string, unknown>;
-                sessionSummary = typeof sData.sessionSummary === 'string' ? sData.sessionSummary : undefined;
-                pendingActions = Array.isArray(sData.pendingActions) ? sData.pendingActions.filter(a => typeof a === 'string') as string[] : undefined;
-                keywords = Array.isArray(sData.keywords) ? sData.keywords.filter(k => typeof k === 'string') as string[] : undefined;
-                if (sData.summaryUpdatedAt && typeof sData.summaryUpdatedAt === 'object' && 'toDate' in sData.summaryUpdatedAt && typeof ((sData.summaryUpdatedAt as { toDate?: unknown }).toDate) === 'function') {
-                    summaryUpdatedAt = (sData.summaryUpdatedAt as { toDate: () => Date }).toDate().toISOString();
-                } else {
-                    summaryUpdatedAt = undefined;
+                const sDataRaw = sessionDoc.data() as Record<string, unknown>;
+                const ss = sDataRaw.sessionSummary; if (typeof ss === 'string') sessionSummary = ss;
+                const pa = sDataRaw.pendingActions; if (Array.isArray(pa)) pendingActions = pa.filter((a: unknown): a is string => typeof a === 'string');
+                const kw = sDataRaw.keywords; if (Array.isArray(kw)) keywords = kw.filter((k: unknown): k is string => typeof k === 'string');
+                const su = sDataRaw.summaryUpdatedAt;
+                if (su && typeof su === 'object' && 'toDate' in su && typeof (su as { toDate?: unknown }).toDate === 'function') {
+                    try { summaryUpdatedAt = (su as { toDate: () => Date }).toDate().toISOString(); } catch { summaryUpdatedAt = undefined; }
                 }
             }
         } catch { /* ignore */ }

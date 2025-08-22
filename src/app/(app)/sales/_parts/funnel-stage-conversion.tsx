@@ -1,6 +1,6 @@
 "use client";
+import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useSalesContext } from './sales-context';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LabelList, Cell } from 'recharts';
 
 interface FunnelEntry {
   stage: string;
@@ -36,7 +36,10 @@ export default function FunnelStageConversion({ onStageClick }: Props): JSX.Elem
               <LabelList
                 dataKey="conversion"
                 position="right"
-                formatter={(v?: number | string | null) => `${String(v ?? '')}%`}
+                formatter={(label: React.ReactNode) => {
+                  const v = (typeof label === 'number' || typeof label === 'string') ? label : '';
+                  return `${String(v ?? '')}%`;
+                }}
                 className="text-[10px] fill-current"
               />
               {funnel.map((f: FunnelEntry, i: number) => (

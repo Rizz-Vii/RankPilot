@@ -1,0 +1,6 @@
+710	@typescript-eslint/no-explicit-any
+121	@typescript-eslint/no-unused-vars
+59	@typescript-eslint/no-misused-promises
+45	@typescript-eslint/no-floating-promises
+30	react-hooks/exhaustive-deps
+3	__no_rule

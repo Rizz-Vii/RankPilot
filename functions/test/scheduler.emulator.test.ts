@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import type { AppOptions } from 'firebase-admin/app';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { runDueAutomationTick } from '../src/scheduled/run-due-automation';
@@ -15,7 +16,7 @@ describe('Scheduler emulator tests', function () {
         process.env.FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
         if (!getApps().length) {
             // Initialize without credentials when using emulator
-            initializeApp({ projectId: 'demo-test' } as any);
+            initializeApp({ projectId: 'demo-test' } as AppOptions);
         }
     });
 
@@ -55,12 +56,13 @@ describe('Scheduler emulator tests', function () {
 
         await runDueAutomationTick(db, now);
         const snap = await ref.get();
-        const data: any = snap.data();
+        const data = snap.data() as Record<string, unknown>;
         expect(data.running).to.equal(false);
         expect(typeof data.failureCount).to.equal('number');
         expect(data.failureCount).to.be.greaterThan(0);
-        const next = data.nextRun?.toDate?.() || data.nextRun;
-        expect(next instanceof Date).to.equal(true);
-        expect((next as Date).getTime()).to.be.greaterThan(now.getTime());
+        const next = (data.nextRun as { toDate?: () => Date } | Date | undefined);
+        const nextDate = (next && typeof next === 'object' && 'toDate' in next && typeof (next as { toDate?: unknown }).toDate === 'function') ? (next as { toDate: () => Date }).toDate() : (next as Date | undefined);
+        expect(nextDate instanceof Date).to.equal(true);
+        expect((nextDate as Date).getTime()).to.be.greaterThan(now.getTime());
     });
 });

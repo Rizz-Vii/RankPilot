@@ -77,10 +77,9 @@ export function EnhancedForm({
   const [values, setValues] = React.useState(initialValues);
   const fieldRegistryRef = React.useRef<Map<string, FieldConfig>>(new Map());
   const formRef = useRef<HTMLFormElement>(null);
-
   const setFieldValue = (name: string, value: unknown) => {
     setValues((prev) => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
+    // Clear any existing error on new input
     if (errors[name]) {
       clearFieldError(name);
     }
@@ -122,7 +121,7 @@ export function EnhancedForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitAttempted(true);
+    // submit attempt tracked (state removed to avoid unused var)
 
     // Mark all fields as touched to show validation errors
     const allFieldNames = Object.keys(values);
@@ -170,7 +169,7 @@ export function EnhancedForm({
     if (submitOnEnter && e.key === "Enter" && !e.shiftKey) {
       // Don't submit on Enter for textareas
       if (target.tagName.toLowerCase() !== "textarea") {
-        handleSubmit(e as any);
+        void handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
       }
     }
   };
@@ -227,7 +226,8 @@ export function EnhancedForm({
     <EnhancedFormContext.Provider value={contextValue}>
       <form
         ref={formRef}
-        onSubmit={handleSubmit}
+        // Wrap async submit to satisfy @typescript-eslint/no-misused-promises
+        onSubmit={(e) => { void handleSubmit(e); }}
         onKeyDown={handleKeyDown}
         className={cn("space-y-6", className)}
         autoComplete={autoComplete}

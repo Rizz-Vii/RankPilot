@@ -1,17 +1,16 @@
 #!/usr/bin/env node
 /**
  * Fix Vendor Chunks - Systematic Debugging Solution
- * 
+ *
  * Resolves missing vendor chunks causing 500 errors
  * Pattern: Build System Dependency Corruption
- * 
+ *
  * Generated: July 28, 2025
  * Success Rate: 100% (validated)
  */
 
 const { execSync } = require('child_process');
 const fs = require('fs');
-const path = require('path');
 
 console.log('🔧 Starting vendor chunks repair...');
 
@@ -30,7 +29,7 @@ console.log('✅ framer-motion dependency validated');
 console.log('📋 Step 2: Stopping conflicting processes...');
 try {
     execSync('pkill -f "next dev"', { stdio: 'ignore' });
-} catch (e) {
+} catch {
     // No processes to kill
 }
 console.log('✅ Processes cleared');
@@ -51,7 +50,7 @@ console.log('📋 Step 4: Performing clean rebuild...');
 try {
     execSync('npm run build', { stdio: 'inherit' });
     console.log('✅ Build successful');
-} catch (error) {
+} catch {
     console.log('❌ Build failed');
     process.exit(1);
 }

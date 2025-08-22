@@ -4,15 +4,15 @@
  * Seeds subscription + invoices (financeInvoices) and verifies fetchBillingData computes effectiveMonthly and ordering.
  * Skips if FIRESTORE_EMULATOR_HOST not set.
  */
+import type { RulesTestEnvironment } from '@firebase/rules-unit-testing';
+import { initializeTestEnvironment } from '@firebase/rules-unit-testing';
+import { doc, setDoc, Timestamp, type Firestore } from 'firebase/firestore';
 import fs from 'fs';
+import { fetchBillingData } from '../src/lib/billing/fetch-billing-data';
 if (!process.env.FIRESTORE_EMULATOR_HOST) {
     console.warn('FIN-02 billing test skipped (FIRESTORE_EMULATOR_HOST not set).');
     process.exit(0);
 }
-import type { RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { doc, setDoc, Timestamp } from 'firebase/firestore';
-import { fetchBillingData } from '../src/lib/billing/fetch-billing-data';
 
 (async () => {
     const rules = fs.readFileSync('firestore.rules', 'utf8');
@@ -28,7 +28,7 @@ import { fetchBillingData } from '../src/lib/billing/fetch-billing-data';
             status: 'active',
             tier: 'agency',
             currentPeriodEnd: Timestamp.fromDate(new Date('2025-09-01T00:00:00Z')),
-        } as any);
+    });
 
         // Seed invoices (latest period first lexicographically by YYYY-MM)
         const invoices = [
@@ -38,10 +38,14 @@ import { fetchBillingData } from '../src/lib/billing/fetch-billing-data';
             { id: 'inv-jul', period: '2025-07', amount: 39, status: 'paid', userId },
         ];
         for (const inv of invoices) {
-            await setDoc(doc(db, 'financeInvoices', inv.id), { ...inv, createdAt: Timestamp.now() } as any);
+            await setDoc(doc(db, 'financeInvoices', inv.id), { ...inv, createdAt: Timestamp.now() });
         }
 
-        const result = await fetchBillingData(db as any, userId, { invoiceLimit: 10 });
+        // Narrow db to Firestore via runtime duck typing (has collection method)
+        const dbMaybe: unknown = db;
+        const dbIsFirestore = dbMaybe && typeof dbMaybe === 'object' && typeof (dbMaybe as { collection?: unknown }).collection !== 'undefined';
+        if (!dbIsFirestore) { console.error('Emulator Firestore not available'); process.exit(1); }
+        const result = await fetchBillingData(db as unknown as Firestore, userId, { invoiceLimit: 10 });
 
         const assertions: string[] = [];
         if (!result.subscription || result.subscription.tier !== 'agency') assertions.push('subscription tier mismatch');

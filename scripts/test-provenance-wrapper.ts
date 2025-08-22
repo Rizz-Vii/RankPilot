@@ -4,9 +4,9 @@
  * Ensures withProvenance injects provenance when missing and preserves existing tags.
  */
 // Register ts-node + tsconfig-paths so alias imports in source work.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+ 
 require('ts-node').register({ transpileOnly: true });
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+ 
 require('tsconfig-paths').register();
 import { getUnifiedMetricsSnapshot } from '@/lib/metrics/unified-metrics';
 import { withProvenance } from '@/lib/middleware/provenance';
@@ -48,13 +48,13 @@ async function run(): Promise<void> {
     if (injectedDelta < 1) throw new Error('Expected at least one provenance injection to be recorded');
 
     // Print concise success summary for CI parsing
-    // eslint-disable-next-line no-console
+     
     console.log(JSON.stringify({ ok: true, injectedDelta }));
 }
 
 // Avoid flagged "floating promise" by using void
 void run().catch((e: unknown) => {
-    // eslint-disable-next-line no-console
+     
     console.error(e);
     // Exit with non-zero to fail CI
     process.exit(1);

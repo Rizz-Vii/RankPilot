@@ -47,6 +47,10 @@ export default function ContentBriefForm({
     defaultValues: { keyword: "" },
   });
 
+  const handleSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
+    void form.handleSubmit(onSubmit)(e);
+  };
+
   return (
     <Card className="h-full">
       <CardHeader>
@@ -58,7 +62,7 @@ export default function ContentBriefForm({
         </CardDescription>
       </CardHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
           <CardContent>
             <FormField
               control={form.control}

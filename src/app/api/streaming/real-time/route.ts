@@ -3,8 +3,9 @@
  * Handles WebSocket connections and Server-Sent Events for real-time data
  */
 
-import { realTimeDataStreamer } from '@/lib/streaming/real-time-data-streamer';
+import { extractErrorMessage } from '@/lib/errors/extract-error-message';
 import { allowStreamingMockUser } from '@/lib/flags/demo';
+import { realTimeDataStreamer } from '@/lib/streaming/real-time-data-streamer';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
@@ -83,13 +84,16 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Collaboration event data is required' }, { status: 400 });
         }
 
-        const ev = body.collaborationEvent as { type?: string; userName?: string; dashboardId?: string; data?: unknown } | any;
+        const rawEv = body.collaborationEvent as unknown;
+        const ev = (rawEv && typeof rawEv === 'object') ? rawEv as { type?: string; userName?: string; dashboardId?: string; data?: unknown } : {};
 
+        const typeVal = typeof ev.type === 'string' ? ev.type : 'widget-edit';
+        const dashId = typeof ev.dashboardId === 'string' ? ev.dashboardId : '';
         await realTimeDataStreamer.broadcastCollaboration({
-          type: ev?.type,
+          type: typeVal as 'user-joined' | 'user-left' | 'cursor-move' | 'widget-edit' | 'comment-added',
           userId: mockUser.uid,
-          userName: ev?.userName || 'Demo User',
-          dashboardId: ev?.dashboardId,
+          userName: typeof ev.userName === 'string' ? ev.userName : 'Demo User',
+          dashboardId: dashId,
           data: ev?.data,
           timestamp: Date.now()
         });
@@ -113,7 +117,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: extractErrorMessage(error)
       },
       { status: 500 }
     );
@@ -173,7 +177,7 @@ export async function GET(request: NextRequest) {
           const onAbort = (): void => {
             clearInterval(heartbeat as unknown as number);
             realTimeDataStreamer.off('sse-data', handleSSEData);
-            realTimeDataStreamer.disconnectClient(clientId);
+            void realTimeDataStreamer.disconnectClient(clientId);
             controller.close();
           };
 
@@ -216,7 +220,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: extractErrorMessage(error)
       },
       { status: 500 }
     );
@@ -243,7 +247,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: extractErrorMessage(error)
       },
       { status: 500 }
     );

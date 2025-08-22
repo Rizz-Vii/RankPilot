@@ -1,19 +1,19 @@
 "use client";
-import React, { useEffect, useState } from 'react';
-import type { ChangeEvent } from 'react';
+import { useHydration } from '@/components/HydrationContext';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
-import type { AutomationRecipe, AutomationRunLog, AutomationActionType } from '@/lib/automation/recipes';
-import { createAutomationRecipe, listAutomationRecipes, updateAutomationRecipe, defaultRecipeTemplate, listRecentAutomationRuns, countPendingEmails } from '@/lib/automation/recipes';
-import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { useHydration } from '@/components/HydrationContext';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import type { AutomationActionType, AutomationRecipe, AutomationRunLog } from '@/lib/automation/recipes';
+import { countPendingEmails, createAutomationRecipe, defaultRecipeTemplate, listAutomationRecipes, listRecentAutomationRuns, updateAutomationRecipe } from '@/lib/automation/recipes';
+import type { ChangeEvent } from 'react';
+import { useEffect, useState } from 'react';
 
 const ACTIONS: { id: string; label: string; desc: string }[] = [
   { id: 'runNeuroSEOAnalysis', label: 'Run NeuroSEO Analysis', desc: 'Executes a fresh analysis with placeholder inputs' },
@@ -28,7 +28,13 @@ const ACTIONS: { id: string; label: string; desc: string }[] = [
 
 export default function AutomationRecipesPage() {
   const { user } = useAuth();
-  const teamId = (user as any)?.teamId;
+  // Narrow user.teamId safely without using any
+  const teamId = ((): string | undefined => {
+    const u = user as unknown;
+    if (!u || typeof u !== 'object') return undefined;
+    const rec = u as Record<string, unknown>;
+    return typeof rec.teamId === 'string' ? rec.teamId : undefined;
+  })();
   const { toast } = useToast();
   const hydrated = useHydration();
   const [recipes, setRecipes] = useState<AutomationRecipe[]>([]);
@@ -73,7 +79,7 @@ export default function AutomationRecipesPage() {
         setLoading(false);
       }
     })();
-  }, [user]);
+  }, [user, teamId]);
 
   const create = async () => {
     if (!user) return;

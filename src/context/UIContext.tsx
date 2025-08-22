@@ -2,10 +2,10 @@
 
 import React, {
   createContext,
-  useContext,
-  useState,
-  useEffect,
   useCallback,
+  useContext,
+  useEffect,
+  useState,
 } from "react";
 
 interface Feedback {
@@ -44,19 +44,18 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     return () => setIsMounted(false);
   }, []);
 
-  const addFeedback = useCallback((message: string, type: Feedback["type"]) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    setFeedback((prev) => [...prev, { message, type, id }]);
-
-    // Auto-remove feedback after 5 seconds
-    setTimeout(() => {
-      removeFeedback(id);
-    }, 5000);
-  }, []);
-
   const removeFeedback = useCallback((id: string) => {
     setFeedback((prev) => prev.filter((item) => item.id !== id));
   }, []);
+
+  const addFeedback = useCallback((message: string, type: Feedback["type"]) => {
+    const id = Math.random().toString(36).slice(2, 11);
+    setFeedback((prev) => [...prev, { message, type, id }]);
+    // Auto-remove feedback after 5 seconds (fire-and-forget)
+    window.setTimeout(() => {
+      removeFeedback(id);
+    }, 5000);
+  }, [removeFeedback]);
 
   const scrollToTop = useCallback(() => {
     window.scrollTo({

@@ -1,14 +1,14 @@
 /* Minimal runtime test for entitlement metadata access helpers */
-import { canAccessEntitlement, listEntitlementsForTier, TIER_HIERARCHY } from '../src/lib/access-control';
+import { canAccessEntitlement, listEntitlementsForTier, TIER_HIERARCHY, type SubscriptionTier } from '../src/lib/access-control';
 
-function assert(cond: any, msg: string) {
+function assert(cond: unknown, msg: string) {
     if (!cond) throw new Error('Assertion failed: ' + msg);
 }
 
 const tiers = TIER_HIERARCHY;
 
 for (const tier of tiers) {
-    const ents = listEntitlementsForTier(tier as any);
+    const ents = listEntitlementsForTier(tier as SubscriptionTier);
     // priority_support should appear only for agency+
     if (tier === 'agency' || tier === 'enterprise') {
         assert(ents.includes('priority_support'), `${tier} should include priority_support`);

@@ -22,7 +22,7 @@ async function main() {
       // Prefer pkill where available; fall back silently if not present.
       execSync('pkill -f typescript || true', { stdio: 'ignore' });
       console.log('   ✓ TypeScript processes checked and terminated if found (pkill used)');
-    } catch (err) {
+    } catch {
       console.log('   ℹ No TypeScript processes to terminate or pkill unavailable');
     }
 
@@ -48,7 +48,7 @@ async function main() {
   try {
     execSync('npx tsc --build --clean', { stdio: 'ignore' });
     console.log('   ✓ TypeScript build cleaned');
-  } catch (error) {
+  } catch {
     console.log('   ℹ No TypeScript build to clean');
   }
 
@@ -59,11 +59,11 @@ async function main() {
     let settings = {};
     try {
       settings = JSON.parse(fs.readFileSync(vscodeSettingsPath, 'utf8'));
-    } catch (err) {
+    } catch {
       console.warn(`   ⚠️ Could not parse ${vscodeSettingsPath} — proceeding with defaults`);
       settings = {};
     }
-    
+
     // Check for EPIPE prevention settings
     const requiredSettings = {
       'typescript.tsserver.maxTsServerMemory': 3072,

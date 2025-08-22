@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,22 +9,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { db } from "@/lib/firebase";
+import { collection, getCountFromServer } from "firebase/firestore";
 import {
-  Database,
-  Server,
-  Zap,
-  Clock,
   AlertTriangle,
   CheckCircle,
-  RefreshCw,
-  HardDrive,
+  Clock,
   Cpu,
+  Database,
+  HardDrive,
   Network,
+  RefreshCw,
+  Server,
+  Zap,
 } from "lucide-react";
-import { collection, getCountFromServer } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { useEffect, useState } from "react";
 
 interface SystemMetrics {
   firestoreDocuments: number;
@@ -40,10 +40,11 @@ export default function AdminSystemMetrics() {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   useEffect(() => {
-    fetchSystemMetrics();
+    // fire-and-forget initial metrics load
+    void fetchSystemMetrics();
   }, []);
 
-  const fetchSystemMetrics = async () => {
+  const fetchSystemMetrics = async (): Promise<void> => {
     try {
       setLoading(true);
 
@@ -62,7 +63,7 @@ export default function AdminSystemMetrics() {
 
       setMetrics(simulatedMetrics);
       setLastRefresh(new Date());
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error fetching system metrics:", error);
     } finally {
       setLoading(false);
@@ -123,7 +124,7 @@ export default function AdminSystemMetrics() {
             Last updated: {lastRefresh.toLocaleTimeString()}
           </p>
         </div>
-        <Button onClick={fetchSystemMetrics} disabled={loading}>
+        <Button onClick={() => { void fetchSystemMetrics(); }} disabled={loading}>
           <RefreshCw
             className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
           />

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { UNIFIED_TEST_USERS } from "./unified-test-users";
 import { EnhancedAuth } from "./enhanced-auth";
+import { UNIFIED_TEST_USERS } from "./unified-test-users";
 
 test.describe('Database - Firestore Security', () => {
     let auth: EnhancedAuth;
@@ -15,8 +15,11 @@ test.describe('Database - Firestore Security', () => {
             const testUser = UNIFIED_TEST_USERS.starter;
             await auth.loginAndGoToDashboard(testUser);
             await expect(page.locator('[data-testid="user-data"]')).toBeVisible();
-        } catch (error: any) {
-            console.warn('User access test failed:', error.message);
+        } catch (error: unknown) {
+            const msg = (error && typeof error === 'object' && 'message' in error)
+                ? String((error as { message?: unknown }).message)
+                : String(error);
+            console.warn('User access test failed:', msg);
         }
     });
 
@@ -33,8 +36,11 @@ test.describe('Database - Firestore Security', () => {
             // Free users should have limited data access
             await page.goto('/dashboard');
             await expect(page.locator('[data-testid="tier-limitations"]')).toBeVisible();
-        } catch (error: any) {
-            console.warn('Tier validation test failed:', error.message);
+        } catch (error: unknown) {
+            const msg = (error && typeof error === 'object' && 'message' in error)
+                ? String((error as { message?: unknown }).message)
+                : String(error);
+            console.warn('Tier validation test failed:', msg);
         }
     });
 
@@ -49,8 +55,11 @@ test.describe('Database - Firestore Security', () => {
             await auth.loginAndGoToDashboard(testUser);
             await page.goto('/projects');
             await expect(page.locator('[data-testid="project-list"]')).toBeVisible();
-        } catch (error: any) {
-            console.warn('Data consistency test failed:', error.message);
+        } catch (error: unknown) {
+            const msg = (error && typeof error === 'object' && 'message' in error)
+                ? String((error as { message?: unknown }).message)
+                : String(error);
+            console.warn('Data consistency test failed:', msg);
         }
     });
 
@@ -65,8 +74,11 @@ test.describe('Database - Firestore Security', () => {
             await auth.loginAndGoToDashboard(testUser);
             await page.goto('/dashboard');
             await expect(page.locator('[data-testid="realtime-data"]')).toBeVisible();
-        } catch (error: any) {
-            console.warn('Real-time test failed:', error.message);
+        } catch (error: unknown) {
+            const msg = (error && typeof error === 'object' && 'message' in error)
+                ? String((error as { message?: unknown }).message)
+                : String(error);
+            console.warn('Real-time test failed:', msg);
         }
     });
 

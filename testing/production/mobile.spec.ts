@@ -38,7 +38,7 @@ test.describe('Mobile Compatibility', () => {
         }
 
         // At least 90% of touch targets should meet WCAG guidelines (44x44px)
-        const touchTargetScore = (validTouchTargets / touchTargets.length) * 100;
+        const touchTargetScore = touchTargets.length > 0 ? (validTouchTargets / touchTargets.length) * 100 : 100;
         expect(touchTargetScore).toBeGreaterThanOrEqual(90);
     });
 
@@ -116,7 +116,7 @@ test.describe('Mobile Compatibility', () => {
 
         for (const img of images.slice(0, 10)) { // Test first 10 images
             const src = await img.getAttribute('src');
-            const loading = await img.getAttribute('loading');
+            // const loading = await img.getAttribute('loading'); // intentionally unused (potential future assertion)
             const alt = await img.getAttribute('alt');
 
             // Images should have proper attributes

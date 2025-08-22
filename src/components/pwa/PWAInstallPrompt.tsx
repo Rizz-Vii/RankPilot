@@ -1,7 +1,7 @@
 /**
  * PWA Install Prompt Component
  * Advanced Architecture Enhancement - DevReady Phase 3
- * 
+ *
  * Features:
  * - Install prompt UI with native app styling
  * - Connection status indicator
@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { usePWA } from '@/lib/pwa/pwa-manager';
+import { asVoidHandler } from '@/lib/react/handlers';
 import { cn } from '@/lib/utils';
 import {
     AlertCircle,
@@ -64,7 +65,7 @@ export function PWAInstallPrompt({ className, showInAppHeader = false }: PWAInst
     const isIOS = typeof window !== 'undefined' && /iphone|ipad|ipod/i.test(window.navigator.userAgent);
     const isStandalone = typeof window !== 'undefined' && (
         window.matchMedia('(display-mode: standalone)').matches ||
-        (typeof (window.navigator as any) === 'object' && (window.navigator as any)?.standalone === true)
+        ((window.navigator as unknown as { standalone?: boolean })?.standalone === true)
     );
 
     useEffect(() => {
@@ -133,7 +134,7 @@ export function PWAInstallPrompt({ className, showInAppHeader = false }: PWAInst
                     <Button
                         size="sm"
                         variant="outline"
-                        onClick={handleInstall}
+                        onClick={() => { void handleInstall(); }}
                         disabled={isInstalling}
                         className="gap-1"
                     >
@@ -235,7 +236,7 @@ export function PWAInstallPrompt({ className, showInAppHeader = false }: PWAInst
                                 </div>
                                 <Switch
                                     checked={notificationsEnabled}
-                                    onCheckedChange={handleNotificationToggle}
+                                    onCheckedChange={asVoidHandler(handleNotificationToggle)}
                                 />
                             </div>
 
@@ -243,7 +244,7 @@ export function PWAInstallPrompt({ className, showInAppHeader = false }: PWAInst
                             <div className="flex gap-2">
                                 {!isIOS && isInstallable && !isInstalled && (
                                     <Button
-                                        onClick={handleInstall}
+                                        onClick={() => { void handleInstall(); }}
                                         disabled={isInstalling}
                                         className="flex-1 gap-2"
                                     >
@@ -293,7 +294,7 @@ export function PWAInstallPrompt({ className, showInAppHeader = false }: PWAInst
                     <AlertDescription className="flex items-center justify-between gap-2">
                         <span>Update available!</span>
                         <div className="flex gap-1">
-                            <Button size="sm" onClick={handleUpdate}>
+                            <Button size="sm" onClick={() => { void handleUpdate(); }}>
                                 Update
                             </Button>
                             <Button

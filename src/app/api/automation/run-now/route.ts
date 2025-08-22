@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
+import { NextResponse } from 'next/server';
 // Dynamic imports used to minimize cold route bundle size
 // (Ensure these modules are only loaded when needed)
 import { fetchRewriteSourceContents } from '@/lib/automation/content-fetch';
@@ -11,24 +11,46 @@ interface AutomationRecipeDoc {
     userId: string;
     teamId?: string | null;
     actions?: string[];
-    actionConfigs?: Record<string, any>; // keep loose; downstream guards applied
+    // Keep config values flexible but avoid explicit any: unknown plus guarded access where needed
+    actionConfigs?: Record<string, unknown>;
     nextRun?: Date | string | null;
 }
 
 interface DealDoc { status?: string; amount?: number; }
-interface InvoiceDoc { period?: string; status?: string; amount?: number; paidAt?: any; dueAt?: any; }
+// Timestamp-like shape (Firestore) minimal guard
+type TimestampLike = { toDate?: () => Date } | Date | null | undefined;
+interface InvoiceDoc { period?: string; status?: string; amount?: number; paidAt?: TimestampLike; dueAt?: TimestampLike; }
 interface JournalLine { account?: string; side?: 'debit' | 'credit'; amount?: number; }
 interface JournalEntryDoc { period?: string; lines?: JournalLine[]; }
 
 type ActionResult = { action: string; status: 'ok' | 'error' | 'skipped'; message?: string };
 
-function errMsg(e: unknown, fallback = 'error'): string {
-    if (e && typeof e === 'object' && 'message' in e) {
-        try {
-            return String((e as any).message);
-        } catch {
-            return fallback;
+// Safe helpers
+function cfgObject(v: unknown): Record<string, unknown> | undefined {
+    return v && typeof v === 'object' ? v as Record<string, unknown> : undefined;
+}
+function strArray(v: unknown, fallback: string[]): string[] {
+    return Array.isArray(v) ? (v.filter(x => typeof x === 'string') as string[]) : fallback;
+}
+function strVal(v: unknown, fallback: string): string { return typeof v === 'string' ? v : fallback; }
+function rangeVal(v: unknown): '30d' | '90d' | 'ytd' { return v === '90d' || v === 'ytd' ? v : '30d'; }
+function timestampToDate(t: TimestampLike): Date | undefined {
+    if (!t) return undefined;
+    if (t instanceof Date) return t;
+    if (typeof t === 'object' && 'toDate' in t) {
+        const fn = (t as { toDate?: unknown }).toDate;
+        if (typeof fn === 'function') {
+            try { return (fn as () => Date)(); } catch { return undefined; }
         }
+    }
+    return undefined;
+}
+
+function errMsg(e: unknown, fallback = 'error'): string {
+    if (!e || typeof e !== 'object') return fallback;
+    if ('message' in (e as Record<string, unknown>)) {
+        const m = (e as { message?: unknown }).message;
+        if (typeof m === 'string') return m;
     }
     return fallback;
 }
@@ -48,37 +70,38 @@ export const POST = withProvenance(async function POST(req: Request): Promise<Ne
         const actionResults: ActionResult[] = [];
         const started = new Date();
         for (const action of actions) {
-            const cfg = data.actionConfigs?.[action];
+            const cfgRaw = data.actionConfigs?.[action];
+            const cfg = cfgObject(cfgRaw);
             if (action === 'runNeuroSEOAnalysis') {
-                const urls: string[] = Array.isArray(cfg?.urls) && cfg.urls.length ? cfg.urls : ['https://example.com'];
-                const keywords: string[] = Array.isArray(cfg?.keywords) && cfg.keywords.length ? cfg.keywords : ['example'];
+                const urls = strArray(cfg?.urls, ['https://example.com']);
+                const keywords = strArray(cfg?.keywords, ['example']);
                 await suite.runAnalysis({ urls, targetKeywords: keywords, analysisType: 'comprehensive', userPlan: 'agency', userId: data.userId });
                 actionResults.push({ action, status: 'ok' });
             } else if (action === 'sendDigestEmail') {
-                const to: string = cfg?.to || 'digest@example.com';
-                const subject = cfg?.subject || 'NeuroSEO Digest';
-                const body = `Automated NeuroSEO digest run-now at ${new Date().toISOString()}\nURLs: ${(cfg?.urls || ['https://example.com']).join(', ')}\nKeywords: ${(cfg?.keywords || ['example']).join(', ')}`;
+                const to = strVal(cfg?.to, 'digest@example.com');
+                const subject = strVal(cfg?.subject, 'NeuroSEO Digest');
+                const body = `Automated NeuroSEO digest run-now at ${new Date().toISOString()}\nURLs: ${strArray(cfg?.urls, ['https://example.com']).join(', ')}\nKeywords: ${strArray(cfg?.keywords, ['example']).join(', ')}`;
                 try { await adminDb.collection('emailQueue').add({ userId: data.userId, teamId: data.teamId || null, recipeId, to, subject, body, status: 'pending', createdAt: new Date() }); actionResults.push({ action, status: 'ok', message: 'Digest enqueued' }); } catch (e: unknown) { actionResults.push({ action, status: 'error', message: errMsg(e, 'Queue failed') }); }
             } else if (action === 'generateContentRewrite') {
                 try {
                     const { RewriteGenEngine } = await import('@/lib/neuroseo/rewrite-gen');
                     const engine = new RewriteGenEngine();
-                    const urls: string[] = Array.isArray(cfg?.urls) && cfg.urls.length ? cfg.urls.slice(0, 3) : ['https://example.com'];
+                    const urls = strArray(cfg?.urls, ['https://example.com']).slice(0, 3);
                     const sourceMap = await fetchRewriteSourceContents(urls, { max: 3, deterministicFallback: true });
                     const batchRef = await adminDb.collection('rewriteBatches').add({ userId: data.userId, teamId: data.teamId || null, recipeId, createdAt: new Date(), urlCount: urls.length, status: 'processing' });
                     for (const url of urls) {
                         const originalContent = sourceMap[url] || `Placeholder content for ${url}`;
                         const analysis = await engine.generateRewrites({
                             originalContent,
-                            targetKeywords: (cfg?.keywords || ['example']).slice(0, 5),
+                            targetKeywords: strArray(cfg?.keywords, ['example']).slice(0, 5),
                             tone: 'professional',
                             audience: 'general',
                             contentType: 'article',
                             goals: [{ type: 'readability', target: 60, priority: 'medium', description: 'Improve readability' }],
                             constraints: [{ type: 'preserve_facts', value: true, importance: 'high' }],
                             seoRequirements: {
-                                primaryKeyword: (cfg?.keywords?.[0]) || 'example',
-                                secondaryKeywords: (cfg?.keywords || []).slice(1, 4),
+                                primaryKeyword: strArray(cfg?.keywords, ['example'])[0] || 'example',
+                                secondaryKeywords: strArray(cfg?.keywords, []).slice(1, 4),
                                 targetLength: { min: 300, max: 1200 },
                                 readabilityScore: 50,
                                 headingStructure: true,
@@ -96,7 +119,7 @@ export const POST = withProvenance(async function POST(req: Request): Promise<Ne
                 }
             } else if (action === 'salesRefreshMetrics') {
                 try {
-                    const range: '30d' | '90d' | 'ytd' = cfg?.range || '30d';
+                    const range = rangeVal(cfg?.range);
                     const dealsSnap = await adminDb.collection('salesDeals').where(data.teamId ? 'teamId' : 'userId', '==', data.teamId || data.userId).get();
                     const deals = dealsSnap.docs.map(d => d.data() as DealDoc);
                     if (!deals.length) actionResults.push({ action, status: 'skipped', message: 'No deals' });
@@ -118,8 +141,8 @@ export const POST = withProvenance(async function POST(req: Request): Promise<Ne
                 } catch (e: unknown) { actionResults.push({ action, status: 'error', message: errMsg(e, 'Forecast failed') }); }
             } else if (action === 'salesPipelineDigest') {
                 try {
-                    const to: string = cfg?.to || 'sales-digest@example.com';
-                    const range: '30d' | '90d' | 'ytd' = cfg?.range || '30d';
+                    const to = strVal(cfg?.to, 'sales-digest@example.com');
+                    const range = rangeVal(cfg?.range);
                     const dealsSnap = await adminDb.collection('salesDeals').where(data.teamId ? 'teamId' : 'userId', '==', data.teamId || data.userId).get();
                     const deals = dealsSnap.docs.map(d => d.data() as DealDoc);
                     if (!deals.length) actionResults.push({ action, status: 'skipped', message: 'No deals' });
@@ -143,7 +166,7 @@ export const POST = withProvenance(async function POST(req: Request): Promise<Ne
                         const current = invoices.filter(i => i.period === last);
                         const paid = current.filter(i => i.status === 'paid');
                         const mrr = paid.reduce((s, i) => s + (i.amount || 0), 0);
-                        const onTime = paid.filter(i => { const paidAt = i.paidAt?.toDate?.(); const due = i.dueAt?.toDate?.(); return paidAt && due && paidAt.getTime() <= due.getTime(); });
+                        const onTime = paid.filter(i => { const paidAt = timestampToDate(i.paidAt); const due = timestampToDate(i.dueAt); return paidAt && due && paidAt.getTime() <= due.getTime(); });
                         const onTimePct = paid.length ? (onTime.length / paid.length) * 100 : 0;
                         const outstanding = current.filter(i => i.status !== 'paid').length;
                         await adminDb.collection('financeRevenueSnapshots').add({ userId: data.userId, teamId: data.teamId || null, period: last, mrr, onTimePct: Number(onTimePct.toFixed(1)), outstanding, createdAt: new Date() });
@@ -152,13 +175,14 @@ export const POST = withProvenance(async function POST(req: Request): Promise<Ne
                 } catch (e: unknown) { actionResults.push({ action, status: 'error', message: errMsg(e, 'Revenue snapshot failed') }); }
             } else if (action === 'financeInvoiceAgingDigest') {
                 try {
-                    const to: string = cfg?.to || 'finance-aging@example.com';
+                    const to = strVal(cfg?.to, 'finance-aging@example.com');
                     const invSnap = await adminDb.collection('financeInvoices').where(data.teamId ? 'teamId' : 'userId', '==', data.teamId || data.userId).get();
                     const invoices = invSnap.docs.map(d => d.data() as InvoiceDoc);
                     const nowTs = Date.now();
                     const buckets: Record<string, number> = { '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 };
                     invoices.filter(i => i.status !== 'paid').forEach(i => {
-                        const due = i.dueAt?.toDate?.()?.getTime?.();
+                        const dueDate = timestampToDate(i.dueAt);
+                        const due = dueDate?.getTime();
                         if (!due) return; const days = Math.floor((nowTs - due) / 86400000);
                         if (days <= 30) buckets['0-30']++; else if (days <= 60) buckets['31-60']++; else if (days <= 90) buckets['61-90']++; else buckets['90+']++;
                     });

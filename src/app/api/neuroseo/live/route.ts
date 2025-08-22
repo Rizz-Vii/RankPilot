@@ -1,11 +1,11 @@
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import { getLogger } from '@/lib/logging/app-logger';
+import { recordError, recordRouteLatency } from '@/lib/metrics/unified-metrics';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { executeNeuroLive } from '@/lib/neuroseo/live-exec';
 import { enforceNeuroSeoRateLimit, NeuroSeoRateLimitError } from '@/lib/neuroseo/rate-limit';
 import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
-import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
-import { getLogger } from '@/lib/logging/app-logger';
-import { recordRouteLatency, recordError } from '@/lib/metrics/unified-metrics';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 const logger = getLogger('neuroseo-live-route');
@@ -23,27 +23,46 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         } catch {
             body = {};
         }
-        const { urls, analysisType, userId, forceRefresh, teamId } = (body as any) || {};
+        interface IncomingBody { urls?: unknown; analysisType?: unknown; userId?: unknown; forceRefresh?: unknown; teamId?: unknown; }
+        const { urls, analysisType, userId, forceRefresh, teamId } = (body as IncomingBody) || {};
+        const urlArray: string[] = Array.isArray(urls) ? urls.filter(u => typeof u === 'string') as string[] : [];
+        const allowedTypes = ['comprehensive', 'quick', 'competitor'] as const;
+        const atype = (typeof analysisType === 'string' && (allowedTypes as readonly string[]).includes(analysisType)) ? analysisType as typeof allowedTypes[number] : undefined;
+        const uid = typeof userId === 'string' && userId ? userId : 'anonymous';
+        const force = typeof forceRefresh === 'boolean' ? forceRefresh : false;
         if (!Array.isArray(urls) || urls.length === 0) {
             return NextResponse.json(enforceProvenance({ success: false, error: 'urls[] required', provenance: 'synthetic' }, { path: 'neuroseo/live', note: 'validation' }), { status: 400 });
         }
         // PERF-01 / TEAM-01: Prefer team-aware limiter when teamId supplied; otherwise fallback to legacy per-user neuroseo limiter for backward compatibility during transition.
         try {
             if (typeof teamId === 'string' && teamId) {
-                const { adminDb } = (global as any).adminDb ? { adminDb: (global as any).adminDb } : await import('@/lib/firebase-admin');
-                await enforceTeamRateLimit(adminDb, teamId, { routeKey: 'neuroseo/live' });
+                const g = global as unknown as { adminDb?: unknown };
+                const imported = await import('@/lib/firebase-admin');
+                const candidate = (g.adminDb && typeof g.adminDb === 'object') ? g.adminDb : imported.adminDb;
+                const resolvedAdmin = (candidate && typeof candidate === 'object' && 'collection' in candidate)
+                    ? candidate as typeof imported.adminDb
+                    : imported.adminDb;
+                await enforceTeamRateLimit(resolvedAdmin, teamId, { routeKey: 'neuroseo/live' });
             } else {
-                const scopeId = userId || 'anonymous';
-                await enforceNeuroSeoRateLimit((global as any).adminDb || (await import('@/lib/firebase-admin')).adminDb, scopeId, {});
+                const scopeId = uid; // already narrowed to string above
+                const g = global as unknown as { adminDb?: unknown };
+                const imported = await import('@/lib/firebase-admin');
+                const candidate = (g.adminDb && typeof g.adminDb === 'object') ? g.adminDb : imported.adminDb;
+                const resolvedAdmin = (candidate && typeof candidate === 'object' && 'collection' in candidate)
+                    ? candidate as typeof imported.adminDb
+                    : imported.adminDb;
+                await enforceNeuroSeoRateLimit(resolvedAdmin, scopeId);
             }
         } catch (e: unknown) {
             if (e instanceof TeamRateLimitError || e instanceof NeuroSeoRateLimitError) {
-                const retryAfterSeconds = (e as any)?.retryAfterSeconds || 60;
+                const retryAfterSeconds = (e && typeof e === 'object' && 'retryAfterSeconds' in e && typeof (e as { retryAfterSeconds?: unknown }).retryAfterSeconds === 'number')
+                    ? (e as { retryAfterSeconds: number }).retryAfterSeconds
+                    : 60;
                 return NextResponse.json(enforceProvenance({ success: false, error: 'rate_limited', retryAfter: retryAfterSeconds, provenance: 'synthetic' }, { path: 'neuroseo/live', note: 'rate_limit' }), { status: 429, headers: { 'Retry-After': String(retryAfterSeconds) } });
             }
             throw e;
         }
-        const result = await executeNeuroLive({ urls, analysisType, userId: userId || 'anonymous' }, { forceRefresh });
+        const result = await executeNeuroLive({ urls: urlArray, analysisType: atype, userId: uid }, { forceRefresh: force });
         const resp = NextResponse.json(enforceProvenance({ ...result }, { path: 'neuroseo/live' }), { status: 200 });
         recordRouteLatency('neuroseo/live', Date.now() - start);
         return resp;

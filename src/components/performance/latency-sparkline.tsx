@@ -1,7 +1,7 @@
 "use client";
-import React, { useMemo, useState, useRef, useCallback } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-interface LatencySparklineProps {
+export interface LatencySparklineProps {
   samples: number[]; // durations in ms
   maxPoints?: number;
   height?: number;

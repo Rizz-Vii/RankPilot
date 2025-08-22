@@ -15,7 +15,7 @@ interface Stats {
     legacyCount: number; aggCount: number; matched: number; legacyBytes: number; aggBytes: number; reductionPct: number | null;
 }
 
-function approxSize(v: any) { try { return Buffer.byteLength(JSON.stringify(v)); } catch { return 0; } }
+function approxSize(v: unknown) { try { return Buffer.byteLength(JSON.stringify(v)); } catch { return 0; } }
 
 async function collectPairSizes(db: FirebaseFirestore.Firestore, legacyCol: string, aggCol: string, matchFields: string[]): Promise<Stats> {
     const stats: Stats = { legacyCount: 0, aggCount: 0, matched: 0, legacyBytes: 0, aggBytes: 0, reductionPct: null };
@@ -26,19 +26,28 @@ async function collectPairSizes(db: FirebaseFirestore.Firestore, legacyCol: stri
         stats.aggCount = aggSnap.size;
         const aggIndex = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
         aggSnap.docs.forEach(d => {
-            const data: any = d.data();
-            const key = matchFields.map(f => data[f] ?? '').join('|');
+            const raw: unknown = (d as unknown as { data: () => unknown }).data();
+            const data = (raw && typeof raw === 'object') ? (raw as Record<string, unknown>) : {};
+            const key = matchFields.map(f => {
+                const v = data[f];
+                return typeof v === 'string' ? v : String(v ?? '');
+            }).join('|');
             aggIndex.set(key, d);
         });
         for (const doc of legacySnap.docs) {
-            const data: any = doc.data();
-            const key = matchFields.map(f => data[f] ?? '').join('|');
+            const raw: unknown = (doc as unknown as { data: () => unknown }).data();
+            const data = (raw && typeof raw === 'object') ? (raw as Record<string, unknown>) : {};
+            const key = matchFields.map(f => {
+                const v = data[f];
+                return typeof v === 'string' ? v : String(v ?? '');
+            }).join('|');
             const legacySize = approxSize(data);
             const aggDoc = aggIndex.get(key);
             if (aggDoc) {
                 stats.matched++;
                 stats.legacyBytes += legacySize;
-                stats.aggBytes += approxSize(aggDoc.data());
+                const aggRaw: unknown = (aggDoc as unknown as { data: () => unknown }).data();
+                stats.aggBytes += approxSize(aggRaw);
             }
         }
         if (stats.matched > 0) {
@@ -59,7 +68,7 @@ async function main() {
     console.log('[size-reduction] summary', JSON.stringify(summary, null, 2));
     const out = process.env.OUTPUT_FILE;
     if (out) {
-        try { const fs = await import('fs'); fs.mkdirSync(require('path').dirname(out), { recursive: true }); fs.writeFileSync(out, JSON.stringify(summary, null, 2)); console.log(`[size-reduction] wrote ${out}`); } catch (e) { console.error('[size-reduction] failed to write OUTPUT_FILE', (e as any)?.message); }
+        try { const fs = await import('fs'); fs.mkdirSync(require('path').dirname(out), { recursive: true }); fs.writeFileSync(out, JSON.stringify(summary, null, 2)); console.log(`[size-reduction] wrote ${out}`); } catch (e: unknown) { const msg = e && typeof e === 'object' && 'message' in e ? String((e as { message?: unknown }).message) : String(e); console.error('[size-reduction] failed to write OUTPUT_FILE', msg); }
     }
 }
 

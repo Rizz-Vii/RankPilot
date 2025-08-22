@@ -57,9 +57,14 @@ export default function CompetitorAnalysisForm({
   });
 
   async function handleSubmit(values: FormValues) {
-    // Pass the raw form values to the handler
-    onSubmit(values);
+    // Await to avoid floating promise lint warning and surface errors if needed later.
+    await onSubmit(values);
   }
+
+  // Provide a stable sync wrapper so the onSubmit attribute does not receive a promise-returning function directly.
+  const handleFormEvent: React.FormEventHandler<HTMLFormElement> = (e) => {
+    void form.handleSubmit(handleSubmit)(e);
+  };
 
   return (
     <Card className="h-full">
@@ -71,7 +76,7 @@ export default function CompetitorAnalysisForm({
       </CardHeader>
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(handleSubmit)}
+          onSubmit={handleFormEvent}
           className="space-y-8"
         >
           <CardContent className="space-y-4">

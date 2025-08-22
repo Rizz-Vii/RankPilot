@@ -3,9 +3,9 @@
  * This will help us understand the current data structure and identify inconsistencies
  */
 
-import { initializeApp, getApps } from "firebase/app";
-import { getFirestore, collection, getDocs } from "firebase/firestore";
 import * as dotenv from "dotenv";
+import { getApps, initializeApp } from "firebase/app";
+import { collection, getDocs, getFirestore } from "firebase/firestore";
 
 // Load environment variables
 dotenv.config();
@@ -33,8 +33,8 @@ interface UserData {
   subscriptionTier?: string;
   subscriptionStatus?: string;
   displayName?: string;
-  createdAt?: any;
-  updatedAt?: any;
+  createdAt?: Date | { toDate?: () => Date } | string | number | null;
+  updatedAt?: Date | { toDate?: () => Date } | string | number | null;
 }
 
 async function analyzeUserRolesAndTiers() {

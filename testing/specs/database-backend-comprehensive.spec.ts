@@ -315,9 +315,10 @@ test.describe('Database Integration - Performance Optimization', () => {
 
         // Monitor memory usage
         const metrics = await page.evaluate(() => {
+            const mem = (performance as unknown as { memory?: { usedJSHeapSize?: number; totalJSHeapSize?: number } }).memory;
             return {
-                usedJSHeapSize: (performance as any).memory?.usedJSHeapSize || 0,
-                totalJSHeapSize: (performance as any).memory?.totalJSHeapSize || 0
+                usedJSHeapSize: mem?.usedJSHeapSize || 0,
+                totalJSHeapSize: mem?.totalJSHeapSize || 0
             };
         });
 

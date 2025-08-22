@@ -1,6 +1,6 @@
  // Dynamic Entitlements Loader (Phase 2)
  // Provides runtime-loaded entitlement flags with safe fallback defaults.
- 
+
  // NOTE: We intentionally duplicate the SubscriptionTier union here to avoid a
 // circular dependency (access-control imports ENTITLEMENT_FLAGS). Keep in sync
 // with access-control.ts. Future refactor: extract shared types to types/access.ts.
@@ -38,8 +38,8 @@ export async function loadEntitlements(force = false): Promise<EntitlementMap> {
             cache = { map: ent, loadedAt: now, source: 'dynamic' };
             return cache.map;
         }
-    } catch (err) {
-        // swallow
+    } catch {
+    // swallow (fallback to defaults below)
     }
     cache = { map: DEFAULT_ENTITLEMENTS, loadedAt: now, source: 'default' };
     return cache.map;

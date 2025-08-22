@@ -1,35 +1,59 @@
-// @ts-nocheck
 /* Autonomous delegation watch loop (lightweight) */
 import { spawn, spawnSync } from 'child_process';
 import crypto from 'crypto';
-import fs from 'fs';
+import fs, { statSync } from 'fs';
 import path from 'path';
 
 const QUEUE = path.resolve('sessions/aider-queue.jsonl');
-const LOG = path.resolve('sessions/aider-log.jsonl');
+const _LOG = path.resolve('sessions/aider-log.jsonl'); // retained for future extended logging
 const INTERVAL_BASE = 15000; // 15s base
+// Single-instance lock (optional): prevents multiple concurrent watch loops.
+const LOCK_FILE = path.resolve('.codex/tmp/delegation.watch.lock');
+function obtainLock(): boolean {
+    try {
+        const now = Date.now();
+        if (fs.existsSync(LOCK_FILE)) {
+            const raw = fs.readFileSync(LOCK_FILE, 'utf8');
+            const [pidStr, tsStr] = raw.split(/\s+/);
+            const pid = Number(pidStr);
+            const ts = Number(tsStr);
+            const STALE_MS = Number(process.env.DELEGATE_LOCK_STALE_MS || 10 * 60_000); // 10m default
+            const stale = !ts || (now - ts) > STALE_MS;
+            if (pid && !stale) {
+                try {
+                    process.kill(pid, 0); // still alive
+
+                    console.log('[delegate:loop] lock detected (another instance running) – exiting');
+                    return false;
+                } catch {
+                    // pid not alive -> treat as stale
+                }
+            }
+        }
+        fs.mkdirSync(path.dirname(LOCK_FILE), { recursive: true });
+        fs.writeFileSync(LOCK_FILE, `${process.pid} ${now}`);
+        return true;
+    } catch {
+        return true; // fail-open
+    }
+}
+if (!obtainLock()) process.exit(0);
 let running = false;
 let lastHash = '';
 let lastPlanHash = '';
+const PLAN_TRIGGER = process.env.TWO_AGENT_DELEGATION_TRIGGER_FILE || '.codex/tmp/delegation-trigger.signal';
+let lastTriggerMtime = 0;
 
 // ANSI color helpers (fallback to plain if NO_COLOR set)
 const COLOR = process.env.NO_COLOR ? { r: '', y: '', g: '', b: '', dim: '', reset: '' } : {
     r: '\x1b[31m', y: '\x1b[33m', g: '\x1b[32m', b: '\x1b[36m', dim: '\x1b[2m', reset: '\x1b[0m'
 };
 
-// Using JSDoc typedef so file can run under plain node without ts-node preloader
-/**
- * @typedef {Object} QueueTask
- * @property {string} taskId
- * @property {string} status
- * @property {string=} updatedAt
- * @property {string=} createdAt
- * @property {string=} summary
- */
+// Define a minimal local type for QueueTask used in this script
+type QueueTask = { taskId: string; status: 'pending' | 'running' | 'done' | 'failed'; updatedAt?: string; createdAt?: string; summary?: string; files?: string[]; estLoc?: number; previousFailures?: number; domains?: unknown };
 
-/** @param {QueueTask[]} tasks */
-function categorize(tasks /**: any[] */) {
-    const groups = { running: [] as any[], failed: [] as any[], done: [] as any[], pending: [] as any[] };
+function categorize(tasks: QueueTask[]) {
+    const groups = { running: [] as QueueTask[], failed: [] as QueueTask[], done: [] as QueueTask[], pending: [] as QueueTask[] };
     for (const t of tasks) {
         if (t.status === 'running') groups.running.push(t);
         else if (t.status === 'failed') groups.failed.push(t);
@@ -44,7 +68,7 @@ function ageSec(ts?: string) {
 }
 
 /** @param {QueueTask} t @param {number} staleThresholdSec */
-function fmtTask(t /**: any */, staleThresholdSec /**: number */) {
+function fmtTask(t: QueueTask, staleThresholdSec: number) {
     const a = ageSec(t.updatedAt);
     const stale = t.status === 'running' && a > staleThresholdSec;
     const color = t.status === 'failed' ? COLOR.r : t.status === 'running' ? (stale ? COLOR.r : COLOR.y) : t.status === 'done' ? COLOR.g : COLOR.b;
@@ -52,16 +76,14 @@ function fmtTask(t /**: any */, staleThresholdSec /**: number */) {
     return `${color}${t.taskId}${stale ? '*' : ''}${COLOR.reset}${COLOR.dim}[${t.status},${ageLabel}]${COLOR.reset}`;
 }
 
-/** @param {QueueTask[]} tasks */
-function renderSnapshot(tasks /**: any[] */) {
-    const groups = categorize(tasks as any[]);
+function renderSnapshot(tasks: QueueTask[]) {
+    const groups = categorize(tasks as QueueTask[]);
     const total = tasks.length;
     const staleThresholdSec = Number(process.env.DELEGATE_STALE_SEC || 180); // 3 min default
     const summary = `${COLOR.dim}Σ=${total}${COLOR.reset} ${COLOR.y}R=${groups.running.length}${COLOR.reset} ${COLOR.r}F=${groups.failed.length}${COLOR.reset} ${COLOR.g}D=${groups.done.length}${COLOR.reset} ${COLOR.b}P=${groups.pending.length}${COLOR.reset}`;
     const parts: string[] = [];
     const verbose = process.env.DELEGATE_VERBOSE === '1';
-    /** @param {string} label @param {QueueTask[]} arr */
-    const show = (label /**: string */, arr /**: any[] */) => {
+    const show = (label: string, arr: QueueTask[]) => {
         if (!arr.length) return;
         const list = arr.slice(0, verbose ? arr.length : 6).map(t => fmtTask(t, staleThresholdSec)).join(', ');
         const more = !verbose && arr.length > 6 ? ` …(+${arr.length - 6})` : '';
@@ -80,11 +102,7 @@ function hashPlan(plan: unknown): string {
     try { return crypto.createHash('sha1').update(JSON.stringify(plan)).digest('hex'); } catch { return ''; }
 }
 
-function loadPlan(): any | null {
-    const p = path.resolve('.codex/last-plan.json');
-    if (!fs.existsSync(p)) return null;
-    try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return null; }
-}
+// loadPlan removed (unused) to satisfy lint
 
 function readQueueLines(): string[] {
     if (!fs.existsSync(QUEUE)) return [];
@@ -93,22 +111,28 @@ function readQueueLines(): string[] {
 
 function parseTasks() {
     const lines = readQueueLines();
-    const tasks = [] as any[];
+    const tasks: QueueTask[] = [] as unknown as QueueTask[];
     for (const line of lines.slice(1)) { // skip header
         try { tasks.push(JSON.parse(line)); } catch { /* ignore */ }
     }
     return tasks;
 }
 
-function hashTasks(tasks: any[]): string {
+function hashTasks(tasks: QueueTask[]): string {
     return tasks.map(t => `${t.taskId}:${t.status}:${t.updatedAt}`).join('|');
 }
 
-function pickPending(tasks: any[]) {
+function pickPending(tasks: QueueTask[]) {
+    // Honor optional max concurrency: if running >= limit, skip starting new.
+    const maxConc = Number(process.env.DELEGATE_MAX_CONCURRENCY || 0);
+    if (maxConc > 0) {
+        const runningCount = tasks.filter(t => t.status === 'running').length;
+        if (runningCount >= maxConc) return undefined;
+    }
     return tasks.find(t => t.status === 'pending');
 }
 
-function hasRunning(tasks: any[]) {
+function hasRunning(tasks: QueueTask[]) {
     return tasks.some(t => t.status === 'running');
 }
 
@@ -151,17 +175,29 @@ function markStatus(taskId: string, from: string, to: string) {
 
 function processQueue() {
     if (running) return;
+    // If planner trigger file updated, we run an immediate fast pass (skip hashing throttle)
+    try {
+        if (PLAN_TRIGGER && fs.existsSync(PLAN_TRIGGER)) {
+            const st = statSync(PLAN_TRIGGER);
+            if (st.mtimeMs > lastTriggerMtime) {
+                lastTriggerMtime = st.mtimeMs;
+
+                console.log('[delegate:loop] planner trigger detected, forcing snapshot + dequeue attempt');
+                lastHash = ''; // force snapshot render
+            }
+        }
+    } catch { /* ignore trigger check */ }
     const tasks = parseTasks();
     const hash = hashTasks(tasks);
     if (hash !== lastHash) {
         lastHash = hash;
         try {
-            const pretty = renderSnapshot(tasks as any[]);
-            // eslint-disable-next-line no-console
+            const pretty = renderSnapshot(tasks as unknown as QueueTask[]);
+
             console.log(pretty);
         } catch {
             // fallback minimal
-            // eslint-disable-next-line no-console
+
             console.log('[delegate:loop] queue snapshot', tasks.map(t => `${t.taskId}:${t.status}`).join(', '));
         }
     }
@@ -174,7 +210,7 @@ function processQueue() {
             if (age > STALE_SEC) {
                 markStatus(t.taskId, 'running', 'failed');
                 progressed = true;
-                // eslint-disable-next-line no-console
+
                 console.log(`${COLOR.r}[delegate:loop] auto-failed stale task${COLOR.reset} ${t.taskId} age=${Math.round(age)}s>`);
             }
         }
@@ -195,7 +231,7 @@ function processQueue() {
             const ph = hashPlan(synthesizedPlan);
             if (ph && ph !== lastPlanHash) {
                 lastPlanHash = ph;
-                // eslint-disable-next-line no-console
+
                 console.log('[delegate:loop] plan hash delta', ph.slice(0, 8));
             }
         } catch { /* silent */ }
@@ -214,12 +250,13 @@ function processQueue() {
             if (pr.status === 0 && pr.stdout) {
                 const decision = JSON.parse(pr.stdout.split(/\n/).filter(Boolean).pop() || '{}');
                 if (decision.profile) activeProfile = decision.profile;
-                // eslint-disable-next-line no-console
+
                 console.log(`[delegate:loop] profile-router → ${activeProfile} (${decision.reason || 'no-reason'})`);
             }
         }
-    } catch (e) {
-        console.warn('[delegate:loop] profile router failed', (e as any)?.message);
+    } catch (e: unknown) {
+        const msg = e && typeof e === 'object' && 'message' in e && typeof (e as Record<string, unknown>).message === 'string' ? (e as Record<string, unknown>).message as string : String(e);
+        console.warn('[delegate:loop] profile router failed', msg);
     }
 
     running = true;
@@ -227,12 +264,12 @@ function processQueue() {
     const proc = spawn('npm', ['run', 'delegate:process'], { stdio: 'inherit', env: { ...process.env, AIDER_AUTORUN: '1', ACTIVE_PROFILE: activeProfile } });
     proc.on('exit', (code) => {
         const durMs = Date.now() - started;
-        // eslint-disable-next-line no-console
+
         console.log(`[delegate:loop] delegate:process exited code=${code} duration=${durMs}ms`);
         if (process.env.TOKEN_LEDGER === '1') {
             try {
                 const metricsPath = path.resolve('.codex/tmp/last-token-stats.json');
-                let tokenStats: any = null;
+                let tokenStats: { input_tokens?: number; input_tokens_est?: number; output_tokens?: number; output_tokens_est?: number; tool_calls?: number } | null = null;
                 if (fs.existsSync(metricsPath)) {
                     try { tokenStats = JSON.parse(fs.readFileSync(metricsPath, 'utf8')); } catch { tokenStats = null; }
                 }
@@ -246,7 +283,7 @@ function processQueue() {
                     success: code === 0
                 };
                 fs.appendFileSync('.codex/token-ledger.jsonl', JSON.stringify(ledgerLine) + '\n');
-            } catch (e) { /* ignore */ }
+            } catch { /* ignore ledger append */ }
         }
         running = false;
     });

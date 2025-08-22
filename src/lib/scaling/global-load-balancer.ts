@@ -717,8 +717,8 @@ export class EnterpriseGlobalLoadBalancer {
 
     // Private helper methods
     private startHealthChecking(): void {
-        this.healthCheckInterval = setInterval(async () => {
-            await this.performHealthChecks();
+        this.healthCheckInterval = setInterval(() => {
+            void this.performHealthChecks().catch(err => console.error('[GlobalLoadBalancer] performHealthChecks error', err));
         }, 30000); // Check every 30 seconds
     }
 

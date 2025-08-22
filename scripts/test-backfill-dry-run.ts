@@ -16,7 +16,7 @@ function run(cmd: string, env: Record<string, string | undefined> = {}) {
     return execSync(cmd, { stdio: 'pipe', env: mergedEnv, encoding: 'utf8' });
 }
 
-function assert(cond: any, msg: string) { if (!cond) { console.error('\n[CI][BACKFILL-DRY-RUN] Assertion FAILED:', msg); process.exit(1); } }
+function assert(cond: unknown, msg: string) { if (!Boolean(cond)) { console.error('\n[CI][BACKFILL-DRY-RUN] Assertion FAILED:', msg); process.exit(1); } }
 
 function log(msg: string) { console.log(`[CI][BACKFILL-DRY-RUN] ${msg}`); }
 

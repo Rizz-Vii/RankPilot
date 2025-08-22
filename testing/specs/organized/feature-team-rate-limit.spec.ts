@@ -1,10 +1,7 @@
-import { test, expect } from '@playwright/test'
-import type { TestContext } from '../../types/test-context'
-
-const LIMIT = parseInt(process.env.BUCKET_TOKENS || '60', 10)
+import { expect, test } from '@playwright/test'
 
 test.describe('Team Token Bucket Rate Limiting', () => {
-    const ctx: TestContext = {}
+    // (ctx placeholder removed – no test context state required for these specs)
 
     test.beforeEach(async () => {
         process.env.ENABLE_TEAM_BUCKET_LIMIT = '1'

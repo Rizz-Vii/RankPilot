@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { allowEnterpriseMocks } from '@/lib/flags/demo';
 import {
     Activity,
     AlertTriangle,
@@ -23,8 +24,7 @@ import {
     Users,
     Zap
 } from 'lucide-react';
-import { useEffect, useState, useCallback } from 'react';
-import { allowEnterpriseMocks } from '@/lib/flags/demo';
+import { useCallback, useEffect, useState } from 'react';
 import {
     Area,
     AreaChart,
@@ -88,62 +88,65 @@ export function EnterpriseDashboard() {
     const [activeTab, setActiveTab] = useState('overview');
 
 
-    const loadDashboardMetrics = useCallback(async () => {
-        try {
-            setIsLoading(true);
-            // Mock data for demonstration
-            if (!allowEnterpriseMocks()) {
-                setMetrics({
-                    global_performance: { edge_locations: { total: 0, active: 0, avg_latency: 0, avg_cache_hit_rate: 0 }, cache_performance: { global_hit_rate: 0, bandwidth_savings: 0 }, database: { avg_query_improvement: 0, throughput_increase: 0 } },
-                    automation_metrics: { code_quality: { average_quality_score: 0, issues_auto_fixed: 0 }, testing: { average_pass_rate: 0, performance_regressions_detected: 0 }, deployment: { success_rate: 0, average_deployment_time: 0 } },
-                    business_intelligence: { revenue_growth: 0, user_engagement_improvement: 0, conversion_rate_improvement: 0, performance_impact_score: 0 },
-                    anomalies: [],
-                    real_time_metrics: { active_users: 0, response_time: 0, error_rate: 0, cpu_usage: 0, memory_usage: 0 }
-                });
-                return;
-            }
-            const mockMetrics: DashboardMetrics = {
-                global_performance: {
-                    edge_locations: { total: 12, active: 11, avg_latency: 145, avg_cache_hit_rate: 0.94 },
-                    cache_performance: { global_hit_rate: 0.91, bandwidth_savings: 2500000 },
-                    database: { avg_query_improvement: 65, throughput_increase: 45 }
-                },
-                automation_metrics: {
-                    code_quality: { average_quality_score: 92, issues_auto_fixed: 156 },
-                    testing: { average_pass_rate: 97.8, performance_regressions_detected: 3 },
-                    deployment: { success_rate: 98.9, average_deployment_time: 8.5 }
-                },
-                business_intelligence: {
-                    revenue_growth: 18.5,
-                    user_engagement_improvement: 25.3,
-                    conversion_rate_improvement: 21.7,
-                    performance_impact_score: 88.5
-                },
-                anomalies: [
-                    { id: '1', severity: 'medium', description: 'API response time spike detected', timestamp: Date.now() - 3600000, resolved: false },
-                    { id: '2', severity: 'low', description: 'Cache hit rate below optimal', timestamp: Date.now() - 7200000, resolved: true },
-                    { id: '3', severity: 'high', description: 'Database connection pool exhaustion', timestamp: Date.now() - 1800000, resolved: false }
-                ],
-                real_time_metrics: {
-                    active_users: 2847,
-                    response_time: 187,
-                    error_rate: 0.012,
-                    cpu_usage: 67.5,
-                    memory_usage: 72.3
+    const loadDashboardMetrics = useCallback(() => {
+        // Fire & forget internal async logic to avoid exposing a Promise to callers (simplifies lint contract)
+        void (async () => {
+            try {
+                setIsLoading(true);
+                if (!allowEnterpriseMocks()) {
+                    setMetrics({
+                        global_performance: { edge_locations: { total: 0, active: 0, avg_latency: 0, avg_cache_hit_rate: 0 }, cache_performance: { global_hit_rate: 0, bandwidth_savings: 0 }, database: { avg_query_improvement: 0, throughput_increase: 0 } },
+                        automation_metrics: { code_quality: { average_quality_score: 0, issues_auto_fixed: 0 }, testing: { average_pass_rate: 0, performance_regressions_detected: 0 }, deployment: { success_rate: 0, average_deployment_time: 0 } },
+                        business_intelligence: { revenue_growth: 0, user_engagement_improvement: 0, conversion_rate_improvement: 0, performance_impact_score: 0 },
+                        anomalies: [],
+                        real_time_metrics: { active_users: 0, response_time: 0, error_rate: 0, cpu_usage: 0, memory_usage: 0 }
+                    });
+                    return;
                 }
-            };
-
-            setMetrics(mockMetrics);
-        } catch (error) {
-            console.error('Failed to load dashboard metrics:', error);
-        } finally {
-            setIsLoading(false);
-        }
+                const mockMetrics: DashboardMetrics = {
+                    global_performance: {
+                        edge_locations: { total: 12, active: 11, avg_latency: 145, avg_cache_hit_rate: 0.94 },
+                        cache_performance: { global_hit_rate: 0.91, bandwidth_savings: 2500000 },
+                        database: { avg_query_improvement: 65, throughput_increase: 45 }
+                    },
+                    automation_metrics: {
+                        code_quality: { average_quality_score: 92, issues_auto_fixed: 156 },
+                        testing: { average_pass_rate: 97.8, performance_regressions_detected: 3 },
+                        deployment: { success_rate: 98.9, average_deployment_time: 8.5 }
+                    },
+                    business_intelligence: {
+                        revenue_growth: 18.5,
+                        user_engagement_improvement: 25.3,
+                        conversion_rate_improvement: 21.7,
+                        performance_impact_score: 88.5
+                    },
+                    anomalies: [
+                        { id: '1', severity: 'medium', description: 'API response time spike detected', timestamp: Date.now() - 3600000, resolved: false },
+                        { id: '2', severity: 'low', description: 'Cache hit rate below optimal', timestamp: Date.now() - 7200000, resolved: true },
+                        { id: '3', severity: 'high', description: 'Database connection pool exhaustion', timestamp: Date.now() - 1800000, resolved: false }
+                    ],
+                    real_time_metrics: {
+                        active_users: 2847,
+                        response_time: 187,
+                        error_rate: 0.012,
+                        cpu_usage: 67.5,
+                        memory_usage: 72.3
+                    }
+                };
+                setMetrics(mockMetrics);
+            } catch (error) {
+                console.error('Failed to load dashboard metrics:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        })();
     }, []);
 
     useEffect(() => {
-        loadDashboardMetrics();
-        const interval = setInterval(loadDashboardMetrics, 30000); // Update every 30 seconds
+        // Initial load (fire & forget)
+        void loadDashboardMetrics();
+        // Periodic refresh – wrap in non-async interval callback
+        const interval = setInterval(() => { void loadDashboardMetrics(); }, 30000);
         return () => clearInterval(interval);
     }, [selectedTimeRange, loadDashboardMetrics]);
 
@@ -192,7 +195,7 @@ export function EnterpriseDashboard() {
                 <AlertTriangle className="h-16 w-16 text-warning-foreground mx-auto mb-4" />
                 <h2 className="text-xl font-semibold mb-2">Failed to Load Dashboard</h2>
                 <p className="text-muted-foreground">Unable to retrieve enterprise metrics.</p>
-                <Button onClick={loadDashboardMetrics} className="mt-4">
+                <Button onClick={() => { void loadDashboardMetrics(); }} className="mt-4">
                     Retry
                 </Button>
             </div>

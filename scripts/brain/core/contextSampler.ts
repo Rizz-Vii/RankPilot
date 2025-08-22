@@ -26,9 +26,14 @@ export function sampleContext(maxKb: number): { files: string[]; notes: string[]
     const memFile = path.join(root, 'artifacts/brain/memory.jsonl');
     if (fs.existsSync(memFile)) {
       const raw = fs.readFileSync(memFile, 'utf8').trim().split(/\n/).slice(-5); // last 5 events
-      const events = raw.map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean) as any[];
+      const events = raw.map(l => { try { return JSON.parse(l) as unknown; } catch { return null; } }).filter(Boolean) as unknown[];
       for (const ev of events) {
-        notes.push(`mem:${ev.source}:${ev.kind}:${ev.status || ''}:${ev.id || ''}`);
+        const e = (ev && typeof ev === 'object') ? (ev as Record<string, unknown>) : {};
+        const source = typeof e.source === 'string' ? e.source : '';
+        const kind = typeof e.kind === 'string' ? e.kind : '';
+        const status = typeof e.status === 'string' ? e.status : '';
+        const id = typeof e.id === 'string' ? e.id : '';
+        notes.push(`mem:${source}:${kind}:${status}:${id}`);
       }
     }
   } catch { }

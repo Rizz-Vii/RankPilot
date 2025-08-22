@@ -1,7 +1,7 @@
 /**
  * Theme Configuration Component
  * Priority 3 Feature Implementation - DevReady Phase 3
- * 
+ *
  * Features:
  * - User-configurable theme preferences
  * - Accessibility options
@@ -18,7 +18,7 @@ import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { ThemeMode, ThemePreferences} from '@/lib/themes/theme-system';
+import type { ThemeMode, ThemePreferences } from '@/lib/themes/theme-system';
 import { useTheme } from '@/lib/themes/theme-system';
 import {
     Accessibility,
@@ -467,7 +467,7 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
                                         variant="outline"
                                         onClick={() => {
                                             const config = JSON.stringify(preferences, null, 2);
-                                            navigator.clipboard.writeText(config);
+                                            void navigator.clipboard.writeText(config);
                                         }}
                                     >
                                         Export Theme
@@ -475,12 +475,12 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
                                     <Button
                                         variant="outline"
                                         onClick={() => {
-                                            navigator.clipboard.readText().then(text => {
+                                            void navigator.clipboard.readText().then(text => {
                                                 try {
                                                     const config = JSON.parse(text);
                                                     setPreferences(config);
                                                 } catch (error) {
-                                                    console.error('Invalid theme configuration');
+                                                    console.error('Invalid theme configuration', error);
                                                 }
                                             });
                                         }}
@@ -513,6 +513,10 @@ export function ThemeConfiguration({ className }: ThemeConfigurationProps) {
                                 <div>
                                     <div className="font-medium">Reduced Motion:</div>
                                     <div className="text-muted-foreground">{shouldReduceMotion() ? 'Enabled' : 'Disabled'}</div>
+                                </div>
+                                <div>
+                                    <div className="font-medium">Color Blindness Support:</div>
+                                    <div className="text-muted-foreground">{hasColorBlindnessSupport() ? 'Enabled' : 'Disabled'}</div>
                                 </div>
                             </div>
                         </CardContent>

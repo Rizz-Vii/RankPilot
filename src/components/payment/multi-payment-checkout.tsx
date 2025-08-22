@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,20 +9,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { CreditCard, Star, Check, Shield, Zap, Lock } from "lucide-react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
 import LoadingScreen from "@/components/ui/loading-screen";
-import { toast } from "sonner";
-import { STRIPE_PLANS } from "@/lib/stripe";
-import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import getStripe from "@/lib/stripe";
-import { httpsCallable } from "firebase/functions";
+import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/context/AuthContext";
+import { conversionFunnel, trackPaymentEvents } from "@/lib/analytics";
 import { functions } from "@/lib/firebase";
-import { trackPaymentEvents, conversionFunnel } from "@/lib/analytics";
+import { asVoidHandler } from '@/lib/react/handlers';
+import getStripe, { STRIPE_PLANS } from "@/lib/stripe";
+import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
+import { httpsCallable } from "firebase/functions";
+import { motion } from "framer-motion";
+import { Check, CreditCard, Lock, Shield, Star, Zap } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 const createCheckoutSession = httpsCallable(functions, "createCheckoutSession");
 const createPayPalOrder = httpsCallable(functions, "createPayPalOrder");
@@ -349,7 +349,7 @@ export default function MultiPaymentCheckout(): JSX.Element {
                         </p>
                       </div>
                       <Button
-                        onClick={handleStripeCheckout}
+                        onClick={asVoidHandler(handleStripeCheckout)}
                         disabled={isProcessing}
                         className="w-full"
                         size="lg"
@@ -405,7 +405,10 @@ export default function MultiPaymentCheckout(): JSX.Element {
                               throw new Error(msg);
                             }
                           }}
-                          onApprove={(data: unknown) => void handlePayPalApprove(data as PayPalApproveData)}
+                          onApprove={async (data: unknown) => {
+                            await handlePayPalApprove(data as PayPalApproveData);
+                            return;
+                          }}
                           onError={(error: unknown) => {
                             const msg = (error as { message?: string })?.message || 'PayPal error';
                             console.error("PayPal error:", error);

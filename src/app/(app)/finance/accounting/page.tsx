@@ -1,15 +1,15 @@
 "use client";
-import { useEffect, useState, useMemo } from 'react';
-import { FeatureGate } from '@/components/subscription/FeatureGate';
-import { useAuth } from '@/context/AuthContext';
-import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
-import { fetchRecentAccountingSnapshots } from '@/lib/services/accounting-automation-snapshots';
-import { ActionCard } from '@/components/shared/action-card';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
+import { ActionCard } from '@/components/shared/action-card';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/context/AuthContext';
 import { useAutomationTrigger } from '@/hooks/useAutomationTrigger';
 import { useProvenance } from '@/hooks/useProvenance';
+import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { fetchRecentAccountingSnapshots } from '@/lib/services/accounting-automation-snapshots';
+import { useEffect, useMemo, useState } from 'react';
 
 interface PnLFigures { revenue:number; cogs:number; grossProfit:number; opex:number; netIncome:number; }
 interface BSFigures { assets:number; liabilities:number; equity:number; }
@@ -32,14 +32,29 @@ export default function AccountingPage(){
   useEffect(()=> { void trackDashboardView('finance'); }, []);
 
   useEffect(()=> { if(!userId) return; setLoading(true); void (async()=> { try {
-  const rawSnaps = await fetchRecentAccountingSnapshots(userId, teamId, undefined, 8) as AccountingSnapshot[];
-  // Narrow by presence of expected figure keys
-  const pnl = rawSnaps.find(s=> s.type==='pnl' && s.figures && 'grossProfit' in s.figures);
-  const bs = rawSnaps.find(s=> s.type==='balance_sheet' && s.figures && 'assets' in s.figures);
-  setPnlSnap(pnl || null);
-  setBsSnap(bs || null);
-  setRecentPnL(rawSnaps.filter(s=> s.type==='pnl' && s.figures && 'grossProfit' in s.figures));
-  if(rawSnaps.length) markLive(); else markFallback();
+    const raw = await fetchRecentAccountingSnapshots(userId, teamId, undefined, 8) as unknown;
+    const array: unknown[] = Array.isArray(raw) ? raw : [];
+    const narrowed: AccountingSnapshot[] = array.map(r => {
+      if (!r || typeof r !== 'object') return null;
+      const rec = r as Record<string, unknown>;
+      const type = rec['type'];
+      const figures = rec['figures'];
+      if (type === 'pnl' && figures && typeof figures === 'object' && 'grossProfit' in (figures as object)) {
+        const createdAt = (rec['createdAt'] && typeof rec['createdAt'] === 'object') ? (rec['createdAt'] as { toDate: () => Date }) : undefined;
+        return { type: 'pnl', figures: figures as PnLFigures, createdAt } as PnLSnapshot;
+      }
+      if (type === 'balance_sheet' && figures && typeof figures === 'object' && 'assets' in (figures as object)) {
+        const createdAt = (rec['createdAt'] && typeof rec['createdAt'] === 'object') ? (rec['createdAt'] as { toDate: () => Date }) : undefined;
+        return { type: 'balance_sheet', figures: figures as BSFigures, createdAt } as BalanceSheetSnapshot;
+      }
+      return null;
+    }).filter(Boolean) as AccountingSnapshot[];
+    const pnlArr = narrowed.filter(s => s.type === 'pnl') as PnLSnapshot[];
+    const bsArr = narrowed.filter(s => s.type === 'balance_sheet') as BalanceSheetSnapshot[];
+    setPnlSnap(pnlArr[0] || null);
+    setBsSnap(bsArr[0] || null);
+    setRecentPnL(pnlArr);
+    if (narrowed.length) markLive(); else markFallback();
   } finally { setLoading(false); } })(); }, [userId, teamId, markLive, markFallback]);
 
   function run(action: 'financeAccountingSeedSampleJournals'|'financeAccountingGeneratePnL'|'financeAccountingGenerateBalanceSheet'|'financeAccountingReconcile') {

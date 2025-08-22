@@ -1,6 +1,7 @@
+import { extractErrorMessage } from '@/lib/errors/extract-error-message';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
+import { AIVisibilityEngine, type CitationAnalysis, type VisibilityRecommendation } from '@/lib/neuroseo/ai-visibility-engine';
 import { NextResponse } from 'next/server';
-import { AIVisibilityEngine } from '@/lib/neuroseo/ai-visibility-engine';
-import { withProvenance, enforceProvenance } from '@/lib/middleware/provenance';
 
 // Lightweight in-memory cache to reduce repeated analyses during a short window
 const cache = new Map<string, { ts: number; data: unknown }>();
@@ -29,22 +30,41 @@ export const POST = withProvenance(async function POST(req: Request) {
         const score = Math.round(report.metrics.overallVisibilityScore);
         const citationRate = report.metrics.citationRate;
 
-        const visibility = report.citations.slice(0, 25).map(c => ({
-            citation: {
-                platform: (c as any).platform || 'unknown',
-                position: (c as any).position ?? 0,
-                snippet: (c as any).snippet || '',
-                confidence: (c as any).confidence ?? 0,
-                url: (c as any).url || url
-            },
-            optimization: {
-                recommendations: (c as any).recommendations?.map((r: any) => r?.description) || [],
-                priority: 'medium',
-                impact: 50
-            }
-        }));
+        // Some downstream UI expects enriched citation objects; extend base citation analysis with optional fields.
+        interface EnrichedCitation extends CitationAnalysis {
+            platform?: string;
+            position?: number; // alias for citationPosition
+            snippet?: string; // alias for citationContext
+            confidence?: number; // alias for relevanceScore
+            url?: string; // source url (fallback to request url)
+            recommendations?: Array<{ description?: string } | string>;
+        }
+        const visibility = (report.citations as EnrichedCitation[]).slice(0, 25).map(c => {
+            const recs = Array.isArray(c.recommendations)
+                ? c.recommendations
+                    .map(r => typeof r === 'string' ? r : (r?.description || ''))
+                    .filter(Boolean)
+                : [];
+            return {
+                citation: {
+                    platform: c.platform || 'unknown',
+                    position: c.position ?? c.citationPosition ?? 0,
+                    snippet: c.snippet || c.citationContext || '',
+                    confidence: typeof c.confidence === 'number' ? c.confidence : c.relevanceScore,
+                    url: c.url || url
+                },
+                optimization: {
+                    recommendations: recs,
+                    priority: 'medium' as const,
+                    impact: 50
+                }
+            };
+        });
 
-        const recommendations = (report.recommendations || []).map((r: any) => r?.description ?? '').filter(Boolean).slice(0, 15);
+        const recommendations = (report.recommendations as VisibilityRecommendation[] | undefined || [])
+            .map(r => r.description)
+            .filter(Boolean)
+            .slice(0, 15);
 
         const platforms = report.competitiveAnalysis.topCompetitors.slice(0, 8).map(comp => ({
             name: new URL(comp.url).hostname.replace('www.', ''),
@@ -65,8 +85,11 @@ export const POST = withProvenance(async function POST(req: Request) {
         cache.set(cacheKey, { ts: Date.now(), data: responsePayload });
         return NextResponse.json(responsePayload);
     } catch (error: unknown) {
-        const errMessage = error instanceof Error ? error.message : String(error);
+        const errMessage = extractErrorMessage(error);
         console.error('[AI Visibility API] Failure', errMessage);
-        return NextResponse.json(enforceProvenance({ error: 'Internal server error' }, { path: 'neuroseo/ai-visibility', note: 'error' }), { status: 500 });
+        return NextResponse.json(
+            enforceProvenance({ error: 'Internal server error', details: errMessage }, { path: 'neuroseo/ai-visibility', note: 'error' }),
+            { status: 500 }
+        );
     }
 }, { path: 'neuroseo/ai-visibility' });

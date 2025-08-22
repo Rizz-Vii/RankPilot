@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import type { ChangeEvent } from "react";
-import { useI18n } from '@/lib/i18n/internationalization-system';
-import { Input } from "@/components/ui/input";
-import { Search, Loader2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { searchFeatures } from "@/ai/flows/search";
 import type { SearchOutput } from "@/ai/flows/search";
+import { searchFeatures } from "@/ai/flows/search";
+import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useI18n } from '@/lib/i18n/internationalization-system';
+import { AnimatePresence, motion } from "framer-motion";
+import { Loader2, Search } from "lucide-react";
 import Link from "next/link";
+import type { ChangeEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const placeholderQueries = [
   "Audit my competitor's site...",
@@ -95,7 +95,8 @@ export default function GlobalSearch() {
       }
     };
 
-    performSearch();
+    // Fire & forget search execution (debounced effect)
+    void performSearch();
   }, [debouncedQuery]);
 
   useEffect(() => {

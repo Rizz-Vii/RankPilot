@@ -481,7 +481,8 @@ export class AutomatedPentestingFramework extends EventEmitter {
      */
     private startTestScheduler(): void {
         setInterval(() => {
-            this.processTestQueue();
+            // Fire-and-forget with error capture
+            void this.processTestQueue().catch(err => console.error('[AutomatedPentesting] processTestQueue scheduler error', err));
         }, 1000);
     }
 
@@ -493,9 +494,12 @@ export class AutomatedPentestingFramework extends EventEmitter {
             const testId = this.testQueue.shift();
             if (testId) {
                 this.runningTests.add(testId);
-                this.executeTest(testId).finally(() => {
-                    this.runningTests.delete(testId);
-                });
+                // Execute without awaiting the entire queue loop iteration; capture completion & errors
+                void this.executeTest(testId)
+                    .catch(err => console.error('[AutomatedPentesting] executeTest error', err))
+                    .finally(() => {
+                        this.runningTests.delete(testId);
+                    });
             }
         }
     }
@@ -896,13 +900,14 @@ export class AutomatedPentestingFramework extends EventEmitter {
                 2629746000; // monthly
 
         setTimeout(() => {
-            this.createTest({
+            // Fire-and-forget creation of the next scheduled test
+            void this.createTest({
                 ...test,
                 schedule: {
                     startTime: Date.now(),
                     recurring: test.schedule.recurring
                 }
-            });
+            }).catch(err => console.error('[AutomatedPentesting] scheduleRecurringTest createTest error', err));
         }, interval * test.schedule.recurring.interval);
     }
 

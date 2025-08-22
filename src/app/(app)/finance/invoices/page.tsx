@@ -1,23 +1,23 @@
 "use client";
 // Finance - Invoices
-import { useEffect, useState } from 'react';
-import { FeatureGate } from '@/components/subscription/FeatureGate';
-import { MetricCard } from '@/components/metrics/MetricCard';
-import { TrendSparkline } from '@/components/metrics/TrendSparkline';
-import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
-import { allowFinanceMocks } from '@/lib/flags/finance';
-import { Alert } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
-import { useFinanceInvoiceMetrics } from '@/hooks/useFinanceInvoiceMetrics';
-import { fetchRecentFinanceRevenueSnapshots } from '@/lib/services/finance-automation-snapshots';
-import { useAuth } from '@/context/AuthContext';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ActionCard } from '@/components/shared/action-card';
-import { useAutomationTrigger } from '@/hooks/useAutomationTrigger';
-import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { LazyDataTable } from '@/components/metrics/LazyDataTable';
-import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { MetricCard } from '@/components/metrics/MetricCard';
+import { PeriodSelector } from '@/components/metrics/PeriodSelector';
+import { TrendSparkline } from '@/components/metrics/TrendSparkline';
+import { ActionCard } from '@/components/shared/action-card';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { Alert } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/context/AuthContext';
+import { useAutomationTrigger } from '@/hooks/useAutomationTrigger';
+import { useFinanceInvoiceMetrics } from '@/hooks/useFinanceInvoiceMetrics';
+import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
 import { useProvenance } from '@/hooks/useProvenance';
+import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { allowFinanceMocks } from '@/lib/flags/finance';
+import { fetchRecentFinanceRevenueSnapshots } from '@/lib/services/finance-automation-snapshots';
+import { AlertTriangle } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function InvoicesPage(): JSX.Element {
   const [months, setMonths] = useState(6);
@@ -72,8 +72,8 @@ export default function InvoicesPage(): JSX.Element {
         <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Invoices</h2>
           <LazyDataTable
-            columns={[{ key:'period', header:'Period'}, { key:'planTier', header:'Tier'}, { key:'amount', header:'Amount'}, { key:'status', header:'Status'}, { key:'issuedAt', header:'Issued', render:(r)=> { const rec = r as InvoiceRowLite; return rec.issuedAt?.toDate?.()?.toISOString().slice(0,10) } }, { key:'paidAt', header:'Paid', render:(r)=> { const rec = r as InvoiceRowLite; return rec.paidAt ? rec.paidAt.toDate().toISOString().slice(0,10) : '-' } }]}
-            rows={live.rows}
+            columns={[{ key: 'period', header: 'Period' }, { key: 'planTier', header: 'Tier' }, { key: 'amount', header: 'Amount' }, { key: 'status', header: 'Status' }, { key: 'issuedAt', header: 'Issued', render: (r) => { const rec = r as unknown as InvoiceRowLite; return rec.issuedAt?.toDate ? rec.issuedAt.toDate().toISOString().slice(0, 10) : '-' } }, { key: 'paidAt', header: 'Paid', render: (r) => { const rec = r as unknown as InvoiceRowLite; return rec.paidAt?.toDate ? rec.paidAt.toDate().toISOString().slice(0, 10) : '-' } }]}
+            rows={live.rows as unknown as Record<string, unknown>[]}
             loading={live.loading}
             empty="No invoice data"
           />

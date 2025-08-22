@@ -264,7 +264,7 @@ test.describe('API Integration - Error Handling & Rate Limiting', () => {
                 data: 'invalid json'
             });
             expect([400, 404]).toContain(response.status());
-        } catch (error) {
+        } catch {
             console.log('✅ Malformed JSON properly rejected');
         }
     });

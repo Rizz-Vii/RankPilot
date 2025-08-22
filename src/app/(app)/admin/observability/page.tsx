@@ -1,13 +1,13 @@
 "use client";
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import useAdminRoute from '@/hooks/useAdminRoute';
-import LoadingScreen from '@/components/ui/loading-screen';
 import { ToolPageHeader } from '@/components/tool-page-header';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import LoadingScreen from '@/components/ui/loading-screen';
 import { Progress } from '@/components/ui/progress';
-import { BarChart3, Activity, Zap, Gauge, Brain, LineChart as LineIcon } from 'lucide-react';
+import useAdminRoute from '@/hooks/useAdminRoute';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
+import { Activity, BarChart3, Brain, Gauge, LineChart as LineIcon, Zap } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 interface KPIRecord {
   date?: string;
@@ -43,14 +43,31 @@ interface HealthPayload {
   timestamp?: string;
 }
 
+// Narrow type for MA7 + smoothed fields to avoid implicit any in dynamic picks
+type MA7Fields = {
+  ma7Provenance?: number;
+  ma7LatencyP95?: number;
+  ma7CrawlerAdoption?: number;
+  ma7SemanticAdoption?: number;
+  ma7TeamRateLimitUtilizationPct?: number;
+  smoothedProvenance?: number;
+  smoothedLatencyP95?: number;
+  smoothedCrawlerAdoption?: number;
+  smoothedSemanticAdoption?: number;
+};
+
 // Extract only MA7 & smoothed fields for alert history enrichment
-const pickMA7 = (r: KPIRecord) => {
-  const out: Partial<KPIRecord> = {};
-  const keys: (keyof KPIRecord)[] = [
-    'ma7Provenance','ma7LatencyP95','ma7CrawlerAdoption','ma7SemanticAdoption','ma7TeamRateLimitUtilizationPct',
-    'smoothedProvenance','smoothedLatencyP95','smoothedCrawlerAdoption','smoothedSemanticAdoption'
-  ];
-  keys.forEach(k=> { if (typeof r[k] === 'number') (out as any)[k] = r[k]; });
+const pickMA7 = (r: KPIRecord): MA7Fields => {
+  const out: MA7Fields = {};
+  if (typeof r.ma7Provenance === 'number') out.ma7Provenance = r.ma7Provenance;
+  if (typeof r.ma7LatencyP95 === 'number') out.ma7LatencyP95 = r.ma7LatencyP95;
+  if (typeof r.ma7CrawlerAdoption === 'number') out.ma7CrawlerAdoption = r.ma7CrawlerAdoption;
+  if (typeof r.ma7SemanticAdoption === 'number') out.ma7SemanticAdoption = r.ma7SemanticAdoption;
+  if (typeof r.ma7TeamRateLimitUtilizationPct === 'number') out.ma7TeamRateLimitUtilizationPct = r.ma7TeamRateLimitUtilizationPct;
+  if (typeof r.smoothedProvenance === 'number') out.smoothedProvenance = r.smoothedProvenance;
+  if (typeof r.smoothedLatencyP95 === 'number') out.smoothedLatencyP95 = r.smoothedLatencyP95;
+  if (typeof r.smoothedCrawlerAdoption === 'number') out.smoothedCrawlerAdoption = r.smoothedCrawlerAdoption;
+  if (typeof r.smoothedSemanticAdoption === 'number') out.smoothedSemanticAdoption = r.smoothedSemanticAdoption;
   return out;
 };
 
@@ -187,12 +204,12 @@ export default function ObservabilityDashboard() {
 
   // If no history yet (e.g., first load or Firestore blocked in test), synthesize single-point series from live kpis
   const kpiFallback = (data?.kpis as KPIRecord) || {} as KPIRecord;
-  const histProvenance = history.length ? history.map(r => r.provenanceCoveragePct).filter((v: unknown) => typeof v === 'number') : (typeof kpiFallback.provenanceCoveragePct === 'number' ? [ kpiFallback.provenanceCoveragePct ] : []);
-  const histP95 = history.length ? history.map(r => r.p95LatencyOverall).filter((v: unknown) => typeof v === 'number') : (typeof kpiFallback.p95LatencyOverall === 'number' ? [ kpiFallback.p95LatencyOverall ] : []);
+  const histProvenance = useMemo(() => history.length ? history.map(r => r.provenanceCoveragePct).filter((v: unknown) => typeof v === 'number') : (typeof kpiFallback.provenanceCoveragePct === 'number' ? [kpiFallback.provenanceCoveragePct] : []), [history, kpiFallback.provenanceCoveragePct]);
+  const histP95 = useMemo(() => history.length ? history.map(r => r.p95LatencyOverall).filter((v: unknown) => typeof v === 'number') : (typeof kpiFallback.p95LatencyOverall === 'number' ? [kpiFallback.p95LatencyOverall] : []), [history, kpiFallback.p95LatencyOverall]);
   // Could extend to p90/p99 historical sparklines in future
   const histCost = history.map(r => r.aiCostEstimate).filter((v: unknown) => typeof v === 'number');
-  const histCrawlerAdopt = history.length ? history.map(r => r.crawlerAggregateAdoptionPct).filter((v: unknown) => typeof v === 'number') : (typeof kpiFallback.crawlerAggregateAdoptionPct === 'number' ? [ kpiFallback.crawlerAggregateAdoptionPct ] : []);
-  const histSemanticAdopt = history.length ? history.map(r => r.semanticMapAggregateAdoptionPct).filter((v: unknown) => typeof v === 'number') : (typeof kpiFallback.semanticMapAggregateAdoptionPct === 'number' ? [ kpiFallback.semanticMapAggregateAdoptionPct ] : []);
+  const histCrawlerAdopt = useMemo(() => history.length ? history.map(r => r.crawlerAggregateAdoptionPct).filter((v: unknown) => typeof v === 'number') : (typeof kpiFallback.crawlerAggregateAdoptionPct === 'number' ? [kpiFallback.crawlerAggregateAdoptionPct] : []), [history, kpiFallback.crawlerAggregateAdoptionPct]);
+  const histSemanticAdopt = useMemo(() => history.length ? history.map(r => r.semanticMapAggregateAdoptionPct).filter((v: unknown) => typeof v === 'number') : (typeof kpiFallback.semanticMapAggregateAdoptionPct === 'number' ? [kpiFallback.semanticMapAggregateAdoptionPct] : []), [history, kpiFallback.semanticMapAggregateAdoptionPct]);
   const histTeamUtil = history.map(r => r.teamRateLimitUtilizationPct).filter((v: unknown) => typeof v === 'number');
   const histFallback = history.map(r => r.fallbackRatePct ?? r.fallbackRate).filter((v: unknown) => typeof v === 'number');
   const histCacheHit = history.map(r => r.cacheHitRatio).filter((v: unknown) => typeof v === 'number');
@@ -248,7 +265,7 @@ export default function ObservabilityDashboard() {
 
 
 
-  const cards: Array<{ title: string; value: unknown; unit?: string; help?: string; icon: unknown; variant?: 'percent' | 'ms' | 'raw'; extra?: React.ReactNode }> = [
+  const cards: Array<{ title: string; value: unknown; unit?: string; help?: string; icon: IconType; variant?: 'percent' | 'ms' | 'raw'; extra?: React.ReactNode }> = [
     { title: 'Provenance Coverage', value: k.provenanceCoveragePct, unit: '%', help: 'Target 100%. All responses wrapped with provenance metadata.', icon: Activity, variant: 'percent', extra: provenanceExtra || (
       <span className="flex flex-col gap-0.5"><span data-testid="prov-delta-smoothed" className="text-[10px] font-medium text-muted-foreground">— vs Smoothed</span></span>
     ) },
@@ -295,7 +312,8 @@ export default function ObservabilityDashboard() {
   if (loading && !forceAdmin) return <LoadingScreen fullScreen text="Loading admin context..." />;
   if ((!user || role !== 'admin') && !forceAdmin) return <LoadingScreen fullScreen text="Redirecting..." />;
 
-  interface CardDef { title: string; value: unknown; unit?: string; help?: string; icon: any; variant?: 'percent' | 'ms' | 'raw'; extra?: React.ReactNode }
+  type IconType = React.ComponentType<{ className?: string }>;
+  interface CardDef { title: string; value: unknown; unit?: string; help?: string; icon: IconType; variant?: 'percent' | 'ms' | 'raw'; extra?: React.ReactNode }
   const renderCard = (c: CardDef) => {
     const state = c.variant === 'percent' ? classify(c.value as number | null) : '';
     return (

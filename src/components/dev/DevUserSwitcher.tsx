@@ -6,15 +6,15 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
+import { auth } from "@/lib/firebase";
 import {
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-import { auth } from "@/lib/firebase";
-import { ChevronDown, ChevronUp, User, Bug } from "lucide-react";
+import { Bug, ChevronDown, ChevronUp, User } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
 // Centralized test user credentials (matches test.config.ts)
 const TEST_USERS = {
@@ -25,21 +25,21 @@ const TEST_USERS = {
     displayName: "Abbas Ali (Free)"
   },
   starter: {
-    email: "starter@rankpilot.com", 
+    email: "starter@rankpilot.com",
     password: "starter123",
     tier: "starter",
     displayName: "Starter User"
   },
   agency: {
     email: "agency@rankpilot.com",
-    password: "agency123", 
+    password: "agency123",
     tier: "agency",
     displayName: "Agency User"
   },
   enterprise: {
     email: "enterprise@rankpilot.com",
     password: "enterprise123",
-    tier: "enterprise", 
+    tier: "enterprise",
     displayName: "Enterprise User"
   },
   admin: {
@@ -183,7 +183,7 @@ export function DevUserSwitcher() {
                   {Object.entries(TEST_USERS).map(([tier, config]) => (
                     <button
                       key={tier}
-                      onClick={() => handleUserSwitch(tier as keyof typeof TEST_USERS)}
+                      onClick={() => { void handleUserSwitch(tier as keyof typeof TEST_USERS); }}
                       className={`group relative flex flex-col rounded-md border px-2.5 py-2 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 ${
                         user?.email === config.email
                           ? "bg-primary text-primary-foreground border-primary shadow-sm"
@@ -204,7 +204,7 @@ export function DevUserSwitcher() {
                     </button>
                   ))}
                   <button
-                    onClick={() => handleUserSwitch("logout")}
+                  onClick={() => { void handleUserSwitch("logout"); }}
                     className={`group relative flex flex-col rounded-md border px-2.5 py-2 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 ${
                       !user
                         ? "bg-destructive text-destructive-foreground border-destructive"

@@ -4,6 +4,7 @@
 import ProfileForm from "@/components/profile-form";
 import SEOAchievementsBadges from "@/components/profile/seo-achievements-badges";
 import SEOActivitiesTimeline from "@/components/profile/seo-activities-timeline";
+import { ToolPageHeader } from "@/components/tool-page-header";
 import {
   Card,
   CardContent,
@@ -14,11 +15,10 @@ import {
 import LoadingScreen from "@/components/ui/loading-screen";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
+import { toJsDate } from "@/lib/utils";
 import { Activity, Award, TrendingUp, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
-import { toJsDate } from "@/lib/utils";
-import { ToolPageHeader } from "@/components/tool-page-header";
 
 export default function ProfilePage() {
   const { user, profile, activities, loading: authLoading } = useAuth();
@@ -53,16 +53,34 @@ export default function ProfilePage() {
   }
 
   // Normalize activities to expected Activity shape for downstream components
-  const normalizedActivities = (activities || []).map((a: any) => {
-    const ts = a?.timestamp;
-    // Accept number (assumed seconds), Date, or Firestore-like { seconds, toDate }
-    let timestamp: any = ts;
-    if (typeof ts === 'number' && ts > 1e12) { // likely ms -> convert to Date
-      timestamp = new Date(ts);
-    } else if (typeof ts === 'number' && ts < 1e12) { // likely seconds
-      timestamp = { seconds: ts };
+  type ActivityTs = Date | number | { seconds?: number; toDate?: () => Date };
+  type NormalizedActivity = {
+    id: string;
+    type: string;
+    title?: string;
+    url?: string;
+    keywords?: string[];
+    score?: number;
+    timestamp: ActivityTs;
+    metadata?: unknown;
+  };
+  const normalizedActivities: NormalizedActivity[] = (activities || []).map((a) => {
+    const obj = a as unknown as Record<string, unknown>;
+    const id = typeof obj.id === 'string' ? obj.id : Math.random().toString(36).slice(2);
+    const type = typeof obj.type === 'string' ? obj.type : 'activity';
+    const title = typeof obj.title === 'string' ? obj.title : undefined;
+    const url = typeof obj.url === 'string' ? obj.url : undefined;
+    const keywords = Array.isArray(obj.keywords) ? (obj.keywords as unknown[]).filter((k): k is string => typeof k === 'string') : undefined;
+    const score = typeof obj.score === 'number' ? obj.score : undefined;
+    const metadata = obj.metadata as unknown;
+    const tsUnknown = obj.timestamp as unknown;
+    let timestamp: ActivityTs = tsUnknown as ActivityTs;
+    if (typeof tsUnknown === 'number' && tsUnknown > 1e12) {
+      timestamp = new Date(tsUnknown);
+    } else if (typeof tsUnknown === 'number' && tsUnknown < 1e12) {
+      timestamp = { seconds: tsUnknown };
     }
-    return { ...a, timestamp };
+    return { id, type, title, url, keywords, score, timestamp, metadata };
   });
 
   return (
@@ -106,7 +124,7 @@ export default function ProfilePage() {
           <SEOAchievementsBadges
             user={user}
             profile={profile}
-            activities={normalizedActivities as any}
+            activities={normalizedActivities}
           />
         </TabsContent>
 
@@ -124,7 +142,7 @@ export default function ProfilePage() {
                 <p className="text-sm text-muted-foreground">
                   This month:{" "}
                   {(activities || []).filter(
-                    (a) => a.type === "audit" && toJsDate((a as any).timestamp).getMonth() === new Date().getMonth()
+                    (a) => a.type === "audit" && toJsDate((a as { timestamp?: unknown }).timestamp).getMonth() === new Date().getMonth()
                   ).length || 0}
                 </p>
               </CardContent>
@@ -142,7 +160,7 @@ export default function ProfilePage() {
                 <p className="text-sm text-muted-foreground">
                   This month:{" "}
                   {(activities || []).filter(
-                    (a) => a.type === "keyword-research" && toJsDate((a as any).timestamp).getMonth() === new Date().getMonth()
+                    (a) => a.type === "keyword-research" && toJsDate((a as { timestamp?: unknown }).timestamp).getMonth() === new Date().getMonth()
                   ).length || 0}
                 </p>
               </CardContent>
@@ -160,7 +178,7 @@ export default function ProfilePage() {
                 <p className="text-sm text-muted-foreground">
                   This month:{" "}
                   {(activities || []).filter(
-                    (a) => a.type === "serp-analysis" && toJsDate((a as any).timestamp).getMonth() === new Date().getMonth()
+                    (a) => a.type === "serp-analysis" && toJsDate((a as { timestamp?: unknown }).timestamp).getMonth() === new Date().getMonth()
                   ).length || 0}
                 </p>
               </CardContent>

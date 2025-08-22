@@ -33,6 +33,7 @@ interface RedisLike {
 export class RedisCache<V> implements ICache<V> {
     private client: RedisLike | null = null;
     private prefix: string;
+    private isPromiseLike<T>(val: unknown): val is Promise<T> { return !!val && typeof val === 'object' && typeof (val as { then?: unknown }).then === 'function'; }
 
     constructor(opts?: { client?: RedisLike; prefix?: string; upstashUrl?: string; upstashToken?: string; }) {
         this.prefix = opts?.prefix || 'cache:';
@@ -72,7 +73,7 @@ export class RedisCache<V> implements ICache<V> {
     get(key: string): CacheEntry<V> | undefined {
         if (!this.client) return undefined;
         const out = this.client.get(key as string);
-        if (out && typeof (out as any).then === 'function') {
+        if (this.isPromiseLike(out)) {
             // Note: callers expecting sync ICache will not await; to keep contract, return undefined when async
             // Prefer using factory below to choose sync in-memory in environments without async support
             console.warn('RedisCache.get is async; returning undefined synchronously');
@@ -84,7 +85,7 @@ export class RedisCache<V> implements ICache<V> {
         if (!this.client) return;
         const payload = this.serialize({ value, ts: Date.now() });
         const out = this.client.set(key, payload);
-        if (out && typeof (out as any).then === 'function') {
+        if (this.isPromiseLike(out)) {
             // fire and forget
             (out as Promise<unknown>).catch(() => { /* ignore */ });
         }
@@ -99,7 +100,7 @@ export class RedisCache<V> implements ICache<V> {
     delete(key: string): void {
         if (!this.client) return;
         const out = this.client.del(key);
-        if (out && typeof (out as any).then === 'function') (out as Promise<unknown>).catch(() => { /* ignore */ });
+        if (this.isPromiseLike(out)) (out as Promise<unknown>).catch(() => { /* ignore */ });
     }
     keys(): string[] { return []; }
 }

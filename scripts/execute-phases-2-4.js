@@ -24,10 +24,10 @@ class ComprehensiveAgentExecutor {
 
     async executePhase(phaseNumber) {
         console.log(`🎯 Executing Phase ${phaseNumber}...`);
-        const phaseAgents = Array.from(this.agents.entries()).filter(([name, agent]) => agent.phase === phaseNumber);
+        const phaseAgents = Array.from(this.agents.entries()).filter(([_name, agent]) => agent.phase === phaseNumber);
 
         let phaseSuccess = true;
-        for (const [name, agent] of phaseAgents) {
+        for (const [name, _agent] of phaseAgents) {
             const success = await this.executeAgent(name);
             if (!success) phaseSuccess = false;
         }
@@ -215,10 +215,10 @@ async function executeTestingOrchestrator() {
             'playwright.config.performance.ts'
         ];
 
-        let configsValid = 0;
+        let _configsValid = 0;
         for (const config of playwrightConfigs) {
             if (fs.existsSync(config)) {
-                configsValid++;
+                _configsValid++;
                 console.log(`✅ Found: ${config}`);
             } else {
                 console.log(`⚠️  Missing: ${config} - Using base configuration`);
@@ -245,7 +245,7 @@ async function executeTestingOrchestrator() {
                 // Small delay to simulate real test execution
                 await new Promise(resolve => setTimeout(resolve, 100));
 
-            } catch (error) {
+            } catch {
                 console.log(`⚠️  ${tier} tier test execution simulated, continuing...`);
             }
         }
@@ -263,7 +263,7 @@ async function executeTestingOrchestrator() {
                     console.log('⚠️  Development server not accessible, but performance framework validated');
                 }
             });
-        } catch (error) {
+        } catch {
             console.log('⚠️  Performance test infrastructure validated (dev server check skipped)');
         }
 
@@ -303,8 +303,8 @@ export default { useMobileDetection, useTouch };`;
         console.log('✅ Testing Orchestrator Agent - Phase 2 Complete!');
         return true;
 
-    } catch (error) {
-        console.error('🚨 Testing Orchestrator Agent execution failed:', error);
+    } catch (_error) {
+        console.error('🚨 Testing Orchestrator Agent execution failed:', _error);
         return false;
     }
 }
@@ -411,8 +411,8 @@ export const processNeuroSEOAnalysis = onRequest(async (request, response) => {
         console.log('✅ API Enhancement Agent - Phase 3 Complete!');
         return true;
 
-    } catch (error) {
-        console.error('🚨 API Enhancement Agent execution failed:', error);
+    } catch (_error) {
+        console.error('🚨 API Enhancement Agent execution failed:', _error);
         return false;
     }
 }
@@ -450,7 +450,7 @@ echo "Production build complete!"`;
 
         try {
             execSync('chmod +x scripts/production-build.sh');
-        } catch (error) {
+        } catch {
             console.log('⚠️  Could not set execute permissions (non-POSIX system)');
         }
 
@@ -544,7 +544,7 @@ echo "🎉 Deployment verification complete!"`;
 
         try {
             execSync('chmod +x scripts/verify-deployment.sh');
-        } catch (error) {
+        } catch {
             console.log('⚠️  Could not set execute permissions (non-POSIX system)');
         }
 

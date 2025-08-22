@@ -1,24 +1,32 @@
+import { adminStorage } from '@/lib/firebase-admin';
+import * as vizApiTest from '@/lib/visualizations/server-exports';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import * as vizApiTest from '@/lib/visualizations/server-exports';
-import { adminStorage } from '@/lib/firebase-admin';
 // Use server-only artifact generator to avoid importing client module in Node tests
-import { generateServerArtifact } from '@/lib/visualizations/server-artifacts';
 import { d3VisualizationEngine } from '@/lib/visualizations/d3-visualization-engine';
+import { generateServerArtifact } from '@/lib/visualizations/server-artifacts';
 
 // Minimal typings for NextResponse wrappers aren't needed; we call the internal helpers
 
+interface FakeFile {
+    save: sinon.SinonStub; getSignedUrl: sinon.SinonStub;
+}
+interface BucketStub { file: sinon.SinonStub<[string?], FakeFile>; }
+interface StorageStub { bucket: sinon.SinonStub<[], BucketStub>; }
+
 describe('Visualizations API exports', () => {
-    const bucketStub: any = {
-        file: sinon.stub()
+    const bucketStub: BucketStub = {
+        // cast stub to expected signature for test simplicity
+        file: sinon.stub() as unknown as BucketStub['file']
     };
-    const storageStub: any = {
+    const storageStub: StorageStub = {
+    // @ts-expect-error simplify stub signature for test
         bucket: sinon.stub().returns(bucketStub)
     };
 
     beforeEach(() => {
-        // Stub adminStorage.bucket().file().save and getSignedUrl
-        (adminStorage as any).bucket = storageStub.bucket;
+        // Stub adminStorage.bucket().file().save and getSignedUrl (narrow via index signature)
+        (adminStorage as unknown as { bucket: StorageStub['bucket'] }).bucket = storageStub.bucket;
     });
 
     afterEach(() => {
@@ -32,9 +40,10 @@ describe('Visualizations API exports', () => {
         };
         bucketStub.file.returns(fakeFile);
 
-        const url = await vizApiTest.persistExportArtifact({
+        const artifactInput: Parameters<typeof vizApiTest.persistExportArtifact>[0] = {
             userId: 'u1', kind: 'chart', id: 'c1', format: 'pdf', artifact: 'data:application/pdf;base64,UEsDBAoAAAAA', metadata: { chartType: 'bar' }
-        } as any);
+        };
+        const url = await vizApiTest.persistExportArtifact(artifactInput);
 
         expect(url).to.equal('https://signed.example.com/chart.pdf');
         expect(bucketStub.file.called).to.be.true;
@@ -48,7 +57,7 @@ describe('Visualizations API exports', () => {
         };
         bucketStub.file.returns(fakeFile);
 
-        const chartDoc: any = {
+        const chartDoc: Parameters<typeof vizApiTest.generateChartExport>[0] = {
             id: 'c2',
             userId: 'u1',
             config: { type: 'line' },
@@ -68,7 +77,7 @@ describe('Visualizations API exports', () => {
         };
         bucketStub.file.returns(fakeFile);
 
-        const dashboardDoc: any = {
+        const dashboardDoc: Parameters<typeof vizApiTest.generateDashboardExport>[0] = {
             id: 'd1',
             userId: 'u1',
             widgets: [{ id: 'w1', type: 'bar' }, { id: 'w2', type: 'line' }]
@@ -101,19 +110,19 @@ describe('Visualizations API exports', () => {
         container.id = 'c-svg-inline';
         document.body.appendChild(container);
 
-        const config: any = {
+        const config = {
             id: 'chart-inline',
-            type: 'bar',
+            type: 'bar' as const,
             width: 200,
             height: 120,
             margin: { top: 10, right: 10, bottom: 20, left: 20 },
             data: [{ x: 'A', y: 5 }, { x: 'B', y: 7 }],
             options: { grid: false, animations: false, interactive: false, legend: false },
             styling: { backgroundColor: undefined }
-        };
+        } satisfies Record<string, unknown>;
 
         d3VisualizationEngine.createBarChart(container.id, config);
-        const dataUrl = await d3VisualizationEngine.exportChart('chart-inline', { format: 'svg', includeStyles: true } as any);
+        const dataUrl = await d3VisualizationEngine.exportChart('chart-inline', { format: 'svg', includeStyles: true });
         expect(dataUrl.startsWith('data:image/svg+xml;base64,')).to.be.true;
         // Decode and assert style attributes present on elements
         const b64 = dataUrl.replace(/^data:[^,]+,/, '');
@@ -128,23 +137,23 @@ describe('Visualizations API exports', () => {
         container.id = 'c-svg-font';
         document.body.appendChild(container);
 
-        const config: any = {
+        const config = {
             id: 'chart-font',
-            type: 'bar',
+            type: 'bar' as const,
             width: 200,
             height: 120,
             margin: { top: 10, right: 10, bottom: 20, left: 20 },
             data: [{ x: 'A', y: 5 }],
             options: { grid: false, animations: false, interactive: false, legend: false },
             styling: { backgroundColor: undefined }
-        };
+        } satisfies Record<string, unknown>;
 
         d3VisualizationEngine.createBarChart(container.id, config);
         const dataUrl = await d3VisualizationEngine.exportChart('chart-font', {
             format: 'svg',
             includeStyles: true,
-            embedFonts: [{ family: 'TestSans', src: 'data:font/woff2;base64,d09GRgABAAAAA' as any, format: 'woff2', display: 'swap' }]
-        } as any);
+            embedFonts: [{ family: 'TestSans', src: 'data:font/woff2;base64,d09GRgABAAAAA', format: 'woff2', display: 'swap' }]
+        });
         const b64 = dataUrl.replace(/^data:[^,]+,/, '');
         const decoded = Buffer.from(b64, 'base64').toString('utf-8');
         expect(decoded).to.include('<style');

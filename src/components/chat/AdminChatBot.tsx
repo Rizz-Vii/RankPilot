@@ -15,6 +15,7 @@ import { useAuth } from '@/context/AuthContext';
 import { auth } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
+import DOMPurify from 'isomorphic-dompurify';
 import {
     AlertTriangle,
     BarChart3,
@@ -31,7 +32,6 @@ import {
     X
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import DOMPurify from 'isomorphic-dompurify';
 
 // Types
 interface AdminChatMessage {
@@ -111,7 +111,7 @@ export default function AdminChatBot({ className }: AdminChatBotProps) {
 
 **Available Commands:**
 • \`/system status\` - Get real-time system health
-• \`/users analytics\` - User engagement metrics  
+• \`/users analytics\` - User engagement metrics
 • \`/performance report\` - System performance analysis
 • \`/errors analyze\` - Error tracking and resolution
 • \`/billing overview\` - Revenue and subscription insights
@@ -421,7 +421,7 @@ What would you like to analyze today?`,
                                             className="flex-1"
                                         />
                                         <Button
-                                            onClick={sendMessage}
+                                            onClick={() => { void sendMessage(); }}
                                             disabled={!inputValue.trim() || isLoading || !isAdmin}
                                             size="sm"
                                             className="bg-gradient-to-r from-destructive to-warning hover:from-destructive/90 hover:to-warning/90"

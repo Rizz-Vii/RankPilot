@@ -94,8 +94,11 @@ function main() {
                     content = raw.toString('utf8');
                 }
             }
-        } catch (err: any) {
-            content = `Error reading file: ${err?.message || err}`;
+        } catch (err: unknown) {
+            const msg = (err && typeof err === 'object' && 'message' in (err as Record<string, unknown>))
+                ? String((err as { message?: unknown }).message)
+                : String(err);
+            content = `Error reading file: ${msg}`;
         }
         lines.push(`=== BEGIN ${e.rel} (DATE:${e.date || 'N/A'}) ===`);
         lines.push(content.trimEnd());

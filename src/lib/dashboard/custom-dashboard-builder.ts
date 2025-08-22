@@ -754,9 +754,12 @@ export class CustomDashboardBuilder {
 
     private setupRealTimeUpdate(widgetId: string, dataSource: { refreshInterval?: number }): void {
         if (dataSource?.refreshInterval && dataSource.refreshInterval > 0) {
-            const interval = setInterval(async () => {
-                // Emit real-time update event
-                console.log(`[DashboardBuilder] Real-time update for widget ${widgetId}`);
+            const interval = setInterval(() => {
+                // Fire-and-forget async update wrapper to satisfy no-misused-promises
+                void (async () => {
+                    console.log(`[DashboardBuilder] Real-time update for widget ${widgetId}`);
+                    // Placeholder: could emit event or refresh cache in future
+                })();
             }, dataSource.refreshInterval * 1000);
 
             this.realTimeSubscriptions.set(widgetId, interval);

@@ -1,7 +1,7 @@
 /**
  * Service Worker for RankPilot PWA
  * Advanced Architecture Enhancement - DevReady Phase 3
- * 
+ *
  * Features:
  * - Offline functionality with intelligent caching
  * - Background sync for data synchronization
@@ -127,7 +127,7 @@ async function networkFirstStrategy(request) {
         }
 
         return networkResponse;
-    } catch (error) {
+    } catch {
         console.log('[SW] Network failed, trying cache:', request.url);
         const cachedResponse = await caches.match(request);
 
@@ -166,7 +166,7 @@ async function cacheFirstStrategy(request) {
         }
 
         return networkResponse;
-    } catch (error) {
+    } catch {
         console.log('[SW] Failed to fetch static asset:', request.url);
         return new Response('Asset not available offline', { status: 503 });
     }
@@ -383,8 +383,8 @@ function openDB() {
 
             req.onsuccess = () => resolve(req.result);
             req.onerror = () => reject(req.error);
-        } catch (err) {
-            reject(err);
+        } catch {
+            console.error('\u274c [SW] Installation failed');
         }
     });
 
@@ -401,8 +401,8 @@ async function withStore(storeName, mode, fn) {
             tx.oncomplete = () => resolve(result);
             tx.onerror = () => reject(tx.error);
             tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
-        } catch (err) {
-            reject(err);
+        } catch (e) {
+            reject(e);
         }
     });
 }

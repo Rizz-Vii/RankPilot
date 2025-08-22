@@ -1,8 +1,8 @@
 "use client";
-import { useContext, useEffect, useState } from 'react';
-import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { AuthContext } from '@/context/AuthContext';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
+import { useContext, useEffect, useState } from 'react';
 
 interface Metric {
   key: string;
@@ -30,7 +30,8 @@ interface Result {
 }
 
 export function useSerpKeywordMetrics(): Result {
-  const { user } = useContext(AuthContext) as { user?: { uid: string } } | any;
+  const authCtx = useContext(AuthContext) as Partial<{ user?: { uid: string } }> | null;
+  const user = authCtx?.user;
   const [state, setState] = useState<Result>({ loading: true, kpis: [], rows: [] });
 
   useEffect(() => {
@@ -42,7 +43,7 @@ export function useSerpKeywordMetrics(): Result {
 
     let cancelled = false;
 
-    (async () => {
+    void (async () => {
       try {
         const q = query(
           collection(db, 'serpData'),

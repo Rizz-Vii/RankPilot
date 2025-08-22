@@ -21,8 +21,8 @@ function getDocsFolders() {
             .filter(item => item.isDirectory())
             .map(item => item.name)
             .sort();
-    } catch (error) {
-        console.error('❌ Error reading docs directory:', error.message);
+    } catch {
+        console.error('❌ Error reading docs directory');
         return [];
     }
 }
@@ -38,8 +38,8 @@ function getMarkdownFiles(dirPath) {
             .filter(item => item.isFile() && item.name.endsWith('.md'))
             .map(item => path.join(dirPath, item.name))
             .sort();
-    } catch (error) {
-        console.warn(`⚠️ Error reading directory ${dirPath}:`, error.message);
+    } catch {
+        console.warn(`⚠️ Error reading directory ${dirPath}`);
         return [];
     }
 }
@@ -52,7 +52,7 @@ function readFileContent(filePath) {
             return fs.readFileSync(fullPath, 'utf8');
         }
         return null;
-    } catch (_error) {
+    } catch {
         console.warn(`⚠️ Could not read file: ${filePath}`);
         return null;
     }
@@ -295,9 +295,8 @@ function main() {
         console.log(`💾 Full backup: ${BACKUP_DIR}`);
         console.log('\n🎯 All docs subdirectories have been consolidated into root-level files!');
 
-    } catch (error) {
-        console.error('❌ Complete consolidation failed:', error.message);
-        console.error(error.stack);
+    } catch {
+        console.error('❌ Complete consolidation failed');
         process.exit(1);
     }
 }

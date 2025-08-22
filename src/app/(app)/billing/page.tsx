@@ -1,7 +1,7 @@
 ﻿"use client";
 
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,33 +9,31 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import {
-  CreditCard,
-  Download,
-  Calendar,
-  DollarSign,
-  AlertTriangle,
-  CheckCircle,
-  Settings,
-  ExternalLink,
-  RefreshCw,
-  Crown,
-  TrendingUp,
-} from "lucide-react";
-import Link from "next/link";
-import { useAuth } from "@/context/AuthContext";
 import LoadingScreen from "@/components/ui/loading-screen";
-import { toast } from "sonner";
+import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/context/AuthContext";
 import { fetchBillingData, type BillingDataResult } from "@/lib/billing/fetch-billing-data";
 import type { NormalizedUsageMetrics } from '@/lib/billing/fetch-usage-metrics';
 import { fetchUsageMetrics } from '@/lib/billing/fetch-usage-metrics';
 import { db, functions } from "@/lib/firebase";
-import { httpsCallable } from "firebase/functions";
 import { getLogger } from "@/lib/logging/app-logger";
-import { useSubscription } from "@/hooks/useSubscription";
+import { httpsCallable } from "firebase/functions";
+import { motion } from "framer-motion";
+import {
+  AlertTriangle,
+  CheckCircle,
+  CreditCard,
+  Crown,
+  DollarSign,
+  Download,
+  ExternalLink,
+  RefreshCw,
+  Settings,
+  TrendingUp
+} from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 // FIN-02: Wiring live usage metrics and payment method is implemented via fetchUsageMetrics and /api/billing/payment-method
 
@@ -45,8 +43,7 @@ export default function BillingPage() {
   const { user, loading } = useAuth();
   const [billing, setBilling] = useState<BillingDataResult | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const { canUseFeature } = useSubscription();
-  const billingPortalEnabled = canUseFeature('billing_portal_access');
+  // Subscription feature checks can be invoked inline via the hook where needed; no unused extraction.
   interface PaymentMethod { brand:string; last4:string; expMonth:number; expYear:number }
   const [paymentMethodState, setPaymentMethodState] = useState<PaymentMethod|null>(null);
   const [isManagingPortal, setIsManagingPortal] = useState(false);
@@ -65,17 +62,23 @@ export default function BillingPage() {
         const data = await fetchBillingData(db, user.uid, { invoiceLimit: 10 });
         if (cancelled) return;
         setBilling(data);
-      } catch (e) {
+      } catch (e: unknown) {
         if (cancelled) return;
-        const err = e as any;
-        setFetchError(err?.message || "Failed to load billing data");
-        _logger.error("billing-ui.client.fetch.error", { error: err?.message });
+        const msg = (() => {
+          if (e && typeof e === 'object') {
+            const maybe = e as { message?: unknown };
+            if (typeof maybe.message === 'string') return maybe.message;
+          }
+          return 'Failed to load billing data';
+        })();
+        setFetchError(msg);
+        _logger.error("billing-ui.client.fetch.error", { error: msg });
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [user?.uid, db, fetchBillingData, getLogger]);
+  }, [user?.uid]);
 
   // Payment method fetch (server API)
   useEffect(() => {
@@ -100,8 +103,8 @@ export default function BillingPage() {
 
   const subscription = billing?.subscription || null;
   const PAGE_SIZE = 10;
-  interface InvoiceLite { id:string; amount:number; period?:string; description?:string; date?:string; createdAt?:Date; issuedAt?:{ toDate:()=>Date }; [k:string]:any }
-  const [invoices, setInvoices] = useState<InvoiceLite[]>(billing?.invoices as InvoiceLite[] || []);
+  interface InvoiceLite { id: string; amount: number; period?: string; description?: string; date?: string; createdAt?: Date; issuedAt?: { toDate: () => Date };[k: string]: unknown }
+  const [invoices, setInvoices] = useState<InvoiceLite[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -109,14 +112,26 @@ export default function BillingPage() {
   // Normalize initial invoices to include description/date for display parity with API pagination
   useEffect(() => {
     if (billing?.invoices) {
-      const normalized = (billing.invoices || []).map((inv: any) => {
-        const createdAt: Date = inv?.createdAt?.toDate?.() || inv?.issuedAt?.toDate?.() || (inv?.date ? new Date(inv.date) : new Date(`${inv?.period || '1970-01'}-01T00:00:00Z`));
-        return {
-          ...inv,
-          description: inv?.description || `Invoice ${inv?.period}`,
-          date: inv?.date || createdAt.toISOString(),
-          createdAt,
+      const normalized: InvoiceLite[] = (billing.invoices || []).map((inv: unknown) => {
+        const rec = (inv && typeof inv === 'object') ? (inv as Record<string, unknown>) : {};
+        const toDateIf = (v: unknown): Date | undefined => {
+          if (v && typeof v === 'object' && 'toDate' in (v as Record<string, unknown>)) {
+            const maybe = v as { toDate?: () => Date };
+            if (typeof maybe.toDate === 'function') return maybe.toDate();
+          }
+          return undefined;
         };
+        const createdAt: Date = (
+          toDateIf(rec.createdAt) ||
+          toDateIf(rec.issuedAt) ||
+          (typeof rec.date === 'string' ? new Date(rec.date) : new Date(`${typeof rec.period === 'string' ? rec.period : '1970-01'}-01T00:00:00Z`))
+        );
+        const id = typeof rec.id === 'string' ? rec.id : `${String(rec.period ?? 'unknown')}-${createdAt.toISOString()}`;
+        const amount = typeof rec.amount === 'number' ? rec.amount : Number(rec.amount as unknown) || 0;
+        const description = typeof rec.description === 'string' ? rec.description : `Invoice ${String(rec.period ?? '')}`;
+        const date = typeof rec.date === 'string' ? rec.date : createdAt.toISOString();
+        const issuedAt = rec['issuedAt'] && typeof rec['issuedAt'] === 'object' ? (rec['issuedAt'] as { toDate?: () => Date }) : undefined;
+        return { id, amount, period: typeof rec.period === 'string' ? rec.period : undefined, description, date, createdAt, issuedAt } as InvoiceLite;
       });
       setInvoices(normalized);
       setHasMore((billing.invoices || []).length === PAGE_SIZE);
@@ -133,19 +148,26 @@ export default function BillingPage() {
     try {
       const last = invoices[invoices.length - 1];
       // Use composite cursor if API returned one previously (stored on last invoice as _cursor maybe later) else fallback
-      const cursor = last?.periodAndCreatedAtCursor || last?.period;
+      const cursor = (last as unknown as Record<string, unknown> | undefined)?.periodAndCreatedAtCursor || last?.period;
       const token = await user?.getIdToken?.();
-      const res = await fetch(`/api/billing/invoices?limit=${PAGE_SIZE}&cursor=${encodeURIComponent(cursor)}`, { headers: { authorization: `Bearer ${token}` } });
+      const base = `/api/billing/invoices?limit=${PAGE_SIZE}`;
+      const url = typeof cursor === 'string' ? `${base}&cursor=${encodeURIComponent(cursor)}` : base;
+      const res = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
       if (res.ok) {
-        const json = await res.json();
-        const newOnes = (json.invoices || []).filter((inv: any) => !invoices.some(i => i.id === inv.id));
+        const json: unknown = await res.json();
+        const invoicesArr: unknown[] = (json && typeof json === 'object' && Array.isArray((json as Record<string, unknown>).invoices)) ? (json as Record<string, unknown>).invoices as unknown[] : [];
+        const newOnes = invoicesArr.filter((inv: unknown) => {
+          const rec = (inv && typeof inv === 'object') ? (inv as Record<string, unknown>) : undefined;
+          return rec && typeof rec.id === 'string' && !invoices.some(i => i.id === rec.id);
+        }) as InvoiceLite[];
         // Attach composite cursor to each invoice for subsequent pagination
-        if (json.nextCursor && newOnes.length) {
+        if (json && typeof json === 'object' && 'nextCursor' in json && (json as Record<string, unknown>).nextCursor && newOnes.length) {
           // store on the last currently loaded invoice for retrieval
-          newOnes[newOnes.length - 1].periodAndCreatedAtCursor = json.nextCursor;
+          (newOnes[newOnes.length - 1] as unknown as Record<string, unknown>).periodAndCreatedAtCursor = String((json as Record<string, unknown>).nextCursor);
         }
         if (newOnes.length) setInvoices(prev => [...prev, ...newOnes]);
-        setHasMore(json.hasMore);
+        const hasMoreFlag = json && typeof json === 'object' && 'hasMore' in json ? Boolean((json as Record<string, unknown>).hasMore) : false;
+        setHasMore(hasMoreFlag);
       }
     } catch {
       /* silent */
@@ -175,8 +197,23 @@ export default function BillingPage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.uid, db, fetchUsageMetrics]);
+  }, [user?.uid]);
   const usage = usageMetrics ? { keywordsTracked: usageMetrics.keywordsTracked, keywordsLimit: usageMetrics.keywordsLimit, competitorAnalysis: usageMetrics.competitorAnalysis, competitorLimit: usageMetrics.competitorLimit, reportsGenerated: usageMetrics.reportsGenerated, currentPeriodStart: usageMetrics.periodStart.toISOString(), currentPeriodEnd: usageMetrics.periodEnd.toISOString() } : { keywordsTracked: 0, keywordsLimit: 0, competitorAnalysis: 0, competitorLimit: 0, reportsGenerated: 0, currentPeriodStart: subscription ? (subscription.currentPeriodEnd ? subscription.currentPeriodEnd.toISOString() : new Date().toISOString()) : new Date().toISOString(), currentPeriodEnd: subscription ? (subscription.currentPeriodEnd ? subscription.currentPeriodEnd.toISOString() : new Date().toISOString()) : new Date().toISOString() };
+
+  // Derive current plan summary (needed for UI display). Previously missing -> TS2304.
+  const currentPlan = subscription ? {
+    name: subscription.tier || 'Unknown',
+    price: (billing?.effectiveMonthly ?? 0),
+    billingCycle: 'monthly' as const,
+    nextBillingDate: subscription.currentPeriodEnd ? subscription.currentPeriodEnd.toISOString() : new Date().toISOString(),
+    status: subscription.status || 'active'
+  } : {
+    name: 'Free',
+    price: 0,
+    billingCycle: 'monthly' as const,
+    nextBillingDate: new Date().toISOString(),
+    status: 'free'
+  };
 
   const handleUpgrade = (plan?: string) => {
     toast.info("Redirecting to upgrade options...");
@@ -204,16 +241,24 @@ export default function BillingPage() {
     try {
       setIsManagingPortal(true);
       const createPortalSession = httpsCallable(functions, "createPortalSession");
-  const result: any = await createPortalSession({ userId: user?.uid });
-  const url = result?.data?.url;
+      const result = await createPortalSession({ userId: user?.uid });
+      type PortalResult = { data?: { url?: unknown } };
+      const resObj = result as unknown as PortalResult;
+      const url = (resObj && resObj.data && typeof resObj.data.url === 'string') ? resObj.data.url : undefined;
       if (url) {
         if (typeof window !== 'undefined') window.open(url, '_blank');
       } else {
         toast.error('Failed to open billing portal');
       }
-    } catch (e) {
-      const err = e as any;
-      toast.error(err?.message || 'Failed to open billing portal');
+    } catch (e: unknown) {
+      const msg = (() => {
+        if (e && typeof e === 'object') {
+          const maybe = e as { message?: unknown };
+          if (typeof maybe.message === 'string') return maybe.message;
+        }
+        return 'Failed to open billing portal';
+      })();
+      toast.error(msg);
     } finally {
       setIsManagingPortal(false);
     }
@@ -259,6 +304,8 @@ export default function BillingPage() {
   if (loading || !isMounted) {
     return <LoadingScreen fullScreen text="Loading billing information..." />;
   }
+
+  // Removed erroneous self-referential redeclaration of currentPlan (was masking original definition in incremental build).
 
   if (!user) {
     return (

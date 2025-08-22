@@ -9,12 +9,12 @@ const nextConfig: NextConfig = {
 
   // Disable ESLint during build for deployment
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
 
   // Disable TypeScript checking during build for deployment
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 
   // Configure image domains

@@ -6,7 +6,7 @@
 import assert from 'assert';
 import http from 'http';
 
-function post(path: string, body: any): Promise<{ status: number; json: any }> {
+function post(path: string, body: unknown): Promise<{ status: number; json: unknown }> {
     return new Promise((resolve, reject) => {
         const data = JSON.stringify(body);
         const req = http.request({ hostname: 'localhost', port: process.env.PORT || 3000, path, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } }, res => {
@@ -16,7 +16,7 @@ function post(path: string, body: any): Promise<{ status: number; json: any }> {
     });
 }
 
-function get(path: string): Promise<any> {
+function get(path: string): Promise<unknown> {
     return new Promise((resolve, reject) => {
         http.get({ hostname: 'localhost', port: process.env.PORT || 3000, path }, res => {
             let buf = ''; res.on('data', c => buf += c); res.on('end', () => { try { resolve(JSON.parse(buf)); } catch (e) { reject(e); } });
@@ -38,18 +38,19 @@ async function run() {
     await hitMultiModel();
     // fetch health
     const health = await get('/api/health');
-    assert(health.kpis, 'kpis block missing');
-    const k = health.kpis;
+    const h = (health && typeof health === 'object') ? health as Record<string, unknown> : {};
+    assert(h.kpis, 'kpis block missing');
+    const k = (h.kpis && typeof h.kpis === 'object') ? h.kpis as Record<string, unknown> : {};
     // Presence assertions
     ['provenanceCoveragePct', 'cacheHitRatio', 'fallbackRate', 'p95LatencyOverall', 'rateLimitRejectionRate', 'avgCompactDocBytes', 'routesP95'].forEach(f => {
         assert(f in k, `kpi field ${f} missing`);
     });
     // alerts array should exist (may be empty) and provenanceCoverage alert absent if 100%
-    assert(Array.isArray(health.alerts), 'alerts array missing');
+    assert(Array.isArray(h.alerts as unknown[]), 'alerts array missing');
     // coverage should be 100 if all responses tagged
     assert(typeof k.provenanceCoveragePct === 'number', 'provenanceCoveragePct not numeric');
     // routesP95 should have entries for at least one route
-    const routeKeys = Object.keys(k.routesP95 || {});
+    const routeKeys = Object.keys((k.routesP95 && typeof k.routesP95 === 'object') ? (k.routesP95 as Record<string, unknown>) : {});
     assert(routeKeys.length >= 1, 'expected at least one route p95 entry');
     console.log('KPI TEST PASS', { routeCount: routeKeys.length, coverage: k.provenanceCoveragePct, p95Overall: k.p95LatencyOverall });
 }

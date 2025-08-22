@@ -1,9 +1,11 @@
 // src/hooks/useAdminRoute.ts
  "use client";
- 
- import { useEffect } from "react";
- import { useRouter } from "next/navigation";
+
  import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
+interface E2EWindowFlag { __E2E__?: string; }
 
 
 
@@ -24,7 +26,8 @@ export default function useAdminRoute(): { user: ReturnType<typeof useAuth>["use
   // Moved below hook calls to keep hooks usage unconditional (fixes react-hooks/rules-of-hooks).
   if (typeof window !== 'undefined') {
     try {
-      const allowE2E = (process.env.NEXT_PUBLIC_E2E === '1') || (window as any).__E2E__ === '1';
+      const w = window as unknown as E2EWindowFlag;
+      const allowE2E = (process.env.NEXT_PUBLIC_E2E === '1') || (w.__E2E__ === '1');
       if (allowE2E && localStorage.getItem('TEST_FORCE_ADMIN') === '1') {
         // Provide deterministic admin override object; keep shape consistent with AdminRouteResult.
         return { user: (user || { uid: 'test-admin-override' }) as typeof user, loading: false, role: 'admin' };

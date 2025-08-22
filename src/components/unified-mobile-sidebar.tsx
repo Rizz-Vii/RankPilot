@@ -1,18 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Menu, User, LogOut, Crown, Zap } from "lucide-react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { AppLogo, AppName } from "@/constants/nav";
 import { useAuth } from "@/context/AuthContext";
-import { useSubscription } from "@/hooks/useSubscription";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { signOut } from "firebase/auth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { auth } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
+import { signOut } from "firebase/auth";
+import { Crown, LogOut, Menu, User, Zap } from "lucide-react";
+import Link from "next/link";
+import React, { useEffect, useState } from "react";
 
 // Unified navigation items for all layouts
 const publicNavigationItems = [
@@ -207,7 +207,7 @@ export default function UnifiedMobileSidebar({
 
                   <Button
                     variant="ghost"
-                    onClick={handleLogout}
+                    onClick={() => { void handleLogout(); }}
                     className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors min-h-[48px] w-full justify-start"
                   >
                     <LogOut className="h-4 w-4" />

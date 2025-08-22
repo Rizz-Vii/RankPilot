@@ -1,30 +1,5 @@
 "use client";
 
-import React, { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import {
-  adminUpdateUserSubscription,
-  fixAbbaUser,
-  fixAllTestUsers,
-} from "@/lib/admin-user-management";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +10,31 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import {
+  adminUpdateUserSubscription,
+  fixAbbaUser,
+  fixAllTestUsers,
+} from "@/lib/admin-user-management";
+import { useState } from "react";
 
 interface QuickAction {
   label: string;
@@ -268,7 +268,7 @@ export function AdminUserSubscriptionManager() {
           </div>
 
           <div className="flex justify-end">
-            <Button onClick={handleManualUpdate} disabled={loading}>
+            <Button onClick={() => { void handleManualUpdate(); }} disabled={loading}>
               {loading ? "Updating..." : "Update Subscription"}
             </Button>
           </div>
@@ -323,7 +323,7 @@ export function AdminUserSubscriptionManager() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={executeAction}>
+            <AlertDialogAction onClick={() => { void executeAction(); }}>
               Execute
             </AlertDialogAction>
           </AlertDialogFooter>

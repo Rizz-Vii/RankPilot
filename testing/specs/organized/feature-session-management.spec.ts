@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { UNIFIED_TEST_USERS } from "./unified-test-users";
 import { EnhancedAuth } from "./enhanced-auth";
+import { UNIFIED_TEST_USERS } from "./unified-test-users";
 
 /**
  * Feature Test: session-management
@@ -17,8 +17,11 @@ test.describe('Feature - session-management', () => {
         try {
             const testUser = UNIFIED_TEST_USERS.agency;
             await auth.loginAndGoToDashboard(testUser);
-        } catch (error: any) {
-            console.warn('Login failed, using fallback:', error.message);
+        } catch (error: unknown) {
+            const msg = (error && typeof error === 'object' && 'message' in error)
+                ? (error as { message: string }).message
+                : String(error);
+            console.warn('Login failed, using fallback:', msg);
             await page.goto('/dashboard');
             await page.waitForTimeout(2000);
         }

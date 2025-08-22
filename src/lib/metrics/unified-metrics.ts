@@ -1,11 +1,27 @@
 // Unified Metrics Module (OBS-01)
 // Provides provenance coverage counters and simple latency aggregation per route.
+// (Lint: no unused disable directives; dynamic import pattern replaces prior require usage)
 
 export interface RouteLatencyStats {
     count: number;
     totalMs: number;
     maxMs: number;
 }
+
+import type { QueueMetricsSnapshot } from './queue-metrics';
+// Dynamic loader (avoids banned require pattern) with fallback snapshot
+let getQueueMetricsSnapshot: () => QueueMetricsSnapshot = () => ({ enqueued: 0, started: 0, completed: 0, failed: 0, running: 0, depth: 0, successRatio: 1 });
+// Attempt dynamic import lazily (non-blocking); ignore failure
+void (async () => {
+    try {
+        type QueueModule = { getQueueMetricsSnapshot?: () => QueueMetricsSnapshot };
+        const imported: unknown = await import('./queue-metrics');
+        const mod: QueueModule = (imported && typeof imported === 'object') ? imported as QueueModule : {};
+        if (typeof mod.getQueueMetricsSnapshot === 'function') {
+            getQueueMetricsSnapshot = mod.getQueueMetricsSnapshot;
+        }
+    } catch { /* fallback retained */ }
+})();
 
 export interface UnifiedMetricsSnapshot {
     aiResponses: {
@@ -24,6 +40,7 @@ export interface UnifiedMetricsSnapshot {
     crawler?: { success: number; errors: number; totalCrawlMs: number; totalAnalysisMs: number; crawlP95?: number | null; analysisP95?: number | null; crawlP99?: number | null; analysisP99?: number | null };
     semanticMap?: { aggregateHits: number; legacyFallbacks: number };
     governance?: { provenanceInjected: number; forbiddenFieldStrips: number }; // Phase 1 governance counters
+    queue?: QueueMetricsSnapshot; // DEV-QUEUE-01
 }
 
 const provenanceCounters = {
@@ -44,6 +61,7 @@ const crawlerCounters = { success: 0, errors: 0, totalCrawlMs: 0, totalAnalysisM
 const semanticMapCounters = { aggregateHits: 0, legacyFallbacks: 0 };
 // Governance counters (Phase 1 – PROV-01 / MKT-01)
 const governanceCounters = { provenanceInjected: 0, forbiddenFieldStrips: 0 };
+// Queue metrics dynamic import handled above (no circular deps; queue-metrics has no imports of unified)
 
 export function recordProvenanceObservation(hasProvenance: boolean) {
     provenanceCounters.total += 1;
@@ -122,6 +140,7 @@ export function getUnifiedMetricsSnapshot(): UnifiedMetricsSnapshot {
         , crawler: { ...crawlerCounters, crawlP95: computeSimpleP95(crawlerCounters.crawlSamples), analysisP95: computeSimpleP95(crawlerCounters.analysisSamples), crawlP99: computeSimpleP99(crawlerCounters.crawlSamples), analysisP99: computeSimpleP99(crawlerCounters.analysisSamples) }
         , semanticMap: { ...semanticMapCounters }
         , governance: { ...governanceCounters }
+        , queue: getQueueMetricsSnapshot()
     };
 }
 
@@ -196,4 +215,20 @@ function computeSimpleP99(samples: number[]): number | null {
     const sorted = [...samples].sort((a, b) => a - b);
     const idx = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.99));
     return sorted[idx];
+}
+
+// Test-only helper (DEV-GOV-COUNTERS): Reset unified metrics state to support isolated unit tests.
+// Not intended for production code paths; safe because all counters are in-memory only.
+export function __resetUnifiedMetricsTestOnly() {
+    provenanceCounters.total = 0; provenanceCounters.withProvenance = 0;
+    for (const k of Object.keys(latency)) delete latency[k];
+    for (const k of Object.keys(fallbackReasons)) delete fallbackReasons[k];
+    for (const k of Object.keys(errorTaxonomy)) delete errorTaxonomy[k];
+    for (const k of Object.keys(rateLimitRejections)) delete rateLimitRejections[k];
+    for (const k of Object.keys(teamRateLimitAllows)) delete teamRateLimitAllows[k];
+    compactDocSize.count = 0; compactDocSize.totalBytes = 0;
+    inviteMaintenanceCounters.markedExpired = 0; inviteMaintenanceCounters.deletedAccepted = 0; inviteMaintenanceCounters.deletedExpired = 0; inviteMaintenanceCounters.orphanIndexes = 0;
+    crawlerCounters.success = 0; crawlerCounters.errors = 0; crawlerCounters.totalCrawlMs = 0; crawlerCounters.totalAnalysisMs = 0; crawlerCounters.aggregateHits = 0; crawlerCounters.legacyFallbacks = 0; crawlerCounters.quotaLimit = 0; crawlerCounters.quotaRemaining = 0; crawlerCounters.crawlSamples.length = 0; crawlerCounters.analysisSamples.length = 0;
+    semanticMapCounters.aggregateHits = 0; semanticMapCounters.legacyFallbacks = 0;
+    governanceCounters.provenanceInjected = 0; governanceCounters.forbiddenFieldStrips = 0;
 }

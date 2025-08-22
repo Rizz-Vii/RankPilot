@@ -12,6 +12,7 @@ A focused AI SEO/marketing SaaS built with Next.js + Firebase.
 ## Canonical quick links (AI + engineering)
 
 - DevAgents – in‑app AI agents root guide: [docs/exMD/DevAgents.md](./docs/exMD/DevAgents.md)
+- Brain & Agents Env Reference: [docs/BRAIN_AND_AGENTS_ENV.md](./docs/BRAIN_AND_AGENTS_ENV.md)
 - Copilot Chatmode (deterministic profile): [.github/chatmodes/pilotBuddy.chatmode.md](./.github/chatmodes/pilotBuddy.chatmode.md)
 - Copilot Instructions (deterministic execution): [.github/chatmodes/copilot-instructions.md](./.github/chatmodes/copilot-instructions.md)
 - Production Addendum (2025‑08‑12): [archey/ADDENDUM_2025-08-12.md](./archey/ADDENDUM_2025-08-12.md)
@@ -131,6 +132,59 @@ BRAIN_MODE=ask BRAIN_VERBOSE=1 BRAIN_TICK_JSON=1 BRAIN_ENQUEUE_TS=1 BRAIN_AUTODE
 ```
 
 Safety: Cooldowns prevent runaway task enqueue or loop spawning. Adjust via env vars rather than code edits.
+
+## Two-Agent Lint / Type Remediation (Supervisor + Reviewer Prototype)
+
+Scripts:
+
+```
+npm run brain:two-agent:lint-cycle   # single planning + enqueue pass
+npm run brain:two-agent:auto         # iterative autorun: plan + process queue
+```
+
+Autorun flow per iteration:
+
+1. Regenerate ESLint + TypeScript diagnostics artifacts (unless `TWO_AGENT_SKIP_PREGEN=1`).
+2. Plan prioritized remediation tasks (respecting churn guard + hash guard).
+3. Enqueue new tasks into delegation queue.
+4. Process queue (requires `OPENAI_API_KEY`).
+
+
+Key environment variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TWO_AGENT_MAX_TASKS` | 5 | Max tasks per planning cycle (pre-adaptive). |
+| `TWO_AGENT_AUTOSCALE` | enabled | If not `0`, may expand batch when mixed task types & low drift. |
+| `TWO_AGENT_AUTOSCALE_CAP` | 10 | Upper cap after autoscale adjustments. |
+| `TWO_AGENT_DRIFT_THRESHOLD` | 1.5 | Planner drift threshold to halve adaptive batch. |
+| `TWO_AGENT_PLANNER` | unset | If `1`, attempts OpenAI planner ordering (needs `OPENAI_API_KEY`). |
+| `TWO_AGENT_PLANNER_MODEL` | gpt-4o-mini | Model for ordering when planner enabled. |
+| `TWO_AGENT_FILE_CHURN_MINUTES` | 10 | Skip files modified within this many minutes. |
+| `TWO_AGENT_LINT_REPORT_PATH` | artifacts/eslint-report.json | Override ESLint report path. |
+| `TWO_AGENT_TSC_DIAGNOSTICS_PATH` | artifacts/tsc-diagnostics.json | Override TypeScript diagnostics path. |
+| `TWO_AGENT_TSC_BATCH` | unset | If `1`, enable diagnostic batching heuristics. |
+| `TWO_AGENT_TSC_BATCH_MIN` | 4 | Min per-rule tasks to trigger batching. |
+| `TWO_AGENT_TSC_BATCH_MAX_FILES` | 3 | Max files per batched TS task. |
+| `TWO_AGENT_PLANNER_RETRIES` | 2 | Planner retry attempts. |
+| `TWO_AGENT_PLANNER_BACKOFF_MS` | 300 | Base backoff (exponential) between planner retries. |
+| `TWO_AGENT_AUTORUN_ITERS` | 3 | Max autorun iterations. |
+| `TWO_AGENT_AUTORUN_MINUTES` | 10 | Time budget (minutes) for autorun loop. |
+| `TWO_AGENT_FORCE_REPLAN_AFTER` | 2 | Consecutive zero-plan cycles before forcing replan. |
+| `TWO_AGENT_FORCE_REPLAN_QUEUE_MIN` | 5 | Pending threshold to trigger forced replan. |
+| `TWO_AGENT_FORCE_REPLAN` | enabled | Set to `0` to disable force-replan hash clearing entirely. |
+| `TWO_AGENT_SKIP_PREGEN` | unset | If `1`, skip regenerating lint/ts diagnostics each cycle. |
+
+Forced re-planning: When `planned=0` for `TWO_AGENT_FORCE_REPLAN_AFTER` consecutive iterations and the queue still has at least `TWO_AGENT_FORCE_REPLAN_QUEUE_MIN` pending tasks, the autorun loop deletes the previous hash ( `.codex/tmp/two-agent-last-hash.txt` ) so the next iteration can re-consider tasks. Disable this behavior entirely by setting `TWO_AGENT_FORCE_REPLAN=0`.
+
+Prerequisites for queue processing: set `OPENAI_API_KEY` (or `OPENAI_GPT5_KEY`). Without it, autorun will skip the delegation processor execution stage.
+
+Example:
+
+```
+OPENAI_API_KEY=sk-... TWO_AGENT_AUTORUN_ITERS=6 TWO_AGENT_MAX_TASKS=7 npm run brain:two-agent:auto
+```
+
 
 
 

@@ -1,7 +1,7 @@
-import { onSchedule } from "firebase-functions/v2/scheduler";
-import { logger } from "firebase-functions/v2";
-import { getFirestore } from "firebase-admin/firestore";
 import { getApps, initializeApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
+import { logger } from "firebase-functions/v2";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 
 const ACCEPTED_RETENTION_DAYS = Number(process.env.INVITES_ACCEPTED_RETENTION_DAYS || 30);
 const EXPIRED_RETENTION_DAYS = Number(process.env.INVITES_EXPIRED_RETENTION_DAYS || 14);
@@ -60,14 +60,15 @@ export const cleanupInvites = onSchedule({
         // Orphan indexes
         const indexSnap = await db.collection('invites_index').get();
         for (const idx of indexSnap.docs) {
-            const teamId = (idx.data() as any).teamId;
+            const data = idx.data() as Record<string, unknown>;
+            const teamId = typeof data.teamId === 'string' ? data.teamId : undefined;
             if (!teamId) { orphanIndexes++; await idx.ref.delete().catch(() => { }); continue; }
             const invDoc = await db.collection('teams').doc(teamId).collection('invites').doc(idx.id).get();
             if (!invDoc.exists) { await idx.ref.delete().catch(() => { }); orphanIndexes++; }
         }
         logger.info("cleanupInvites summary", { markedExpired, deletedAccepted, deletedExpired, orphanIndexes });
     } catch (e) {
-        logger.error('cleanupInvites error', e as any);
+        logger.error('cleanupInvites error', e instanceof Error ? e.message : String(e));
         throw e;
     }
 });

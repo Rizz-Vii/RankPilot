@@ -29,7 +29,8 @@ function postStreamOnce(urls: string[]): Promise<{ cached: boolean }> {
     });
 }
 
-function fetchMetrics(): Promise<any> {
+type NeuroMetrics = { neuro?: { analysisRuns?: number; analysisCacheHits?: number } };
+function fetchMetrics(): Promise<NeuroMetrics> {
     return new Promise((resolve, reject) => {
         http.get({ hostname: 'localhost', port: process.env.PORT || 3000, path: '/api/neuroseo/metrics' }, res => {
             let buf = ''; res.on('data', c => buf += c); res.on('end', () => { try { resolve(JSON.parse(buf)); } catch (e) { reject(e); } });
@@ -49,8 +50,10 @@ async function main() {
     await new Promise(r => setTimeout(r, 75));
     const third = await postStreamOnce([url]);
     const after = await fetchMetrics();
-    const runsDelta = (after.neuro.analysisRuns - baseRuns);
-    const hitsDelta = (after.neuro.analysisCacheHits - baseHits);
+    const afterRuns = after.neuro?.analysisRuns || 0;
+    const afterHits = after.neuro?.analysisCacheHits || 0;
+    const runsDelta = (afterRuns - baseRuns);
+    const hitsDelta = (afterHits - baseHits);
     const sawCachedEvent = first.cached || second.cached || third.cached;
     if (!sawCachedEvent && hitsDelta < 1) {
         console.warn('METRICS REGISTRY TEST WARN: no cache hit observed (possible very fast recompute).');

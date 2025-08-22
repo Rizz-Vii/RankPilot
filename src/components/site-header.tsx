@@ -1,32 +1,33 @@
 // src/components/site-header.tsx
 "use client";
 
-import Link from "next/link";
-import { useState, useEffect } from "react";
-import { EnhancedButton } from "@/components/ui/enhanced-button";
-import { useAuth } from "@/context/AuthContext";
-import { useHydration } from "@/components/HydrationContext";
-import { User, LogOut, Sun, Moon } from "lucide-react";
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { CommandPaletteButton } from "@/components/command-palette";
 import { ContextAwareLogo } from "@/components/context-aware-logo";
+import GlobalSearch from "@/components/global-search";
+import { useHydration } from "@/components/HydrationContext";
+import { LanguageSelector } from "@/components/i18n/LanguageSelector";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { EnhancedButton } from "@/components/ui/enhanced-button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PublicMobileSidebar } from "@/components/unified-mobile-sidebar";
-import GlobalSearch from "@/components/global-search";
-import { LanguageSelector } from "@/components/i18n/LanguageSelector";
-import { CommandPaletteButton } from "@/components/command-palette";
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
-import { useTheme } from "@/lib/themes/theme-system";
-import { useI18n } from "@/lib/i18n/internationalization-system";
+import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { auth } from "@/lib/firebase";
+import { useI18n } from "@/lib/i18n/internationalization-system";
+import type { ThemeMode } from "@/lib/themes/theme-system";
+import { useTheme } from "@/lib/themes/theme-system";
+import { cn } from "@/lib/utils";
+import { signOut } from "firebase/auth";
+import { motion } from "framer-motion";
+import { LogOut, Moon, Sun, User } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 const navigationItems = [
   { href: "/features", label: "nav.features", external: false },
@@ -45,15 +46,15 @@ export default function SiteHeader() {
   const [a11yMessage, setA11yMessage] = useState("");
   const { toast } = useToast();
 
-  const toggleTheme = () => {
+  const toggleTheme = (): void => {
     // cycle light -> dark -> high-contrast -> auto -> light
-  const order: Array<typeof theme> = ["light", "dark", "high-contrast", "auto"];
-  const idx = order.indexOf(theme as typeof theme);
-  const next = order[(idx + 1) % order.length] as any;
-  setTheme(next);
-  const msg = translate('feedback.theme.cycled');
-  setA11yMessage(msg);
-  toast({ title: msg });
+    const order: ThemeMode[] = ["light", "dark", "high-contrast", "auto"];
+    const idx = order.indexOf(theme as ThemeMode);
+    const next = order[(idx + 1) % order.length];
+    setTheme(next);
+    const msg = translate('feedback.theme.cycled');
+    setA11yMessage(msg);
+    toast({ title: msg });
   };
 
   const handleLogout = async () => {
@@ -237,7 +238,7 @@ export default function SiteHeader() {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={handleLogout}
+                        onClick={() => { void handleLogout(); }}
                     className="flex items-center"
                   >
                     <LogOut className="mr-2 h-4 w-4" />

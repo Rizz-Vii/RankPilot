@@ -1,33 +1,33 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import {
-  getVisibleNavGroups,
-  defaultNavState,
-  type NavState,
-  type NavGroup,
-  type NavItem,
-  trackNavigation,
-  handleNavError,
-} from "@/constants/enhanced-nav";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ChevronDown, Zap, Target, Rocket } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  defaultNavState,
+  getVisibleNavGroups,
+  handleNavError,
+  type NavGroup,
+  type NavItem,
+  type NavState,
+  trackNavigation,
+} from "@/constants/enhanced-nav";
+import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown, Rocket, Target, Zap } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import React, { useCallback, useEffect, useState } from "react";
 
 const EXPANDED_STORAGE_KEY = "enhanced_nav_expanded_groups_v1";
 
@@ -64,7 +64,7 @@ export function EnhancedAppNav({
   useEffect(() => {
     setMounted(true);
     try {
-      const groups = getVisibleNavGroups(userTier, { isAdmin, includeLocked: true });
+      const groups = getVisibleNavGroups(userTier, isAdmin, { includeLocked: true });
       setVisibleGroups(groups);
 
       // Restore persisted expanded groups (desktop only)
@@ -81,7 +81,8 @@ export function EnhancedAppNav({
       );
 
       setNavState((prev) => {
-        let expanded = Array.isArray(prev.expandedGroups) ? [...prev.expandedGroups] : [];
+        // expandedGroups now a string[] (see NavState) simplifying persistence
+        let expanded = [...prev.expandedGroups];
 
         // If mobile: collapse all except active (for focus) to reduce scroll noise
         if (mobile) {
@@ -125,7 +126,7 @@ export function EnhancedAppNav({
     setNavState((prev) => {
       const isOpen = prev.expandedGroups.includes(groupId);
       const newExpanded = isOpen ? [] : [groupId];
-      return { ...prev, expandedGroups: newExpanded };
+      return { ...prev, expandedGroups: newExpanded } satisfies NavState;
     });
   }, []);
 
@@ -137,7 +138,7 @@ export function EnhancedAppNav({
         activeItem: item.href,
         activeGroup: groupId,
         expandedGroups: mobile ? [] : prev.expandedGroups,
-      }));
+      } satisfies NavState));
       onItemClickAction?.(item);
     },
       [onItemClickAction, mobile]
@@ -146,7 +147,8 @@ export function EnhancedAppNav({
   // -----------------------------------------------------------------------
   // Tier + Feature Badge System
   // -----------------------------------------------------------------------
-  const tierVisual = {
+  // Static tier visual definition – wrapped in useMemo to provide stable ref for callbacks
+  const tierVisual = React.useMemo(() => ({
     starter: {
       label: "Starter",
       icon: Zap,
@@ -165,13 +167,10 @@ export function EnhancedAppNav({
       classes:
         "bg-[hsl(var(--chart-4)/0.15)] text-[hsl(var(--chart-4))] border border-[hsl(var(--chart-4)/0.3)] shadow-sm",
     },
-  } as const;
+  } as const), []);
 
-  const tierOrder: Array<keyof typeof tierVisual> = [
-    "starter",
-    "agency",
-    "enterprise",
-  ];
+  type PaidTier = 'starter' | 'agency' | 'enterprise';
+  const tierOrder: PaidTier[] = React.useMemo(() => ['starter', 'agency', 'enterprise'], []);
 
   const getTierBadge = useCallback(
     (tier?: string) => {
@@ -179,30 +178,31 @@ export function EnhancedAppNav({
       if (tier in tierVisual) return tierVisual[tier as keyof typeof tierVisual];
       return null;
     },
-    []
+    [tierVisual]
   );
 
   // Feature badges now suppressed unless also locked (kept for potential future use)
 
 
   // Highest tier among LOCKED items only (relative to current user)
-  const getGroupLockedTier = (group: NavGroup) => {
+  const getGroupLockedTier = useCallback((group: NavGroup) => {
     if (!userTier) return null; // can't determine without user tier
-    let highest: keyof typeof tierVisual | undefined;
+    let highest: PaidTier | undefined;
     group.items.forEach((item) => {
-      if (item.requiredTier && tierOrder.includes(item.requiredTier)) {
-        const userIndex = tierOrder.indexOf(userTier as keyof typeof tierVisual);
-        const reqIndex = tierOrder.indexOf(item.requiredTier as keyof typeof tierVisual);
+      // ignore free tier when computing locked upgrades
+      if (item.requiredTier && item.requiredTier !== 'free' && tierOrder.includes(item.requiredTier as PaidTier)) {
+        const userIndex = tierOrder.indexOf(userTier as PaidTier);
+        const reqIndex = tierOrder.indexOf(item.requiredTier as PaidTier);
         if (userIndex === -1 || reqIndex > userIndex) {
-          if (!highest) highest = item.requiredTier;
-          else if (tierOrder.indexOf(item.requiredTier as keyof typeof tierVisual) > tierOrder.indexOf(highest)) {
-            highest = item.requiredTier;
+          if (!highest) highest = item.requiredTier as PaidTier;
+          else if (tierOrder.indexOf(item.requiredTier as PaidTier) > tierOrder.indexOf(highest)) {
+            highest = item.requiredTier as PaidTier;
           }
         }
       }
     });
     return highest ? tierVisual[highest] : null;
-  };
+  }, [tierVisual, tierOrder, userTier]);
 
   const renderNavItem = useCallback(
     (item: NavItem, groupId: string, index: number) => {
@@ -332,7 +332,7 @@ export function EnhancedAppNav({
         </motion.li>
       );
     },
-    [pathname, collapsed, className, handleItemClick]
+    [pathname, collapsed, className, handleItemClick, getTierBadge, navState.activeGroup]
   );
 
   const renderNavGroup = useCallback(
@@ -527,15 +527,7 @@ export function EnhancedAppNav({
         </motion.div>
       );
     },
-    [
-      navState.expandedGroups,
-      navState.activeGroup,
-      collapsed,
-      toggleGroup,
-      renderNavItem,
-      handleItemClick,
-      pathname,
-    ]
+    [navState.expandedGroups, navState.activeGroup, collapsed, toggleGroup, renderNavItem, handleItemClick, pathname, getGroupLockedTier, getTierBadge]
   );
 
   if (!mounted) {

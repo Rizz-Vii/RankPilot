@@ -1,6 +1,6 @@
-import { test, expect } from '@playwright/test';
-import { computePnL, computeBalanceSheet } from '../../../src/lib/accounting/aggregation';
+import { expect, test } from '@playwright/test';
 import type { JournalEntry } from '../../../src/lib/accounting/accounts';
+import { computeBalanceSheet, computePnL } from '../../../src/lib/accounting/aggregation';
 
 test.describe('accounting aggregation', () => {
     const baseEntries: JournalEntry[] = [
@@ -22,7 +22,7 @@ test.describe('accounting aggregation', () => {
                 { account: 'ASSET_CASH', side: 'credit', amount: 15000 }
             ]
         }
-    ] as any;
+    ];
 
     test('computePnL aggregates correctly', () => {
         const figures = computePnL('2025-08', baseEntries);

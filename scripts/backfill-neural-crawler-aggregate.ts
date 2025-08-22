@@ -7,7 +7,7 @@
  *   DRY_RUN=1 npm run backfill:neural-crawler-agg    # dry run (counts only)
  *   BATCH_SIZE=200 npm run backfill:neural-crawler-agg
  */
-import { initializeApp, getApps } from 'firebase-admin/app';
+import { getApps, initializeApp } from 'firebase-admin/app';
 import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { getFirestore } from 'firebase-admin/firestore';
 
@@ -17,13 +17,13 @@ interface LegacyDoc {
     url: string;
     wordCount?: number;
     readingTime?: number;
-    images?: any[];
+    images?: unknown[];
     links?: Array<{ type: 'internal' | 'external' }>;
     seoAnalysis?: { titleLength?: number; metaDescriptionLength?: number };
-    issues?: any[];
-    entities?: any[];
+    issues?: unknown[];
+    entities?: unknown[];
     headings?: Record<string, string[]>;
-    createdAt?: any;
+    createdAt?: Date | { toDate?: () => Date } | null;
 }
 
 function deriveAggregate(d: LegacyDoc) {

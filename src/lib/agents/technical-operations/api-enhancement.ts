@@ -2,16 +2,14 @@
 // Implementation Date: July 30, 2025
 // Priority: HIGH - API Enhancement & Real-time Processing
 
-import { exec } from 'child_process';
 import * as fs from 'fs/promises';
-import { promisify } from 'util';
 import type { AgentCapability, RankPilotAgent, SafetyConstraint } from '../core/AgentFramework';
 
 
 
 /**
  * API Enhancement Agent - Complete NeuroSEO™ Suite real-time processing
- * 
+ *
  * Targets:
  * 1. NeuroSEO™ Suite real-time processing optimization
  * 2. Stripe integration with webhook validation
@@ -155,7 +153,7 @@ export async function POST(request: NextRequest) {
       neuroSEO = new NeuroSEOSuite();
     } catch (error) {
       console.warn('[NeuroSEO API] Failed to initialize NeuroSEO Suite:', error);
-      
+
       // Enhanced mock response with real-time simulation
       return NextResponse.json({
         analysis: {
@@ -167,33 +165,33 @@ export async function POST(request: NextRequest) {
             realTimeMode: true
           },
           engines: {
-            neuralCrawler: { 
-              status: "completed", 
+            neuralCrawler: {
+              status: "completed",
               score: 85 + Math.floor(Math.random() * 10),
               processingTime: Math.floor(Math.random() * 1000) + 500
             },
-            semanticMap: { 
-              status: "completed", 
+            semanticMap: {
+              status: "completed",
               score: 80 + Math.floor(Math.random() * 15),
               processingTime: Math.floor(Math.random() * 1500) + 700
             },
-            aiVisibility: { 
-              status: "completed", 
+            aiVisibility: {
+              status: "completed",
               score: 90 + Math.floor(Math.random() * 8),
               processingTime: Math.floor(Math.random() * 2000) + 1000
             },
-            trustBlock: { 
-              status: "completed", 
+            trustBlock: {
+              status: "completed",
               score: 85 + Math.floor(Math.random() * 12),
               processingTime: Math.floor(Math.random() * 1200) + 600
             },
-            rewriteGen: { 
-              status: "completed", 
+            rewriteGen: {
+              status: "completed",
               score: 88 + Math.floor(Math.random() * 10),
               processingTime: Math.floor(Math.random() * 1800) + 900
             },
-            orchestrator: { 
-              status: "completed", 
+            orchestrator: {
+              status: "completed",
               score: 87 + Math.floor(Math.random() * 8),
               processingTime: Math.floor(Math.random() * 500) + 200
             }
@@ -233,7 +231,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[NeuroSEO API] Processing error:', error);
     return NextResponse.json(
-      { 
+      {
         error: "Failed to process analysis request",
         phase3Enhancement: true,
         errorHandling: "enhanced"
@@ -250,7 +248,7 @@ async function handleStreamingAnalysis(urls: string[], targetKeywords: string[],
       // Simulate real-time analysis streaming
       const engines = ['neuralCrawler', 'semanticMap', 'aiVisibility', 'trustBlock', 'rewriteGen', 'orchestrator'];
       let engineIndex = 0;
-      
+
       const streamUpdate = () => {
         if (engineIndex < engines.length) {
           const update = {
@@ -260,10 +258,10 @@ async function handleStreamingAnalysis(urls: string[], targetKeywords: string[],
             progress: Math.floor((engineIndex / engines.length) * 100),
             timestamp: new Date().toISOString()
           };
-          
+
           controller.enqueue(\`data: \${JSON.stringify(update)}\\n\\n\`);
           engineIndex++;
-          
+
           setTimeout(streamUpdate, 1000 + Math.random() * 2000);
         } else {
           // Final results
@@ -275,12 +273,12 @@ async function handleStreamingAnalysis(urls: string[], targetKeywords: string[],
               processingTime: Date.now()
             }
           };
-          
+
           controller.enqueue(\`data: \${JSON.stringify(finalResult)}\\n\\n\`);
           controller.close();
         }
       };
-      
+
       streamUpdate();
     }
   });
@@ -332,9 +330,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('[NeuroSEO API] GET error:', error);
     return NextResponse.json(
-      { 
+      {
         error: "Failed to load usage statistics",
-        phase3Enhancement: true 
+        phase3Enhancement: true
       },
       { status: 500 }
     );
@@ -397,27 +395,27 @@ export async function POST(request: NextRequest) {
       case 'checkout.session.completed':
         await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
         break;
-        
+
       case 'customer.subscription.created':
         await handleSubscriptionCreated(event.data.object as Stripe.Subscription);
         break;
-        
+
       case 'customer.subscription.updated':
         await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
         break;
-        
+
       case 'customer.subscription.deleted':
         await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
         break;
-        
+
       case 'invoice.payment_succeeded':
         await handlePaymentSucceeded(event.data.object as Stripe.Invoice);
         break;
-        
+
       case 'invoice.payment_failed':
         await handlePaymentFailed(event.data.object as Stripe.Invoice);
         break;
-        
+
       default:
         console.log(\`[Stripe Webhook] Unhandled event type: \${event.type}\`);
     }
@@ -435,11 +433,11 @@ export async function POST(request: NextRequest) {
 // Enhanced webhook handlers with Firebase integration
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   console.log('[Stripe] Checkout session completed:', session.id);
-  
+
   try {
     // Import Firebase admin for user updates
     const { adminDb } = await import('../../../lib/firebase-admin');
-    
+
     if (session.customer && session.metadata?.userId) {
       await adminDb.collection('users').doc(session.metadata.userId).update({
         stripeCustomerId: session.customer,
@@ -455,13 +453,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
 async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
   console.log('[Stripe] Subscription created:', subscription.id);
-  
+
   try {
     const { adminDb } = await import('../../../lib/firebase-admin');
-    
+
     if (subscription.customer && subscription.metadata?.userId) {
       const subscriptionTier = getSubscriptionTier(subscription.items.data[0].price.id);
-      
+
       await adminDb.collection('users').doc(subscription.metadata.userId).update({
         subscriptionId: subscription.id,
         subscriptionTier,
@@ -478,13 +476,13 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   console.log('[Stripe] Subscription updated:', subscription.id);
-  
+
   try {
     const { adminDb } = await import('../../../lib/firebase-admin');
-    
+
     if (subscription.customer && subscription.metadata?.userId) {
       const subscriptionTier = getSubscriptionTier(subscription.items.data[0].price.id);
-      
+
       await adminDb.collection('users').doc(subscription.metadata.userId).update({
         subscriptionTier,
         subscriptionStatus: subscription.status,
@@ -500,10 +498,10 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   console.log('[Stripe] Subscription deleted:', subscription.id);
-  
+
   try {
     const { adminDb } = await import('../../../lib/firebase-admin');
-    
+
     if (subscription.customer && subscription.metadata?.userId) {
       await adminDb.collection('users').doc(subscription.metadata.userId).update({
         subscriptionTier: 'free',
@@ -519,10 +517,10 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   console.log('[Stripe] Payment succeeded:', invoice.id);
-  
+
   try {
     const { adminDb } = await import('../../../lib/firebase-admin');
-    
+
     if (invoice.customer && invoice.subscription_details?.metadata?.userId) {
       await adminDb.collection('payments').add({
         userId: invoice.subscription_details.metadata.userId,
@@ -541,10 +539,10 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
 
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
   console.log('[Stripe] Payment failed:', invoice.id);
-  
+
   try {
     const { adminDb } = await import('../../../lib/firebase-admin');
-    
+
     if (invoice.customer && invoice.subscription_details?.metadata?.userId) {
       await adminDb.collection('payments').add({
         userId: invoice.subscription_details.metadata.userId,
@@ -555,7 +553,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
         failedAt: new Date(),
         createdAt: new Date()
       });
-      
+
       // Update user subscription status
       await adminDb.collection('users').doc(invoice.subscription_details.metadata.userId).update({
         subscriptionStatus: 'past_due',
@@ -574,7 +572,7 @@ function getSubscriptionTier(priceId: string): string {
     [process.env.STRIPE_PRICE_AGENCY!]: 'agency',
     [process.env.STRIPE_PRICE_ENTERPRISE!]: 'enterprise'
   };
-  
+
   return priceMapping[priceId] || 'free';
 }`;
 
@@ -623,11 +621,11 @@ export async function GET(request: NextRequest) {
   const stream = new ReadableStream({
     start(controller) {
       let intervalId: NodeJS.Timeout;
-      
+
       const sendUpdate = () => {
         const update = generateStreamUpdate(streamType, userId);
         const data = \`data: \${JSON.stringify(update)}\\n\\n\`;
-        
+
         try {
           controller.enqueue(data);
         } catch (error) {
@@ -678,7 +676,7 @@ function generateStreamUpdate(streamType: string, userId: string) {
           bounceRate: (Math.random() * 0.3 + 0.2).toFixed(2)
         }
       };
-      
+
     case 'neuroseo':
       return {
         ...baseUpdate,
@@ -690,7 +688,7 @@ function generateStreamUpdate(streamType: string, userId: string) {
           queueLength: Math.floor(Math.random() * 10)
         }
       };
-      
+
     case 'performance':
       return {
         ...baseUpdate,
@@ -702,7 +700,7 @@ function generateStreamUpdate(streamType: string, userId: string) {
           activeConnections: Math.floor(Math.random() * 100) + 50
         }
       };
-      
+
     default:
       return {
         ...baseUpdate,
@@ -723,7 +721,7 @@ function getUpdateInterval(streamType: string): number {
     'performance': 2000,    // 2 seconds
     'general': 10000        // 10 seconds
   };
-  
+
   return intervals[streamType] || 10000;
 }
 
@@ -737,7 +735,7 @@ export async function POST(request: NextRequest) {
 
     // Here you would typically broadcast to connected clients
     // For now, we'll just acknowledge the update
-    
+
     return NextResponse.json({
       success: true,
       type,
@@ -745,7 +743,7 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
       message: 'Update processed successfully'
     });
-    
+
   } catch (error) {
     console.error('[Streaming] POST error:', error);
     return NextResponse.json(
@@ -805,7 +803,7 @@ class PerformanceMonitor {
     };
 
     this.metrics.push(metric);
-    
+
     // Keep only recent metrics
     if (this.metrics.length > this.maxMetrics) {
       this.metrics = this.metrics.slice(-this.maxMetrics);
@@ -830,14 +828,14 @@ class PerformanceMonitor {
   static getAverageResponseTime(): number {
     const completedMetrics = this.metrics.filter(m => m.duration);
     if (completedMetrics.length === 0) return 0;
-    
+
     const total = completedMetrics.reduce((sum, m) => sum + (m.duration || 0), 0);
     return total / completedMetrics.length;
   }
 
   static getMetricsByEndpoint(): Record<string, { count: number; avgDuration: number }> {
     const endpointMetrics: Record<string, number[]> = {};
-    
+
     this.metrics
       .filter(m => m.duration)
       .forEach(m => {
@@ -849,7 +847,7 @@ class PerformanceMonitor {
       });
 
     const result: Record<string, { count: number; avgDuration: number }> = {};
-    
+
     Object.entries(endpointMetrics).forEach(([endpoint, durations]) => {
       result[endpoint] = {
         count: durations.length,
@@ -862,7 +860,7 @@ class PerformanceMonitor {
 }
 
 function generateRequestId(): string {
-  return Math.random().toString(36).substring(2, 15) + 
+  return Math.random().toString(36).substring(2, 15) +
          Math.random().toString(36).substring(2, 15);
 }
 
@@ -881,15 +879,15 @@ export function withPerformanceMonitoring(
 ) {
   return async (request: NextRequest): Promise<NextResponse> => {
     const metric = PerformanceMonitor.startRequest(request);
-    
+
     try {
       const response = await handler(request);
       PerformanceMonitor.endRequest(metric.requestId, response);
-      
+
       // Add performance headers
       response.headers.set('X-Response-Time', (metric.duration || 0).toString());
       response.headers.set('X-Request-ID', metric.requestId);
-      
+
       return response;
     } catch (error) {
       // Record error metrics
@@ -897,9 +895,9 @@ export function withPerformanceMonitoring(
         { error: 'Internal server error' },
         { status: 500 }
       );
-      
+
       PerformanceMonitor.endRequest(metric.requestId, errorResponse);
-      
+
       throw error;
     }
   };
@@ -923,12 +921,12 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   const startTime = Date.now();
-  
+
   try {
     // Check system health
     const healthStatus = await performHealthChecks();
     const responseTime = Date.now() - startTime;
-    
+
     // Get performance metrics
     const performanceMetrics = {
       avgResponseTime: PerformanceMonitor.getAverageResponseTime(),
@@ -951,10 +949,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(healthResponse, {
       status: healthStatus.overall === 'healthy' ? 200 : 503
     });
-    
+
   } catch (error) {
     console.error('[Health Check] Error:', error);
-    
+
     return NextResponse.json({
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
@@ -972,8 +970,8 @@ async function performHealthChecks() {
     streaming: await checkStreaming()
   };
 
-  const overall = Object.values(checks).every(check => check.status === 'healthy') 
-    ? 'healthy' 
+  const overall = Object.values(checks).every(check => check.status === 'healthy')
+    ? 'healthy'
     : 'degraded';
 
   return { overall, checks };
@@ -1088,13 +1086,13 @@ export const processNeuroSEOAnalysis = onRequest({
   maxInstances: 50
 }, async (request, response) => {
   const startTime = Date.now();
-  
+
   try {
     console.log('[NeuroSEO Function] Processing analysis request');
-    
+
     // Enhanced error handling and logging
     const { urls, targetKeywords, analysisType, userPlan, userId } = request.body;
-    
+
     if (!urls || !Array.isArray(urls) || urls.length === 0) {
       response.status(400).json({
         error: "URLs array is required and cannot be empty",
@@ -1143,17 +1141,17 @@ export const processNeuroSEOAnalysis = onRequest({
     if (!admin.apps.length) {
       admin.initializeApp();
     }
-    
+
     const db = admin.firestore();
     await db.collection("neuroSeoAnalyses").add(analysisResult);
-    
+
     console.log(\`[NeuroSEO Function] Analysis completed in \${Date.now() - startTime}ms\`);
-    
+
     response.status(200).json(analysisResult);
-    
+
   } catch (error) {
     console.error('[NeuroSEO Function] Processing error:', error);
-    
+
     response.status(500).json({
       error: "Analysis processing failed",
       function: "processNeuroSEOAnalysis",
@@ -1167,16 +1165,16 @@ export const processNeuroSEOAnalysis = onRequest({
 export const trackUserSubscription = onDocumentUpdated("users/{userId}", async (event) => {
   const beforeData = event.data?.before.data();
   const afterData = event.data?.after.data();
-  
+
   if (!beforeData || !afterData) return;
-  
+
   // Track subscription tier changes
   if (beforeData.subscriptionTier !== afterData.subscriptionTier) {
     console.log(\`[Subscription] User \${event.params.userId} tier changed: \${beforeData.subscriptionTier} → \${afterData.subscriptionTier}\`);
-    
+
     const admin = await import("firebase-admin");
     const db = admin.firestore();
-    
+
     await db.collection("subscriptionEvents").add({
       userId: event.params.userId,
       previousTier: beforeData.subscriptionTier,
@@ -1190,22 +1188,22 @@ export const trackUserSubscription = onDocumentUpdated("users/{userId}", async (
 // Enhanced analytics tracking
 export const trackAnalyticsEvent = onDocumentCreated("analytics/{eventId}", async (event) => {
   const eventData = event.data?.data();
-  
+
   if (!eventData) return;
-  
+
   console.log(\`[Analytics] New event: \${eventData.type} for user \${eventData.userId}\`);
-  
+
   const admin = await import("firebase-admin");
   const db = admin.firestore();
-  
+
   // Update user analytics summary
   const userRef = db.collection("users").doc(eventData.userId);
   const userDoc = await userRef.get();
-  
+
   if (userDoc.exists) {
     const userData = userDoc.data();
     const currentAnalytics = userData?.analytics || {};
-    
+
     await userRef.update({
       analytics: {
         ...currentAnalytics,

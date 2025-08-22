@@ -1,27 +1,28 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/context/AuthContext";
+import { asVoidHandler } from '@/lib/react/handlers';
+import { updateUserSubscription } from "@/lib/subscription";
+import confetti from "canvas-confetti";
+import { motion } from "framer-motion";
 import {
+  ArrowRight,
+  Calendar,
   CheckCircle,
+  CreditCard,
   Download,
   Mail,
-  Calendar,
-  CreditCard,
-  ArrowRight,
   Receipt,
   Star,
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { updateUserSubscription } from "@/lib/subscription";
-import confetti from "canvas-confetti";
 
 export default function PaymentSuccess(): JSX.Element {
   const [emailSent, setEmailSent] = useState(false);
@@ -35,7 +36,8 @@ export default function PaymentSuccess(): JSX.Element {
   const amount = searchParams?.get("amount") || "79";
   const cycle = searchParams?.get("cycle") || "monthly";
   const method = searchParams?.get("method") || "stripe";
-  const sessionId = searchParams?.get("session_id");
+  // sessionId available if needed for future invoice retrieval (unused currently)
+  // const sessionId = searchParams?.get("session_id");
 
   const sendConfirmationEmail = useCallback(async () => {
     try {
@@ -48,28 +50,30 @@ export default function PaymentSuccess(): JSX.Element {
   }, []);
 
   useEffect(() => {
-    // Trigger confetti animation
     const timer = setTimeout(() => {
-      confetti({
+      void confetti({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
       });
     }, 500);
 
-    // Update user subscription status in Firestore
     if (user?.uid) {
-      // Minimal optimistic subscription update; real values handled by webhook
-      updateUserSubscription(user.uid, {
-        status: "active",
-        tier: (plan as any) || "agency",
-      }).catch(() => {/* ignore – webhook will reconcile */});
+      const allowedTiers = ['starter', 'agency', 'enterprise', 'free'] as const;
+      const normalizedTier = ((): typeof allowedTiers[number] => {
+        return (allowedTiers as readonly string[]).includes(plan) ? (plan as typeof allowedTiers[number]) : 'agency';
+      })();
+      void updateUserSubscription(user.uid, {
+        status: 'active',
+        tier: normalizedTier,
+      }).catch(() => { /* ignore – webhook will reconcile */ });
     }
 
-    // Send confirmation email
-    if (!emailSent) sendConfirmationEmail();
+    if (!emailSent) {
+      void sendConfirmationEmail();
+    }
 
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); };
   }, [user, plan, emailSent, sendConfirmationEmail]);
 
   const downloadInvoice = useCallback(async () => {
@@ -215,7 +219,7 @@ export default function PaymentSuccess(): JSX.Element {
                 </div>
 
                 <Button
-                  onClick={downloadInvoice}
+                  onClick={asVoidHandler(downloadInvoice)}
                   variant="outline"
                   disabled={invoiceLoading}
                   className="w-full justify-start"

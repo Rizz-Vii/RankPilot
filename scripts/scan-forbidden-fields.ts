@@ -44,19 +44,22 @@ async function scanCodebase(root: string): Promise<string[]> {
 async function scanFirestore(): Promise<string[]> {
     const project = process.env.FIREBASE_PROJECT_ID || process.env.GCLOUD_PROJECT;
     if (!project) return []; // Skip if not configured
-    let admin: any;
+    let admin: unknown;
     try { admin = require('firebase-admin'); } catch { return []; }
-    if (!admin.apps?.length) {
-        try { admin.initializeApp({ projectId: project }); } catch { /* ignore */ }
+    const a = admin as unknown as { apps?: unknown[]; initializeApp?: (cfg: unknown) => void; firestore?: () => unknown };
+    if (!Array.isArray(a.apps) || a.apps.length === 0) {
+        try { a.initializeApp && a.initializeApp({ projectId: project }); } catch { /* ignore */ }
     }
-    const db = admin.firestore?.();
-    if (!db) return [];
+    const db = a.firestore && a.firestore();
+    if (!db) return [] as string[];
     const violations: string[] = [];
     try {
-        const snap = await db.collection('marketingCampaigns').limit(200).get();
-        snap.forEach((doc: any) => {
-            const data = doc.data();
-            FORBIDDEN_FIELDS.forEach(f => { if (f in data) violations.push(`Firestore doc marketingCampaigns/${doc.id} contains forbidden field '${f}'`); });
+        const snap = await (db as unknown as { collection: (c: string) => { limit: (n: number) => { get: () => Promise<unknown> } } }).collection('marketingCampaigns').limit(200).get();
+        const s = snap as unknown as { forEach: (cb: (doc: unknown) => void) => void };
+        s.forEach((doc: unknown) => {
+            const d = doc as unknown as { id?: string; data?: () => unknown };
+            const data = typeof d.data === 'function' ? d.data() as unknown as Record<string, unknown> : {};
+            FORBIDDEN_FIELDS.forEach(f => { if (data && typeof data === 'object' && f in data) violations.push(`Firestore doc marketingCampaigns/${d.id ?? 'unknown'} contains forbidden field '${f}'`); });
         });
     } catch { /* ignore firestore errors in local non-emulator context */ }
     return violations;

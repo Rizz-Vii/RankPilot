@@ -1,27 +1,31 @@
 "use client";
 // Sales - Pipeline
-import { useEffect, useState } from 'react';
-import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
-import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { QuotaBar } from '@/components/metrics/QuotaBar';
-import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
-import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { TrendSparkline } from '@/components/metrics/TrendSparkline';
+import { ActionCard } from '@/components/shared/action-card';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from '@/components/tool-page-header';
 import { Button } from '@/components/ui/button';
-import { fetchRecentSalesMetricsSnapshots, fetchRecentSalesForecastSnapshots } from '@/lib/services/sales-automation-snapshots';
-import { ActionCard } from '@/components/shared/action-card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/context/AuthContext';
 import { useAutomationTrigger } from '@/hooks/useAutomationTrigger';
-import { AddDealModal } from '../_parts/add-deal-modal';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
 import { useProvenance } from '@/hooks/useProvenance';
+import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { fetchRecentSalesForecastSnapshots, fetchRecentSalesMetricsSnapshots } from '@/lib/services/sales-automation-snapshots';
+import { useEffect, useState } from 'react';
+import { AddDealModal } from '../_parts/add-deal-modal';
 
 export default function SalesPipelinePage() {
   const { data } = useMockDomainMetrics('sales', true);
   const { user } = useAuth();
   const userId = user?.uid;
-  const teamId = (user as any)?.teamId as string | undefined;
+  const teamId: string | undefined = ((): string | undefined => {
+    if (!user || typeof user !== 'object') return undefined;
+    const possible = (user as unknown as { teamId?: unknown }).teamId;
+    return typeof possible === 'string' ? possible : undefined;
+  })();
   interface SalesPipelineMetricsSnapshot { pipeline:number; closedWon:number; totalDeals:number; ts:Date }
   interface SalesPipelineForecastSnapshot { forecast:number; period:string; ts:Date }
   const [snapMetrics, setSnapMetrics] = useState<SalesPipelineMetricsSnapshot | null>(null);
@@ -33,40 +37,59 @@ export default function SalesPipelinePage() {
   const [loadingSnaps, setLoadingSnaps] = useState(false);
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(() => { trackDashboardView('sales'); }, []);
-  useEffect(()=> {
-    if(!userId) return; let active = true; setLoadingSnaps(true);
-  (async ()=> {
+  function toDateLike(v: unknown): Date {
+    if (v instanceof Date) return v;
+    if (v && typeof v === 'object' && 'toDate' in (v as Record<string, unknown>)) {
+      const fn = (v as { toDate?: () => unknown }).toDate;
+      if (typeof fn === 'function') {
+        const d = fn();
+        if (d instanceof Date) return d;
+      }
+    }
+    return new Date();
+  }
+
+  useEffect(() => {
+    if (!userId) return;
+    let active = true;
+    setLoadingSnaps(true);
+    void (async () => {
       try {
-        const [m,f] = await Promise.all([
+        const [m, f] = await Promise.all([
           fetchRecentSalesMetricsSnapshots(userId, teamId, 6),
           fetchRecentSalesForecastSnapshots(userId, teamId, 3)
         ]);
-        if(!active) return;
-        if(m.length) {
-          setSnapMetrics({ pipeline: m[0].pipeline, closedWon: m[0].closedWon, totalDeals: m[0].totalDeals, ts: (m[0].createdAt as any)?.toDate?.() || new Date() });
-          setMetricsHistory(m.map(s => ({ ts: (s.createdAt as any)?.toDate?.() || new Date(), pipeline: s.pipeline })));
+        if (!active) return;
+        if (m.length) {
+          setSnapMetrics({ pipeline: m[0].pipeline, closedWon: m[0].closedWon, totalDeals: m[0].totalDeals, ts: toDateLike((m[0] as unknown as { createdAt?: unknown }).createdAt) });
+          setMetricsHistory(m.map(s => ({ ts: toDateLike((s as unknown as { createdAt?: unknown }).createdAt), pipeline: s.pipeline })));
         }
-  if(f.length) setSnapForecast({ forecast: f[0].forecast, period: f[0].period, ts: (f[0].createdAt as any)?.toDate?.() || new Date() });
-    if(m.length || f.length) { markLive(); } else { markFallback(); }
-      } finally { if(active) setLoadingSnaps(false); }
+        if (f.length) setSnapForecast({ forecast: f[0].forecast, period: f[0].period, ts: toDateLike((f[0] as unknown as { createdAt?: unknown }).createdAt) });
+        if (m.length || f.length) { markLive(); } else { markFallback(); }
+      } finally { if (active) setLoadingSnaps(false); }
     })();
-    return ()=> { active=false; };
-  }, [userId, teamId]);
+    return () => { active = false; };
+  }, [userId, teamId, markLive, markFallback]);
 
-  function handleAutomation(action: 'salesForecastSnapshot'|'salesRefreshMetrics') {
-    trigger(action, {
-      optimistic: action === 'salesRefreshMetrics' ? () => {
-    // optimistic: inject a pseudo snapshot bar timestamp to visually indicate refresh
-  setSnapMetrics((s) => s ? { ...s, ts: new Date() } : s);
-  setMetricsHistory((h) => h.length ? [{ ...h[0], ts: new Date() }, ...h] : h);
-      } : undefined,
+  function handleAutomation(action: 'salesForecastSnapshot' | 'salesRefreshMetrics') {
+    void (trigger(action, {
+      optimistic: action === 'salesRefreshMetrics'
+        ? () => {
+          setSnapMetrics((s) => s ? { ...s, ts: new Date() } : s);
+          setMetricsHistory((h) => h.length ? [{ ...h[0], ts: new Date() }, ...h] : h);
+        }
+        : undefined,
       label: action
-    });
+    }).catch(() => { /* intentionally ignored */ }));
   }
   return (
     <FeatureGate feature="sales_pipeline" requiredTier="starter" showUpgrade>
       <div className="p-6 space-y-10">
-  <AddDealModal open={addOpen} onOpenChange={setAddOpen} onCreated={(d: any)=> { /* lightweight optimistic pipeline adjustment */ setSnapMetrics((s) => s ? { ...s, totalDeals: (s.totalDeals||0)+1, pipeline: s.pipeline + (d?.amount||0) } : s); }} />
+        <AddDealModal open={addOpen} onOpenChange={setAddOpen} onCreated={(d: unknown) => {
+          const deal = (d && typeof d === 'object') ? (d as { amount?: unknown }) : {};
+          const amount = typeof deal.amount === 'number' ? deal.amount : 0;
+          setSnapMetrics((s) => s ? { ...s, totalDeals: (s.totalDeals || 0) + 1, pipeline: s.pipeline + amount } : s);
+        }} />
   <ToolPageHeader
           title="Sales Pipeline"
           description="Stage health, velocity, conversion yield & coverage readiness for forecast confidence."

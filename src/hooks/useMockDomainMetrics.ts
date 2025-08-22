@@ -7,7 +7,7 @@ export function useMockDomainMetrics(domain: 'sales' | 'finance' | 'marketing', 
     const [loading, setLoading] = useState<boolean>(!!enabled);
     useEffect(() => {
         if (!enabled) return; let active = true;
-        (async () => {
+        void (async () => {
             try {
                 const m = await getMockMetrics(domain);
                 if (active) setData(m);

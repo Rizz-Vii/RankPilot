@@ -35,7 +35,7 @@ function timeMeta(): { date: string; melbTime: string; utcDelta: string } {
     const sign = diff >= 0 ? '+' : '-';
     const abs = Math.abs(diff); const dh = Math.floor(abs / 60); const dm = abs % 60;
     utcDelta = `${sign}${String(dh).padStart(2, '0')}:${String(dm).padStart(2, '0')}`;
-  } catch (_) {
+  } catch {
     // ignore errors computing timezone delta
   }
   return { date, melbTime, utcDelta };
@@ -61,26 +61,32 @@ function writeRemediation(reason: string, tasks: Task[]): void {
   }
 }
 
-export async function runBatch(tasks: Task[], opts: { mode: 'execute' | 'dry-run' | 'plan-only'; cfg: any; preflightEstimate?: { files: number; locAdded: number } }): Promise<{ results: any[]; diffs: { files: number; locAdded: number } }> {
-  const results: any[] = [];
+export async function runBatch(
+  tasks: Task[],
+  opts: { mode: 'execute' | 'dry-run' | 'plan-only'; cfg: unknown; preflightEstimate?: { files: number; locAdded: number } }
+): Promise<{ results: Array<{ taskId: string; tool: string; ok: boolean; note: string; elapsedMs: number; date: string; melbTime: string; utcDelta: string }>; diffs: { files: number; locAdded: number } }> {
+  const results: Array<{ taskId: string; tool: string; ok: boolean; note: string; elapsedMs: number; date: string; melbTime: string; utcDelta: string }> = [];
   if (opts.mode !== 'execute') return { results, diffs: { files: 0, locAdded: 0 } };
   // Pre-flight guard estimate (placeholder 0 for now)
   const estimate = opts.preflightEstimate || { files: 0, locAdded: 0 };
-  const guard = (opts.cfg && opts.cfg.limits) ? checkBatchLimits(estimate, opts.cfg.limits) : { ok: true };
+  const cfgAny = opts.cfg as { limits?: { maxLocAdded: number; maxFiles: number } };
+  const guard = (cfgAny && cfgAny.limits) ? checkBatchLimits(estimate, cfgAny.limits) : { ok: true };
   if (!guard.ok) { writeRemediation('limits', tasks); return { results, diffs: estimate }; }
   const tMeta = timeMeta();
   for (const t of tasks) {
-    const runners = getRunnersFor(t.domain || 'docs', opts.cfg);
+    const runners = getRunnersFor(t.domain || 'docs', cfgAny);
     for (const r of runners) {
       const start = Date.now();
-      const out = await r.run({ taskId: t.id }, { cfg: opts.cfg });
+      const outUnknown = await r.run({ taskId: t.id }, { cfg: cfgAny });
+      const outObj = (outUnknown && typeof outUnknown === 'object') ? (outUnknown as Record<string, unknown>) : {};
       const elapsedMs = Date.now() - start;
-      const ok = !!out?.ok;
-      results.push({ taskId: t.id, tool: r.name, ok, note: out?.note || 'stub', elapsedMs, date: tMeta.date, melbTime: tMeta.melbTime, utcDelta: tMeta.utcDelta });
+      const ok = !!outObj.ok;
+      const note = typeof outObj.note === 'string' ? outObj.note : 'stub';
+      results.push({ taskId: t.id, tool: r.name, ok, note, elapsedMs, date: tMeta.date, melbTime: tMeta.melbTime, utcDelta: tMeta.utcDelta });
       // Structured console line (skip if JSON capture expected via higher layer env flag)
       if (!process.env.BRAIN_SILENCE_RUNNERS) {
         const status = ok ? green('OK') : red('FAIL');
-        console.log(`${cyan('[runner]')} ${tMeta.date} ${dim('@')} ${tMeta.melbTime} Δ${tMeta.utcDelta} ${r.name} ${dim('task=' + t.id)} ${status} ${dim(elapsedMs + 'ms')} ${out?.note ? dim(out.note) : ''}`);
+        console.log(`${cyan('[runner]')} ${tMeta.date} ${dim('@')} ${tMeta.melbTime} Δ${tMeta.utcDelta} ${r.name} ${dim('task=' + t.id)} ${status} ${dim(elapsedMs + 'ms')} ${note ? dim(note) : ''}`);
       }
     }
   }

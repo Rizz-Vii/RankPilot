@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { DashboardSurface } from '@/components/layout/DashboardSurface';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from "@/components/tool-page-header";
-import { useAuth } from "@/context/AuthContext";
-import { useSubscription } from "@/hooks/useSubscription";
-import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -13,20 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { DashboardSurface } from '@/components/layout/DashboardSurface';
-import { SuiteAccentProvider } from '@/context/SuiteAccentContext';
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -41,25 +26,40 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import LoadingScreen from "@/components/ui/loading-screen";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/context/AuthContext";
+import { SuiteAccentProvider } from '@/context/SuiteAccentContext';
+import { useSubscription } from "@/hooks/useSubscription";
+import { db } from "@/lib/firebase";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, serverTimestamp, where } from "firebase/firestore";
+import {
+  AlertCircle,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Edit,
   Folder,
+  MoreVertical,
   Plus,
   Search,
-  Calendar,
-  Users,
   Target,
-  TrendingUp,
-  MoreVertical,
-  Edit,
   Trash2,
-  Clock,
-  CheckCircle,
-  AlertCircle,
+  TrendingUp,
+  Users,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, orderBy, addDoc, serverTimestamp, doc, getDoc, deleteDoc } from "firebase/firestore";
 
 interface Project {
   id: string;
@@ -100,13 +100,16 @@ export default function TeamProjectsPage() {
   const { user, loading: authLoading } = useAuth();
   useSubscription(); // invoke hook without destructuring to avoid unused-variable lint warnings
   const router = useRouter();
+  const userUid = user?.uid;
+  const userTeamId = (user as unknown as { teamId?: string })?.teamId;
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  // editingProject reserved for future inline edit UX – state value currently unused
+  const [_editingProject, setEditingProject] = useState<Project | null>(null);
 
   const [projectForm, setProjectForm] = useState({
     name: "",
@@ -121,43 +124,45 @@ export default function TeamProjectsPage() {
   const [teamId, setTeamId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user?.uid) return;
-    (async () => {
-      const tQ = query(collection(db, 'teams'), where('memberIds', 'array-contains', user.uid));
+    const uid = userUid;
+    if (!uid) return;
+    void (async () => {
+      const tQ = query(collection(db, 'teams'), where('memberIds', 'array-contains', uid));
       const tSnap = await getDocs(tQ);
       if (!tSnap.empty) setTeamId(tSnap.docs[0].id);
       else {
-        const uSnap = await getDoc(doc(db, 'users', user.uid));
-        const uData = uSnap.exists() ? (uSnap.data() as any) : undefined;
-        const tId = typeof uData?.teamId === 'string' ? uData.teamId : (user as any)?.teamId;
+        const uSnap = await getDoc(doc(db, 'users', uid));
+        const uData = uSnap.exists() ? (uSnap.data() as Record<string, unknown>) : undefined;
+        const tId = typeof uData?.teamId === 'string' ? uData.teamId : userTeamId;
         if (typeof tId === 'string') setTeamId(tId);
       }
     })();
-  }, [user?.uid]);
+    // We intentionally scope this effect to user.uid (not entire user object) to avoid unnecessary re-runs on unrelated auth object mutations
+  }, [userUid, userTeamId]);
 
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     try {
       setLoading(true);
       if (!teamId) { setProjects([]); return; }
-      // Read projects with teamId
       const q = query(collection(db, 'projects'), where('teamId', '==', teamId), orderBy('name'));
       const snap = await getDocs(q);
       const items: Project[] = snap.docs.map(d => {
-        const data = d.data() as any;
+        const raw = d.data() as Record<string, unknown>;
+        const toDate = (v: unknown): Date | undefined => (v && typeof v === 'object' && 'toDate' in (v as Record<string, unknown>) && typeof (v as { toDate?: unknown }).toDate === 'function') ? (v as { toDate: () => Date }).toDate() : undefined;
         return {
           id: d.id,
-          name: data.name,
-          description: data.description,
-          status: data.status || 'active',
-          priority: data.priority || 'medium',
-          assignedMembers: data.assignedMembers || [],
-          keywords: data.keywords || [],
-          targetUrls: data.targetUrls || [],
-          createdAt: data.createdAt?.toDate?.() || new Date(),
-          updatedAt: data.updatedAt?.toDate?.() || new Date(),
-          deadline: data.deadline?.toDate?.(),
-          progress: data.progress ?? 0,
-          metrics: data.metrics || { totalKeywords: 0, rankedKeywords: 0, avgPosition: 0, trafficIncrease: 0 },
+          name: typeof raw.name === 'string' ? raw.name : '',
+          description: typeof raw.description === 'string' ? raw.description : '',
+          status: ['active', 'completed', 'paused', 'planning'].includes(String(raw.status)) ? raw.status as Project['status'] : 'active',
+          priority: ['low', 'medium', 'high', 'critical'].includes(String(raw.priority)) ? raw.priority as Project['priority'] : 'medium',
+          assignedMembers: Array.isArray(raw.assignedMembers) ? raw.assignedMembers.filter(m => typeof m === 'string') as string[] : [],
+          keywords: Array.isArray(raw.keywords) ? raw.keywords.filter(k => typeof k === 'string') as string[] : [],
+          targetUrls: Array.isArray(raw.targetUrls) ? raw.targetUrls.filter(u => typeof u === 'string') as string[] : [],
+          createdAt: toDate(raw.createdAt) || new Date(),
+          updatedAt: toDate(raw.updatedAt) || new Date(),
+          deadline: toDate(raw.deadline),
+          progress: typeof raw.progress === 'number' ? raw.progress : 0,
+          metrics: (raw.metrics && typeof raw.metrics === 'object') ? raw.metrics as Project['metrics'] : { totalKeywords: 0, rankedKeywords: 0, avgPosition: 0, trafficIncrease: 0 },
         } as Project;
       });
       setProjects(items);
@@ -167,7 +172,7 @@ export default function TeamProjectsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [teamId]);
 
   const handleCreateProject = async () => {
     try {
@@ -233,7 +238,9 @@ export default function TeamProjectsPage() {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
-  useEffect(() => { if (teamId) fetchProjects(); }, [teamId]);
+  useEffect(() => {
+    if (teamId) { void fetchProjects(); }
+  }, [fetchProjects, teamId]); // stable fetchProjects memoized by teamId
 
   if (authLoading || loading) {
     return <LoadingScreen fullScreen text="Loading team projects..." />;
@@ -383,7 +390,7 @@ export default function TeamProjectsPage() {
               >
                 Cancel
               </Button>
-              <Button onClick={handleCreateProject}>Create Project</Button>
+                <Button onClick={() => { void handleCreateProject(); }}>Create Project</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -458,7 +465,7 @@ export default function TeamProjectsPage() {
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleDeleteProject(project.id)}
+                          onClick={() => { void handleDeleteProject(project.id); }}
                           className="text-destructive-foreground"
                         >
                           <Trash2 className="h-4 w-4 mr-2" />

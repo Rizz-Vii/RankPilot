@@ -2,6 +2,23 @@
 
 Objective: Close foundational gaps (provenance, rate limiting, forbidden-field guard, structured logging coverage) to reach audit-ready baseline.
 
+Focus Guardrails (Enforced During Phase 1):
+- Do NOT add adaptive planner logic, forecasting, new agent loop types, or risk scoring.
+- Do NOT expand design system / styling beyond minimal fixes required for tests.
+- Any diff not impacting PROV-01 .. LOG-01 is out-of-scope and must be deferred.
+
+Fast Coding Discipline:
+1. Each change ≤150 LOC prod (ex tests/docs) unless adding a guard/middleware (note exception in CHANGE_LOG).
+2. No new `any`; use `unknown` + narrow locally.
+3. Remove unused vars immediately (delegate mechanical task if multi-file).
+4. Always run `lint:flat:all` + `typecheck` before PR; zero new errors allowed.
+5. Add the smallest possible test (1 happy, 1 edge) when introducing logic.
+6. Reuse existing logger/metrics helpers; never introduce ad-hoc logging.
+7. All API responses containing AI/automation output must pass through provenance wrapper.
+8. If touching >3 domain folders in one diff: STOP and open a planning issue.
+
+Failure Halt Rule: If provenance coverage <100% or rate limit tests fail after a merge, freeze feature PRs until resolved.
+
 ## Scope
 
 - Universal provenance middleware + scan task (PROV-01)

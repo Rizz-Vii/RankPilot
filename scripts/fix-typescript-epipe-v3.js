@@ -24,7 +24,7 @@ const safeClearPath = (targetPath, description) => {
       }
       console.log(`   ✅ Cleared ${description}`);
       return true;
-    } catch (error) {
+    } catch {
       console.log(`   ⚠️  Could not clear ${description}`);
       return false;
     }
@@ -36,23 +36,23 @@ const safeClearPath = (targetPath, description) => {
 
 const updateVSCodeSettings = () => {
   console.log('2. Optimizing VS Code settings...');
-  
+
   const vscodeDir = path.join(process.cwd(), '.vscode');
   const settingsPath = path.join(vscodeDir, 'settings.json');
-  
+
   if (!fs.existsSync(vscodeDir)) {
     fs.mkdirSync(vscodeDir, { recursive: true });
   }
-  
+
   let settings = {};
   if (fs.existsSync(settingsPath)) {
     try {
       settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-    } catch (error) {
+    } catch {
       settings = {};
     }
   }
-  
+
   // Essential EPIPE prevention settings
   const updates = {
     'typescript.tsserver.maxTsServerMemory': 4096,
@@ -61,7 +61,7 @@ const updateVSCodeSettings = () => {
     'typescript.check.npmIsInstalled': false,
     'typescript.surveys.enabled': false
   };
-  
+
   let changed = false;
   Object.entries(updates).forEach(([key, value]) => {
     if (settings[key] !== value) {
@@ -69,7 +69,7 @@ const updateVSCodeSettings = () => {
       changed = true;
     }
   });
-  
+
   if (changed) {
     fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 4));
     console.log('   ✅ VS Code settings optimized');
@@ -81,13 +81,13 @@ const updateVSCodeSettings = () => {
 const testTypeScript = () => {
   console.log('3. Testing TypeScript compilation...');
   try {
-    execSync('npx tsc --noEmit --incremental false', { 
+    execSync('npx tsc --noEmit --incremental false', {
       stdio: 'pipe',
       timeout: 20000
     });
     console.log('   ✅ TypeScript compilation successful');
     return true;
-  } catch (error) {
+  } catch {
     console.log('   ⚠️  TypeScript compilation had issues (this may be normal)');
     return false;
   }
@@ -95,7 +95,7 @@ const testTypeScript = () => {
 
 const createQuickRestartScript = () => {
   console.log('4. Creating quick restart utility...');
-  
+
   const quickRestart = `#!/usr/bin/env node
 // Quick TypeScript restart utility
 const { execSync } = require('child_process');
@@ -109,20 +109,20 @@ try {
 
   const scriptPath = path.join(process.cwd(), 'scripts', 'quick-typescript-restart.js');
   fs.writeFileSync(scriptPath, quickRestart);
-  
+
   try {
     execSync(`chmod +x "${scriptPath}"`);
-  } catch (error) {
+  } catch {
     // Ignore chmod errors on Windows
   }
-  
+
   console.log('   ✅ Created quick-typescript-restart.js');
 };
 
 // Main execution
 try {
   console.log('1. Clearing TypeScript and build caches...');
-  
+
   const cacheClears = [
     ['.next', 'Next.js cache'],
     ['node_modules/.cache', 'Node modules cache'],
@@ -130,32 +130,32 @@ try {
     ['.tsbuildinfo', 'TS build info backup'],
     ['functions/lib', 'Firebase functions build']
   ];
-  
+
   cacheClears.forEach(([path, desc]) => {
     safeClearPath(path, desc);
   });
-  
+
   updateVSCodeSettings();
   testTypeScript();
   createQuickRestartScript();
-  
+
   console.log('\n🎉 TypeScript EPIPE fix completed!');
   console.log('\n📋 Summary:');
   console.log('   ✅ Cleared all TypeScript and build caches');
   console.log('   ✅ Optimized VS Code settings');
   console.log('   ✅ Created quick restart utility');
-  
+
   console.log('\n🚀 Next steps:');
   console.log('   1. Reload VS Code: Ctrl+Shift+P → "Developer: Reload Window"');
   console.log('   2. Start development: npm run dev-no-turbopack');
   console.log('   3. For future issues: node scripts/quick-typescript-restart.js');
-  
+
   console.log('\n💡 Available commands:');
   console.log('   npm run fix:typescript-epipe    - Full fix (this script)');
   console.log('   npm run restart:typescript       - Quick restart only');
 
-} catch (error) {
-  console.error('\n❌ Error:', error.message);
+} catch (_error) {
+  console.error('\n❌ Error:', _error.message);
   console.log('\n🔧 Manual steps to resolve EPIPE:');
   console.log('   1. Close VS Code completely');
   console.log('   2. Delete .next and tsconfig.tsbuildinfo folders');

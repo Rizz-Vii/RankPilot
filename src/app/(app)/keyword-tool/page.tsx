@@ -1,15 +1,14 @@
 ﻿// src/app/(app)/keyword-tool/page.tsx
 "use client";
 
-import { ToolPageHeader } from "@/components/tool-page-header";
 import { KeywordToolForm } from "@/components/forms/seo-forms";
 import LoadingState from "@/components/loading-state";
-import { useState, useEffect, useRef } from "react";
 import {
   MobileResultsCard,
   MobileToolCard,
 } from "@/components/mobile-tool-layout";
 import { useFeedbackCollection } from "@/components/performance-feedback";
+import { ToolPageHeader } from "@/components/tool-page-header";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -33,11 +32,12 @@ import { getDemoData } from "@/lib/demo-data";
 import { db } from "@/lib/firebase";
 import { TimeoutError, withTimeout } from "@/lib/timeout";
 import { cn, copyToClipboard, safeErrorMessage } from "@/lib/utils";
+import { useEffect, useRef, useState } from "react";
 // Use production AI service (with caching, quota, persistence)
+import { useProvenance } from "@/hooks/useProvenance";
 import type { KeywordSuggestionsResponse } from "@/lib/services/ai-service";
 import { fetchKeywordSuggestions } from "@/lib/services/ai-service";
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
-import { useProvenance } from "@/hooks/useProvenance";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 import { Copy, Search, TrendingUp } from "lucide-react";
@@ -118,7 +118,7 @@ const DesktopSkeletonTable = () => (
 const KeywordResults = ({ results }: { results: { suggestions: EnhancedKeywordData[]; relatedQueries?: string[] } }) => {
   const { toast } = useToast();
   const copyAll = () => {
-    copyToClipboard(results.suggestions.map(k => k.keyword).join(", "));
+    void copyToClipboard(results.suggestions.map(k => k.keyword).join(", "));
     toast?.({ title: "Copied keywords", description: "Keywords copied to clipboard." });
   };
   return (
@@ -224,7 +224,7 @@ export default function KeywordToolPage() {
   const [results, setResults] = useState<KeywordSuggestionsResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const [usedFallback, setUsedFallback] = useState(false);
+  const [_usedFallback, setUsedFallback] = useState(false);
 
   // Performance feedback integration
   const { startOperation, endOperation, FeedbackComponent } =
@@ -244,15 +244,19 @@ export default function KeywordToolPage() {
 
   // Narrow raw service / legacy demo shapes into canonical KeywordSuggestionsResponse
   function adaptKeywordSuggestions(raw: unknown): KeywordSuggestionsResponse {
-    const r: any = raw || {};
+    const r = (raw ?? {}) as Record<string, unknown>;
     return {
-      suggestions: Array.isArray(r.suggestions) ? r.suggestions : (Array.isArray(r.keywords) ? r.keywords : []),
-      relatedQueries: Array.isArray(r.relatedQueries) ? r.relatedQueries : [],
-      totalProcessingTime: typeof r.totalProcessingTime === 'number' ? r.totalProcessingTime : 0,
+      suggestions: Array.isArray(r.suggestions) ? (r.suggestions as KeywordSuggestionsResponse['suggestions']) : (Array.isArray(r.keywords) ? (r.keywords as KeywordSuggestionsResponse['suggestions']) : []),
+      relatedQueries: Array.isArray(r.relatedQueries) ? (r.relatedQueries as string[]) : [],
+      totalProcessingTime: typeof r.totalProcessingTime === 'number' ? (r.totalProcessingTime as number) : 0,
       cacheHit: !!r.cacheHit,
-      plan: r.plan,
-      quota: r.quota,
-      source: typeof r.source === 'string' ? r.source : undefined,
+      plan: typeof r.plan === 'string' ? r.plan : undefined,
+      quota: r.quota as unknown as KeywordSuggestionsResponse['quota'],
+      source: ((): KeywordSuggestionsResponse['source'] => {
+        if (typeof r.source !== 'string') return undefined;
+        const v = r.source as string;
+        return v === 'live' || v === 'cache' || v === 'fallback' ? v : undefined;
+      })(),
     };
   }
 
@@ -318,7 +322,8 @@ export default function KeywordToolPage() {
         console.warn("Keyword suggestions fallback engaged:", message);
         const demoData = getDemoData("keyword-tool");
         if (demoData) {
-          const adapted = adaptKeywordSuggestions({ suggestions: (demoData as any).keywords || [], source: 'fallback' });
+          const kws = (demoData as Record<string, unknown>)?.keywords;
+          const adapted = adaptKeywordSuggestions({ suggestions: (Array.isArray(kws) ? kws : []), source: 'fallback' });
           setResults(adapted);
           setUsedFallback(true);
           setProvenance('fallback');
@@ -336,7 +341,7 @@ export default function KeywordToolPage() {
           await addDoc(collection(db, "telemetry", "keywordTool", "errors"), {
             userId: user?.uid || null,
             message,
-            code: (error as any)?.code || null,
+            code: (error as unknown as { code?: unknown })?.code ?? null,
             isTimeout,
             isServiceUnavailable,
             isQuota,
@@ -351,7 +356,7 @@ export default function KeywordToolPage() {
           await addDoc(collection(db, "telemetry", "keywordTool", "errors"), {
             userId: user?.uid || null,
             message,
-            code: (error as any)?.code || null,
+            code: (error as unknown as { code?: unknown })?.code ?? null,
             createdAt: serverTimestamp(),
           });
         } catch {}

@@ -21,21 +21,35 @@ async function adoption(db: FirebaseFirestore.Firestore) {
     };
 }
 
-async function runSizeReport(): Promise<any> {
+type PairStats = { legacyCount: number; aggCount: number; matched: number; legacyBytes: number; aggBytes: number; reductionPct: number | null };
+async function runSizeReport(): Promise<{ semantic: PairStats; crawler: PairStats }> {
     const { getApps: ga2 } = await import('firebase-admin/app');
     const { getFirestore: gf2 } = await import('firebase-admin/firestore');
     if (!ga2().length) initializeApp();
     const db = gf2();
     async function collectPairSizes(legacyCol: string, aggCol: string, matchFields: string[]) {
-        const stats: any = { legacyCount: 0, aggCount: 0, matched: 0, legacyBytes: 0, aggBytes: 0, reductionPct: null };
+        const stats: PairStats = { legacyCount: 0, aggCount: 0, matched: 0, legacyBytes: 0, aggBytes: 0, reductionPct: null };
         const legacySnap = await db.collection(legacyCol).limit(5000).get(); stats.legacyCount = legacySnap.size;
         if (!legacySnap.empty) {
             const aggSnap = await db.collection(aggCol).limit(5000).get(); stats.aggCount = aggSnap.size;
             const aggIndex = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
-            aggSnap.docs.forEach(d => { const data: any = d.data(); const key = matchFields.map(f => (data as any)[f] ?? '').join('|'); aggIndex.set(key, d); });
+            aggSnap.docs.forEach(d => {
+                const data = d.data() as Record<string, unknown>;
+                const key = matchFields.map(f => {
+                    const v = data[f];
+                    return typeof v === 'string' ? v : String(v ?? '');
+                }).join('|');
+                aggIndex.set(key, d);
+            });
             for (const doc of legacySnap.docs) {
-                const data: any = doc.data(); const key = matchFields.map(f => (data as any)[f] ?? '').join('|'); const legacySize = Buffer.byteLength(JSON.stringify(data)); const aggDoc = aggIndex.get(key);
-                if (aggDoc) { stats.matched++; stats.legacyBytes += legacySize; stats.aggBytes += Buffer.byteLength(JSON.stringify(aggDoc.data())); }
+                const data = doc.data() as Record<string, unknown>;
+                const key = matchFields.map(f => {
+                    const v = data[f];
+                    return typeof v === 'string' ? v : String(v ?? '');
+                }).join('|');
+                const legacySize = Buffer.byteLength(JSON.stringify(data));
+                const aggDoc = aggIndex.get(key);
+                if (aggDoc) { stats.matched++; stats.legacyBytes += legacySize; stats.aggBytes += Buffer.byteLength(JSON.stringify(aggDoc.data() as unknown)); }
             }
             if (stats.matched > 0) { const avgLegacy = stats.legacyBytes / stats.matched; const avgAgg = stats.aggBytes / stats.matched; stats.reductionPct = +(((1 - (avgAgg / avgLegacy)) * 100)).toFixed(2); }
         }
@@ -60,8 +74,9 @@ async function main() {
             const file = `${dir}/size-reduction-${new Date().toISOString().split('T')[0]}.json`;
             fs.writeFileSync(file, JSON.stringify(snapshot, null, 2));
             console.log('[snapshot-size] wrote', file);
-        } catch (e) {
-            console.error('[snapshot-size] write failed', (e as any)?.message);
+        } catch (e: unknown) {
+            const msg = (e && typeof e === 'object' && 'message' in e) ? String((e as { message?: unknown }).message) : String(e);
+            console.error('[snapshot-size] write failed', msg);
         }
     }
 }

@@ -2,12 +2,16 @@
 "use client";
 
 import type { AnalyzeContentInput } from "@/ai/flows/content-optimization";
-import { colors } from "@/lib/design-system/colors";
-import { zodResolver } from "@hookform/resolvers/zod";
-import React from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { useHydration } from "@/components/HydrationContext";
 import { EnhancedButton } from "@/components/ui/enhanced-button";
+import {
+  EnhancedCard,
+  EnhancedCardContent,
+  EnhancedCardDescription,
+  EnhancedCardFooter,
+  EnhancedCardHeader,
+  EnhancedCardTitle,
+} from "@/components/ui/enhanced-card";
 import {
   Form,
   FormControl,
@@ -19,17 +23,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  EnhancedCard,
-  EnhancedCardContent,
-  EnhancedCardDescription,
-  EnhancedCardFooter,
-  EnhancedCardHeader,
-  EnhancedCardTitle,
-} from "@/components/ui/enhanced-card";
-import { FileText, Sparkles } from "lucide-react";
-import { useHydration } from "@/components/HydrationContext";
+import { colors } from "@/lib/design-system/colors";
 import { useIsMobile } from "@/lib/mobile-responsive-utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FileText, Sparkles } from "lucide-react";
+import React from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const formSchema = z.object({
   content: z
@@ -73,6 +73,11 @@ export default function ContentAnalyzerForm({
     }
   }
 
+  // Sync wrapper so the form onSubmit attribute itself does not receive a promise-returning function
+  const handleFormEvent: React.FormEventHandler<HTMLFormElement> = (e) => {
+    void form.handleSubmit(handleFormSubmit)(e);
+  };
+
   const contentLength = form.watch("content")?.length || 0;
   const keywordsLength = form.watch("targetKeywords")?.length || 0;
 
@@ -94,7 +99,7 @@ export default function ContentAnalyzerForm({
 
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(handleFormSubmit)}
+          onSubmit={handleFormEvent}
           className="space-y-6"
           aria-busy={isLoading}
           aria-disabled={isLoading}

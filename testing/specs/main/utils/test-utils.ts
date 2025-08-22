@@ -40,8 +40,10 @@ export function rotateUserAgent(): string {
 /**
  * Wait for element with retry logic
  */
+import type { Page } from '@playwright/test';
+
 export async function waitForElementWithRetry(
-    page: any,
+    page: Page,
     selector: string,
     timeout: number = 30000,
     retries: number = 3

@@ -1,38 +1,38 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ToolPageHeader } from "@/components/tool-page-header";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Shield, 
-  UserCheck, 
-  Award, 
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
-  Brain,
-  Download,
-  RefreshCw,
-  User,
-  TrendingUp
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+// Removed unused Alert components to satisfy no-unused-vars
+import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { useAuth } from "@/context/AuthContext";
+import { useProvenance } from "@/hooks/useProvenance";
+import { db } from "@/lib/firebase";
 import { createDeterministicRng, randomInt, tagSynthetic } from '@/lib/synthetic/synthetic-utils';
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
-import { useAuth } from "@/context/AuthContext";
-import { FeatureGate } from '@/components/subscription/FeatureGate';
-import { db } from "@/lib/firebase";
-import { collection, addDoc } from "firebase/firestore";
+import { addDoc, collection } from "firebase/firestore";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  AlertTriangle,
+  Award,
+  Brain,
+  CheckCircle2,
+  Download,
+  RefreshCw,
+  Shield,
+  TrendingUp,
+  User,
+  UserCheck,
+  XCircle
+} from "lucide-react";
+import { Bar, BarChart, CartesianGrid, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { toast } from "sonner";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
-import { useProvenance } from "@/hooks/useProvenance";
 
 interface AuthorCredentials {
   name: string;
@@ -273,13 +273,13 @@ export default function TrustBlockPage() {
 
   const exportResults = () => {
     if (!currentResult) return;
-    
+
     const exportData = {
       url: currentResult.url,
       analysis: currentResult,
       exportedAt: new Date().toISOString()
     };
-    
+
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -289,7 +289,7 @@ export default function TrustBlockPage() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
+
     toast.success("Results exported successfully!");
   };
 
@@ -339,8 +339,8 @@ export default function TrustBlockPage() {
               />
             </div>
             <div className="flex items-end">
-              <Button 
-                onClick={handleAnalyze}
+                <Button
+                  onClick={() => void handleAnalyze()}
                 disabled={isAnalyzing || !analysisUrl}
                 className="min-w-[140px]"
               >
@@ -690,7 +690,7 @@ export default function TrustBlockPage() {
                             <div className="flex items-center gap-2 mb-2">
                               <h4 className="font-semibold">{rec.title}</h4>
                               <Badge variant={
-                                rec.priority === 'high' ? 'destructive' : 
+                                rec.priority === 'high' ? 'destructive' :
                                 rec.priority === 'medium' ? 'default' : 'secondary'
                               }>
                                 {rec.priority} priority
@@ -706,7 +706,7 @@ export default function TrustBlockPage() {
                                 <span className="text-success-foreground">{rec.impact}</span>
                               </div>
                               <Badge variant={
-                                rec.effort === 'low' ? 'default' : 
+                                rec.effort === 'low' ? 'default' :
                                 rec.effort === 'medium' ? 'secondary' : 'destructive'
                               }>
                                 {rec.effort} effort

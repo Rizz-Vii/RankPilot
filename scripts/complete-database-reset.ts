@@ -1,6 +1,6 @@
 /**
  * Complete Database Reset and Seeding Script
- * 
+ *
  * This script will:
  * 1. Clear existing data conflicts
  * 2. Seed comprehensive realistic data
@@ -8,9 +8,9 @@
  * 4. Verify database integrity
  */
 
-import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
 
 // Initialize Firebase Admin
 if (!getApps().length) {
@@ -38,7 +38,7 @@ const TEST_USERS = {
     displayName: "Abbas Ali (Free)"
   },
   starter: {
-    email: "starter@rankpilot.com", 
+    email: "starter@rankpilot.com",
     uid: "Y0hv244mtsYk4dwsxBCS1xBOhab2",
     tier: "starter",
     displayName: "Starter User"
@@ -72,7 +72,7 @@ interface SeedUser {
 
 async function seedUserProfile(user: SeedUser): Promise<void> {
   console.log(`🌱 Seeding user profile: ${user.email}`);
-  
+
   try {
     // Create user document in Firestore
     await db.collection('users').doc(user.uid).set({
@@ -84,7 +84,7 @@ async function seedUserProfile(user: SeedUser): Promise<void> {
       lastActiveAt: Timestamp.now(),
       profileCompleted: true,
       emailVerified: true,
-      
+
       // Subscription details
       subscription: {
         tier: user.tier,
@@ -92,14 +92,14 @@ async function seedUserProfile(user: SeedUser): Promise<void> {
         startDate: Timestamp.fromDate(new Date('2024-01-01')),
         features: getFeaturesByTier(user.tier)
       },
-      
+
       // Usage tracking
       usage: {
         analysesThisMonth: Math.floor(Math.random() * 50),
         keywordSearchesThisMonth: Math.floor(Math.random() * 100),
         lastResetDate: Timestamp.fromDate(new Date('2024-07-01'))
       },
-      
+
       // Profile metadata
       profile: {
         company: `${user.displayName} Company`,
@@ -108,12 +108,12 @@ async function seedUserProfile(user: SeedUser): Promise<void> {
         teamSize: getTierTeamSize(user.tier)
       }
     }, { merge: true });
-    
+
     console.log(`   ✅ User profile created for ${user.email}`);
-    
+
     // Seed sample data for this user
     await seedUserData(user);
-    
+
   } catch (error) {
     console.error(`   ❌ Failed to seed user ${user.email}:`, error);
   }
@@ -122,7 +122,7 @@ async function seedUserProfile(user: SeedUser): Promise<void> {
 async function seedUserData(user: SeedUser): Promise<void> {
   const now = Timestamp.now();
   const pastMonth = Timestamp.fromDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
-  
+
   // Seed NeuroSEO analyses
   const analysesCount = getTierAnalysesCount(user.tier);
   for (let i = 0; i < analysesCount; i++) {
@@ -138,7 +138,7 @@ async function seedUserData(user: SeedUser): Promise<void> {
       } : null
     });
   }
-  
+
   // Seed keyword research
   const keywordCount = getTierKeywordCount(user.tier);
   for (let i = 0; i < keywordCount; i++) {
@@ -150,7 +150,7 @@ async function seedUserData(user: SeedUser): Promise<void> {
       volume: Math.floor(Math.random() * 10000)
     });
   }
-  
+
   // Seed SEO audits
   const auditCount = getTierAuditCount(user.tier);
   for (let i = 0; i < auditCount; i++) {
@@ -162,7 +162,7 @@ async function seedUserData(user: SeedUser): Promise<void> {
       issues: Math.floor(Math.random() * 20)
     });
   }
-  
+
   // Seed link analyses
   const linkCount = getTierLinkCount(user.tier);
   for (let i = 0; i < linkCount; i++) {
@@ -174,7 +174,7 @@ async function seedUserData(user: SeedUser): Promise<void> {
       domainRating: Math.floor(Math.random() * 100)
     });
   }
-  
+
   console.log(`   ✅ Sample data seeded for ${user.email}`);
 }
 
@@ -267,13 +267,13 @@ async function main(): Promise<void> {
 
 Starting seeding process...
   `);
-  
+
   try {
     // Seed all test users
-    for (const [tierName, user] of Object.entries(TEST_USERS)) {
+    for (const [_tierName, user] of Object.entries(TEST_USERS)) {
       await seedUserProfile(user);
     }
-    
+
     console.log(`
 ✅ Database seeding completed successfully!
 
@@ -285,14 +285,14 @@ Starting seeding process...
 
 🧪 Test Users Ready:
 • Free: abbas_ali_rizvi@hotmail.com
-• Starter: starter@rankpilot.com  
+• Starter: starter@rankpilot.com
 • Agency: agency@rankpilot.com
 • Enterprise: enterprise@rankpilot.com
 • Admin: admin@rankpilot.com
 
 Next: Run authentication tests
     `);
-    
+
   } catch (error) {
     console.error(`
 ❌ Database seeding failed!

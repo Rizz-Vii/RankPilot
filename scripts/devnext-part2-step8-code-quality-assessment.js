@@ -2,17 +2,17 @@
 
 /**
  * DevNext Part II Step 8: Code Quality & Technical Debt Assessment
- * 
+ *
  * Comprehensive code quality analysis leveraging existing enterprise-grade framework
  * discovered in previous technical sessions, integrated with DevNext systematic audit.
- * 
+ *
  * Features:
  * - Legacy code identification and refactoring opportunities
- * - Code complexity analysis and simplification strategies  
+ * - Code complexity analysis and simplification strategies
  * - Technical debt quantification and prioritization
  * - Code maintainability and documentation improvements
  * - Integration with existing comprehensive code quality analysis
- * 
+ *
  * Created: January 2025
  * Integrates: Existing enterprise-grade code quality framework from technical analysis sessions
  */
@@ -97,8 +97,8 @@ class DevNextCodeQualityAssessment {
             console.log('✅ DevNext Part II Step 8 Code Quality Assessment Complete!');
             console.log(`${colors.reset}`);
 
-        } catch (error) {
-            console.error(`${colors.red}❌ DevNext Step 8 Assessment Failed:${colors.reset}`, error.message);
+        } catch {
+            console.error(`${colors.red}❌ DevNext Step 8 Assessment Failed:${colors.reset}`);
             process.exit(1);
         }
     }
@@ -185,7 +185,7 @@ class DevNextCodeQualityAssessment {
                     });
                 }
 
-            } catch (error) {
+            } catch {
                 console.warn(`${colors.yellow}Warning: Could not analyze ${file}${colors.reset}`);
             }
         }
@@ -265,7 +265,7 @@ class DevNextCodeQualityAssessment {
                     });
                 }
 
-            } catch (error) {
+            } catch {
                 console.warn(`${colors.yellow}Warning: Could not analyze complexity for ${file}${colors.reset}`);
             }
         }
@@ -332,7 +332,7 @@ class DevNextCodeQualityAssessment {
 
         // Calculate total debt ratio
         let weightedScore = 0;
-        for (const [category, data] of Object.entries(this.results.technicalDebt.categories)) {
+        for (const [_category, data] of Object.entries(this.results.technicalDebt.categories)) {
             weightedScore += data.score * data.weight;
         }
         this.results.technicalDebt.totalDebtRatio = Math.max(0, 100 - weightedScore);
@@ -427,7 +427,7 @@ class DevNextCodeQualityAssessment {
                 totalMaintainabilityScore += Math.max(0, Math.min(100, score));
                 maintainableFiles++;
 
-            } catch (error) {
+            } catch {
                 console.warn(`${colors.yellow}Warning: Could not assess maintainability for ${file}${colors.reset}`);
             }
         }
@@ -470,7 +470,7 @@ class DevNextCodeQualityAssessment {
                 const documentedInterfaceMatches = content.match(/\/\*\*[\s\S]*?\*\/\s*(?:export\s+)?interface\s+\w+/g) || [];
                 documentedInterfaces += documentedInterfaceMatches.length;
 
-            } catch (error) {
+            } catch {
                 console.warn(`${colors.yellow}Warning: Could not analyze documentation for ${file}${colors.reset}`);
             }
         }
@@ -721,10 +721,10 @@ This assessment integrates with the existing enterprise-grade code quality analy
 
 /**
  * DevNext Part II Step 8: Code Quality Implementation Plan
- * 
+ *
  * Automated implementation of code quality improvements identified in assessment.
  * Prioritizes high-impact, low-effort improvements for immediate quality gains.
- * 
+ *
  * Usage: node scripts/devnext-code-quality-implementation-plan.js [--dry-run]
  */
 
@@ -749,13 +749,13 @@ class CodeQualityImplementation {
 
     // Phase 1: Remove console statements
     await this.removeConsoleStatements();
-    
+
     // Phase 2: Add basic TypeScript types
     await this.improveTypeScript();
-    
+
     // Phase 3: Add JSDoc documentation
     await this.addDocumentation();
-    
+
     // Phase 4: Create quality gates configuration
     await this.setupQualityGates();
 
@@ -764,7 +764,7 @@ class CodeQualityImplementation {
 
   async removeConsoleStatements() {
     console.log('📝 Phase 1: Removing Console Statements');
-    
+
     const files = await this.getSourceFiles();
     let totalRemovals = 0;
 
@@ -772,20 +772,20 @@ class CodeQualityImplementation {
       const content = fs.readFileSync(file, 'utf8');
       const consolePattern = /console\\.(log|warn|error|debug)\\([^)]*\\);?/g;
       const matches = content.match(consolePattern) || [];
-      
+
       if (matches.length > 0) {
         let newContent = content;
-        
+
         // Replace console.log with logger
         newContent = newContent.replace(/console\\.log\\(/g, '// logger.info(');
         newContent = newContent.replace(/console\\.warn\\(/g, '// logger.warn(');
         newContent = newContent.replace(/console\\.error\\(/g, '// logger.error(');
         newContent = newContent.replace(/console\\.debug\\(/g, '// logger.debug(');
-        
+
         if (!this.dryRun) {
           fs.writeFileSync(file, newContent, 'utf8');
         }
-        
+
         totalRemovals += matches.length;
         this.changes.push(\`Commented out \${matches.length} console statements in \${path.relative(this.srcPath, file)}\`);
       }
@@ -796,7 +796,7 @@ class CodeQualityImplementation {
 
   async improveTypeScript() {
     console.log('📝 Phase 2: TypeScript Improvements');
-    
+
     const files = await this.getSourceFiles();
     let totalImprovements = 0;
 
@@ -833,7 +833,7 @@ class CodeQualityImplementation {
 
   async addDocumentation() {
     console.log('📝 Phase 3: Adding Documentation');
-    
+
     const files = await this.getSourceFiles();
     let totalDocumentations = 0;
 
@@ -869,7 +869,7 @@ class CodeQualityImplementation {
 
   async setupQualityGates() {
     console.log('📝 Phase 4: Setting Up Quality Gates');
-    
+
     const qualityConfig = {
       "quality-gates": {
         "maintainability": {
@@ -892,11 +892,11 @@ class CodeQualityImplementation {
     };
 
     const configPath = path.join(process.cwd(), '.quality-gates.json');
-    
+
     if (!this.dryRun) {
       fs.writeFileSync(configPath, JSON.stringify(qualityConfig, null, 2), 'utf8');
     }
-    
+
     this.changes.push('Created .quality-gates.json configuration');
     console.log('   ✅ Quality gates configuration created\\n');
   }
@@ -904,18 +904,18 @@ class CodeQualityImplementation {
   async getSourceFiles() {
     const getAllFiles = (dir, files = []) => {
       const fileList = fs.readdirSync(dir);
-      
+
       for (const file of fileList) {
         const filePath = path.join(dir, file);
         const stat = fs.statSync(filePath);
-        
+
         if (stat.isDirectory()) {
           getAllFiles(filePath, files);
         } else if (file.match(/\\.(ts|tsx)$/) && !file.includes('.test.') && !file.includes('.spec.')) {
           files.push(filePath);
         }
       }
-      
+
       return files;
     };
 
@@ -926,7 +926,7 @@ class CodeQualityImplementation {
     console.log('📊 Implementation Summary');
     console.log('========================');
     console.log(\`Total changes: \${this.changes.length}\\n\`);
-    
+
     this.changes.forEach((change, index) => {
       console.log(\`\${index + 1}. \${change}\`);
     });

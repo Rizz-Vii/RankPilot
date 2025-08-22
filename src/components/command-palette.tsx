@@ -1,16 +1,16 @@
 "use client";
-import { useEffect, useState } from 'react';
-import { Command, Sun, Moon, Contrast, User, LogOut } from 'lucide-react';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import GlobalSearch from '@/components/global-search';
 import { LanguageSelector } from '@/components/i18n/LanguageSelector';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { EnhancedButton } from '@/components/ui/enhanced-button';
-import { useTheme } from '@/lib/themes/theme-system';
-import { useI18n } from '@/lib/i18n/internationalization-system';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/context/AuthContext';
-import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { useI18n } from '@/lib/i18n/internationalization-system';
+import { useTheme } from '@/lib/themes/theme-system';
+import { signOut } from 'firebase/auth';
+import { Command, Contrast, LogOut, Moon, Sun, User } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export function CommandPaletteButton() {
   const [open, setOpen] = useState(false);
@@ -49,11 +49,13 @@ function CommandPalette({ onClose }: CommandPaletteProps) {
   const { user } = useAuth();
   const { translate } = useI18n();
   const tr = (k: string, fb: string) => { const v = translate(k); return v === k ? fb : v; };
+  type ThemeOption = 'light' | 'dark' | 'high-contrast' | 'auto';
+  // Ensure cycleTheme is a synchronous handler to satisfy no-misused-promises
   const cycleTheme = () => {
     const order = ['light', 'dark', 'high-contrast', 'auto'] as const;
-    const idx = order.indexOf(theme as typeof order[number]);
+    const idx = order.indexOf(theme as (typeof order)[number]);
     const next = order[(idx + 1) % order.length];
-    setTheme(next as any);
+    setTheme(next as ThemeOption);
     try {
       window.dispatchEvent(
         new CustomEvent('rp_theme_cycle', {
@@ -69,6 +71,13 @@ function CommandPalette({ onClose }: CommandPaletteProps) {
     const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handleKey); return () => window.removeEventListener('keydown', handleKey);
   }, [onClose]);
+
+  // Synchronous wrapper for sign out to avoid passing a promise-returning function directly to onClick
+  const handleSignOut = () => {
+    void (async () => {
+      try { await signOut(auth); } finally { onClose(); }
+    })();
+  };
 
   return (
     <Dialog open={true} onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -96,7 +105,7 @@ function CommandPalette({ onClose }: CommandPaletteProps) {
             <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{tr('commandPalette.section.account','Account')}</h4>
             <div className="flex items-center gap-2 flex-wrap">
               {user ? (
-                <EnhancedButton size="sm" variant="secondary" onClick={() => { signOut(auth); onClose(); }}>
+                <EnhancedButton size="sm" variant="secondary" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-1"/> {tr('commandPalette.signOut','Sign Out')}
                 </EnhancedButton>
               ) : (

@@ -1,9 +1,9 @@
 import { ClientLayout } from "@/components/client-layout";
 import { AuthProvider } from "@/context/AuthContext";
 import "@/styles/globals.css";
-import type React from "react";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
+import type React from "react";
 
 export const metadata: Metadata = {
   title: "RankPilot - AI-Powered SEO Platform",
@@ -78,7 +78,7 @@ export default async function RootLayout({
         if (['ar','he'].includes(htmlLang)) htmlDir = 'rtl';
       }
     }
-  } catch (e) {
+  } catch {
     /* ignore cookie/headers parsing errors during SSR */
   }
   // Default to primary/dark theme when no preference is set
@@ -97,11 +97,11 @@ export default async function RootLayout({
   if (process.env.NODE_ENV === 'development') {
     try {
       const mod = await import('@/components/dev/AgentsToggle');
-      const AgentsToggleComp = (mod && (mod.AgentsToggle ?? mod.default)) as React.ComponentType | undefined;
+      const AgentsToggleComp = (mod && mod.AgentsToggle) as React.ComponentType | undefined;
       if (AgentsToggleComp) {
         agentsToggleElement = <div suppressHydrationWarning><AgentsToggleComp /></div>;
       }
-    } catch (e) {
+    } catch {
       /* ignore dev-only import failures */
     }
   }

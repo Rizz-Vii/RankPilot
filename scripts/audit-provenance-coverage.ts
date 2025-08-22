@@ -45,7 +45,8 @@ function loadConfig(): AuditConfig {
             return JSON.parse(raw) as AuditConfig;
         }
     } catch (e) {
-        console.warn('[provenance-audit] Failed to load .provenance-audit.json:', (e as any)?.message);
+        const msg = (e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string') ? (e as Error).message : String(e);
+        console.warn('[provenance-audit] Failed to load .provenance-audit.json:', msg);
     }
     return {};
 }
@@ -135,7 +136,7 @@ function parseArgs(argv: string[]): Record<string, string> {
 
 async function fetchWithRetry(url: string, opts: RequestInit & { retries?: number; retryDelayMs?: number } = {}): Promise<Response> {
     const { retries = 1, retryDelayMs = 300, ...rest } = opts;
-    let lastErr: any;
+    let lastErr: unknown;
     for (let i = 0; i <= retries; i++) {
         try {
             const res = await fetch(url, rest);
@@ -176,10 +177,11 @@ async function runTableDataProvenanceChecks(origin: string, timeoutMs: number): 
         } else {
             out.push({ file: 'runtime:/api/table-data?format=csv', reason: `HTTP ${csvRes.status} calling table-data` });
         }
-    } catch (e: any) {
+    } catch (e: unknown) {
         const requireServer = process.env.PROV_REQUIRE_SERVER === '1';
         if (requireServer) {
-            out.push({ file: 'runtime:/api/table-data', reason: `Server unavailable for runtime provenance audit: ${e?.message || e}` });
+            const msg = (e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string') ? (e as Error).message : String(e);
+            out.push({ file: 'runtime:/api/table-data', reason: `Server unavailable for runtime provenance audit: ${msg}` });
         } else {
             console.warn('[provenance-audit] Skipping runtime /api/table-data checks (server not available).');
         }
@@ -220,21 +222,23 @@ async function runExtraRuntimeChecks(origin: string, timeoutMs: number): Promise
                 // Optional: attempt to read a small portion of the body to ensure stream
                 // Note: Node fetch body is a web ReadableStream in modern Node.
                 try {
-                    const reader = (res.body as any)?.getReader?.();
+                    const body = res.body as unknown as { getReader?: () => ReadableStreamDefaultReader<Uint8Array> } | null;
+                    const reader = body?.getReader?.();
                     if (reader) {
                         const r = await Promise.race([
                             reader.read(),
                             sleep(500).then(() => ({ done: true, value: undefined }))
                         ]);
-                        if (!r || (r as any).done) {
+                        if (!r || (r as { done?: boolean }).done) {
                             out.push({ file: `runtime:${check.path}`, reason: 'SSE stream did not yield initial chunk' });
                         }
                     }
                 } catch { }
             }
-        } catch (e: any) {
+        } catch (e: unknown) {
             const requireServer = process.env.PROV_REQUIRE_SERVER === '1';
-            if (requireServer) out.push({ file: `runtime:${check.path}`, reason: `Server unavailable: ${e?.message || e}` });
+            const msg = (e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string') ? (e as Error).message : String(e);
+            if (requireServer) out.push({ file: `runtime:${check.path}`, reason: `Server unavailable: ${msg}` });
             else console.warn(`[provenance-audit] Skipping runtime ${check.path} (${check.type}) check (server not available).`);
         } finally {
             clearTimeout(t);

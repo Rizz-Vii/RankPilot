@@ -1,7 +1,7 @@
 /**
  * Firecrawl Competitive Intelligence System
  * Implements Priority 2 Enterprise Features from DevReady Phase 3
- * 
+ *
  * Features:
  * - Automated competitor tracking with Firecrawl MCP
  * - SEO competitive analysis and benchmarking
@@ -951,7 +951,9 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
     private queueAnalysis(competitorId: string): void {
         if (!this.analysisQueue.includes(competitorId)) {
             this.analysisQueue.push(competitorId);
-            this.processAnalysisQueue();
+            // Fire-and-forget processing; internal loop manages its own async lifecycle.
+            // Explicit void satisfies eslint no-floating-promises.
+            void this.processAnalysisQueue();
         }
     }
 
@@ -997,10 +999,11 @@ export class FirecrawlCompetitiveIntelligence extends EventEmitter {
                 if (frequency === 'monthly') interval = 30 * 24 * 60 * 60 * 1000;
 
                 if (now - lastAnalysis >= interval) {
+                    // Fire-and-forget queue enqueue (synchronous) – safe
                     this.queueAnalysis(competitor.id);
                 }
             });
-        }, 60 * 60 * 1000); // Check every hour
+    }, 60 * 60 * 1000); // Check every hour
     }
 
     /**

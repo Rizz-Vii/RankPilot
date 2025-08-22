@@ -1,6 +1,6 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 // Test-only endpoint: seeds a kpiAlertsDaily doc for the current date so Playwright
 // can deterministically validate alert history rendering on /admin/observability.
@@ -87,7 +87,9 @@ export async function GET(req: NextRequest) {
         await seed(dateKey, [{ type, level, message, value, threshold: 0 }], ma7Override);
         return NextResponse.json({ ok: true, date: dateKey, seeded: { type, level, value }, ma7Override });
     } catch (e: unknown) {
-        const msg = (e as any)?.message || 'seed_failed';
+        const msg = (e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string')
+            ? (e as { message: string }).message
+            : 'seed_failed';
         return NextResponse.json({ ok: false, error: msg }, { status: 500 });
     }
 }

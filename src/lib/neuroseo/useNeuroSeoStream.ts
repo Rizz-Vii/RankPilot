@@ -112,11 +112,12 @@ export function useNeuroSeoStream(urls: string[], opts: UseNeuroSeoStreamOptions
         startedRef.current = false;
     }, []);
 
+    // Use stable dependency keys to avoid re-creating effect on every render while honoring changes
+    const urlsKey = urls.join(',');
     useEffect(() => {
         if (autoStart) start();
         return () => cancel();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [autoStart, urls.join(','), analysisType]);
+    }, [autoStart, urlsKey, analysisType, start, cancel]);
 
     return { ...state, start, cancel };
 }

@@ -1,13 +1,13 @@
 #!/usr/bin/env ts-node
 /* NEU-02: Ensure compact persisted doc <5KB and stable hash key matches signature */
 import assert from 'assert';
-import { initializeApp, getApps } from 'firebase-admin/app';
+import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import http from 'http';
 
-async function postStream(body: any): Promise<void> {
+async function postStream(body: unknown): Promise<void> {
     return new Promise((resolve, reject) => {
-        const data = JSON.stringify(body);
+        const data = JSON.stringify(body as Record<string, unknown>);
         const req = http.request({ hostname: 'localhost', port: process.env.PORT || 3000, path: '/api/neuroseo/stream', method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } }, res => {
             res.on('data', () => { /* drain */ });
             res.on('end', resolve);

@@ -3,6 +3,7 @@
  * Saves warmed state for subsequent high-memory AI tests
  */
 
+import { extractErrorMessage } from '@/lib/errors/extract-error-message';
 import type { FullConfig } from "@playwright/test";
 import { chromium } from "@playwright/test";
 import fs from 'fs';
@@ -50,9 +51,9 @@ async function globalSetup(config: FullConfig) {
         console.log("🔍 Checking development server...");
         await page.goto(baseURL, { timeout: 15000 });
         console.log("✅ Development server is running");
-    } catch (error) {
+    } catch (error: unknown) {
         console.log("❌ Development server not running. Please start with: npm run dev-no-turbopack");
-        throw new Error("Development server not available");
+        throw new Error("Development server not available: " + extractErrorMessage(error));
     }
 
     // Pre-authenticate and save storage state
@@ -67,9 +68,10 @@ async function globalSetup(config: FullConfig) {
 
         // Save authentication state for reuse
         await context.storageState({ path: path.join(cacheDir, 'warmed-storage-state.json') });
-    } catch (error) {
-        console.log("⚠️ Authentication failed, continuing with warming...");
-    }    // Define enhanced warming sequence with state tracking
+    } catch (error: unknown) {
+        console.log("⚠️ Authentication failed, continuing with warming...", extractErrorMessage(error));
+    }
+    // Define enhanced warming sequence with state tracking
     const warmingSequence = [
         // Light pages (build base cache)
         { path: "/", name: "Homepage", timeout: 15000, priority: "light", cacheKey: "home" },
@@ -87,11 +89,14 @@ async function globalSetup(config: FullConfig) {
         { path: "/competitors", name: "Competitors", timeout: 40000, priority: "heavy", cacheKey: "competitors" },
     ];
 
-    const warmingResults = [];
-    const cacheManifest = {
+    interface WarmingResult { path: string; name: string; priority: string; loadTime?: number; success: boolean; cached: boolean; error?: string }
+    const warmingResults: WarmingResult[] = [];
+    const cacheManifest: { timestamp: string; version: string; pages: Record<string, { path: string; name: string; priority: string; loadTime?: number; timestamp: string; success: boolean; error?: string }> } = {
         timestamp: new Date().toISOString(),
         version: "1.0.0",
-        pages: {} as Record<string, any>
+        pages: {} as Record<string, {
+            path: string; name: string; priority: string; loadTime?: number; timestamp: string; success: boolean; error?: string
+        }>
     };
 
     for (const pageConfig of warmingSequence) {
@@ -146,8 +151,8 @@ async function globalSetup(config: FullConfig) {
                 success: true
             };
 
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
+        } catch (error: unknown) {
+            const errorMessage = extractErrorMessage(error);
             console.log(`   ⚠️ ${pageConfig.name} warming failed: ${errorMessage}`);
 
             warmingResults.push({

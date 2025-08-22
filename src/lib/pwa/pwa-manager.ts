@@ -57,7 +57,9 @@ export class PWAManager {
 
     constructor() {
         if (typeof window !== 'undefined') {
-            this.initializePWA();
+            // Fire-and-forget initialization; use void operator to satisfy no-floating-promises.
+            // Non-critical initialization errors are intentionally ignored.
+            void this.initializePWA();
         }
     }
 
@@ -96,7 +98,8 @@ export class PWAManager {
                     if (newWorker) {
                         newWorker.addEventListener('statechange', () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                this.showUpdateAvailableNotification();
+                                // Fire-and-forget notification
+                                void this.showUpdateAvailableNotification();
                             }
                         });
                     }
@@ -128,7 +131,8 @@ export class PWAManager {
         // Handle online/offline status
         window.addEventListener('online', () => {
             this.isOnline = true;
-            this.syncPendingData();
+            // Fire-and-forget pending data sync
+            void this.syncPendingData();
         });
 
         window.addEventListener('offline', () => {
@@ -137,7 +141,8 @@ export class PWAManager {
 
         // Initialize push notifications only when PWA is enabled
         if (enablePWA) {
-            this.initializePushNotifications();
+            // Fire-and-forget initialization of push notifications
+            void this.initializePushNotifications();
         }
     }
 
@@ -146,14 +151,14 @@ export class PWAManager {
 
         switch (type) {
             case 'SYNC_SUCCESS':
-                this.showNotification('Data Synchronized', {
+                void this.showNotification('Data Synchronized', {
                     body: 'Your data has been synchronized successfully',
                     tag: 'sync-success'
                 });
                 break;
 
             case 'ANALYSIS_COMPLETE':
-                this.showNotification('Analysis Complete', {
+                void this.showNotification('Analysis Complete', {
                     body: payload.message || 'Your SEO analysis is ready',
                     tag: 'analysis-complete',
                     data: { url: '/neuroseo/results' },
@@ -174,7 +179,7 @@ export class PWAManager {
     }
 
     private showUpdateAvailableNotification() {
-        this.showNotification('Update Available', {
+        void this.showNotification('Update Available', {
             body: 'A new version of RankPilot is available',
             tag: 'update-available',
             actions: [
@@ -492,7 +497,7 @@ export function usePWA() {
                 window.removeEventListener('offline', handleOffline);
             }
         };
-    }, []);
+    }, [pwaManager]);
 
     const installApp = async () => {
         const success = await pwaManager.installApp();

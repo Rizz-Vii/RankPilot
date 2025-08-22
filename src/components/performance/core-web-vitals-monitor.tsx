@@ -25,7 +25,7 @@ interface WebVitalsMetric {
 
 interface WebVitalsData {
     lcp: number; // Largest Contentful Paint
-    fid: number; // First Input Delay  
+    fid: number; // First Input Delay
     cls: number; // Cumulative Layout Shift
     ttfb: number; // Time to First Byte
     fcp: number; // First Contentful Paint
@@ -74,7 +74,7 @@ export function CoreWebVitalsMonitor() {
             }
         };
 
-        initWebVitals();
+        void initWebVitals();
     }, []);
 
     if (!mounted || !vitals) {
@@ -244,7 +244,7 @@ export function CoreWebVitalsWidget() {
             }
         };
 
-        calculateScore();
+        void calculateScore();
     }, []);
 
     const ratingColors = getRatingColor(rating);

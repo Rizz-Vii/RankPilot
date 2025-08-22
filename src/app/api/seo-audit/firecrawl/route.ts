@@ -68,6 +68,13 @@ import { enforceFirecrawlQuota } from './firecrawl-quota';
         res.headers.set('X-Quota-Reset', quota.resetAt.toISOString());
         return res;
     } catch (e: unknown) {
-        return NextResponse.json(enforceProvenance({ success: false, error: (e as any)?.message || 'crawl_error', provenance: 'synthetic' }, { path: 'seo-audit/firecrawl', note: 'exception' }), { status: 500 });
+        const msg = ((): string => {
+            if (e && typeof e === 'object') {
+                const rec = e as Record<string, unknown>;
+                if (typeof rec.message === 'string') return rec.message;
+            }
+            return 'crawl_error';
+        })();
+        return NextResponse.json(enforceProvenance({ success: false, error: msg, provenance: 'synthetic' }, { path: 'seo-audit/firecrawl', note: 'exception' }), { status: 500 });
     }
 }, { path: 'seo-audit/firecrawl' });

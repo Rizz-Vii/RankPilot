@@ -1,7 +1,7 @@
 /**
  * Advanced Accessibility System for RankPilot
  * Priority 3 Feature Implementation - DevReady Phase 3
- * 
+ *
  * Features:
  * - Enhanced ARIA live regions for dynamic content
  * - Advanced keyboard shortcuts and focus management
@@ -11,8 +11,6 @@
  */
 
 import { useEffect, useState } from 'react';
-
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
 // Web Speech API type definitions
 // Minimal Speech Recognition types (only what we use)
@@ -383,10 +381,10 @@ export class AccessibilityManager {
                 this.isListening = true;
                 this.announce('Voice commands enabled', 'polite', 'status');
             } catch (err) {
-                // Surface a friendly error while avoiding crashes in edge environments.
-                // E.g. start() may throw if permissions are denied.
-                // eslint-disable-next-line no-console
-                console.error('Failed to start voice recognition', err);
+                // Surface a friendly error while avoiding crashes in edge environments (guard console).
+                if (typeof console !== 'undefined' && console.error) {
+                    console.error('Failed to start voice recognition', err);
+                }
                 this.announceError('Failed to start voice recognition');
             }
         }
@@ -399,8 +397,9 @@ export class AccessibilityManager {
                 this.isListening = false;
                 this.announce('Voice commands disabled', 'polite', 'status');
             } catch (err) {
-                // eslint-disable-next-line no-console
-                console.error('Failed to stop voice recognition', err);
+                if (typeof console !== 'undefined' && console.error) {
+                    console.error('Failed to stop voice recognition', err);
+                }
                 this.announceError('Failed to stop voice recognition');
             }
         }

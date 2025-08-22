@@ -84,7 +84,7 @@ export default function RegisterPage() {
   return (
     <div className="inset-0 flex items-center justify-center bg-background">
       <form
-        onSubmit={handleRegister}
+        onSubmit={(e) => { void handleRegister(e); }}
         className="w-full max-w-md p-8 space-y-6 rounded-1xl shadow-xl border bg-card text-card-foreground -mt-16"
       >
   <h2 className="text-2xl font-bold text-center mb-2">Create Your Account</h2>

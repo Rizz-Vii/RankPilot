@@ -124,18 +124,18 @@ export function SubscriptionManagement() {
 
       usersSnapshot.forEach((d) => {
         const data = d.data() as Record<string, unknown>;
-        const sub = data.subscription || { tier: 'free', status: 'inactive' };
+        const rawSub = (data as Record<string, unknown>).subscription as unknown;
+        const safeSub = (rawSub && typeof rawSub === 'object') ? rawSub as Record<string, unknown> : {};
+        const tier = typeof safeSub.tier === 'string' ? safeSub.tier : 'free';
+        const status = typeof safeSub.status === 'string' ? safeSub.status : 'inactive';
+        const current_period_end = typeof safeSub.current_period_end === 'number' ? safeSub.current_period_end : undefined;
+        const customer_id = typeof safeSub.customer_id === 'string' ? safeSub.customer_id : undefined;
+        const subscription_id = typeof safeSub.subscription_id === 'string' ? safeSub.subscription_id : undefined;
         const user: SubscriptionUser = {
           id: d.id,
           email: typeof data.email === 'string' ? data.email : '',
           displayName: typeof data.displayName === 'string' ? data.displayName : undefined,
-          subscription: {
-            tier: typeof sub.tier === 'string' ? sub.tier : 'free',
-            status: typeof sub.status === 'string' ? sub.status : 'inactive',
-            current_period_end: typeof sub.current_period_end === 'number' ? sub.current_period_end : undefined,
-            customer_id: typeof sub.customer_id === 'string' ? sub.customer_id : undefined,
-            subscription_id: typeof sub.subscription_id === 'string' ? sub.subscription_id : undefined
-          },
+          subscription: { tier, status, current_period_end, customer_id, subscription_id },
           createdAt: isTimestampLike(data.createdAt) ? data.createdAt.seconds * 1000 : Date.now(),
           lastLoginAt: isTimestampLike(data.lastLoginAt) ? data.lastLoginAt.seconds * 1000 : undefined
         };
@@ -193,7 +193,7 @@ export function SubscriptionManagement() {
       await updateDoc(userRef, updateData);
 
       toast.success("Subscription updated successfully");
-      fetchSubscriptionData(); // Refresh data
+      await fetchSubscriptionData(); // Refresh data
     } catch (error) {
       console.error("Error updating subscription:", error);
       toast.error("Failed to update subscription");
@@ -390,20 +390,12 @@ export function SubscriptionManagement() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
-                                onClick={() =>
-                                  updateUserSubscription(user.id, {
-                                    status: "active",
-                                  })
-                                }
+                                onClick={() => { void updateUserSubscription(user.id, { status: "active" }); }}
                               >
                                 Activate Subscription
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() =>
-                                  updateUserSubscription(user.id, {
-                                    status: "canceled",
-                                  })
-                                }
+                                onClick={() => { void updateUserSubscription(user.id, { status: "canceled" }); }}
                               >
                                 Cancel Subscription
                               </DropdownMenuItem>

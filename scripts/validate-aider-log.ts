@@ -24,10 +24,17 @@ function run() {
     lines.forEach((line, i) => {
         if (i === 0 && line.includes('meta')) return;
         try {
-            const obj = JSON.parse(line);
+            const parsed: unknown = JSON.parse(line);
+            const obj = (parsed && typeof parsed === 'object') ? parsed as Record<string, unknown> : {};
             for (const f of REQUIRED) if (!(f in obj)) { console.error(`[error] Line ${i + 1} missing field ${f}`); errors++; }
-            if (typeof obj.locAdded !== 'number' || typeof obj.locRemoved !== 'number') { console.error(`[error] Line ${i + 1} locAdded/locRemoved must be numbers`); errors++; }
-        } catch (e: any) { console.error(`[error] Line ${i + 1} invalid JSON: ${e.message}`); errors++; }
+            const locAdded = obj['locAdded'];
+            const locRemoved = obj['locRemoved'];
+            if (typeof locAdded !== 'number' || typeof locRemoved !== 'number') { console.error(`[error] Line ${i + 1} locAdded/locRemoved must be numbers`); errors++; }
+        } catch (e: unknown) {
+            const msg = (e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string') ? (e as { message: string }).message : 'Unknown parse error';
+            console.error(`[error] Line ${i + 1} invalid JSON: ${msg}`);
+            errors++;
+        }
     });
     if (errors) { console.error(`Validation failed: ${errors} error(s).`); process.exit(2); }
     console.log(`Validation OK: ${lines.length - 1} record(s), size ${kb.toFixed(1)}KB.`);

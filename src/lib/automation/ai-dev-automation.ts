@@ -7,7 +7,7 @@ import { EventEmitter } from 'events';
 
 // --- Type Hardening Interfaces (replacing prior 'unknown' clusters) ---
 interface CodeQualityIssue { rule_id: string; line: number; column: number; message: string; severity: string; suggestion: string; auto_fixable: boolean; }
-interface CodeSuggestion { type: 'refactor' | 'optimize' | 'test' | 'document'; description: string; impact: 'low' | 'medium' | 'high'; effort: 'low' | 'medium' | 'high'; }
+// (Removed unused CodeSuggestion interface)
 interface CodeMetrics { cyclomatic_complexity: number; cognitive_complexity: number; duplication_percentage: number; dependencies_count: number; security_score: number; }
 interface PerformanceTestResult { suite: string; test: string; metric: string; value: number; threshold: number; passed: boolean; }
 interface RegressionItem { metric: string; current_value: number; baseline_value: number; change_percentage: number; is_regression: boolean; }
@@ -18,7 +18,7 @@ interface HealthCheckResult { check: string; status: 'healthy' | 'unhealthy'; re
 interface DeploymentExecution { deployment_id: string; status: 'success' | 'failed' | 'rolled_back'; steps_executed: DeploymentStepResult[]; rollback_performed: boolean; total_duration: number; health_check_results: HealthCheckResult[]; }
 interface WorkflowActionResult { action_id: string; status: 'success' | 'failed'; duration: number; output: string; }
 interface WorkflowExecutionResult { workflow_id: string; execution_id: string; status: 'success' | 'failed' | 'partial'; actions_executed: WorkflowActionResult[]; total_duration: number; }
-interface AutoFixResult { success: boolean; original: string; fixed: string; confidence: number; reason?: string; }
+// (Removed unused AutoFixResult interface)
 interface OverallRecommendation { type: string; description: string; priority: string; }
 interface CodeQualityMetrics { total_files_analyzed: number; average_quality_score: number; issues_auto_fixed: number; manual_fixes_required: number; }
 interface TestingMetrics { total_test_runs: number; average_pass_rate: number; performance_regressions_detected: number; test_coverage_improvement: number; }
@@ -354,10 +354,10 @@ export class AIDevAutomation extends EventEmitter {
             this.emit('deployment-completed', result);
             return result;
 
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        } catch (_err) {
+            const errorMessage = _err instanceof Error ? _err.message : 'Unknown error';
             this.emit('deployment-failed', { deploymentId, error: errorMessage });
-            throw error;
+            throw _err;
         }
     }
 
@@ -610,7 +610,7 @@ export class AIDevAutomation extends EventEmitter {
                 health_check_results: healthCheckResults
             };
 
-        } catch (error) {
+        } catch {
             return {
                 deployment_id: deploymentId,
                 status: 'failed',

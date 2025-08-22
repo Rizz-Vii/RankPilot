@@ -1,37 +1,37 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from "@/components/tool-page-header";
-import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
-import { useProvenance } from "@/hooks/useProvenance";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Search, 
-  Clock, 
-  FileText, 
-  AlertCircle, 
-  Download,
-  RefreshCw,
-  Zap,
-  Link as LinkIcon,
-  Image as ImageIcon
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
-import { FeatureGate } from '@/components/subscription/FeatureGate';
-import { tagSynthetic } from '@/lib/synthetic/synthetic-utils';
-import { toJsDate, safeErrorMessage } from '@/lib/utils';
+import { useProvenance } from "@/hooks/useProvenance";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, query, where, orderBy, limit, getDocs, getDoc, doc } from "firebase/firestore";
-import { dualWriteNeuralCrawlerAggregate } from '@/lib/neural-crawler/aggregate';
 import { recordCrawlerAggregateHit, recordCrawlerLegacyFallback } from '@/lib/metrics/unified-metrics';
+import { dualWriteNeuralCrawlerAggregate } from '@/lib/neural-crawler/aggregate';
+import { tagSynthetic } from '@/lib/synthetic/synthetic-utils';
+import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
+import { safeErrorMessage, toJsDate } from '@/lib/utils';
+import { addDoc, collection, doc, getDoc, getDocs, limit, orderBy, query, where } from "firebase/firestore";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  AlertCircle,
+  Clock,
+  Download,
+  FileText,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  RefreshCw,
+  Search,
+  Zap
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from 'sonner';
 
 interface CrawlResult {
@@ -98,9 +98,83 @@ interface CrawlHistory {
   createdAt: Date;
 }
 
+function normalizeHeadingCounts(h: unknown): CrawlResult['headings'] {
+  const base: CrawlResult['headings'] = { h1: [], h2: [], h3: [], h4: [], h5: [], h6: [] };
+  if (h && typeof h === 'object') {
+    const obj = h as Record<string, unknown>;
+    (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as const).forEach((k) => {
+      const v = obj[k];
+      const n = typeof v === 'number' ? v : 0;
+      base[k] = Array(n).fill('').map((_, i) => `${k.toUpperCase()} heading ${i + 1}`);
+    });
+  }
+  return base;
+}
+
+function buildLinkPlaceholders(internal = 0, external = 0): CrawlResult['links'] {
+  const arr: CrawlResult['links'] = [];
+  for (let i = 0; i < internal; i++) arr.push({ href: '#', text: `Internal ${i + 1}`, type: 'internal' });
+  for (let i = 0; i < external; i++) arr.push({ href: '#', text: `External ${i + 1}`, type: 'external' });
+  return arr;
+}
+
+function legacyFromAggregate(a: unknown): CrawlResult {
+  // Reconstruct a minimal pseudo-legacy object (omitting heavy arrays) for UI components already tolerant to partial data.
+  type Agg = Record<string, unknown>;
+  const x = a as Agg;
+
+  const getString = (key: string, fallback = ''): string => {
+    const v = x?.[key];
+    if (typeof v === 'string') return v;
+    if (typeof v === 'number') return String(v);
+    return fallback;
+  };
+
+  const getNumber = (key: string, fallback = 0): number => {
+    const v = x?.[key];
+    if (typeof v === 'number') return v;
+    if (typeof v === 'string') {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : fallback;
+    }
+    return fallback;
+  };
+
+  const imagesCount = getNumber('imagesCount', 0);
+  const issuesCount = getNumber('issuesCount', 0);
+  const entitiesCount = getNumber('entitiesCount', 0);
+  const linksInternal = getNumber('linksInternal', 0);
+  const linksExternal = getNumber('linksExternal', 0);
+
+  return {
+    id: (typeof x?.historyId === 'string' ? x.historyId : undefined) || (typeof x?.id === 'string' ? x.id : undefined) || `agg_${getString('url')}`,
+    url: getString('url', ''),
+    title: getString('title', getString('url', '')),
+    metaDescription: getString('metaDescription', ''),
+    content: '',
+    wordCount: getNumber('wordCount', 0),
+    readingTime: getNumber('readingTime', 0),
+    headings: normalizeHeadingCounts(x?.headings),
+    images: new Array(imagesCount).fill(0).map((_, i: number) => ({ src: '', alt: `Image ${i + 1}` })),
+    links: buildLinkPlaceholders(linksInternal, linksExternal),
+    technicalData: { loadTime: 0, pageSize: 0, statusCode: 200, contentType: 'text/html' },
+    seoAnalysis: {
+      titleLength: getNumber('titleLength', 0),
+      metaDescriptionLength: getNumber('metaDescriptionLength', 0),
+      headingStructure: (typeof x?.headingStructure === 'string' ? x.headingStructure : 'Unknown'),
+      imageOptimization: getNumber('imageOptimization', 0),
+      internalLinks: linksInternal,
+      externalLinks: linksExternal
+    },
+    issues: new Array(issuesCount).fill(0).map((_, i: number) => ({ type: 'info', message: `Issue ${i + 1}`, recommendation: '' })),
+    entities: new Array(entitiesCount).fill(0).map((_, i: number) => ({ text: `Entity ${i + 1}`, type: 'concept', confidence: 0 })),
+    createdAt: toJsDate(x?.createdAt)
+  };
+}
+
 export default function NeuralCrawlerPage() {
   const { user } = useAuth();
-  const { provenance, setProvenance, markLive, markFallback } = useProvenance();
+  const { provenance, setProvenance, markLive, markFallback: _markFallback } = useProvenance();
   const [crawlUrl, setCrawlUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -118,14 +192,44 @@ export default function NeuralCrawlerPage() {
       const override = localStorage.getItem('neuralCrawlerReadAggOverride');
       if (override === 'on') setAggReadFlag(true);
       else if (override === 'off') setAggReadFlag(false);
-    } catch {}
+    } catch { }
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      loadCrawlHistory();
+  // legacyFromAggregate is a stable top-level helper
+
+  // Declare before any effects that may reference it
+  const loadCrawlHistory = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const q = query(
+        collection(db, 'neuralCrawlerHistory'),
+        where('userId', '==', user.uid),
+        orderBy('createdAt', 'desc'),
+        limit(10)
+      );
+
+      const querySnapshot = await getDocs(q);
+      const history: CrawlHistory[] = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        history.push({
+          id: doc.id,
+          url: data.url,
+          status: data.status,
+          pagesFound: data.pagesFound || 1,
+          totalTime: data.totalTime || 0,
+          createdAt: data.createdAt?.toDate() || new Date()
+        });
+      });
+
+      setCrawlHistory(history);
+    } catch (error) {
+      console.error('Error loading crawl history:', error);
     }
   }, [user]);
+
 
   // lightweight counters for aggregate vs legacy resolution (dev telemetry only) - omitted (previously unused)
 
@@ -140,145 +244,50 @@ export default function NeuralCrawlerPage() {
         if (latest.id) {
           const aggRef = doc(db, 'neuralCrawlerResultsAgg', latest.id); // attempt direct id match first
           const aggSnap = await getDoc(aggRef);
-            if (aggSnap.exists()) {
-              const data: unknown = aggSnap.data();
-              aggHits.current++;
-              recordCrawlerAggregateHit();
-              console.info('[neuralCrawler] aggregate hit', { historyId: latest.id });
-              setCurrentResult(legacyFromAggregate(data));
-              return;
-            }
+          if (aggSnap.exists()) {
+            const data: unknown = aggSnap.data();
+            aggHits.current++;
+            recordCrawlerAggregateHit();
+            console.info('[neuralCrawler] aggregate hit', { historyId: latest.id });
+            setCurrentResult(legacyFromAggregate(data));
+            return;
+          }
         }
         // Fallback path: search by userId + url (small query: limit 1)
         if (latest.url) {
-            const qLegacy = query(
-              collection(db, 'neuralCrawlerResults'),
-              where('userId', '==', user.uid),
-              where('url', '==', latest.url),
-              orderBy('createdAt', 'desc'),
-              limit(1)
-            );
-            const legacySnap = await getDocs(qLegacy);
-            if (!legacySnap.empty) {
-              legacyFallbacks.current++;
-              recordCrawlerLegacyFallback();
-              console.warn('[neuralCrawler] legacy fallback (aggregate miss)', { url: latest.url });
-              const docData: unknown = legacySnap.docs[0].data();
-              setCurrentResult(docData as CrawlResult);
-            }
+          const qLegacy = query(
+            collection(db, 'neuralCrawlerResults'),
+            where('userId', '==', user.uid),
+            where('url', '==', latest.url),
+            orderBy('createdAt', 'desc'),
+            limit(1)
+          );
+          const legacySnap = await getDocs(qLegacy);
+          if (!legacySnap.empty) {
+            legacyFallbacks.current++;
+            recordCrawlerLegacyFallback();
+            console.warn('[neuralCrawler] legacy fallback (aggregate miss)', { url: latest.url });
+            const docData: unknown = legacySnap.docs[0].data();
+            setCurrentResult(docData as CrawlResult);
+          }
         }
       } catch (e) {
         console.warn('[neuralCrawler] hydrate failed', safeErrorMessage(e));
       }
     };
-    run();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [crawlHistory, aggReadFlag]);
+    void run();
+  }, [crawlHistory, aggReadFlag, currentResult, user]);
 
-  function legacyFromAggregate(a: unknown): CrawlResult {
-    // Reconstruct a minimal pseudo-legacy object (omitting heavy arrays) for UI components already tolerant to partial data.
-    type Agg = Record<string, unknown>;
-    const x = a as Agg;
+  // normalizeHeadingCounts and buildLinkPlaceholders are top-level helpers
 
-    const getString = (key: string, fallback = ''): string => {
-      const v = x?.[key];
-      if (typeof v === 'string') return v;
-      if (typeof v === 'number') return String(v);
-      return fallback;
-    };
 
-    const getNumber = (key: string, fallback = 0): number => {
-      const v = x?.[key];
-      if (typeof v === 'number') return v;
-      if (typeof v === 'string') {
-        const n = Number(v);
-        return Number.isFinite(n) ? n : fallback;
-      }
-      return fallback;
-    };
 
-    const imagesCount = getNumber('imagesCount', 0);
-    const issuesCount = getNumber('issuesCount', 0);
-    const entitiesCount = getNumber('entitiesCount', 0);
-    const linksInternal = getNumber('linksInternal', 0);
-    const linksExternal = getNumber('linksExternal', 0);
-
-    return {
-      id: (typeof x?.historyId === 'string' ? x.historyId : undefined) || (typeof x?.id === 'string' ? x.id : undefined) || `agg_${getString('url')}`,
-      url: getString('url', ''),
-      title: getString('title', getString('url', '')),
-      metaDescription: getString('metaDescription', ''),
-      content: '',
-      wordCount: getNumber('wordCount', 0),
-      readingTime: getNumber('readingTime', 0),
-      headings: normalizeHeadingCounts(x?.headings),
-      images: new Array(imagesCount).fill(0).map((_, i: number) => ({ src: '', alt: `Image ${i+1}` })),
-      links: buildLinkPlaceholders(linksInternal, linksExternal),
-      technicalData: { loadTime: 0, pageSize: 0, statusCode: 200, contentType: 'text/html' },
-      seoAnalysis: {
-        titleLength: getNumber('titleLength', 0),
-        metaDescriptionLength: getNumber('metaDescriptionLength', 0),
-        headingStructure: (typeof x?.headingStructure === 'string' ? x.headingStructure : 'Unknown'),
-        imageOptimization: getNumber('imageOptimization', 0),
-        internalLinks: linksInternal,
-        externalLinks: linksExternal
-      },
-      issues: new Array(issuesCount).fill(0).map((_, i: number) => ({ type: 'info', message: `Issue ${i+1}`, recommendation: '' })),
-      entities: new Array(entitiesCount).fill(0).map((_, i: number) => ({ text: `Entity ${i+1}`, type: 'concept', confidence: 0 })),
-      createdAt: toJsDate(x?.createdAt)
-    };
-  }
-
-  function normalizeHeadingCounts(h: unknown): CrawlResult['headings'] {
-    const base: CrawlResult['headings'] = { h1: [], h2: [], h3: [], h4: [], h5: [], h6: [] };
-    if (h && typeof h === 'object') {
-      const obj = h as Record<string, unknown>;
-      (['h1','h2','h3','h4','h5','h6'] as const).forEach((k) => {
-        const v = obj[k];
-        const n = typeof v === 'number' ? v : 0;
-        base[k] = Array(n).fill('').map((_,i)=>`${k.toUpperCase()} heading ${i+1}`);
-      });
+  // Load crawl history when user becomes available
+  useEffect(() => {
+    if (user) {
+      void loadCrawlHistory();
     }
-    return base;
-  }
-  function buildLinkPlaceholders(internal=0, external=0): CrawlResult['links'] {
-    const arr: CrawlResult['links'] = [];
-    for (let i=0;i<internal;i++) arr.push({ href: '#', text: `Internal ${i+1}`, type: 'internal' });
-    for (let i=0;i<external;i++) arr.push({ href: '#', text: `External ${i+1}`, type: 'external' });
-    return arr;
-  }
-
-  const loadCrawlHistory = async () => {
-    if (!user) return;
-
-    try {
-      const q = query(
-        collection(db, 'neuralCrawlerHistory'),
-        where('userId', '==', user.uid),
-        orderBy('createdAt', 'desc'),
-        limit(10)
-      );
-      
-      const querySnapshot = await getDocs(q);
-      const history: CrawlHistory[] = [];
-      
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        history.push({
-          id: doc.id,
-          url: data.url,
-          status: data.status,
-          pagesFound: data.pagesFound || 1,
-          totalTime: data.totalTime || 0,
-          createdAt: data.createdAt?.toDate() || new Date()
-        });
-      });
-      
-      setCrawlHistory(history);
-    } catch (error) {
-      console.error('Error loading crawl history:', error);
-    }
-  };
+  }, [user, loadCrawlHistory]);
 
   const simulateAnalysis = async (url: string): Promise<CrawlResult> => {
     setProvenance(null);
@@ -396,7 +405,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
         await addDoc(collection(db, 'neuralCrawlerResults'), fullResult);
       }
       // Dual-write compact aggregate (optional, non-blocking) still executed for monitoring until legacy fully retired
-      dualWriteNeuralCrawlerAggregate(fullResult);
+      void dualWriteNeuralCrawlerAggregate(fullResult);
 
       await loadCrawlHistory();
       toast.success("Website analysis completed successfully!");
@@ -412,13 +421,13 @@ Key areas of focus include content quality assessment, competitive analysis, per
 
   const exportResults = () => {
     if (!currentResult) return;
-    
+
     const exportData = {
       url: currentResult.url,
       analysis: currentResult,
       exportedAt: new Date().toISOString()
     };
-    
+
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -428,7 +437,7 @@ Key areas of focus include content quality assessment, competitive analysis, per
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
+
     toast.success("Results exported successfully!");
   };
 
@@ -477,8 +486,8 @@ Key areas of focus include content quality assessment, competitive analysis, per
               />
             </div>
             <div className="flex items-end">
-              <Button 
-                onClick={handleAnalyze}
+                <Button
+                  onClick={() => void handleAnalyze()}
                 disabled={isAnalyzing || !crawlUrl}
                 className="min-w-[120px]"
               >
@@ -736,9 +745,9 @@ Key areas of focus include content quality assessment, competitive analysis, per
                       <div>
                         <Label>Title Length</Label>
                         <div className="flex items-center gap-2">
-                          <Progress 
-                            value={(currentResult.seoAnalysis.titleLength / 60) * 100} 
-                            className="flex-1" 
+                            <Progress
+                              value={(currentResult.seoAnalysis.titleLength / 60) * 100}
+                              className="flex-1"
                           />
                           <span className="text-sm">{currentResult.seoAnalysis.titleLength}/60</span>
                         </div>
@@ -746,15 +755,15 @@ Key areas of focus include content quality assessment, competitive analysis, per
                       <div>
                         <Label>Meta Description Length</Label>
                         <div className="flex items-center gap-2">
-                          <Progress 
-                            value={(currentResult.seoAnalysis.metaDescriptionLength / 160) * 100} 
-                            className="flex-1" 
+                            <Progress
+                              value={(currentResult.seoAnalysis.metaDescriptionLength / 160) * 100}
+                              className="flex-1"
                           />
                           <span className="text-sm">{currentResult.seoAnalysis.metaDescriptionLength}/160</span>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                       <div className="flex justify-between">
                         <span>Heading Structure</span>

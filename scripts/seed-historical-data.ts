@@ -14,10 +14,10 @@
  *  client read failures. Domain (sales/marketing/finance) history is represented via
  *  user activities (users/{uid}/activities) for future dashboard integration.
  */
- 
 
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
-import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
+
+import { cert, getApps, initializeApp } from 'firebase-admin/app';
+import { FieldValue, getFirestore, Timestamp } from 'firebase-admin/firestore';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -79,7 +79,7 @@ const FLAG_FORCE_CHAT_RESEED = argv.includes('--forceChatReseed');
 const FLAG_ADD_MISSING_CHAT_PARTICIPANTS = argv.includes('--addMissingChatParticipants');
 
 // Load users (testAccount by default; optionally all with qualifying roles)
-interface TestUserDoc { uid: string; email: string; role: string; subscriptionTier?: string; createdAt?: any; }
+interface TestUserDoc { uid: string; email: string; role: string; subscriptionTier?: string; createdAt?: unknown; }
 async function getSeedUsers(db: FirebaseFirestore.Firestore): Promise<TestUserDoc[]> {
     const roleSet = new Set(['free', 'starter', 'agency', 'enterprise', 'admin']);
     const snap = FLAG_ALL_USERS
@@ -90,12 +90,18 @@ async function getSeedUsers(db: FirebaseFirestore.Firestore): Promise<TestUserDo
     const roleRank: Record<string, number> = { free: 1, starter: 2, agency: 3, enterprise: 4, admin: 5 };
     const byEmail: Record<string, TestUserDoc> = {};
     for (const doc of snap.docs) {
-        const raw: any = doc.data() || {};
-        const uid = raw.uid || doc.id; // fallback to doc id
-        const email = raw.email;
+        const raw = (doc.data() || {}) as Record<string, unknown>;
+        const uid = typeof raw.uid === 'string' ? raw.uid : doc.id; // fallback to doc id
+        const email = typeof raw.email === 'string' ? raw.email : undefined;
         if (!uid || !email) { skipped++; continue; }
-        const role = roleSet.has(raw.role) ? raw.role : 'free';
-        const candidate: TestUserDoc = { uid, email, role, subscriptionTier: raw.subscriptionTier, createdAt: raw.createdAt };
+        const role = (typeof raw.role === 'string' && roleSet.has(raw.role)) ? (raw.role as string) : 'free';
+        const candidate: TestUserDoc = {
+            uid,
+            email,
+            role,
+            subscriptionTier: typeof raw.subscriptionTier === 'string' ? raw.subscriptionTier : undefined,
+            createdAt: raw.createdAt
+        };
         const existing = byEmail[email];
         if (!existing || roleRank[candidate.role] > roleRank[existing.role]) {
             byEmail[email] = candidate;
@@ -609,9 +615,9 @@ async function augmentUserProfileAndSettings(db: FirebaseFirestore.Firestore, us
     const ref = db.collection('users').doc(user.uid);
     const snap = await ref.get();
     if (!snap.exists) return; // rely on enhanced test seeder
-    const data: any = snap.data() || {};
-    const update: any = {};
-    if (!data.profile) {
+    const data = (snap.data() || {}) as Record<string, unknown>;
+    const update: Record<string, unknown> = {};
+    if (!('profile' in data)) {
         update.profile = {
             company: `${user.role.charAt(0).toUpperCase() + user.role.slice(1)} Demo Co`,
             website: `https://${user.role}.demo.rankpilot.test`,
@@ -622,7 +628,7 @@ async function augmentUserProfileAndSettings(db: FirebaseFirestore.Firestore, us
             language: 'en'
         };
     }
-    if (!data.preferences) {
+    if (!('preferences' in data)) {
         update.preferences = {
             emailNotifications: true,
             weeklyReports: user.role !== 'free',
@@ -725,4 +731,4 @@ async function run() {
     console.log('✅ Historical data seeding complete');
 }
 
-run().catch(e => { console.error(e); process.exit(1); });
+run().catch((err: unknown) => { console.error(err); process.exit(1); });

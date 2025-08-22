@@ -1,6 +1,6 @@
+import { getLogger } from '@/lib/logging/app-logger';
 import type { Firestore } from 'firebase/firestore';
 import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
-import { getLogger } from '@/lib/logging/app-logger';
 
 export interface NormalizedUsageMetrics {
     period: string;
@@ -53,7 +53,13 @@ export async function fetchUsageMetrics(firestore: Firestore, userId: string): P
             reportsGenerated: toNumber(usage?.neuroSeoAnalyses),
         };
     } catch (e: unknown) {
-        const msg = (e && typeof e === 'object' && 'message' in e) ? (e as any).message : String(e);
+        let msg: string;
+        if (e && typeof e === 'object' && 'message' in e) {
+            const maybeErr = e as { message?: unknown };
+            msg = typeof maybeErr.message === 'string' ? maybeErr.message : String(maybeErr.message);
+        } else {
+            msg = String(e);
+        }
         logger.error('billing-usage.error', { userId, error: msg });
         return null;
     }

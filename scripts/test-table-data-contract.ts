@@ -10,7 +10,7 @@ import fetch from 'node-fetch';
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const widgetId = process.env.WIDGET_ID || 'demo-table';
 
-function assert(cond: any, msg: string) {
+function assert(cond: unknown, msg: string) {
     if (!cond) {
         console.error('Assertion failed:', msg);
         process.exitCode = 1;
@@ -21,7 +21,7 @@ async function getJSON(params: Record<string, string>) {
     const qs = new URLSearchParams({ widgetId, format: 'json', ...params }).toString();
     const res = await fetch(`${BASE_URL}/api/table-data?${qs}`);
     assert(res.ok, `JSON request failed: ${res.status}`);
-    return res.json() as Promise<{ rows: any[]; page: number; pageSize: number; total?: number }>;
+    return res.json() as Promise<{ rows: Array<Record<string, unknown>>; page: number; pageSize: number; total?: number }>;
 }
 
 async function getCSV(params: Record<string, string>) {
@@ -34,9 +34,9 @@ async function getCSV(params: Record<string, string>) {
 }
 
 async function run() {
-    const toNumber = (r: any) => {
-        if (typeof r.valueNum === 'number') return r.valueNum;
-        const n = Number(String(r.value ?? '').replace(/[^0-9.-]/g, ''));
+    const toNumber = (r: Record<string, unknown>) => {
+        if (typeof r.valueNum === 'number') return r.valueNum as number;
+        const n = Number(String((r.value as unknown) ?? '').replace(/[^0-9.-]/g, ''));
         return Number.isFinite(n) ? n : NaN;
     };
 

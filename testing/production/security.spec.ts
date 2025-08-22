@@ -54,7 +54,10 @@ test.describe('Security Validation', () => {
             await page.keyboard.press('Enter');
 
             // Script should not execute
-            const xssExecuted = await page.evaluate(() => (window as any).xssTest);
+            // Narrow window to a shape that may contain an xssTest flag without using any
+            const xssExecuted = await page.evaluate(() => {
+                return (window as unknown as { xssTest?: unknown }).xssTest;
+            });
             expect(xssExecuted).toBeUndefined();
         }
     });
@@ -64,8 +67,7 @@ test.describe('Security Validation', () => {
         if (process.env.NODE_ENV === 'development') {
             test.skip();
         }
-
-        const response = await page.goto('/');
+        await page.goto('/');
         expect(page.url()).toMatch(/^https:/);
     });
 });

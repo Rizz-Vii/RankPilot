@@ -464,7 +464,8 @@ export class PerformanceOptimizationEngine extends EventEmitter {
 
             // Auto-trigger analysis every 5 minutes
             if (this.metrics.length % 5 === 0) {
-                this.analyzeAndOptimize().then(result => {
+                // Fire-and-forget; analysis results emitted via events. Prefix with void to satisfy no-floating-promises.
+                void this.analyzeAndOptimize().then(result => {
                     if (result.alerts.length > 0) {
                         this.emit('performance-alerts', result.alerts);
                     }

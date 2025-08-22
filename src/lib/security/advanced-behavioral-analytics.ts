@@ -1,7 +1,7 @@
 /**
  * Advanced Behavioral Analytics Engine
  * DevNext Part III Step 3: Advanced Security Hardening
- * 
+ *
  * AI-powered behavioral pattern recognition and anomaly detection:
  * - User behavior baseline establishment
  * - Real-time anomaly detection and scoring
@@ -357,9 +357,10 @@ export class AdvancedBehavioralAnalytics extends EventEmitter {
      */
     private startContinuousAnalysis(): void {
         setInterval(() => {
-            this.analyzeAllSessions();
-            this.updateThreatModels();
-            this.retrainModels();
+            // Fire-and-forget async operations; attach catch handlers for lint compliance
+            void this.analyzeAllSessions().catch(err => console.error('[AdvancedBehavioralAnalytics] analyzeAllSessions error', err));
+            void this.updateThreatModels().catch(err => console.error('[AdvancedBehavioralAnalytics] updateThreatModels error', err));
+            void this.retrainModels().catch(err => console.error('[AdvancedBehavioralAnalytics] retrainModels error', err));
         }, this.analysisInterval);
     }
 

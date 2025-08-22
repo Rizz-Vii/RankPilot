@@ -48,6 +48,7 @@ try {
     if (duplicates.length) failures.push('Duplicate manifest keys: ' + duplicates.join(','));
     if (failures.length) { console.error('FEATURE KEY AUDIT FAIL', { failures }); process.exit(1); }
     else console.log('FEATURE KEY AUDIT PASS', { manifestCount: manifestKeys.length, referenced: uniq(codeKeys).length });
-} catch (e: any) {
-    console.error('FEATURE KEY AUDIT ERROR', e.message); process.exit(1);
+} catch (e: unknown) {
+    const msg = (e && typeof e === 'object' && 'message' in e) ? String((e as { message?: unknown }).message) : String(e);
+    console.error('FEATURE KEY AUDIT ERROR', msg); process.exit(1);
 }

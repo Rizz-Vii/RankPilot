@@ -1,14 +1,28 @@
 import { strict as assert } from 'assert';
-import { upsertFinanceInvoice } from '../src/lib/billing/invoice-upsert';
-import { initializeApp, getApps } from 'firebase-admin/app';
+import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { upsertFinanceInvoice } from '../src/lib/billing/invoice-upsert';
 
 if (!getApps().length) initializeApp();
 const db = getFirestore();
 
 // Minimal mock Stripe.Invoice shape for test
-function makeInvoice(partial: any): any {
-    const base = {
+type StripeInvoice = {
+    id: string;
+    customer: string;
+    created: number;
+    amount_due: number;
+    amount_paid: number;
+    currency: string;
+    status: 'draft' | 'open' | 'paid' | string;
+    lines: { data: unknown[] };
+    metadata: Record<string, unknown>;
+    period_end: number;
+    status_transitions: Record<string, unknown>;
+};
+
+function makeInvoice(partial: Partial<StripeInvoice>): StripeInvoice {
+    const base: StripeInvoice = {
         id: 'in_test_1',
         customer: 'cus_test_1',
         created: Math.floor(Date.now() / 1000),

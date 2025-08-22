@@ -1,12 +1,12 @@
 // Unified Firebase client exports leveraging connection-manager singleton to avoid duplicate init & logs
 import { app, db } from '@/lib/firebase/connection-manager';
-import { getAuth } from 'firebase/auth';
-import { getStorage } from 'firebase/storage';
-import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import { getAnalytics, isSupported, type Analytics } from 'firebase/analytics';
+import { getAuth } from 'firebase/auth';
+import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
+import { getStorage } from 'firebase/storage';
 
 export const auth = getAuth(app);
-export { db, app };
+export { app, db };
 
 // Functions (explicit region per project standard)
 export const functions = getFunctions(app, 'australia-southeast2');
@@ -24,7 +24,7 @@ let analyticsInstance: Analytics | null = null;
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
   const measurementId = process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID;
   if (measurementId) {
-    isSupported().then(supported => {
+    void isSupported().then(supported => {
       if (supported) {
         try { analyticsInstance = getAnalytics(app); } catch { analyticsInstance = null; }
       }

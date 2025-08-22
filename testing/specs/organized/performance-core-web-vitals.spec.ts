@@ -24,18 +24,19 @@ test.describe('Performance - Core Web Vitals', () => {
         await page.goto('/dashboard');
 
         const clsValue = await page.evaluate(() => {
-            return new Promise((resolve) => {
+            interface LayoutShiftEntry extends PerformanceEntry { value: number; hadRecentInput: boolean }
+            return new Promise<number>((resolve) => {
                 let clsScore = 0;
                 const observer = new PerformanceObserver((list) => {
                     for (const entry of list.getEntries()) {
-                        const layoutShiftEntry = entry as any; // LayoutShift entry type
-                        if (!layoutShiftEntry.hadRecentInput) {
-                            clsScore += layoutShiftEntry.value;
+                        const ls = entry as PerformanceEntry;
+                        const candidate = ls as unknown as Partial<LayoutShiftEntry>;
+                        if (typeof candidate.value === 'number' && candidate.hadRecentInput === false) {
+                            clsScore += candidate.value;
                         }
                     }
                 });
                 observer.observe({ type: 'layout-shift', buffered: true });
-
                 setTimeout(() => resolve(clsScore), 3000);
             });
         });
@@ -50,15 +51,19 @@ test.describe('Performance - Core Web Vitals', () => {
         await page.click('[data-testid="url-input"]');
 
         const fidValue = await page.evaluate(() => {
-            return new Promise((resolve) => {
+            interface FirstInputEntry extends PerformanceEntry { processingStart: number; startTime: number }
+            return new Promise<number>((resolve) => {
+                let resolved = false;
                 const observer = new PerformanceObserver((list) => {
                     const entries = list.getEntries();
-                    const fid = entries[0] as any; // First Input entry type
-                    resolve(fid?.processingStart - fid?.startTime || 0);
+                    const first = entries[0] as unknown as Partial<FirstInputEntry> | undefined;
+                    if (first && typeof first.processingStart === 'number' && typeof first.startTime === 'number') {
+                        resolved = true;
+                        resolve(first.processingStart - first.startTime);
+                    }
                 });
                 observer.observe({ type: 'first-input', buffered: true });
-
-                setTimeout(() => resolve(0), 3000);
+                setTimeout(() => { !resolved && resolve(0); }, 3000);
             });
         });
 
@@ -102,7 +107,7 @@ test.describe('Performance - Core Web Vitals', () => {
                         rule.cssText.includes('font-display') ||
                         rule.cssText.includes('font-face')
                     );
-                } catch (e) {
+                } catch {
                     return false;
                 }
             });

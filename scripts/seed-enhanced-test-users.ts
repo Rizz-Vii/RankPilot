@@ -1,17 +1,17 @@
 /**
  * Enhanced Test User Seeder with Realistic Data Integration
- * 
+ *
  * Creates test users with comprehensive data profiles matching the new database structure.
  * Ensures continuity for existing test users while adding realistic business data.
- * 
+ *
  * Generated: July 26, 2025
  * Integration: Existing test users + new comprehensive database schema
  */
 
-import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getFirestore, Timestamp } from "firebase-admin/firestore";
-import { getAuth } from "firebase-admin/auth";
 import * as dotenv from "dotenv";
+import { cert, getApps, initializeApp } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
 
 // Load environment variables
 dotenv.config({ path: ".env.local" });
@@ -23,9 +23,9 @@ if (!getApps().length) {
       credential: cert("./firebase-admin-key.json"),
       projectId: "rankpilot-h3jpc",
     });
-  } catch (error) {
-    console.error("❌ Failed to initialize Firebase Admin:", error);
-    throw error;
+  } catch (e) {
+    console.error("❌ Failed to initialize Firebase Admin:", e);
+    throw e;
   }
 }
 
@@ -532,7 +532,7 @@ export class EnhancedTestUserSeeder {
       try {
         firebaseUser = await auth.getUserByEmail(userData.email);
         console.log(`    ✅ Auth user exists: ${firebaseUser.uid}`);
-      } catch (error) {
+      } catch {
         // User doesn't exist, create new one
         firebaseUser = await auth.createUser({
           uid: userData.uid,
@@ -795,9 +795,9 @@ export class EnhancedTestUserSeeder {
 
       console.log(`    ✅ Seeded comprehensive data for ${tier} user`);
 
-    } catch (error) {
-      console.error(`    ❌ Failed to seed ${tier} user:`, error);
-      throw error;
+    } catch (e) {
+      console.error(`    ❌ Failed to seed ${tier} user:`, e);
+      throw e;
     }
   }
 
@@ -835,7 +835,7 @@ export class EnhancedTestUserSeeder {
         await db.collection('users').doc(userData.uid).delete();
 
         console.log(`    ✅ Cleaned data for ${userData.email}`);
-      } catch (error) {
+      } catch {
         console.log(`    ⚠️  Warning: Could not clean all data for ${userData.email}`);
       }
     }
@@ -853,15 +853,15 @@ if (require.main === module) {
   if (command === 'clean') {
     seeder.cleanTestData()
       .then(() => process.exit(0))
-      .catch((error) => {
-        console.error("Cleanup failed:", error);
+      .catch((e) => {
+        console.error("Cleanup failed:", e);
         process.exit(1);
       });
   } else {
     seeder.seedAllTestUsers()
       .then(() => process.exit(0))
-      .catch((error) => {
-        console.error("Test user seeding failed:", error);
+      .catch((e) => {
+        console.error("Test user seeding failed:", e);
         process.exit(1);
       });
   }

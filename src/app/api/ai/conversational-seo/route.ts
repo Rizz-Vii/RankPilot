@@ -4,11 +4,12 @@
  */
 
 import { conversationalSEOEngine } from '@/lib/ai/conversational-seo-engine';
-import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
-import { recordRouteLatency, recordError, recordFallback, recordRateLimitRejection } from '@/lib/metrics/unified-metrics';
+import { extractErrorMessage } from '@/lib/errors/extract-error-message';
 import { adminDb } from '@/lib/firebase-admin';
+import { recordError, recordFallback, recordRateLimitRejection, recordRouteLatency } from '@/lib/metrics/unified-metrics';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 export const POST = withProvenance(async function POST(request: NextRequest) {
@@ -67,7 +68,10 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         recordError('ai/conversational-seo', '5xx_server');
         recordFallback('backend_error');
         recordRouteLatency('ai/conversational-seo', Date.now() - start);
-        return NextResponse.json(enforceProvenance({ success: false, error: error instanceof Error ? error.message : 'Internal server error', provenance: 'synthetic' }, { path: 'ai/conversational-seo', note: 'exception' }), { status: 500 });
+        return NextResponse.json(
+            enforceProvenance({ success: false, error: extractErrorMessage(error) || 'Internal server error', provenance: 'synthetic' }, { path: 'ai/conversational-seo', note: 'exception' }),
+            { status: 500 }
+        );
     }
 }, { path: 'ai/conversational-seo' });
 

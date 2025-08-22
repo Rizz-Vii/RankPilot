@@ -1035,8 +1035,6 @@ export const d3VisualizationEngine = new D3VisualizationEngine();
 
 // Utility conversions & domain helpers
 // We keep them outside the class for simplicity / tree-shaking (unused ones drop).
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function isDateLike(v: unknown): v is Date | string | number { return v instanceof Date || typeof v === 'string' || typeof v === 'number'; }
 
 // Extend prototype with helper methods via declaration merging (not necessary now) or add to class:
 declare module './d3-visualization-engine' { interface D3VisualizationEngine { toDate(value: number | string | Date): Date; toNumber(value: number | string | Date | undefined): number; computeDateExtent(data: ChartDataPoint[]): [Date, Date]; computeNumberExtent(data: ChartDataPoint[], key: 'x' | 'y'): [number, number]; } }

@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { useSubscription } from "@/hooks/useSubscription";
-import LoadingScreen from "@/components/ui/loading-screen";
 import { FeatureGate } from "@/components/subscription/FeatureGate";
+import { TutorialAccess } from "@/components/tutorials/TutorialAccess";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,23 +11,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import LoadingScreen from "@/components/ui/loading-screen";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/context/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 import {
-  Key,
-  Copy,
-  Trash2,
-  Plus,
-  BarChart3,
-  ExternalLink,
   AlertTriangle,
+  BarChart3,
   CheckCircle,
+  Copy,
+  ExternalLink,
+  Key,
+  Plus,
+  Trash2,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { TutorialAccess } from "@/components/tutorials/TutorialAccess";
 
 interface ApiKey {
   id: string;
@@ -52,7 +52,7 @@ interface ApiUsage {
 
 export default function ApiManagementPage() {
   const { user, loading: authLoading } = useAuth();
-  const { subscription, canUseFeature } = useSubscription();
+  const { subscription: _subscription, canUseFeature } = useSubscription(); // _subscription reserved for future usage
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [usage, setUsage] = useState<ApiUsage>({
     totalCalls: 0,
@@ -70,8 +70,8 @@ export default function ApiManagementPage() {
 
   useEffect(() => {
     if (user && canUseApi) {
-      fetchApiKeys();
-      fetchUsageStats();
+      void fetchApiKeys();
+      void fetchUsageStats();
     }
   }, [user, canUseApi]);
 
@@ -146,7 +146,7 @@ export default function ApiManagementPage() {
   };
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+    void navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard");
   };
 
@@ -214,7 +214,7 @@ export default function ApiManagementPage() {
                   </div>
                   <div className="flex items-end">
                     <Button
-                      onClick={createApiKey}
+                      onClick={() => { void createApiKey(); }}
                       disabled={isCreating}
                       className="gap-2"
                     >
@@ -273,7 +273,7 @@ export default function ApiManagementPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => copyToClipboard(key.keyPreview)}
+                          onClick={() => { void copyToClipboard(key.keyPreview); }}
                           className="gap-1"
                         >
                           <Copy className="h-3 w-3" />
@@ -282,7 +282,7 @@ export default function ApiManagementPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => deleteApiKey(key.id)}
+                          onClick={() => { void deleteApiKey(key.id); }}
                           className="gap-1 text-destructive-foreground hover:text-destructive-foreground/80"
                         >
                           <Trash2 className="h-3 w-3" />

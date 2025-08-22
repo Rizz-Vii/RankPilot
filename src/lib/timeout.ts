@@ -117,7 +117,7 @@ export function withTimeout<T>(
             `Attempt ${attempts} failed, retrying in ${retryDelay}ms...`,
             error.message
           );
-          setTimeout(attemptOperation, retryDelay);
+          setTimeout(() => { void attemptOperation(); }, retryDelay);
           return;
         }
 
@@ -125,7 +125,7 @@ export function withTimeout<T>(
       }
     };
 
-    attemptOperation();
+    void attemptOperation();
   });
 }
 

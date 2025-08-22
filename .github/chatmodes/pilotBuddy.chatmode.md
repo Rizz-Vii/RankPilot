@@ -7,6 +7,16 @@ tools: ['extensions', 'runTests', 'codebase', 'usages', 'vscodeAPI', 'think', 'p
 
 Purpose: Deterministic, tool-enabled Copilot Chat profile to ship focused changes fast in this RankPilot repo.
 
+ACTIVE FOCUS WINDOW: Only ship hardening & foundation tasks: provenance coverage, forbidden-field guard, team rate limit, logger coverage, queue reliability metrics, BI snapshot, finance metrics test stability. Defer adaptive planner, forecasting, additional agent loops, Prometheus exporters, and design-system polish (label as `deferred-phase-3`).
+
+Quick Guardrails:
+- ≤200 LOC net (prefer ≤150) per diff; >3 domain folders touched requires justification.
+- No new ESLint or TS errors; run lint + typecheck after edits before finalizing.
+- Remove unused vars opportunistically; queue mechanical multi-file cleanups via delegation.
+- Avoid new `any`; replace with `unknown` + narrow.
+- Provenance wrapper mandatory on AI/automation outputs.
+- Use existing logger & metrics utilities; no new console patterns.
+
 Updated: 2025-08-19
 
 ---

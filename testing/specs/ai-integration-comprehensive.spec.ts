@@ -17,8 +17,11 @@ test.describe('AI Integration - NeuroSEO™ Suite', () => {
         try {
             const testUser = UNIFIED_TEST_USERS.agency;
             await auth.loginAndGoToDashboard(testUser);
-        } catch (error: any) {
-            console.log(`⚠️ Auth failed: ${error.message}`);
+        } catch (error: unknown) {
+            const msg = (error && typeof error === 'object' && 'message' in error)
+                ? String((error as { message?: unknown }).message)
+                : String(error);
+            console.log(`⚠️ Auth failed: ${msg}`);
         }
     });
 
@@ -151,7 +154,7 @@ test.describe('AI Integration - Performance & Error Handling', () => {
         try {
             await page.goto('/neuroseo/neural-crawler', { timeout: 10000 });
             await expect(page.locator('body')).toBeVisible();
-        } catch (error) {
+        } catch {
             console.log('⚠️ AI service timeout handled gracefully');
         }
     });

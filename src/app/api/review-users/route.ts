@@ -1,6 +1,48 @@
-import { NextResponse } from "next/server";
+import { extractErrorMessage } from '@/lib/errors/extract-error-message';
 import { db } from "@/lib/firebase/index";
 import { collection, getDocs } from "firebase/firestore";
+import { NextResponse } from "next/server";
+
+// Local interfaces to provide structure for analysis objects (avoid explicit any)
+interface ActivityRecord {
+  id: string;
+  type: string;
+  timestamp?: unknown;
+  data: Record<string, unknown>;
+}
+
+interface UserAnalysisItem {
+  userId: string;
+  userData: {
+    email?: unknown;
+    displayName?: unknown;
+    subscriptionTier?: string;
+    role?: string;
+    plan?: string;
+    planType?: string;
+    createdAt?: unknown;
+    lastLoginAt?: unknown;
+    preferences?: unknown;
+    quotas?: Record<string, number> | undefined;
+    fullData: Record<string, unknown>;
+  };
+  tierAnalysis: {
+    currentTier: string;
+    hasRole: boolean;
+    hasPlan: boolean;
+    hasPlanType: boolean;
+    hasQuotas: boolean;
+    inconsistencies: string[];
+    isConsistent: boolean;
+  };
+  collections: {
+    activities: { count: number; types: string[]; recent: ActivityRecord[] };
+    keywords: { count: number; sample: Array<Record<string, unknown>> };
+    competitors: { count: number; domains: string[] };
+    contentAnalyses: { count: number; sample: Array<Record<string, unknown>> };
+    achievements: { count: number; types: string[] };
+  };
+}
 
 // Expected quotas for each tier
 function getExpectedQuotasForTier(tier: string): Record<string, number> {
@@ -31,7 +73,7 @@ export async function GET(): Promise<NextResponse> {
     console.log("🔍 Starting comprehensive user data review...");
 
     const usersSnapshot = await getDocs(collection(db, "users"));
-    const userAnalysis: Array<Record<string, unknown>> = [];
+    const userAnalysis: UserAnalysisItem[] = [];
 
     for (const userDoc of usersSnapshot.docs) {
       const userId = userDoc.id;
@@ -41,7 +83,7 @@ export async function GET(): Promise<NextResponse> {
       const activitiesSnapshot = await getDocs(
         collection(db, "users", userId, "activities")
       );
-      const activities: Array<Record<string, unknown>> = [];
+      const activities: ActivityRecord[] = [];
 
       for (const activityDoc of activitiesSnapshot.docs) {
         const activityData = activityDoc.data();
@@ -120,7 +162,7 @@ export async function GET(): Promise<NextResponse> {
       const planType = userData.planType;
 
       // Check for tier-related inconsistencies
-      const tierInconsistencies = [];
+      const tierInconsistencies: string[] = [];
 
       // Check if quotas match tier expectations
       const expectedQuotas = getExpectedQuotasForTier(subscriptionTier);
@@ -192,7 +234,9 @@ export async function GET(): Promise<NextResponse> {
           },
           competitors: {
             count: competitors.length,
-            domains: competitors.map((c) => c.domain),
+            domains: competitors
+              .map((c) => (typeof c.domain === 'string' ? c.domain : String(c.domain ?? '')))
+              .filter((d): d is string => d.length > 0),
           },
           contentAnalyses: {
             count: contentAnalyses.length,
@@ -200,7 +244,13 @@ export async function GET(): Promise<NextResponse> {
           },
           achievements: {
             count: achievements.length,
-            types: [...new Set(achievements.map((a) => a.type))],
+            types: [
+              ...new Set(
+                achievements.map((a) =>
+                  typeof a.type === 'string' ? a.type : String(a.type ?? '')
+                )
+              ),
+            ].filter((t): t is string => t.length > 0),
           },
         },
       });
@@ -281,8 +331,7 @@ export async function GET(): Promise<NextResponse> {
     });
   } catch (error) {
     console.error("Error reviewing user data:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
+    const errorMessage = extractErrorMessage(error) || 'Unknown error occurred';
     return NextResponse.json(
       {
         success: false,

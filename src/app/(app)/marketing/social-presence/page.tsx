@@ -1,24 +1,24 @@
 "use client";
 // Enterprise Marketing - Social Presence
-import React, { useEffect, useState } from 'react';
-import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { MetricCard } from '@/components/metrics/MetricCard';
-import { TrendSparkline } from '@/components/metrics/TrendSparkline';
+import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { QuotaBar } from '@/components/metrics/QuotaBar';
-import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
-import { Button } from '@/components/ui/button';
+import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { ActionCard } from '@/components/shared/ActionCard';
 import { SkeletonOverlay } from '@/components/shared/SkeletonOverlay';
-import { Textarea } from '@/components/ui/textarea';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import { schedulePost, optimizeCopy, connectSocialAccount, listSocialAccounts, fetchPlatformTrends } from '@/lib/ai/marketing-automation';
+import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { useMarketingCampaignMetrics } from '@/hooks/useMarketingCampaignMetrics';
-import { PeriodSelector } from '@/components/metrics/PeriodSelector';
-import { LazyDataTable } from '@/components/metrics/LazyDataTable';
-import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
 import { useProvenance } from '@/hooks/useProvenance';
+import { connectSocialAccount, fetchPlatformTrends, listSocialAccounts, optimizeCopy, schedulePost } from '@/lib/ai/marketing-automation';
+import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import React, { useEffect, useState } from 'react';
 
 interface PostDialogProps { open:boolean; onClose:()=>void; onSchedule:(c:string,channel:string,when:Date)=>Promise<void>; loading:boolean; }
 function PostDialog({ open, onClose, onSchedule, loading }: PostDialogProps){
@@ -42,7 +42,7 @@ function PostDialog({ open, onClose, onSchedule, loading }: PostDialogProps){
       </div>
       <div className="flex justify-end gap-2">
         <Button variant="ghost" size="sm" onClick={onClose} disabled={loading}>Cancel</Button>
-        <Button size="sm" onClick={()=> onSchedule(content, channel, time? new Date(time): new Date())} disabled={loading}>{loading? 'Scheduling…':'Schedule'}</Button>
+        <Button size="sm" onClick={() => { void onSchedule(content, channel, time ? new Date(time) : new Date()); }} disabled={loading}>{loading ? 'Scheduling…' : 'Schedule'}</Button>
       </div>
     </div>
   </div>;
@@ -80,7 +80,7 @@ function AccountsPanel({ accounts, onConnect, connecting }: AccountsPanelProps){
         <option value="x">X</option>
       </select>
       <Input placeholder="@handle" value={handle} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHandle(e.target.value)} className="h-8 text-xs" />
-      <Button size="sm" disabled={!handle || connecting} onClick={()=> onConnect(platform, handle)}>{connecting? 'Connecting…':'Connect'}</Button>
+      <Button size="sm" disabled={!handle || connecting} onClick={() => { void onConnect(platform, handle); }}>{connecting ? 'Connecting…' : 'Connect'}</Button>
     </div>
   </div>;
 }
@@ -91,16 +91,20 @@ export default function SocialPresencePage() {
   const live = useMarketingCampaignMetrics(months);
   const { data: mock } = useMockDomainMetrics('marketing', true);
   type CampaignMetrics = typeof live;
-  const data: CampaignMetrics | { kpis: NonNullable<typeof mock>['kpis']; quotas: NonNullable<typeof mock>['quotas']; rows: any[]; loading:boolean } = (live.kpis.length ? live : { kpis: (mock?.kpis || []), quotas: mock?.quotas, rows: [], loading:false });
+  const data: CampaignMetrics | { kpis: NonNullable<typeof mock>['kpis']; quotas: NonNullable<typeof mock>['quotas']; rows: unknown[]; loading: boolean } = (live.kpis.length ? live : { kpis: (mock?.kpis || []), quotas: mock?.quotas, rows: [], loading: false });
   useEffect(() => { trackDashboardView('marketing'); }, []);
   const { toast } = useToast();
   const { user } = useAuth();
   const userId = user?.uid || 'dev-user';
-  const teamId = (user as any)?.teamId;
+  const teamId: string | undefined = ((): string | undefined => {
+    if (!user || typeof user !== 'object') return undefined;
+    const possible = (user as unknown as { teamId?: unknown }).teamId;
+    return typeof possible === 'string' ? possible : undefined;
+  })();
   const [postOpen,setPostOpen]=useState(false);
   const [optOpen,setOptOpen]=useState(false);
-  const [optChannel,setOptChannel]=useState('linkedin');
-  const [optOriginal,setOptOriginal]=useState('We are launching a new feature.');
+  const [optChannel, _setOptChannel] = useState('linkedin');
+  const [optOriginal, _setOptOriginal] = useState('We are launching a new feature.');
   const [busy,setBusy]=useState<string|null>(null);
   const [accounts,setAccounts]=useState<SocialAccount[]>([]);
   const [connecting,setConnecting]=useState(false);
@@ -108,15 +112,17 @@ export default function SocialPresencePage() {
   const [trends,setTrends]=useState<PlatformTrends|null>(null);
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(() => { if(live.loading) return; if(live.kpis.length) markLive(); else markFallback(); }, [live.loading, live.kpis, markLive, markFallback]);
-  useEffect(()=> { (async ()=> { const list = await listSocialAccounts(userId, teamId); setAccounts(list); })(); }, [userId, teamId]);
+  useEffect(() => { void (async () => { const list = await listSocialAccounts(userId, teamId); setAccounts(list); })(); }, [userId, teamId]);
 
   async function handleSchedule(content:string, channel:string, when:Date){
     try{ setBusy('schedule');
-      live.addOptimistic({ id:'temp-'+Date.now(), period: new Date().toISOString().slice(0,7), name: content.slice(0,40), channel, impressions:0, clicks:0, leads:0, __provenance:'optimistic' } as any);
-      await schedulePost({ content, channel, scheduledAt: when, userId, teamId }); toast({ title:'Post scheduled', description:`${channel} post queued.` }); setPostOpen(false);}catch(e){ const err = e as any; toast({ title:'Schedule failed', description:err?.message||'Unknown error', variant:'destructive'});} finally{ setBusy(null);} }
+      live.addOptimistic({ id: 'temp-' + Date.now(), period: new Date().toISOString().slice(0, 7), name: content.slice(0, 40), channel, impressions: 0, clicks: 0, leads: 0, __provenance: 'optimistic' } as unknown as Parameters<typeof live.addOptimistic>[0]);
+      await schedulePost({ content, channel, scheduledAt: when, userId, teamId }); toast({ title: 'Post scheduled', description: `${channel} post queued.` }); setPostOpen(false);
+    } catch (e) { const err = (e && typeof e === 'object' && 'message' in e) ? (e as Error) : new Error(String(e)); toast({ title: 'Schedule failed', description: err.message || 'Unknown error', variant: 'destructive' }); } finally { setBusy(null); }
+  }
   function handleOptimize(){ setOptOpen(true); }
-  async function handleConnect(p:string,h:string){ try{ setConnecting(true); const res= await connectSocialAccount(p as any, h, userId, teamId); toast({ title:'Account connected', description:`${res.platform}:${res.handle}`}); const list= await listSocialAccounts(userId, teamId); setAccounts(list);}catch(e){ const err = e as any; toast({ title:'Connect failed', description:err?.message||'Unknown error', variant:'destructive' }); } finally{ setConnecting(false); } }
-  async function handleAnalyze(){ try{ setBusy('analyze'); const t = await fetchPlatformTrends('linkedin'); setTrends(t); toast({ title:'Trends fetched', description:t.hashtags.slice(0,3).join(' ') }); } catch(e){ const err = e as any; toast({ title:'Trend fetch failed', description:err?.message||'Unknown error', variant:'destructive' }); } finally{ setBusy(null); } }
+  async function handleConnect(p: string, h: string) { try { setConnecting(true); const res = await connectSocialAccount(p as unknown as 'linkedin' | 'instagram' | 'facebook' | 'x', h, userId, teamId); toast({ title: 'Account connected', description: `${res.platform}:${res.handle}` }); const list = await listSocialAccounts(userId, teamId); setAccounts(list); } catch (e) { const err = (e && typeof e === 'object' && 'message' in e) ? (e as Error) : new Error(String(e)); toast({ title: 'Connect failed', description: err.message || 'Unknown error', variant: 'destructive' }); } finally { setConnecting(false); } }
+  async function handleAnalyze() { try { setBusy('analyze'); const t = await fetchPlatformTrends('linkedin'); setTrends(t); toast({ title: 'Trends fetched', description: t.hashtags.slice(0, 3).join(' ') }); } catch (e) { const err = (e && typeof e === 'object' && 'message' in e) ? (e as Error) : new Error(String(e)); toast({ title: 'Trend fetch failed', description: err.message || 'Unknown error', variant: 'destructive' }); } finally { setBusy(null); } }
   return (
     <FeatureGate feature="marketing_social_presence" requiredTier="enterprise" showUpgrade>
       <div className="space-y-8 p-6">
@@ -126,7 +132,7 @@ export default function SocialPresencePage() {
           <PeriodSelector value={months} onChange={setMonths} />
         </header>
   <ProvenanceLegend />
-        <AccountsPanel accounts={accounts} onConnect={handleConnect} connecting={connecting} />
+        <AccountsPanel accounts={accounts} onConnect={(p, h) => handleConnect(p, h)} connecting={connecting} />
         <section className="grid gap-4 md:grid-cols-4">
           {data.kpis.map(k => (
             <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={(k.intent ?? 'neutral') as 'neutral' | 'success' | 'warning' | 'danger' | 'accent'} />
@@ -160,14 +166,14 @@ export default function SocialPresencePage() {
         <section className="space-y-4">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Social Actions</h2>
           <div className="grid gap-4 md:grid-cols-3">
-            <ActionCard title="Schedule Post" desc="Queue cross-channel post." action={()=> setPostOpen(true)} label={busy==='schedule'? 'Scheduling…':'Schedule'} disabled={!!busy} />
-            <ActionCard title="Optimize Copy" desc="AI adjust for channel tone." action={handleOptimize} label="Optimize" disabled={!!busy} />
-            <ActionCard title="Analyze Trends" desc="Fetch latest engagement trend." action={handleAnalyze} label={busy==='analyze'? 'Analyzing…':'Analyze'} disabled={!!busy} />
+            <ActionCard title="Schedule Post" desc="Queue cross-channel post." action={() => { setPostOpen(true); }} label={busy === 'schedule' ? 'Scheduling…' : 'Schedule'} disabled={!!busy} />
+            <ActionCard title="Optimize Copy" desc="AI adjust for channel tone." action={() => { handleOptimize(); }} label="Optimize" disabled={!!busy} />
+            <ActionCard title="Analyze Trends" desc="Fetch latest engagement trend." action={() => { void handleAnalyze(); }} label={busy === 'analyze' ? 'Analyzing…' : 'Analyze'} disabled={!!busy} />
           </div>
           {trends && <div className="text-xs rounded-md border p-3 bg-background/40 flex flex-wrap gap-2" aria-live="polite">{trends.hashtags.map(h=> <span key={h} className="px-1.5 py-0.5 rounded bg-primary/10 text-primary">{h}</span>)}</div>}
         </section>
-        <PostDialog open={postOpen} onClose={()=> setPostOpen(false)} onSchedule={handleSchedule} loading={busy==='schedule'} />
-        <OptimizeDialog open={optOpen} original={optOriginal} channel={optChannel} onClose={()=> setOptOpen(false)} />
+        <PostDialog open={postOpen} onClose={() => setPostOpen(false)} onSchedule={handleSchedule} loading={busy === 'schedule'} />
+        <OptimizeDialog open={optOpen} original={optOriginal} channel={optChannel} onClose={() => setOptOpen(false)} />
       </div>
     </FeatureGate>
   );

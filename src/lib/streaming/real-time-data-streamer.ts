@@ -425,7 +425,8 @@ export class RealTimeDataStreamer extends EventEmitter {
 
             // Clean up stale connections
             for (const clientId of staleConnections) {
-                this.disconnectClient(clientId);
+                // Detach async disconnects with error handling
+                void this.disconnectClient(clientId).catch(err => console.error('[RealTimeStreamer] disconnectClient error (stale cleanup):', safeErrorMessage(err)));
             }
 
         }, 10000); // Check every 10 seconds
@@ -467,31 +468,32 @@ export class RealTimeDataStreamer extends EventEmitter {
             return; // Stream already active
         }
 
-        const interval = setInterval(async () => {
-            let data: unknown;
-            try {
-                data = await this.generateMockData(streamType);
-            } catch (e) {
-                console.error('[RealTimeStreamer] Mock data generation failed:', safeErrorMessage(e));
-                return; // skip emit this cycle
-            }
-
-            const dataPoint: StreamingDataPoint = {
-                id: `${streamType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                type: streamType as StreamingDataPoint['type'],
-                userId: 'system',
-                data,
-                timestamp: Date.now(),
-                metadata: {
-                    source: 'data-generator',
-                    version: '1.0',
-                    compressed: false,
-                    delta: false
+        const interval = setInterval(() => {
+            void (async () => {
+                let data: unknown;
+                try {
+                    data = await this.generateMockData(streamType);
+                } catch (e) {
+                    console.error('[RealTimeStreamer] Mock data generation failed:', safeErrorMessage(e));
+                    return; // skip emit this cycle
                 }
-            };
 
-            await this.streamData(dataPoint);
+                const dataPoint: StreamingDataPoint = {
+                    id: `${streamType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    type: streamType as StreamingDataPoint['type'],
+                    userId: 'system',
+                    data,
+                    timestamp: Date.now(),
+                    metadata: {
+                        source: 'data-generator',
+                        version: '1.0',
+                        compressed: false,
+                        delta: false
+                    }
+                };
 
+                await this.streamData(dataPoint);
+            })().catch(err => console.error('[RealTimeStreamer] streamData error', err));
         }, this.getStreamInterval(streamType));
 
         this.dataStreams.set(streamType, interval);
@@ -554,7 +556,8 @@ export class RealTimeDataStreamer extends EventEmitter {
 
     private handleClientError(clientId: string): void {
         this.metrics.errorRate++;
-        this.disconnectClient(clientId);
+        // Fire-and-forget disconnect; errors handled internally where needed.
+        void this.disconnectClient(clientId);
     }
 
     /**
@@ -581,7 +584,7 @@ export class RealTimeDataStreamer extends EventEmitter {
 
         // Disconnect all clients
         for (const clientId of this.clients.keys()) {
-            this.disconnectClient(clientId);
+            void this.disconnectClient(clientId).catch(err => console.error('[RealTimeStreamer] disconnectClient error (destroy):', safeErrorMessage(err)));
         }
 
         console.log('[RealTimeStreamer] Streamer destroyed and cleaned up');

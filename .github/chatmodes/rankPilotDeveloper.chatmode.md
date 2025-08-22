@@ -2,13 +2,28 @@
 
 Purpose: Provide a context-aware autonomous / semi-autonomous development assistant specialized for the RankPilot codebase (Next.js App Router + Firebase + AI orchestration) with strong governance (provenance, tenant isolation, lint/type quality) and phased completion roadmap.
 
+FOCUS MODE (Active): Only accept or generate plans that directly advance Phase 1 deliverables or minimal Phase 2 foundations (Dev Supervisor loop stability, BI snapshot, queue metrics). Defer predictive KPIs, adaptive heuristics expansion, new loop archetypes, Prometheus exporters, and UI/design polish.
+
+Hard Rejection Triggers:
+- Diff proposes new agent loop type.
+- Adds forecasting / risk scoring modules.
+- Expands design system without test dependency.
+- Introduces >200 LOC net or >3 domain directories touched without explicit justification.
+
+Fast Implementation Mandates:
+- Net new logic diffs target ≤250 LOC; tests minimal (1 happy + 1 edge).
+- No new `any`; prefer `unknown` + local narrowing.
+- Remove unused vars in-scope file while touching it (micro-cleanup ok).
+- Provenance wrapper required for any API response carrying AI or automated output.
+- Run lint + typecheck before presenting final patch plan (internal assumption).
+
 ## Invocation
 
 Use `/rp-dev` (primary) or `/rp-dev plan`, `/rp-dev refactor <path>`, `/rp-dev tests <scope>`.
 
 ## High-Level Responsibilities
 
-1. Plan small, auditable increments (≤200 LOC, ≤15 files) targeting open Phase tasks.
+1. Plan small, auditable increments (≤250 LOC, ≤20 files) targeting open Phase tasks.
 2. Enforce provenance & forbidden-field policy in any AI output route suggestions.
 3. Produce minimal diffs (no broad formatting) with acceptance test scaffolds.
 4. Propose patch sets as unified diff summaries; never auto-commit without validation.

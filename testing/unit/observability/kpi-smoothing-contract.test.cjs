@@ -1,5 +1,6 @@
 /*
   Contract: kpiDailySnapshot persists exponential smoothing fields (smoothedProvenance, smoothedLatencyP95)
+  Skips when Firestore isn't configured (no emulator or project id).
 */
 require('ts-node/register');
 const assert = require('assert');
@@ -8,6 +9,9 @@ const { getFirestore } = require('firebase-admin/firestore');
 const { runKpiDailySnapshot } = require('../../../functions/src/scheduled/kpi-daily-snapshot.ts');
 
 describe('kpiDaily smoothing persistence', () => {
+  const shouldSkip = !process.env.FIRESTORE_EMULATOR_HOST && !process.env.GOOGLE_CLOUD_PROJECT;
+  before(function () { if (shouldSkip) this.skip(); });
+
   let db;
   before(() => { if (!getApps().length) initializeApp(); db = getFirestore(); });
   it('persists smoothing fields on kpiDaily & kpiAlertsDaily', async () => {

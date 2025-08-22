@@ -4,7 +4,8 @@ import { runDueAutomationTick } from "../scheduled/run-due-automation";
 
 // A very light Firestore double sufficient for our backoff path
 function createDbDouble() {
-    const data: Record<string, any[]> = {
+    type Doc = Record<string, unknown>;
+    const data: Record<string, Doc[]> = {
         automationRecipes: [],
         automationRuns: [],
         schedulerFailures: [],
@@ -19,39 +20,47 @@ function createDbDouble() {
 
     const coll = (name: string) => ({
         _name: name,
-        add: async (doc: any) => { data[name].push({ ...doc, _id: `${name}_${data[name].length + 1}` }); return { id: `${name}_${data[name].length}` }; },
-        where: (field: string, op: string, val: any) => ({
+        add: async (doc: Doc) => { data[name].push({ ...doc, _id: `${name}_${data[name].length + 1}` }); return { id: `${name}_${data[name].length}` }; },
+        where: (field: string, op: string, val: unknown) => ({
             orderBy: (_: string, __: string) => ({
                 limit: (_n: number) => ({
                     get: async () => {
                         let arr = data[name];
-                        if (op === "<=") arr = arr.filter((d: any) => (d as any)[field] <= val);
+                        if (op === "<=") {
+                            arr = arr.filter((d: Doc) => {
+                                const v = (d as Record<string, unknown>)[field];
+                                if (v instanceof Date && val instanceof Date) return v.getTime() <= val.getTime();
+                                if (typeof v === 'number' && typeof val === 'number') return v <= val;
+                                if (typeof v === 'string' && typeof val === 'string') return v <= val;
+                                return false;
+                            });
+                        }
                         return {
                             empty: arr.length === 0,
-                            docs: arr.map((d: any, idx: number) => ({
-                                id: (d as any).id || `${name}_${idx + 1}`,
+                            docs: arr.map((d: Doc, idx: number) => ({
+                                id: (d as Record<string, unknown>).id as string || `${name}_${idx + 1}`,
                                 data: () => d,
                                 ref: {
                                     _doc: d,
-                                    update: async (u: any) => { Object.assign(d, u); },
+                                    update: async (u: Doc) => { Object.assign(d, u); },
                                 },
                             })),
-                        } as any;
+                        };
                     },
                 }),
             }),
         }),
-        doc: (id: string) => ({ get: async () => ({ exists: true, data: () => data[name].find((d: any) => (d.id || "") === id) }) }),
+        doc: (id: string) => ({ get: async () => ({ exists: true, data: () => data[name].find((d: Doc) => String((d as Record<string, unknown>).id || "") === id) }) }),
     });
 
     return {
         _data: data,
         collection: coll,
-        runTransaction: async (fn: any) => fn({
-            get: async (docRef: any) => ({ data: () => docRef._doc || {} }),
-            update: async (_ref: any, _u: any) => { /* noop for double */ },
+        runTransaction: async (fn: (tx: { get: (docRef: { _doc?: Doc }) => Promise<{ data: () => Doc | {} }>; update: (ref: unknown, u: unknown) => Promise<void> }) => Promise<unknown>) => fn({
+            get: async (docRef: { _doc?: Doc }) => ({ data: () => docRef._doc || {} }),
+            update: async (_ref: unknown, _u: unknown) => { /* noop for double */ },
         }),
-    } as any;
+    };
 }
 
 describe("Scheduler backoff", () => {
@@ -62,7 +71,7 @@ describe("Scheduler backoff", () => {
         db.collection = (name: string) => {
             const c = origCollection(name);
             if (name === "emailQueue") {
-                return { ...c, add: async (_doc: any) => { throw new Error("forced"); } };
+                return { ...c, add: async (_doc: unknown) => { throw new Error("forced"); } };
             }
             return c;
         };

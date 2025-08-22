@@ -1,16 +1,17 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-} from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
+import { AlertCircle, AlertTriangle, CheckCircle, Info, X } from "lucide-react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 export interface Toast {
   id: string;
@@ -70,6 +71,10 @@ export function ToastProvider({
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
+  const removeToast = useCallback((id: string) => {
+    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
+  }, []);
+
   const addToast = useCallback(
     (toastData: Omit<Toast, "id">) => {
       const id = generateId();
@@ -96,12 +101,8 @@ export function ToastProvider({
 
       return id;
     },
-    [defaultDuration, maxToasts]
+    [defaultDuration, maxToasts, removeToast]
   );
-
-  const removeToast = useCallback((id: string) => {
-    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
-  }, []);
 
   const clearAllToasts = useCallback(() => {
     setToasts([]);
@@ -153,7 +154,7 @@ export function ToastProvider({
     [addToast]
   );
 
-  const getPositionClasses = () => {
+  const positionClasses = useMemo(() => {
     switch (position) {
       case "top-left":
         return "top-4 left-4";
@@ -168,7 +169,7 @@ export function ToastProvider({
       default: // top-right
         return "top-4 right-4";
     }
-  };
+  }, [position]);
 
   const contextValue: ToastContextType = {
     toasts,
@@ -189,7 +190,7 @@ export function ToastProvider({
       <div
         className={cn(
           "fixed z-50 flex flex-col gap-2 w-full max-w-sm",
-          getPositionClasses()
+          positionClasses
         )}
       >
         <AnimatePresence mode="popLayout">
@@ -244,9 +245,9 @@ function ToastComponent({ toast, onRemove }: ToastComponentProps) {
     }
   };
 
-  const handleRemove = () => {
+  const handleRemove = useCallback(() => {
     onRemove(toast.id);
-  };
+  }, [onRemove, toast.id]);
 
   // Auto-remove logic with hover pause
   useEffect(() => {
@@ -263,7 +264,7 @@ function ToastComponent({ toast, onRemove }: ToastComponentProps) {
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [toast.duration, toast.persistent, isHovered]);
+  }, [toast.duration, toast.persistent, isHovered, handleRemove]);
 
   return (
     <motion.div

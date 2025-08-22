@@ -135,7 +135,7 @@ async function main() {
     const dir = 'artifacts/brain';
     const runs = fs.readdirSync(dir).filter(f => f.startsWith('run-') && f.endsWith('.json')).sort().slice(-10);
     const summaries = runs.map(f => { try { const obj = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')); return { runId: obj.runId, mode: obj.mode, status: obj.outcome?.status, files: obj.diffs?.files, loc: obj.diffs?.locAdded, timeMs: obj.metrics?.elapsedMs }; } catch { return null; } }).filter(Boolean);
-    let mission: any = undefined; try { mission = JSON.parse(fs.readFileSync('artifacts/brain/currentMission.json', 'utf8')); } catch { }
+    let mission: Mission | undefined = undefined; try { mission = JSON.parse(fs.readFileSync('artifacts/brain/currentMission.json', 'utf8')) as Mission; } catch { }
     if (asJson) {
       console.log(JSON.stringify({ date: tsHuman, melbTime, utcDelta: tzDiffStr, recentRuns: summaries, mission: mission ? { tsErrors: mission.diagnostics.typecheck.errors, lintErrors: mission.diagnostics.lint.errors, lintWarnings: mission.diagnostics.lint.warnings } : null }));
     } else {
@@ -169,11 +169,11 @@ async function main() {
     // Periodic autonomous diagnostics + plan refresh loop
     const cycles = Number(arg('cycles', '5')) || 5;
     const intervalMs = Number(arg('intervalMs', process.env.BRAIN_AUTOPULSE_INTERVAL_MS || '60000')) || 60000;
-    const results: any[] = [];
+    const results: Array<{ cycle: number; tsErrors: number; lintErrors: number; lintWarnings: number; steps: number; elapsedMs: number }> = [];
     for (let i = 0; i < cycles; i++) {
       const started = Date.now();
       const mission = runMissionCycle();
-      const p: BrainPlan = plan([{ id: 'autopulse-' + i, title: 'autopulse context refresh', raw: 'refresh', domain: 'docs', status: 'TODO' } as any], { contextKb: 4 });
+      const p: BrainPlan = plan([{ id: 'autopulse-' + i, title: 'autopulse context refresh', raw: 'refresh', domain: 'docs', status: 'TODO' } as Task], { contextKb: 4 });
       try { recordMemory && recordMemory({ ts: Date.now(), source: 'brain', kind: 'autopulse-cycle', status: 'ok', meta: { cycle: i + 1, cycles, tsErrors: mission.diagnostics.typecheck.errors, lintErrors: mission.diagnostics.lint.errors, lintWarnings: mission.diagnostics.lint.warnings, steps: p.steps.length } }); } catch { }
       results.push({ cycle: i + 1, tsErrors: mission.diagnostics.typecheck.errors, lintErrors: mission.diagnostics.lint.errors, lintWarnings: mission.diagnostics.lint.warnings, steps: p.steps.length, elapsedMs: Date.now() - started });
       if (i < cycles - 1) await new Promise(r => setTimeout(r, intervalMs));
@@ -196,7 +196,10 @@ async function main() {
       }
     } catch { }
   }
-  let tasks: Task[] = parseTasks({}) as any;
+  let tasks: Task[] = (parseTasks({}) as unknown as Task[]);
+  if (process.env.BRAIN_PLANNER_DEBUG === '1') {
+    try { console.error(dim(`[planner:tasks] parsed=${tasks.length} sample="${tasks.slice(0, 5).map(t => t.title).join(' | ')}"`)); } catch { }
+  }
   if (!tasks.length) tasks = [{ id: 'cli-1', title: 'CLI demo task', raw: 'demo', domain: 'docs', status: 'TODO' }];
   tasks = tasks.map((t) => ({ ...t, domain: classify(t.title + ' ' + (t.raw || '')) }));
   const useOpenAI = process.env.BRAIN_USE_OPENAI === '1';
@@ -211,7 +214,25 @@ async function main() {
   const estLoc = (p.steps?.length || 0) * 30;
   const preflightEstimate = { files: Math.min(tasks.length, (cfg.governance?.maxBatchTasks || 10)), locAdded: estLoc };
   const runId = 'cli-' + Date.now();
-  savePlanText(runId, p);
+  // Persist enriched plan JSON with step file hints (if present)
+  try {
+    const stepsArr: unknown[] = Array.isArray(p.steps) ? (p.steps as unknown[]) : [];
+    const enriched = {
+      ...p,
+      steps: stepsArr.map((s) => {
+        const r = (s && typeof s === 'object') ? (s as Record<string, unknown>) : {};
+        const taskId = typeof r.taskId === 'string' ? r.taskId : '';
+        const kind = typeof r.kind === 'string' ? r.kind : undefined;
+        const domain = typeof r.domain === 'string' ? r.domain : undefined;
+        const runners = Array.isArray(r.runners) ? r.runners.filter((x): x is string => typeof x === 'string') : undefined;
+        const files = Array.isArray(r.files) ? r.files.filter((x): x is string => typeof x === 'string') : [];
+        return { taskId, kind, domain, runners, files };
+      })
+    };
+    savePlanText(runId, enriched);
+    // Write a canonical last-plan JSON to .codex for delegation introspection
+    try { fs.writeFileSync('.codex/last-plan.json', JSON.stringify(enriched, null, 2)); } catch { }
+  } catch { savePlanText(runId, p); }
   // Record memory event for plan generation
   try { recordMemory && recordMemory({ ts: Date.now(), source: 'brain', kind: 'plan-generated', id: runId, status: 'ok', meta: { steps: p.steps?.length || 0, strategy: p.strategy, model: tokenMeta.model, tokens: tokenMeta.totalTokens } }); } catch { }
   // Optional: enqueue steps into codex queue (disabled unless env flag set)
@@ -223,15 +244,28 @@ async function main() {
         fs.mkdirSync('sessions', { recursive: true });
         fs.writeFileSync(queueFile, JSON.stringify({ meta: 'delegation queue (JSON Lines). Each line: pending task.' }) + '\n');
       }
-      const existing = fs.readFileSync(queueFile, 'utf8').trim().split(/\n/).slice(1).map((l: string) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
-      const existingIds = new Set(existing.map((t: any) => t.taskId));
+      const existing = fs.readFileSync(queueFile, 'utf8').trim().split(/\n/).slice(1).map((l: string) => { try { return JSON.parse(l) as unknown; } catch { return null; } }).filter(Boolean) as unknown[];
+      const existingIds = new Set(
+        existing
+          .map((t) => (t && typeof t === 'object' && 'taskId' in (t as Record<string, unknown>) && typeof (t as { taskId?: unknown }).taskId === 'string') ? (t as { taskId: string }).taskId : '')
+          .filter(Boolean)
+      );
       const newLines: string[] = [];
       let idx = 0;
       for (const step of p.steps || []) {
         idx += 1; if (idx > 20) break; // safety cap
         const taskId = `BRAIN-${runId}-S${idx}`;
         if (existingIds.has(taskId)) continue;
-        const task = { taskId, summary: `Brain planned step ${idx} (${step.kind || 'do'})`, status: 'pending', createdAt: nowIso, updatedAt: nowIso };
+        // Filter out steps with no file hints if filtering enabled
+        let filesUnknown: unknown = (step as unknown);
+        if (filesUnknown && typeof filesUnknown === 'object' && 'files' in (filesUnknown as Record<string, unknown>)) {
+          filesUnknown = (filesUnknown as Record<string, unknown>).files;
+        } else {
+          filesUnknown = [] as unknown[];
+        }
+        const files = Array.isArray(filesUnknown) ? filesUnknown : [];
+        if (process.env.BRAIN_FILTER_NOFILE_STEPS === '1' && (!files || !files.length)) continue;
+        const task = { taskId, summary: `Brain planned step ${idx} (${step.kind || 'do'})`, status: 'pending', createdAt: nowIso, updatedAt: nowIso, files };
         newLines.push(JSON.stringify(task));
       }
       if (newLines.length) fs.appendFileSync(queueFile, newLines.join('\n') + '\n');
@@ -308,10 +342,12 @@ async function main() {
       }));
     } else {
       // Proposed loop assignment: aider for lint/type remediation tasks, codex for broader refactors.
-      const loopSuggestion = p.steps.some((s) => {
-        const step = s as { contextNote?: string };
-        return /lint|type/i.test(step.contextNote || '');
-      }) ? 'aider (remediation)' : 'codex (general)';
+      const forceCodex = process.env.BRAIN_FORCE_CODEX === '1';
+      const loopSuggestion = forceCodex ? 'codex (forced)' : (p.steps.some((s) => {
+        const step = s as { contextNote?: unknown };
+        const note = typeof step.contextNote === 'string' ? step.contextNote : '';
+        return /lint|type/i.test(note || '');
+      }) ? 'aider (remediation)' : 'codex (general)');
       console.log(banner('Plan Summary') +
         `${cyan('Date')}: ${tsHuman}  ${cyan('Melb')}: ${melbTime} UTCΔ=${tzDiffStr}\n` +
         `${cyan('Strategy')}: ${p.strategy}${useOpenAI ? (tokenMeta.totalTokens ? ' ' + dim(`tokens=${tokenMeta.totalTokens}`) : '') : ''}${useOpenAI && tokenMeta.model ? ' ' + dim(`[model=${tokenMeta.model}]`) : ''}\n` +
@@ -319,11 +355,14 @@ async function main() {
         `${cyan('Steps')}: ${p.steps.length}\n` +
         `${cyan('Loop Suggestion')}: ${loopSuggestion}\n` +
         (p.steps.slice(0, 12).map((s, i: number) => {
-          const step = s as { contextNote?: string; kind?: string };
-          const note = step.contextNote || '';
-          const loop = /lint|type/i.test(note) ? 'aider' : 'codex';
+          const r = (s && typeof s === 'object') ? (s as Record<string, unknown>) : {};
+          const note = typeof r.contextNote === 'string' ? r.contextNote : '';
+          const kind = typeof r.kind === 'string' ? r.kind : 'step';
+          const runners = Array.isArray(r.runners) ? r.runners.filter((x): x is string => typeof x === 'string') : [];
+          let loop: 'aider' | 'codex';
+          if (forceCodex) loop = 'codex'; else if (runners.includes('codex')) loop = 'codex'; else if (/lint|type/i.test(note)) loop = 'aider'; else loop = 'codex';
           const tag = loop === 'aider' ? yellow('[aider]') : cyan('[codex]');
-          return `  ${dim((i + 1).toString().padStart(2, '0'))} ${tag} ${green(step.kind || 'step')} ${dim(note)}`;
+          return `  ${dim((i + 1).toString().padStart(2, '0'))} ${tag} ${green(kind)} ${dim(note)}`;
         }).join('\n')) +
         (p.steps.length > 12 ? `\n  ${dim('… +' + (p.steps.length - 12) + ' more')}` : '') + '\n');
     }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useContext, useEffect, useState } from "react";
+import { AuthContext } from "@/context/AuthContext";
+import { db } from "@/lib/firebase";
 import {
   collection,
   getDocs,
@@ -9,8 +10,7 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { AuthContext } from "@/context/AuthContext";
+import { useContext, useEffect, useState } from "react";
 
 interface Metric {
   key: string;
@@ -34,7 +34,8 @@ type BriefDoc = {
 } & Record<string, unknown>;
 
 export function useContentBriefMetrics(monthWindow = 6): Result {
-  const { user } = useContext(AuthContext) as { user?: { uid: string } } | any;
+  const authCtx = useContext(AuthContext) as Partial<{ user?: { uid: string } }> | null;
+  const user = authCtx?.user;
   const [state, setState] = useState<Result>({ loading: true, kpis: [], rows: [] });
 
   useEffect(() => {
@@ -45,7 +46,7 @@ export function useContentBriefMetrics(monthWindow = 6): Result {
 
     let cancelled = false;
 
-    (async () => {
+    void (async () => {
       try {
         const q = query(
           collection(db, "contentBriefs"),

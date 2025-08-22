@@ -26,13 +26,16 @@ describe('Health API - daily AI KPI fields', () => {
     it('exposes aiDaily* KPI fields populated from aiUsageDaily aggregates', async () => {
         const res = await fetch('http://localhost:3000/api/health');
         expect(res.ok).to.equal(true);
-        const body: any = await res.json();
-        expect(body).to.have.property('kpis');
-        expect(body.kpis).to.have.property('aiDailyTokensIn');
-        expect(body.kpis).to.have.property('aiDailyTokensOut');
-        expect(body.kpis).to.have.property('aiDailyCostEstimate');
-        expect(body.kpis.aiDailyTokensIn).to.be.greaterThan(0);
-        expect(body.kpis.aiDailyTokensOut).to.be.greaterThan(0);
-        expect(body.kpis.aiDailyCostEstimate).to.be.greaterThan(0);
+        const body = await res.json() as unknown;
+        expect(body && typeof body === 'object').to.equal(true);
+        const kpis = (body as { kpis?: unknown }).kpis;
+        expect(kpis && typeof kpis === 'object').to.not.equal(undefined);
+        const k = (kpis || {}) as Record<string, unknown>;
+        expect(typeof k.aiDailyTokensIn).to.equal('number');
+        expect(typeof k.aiDailyTokensOut).to.equal('number');
+        expect(typeof k.aiDailyCostEstimate).to.equal('number');
+        expect(k.aiDailyTokensIn as number).to.be.greaterThan(0);
+        expect(k.aiDailyTokensOut as number).to.be.greaterThan(0);
+        expect(k.aiDailyCostEstimate as number).to.be.greaterThan(0);
     });
 });

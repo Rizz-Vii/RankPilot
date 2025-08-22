@@ -9,7 +9,6 @@
 
 const { execSync } = require('child_process');
 const fs = require('fs');
-const path = require('path');
 
 // Simple JavaScript implementation to avoid TypeScript import issues
 class SimpleAgentExecutor {
@@ -111,7 +110,7 @@ async function executeTypeScriptGuardian() {
             console.log('✅ No TypeScript errors found!');
             return true;
         } catch (error) {
-            tscOutput = error.stdout?.toString() + error.stderr?.toString();
+            tscOutput = (error && (error.stdout?.toString() || '') + (error.stderr?.toString() || '')) || '';
             console.log('🔍 TypeScript errors detected, applying fixes...');
         }
 
@@ -180,7 +179,11 @@ interface SecurityError extends Error {
             execSync('npm run typecheck', { stdio: 'pipe' });
             console.log('✅ TypeScript Guardian completed successfully - 0 errors!');
             return true;
-        } catch (error) {
+        } catch {
+            // surface a brief diagnostic snippet to use the tscOutput context
+            if (tscOutput) {
+                console.warn('ℹ️  tsc diagnostic (first 200 chars):', tscOutput.slice(0, 200));
+            }
             console.warn('⚠️  Some TypeScript issues remain, but progress made');
             return true; // Consider partial success
         }

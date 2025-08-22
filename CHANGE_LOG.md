@@ -32,3 +32,19 @@ Rollback plan: Remove the newly added `*.chatmode.md`, `*.prompt.md`, `*.instruc
 - Added provenance wrapper injection test file (pending npm script alias) to assert counter increment.
 
 Rollback: Remove guard file, revert `marketing-write-guard.ts` changes, restore original forbidden list in `scan-forbidden-fields.ts`, and remove governance counter usages from `unified-metrics.ts` & provenance middleware. Safe as counters are additive and not schema-bound.
+
+### 19-08-2025 (DEV-QUEUE-01 Queue Metrics Foundation)
+
+- DEV-QUEUE-01: Introduced minimal queue metrics module `src/lib/metrics/queue-metrics.ts` capturing enqueued, started, completed, failed, running, depth & successRatio.
+- Integrated queue snapshot into unified metrics (`unified-metrics.ts`) under `queue` field (lazy optional import to avoid bootstrap coupling).
+- Instrumented delegation utilities & concurrent loops (aider & codex) to record enqueue/start/done lifecycle events (best-effort, non-fatal if metrics unavailable).
+- Added unit tests `tests/brain/queue.metrics.test.ts` validating lifecycle counters & success ratio edge case with no terminal tasks.
+
+Rollback: Delete `queue-metrics.ts`, remove lazy import/addition in `unified-metrics.ts`, and strip metrics-related require blocks from updated delegation scripts plus test file. No persisted schema impact; purely in-memory counters.
+
+### 21-08-2025 (DEV-GOV-COUNTERS Metrics Tests Augmentation)
+
+- DEV-GOV-COUNTERS: Added test-only unified metrics reset helper `__resetUnifiedMetricsTestOnly` for isolated counter tests (in-memory only, no runtime impact).
+- Added unit test `testing/unit/metrics/team-rate-limit-metrics.test.cjs` verifying independent increment of `rateLimitRejections` and `teamRateLimitAllows`.
+- No production logic changes beyond exported helper; governance counters wiring unchanged.
+Rollback: Remove helper export and test file; no side effects (helper unused in prod paths).

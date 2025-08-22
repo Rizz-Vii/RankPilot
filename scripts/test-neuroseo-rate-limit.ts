@@ -13,7 +13,7 @@ import fs from 'fs';
     try {
         // Use admin SDK via testEnv.unauthenticatedContext? We'll simulate via direct require of admin instance if available.
         const admin = await import('firebase-admin');
-        if (admin.apps.length === 0) { admin.initializeApp({ projectId: 'demo-rankpilot' } as any); }
+        if (admin.apps.length === 0) { admin.initializeApp({ projectId: 'demo-rankpilot' } as { projectId: string }); }
         const adminDb = admin.firestore();
 
         const rateMod = require('../src/lib/neuroseo/rate-limit.ts');
@@ -24,9 +24,9 @@ import fs from 'fs';
         let allowed = 0; let blocked = 0; const limit = 5;
         for (let i = 0; i < limit + 2; i++) {
             try {
-                await enforceNeuroSeoRateLimit(adminDb as any, scope, { limit });
+                await enforceNeuroSeoRateLimit(adminDb, scope, { limit });
                 allowed++;
-            } catch (e: any) {
+            } catch (e: unknown) {
                 if (e instanceof NeuroSeoRateLimitError) { blocked++; break; } else { throw e; }
             }
         }

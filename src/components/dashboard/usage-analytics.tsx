@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,23 +10,22 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/context/AuthContext";
-import { doc, getDoc } from "firebase/firestore";
+import { useSubscription } from "@/hooks/useSubscription";
 import { db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 import {
-  TrendingUp,
-  Zap,
-  Users,
-  FileText,
-  BarChart3,
-  ArrowUpRight,
-  Crown,
   AlertTriangle,
+  ArrowUpRight,
+  BarChart3,
+  Crown,
+  FileText,
+  TrendingUp,
+  Users,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 interface UsageData {
   projects: number;
@@ -103,7 +103,8 @@ export function UsageAnalytics() {
       }
     };
 
-    run();
+    // Fire & forget metrics fetch (safe: internal state update only)
+    void run();
 
     return () => {
       mounted = false;

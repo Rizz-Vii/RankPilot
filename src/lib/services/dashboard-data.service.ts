@@ -1,26 +1,26 @@
 /**
  * Dashboard Data Service - Dynamic Database Integration
- * 
+ *
  * Replaces static dummyDashboardData with real-time user-specific data
  * from comprehensive database structure.
- * 
+ *
  * Generated: July 26, 2025
  * Integration: Firestore collections → Dashboard components
  */
 
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  limit,
-  getDocs,
-  doc,
-  updateDoc,
-  Timestamp
-} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { managedOnSnapshot } from '@/lib/firebase/write-guard';
+import {
+  collection,
+  doc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  Timestamp,
+  updateDoc,
+  where
+} from "firebase/firestore";
 
 // Dashboard data interfaces matching existing component expectations
 export interface DashboardData {
@@ -420,13 +420,13 @@ class DashboardDataService {
 
     const unsubscribe = managedOnSnapshot(
       q,
-      async () => {
-        try {
+      () => {
+        void (async () => {
           const data = await this.getUserDashboardData(userId);
           callback(data);
-        } catch (error) {
+  })().catch(error => {
           console.error("Error in dashboard subscription:", error);
-        }
+        });
       },
       (err) => {
         const e = err as { code?: string };

@@ -55,7 +55,7 @@ interface ContentAnalysisResponse {
 }
 
 // Mock analysis function - to be replaced with NeuroSEO integration
-async function analyzeContent(): Promise<ContentAnalysisResponse> {
+async function _analyzeContent(): Promise<ContentAnalysisResponse> {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 2000));
 

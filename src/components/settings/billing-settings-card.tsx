@@ -1,5 +1,8 @@
 "use client";
 
+import { TierChip, TierIcon } from "@/components/tiers/tier-icons";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -7,30 +10,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { db, functions } from "@/lib/firebase";
+import { asVoidHandler } from "@/lib/react/handlers";
+import type { User } from "firebase/auth";
+import { doc, onSnapshot } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
+import { AnimatePresence, motion } from "framer-motion";
 import {
+  AlertTriangle,
+  CheckCircle,
   CreditCard,
+  DollarSign,
+  Download,
   ExternalLink,
   Loader2,
-  Download,
-  DollarSign,
-  TrendingUp,
-  Settings,
-  CheckCircle,
-  AlertTriangle,
   RefreshCw,
+  Settings,
+  TrendingUp,
 } from "lucide-react";
-import { TierChip, TierIcon } from "@/components/tiers/tier-icons";
-import type { User } from "firebase/auth";
-import { useState, useEffect } from "react";
-import { httpsCallable } from "firebase/functions";
-import { doc, onSnapshot } from "firebase/firestore";
-import { functions, db } from "@/lib/firebase";
-import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 const createPortalSession = httpsCallable(functions, "createPortalSession");
 const createCheckoutSession = httpsCallable(functions, "createCheckoutSession");
@@ -312,7 +313,7 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
                           <Button
                             className="w-full mb-2"
                             size="sm"
-                            onClick={() => handleUpgrade(key, "monthly")}
+                            onClick={asVoidHandler(() => handleUpgrade(key, "monthly"))}
                             disabled={isUpgrading}
                           >
                             {isUpgrading ? (
@@ -335,9 +336,8 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
                 </div>
               </div>
             ) : (
-              <>
                 <Button
-                  onClick={handleManageBilling}
+                  onClick={asVoidHandler(() => handleManageBilling())}
                   disabled={isLoading}
                   className="w-full"
                 >
@@ -348,13 +348,6 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
                   )}
                   Manage Subscription
                 </Button>
-                <Button asChild variant="outline" className="w-full">
-                  <Link href="/pricing">
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    View All Plans
-                  </Link>
-                </Button>
-              </>
             )}
           </div>
         </CardContent>
@@ -490,7 +483,7 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
             <Button
               className="w-full"
               variant="outline"
-              onClick={handleManageBilling}
+              onClick={asVoidHandler(() => handleManageBilling())}
               disabled={isLoading}
             >
               {isLoading ? (
@@ -569,7 +562,7 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
               <Button
                 variant="outline"
                 className="w-full mt-4"
-                onClick={handleManageBilling}
+                onClick={asVoidHandler(() => handleManageBilling())}
               >
                 View All Invoices
               </Button>
@@ -600,7 +593,7 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
             <Button
               className="w-full justify-start"
               variant="outline"
-              onClick={handleManageBilling}
+              onClick={asVoidHandler(() => handleManageBilling())}
               disabled={isLoading}
             >
               <Settings className="h-4 w-4 mr-2" />

@@ -16,7 +16,8 @@ export function KeywordToolForm({ onSubmit, isLoading }: KeywordToolFormProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit({ topic: seed, includeLongTailKeywords: true });
+        // Fire & forget parent promise (if async) without blocking form submit
+        void onSubmit({ topic: seed, includeLongTailKeywords: true });
     };
 
     return (
@@ -52,7 +53,7 @@ export function SeoAuditForm({ onSubmit, isLoading }: SeoAuditFormProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit(formData);
+        void onSubmit(formData);
     };
 
     const handleInputChange = (field: keyof AuditUrlInput) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

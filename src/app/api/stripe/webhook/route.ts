@@ -1,8 +1,8 @@
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, addDoc, collection, getDocs, query, where, getDoc, setDoc } from 'firebase/firestore';
+import { getLogger } from '@/lib/logging/app-logger';
+import { addDoc, collection, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { getLogger } from '@/lib/logging/app-logger';
 import Stripe from 'stripe';
 // NOTE: Functions env centralizes invoice persistence. For ISR / local dev parity we duplicate minimal upsert using client Firestore.
 async function upsertFinanceInvoiceClient(invoice: unknown) {
@@ -14,17 +14,34 @@ async function upsertFinanceInvoiceClient(invoice: unknown) {
         const snap = await getDocs(usersQ);
         if (snap.empty) return;
         const userId = snap.docs[0].id;
-        const period = new Date((((invoice?.period_end ?? invoice?.created) as number) * 1000)).toISOString().slice(0, 7);
-        const status = (invoice?.status as string) || 'open';
-        const amount = ((invoice?.amount_paid || invoice?.amount_due || 0) as number) / 100;
-        const issuedAt = new Date((invoice?.created as number) * 1000);
-        const dueAt = invoice?.due_date ? new Date((invoice?.due_date as number) * 1000) : null;
-        const paidAt = invoice?.status === 'paid' && invoice?.status_transitions?.paid_at ? new Date((invoice?.status_transitions?.paid_at as number) * 1000) : null;
-        const firstLine = (invoiceObj?.lines?.data?.[0]) as Record<string, unknown> | undefined;
-        const planTier = firstLine?.price?.metadata?.planTier || invoice?.metadata?.planTier || null;
-        const ref = doc(db, 'financeInvoices', invoice?.id as string);
+        const period = new Date(((invoiceObj?.period_end ?? invoiceObj?.created) as number) * 1000).toISOString().slice(0, 7);
+        const status = (invoiceObj?.status as string) || 'open';
+        const amount = ((invoiceObj?.amount_paid || invoiceObj?.amount_due || 0) as number) / 100;
+        const issuedAt = new Date((invoiceObj?.created as number) * 1000);
+        const dueAt = invoiceObj?.due_date ? new Date((invoiceObj?.due_date as number) * 1000) : null;
+        const paidAt = invoiceObj?.status === 'paid' && invoiceObj?.status_transitions?.paid_at ? new Date((invoiceObj?.status_transitions?.paid_at as number) * 1000) : null;
+        const firstLine = invoiceObj?.lines?.data?.[0] as Stripe.InvoiceLineItem | undefined;
+        // Narrow price metadata safely without using any (Stripe types may omit metadata in some versions)
+        let priceMeta: Record<string, unknown> | undefined;
+        if (firstLine && typeof firstLine === 'object') {
+            const priceVal: unknown = (firstLine as { price?: unknown }).price;
+            if (priceVal && typeof priceVal === 'object' && 'metadata' in priceVal) {
+                const metaUnknown = (priceVal as { metadata?: unknown }).metadata;
+                if (metaUnknown && typeof metaUnknown === 'object') {
+                    priceMeta = metaUnknown as Record<string, unknown>;
+                }
+            }
+        }
+        const planTier = (priceMeta && typeof priceMeta.planTier === 'string' ? priceMeta.planTier as string : undefined)
+            || (invoiceObj?.metadata?.planTier as string | undefined)
+            || null;
+        const ref = doc(db, 'financeInvoices', invoiceObj?.id as string);
         // merge keeps createdAt if exists
-        await setDoc(ref, { userId, period, amount, status, issuedAt, dueAt, paidAt, planTier, currency: invoice?.currency, updatedAt: new Date(), createdAt: new Date() }, { merge: true });
+        await setDoc(
+            ref,
+            { userId, period, amount, status, issuedAt, dueAt, paidAt, planTier, currency: invoiceObj?.currency, updatedAt: new Date(), createdAt: new Date() },
+            { merge: true }
+        );
     } catch (e) {
         const invoiceId = typeof invoice === 'object' && invoice !== null && 'id' in invoice && typeof (invoice as Record<string, unknown>).id === 'string' ? (invoice as Record<string, unknown>).id as string : undefined;
         getLogger('stripe-webhook').degraded('invoice.upsert.client_failed', { invoiceId, error: (e as Error).message });

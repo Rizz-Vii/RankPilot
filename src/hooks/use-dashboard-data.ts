@@ -1,14 +1,14 @@
 /**
  * Real-time Data Hooks for Dynamic Database Integration
- * 
+ *
  * Custom React hooks for real-time data subscriptions and caching
- * 
+ *
  * Generated: July 26, 2025
  * Integration: Dashboard components → Firestore real-time data
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
 import { DashboardDataService, type DashboardData } from "@/lib/services/dashboard-data.service";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // Hook for real-time dashboard data
 export const useRealTimeDashboardData = (userId: string | null) => {
@@ -24,7 +24,7 @@ export const useRealTimeDashboardData = (userId: string | null) => {
     console.log(`🔄 Setting up real-time dashboard data for user: ${userId}`);
     setLoading(true); setError(null);
     let cancelled = false;
-    DashboardDataService.getUserDashboardData(userId)
+    void DashboardDataService.getUserDashboardData(userId)
       .then(d => { if (!cancelled) { setData(d); setLoading(false); } })
       .catch(err => { if (!cancelled) { console.error('Error fetching initial dashboard data:', err); setError('Failed to load dashboard data'); setLoading(false); } });
     const unsubscribe = DashboardDataService.subscribeToUserDashboardData(userId, upd => { if (!cancelled) { console.log('📊 Dashboard data updated in real-time'); setData(upd); setError(null); } });
@@ -107,7 +107,7 @@ export const useChartData = (
       }
     };
 
-    fetchChartData();
+    void fetchChartData();
   }, [chartType, userId]);
 
   return { chartData, loading };
@@ -147,7 +147,7 @@ export const useUserMetrics = (userId: string | null) => {
       }
     };
 
-    fetchMetrics();
+    void fetchMetrics();
   }, [userId]);
 
   return { metrics, loading };

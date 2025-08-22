@@ -5,21 +5,35 @@
  * Strategy: Scan each legacy collection, copy docs absent in canonical (by deterministic hash or existing id),
  * add migration metadata, and report summary. Idempotent (safe to re-run).
  */
-import { adminDb } from '../src/lib/firebase-admin';
 import { createHash } from 'crypto';
+import { adminDb } from '../src/lib/firebase-admin';
 
 const CANONICAL = 'neuroSeoAnalyses';
 const LEGACY = ['neuroseo-analyses', 'neuroSeoAnalysis'];
 
 interface MigratedDocInfo { legacyId: string; canonicalId: string; sourceCollection: string; }
 
-function buildDeterministicId(d: any): string {
-    const base = JSON.stringify({
-        userId: d.userId || d.request?.userId || 'unknown',
-        urls: d.urls || d.request?.urls || [],
-        createdAt: d.createdAt || d.timestamp || d.created_at || null,
-        overallScore: d.overallScore || d.score || 0,
-    });
+function buildDeterministicId(d: unknown): string {
+    const obj = (d && typeof d === 'object') ? (d as Record<string, unknown>) : {};
+    const request = (obj.request && typeof obj.request === 'object') ? (obj.request as Record<string, unknown>) : {};
+    const userId = typeof obj.userId === 'string' ? obj.userId : (typeof request.userId === 'string' ? request.userId : 'unknown');
+    const urls = Array.isArray(obj.urls) ? obj.urls : (Array.isArray(request.urls) ? request.urls : []);
+    const createdAt: string | number | null = (() => {
+        if (typeof obj.createdAt === 'string' || typeof obj.createdAt === 'number') return obj.createdAt;
+        const ts = (obj as Record<string, unknown>).timestamp;
+        if (typeof ts === 'string' || typeof ts === 'number') return ts;
+        const ca = (obj as Record<string, unknown>).created_at;
+        if (typeof ca === 'string' || typeof ca === 'number') return ca;
+        return null;
+    })();
+    const overallScore: number = (() => {
+        const os = (obj as Record<string, unknown>).overallScore;
+        if (typeof os === 'number') return os;
+        const sc = (obj as Record<string, unknown>).score;
+        if (typeof sc === 'number') return sc;
+        return 0;
+    })();
+    const base = JSON.stringify({ userId, urls, createdAt, overallScore });
     return 'neuro-' + createHash('sha1').update(base).digest('hex').slice(0, 24);
 }
 
@@ -46,12 +60,15 @@ async function migrate() {
                         migratedAt: new Date().toISOString(),
                     }, { merge: true });
                     results.push({ legacyId: doc.id, canonicalId, sourceCollection: col });
-                } catch (wErr) {
-                    errors++; console.warn('[migrate] write failed', col, doc.id, (wErr as any)?.message);
+                } catch (wErr: unknown) {
+                    errors++;
+                    const msg = wErr && typeof wErr === 'object' && 'message' in wErr ? String((wErr as { message?: unknown }).message) : String(wErr);
+                    console.warn('[migrate] write failed', col, doc.id, msg);
                 }
             }
-        } catch (e) {
-            console.warn('[migrate] scan failed', col, (e as any)?.message);
+        } catch (e: unknown) {
+            const msg = e && typeof e === 'object' && 'message' in e ? String((e as { message?: unknown }).message) : String(e);
+            console.warn('[migrate] scan failed', col, msg);
         }
     }
     const summary = { examined, migrated: results.length, skipped, errors, ms: Date.now() - start };

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,18 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -28,20 +17,31 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
+import { formatDistanceToNow } from "date-fns";
 import {
   collection,
+  doc,
   onSnapshot,
   orderBy,
   query,
-  updateDoc,
-  doc,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
-import { formatDistanceToNow } from "date-fns";
-import { Mail, MessageSquareReply, UserPlus, RefreshCw, Filter } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
+import { Filter, Mail, MessageSquareReply, RefreshCw, UserPlus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 type SupportMessage = {
@@ -65,8 +65,17 @@ interface TimestampLike {
 }
 
 function isTimestampLike(v: unknown): v is TimestampLike {
-  return !!v && typeof v === 'object' && 'toDate' in v && typeof (v as any).toDate === 'function';
+  return !!v && typeof v === 'object' && 'toDate' in v && typeof (v as { toDate?: unknown }).toDate === 'function';
 }
+
+// Safe error message extractor (avoid any casts)
+const safeMessage = (e: unknown, fallback: string): string => {
+  if (e && typeof e === 'object' && 'message' in e) {
+    const msg = (e as { message?: unknown }).message;
+    if (typeof msg === 'string' && msg.trim()) return msg;
+  }
+  return fallback;
+};
 
 export default function AdminSupport() {
   const { user } = useAuth();
@@ -108,10 +117,7 @@ export default function AdminSupport() {
       (error: unknown) => {
         console.error("AdminSupport Firestore error:", error);
         setLoading(false);
-        let msg = 'Failed to load support messages';
-        if (error && typeof error === 'object' && 'message' in error && typeof (error as any).message === 'string') {
-          msg = (error as any).message;
-        }
+        const msg = safeMessage(error, 'Failed to load support messages');
         try { toast.error(msg); } catch {}
       }
     );
@@ -136,8 +142,7 @@ export default function AdminSupport() {
       await updateDoc(doc(db, "supportMessages", id), { status, updatedAt: serverTimestamp() });
       toast.success("Status updated");
     } catch (e: unknown) {
-      let msg = 'Failed to update status';
-      if (e && typeof e === 'object' && 'message' in e && typeof (e as any).message === 'string') msg = (e as any).message;
+      const msg = safeMessage(e, 'Failed to update status');
       toast.error(msg);
     }
   };
@@ -152,8 +157,7 @@ export default function AdminSupport() {
       });
       toast.success("Assigned to you");
     } catch (e: unknown) {
-      let msg = 'Failed to assign';
-      if (e && typeof e === 'object' && 'message' in e && typeof (e as any).message === 'string') msg = (e as any).message;
+      const msg = safeMessage(e, 'Failed to assign');
       toast.error(msg);
     }
   };
@@ -181,15 +185,16 @@ export default function AdminSupport() {
         let fallback = 'Failed to send reply';
         try {
           const j = await res.json();
-          if (j && typeof j === 'object' && 'message' in j && typeof j.message === 'string') fallback = j.message;
-        } catch {}
+          if (j && typeof j === 'object' && 'message' in j && typeof (j as { message?: unknown }).message === 'string') {
+            fallback = String((j as { message: string }).message);
+          }
+        } catch {/* ignore parse */ }
         throw new Error(fallback);
       }
       toast.success("Reply sent");
       setReplyOpen(false);
     } catch (e: unknown) {
-      let msg = 'Failed to send reply';
-      if (e && typeof e === 'object' && 'message' in e && typeof (e as any).message === 'string') msg = (e as any).message;
+      const msg = safeMessage(e, 'Failed to send reply');
       toast.error(msg);
     }
   };
@@ -300,14 +305,14 @@ export default function AdminSupport() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-2">
-                        <Button size="sm" variant="outline" onClick={() => assignToMe(m.id)}>
+                        <Button size="sm" variant="outline" onClick={() => { void assignToMe(m.id); }}>
                           <UserPlus className="h-4 w-4 mr-1"/> Assign to me
                         </Button>
-                        <Button size="sm" onClick={() => openReply(m)}>
+                        <Button size="sm" onClick={() => { openReply(m); }}>
                           <MessageSquareReply className="h-4 w-4 mr-1"/> Reply
                         </Button>
                         {m.status !== "resolved" && (
-                          <Button size="sm" variant="secondary" onClick={() => setStatus(m.id, "resolved")}>
+                          <Button size="sm" variant="secondary" onClick={() => { void setStatus(m.id, "resolved"); }}>
                             Resolve
                           </Button>
                         )}
@@ -337,7 +342,7 @@ export default function AdminSupport() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setReplyOpen(false)}>Cancel</Button>
-            <Button onClick={sendReply} disabled={!replyBody.trim()}>Send reply</Button>
+            <Button onClick={() => { void sendReply(); }} disabled={!replyBody.trim()}>Send reply</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

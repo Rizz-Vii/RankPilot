@@ -20,11 +20,14 @@ test.describe('Feature - error-handling', () => {
         try {
             const testUser = UNIFIED_TEST_USERS.agency;
             await auth.loginAndGoToDashboard(testUser);
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const msg = (error && typeof error === 'object' && 'message' in error)
+                ? String((error as { message?: unknown }).message)
+                : String(error);
             try {
-                featureErrorHandlingDiagnostics.errors.push({ message: String(error?.message || error), phase: 'beforeEach-login' });
+                featureErrorHandlingDiagnostics.errors.push({ message: msg, phase: 'beforeEach-login' });
             } catch { }
-            console.warn('Login failed, using fallback:', error?.message);
+            console.warn('Login failed, using fallback:', msg);
             await page.goto('/dashboard');
             await page.waitForTimeout(2000);
         }

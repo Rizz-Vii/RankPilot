@@ -10,6 +10,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/context/AuthContext';
+import { allowIntegrationsMocks } from '@/lib/flags/demo';
 import {
     Activity,
     AlertTriangle,
@@ -22,17 +24,14 @@ import {
     Zap
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { allowIntegrationsMocks } from '@/lib/flags/demo';
 
 // Enterprise system imports
 import { AIDevAutomation } from '@/lib/automation/ai-dev-automation';
-import { AIAnomalyDetector } from '@/lib/monitoring/ai-anomaly-detector';
 import { EnterpriseAPM } from '@/lib/monitoring/enterprise-apm';
-import { GlobalInfrastructureOptimizer } from '@/lib/optimization/global-infrastructure';
 
 // Design system colors
 import { colors } from '@/lib/design-system/colors';
+import { asVoidHandler } from '@/lib/react/handlers';
 
 interface SystemStatus {
     name: string;
@@ -158,18 +157,10 @@ export function Phase5IntegrationHub(): JSX.Element {
     }, [apm, devAutomation, systems, updateSystemStatus]);
 
     useEffect(() => {
-        initializeEnterpriseSystems();
+        void initializeEnterpriseSystems();
     }, [initializeEnterpriseSystems]);
 
-    const getStatusColor = (status: SystemStatus['status']): string => {
-        switch (status) {
-            case 'operational': return colors.status.success.text;
-            case 'warning': return colors.status.warning.text;
-            case 'error': return colors.status.error.text;
-            case 'initializing': return colors.status.info.text;
-            default: return colors.text.muted;
-        }
-    };
+    // Removed unused getStatusColor helper (was triggering unused var lint error)
 
     const getStatusIcon = (status: SystemStatus['status']): React.ReactNode => {
         switch (status) {
@@ -236,7 +227,7 @@ export function Phase5IntegrationHub(): JSX.Element {
                         <Badge variant="outline" className={colors.status.info.bg + " " + colors.status.info.text}>
                             Last Sync: {new Date(lastSync).toLocaleTimeString()}
                         </Badge>
-                        <Button onClick={initializeEnterpriseSystems} size="sm">
+                        <Button onClick={asVoidHandler(initializeEnterpriseSystems)} size="sm">
                             Refresh Systems
                         </Button>
                     </div>
@@ -326,7 +317,7 @@ export function Phase5IntegrationHub(): JSX.Element {
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => executeSystemAction(systemId, 'export_data')}
+                                            onClick={asVoidHandler(() => executeSystemAction(systemId, 'export_data'))}
                                         >
                                             Export Data
                                         </Button>
@@ -335,7 +326,7 @@ export function Phase5IntegrationHub(): JSX.Element {
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => executeSystemAction(systemId, 'retrain_models')}
+                                            onClick={asVoidHandler(() => executeSystemAction(systemId, 'retrain_models'))}
                                         >
                                             Retrain Models
                                         </Button>
@@ -344,7 +335,7 @@ export function Phase5IntegrationHub(): JSX.Element {
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => executeSystemAction(systemId, 'optimize_routes')}
+                                            onClick={asVoidHandler(() => executeSystemAction(systemId, 'optimize_routes'))}
                                         >
                                             Optimize Routes
                                         </Button>
@@ -353,7 +344,7 @@ export function Phase5IntegrationHub(): JSX.Element {
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => executeSystemAction(systemId, 'run_quality_check')}
+                                            onClick={asVoidHandler(() => executeSystemAction(systemId, 'run_quality_check'))}
                                         >
                                             Quality Check
                                         </Button>

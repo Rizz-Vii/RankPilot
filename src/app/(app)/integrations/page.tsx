@@ -33,6 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
+import { allowDemoContent } from "@/lib/flags/demo";
 import {
   BarChart3,
   Check,
@@ -50,7 +51,6 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { allowDemoContent } from "@/lib/flags/demo";
 import { toast } from "sonner";
 
 interface Webhook {
@@ -126,7 +126,7 @@ const INTEGRATION_TYPES = [
 
 export default function IntegrationsPage() {
   const { user, loading: authLoading } = useAuth();
-  const { subscription, canUseFeature } = useSubscription();
+  const { subscription: _subscription, canUseFeature } = useSubscription();
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
@@ -153,7 +153,7 @@ export default function IntegrationsPage() {
 
   useEffect(() => {
     if (user && canUseFeature("custom_integrations")) {
-      fetchIntegrations();
+      void fetchIntegrations();
     }
   }, [user, canUseFeature]);
 
@@ -301,7 +301,7 @@ export default function IntegrationsPage() {
   };
 
   const copySecret = (secret: string) => {
-    navigator.clipboard.writeText(secret);
+    void navigator.clipboard.writeText(secret);
     setCopiedSecret(secret);
     toast.success("Secret copied to clipboard");
     setTimeout(() => setCopiedSecret(null), 2000);

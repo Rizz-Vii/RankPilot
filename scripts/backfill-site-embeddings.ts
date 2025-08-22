@@ -27,11 +27,15 @@ async function backfill({ uid, collection = 'default', limit = 250, dry = false 
     let processed = 0, embedded = 0, skipped = 0, errors = 0;
     for (const doc of snapshot.docs) {
         processed++;
-        const data: any = doc.data();
-        if (Array.isArray(data.embedding) && data.embedding.length > 10) { skipped++; continue; }
+        const data = doc.data() as Record<string, unknown>;
+        const embedding = data.embedding;
+        if (Array.isArray(embedding) && embedding.length > 10) { skipped++; continue; }
         if (dry) { embedded++; continue; }
         try {
-            const text: string = data.content?.slice(0, 3000) || '';
+            const content = typeof (data.content as unknown as { slice?: (s: number, e?: number) => string } | string | undefined) === 'object'
+                ? (data.content as { slice?: (s: number, e?: number) => string }).slice?.(0, 3000)
+                : (typeof data.content === 'string' ? data.content.slice(0, 3000) : '');
+            const text: string = content || '';
             if (!text) { skipped++; continue; }
             const emb = await client.embeddings.create({ model: 'text-embedding-3-small', input: text });
             const vector = emb.data?.[0]?.embedding;
@@ -39,9 +43,10 @@ async function backfill({ uid, collection = 'default', limit = 250, dry = false 
                 await doc.ref.set({ embedding: vector, embeddingModel: 'text-embedding-3-small', embeddingUpdatedAt: new Date() }, { merge: true });
                 embedded++;
             } else { skipped++; }
-        } catch (e: any) {
+        } catch (e: unknown) {
             errors++;
-            if ((e.message || '').includes('rate limit')) {
+            const msg = (e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string') ? (e as Error).message : '';
+            if (msg.includes('rate limit')) {
                 await new Promise(r => setTimeout(r, 4000));
             }
         }

@@ -5,8 +5,8 @@ if (!process.env.FIRESTORE_EMULATOR_HOST) {
     process.exit(0);
 }
 
-import type { RulesTestEnvironment} from '@firebase/rules-unit-testing';
-import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
+import type { RulesTestEnvironment } from '@firebase/rules-unit-testing';
+import { assertFails, assertSucceeds, initializeTestEnvironment } from '@firebase/rules-unit-testing';
 import { setLogLevel } from 'firebase/firestore';
 
 (async () => {
@@ -22,15 +22,15 @@ import { setLogLevel } from 'firebase/firestore';
         const member = testEnv.authenticatedContext('memberUser', { email: 'member@example.com' }).firestore();
         const outsider = testEnv.authenticatedContext('outsiderUser', { email: 'out@example.com' }).firestore();
         const usersCol = owner.collection('users');
-        await usersCol.doc('ownerUser').set({ email: 'owner@example.com', role: 'user' } as any);
-        await usersCol.doc('memberUser').set({ email: 'member@example.com', role: 'user' } as any);
-        await usersCol.doc('outsiderUser').set({ email: 'out@example.com', role: 'user' } as any);
+        await usersCol.doc('ownerUser').set({ email: 'owner@example.com', role: 'user' });
+        await usersCol.doc('memberUser').set({ email: 'member@example.com', role: 'user' });
+        await usersCol.doc('outsiderUser').set({ email: 'out@example.com', role: 'user' });
 
         const teamId = 'teamA';
         const teamsColOwner = owner.collection('teams');
-        await assertSucceeds(teamsColOwner.doc(teamId).set({ ownerId: 'ownerUser', memberIds: ['ownerUser'], name: 'Alpha', createdAt: new Date(), updatedAt: new Date() } as any));
+        await assertSucceeds(teamsColOwner.doc(teamId).set({ ownerId: 'ownerUser', memberIds: ['ownerUser'], name: 'Alpha', createdAt: new Date(), updatedAt: new Date() }));
         await assertFails(outsider.collection('teams').doc(teamId).get());
-        await assertSucceeds(owner.collection('teams').doc(teamId).collection('members').doc('memberUser').set({ userId: 'memberUser', role: 'member', status: 'active', joinedAt: new Date() } as any));
+        await assertSucceeds(owner.collection('teams').doc(teamId).collection('members').doc('memberUser').set({ userId: 'memberUser', role: 'member', status: 'active', joinedAt: new Date() }));
         await assertSucceeds(member.collection('teams').doc(teamId).get());
         await assertFails(member.collection('teams').doc(teamId).update({ name: 'New' }));
         await assertSucceeds(owner.collection('teams').doc(teamId).update({ name: 'OwnerEdit' }));

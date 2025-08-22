@@ -1,37 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,29 +10,61 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  Users,
-  Search,
-  Filter,
-  MoreHorizontal,
-  Shield,
-  Crown,
-  Calendar,
-  Activity,
-  Mail,
-} from "lucide-react";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { db } from "@/lib/firebase";
+import { formatDistanceToNow } from "date-fns";
 import {
   collection,
-  query,
-  orderBy,
-  limit,
-  getDocs,
   doc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
   updateDoc,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useToast } from "@/hooks/use-toast";
-import { formatDistanceToNow } from "date-fns";
+import {
+  Activity,
+  Calendar,
+  Crown,
+  Filter,
+  Mail,
+  MoreHorizontal,
+  Search,
+  Shield,
+  Users,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface TimestampLike { toDate: () => Date }
 
@@ -112,43 +112,44 @@ export default function AdminUserManagement(): JSX.Element {
   useEffect(() => {
     let mounted = true;
 
-    (async function fetchUsers() {
+    const fetchUsers = async (): Promise<void> => {
       try {
         setLoading(true);
         const qy = query(collection(db, "users"), orderBy("createdAt", "desc"), limit(200));
         const snap = await getDocs(qy);
         const list: User[] = snap.docs.map((d) => {
           const data = d.data() as UserDoc;
+          const subRaw = data.subscription as unknown;
+          const subObj = (subRaw && typeof subRaw === 'object') ? subRaw as { status?: unknown; tier?: unknown } : {};
           return {
             id: d.id,
             email: typeof data.email === "string" ? data.email : "",
-            displayName:
-              typeof data.displayName === "string" ? data.displayName : undefined,
+            displayName: typeof data.displayName === "string" ? data.displayName : undefined,
             role: typeof data.role === "string" ? data.role : "user",
             createdAt: isTimestampLike(data.createdAt) ? data.createdAt : undefined,
             lastSignIn: isTimestampLike(data.lastSignIn) ? data.lastSignIn : undefined,
-            subscriptionStatus: data.subscription?.status,
-            subscriptionTier: data.subscription?.tier,
-            activityCount:
-              typeof data.activityCount === "number" ? data.activityCount : undefined,
+            subscriptionStatus: typeof subObj.status === 'string' ? subObj.status : undefined,
+            subscriptionTier: typeof subObj.tier === 'string' ? subObj.tier : undefined,
+            activityCount: typeof data.activityCount === "number" ? data.activityCount : undefined,
           };
         });
         if (mounted) setUsers(list);
-      } catch (e) {
-        if (mounted)
+      } catch {
+        if (mounted) {
           toast({
             variant: "destructive",
             title: "Error",
             description: "Failed to load users",
           });
+        }
       } finally {
         if (mounted) setLoading(false);
       }
-    })();
-
-    return () => {
-      mounted = false;
     };
+
+    void fetchUsers();
+
+    return () => { mounted = false; };
   }, [toast]);
 
   const handleUserAction = async (): Promise<void> => {
@@ -183,7 +184,7 @@ export default function AdminUserManagement(): JSX.Element {
         title: "Success",
         description: `User ${actionType}d successfully.`,
       });
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Error",
@@ -512,7 +513,7 @@ export default function AdminUserManagement(): JSX.Element {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleUserAction}>
+            <AlertDialogAction onClick={() => { void handleUserAction(); }}>
               {actionType === "promote"
                 ? "Promote"
                 : actionType === "demote"

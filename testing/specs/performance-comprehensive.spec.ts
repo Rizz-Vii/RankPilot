@@ -44,8 +44,9 @@ test.describe('Performance - Core Web Vitals Monitoring', () => {
                 let clsValue = 0;
                 new PerformanceObserver((list) => {
                     for (const entry of list.getEntries()) {
-                        if (!(entry as any).hadRecentInput) {
-                            clsValue += (entry as any).value;
+                        const shift = entry as unknown as { hadRecentInput?: boolean; value?: number };
+                        if (!shift.hadRecentInput) {
+                            clsValue += shift.value ?? 0;
                         }
                     }
                     resolve(clsValue);
@@ -122,11 +123,11 @@ test.describe('Performance - Page Load Optimization', () => {
         await page.goto('/', { timeout: 30000 });
 
         const resourceMetrics = await page.evaluate(() => {
-            const entries = performance.getEntriesByType('resource');
+            const entries = performance.getEntriesByType('resource') as PerformanceResourceTiming[];
             return {
                 totalResources: entries.length,
-                totalSize: entries.reduce((sum, entry: any) => sum + (entry.transferSize || 0), 0),
-                slowResources: entries.filter((entry: any) => entry.duration > 1000).length
+                totalSize: entries.reduce((sum, entry) => sum + (entry.transferSize || 0), 0),
+                slowResources: entries.filter(entry => entry.duration > 1000).length
             };
         });
 
@@ -138,8 +139,8 @@ test.describe('Performance - Page Load Optimization', () => {
         await page.goto('/', { timeout: 30000 });
 
         const criticalResources = await page.evaluate(() => {
-            const entries = performance.getEntriesByType('resource');
-            return entries.filter((entry: any) =>
+            const entries = performance.getEntriesByType('resource') as PerformanceResourceTiming[];
+            return entries.filter(entry =>
                 entry.name.includes('.css') ||
                 entry.name.includes('font') ||
                 entry.name.includes('critical')
@@ -167,9 +168,7 @@ test.describe('Performance - Page Load Optimization', () => {
 test.describe('Performance - Network & Caching', () => {
     test('HTTP/2 implementation', async ({ page }) => {
         const response = await page.goto('/', { timeout: 30000 });
-        const protocol = await response?.headerValue('x-powered-by');
-
-        // Check if modern protocols are used
+        // Check if modern protocols are used (placeholder marker removed unused variable)
         if (response?.url().startsWith('https://')) {
             console.log('✅ HTTPS protocol implemented');
         }
@@ -189,7 +188,7 @@ test.describe('Performance - Network & Caching', () => {
 
         const cdnResources = await page.evaluate(() => {
             const entries = performance.getEntriesByType('resource');
-            return entries.filter((entry: any) =>
+            return entries.filter((entry: PerformanceResourceTiming) =>
                 entry.name.includes('cdn') ||
                 entry.name.includes('cloudfront') ||
                 entry.name.includes('jsdelivr')
@@ -309,10 +308,11 @@ test.describe('Performance - Memory & CPU Optimization', () => {
         await page.goto('/', { timeout: 30000 });
 
         const memoryInfo = await page.evaluate(() => {
-            return (performance as any).memory ? {
-                usedJSHeapSize: (performance as any).memory.usedJSHeapSize,
-                totalJSHeapSize: (performance as any).memory.totalJSHeapSize,
-                jsHeapSizeLimit: (performance as any).memory.jsHeapSizeLimit
+            const mem = (performance as unknown as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
+            return mem ? {
+                usedJSHeapSize: mem.usedJSHeapSize,
+                totalJSHeapSize: mem.totalJSHeapSize,
+                jsHeapSizeLimit: mem.jsHeapSizeLimit
             } : null;
         });
 
@@ -326,7 +326,7 @@ test.describe('Performance - Memory & CPU Optimization', () => {
 
         const longTasks = await page.evaluate(() => {
             return new Promise((resolve) => {
-                const tasks: any[] = [];
+                const tasks: PerformanceEntry[] = [];
                 new PerformanceObserver((list) => {
                     tasks.push(...list.getEntries());
                     resolve(tasks.length);
@@ -364,9 +364,9 @@ test.describe('Performance - Memory & CPU Optimization', () => {
 
         const jsResources = await page.evaluate(() => {
             const entries = performance.getEntriesByType('resource');
-            return entries.filter((entry: any) =>
-                entry.name.endsWith('.js')
-            ).reduce((total, entry: any) => total + (entry.transferSize || 0), 0);
+            return (entries as PerformanceResourceTiming[])
+                .filter(entry => entry.name.endsWith('.js'))
+                .reduce((total, entry) => total + (entry.transferSize || 0), 0);
         });
 
         expect(jsResources).toBeLessThan(1024 * 1024); // JS bundle under 1MB

@@ -1,5 +1,6 @@
 /*
   Tests: kpiDailySnapshot alert persistence (kpiAlertsDaily) & retention basics.
+  Skips when Firestore isn't configured (no emulator or project id).
 */
 require('ts-node/register');
 const assert = require('assert');
@@ -9,6 +10,10 @@ const { getFirestore } = require('firebase-admin/firestore');
 const { runKpiDailySnapshot } = require('../../../functions/src/scheduled/kpi-daily-snapshot.ts');
 
 describe('kpiAlertsDaily persistence', () => {
+  // Skip suite if Firestore isn't configured for tests
+  const shouldSkip = !process.env.FIRESTORE_EMULATOR_HOST && !process.env.GOOGLE_CLOUD_PROJECT;
+  before(function () { if (shouldSkip) this.skip(); });
+
   let db;
   before(() => { if (!getApps().length) initializeApp(); db = getFirestore(); });
   it('creates alert doc with MA7 fields', async () => {

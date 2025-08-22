@@ -1,14 +1,15 @@
 "use client";
-import { useEffect, useState } from 'react';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from '@/components/tool-page-header';
-import { composeToolHeaderBadges } from '@/lib/tool-badge-utils';
-import { useProvenance } from '@/hooks/useProvenance';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { useProvenance } from '@/hooks/useProvenance';
+import { composeToolHeaderBadges } from '@/lib/tool-badge-utils';
 import { BarChart3 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-interface HealthPayload { kpis?: Record<string, any>; alerts?: any[]; metrics?: Record<string, any>; }
+type NumericMap = Record<string, number>;
+interface HealthPayload { kpis?: NumericMap; alerts?: unknown[]; metrics?: NumericMap; }
 
 export default function AdoptionDashboard() {
   const { provenance } = useProvenance();
@@ -22,14 +23,14 @@ export default function AdoptionDashboard() {
       setData(j);
     } catch (err) {
       // Log and continue; avoid swallowing errors silently
-      // eslint-disable-next-line no-console
+
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
-  useEffect(() => { load(); const id = setInterval(load, 8000); return () => clearInterval(id); }, []);
-  const kpis = data?.kpis as Record<string, any> | undefined;
+  useEffect(() => { void load(); const id = setInterval(() => { void load(); }, 8000); return () => clearInterval(id); }, []);
+  const kpis = data?.kpis;
   const crawlerPct = (kpis?.crawlerAggregateAdoptionPct as number | undefined) ?? null;
   const smPct = (kpis?.semanticMapAggregateAdoptionPct as number | undefined) ?? null;
   const classify = (v: number | null | undefined) => (v === null || v === undefined) ? '' : (v < 50 ? 'critical' : v < 80 ? 'warn' : 'ok');

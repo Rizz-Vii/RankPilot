@@ -1,15 +1,20 @@
 // src/app/(app)/serp-view/page.tsx
 "use client";
 
+import { LazyDataTable } from '@/components/metrics/LazyDataTable';
+import { MetricCard } from '@/components/metrics/MetricCard';
+import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import SerpViewForm from "@/components/serp-view-form";
-import { ToolPageHeader } from "@/components/tool-page-header";
-import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
-import { useProvenance } from "@/hooks/useProvenance";
 import SerpViewResults from "@/components/serp-view-results";
+import { ToolPageHeader } from "@/components/tool-page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import LoadingScreen from "@/components/ui/loading-screen";
 import { useAuth } from "@/context/AuthContext";
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useProvenance } from "@/hooks/useProvenance";
+import { useSerpKeywordMetrics } from '@/hooks/useSerpKeywordMetrics';
 import { db } from "@/lib/firebase";
+import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import { cn, safeErrorMessage } from "@/lib/utils";
 import { getSerpData } from "@/lib/utils/content-functions";
 import type {
@@ -19,11 +24,6 @@ import type {
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
-import { useSerpKeywordMetrics } from '@/hooks/useSerpKeywordMetrics';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { MetricCard } from '@/components/metrics/MetricCard';
-import { TrendSparkline } from '@/components/metrics/TrendSparkline';
-import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { useEffect, useRef, useState } from "react";
 
 export default function SerpViewPage() {
@@ -108,12 +108,39 @@ export default function SerpViewPage() {
           <MetricCard size={isMobile ? 'sm' : 'md'} key={k.key} label={k.label} value={Number(k.value).toFixed(1)} delta={k.delta} deltaLabel="" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
         ))}
       </div>
-      <LazyDataTable
-        columns={[{ key:'keyword', header:'Keyword'}, { key:'topUrl', header:'Top URL', render: (r:any)=> (r.results?.[0]?.url||'') }, { key:'top3', header:'Top3', render:(r:any)=> (r.results?.some((x:any)=> x.position<=3)? 'Yes':'No') }]}
-        rows={serpMetrics.rows.map((r:any)=> ({ ...r, top3: r.results?.some((x:any)=> x.position<=3) }))}
-        loading={serpMetrics.loading}
-        empty="No SERP snapshots"
-      />
+        {(() => {
+          type Result = { position?: number; url?: string };
+          type Row = { keyword?: string; topUrl?: string; results?: Result[]; top3?: boolean };
+          const columns: { key: keyof Row; header: string; render?: (r: Row) => React.ReactNode }[] = [
+            { key: 'keyword', header: 'Keyword' },
+            {
+              key: 'topUrl',
+              header: 'Top URL',
+              render: (r: Row) => (r.results && r.results[0] && typeof r.results[0].url === 'string') ? r.results[0].url : ''
+            },
+            {
+              key: 'top3',
+              header: 'Top3',
+              render: (r: Row) => (Array.isArray(r.results) && r.results.some(x => typeof x.position === 'number' && x.position <= 3)) ? 'Yes' : 'No'
+            }
+          ];
+          const rows: Row[] = serpMetrics.rows.map((raw) => {
+            const obj = (raw && typeof raw === 'object') ? (raw as unknown as Record<string, unknown>) : {};
+            const results = Array.isArray(obj.results) ? (obj.results as unknown[]).map((x): Result => {
+              const o = (x && typeof x === 'object') ? x as Record<string, unknown> : {};
+              return { position: typeof o.position === 'number' ? o.position : undefined, url: typeof o.url === 'string' ? o.url : undefined };
+            }) : [];
+            return { keyword: typeof obj.keyword === 'string' ? obj.keyword : undefined, results, topUrl: results[0]?.url, top3: results.some(x => typeof x.position === 'number' && x.position <= 3) };
+          });
+          return (
+          <LazyDataTable
+            columns={columns}
+            rows={rows}
+            loading={serpMetrics.loading}
+            empty="No SERP snapshots"
+          />
+          );
+        })()}
       <div
         className={cn(
           "grid gap-8 transition-all duration-500",

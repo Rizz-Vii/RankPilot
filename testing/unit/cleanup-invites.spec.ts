@@ -4,15 +4,26 @@ import { expect } from 'chai';
 describe('cleanup-invites script (logic smoke)', () => {
     it('records metrics without throwing on empty dataset', async () => {
         // Mock firestore shape used by script
-        const collections: Record<string, any> = {
+        interface CollectionDoc { docs: unknown[] }
+        const collections: Record<string, CollectionDoc> = {
             teams: { docs: [] },
             invites_index: { docs: [] }
         };
-        const adminDbMock: any = {
+        interface AdminDbMock {
+            collection: (name: string) => {
+                get: () => Promise<CollectionDoc>;
+                doc: (id: string) => {
+                    collection: (sub: string) => { get: () => Promise<CollectionDoc> };
+                    update: () => Promise<unknown>;
+                    delete: () => Promise<unknown>;
+                };
+            };
+        }
+        const adminDbMock: AdminDbMock = {
             collection: (name: string) => ({
                 get: async () => collections[name],
-                doc: (id: string) => ({
-                    collection: (sub: string) => ({ get: async () => ({ docs: [] }) }),
+                doc: () => ({
+                    collection: () => ({ get: async () => ({ docs: [] }) }),
                     update: async () => ({}),
                     delete: async () => ({})
                 })
@@ -21,7 +32,7 @@ describe('cleanup-invites script (logic smoke)', () => {
         // Inject mock by temporarily rewriting require cache for firebase-admin wrapper
         const path = require.resolve('../../src/lib/firebase-admin.ts');
         const originalModule = require.cache[path];
-        require.cache[path] = { exports: { adminDb: adminDbMock } } as any;
+        require.cache[path] = { exports: { adminDb: adminDbMock } } as unknown as NodeModule;
 
         try {
             await import('../../scripts/cleanup-invites');

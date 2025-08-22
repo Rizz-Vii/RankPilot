@@ -3,10 +3,17 @@ import { execSync, spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 // Prefer require for interop; fallback to global attached by queue-utils
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const qu = require('./queue-utils.ts') || (globalThis as any).__QUEUE_UTILS__;
-const readQueue = qu.readQueue as () => any[];
-const writeQueue = qu.writeQueue as (tasks: any[]) => void;
+const qu: unknown = (() => {
+    try { return require('./queue-utils.ts'); } catch { /* ignore */ }
+    const g = globalThis as unknown as { __QUEUE_UTILS__?: unknown };
+    return g.__QUEUE_UTILS__;
+})();
+const readQueue = (qu && typeof qu === 'object' && 'readQueue' in qu && typeof (qu as Record<string, unknown>).readQueue === 'function')
+    ? ((qu as Record<string, unknown>).readQueue as () => unknown[])
+    : (() => [] as unknown[]);
+const writeQueue = (qu && typeof qu === 'object' && 'writeQueue' in qu && typeof (qu as Record<string, unknown>).writeQueue === 'function')
+    ? ((qu as Record<string, unknown>).writeQueue as (tasks: unknown[]) => void)
+    : ((_tasks: unknown[]) => { /* noop */ });
 
 // Lightweight env loader (avoids external dotenv dep). Loads .env.local then .env if present BEFORE key checks.
 (() => {
@@ -64,8 +71,8 @@ const LOG_ROTATE_BYTES = 200 * 1024; // rotate aide log after 200KB
 const EXT_ALLOW = new Set(['.ts', '.tsx', '.js', '.mjs', '.cjs', '.json', '.md', '.yml', '.yaml', '.css']);
 
 // Extend task type at runtime with optional message support (not persisted in strict schema yet)
-type DelegationTask = ReturnType<typeof readQueue>[number] & { message?: string };
-const tasks = readQueue() as DelegationTask[];
+type DelegationTask = (ReturnType<typeof readQueue>[number] & { [k: string]: unknown }) & { message?: string; taskId: string; files: string[]; status: string; summary?: string; updatedAt?: string };
+const tasks = (readQueue() as unknown[] as DelegationTask[]);
 let changed = false;
 
 const LOG_FILE = path.resolve('sessions/aider-log.jsonl');
@@ -85,8 +92,9 @@ function appendLog(entry: unknown): void {
                 fs.writeFileSync(LOG_FILE, JSON.stringify({ meta: 'aider delegation log (rotated)' }) + '\n');
             }
         } catch { /* noop */ }
-    } catch (e) {
-        console.error('[delegation] failed to append log', (e as any)?.message);
+    } catch (e: unknown) {
+        const msg = e && typeof e === 'object' && 'message' in e && typeof (e as Record<string, unknown>).message === 'string' ? (e as Record<string, unknown>).message as string : String(e);
+        console.error('[delegation] failed to append log', msg);
     }
 }
 
@@ -144,7 +152,7 @@ function validateFiles(files: string[]): { details: { file: string; size: number
  * working set size as the proportional byte span of those lines. This allows keeping
  * global size thresholds strict while still remediating large legacy files incrementally.
  */
-function validateTask(task: DelegationTask): any {
+function validateTask(task: DelegationTask): { details: { file: string; size: number; ok: boolean; reason?: string }[]; aggregateBytes: number; aggregateTooLarge: boolean; risk: string; segment?: { start: number; end: number; estBytes: number; fileBytes: number } } {
     const base = validateFiles(task.files);
     // Only attempt segment logic for single-file tasks that otherwise fail due to size.
     if (task.files.length === 1 && (base.risk === 'aggregate_too_large' || base.risk === 'large_file')) {
@@ -177,7 +185,7 @@ function validateTask(task: DelegationTask): any {
     return base;
 }
 
-function isDirectDeleteTask(task: any): boolean {
+function isDirectDeleteTask(task: { taskId: string; summary?: string }): boolean {
     const directIds = new Set([
         'DEL-REMOVE-ENHANCED-CARD-STUB',
         'DEL-REMOVE-MOBILE-NAV-TEST',
@@ -192,11 +200,11 @@ function isDirectDeleteTask(task: any): boolean {
 for (const task of tasks) {
     if (task.status !== 'pending') continue;
     // Defensive: some tasks (e.g. Brain generic plan steps) may enqueue without a concrete files list.
-    if (!Array.isArray((task as any).files) || !(task as any).files.length) {
+    if (!Array.isArray(task.files) || !task.files.length) {
         // Mark them failed (or skipped) so they don't stall the queue endlessly.
         const note = 'no_files_attached';
         console.log(`[delegation] skipping ${task.taskId} (${task.summary || ''}) – ${note}`);
-        (task as any).notes = note;
+        (task as unknown as { notes?: string }).notes = note;
         task.status = 'failed';
         task.updatedAt = new Date().toISOString();
         appendLog({ taskId: task.taskId, filesChanged: 0, status: 'failed', ts: new Date().toISOString(), notes: note });
@@ -239,8 +247,9 @@ for (const task of tasks) {
         for (const f of task.files) {
             try {
                 if (fs.existsSync(f)) fs.unlinkSync(f);
-            } catch (e) {
-                console.warn(`[direct-delete] failed to delete ${f}: ${(e as any)?.message}`);
+            } catch (e: unknown) {
+                const msg = e && typeof e === 'object' && 'message' in e && typeof (e as Record<string, unknown>).message === 'string' ? (e as Record<string, unknown>).message as string : String(e);
+                console.warn(`[direct-delete] failed to delete ${f}: ${msg}`);
             }
         }
         task.status = 'done';
@@ -274,7 +283,8 @@ Task Summary: ${task.summary}
 Rules Focus: infer rule id from summary; fix occurrences safely.
 ` : '';
         const fallbackMessage = 'Apply requested mechanical edits described by task summary: ' + task.summary + ' (idempotent). If already applied, make no changes.';
-        const effectiveMessage = (task as any).message && typeof (task as any).message === 'string' && (task as any).message.trim().length ? (task as any).message.trim() : (lintPrompt + fallbackMessage);
+        const rawMsg = task.message;
+        const effectiveMessage = rawMsg && typeof rawMsg === 'string' && rawMsg.trim().length ? rawMsg.trim() : (lintPrompt + fallbackMessage);
         aiderArgs.push('--message', effectiveMessage);
         // If API key missing, skip aider invocation gracefully
         if (!process.env.OPENAI_API_KEY && !process.env.OPENAI_GPT5_KEY) {
@@ -292,21 +302,25 @@ Rules Focus: infer rule id from summary; fix occurrences safely.
         // Parse analytics log for token usage (latest line with token fields)
         try {
             /** Extract token stats from a raw analytics JSON object. */
-            const extractTokens = (raw: any): { input_tokens: number; output_tokens: number; tool_calls: number } | null => {
+            const extractTokens = (raw: unknown): { input_tokens: number; output_tokens: number; tool_calls: number } | null => {
                 if (!raw || typeof raw !== 'object') return null;
-                const src = (raw.properties && typeof raw.properties === 'object') ? raw.properties : raw; // aide places fields under properties
-                const inTok = src.prompt_tokens ?? src.input_tokens ?? src.total_prompt_tokens ?? null;
-                const outTok = src.completion_tokens ?? src.output_tokens ?? src.total_completion_tokens ?? null;
+                const anyRaw = raw as Record<string, unknown> & { properties?: Record<string, unknown> };
+                const src = (anyRaw.properties && typeof anyRaw.properties === 'object') ? anyRaw.properties : anyRaw; // aide places fields under properties
+                const inTok = (src as Record<string, unknown>).prompt_tokens ?? (src as Record<string, unknown>).input_tokens ?? (src as Record<string, unknown>).total_prompt_tokens ?? null;
+                const outTok = (src as Record<string, unknown>).completion_tokens ?? (src as Record<string, unknown>).output_tokens ?? (src as Record<string, unknown>).total_completion_tokens ?? null;
                 if (typeof inTok === 'number' || typeof outTok === 'number') {
                     return {
                         input_tokens: typeof inTok === 'number' ? inTok : 0,
                         output_tokens: typeof outTok === 'number' ? outTok : 0,
-                        tool_calls: typeof (src.tool_calls === 'number' ? src.tool_calls : raw.tool_calls) === 'number' ? (src.tool_calls ?? raw.tool_calls ?? 0) : 0
+                        tool_calls: (() => {
+                            const tc = (src as Record<string, unknown>).tool_calls ?? (anyRaw as Record<string, unknown>).tool_calls;
+                            return typeof tc === 'number' ? tc : 0;
+                        })()
                     };
                 }
                 return null;
             };
-            let tokenStats: any = { input_tokens: 0, output_tokens: 0, tool_calls: 0 };
+            let tokenStats: { input_tokens: number; output_tokens: number; tool_calls: number; total_tokens?: number } = { input_tokens: 0, output_tokens: 0, tool_calls: 0 };
             if (fs.existsSync(analyticsLog)) {
                 const lines = fs.readFileSync(analyticsLog, 'utf8').trim().split(/\n/).filter(Boolean);
                 for (let i = lines.length - 1; i >= 0; i--) {
@@ -328,15 +342,15 @@ Rules Focus: infer rule id from summary; fix occurrences safely.
                 }
             }
             // include total for convenience
-            if (typeof (tokenStats as any).input_tokens === 'number' && typeof (tokenStats as any).output_tokens === 'number') {
-                (tokenStats as any).total_tokens = (tokenStats as any).input_tokens + (tokenStats as any).output_tokens;
+            if (typeof tokenStats.input_tokens === 'number' && typeof tokenStats.output_tokens === 'number') {
+                tokenStats.total_tokens = tokenStats.input_tokens + tokenStats.output_tokens;
             }
             fs.writeFileSync(path.join(analyticsDir, 'last-token-stats.json'), JSON.stringify(tokenStats));
         } catch { /* ignore token stats errors */ }
         if (res.status === 0) {
             task.status = 'done';
             const { added, removed } = computeLocDelta(task.files);
-            const baseEntry: any = { taskId: task.taskId, filesChanged: task.files.length, locAdded: added, locRemoved: removed, status: 'pass', ts: new Date().toISOString() };
+            const baseEntry: { taskId: string; filesChanged: number; locAdded: number; locRemoved: number; status: string; ts: string; qa?: { lint: string; tests: string; error?: string } } = { taskId: task.taskId, filesChanged: task.files.length, locAdded: added, locRemoved: removed, status: 'pass', ts: new Date().toISOString() };
             if (RUN_TESTS) {
                 try {
                     console.log('[delegation] Running post-task lint (DELEGATION_RUN_TESTS=1)');
@@ -346,9 +360,12 @@ Rules Focus: infer rule id from summary; fix occurrences safely.
                     execSync(`npm run ${TEST_SCRIPT} --silent`, { stdio: 'pipe', timeout: 1000 * 60 * 10 });
                     console.log('[delegation] Tests PASS');
                     baseEntry.qa = { lint: 'pass', tests: 'pass' };
-                } catch (e: any) {
-                    console.warn('[delegation] QA step failed', e?.message);
-                    baseEntry.qa = { lint: 'unknown', tests: 'fail', error: (e as any)?.message?.slice(0, 200) };
+                } catch (e: unknown) {
+                    const msg = e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string'
+                        ? (e as { message: string }).message
+                        : String(e);
+                    console.warn('[delegation] QA step failed', msg);
+                    baseEntry.qa = { lint: 'unknown', tests: 'fail', error: msg.slice(0, 200) };
                     // downgrade status to failed-tests for visibility
                     baseEntry.status = 'failed-tests';
                     task.status = 'failed';
@@ -368,8 +385,8 @@ Rules Focus: infer rule id from summary; fix occurrences safely.
         // Safely extract message from unknown error
         let errMsg = 'unknown error';
         if (err && typeof err === 'object') {
-            if ('message' in err && typeof (err as any).message === 'string') {
-                errMsg = (err as any).message;
+            if ('message' in err && typeof (err as { message?: unknown }).message === 'string') {
+                errMsg = (err as { message: string }).message;
             } else {
                 try {
                     errMsg = JSON.stringify(err);

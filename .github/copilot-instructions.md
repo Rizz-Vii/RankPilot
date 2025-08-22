@@ -2,6 +2,18 @@
 
 Concise operational context for AI coding agents to be instantly productive. Focus on THIS repo's architecture, workflows, conventions, and guardrails.
 
+## Focus Gate (Current Convergence Phase)
+Only implement changes that advance: provenance coverage, forbidden-field guard, team rate limiting, logger coverage, queue reliability metrics, BI snapshot, finance metrics test stability. Everything else (adaptive planner, forecasting, new agent loop types, Prometheus exporters, design-system polish) is deferred. Reject or label as `deferred-phase-3`.
+
+Quick Coding Rules:
+- ≤200 LOC net per diff (tests/docs excluded); prefer ≤150.
+- Zero new ESLint / TS errors; run lint + typecheck before patch completion.
+- No new `any`; use `unknown` + narrow locally.
+- Remove unused vars immediately (mechanical delegation allowed).
+- Provenance wrapper mandatory for AI/automation responses.
+- Use existing logger & metrics utilities—no ad-hoc console or counter patterns.
+- If touching >3 domain folders, pause and require a planning justification.
+
 ## 1. Architecture Snapshot
 
 - Framework: Next.js (App Router) in `src/app`, React + TypeScript.

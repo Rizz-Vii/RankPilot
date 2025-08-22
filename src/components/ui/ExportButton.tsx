@@ -1,12 +1,16 @@
 "use client";
 
-import React, { useCallback, useState } from 'react';
-import { toast as sonnerToast } from 'sonner';
-import { exportChartClient } from '@/lib/visualizations/export-client';
 import type { ChartExportConfig } from '@/lib/visualizations/d3-visualization-engine';
-// Optional Sentry: only import if available in runtime to avoid SSR issues
+import { exportChartClient } from '@/lib/visualizations/export-client';
+import { useCallback, useState } from 'react';
+import { toast as sonnerToast } from 'sonner';
+// Optional Sentry: dynamically imported client-side to avoid SSR require()
 let Sentry: { captureException?: (...args: unknown[]) => void } | null = null;
-try { Sentry = require('@sentry/nextjs'); } catch {}
+if (typeof window !== 'undefined') {
+  import('@sentry/nextjs')
+    .then(mod => { Sentry = mod as unknown as { captureException?: (...args: unknown[]) => void }; })
+    .catch(() => { /* ignore */ });
+}
 
 type Props = {
   chartId: string;
@@ -33,7 +37,10 @@ export function ExportButton({ chartId, format, label, config, onDone }: Props):
       }
     } catch (e: unknown) {
       let msg = 'Export failed';
-      if (typeof e === 'object' && e && 'message' in e && typeof (e as any).message === 'string') msg = (e as any).message;
+      if (typeof e === 'object' && e && 'message' in e) {
+        const maybeMessage = (e as { message?: unknown }).message;
+        if (typeof maybeMessage === 'string') msg = maybeMessage;
+      }
       setError(msg);
       sonnerToast.error('Export failed', { description: msg });
       try { Sentry?.captureException?.(e, { level: 'error', tags: { feature: 'visualizations-export', format } }); } catch {}
@@ -46,7 +53,7 @@ export function ExportButton({ chartId, format, label, config, onDone }: Props):
     <button
       type="button"
       className="inline-flex items-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50"
-      onClick={onClick}
+      onClick={() => { void onClick(); }}
       disabled={loading}
       aria-busy={loading}
     >

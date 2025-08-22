@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import type { FC } from "react";
+import type { LatencySparklineProps } from '@/components/performance/latency-sparkline';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,28 +10,32 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { aiOptimizer } from "@/lib/ai-optimizer";
+import { performanceMonitor } from "@/lib/performance-monitor";
+import { asVoidHandler } from '@/lib/react/handlers';
 import {
   Activity,
-  Clock,
-  TrendingUp,
   AlertTriangle,
-  CheckCircle,
-  XCircle,
-  Database,
-  RefreshCw,
-  Download,
   BarChart3,
+  CheckCircle,
+  Clock,
+  Database,
+  Download,
+  RefreshCw,
+  TrendingUp,
+  XCircle,
 } from "lucide-react";
 import dynamic from 'next/dynamic';
-// Dynamic sparkline import (client only)
-// Removed explicit .js extension so Next resolves the .tsx module; ensures LatencySparkline export is found.
-// Import TSX module (extensionless for Next.js). Ensure no duplicate .js wrapper exists.
-interface LatencySparklineProps { samples: number[]; id?: string; describedBy?: string }
-const LatencySparkline = dynamic(() => import('./performance/latency-sparkline').then(m => (m as any).LatencySparkline || (m as any).default), { ssr: false, loading: () => <div className="h-9 w-full bg-muted rounded" /> }) as unknown as FC<LatencySparklineProps>;
+import type { FC } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+// Dynamic sparkline import (client only) with proper typing (remove any casts)
+// Dynamic sparkline import (client only) with explicit type to avoid implicit any
+const LatencySparkline = dynamic<LatencySparklineProps>(
+  () => import('./performance/latency-sparkline').then(m => m.LatencySparkline),
+  { ssr: false, loading: () => <div className="h-9 w-full bg-muted rounded" /> }
+);
 
 // Threshold adaptive progress bar wrapper
 const AdaptiveProgress: FC<{ value: number; thresholds?: { good: number; warn: number }; label: string; invert?: boolean }> = ({ value, thresholds = { good: 90, warn: 70 }, label, invert }) => {
@@ -55,8 +60,6 @@ const AdaptiveProgress: FC<{ value: number; thresholds?: { good: number; warn: n
     </div>
   );
 };
-import { performanceMonitor } from "@/lib/performance-monitor";
-import { aiOptimizer } from "@/lib/ai-optimizer";
 
 interface PerformanceStats {
   totalOperations: number;
@@ -139,7 +142,7 @@ export function PerformanceDashboard() {
         liveRegionRef.current.textContent = `Updated: ops ${newStats.totalOperations}, success ${newStats.successRate.toFixed(1)} percent, p95 ${newStats.p95Duration.toFixed(0)} ms.`;
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
+
       console.error("Failed to refresh performance stats:", error);
     } finally {
       setIsRefreshing(false);
@@ -148,11 +151,17 @@ export function PerformanceDashboard() {
 
   useEffect(() => {
     let mounted = true;
-    refreshStats().then(() => {
-      if (mounted) setInitialLoading(false);
-    });
+    // Wrap async flow to satisfy no-floating-promises & ensure error isolation
+    void (async () => {
+      try {
+        await refreshStats();
+        if (mounted) setInitialLoading(false);
+      } catch {
+        // silent – errors already logged inside refreshStats
+      }
+    })();
     if (!autoRefresh) return () => { mounted = false; }; // Skip interval if paused
-    const interval = setInterval(() => { refreshStats(); }, 10000);
+    const interval = setInterval(() => { void refreshStats(); }, 10000);
     return () => { mounted = false; clearInterval(interval); };
   }, [refreshStats, autoRefresh]);
 
@@ -225,7 +234,7 @@ export function PerformanceDashboard() {
           <Button
             variant="outline"
             size="sm"
-            onClick={refreshStats}
+            onClick={asVoidHandler(() => refreshStats())}
             disabled={isRefreshing}
             aria-label="Refresh metrics"
           >

@@ -50,7 +50,7 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
             }
         ];
 
-        const results: any[] = [];
+        const results: Array<{ name: string; status: number | string; responseTime: number; healthy: boolean }> = [];
 
         for (const check of healthChecks) {
             try {
@@ -258,7 +258,7 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
             }
         ];
 
-        const baselines: any[] = [];
+        const baselines: Array<{ name: string; responseTime: number; target: number; withinTarget: boolean }> = [];
 
         for (const test of performanceTests) {
             try {

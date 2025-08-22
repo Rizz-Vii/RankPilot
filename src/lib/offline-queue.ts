@@ -93,8 +93,10 @@ export async function queueAnalysisRequest(data: unknown): Promise<EnqueueResult
     return new Promise<EnqueueResult>((resolve, reject) => {
         withStore<number>(db, STORE_ANALYSIS, 'readwrite', (os) => {
             os.add({ data, createdAt: Date.now() });
-        }, async (id) => {
-            await registerSync('neuroseo-analysis');
+        }, (id) => {
+            // Fire-and-forget background sync registration; we intentionally do not await to avoid
+            // returning a Promise from a callback that expects void (no-misused-promises rule).
+            void registerSync('neuroseo-analysis');
             resolve({ id: Number(id) });
         }, reject);
     });
@@ -109,8 +111,9 @@ export async function queuePreferenceUpdate(data: unknown): Promise<EnqueueResul
     return new Promise<EnqueueResult>((resolve, reject) => {
         withStore<number>(db, STORE_PREFS, 'readwrite', (os) => {
             os.add({ data, createdAt: Date.now() });
-        }, async (id) => {
-            await registerSync('user-preferences');
+        }, (id) => {
+            // Fire-and-forget background sync registration (see above rationale)
+            void registerSync('user-preferences');
             resolve({ id: Number(id) });
         }, reject);
     });

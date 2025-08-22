@@ -35,10 +35,8 @@ global.window.matchMedia = (query: string) => ({
 
 // Simple cookie shim
 Object.defineProperty(document, 'cookie', {
-    get() { return (dom.window as any)._cookie || ''; },
-    set(v: string) { (dom.window as any)._cookie = v; }
+    get() { return (dom.window as unknown as { _cookie?: string })._cookie || ''; },
+    set(v: string) { (dom.window as unknown as { _cookie?: string })._cookie = v; }
 });
 
-export async function flushMicrotasks() {
-    await Promise.resolve();
-}
+export async function flushMicrotasks(): Promise<void> { await Promise.resolve(); }

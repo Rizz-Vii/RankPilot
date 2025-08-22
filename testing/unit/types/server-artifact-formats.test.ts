@@ -1,7 +1,7 @@
-import { strict as assert } from 'assert';
 import { generateServerArtifact } from '@/lib/visualizations/server-artifacts';
 import { generateChartExport } from '@/lib/visualizations/server-exports';
 import type { ExportFormat } from '@/types/visualization-exports';
+import { strict as assert } from 'assert';
 
 describe('Server Artifact Format Guards', () => {
     it('generateServerArtifact json format', async () => {
@@ -18,7 +18,7 @@ describe('Server Artifact Format Guards', () => {
 
     it('rejects unsupported format', async () => {
         let threw = false;
-        try { await (generateServerArtifact as any)('wav' as ExportFormat, { data: [] }, {}); } catch { threw = true; }
+        try { await generateServerArtifact('wav' as ExportFormat, { data: [] }, {}); } catch { threw = true; }
         assert.equal(threw, true);
     });
 });

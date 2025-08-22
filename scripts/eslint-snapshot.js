@@ -7,8 +7,7 @@
 
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
-import { ESLint } from 'eslint';
-import { runMetrics, aggregate } from './metrics/eslint-metrics-api.mjs';
+import { aggregate, runMetrics } from './metrics/eslint-metrics-api.mjs';
 
 const run = (cmd) => execSync(cmd, { stdio: 'pipe', encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 });
 
@@ -17,17 +16,17 @@ async function main(){
   let raw;
   try {
     raw = run("npx eslint -c scripts/eslint-metrics.flat.mjs 'src/**/*.{ts,tsx,js,jsx}' -f json --no-error-on-unmatched-pattern");
-  } catch(e){
+  } catch {
     try { raw = run("npx eslint . -f json"); }
-    catch(e2){
+    catch {
       try { raw = run("npx next lint --format json"); }
-      catch(e3){ raw = e3.stdout || ''; }
+      catch (e3) { raw = e3.stdout || ''; }
     }
   }
   let parsed;
-  try { parsed = JSON.parse(raw); } catch (err) { parsed = []; }
+  try { parsed = JSON.parse(raw); } catch { parsed = []; }
   if (parsed.length === 0) {
-    try { parsed = await runMetrics(); } catch (err) { /* degraded */ }
+    try { parsed = await runMetrics(); } catch { /* degraded */ }
   }
   const { errorCount, warningCount, ruleTally } = aggregate(parsed);
   const topRules = Object.entries(ruleTally).sort((a, b) => b[1] - a[1]).slice(0, 15);

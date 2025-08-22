@@ -46,7 +46,8 @@ test.describe('Load Testing', () => {
 
         // Monitor memory usage during navigation
         const initialMemory = await page.evaluate(() => {
-            return (performance as any).memory?.usedJSHeapSize || 0;
+            const mem = (performance as unknown as { memory?: { usedJSHeapSize?: number } }).memory;
+            return mem?.usedJSHeapSize || 0;
         });
 
         // Navigate through pages to simulate usage
@@ -57,7 +58,8 @@ test.describe('Load Testing', () => {
         }
 
         const finalMemory = await page.evaluate(() => {
-            return (performance as any).memory?.usedJSHeapSize || 0;
+            const mem = (performance as unknown as { memory?: { usedJSHeapSize?: number } }).memory;
+            return mem?.usedJSHeapSize || 0;
         });
 
         // Memory should not increase dramatically (allowing for reasonable growth)

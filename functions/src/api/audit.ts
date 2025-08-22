@@ -1,6 +1,10 @@
-import type { HttpsOptions} from "firebase-functions/v2/https";
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import * as cheerio from 'cheerio';
 import { createHash } from 'crypto';
+import { getApps, initializeApp } from "firebase-admin/app";
+import { FieldValue, getFirestore } from "firebase-admin/firestore";
+import type { HttpsOptions } from "firebase-functions/v2/https";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { z } from 'zod';
 // Indirect AI import so unit tests can stub via global.__genkit or env GENKIT_TEST_STUB
 type GenAI = { generate: (prompt: string) => Promise<unknown> | unknown };
 let __aiMod: GenAI | null = null;
@@ -12,14 +16,10 @@ function getAIWrapper(): GenAI {
   try { __aiMod = require('../ai/genkit').getAI() as GenAI; } catch { __aiMod = { generate: async () => ({ text: () => null }) } as GenAI; }
   return __aiMod;
 }
-import { getApps, initializeApp } from "firebase-admin/app";
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import * as cheerio from 'cheerio';
 // Local crawler metrics (functions env isolated from Next.js in-process unified metrics)
 const crawlerLocal = { success: 0, errors: 0, totalCrawlMs: 0, totalAnalysisMs: 0 };
 function recordCrawlerSuccess(crawlMs: number, analysisMs: number) { crawlerLocal.success++; crawlerLocal.totalCrawlMs += crawlMs; crawlerLocal.totalAnalysisMs += analysisMs; }
 function recordCrawlerError(crawlMs: number) { crawlerLocal.errors++; crawlerLocal.totalCrawlMs += crawlMs; }
-import { z } from 'zod';
 
 // Set options for the audit function
 const httpsOptions: HttpsOptions = {
@@ -462,28 +462,42 @@ ONLY JSON, no prose outside JSON.`;
     const crawl_time_ms = crawlDuration;
     const total_time_ms = Date.now() - start; // final total
     const analysis_time_ms = Math.max(0, total_time_ms - crawl_time_ms);
-    if (parsed && typeof parsed === 'object' && typeof (parsed as any).overallScore === 'number') {
+    if (parsed && typeof parsed === 'object' && typeof (parsed as Record<string, unknown>).overallScore === 'number') {
       // Normalize items array & required fields
-      const p: any = parsed;
-      const parsedItems = Array.isArray(p.items) ? p.items.slice(0, 50).map((it: Record<string, unknown>, idx: number) => ({
-        id: String(it.id || `ai-${idx}`),
-        name: String(it.name || (it as any).title || `Issue ${idx + 1}`),
-        title: String((it as any).title || it.name || `Issue ${idx + 1}`),
-        description: String((it as any).description || (it as any).details || (it as any).title || ''),
-        details: String((it as any).details || (it as any).description || ''),
-        status: ['pass', 'fail', 'warning'].includes((it as any).status) ? (it as any).status as 'pass'|'fail'|'warning' : 'warning',
-        score: typeof (it as any).score === 'number' ? (it as any).score : 60,
-        impact: ['low', 'medium', 'high'].includes((it as any).impact) ? (it as any).impact as 'low'|'medium'|'high' : 'medium',
-        recommendation: String((it as any).recommendation || '')
-      })) : buildItemsFromIssues(core);
+      const p = parsed as Record<string, unknown>;
+      const itemsUnknown = Array.isArray(p.items) ? (p.items as unknown[]) : null;
+      const parsedItems = itemsUnknown
+        ? itemsUnknown.slice(0, 50).map((it: unknown, idx: number) => {
+          const obj = (typeof it === 'object' && it) ? (it as Record<string, unknown>) : {};
+          const statusVal = String((obj.status ?? 'warning'));
+          const status: 'pass' | 'fail' | 'warning' = ['pass', 'fail', 'warning'].includes(statusVal) ? (statusVal as 'pass' | 'fail' | 'warning') : 'warning';
+          const impactVal = String((obj.impact ?? 'medium'));
+          const impact: 'low' | 'medium' | 'high' = ['low', 'medium', 'high'].includes(impactVal) ? (impactVal as 'low' | 'medium' | 'high') : 'medium';
+          return {
+            id: String(obj.id ?? `ai-${idx}`),
+            name: String(obj.name ?? obj.title ?? `Issue ${idx + 1}`),
+            title: String(obj.title ?? obj.name ?? `Issue ${idx + 1}`),
+            description: String(obj.description ?? obj.details ?? obj.title ?? ''),
+            details: String(obj.details ?? obj.description ?? ''),
+            status,
+            score: typeof obj.score === 'number' ? obj.score : 60,
+            impact,
+            recommendation: String(obj.recommendation ?? '')
+          };
+        })
+        : buildItemsFromIssues(core);
+      const issuesUnknown = (p.issues ?? null) as unknown;
+      const issues = issuesUnknown && typeof issuesUnknown === 'object' && (issuesUnknown as Record<string, unknown>).critical
+        ? (issuesUnknown as EnrichedAuditResponse['issues'])
+        : core.issues;
       enriched = {
-        score: typeof p.score === 'number' ? p.score : p.overallScore,
-        overallScore: p.overallScore,
-        issues: p.issues && (p.issues as any).critical ? p.issues as any : core.issues,
-        recommendations: Array.isArray(p.recommendations) && p.recommendations.length ? p.recommendations : core.recommendations,
-        performanceMetrics: p.performanceMetrics || core.performanceMetrics,
+        score: typeof p.score === 'number' ? (p.score as number) : (p.overallScore as number),
+        overallScore: p.overallScore as number,
+        issues,
+        recommendations: Array.isArray(p.recommendations) && (p.recommendations as unknown[]).length ? (p.recommendations as unknown as string[]) : core.recommendations,
+        performanceMetrics: (p.performanceMetrics as EnrichedAuditResponse['performanceMetrics']) || core.performanceMetrics,
         items: parsedItems,
-        summary: typeof p.summary === 'string' ? p.summary : `Audit completed for ${normalizedUrl}.`,
+        summary: typeof p.summary === 'string' ? (p.summary as string) : `Audit completed for ${normalizedUrl}.`,
         totalProcessingTime: Date.now() - start,
         cacheHit: false,
         source: 'live',
@@ -537,7 +551,10 @@ ONLY JSON, no prose outside JSON.`;
         });
       }
     } catch (persistErr) {
-      console.warn('audit_persist_failed', (persistErr as any)?.message);
+      const msg = (persistErr && typeof persistErr === 'object' && 'message' in persistErr && typeof (persistErr as { message?: unknown }).message === 'string')
+        ? (persistErr as { message: string }).message
+        : String(persistErr);
+      console.warn('audit_persist_failed', msg);
     }
     recordCrawlerSuccess(crawlDuration, enriched.totalProcessingTime - crawlDuration);
     // Persist aggregated crawler counters (best effort)
@@ -582,7 +599,10 @@ ONLY JSON, no prose outside JSON.`;
           return { ...historic, ephemeralMetrics: { cacheHitRate: metrics.cacheHitRate, avgProcessingTime: metrics.avgProcessingTime } };
         }
       } catch (histErr) {
-        console.warn('historical_fallback_failed', (histErr as any)?.message);
+        const msg = (histErr && typeof histErr === 'object' && 'message' in histErr && typeof (histErr as { message?: unknown }).message === 'string')
+          ? (histErr as { message: string }).message
+          : String(histErr);
+        console.warn('historical_fallback_failed', msg);
       }
     }
     // Provide generic fallback minimal response (still counts toward quota) to allow UI continuity
@@ -633,9 +653,9 @@ ONLY JSON, no prose outside JSON.`;
 export const runSeoAudit = onCall(httpsOptions, async (request) => coreSeoAudit(request));
 
 // Test helper for invoking callable without Firebase function harness
-export async function __testRunSeoAudit(data: any, auth?: any) {
+export async function __testRunSeoAudit(data: unknown, auth?: unknown) {
   if (process.env.GENKIT_TEST_STUB === '1') return coreSeoAudit({ data, auth });
-  return (runSeoAudit as any)({ data, auth });
+  return (runSeoAudit as unknown as (x: unknown) => unknown)({ data, auth });
 }
 
 // Test helper to apply AI JSON enrichment logic (schema parse + normalization)
@@ -734,19 +754,21 @@ async function performWebCrawl(url: string, depth: number, checkMobile: boolean)
           body: JSON.stringify({ url, maxDepth: Math.min(depth, 3), limit: MAX_PAGES, formats: ['markdown'], onlyMainContent: true })
         });
         if (resp.ok) {
-          const data: any = await resp.json();
-          const pages: any[] = Array.isArray(data?.pages) ? data.pages.slice(0, MAX_PAGES) : [];
-          const primary = pages[0]?.markdown || '';
+          const raw: unknown = await resp.json();
+          const pages: Array<Record<string, unknown>> = (raw && typeof raw === 'object' && 'pages' in (raw as Record<string, unknown>) && Array.isArray((raw as Record<string, unknown>).pages))
+            ? ((raw as Record<string, unknown>).pages as unknown[]).filter(p => p && typeof p === 'object').slice(0, MAX_PAGES) as Array<Record<string, unknown>>
+            : [];
+          const primaryMarkdown = pages.length && typeof pages[0].markdown === 'string' ? String(pages[0].markdown) : '';
           const aggregateHeadingsH1: string[] = [];
           const aggregateHeadingsH2: string[] = [];
           pages.forEach(p => {
-            const md = p.markdown || '';
+            const md = typeof p.markdown === 'string' ? p.markdown : '';
             (md.match(/^#\s+(.+)/gm) || []).forEach((h: string) => aggregateHeadingsH1.push(h.replace(/^#\s+/, '')));
             (md.match(/^##\s+(.+)/gm) || []).forEach((h: string) => aggregateHeadingsH2.push(h.replace(/^##\s+/, '')));
           });
           return {
             url,
-            title: (primary.match(/^#\s+(.+)/m)?.[1]) || `Title for ${url}`,
+            title: (primaryMarkdown.match(/^#\s+(.+)/m)?.[1]) || `Title for ${url}`,
             metaDescription: null,
             headings: { h1: aggregateHeadingsH1.slice(0, 3), h2: aggregateHeadingsH2.slice(0, 25) },
             loadTime: Date.now() - crawlStart,
@@ -766,8 +788,12 @@ async function performWebCrawl(url: string, depth: number, checkMobile: boolean)
           body: JSON.stringify({ url, formats: ['markdown', 'html'], mobile: checkMobile })
         });
         if (resp.ok) {
-          const data: any = await resp.json();
-          const content = data?.markdown || data?.html || '';
+          const raw: unknown = await resp.json();
+          const content = (raw && typeof raw === 'object')
+            ? (typeof (raw as Record<string, unknown>).markdown === 'string'
+              ? String((raw as Record<string, unknown>).markdown)
+              : (typeof (raw as Record<string, unknown>).html === 'string' ? String((raw as Record<string, unknown>).html) : ''))
+            : '';
           return {
             url,
             title: (content.match(/#\s+(.+)/)?.[1]) || `Title for ${url}`,
@@ -783,7 +809,7 @@ async function performWebCrawl(url: string, depth: number, checkMobile: boolean)
           };
         }
       }
-    } catch (e) { console.warn('firecrawl_failed', (e as any)?.message); }
+    } catch (e) { const msg = e && typeof e === 'object' && 'message' in e ? String((e as { message?: unknown }).message) : String(e); console.warn('firecrawl_failed', msg); }
   }
 
   // Simple breadth-first crawl (same-origin) limited when depth>1 and no Firecrawl
@@ -828,7 +854,7 @@ async function performWebCrawl(url: string, depth: number, checkMobile: boolean)
           raw: { directFetch: true, status: res.status, crawled: visited.length }
         };
       }
-    } catch (e) { console.warn('bfs_crawl_fetch_failed', (e as any)?.message); }
+    } catch (e) { const msg = e && typeof e === 'object' && 'message' in e ? String((e as { message?: unknown }).message) : String(e); console.warn('bfs_crawl_fetch_failed', msg); }
   }
 
   // Deterministic synthetic fallback (hash-based seeded variability suppressed to remain stable)

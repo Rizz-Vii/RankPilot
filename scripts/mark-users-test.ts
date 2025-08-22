@@ -2,11 +2,12 @@
  * mark-users-test.ts
  * Sets testAccount=true for specified user emails so they are included in historical seeding.
  */
- 
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
+
+import type { ServiceAccount } from 'firebase-admin/app';
+import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
 
 const TARGET_EMAILS = [
     'admin@rankpilot.com',
@@ -16,18 +17,48 @@ const TARGET_EMAILS = [
 
 function init() {
     if (!getApps().length) {
-        const keyPath = path.resolve(__dirname, '../serviceAccount.json');
-        let creds: any;
-        if (fs.existsSync(keyPath)) {
-            creds = require(keyPath);
-        } else {
-            creds = {
-                project_id: process.env.FIREBASE_ADMIN_PROJECT_ID,
-                client_email: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-                private_key: (process.env.FIREBASE_ADMIN_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
-            };
+        // Prefer ADC if GOOGLE_APPLICATION_CREDENTIALS is set
+        if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+            initializeApp();
+            return getFirestore();
         }
-        initializeApp({ credential: cert(creds), projectId: creds.project_id });
+
+        const keyPath = path.resolve(__dirname, '../serviceAccount.json');
+
+        const fromEnv = (() => {
+            const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
+            const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
+            const privateKeyRaw = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
+            if (projectId && clientEmail && privateKeyRaw) {
+                const privateKey = privateKeyRaw.replace(/\\n/g, '\n');
+                const sa: ServiceAccount = { projectId, clientEmail, privateKey };
+                return sa;
+            }
+            return null;
+        })();
+
+        const fromFile = (() => {
+            if (!fs.existsSync(keyPath)) return null;
+            try {
+                const raw = JSON.parse(fs.readFileSync(keyPath, 'utf8')) as Record<string, unknown>;
+                const projectId = typeof raw.project_id === 'string' ? raw.project_id : (typeof raw.projectId === 'string' ? raw.projectId : undefined);
+                const clientEmail = typeof raw.client_email === 'string' ? raw.client_email : (typeof raw.clientEmail === 'string' ? raw.clientEmail : undefined);
+                const privateKey = typeof raw.private_key === 'string' ? raw.private_key : (typeof raw.privateKey === 'string' ? raw.privateKey : undefined);
+                if (projectId && clientEmail && privateKey) {
+                    const sa: ServiceAccount = { projectId, clientEmail, privateKey };
+                    return sa;
+                }
+                return null;
+            } catch {
+                return null;
+            }
+        })();
+
+        const sa = fromEnv ?? fromFile;
+        if (!sa) {
+            throw new Error('Missing Firebase Admin credentials. Set GOOGLE_APPLICATION_CREDENTIALS or FIREBASE_ADMIN_* env vars, or provide serviceAccount.json locally.');
+        }
+        initializeApp({ credential: cert(sa), projectId: sa.projectId });
     }
     return getFirestore();
 }

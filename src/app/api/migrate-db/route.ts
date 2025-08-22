@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { extractErrorMessage } from '@/lib/errors/extract-error-message';
 import { db } from "@/lib/firebase/index";
-import { collection, getDocs, doc, writeBatch } from "firebase/firestore";
+import { collection, doc, getDocs, writeBatch } from "firebase/firestore";
+import { NextResponse } from "next/server";
 
 const ACTIVITY_TYPE_MIGRATION_MAP: Record<string, string> = {
   "SEO Audit": "audit",
@@ -71,8 +72,7 @@ export async function POST() {
       migrations: activitiesToUpdate,
     });
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown migration error";
+    const errorMessage = extractErrorMessage(error) || 'Unknown migration error';
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

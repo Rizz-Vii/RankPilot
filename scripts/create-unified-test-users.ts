@@ -1,20 +1,21 @@
 /**
  * Updated Unified Authentication Script - Resolves User Creation Conflicts
- * 
+ *
  * Creates Firebase Auth users that match our unified test configuration.
  * Replaces create-auth-users.ts with consistent user management.
- * 
+ *
  * Generated: July 26, 2025
  * Integration: Unified test users, Firestore documents, enhanced auth service
  */
 
-import { initializeApp, getApps, cert } from "firebase-admin/app";
+import { extractErrorMessage } from '@/lib/errors/extract-error-message';
+import * as dotenv from "dotenv";
+import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
-import * as dotenv from "dotenv";
 import {
-    UNIFIED_TEST_USERS,
     DEV_USER,
+    UNIFIED_TEST_USERS,
     createFirestoreUserDoc,
     type UnifiedTestUser
 } from "../testing/config/unified-test-users";
@@ -165,7 +166,7 @@ async function createUnifiedTestUsers() {
             }
 
         } catch (error: unknown) {
-            const errMsg = error instanceof Error ? error.message : String(error);
+            const errMsg = extractErrorMessage(error);
             console.error(`❌ Failed to process user ${user.email}:`, errMsg);
         }
     }
@@ -190,7 +191,7 @@ async function cleanupExistingTestUsers() {
             } catch (error: unknown) {
                 const err = error as { code?: string; message?: string };
                 if (err.code !== 'auth/user-not-found') {
-                    console.error(`  ⚠️ Failed to delete Auth user ${user.email}:`, err.message ?? String(error));
+                    console.error(`  ⚠️ Failed to delete Auth user ${user.email}:`, err.message ?? extractErrorMessage(error));
                 }
             }
 
@@ -200,13 +201,13 @@ async function cleanupExistingTestUsers() {
                 try {
                     await firestore.collection(collection).doc(user.uid).delete();
                     console.log(`  🗑️ Deleted ${collection} document for: ${user.email}`);
-                } catch (error) {
+                } catch {
                     // Document might not exist, which is fine
                 }
             }
 
         } catch (error: unknown) {
-            const errMsg = error instanceof Error ? error.message : String(error);
+            const errMsg = extractErrorMessage(error);
             console.error(`❌ Failed to cleanup user ${user.email}:`, errMsg);
         }
     }
@@ -241,7 +242,7 @@ async function verifyTestUsers() {
             }
 
         } catch (error: unknown) {
-            const errMsg = error instanceof Error ? error.message : String(error);
+            const errMsg = extractErrorMessage(error);
             console.log(`  ❌ ${user.displayName}: ${errMsg}`);
         }
     }
@@ -281,7 +282,7 @@ async function main() {
                 break;
         }
     } catch (error: unknown) {
-        const errMsg = error instanceof Error ? error.message : String(error);
+        const errMsg = extractErrorMessage(error);
         console.error("❌ Script failed:", errMsg);
         process.exit(1);
     }

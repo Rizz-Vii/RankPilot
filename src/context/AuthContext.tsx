@@ -1,21 +1,21 @@
 // src/context/AuthContext.tsx
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import type { DashboardData } from "@/lib/services/dashboard-data.service";
-import type { User as FirebaseUser } from "firebase/auth"; // This line is unchanged
-import { auth, db } from "@/lib/firebase";
 import { useMockAuth } from "@/lib/dev-auth";
+import { auth, db } from "@/lib/firebase";
+import type { DashboardData } from "@/lib/services/dashboard-data.service";
 import { ensureUserSubscription } from "@/lib/user-subscription-sync";
+import type { User as FirebaseUser } from "firebase/auth"; // This line is unchanged
 import {
+  collection,
   doc,
   getDoc,
-  collection,
-  query,
-  orderBy,
-  limit,
   getDocs,
+  limit,
+  orderBy,
+  query,
 } from "firebase/firestore";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 
 interface UserActivity {
@@ -85,8 +85,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Ensure user has proper subscription data
         try {
           await ensureUserSubscription(currentUser.uid, currentUser.email || "");
-        } catch (error) {
-          console.error("Error ensuring user subscription:", error);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error("Error ensuring user subscription:", msg);
         }
 
         // Fetch user profile and role
@@ -94,12 +95,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists()) {
-          const userData = userDocSnap.data();
-          setRole(userData?.role || null);
-          setProfile(userData || null);
+          const userDataRaw = userDocSnap.data();
+          const userData = (userDataRaw && typeof userDataRaw === 'object') ? userDataRaw as Record<string, unknown> : {};
+          const roleField = typeof userData.role === 'string' ? userData.role : null;
+          setRole(roleField);
+          setProfile(userData as UserProfile);
           // Attach teamId from Firestore user doc if present without breaking User prototype methods
           try {
-            (currentUser as any).teamId = (userData as any)?.teamId;
+            // Safely attach teamId without using any casts
+            const possibleTeamId = ('teamId' in userData && typeof userData.teamId === 'string')
+              ? userData.teamId as string
+              : undefined;
+            // Double cast via unknown to extend the FirebaseUser instance at runtime (non‑enumerable methods preserved)
+            (currentUser as unknown as User).teamId = possibleTeamId;
           } catch (e) {
             // non-fatal; ignore
             console.debug("Failed to attach teamId", e);
@@ -129,7 +137,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               }) as UserActivity
           );
           setActivities(fetchedActivities);
-        } catch (error) {
+        } catch {
           console.debug("Activities not found, setting empty array");
           setActivities([]);
         }
@@ -142,14 +150,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     };
 
-    const unsubscribe = auth.onAuthStateChanged(handleAuthStateChange);
+    // Wrap async handler to satisfy no-misused-promises (we intentionally ignore returned promise)
+    const unsubscribe = auth.onAuthStateChanged((u) => { void handleAuthStateChange(u); });
 
     // In development, also listen for mock auth events
     let removeMockListener: (() => void) | undefined;
     if (isDevelopment) {
       const handleMockAuthEvent = (event: CustomEvent) => {
         const mockUser = event.detail;
-        handleAuthStateChange(mockUser);
+        // Explicitly void the async promise (fire-and-forget)
+        void handleAuthStateChange(mockUser);
       };
       window.addEventListener(
         "mockUserLogin",

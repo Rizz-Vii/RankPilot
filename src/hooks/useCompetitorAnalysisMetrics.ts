@@ -1,8 +1,8 @@
 "use client";
-import { useContext, useEffect, useState } from 'react';
-import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { AuthContext } from '@/context/AuthContext';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
+import { useContext, useEffect, useState } from 'react';
 
 interface Metric { key: string; label: string; value: number; delta: number; trend: number[]; intent?: 'neutral' | 'success' | 'warning' | 'danger' | 'accent'; }
 interface Result { loading: boolean; error?: string; kpis: Metric[]; rows: Array<Record<string, unknown>>; }
@@ -10,10 +10,11 @@ interface CompOverview { domainAuthority?: number }
 interface CompDoc { id: string; period: string; competitors?: string[]; analysis?: { overview?: CompOverview[] } }
 
 export function useCompetitorAnalysisMetrics(monthWindow = 6): Result {
-    const { user } = useContext(AuthContext) as { user?: { uid: string } } | any;
+    // Narrow AuthContext to only the needed shape; avoid broad any
+    const { user } = useContext(AuthContext) as { user?: { uid: string } };
     const [state, setState] = useState<Result>({ loading: true, kpis: [], rows: [] });
     useEffect(() => {
-        if (!user) return; let cancelled = false; (async () => {
+        if (!user) return; let cancelled = false; void (async () => {
             try {
                 const q = query(collection(db, 'competitorAnalyses'), where('userId', '==', user.uid), orderBy('period', 'desc'), limit(monthWindow * 16));
                 const snap = await getDocs(q);

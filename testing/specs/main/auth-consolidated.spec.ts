@@ -389,13 +389,13 @@ test.describe("Authentication - Integration Tests", () => {
               sessionStorage.clear();
             }
           });
-        } catch (error) {
+  } catch {
           console.log("⚠️ Storage clearing skipped during logout");
         }
       } else {
         console.log("⚠️ Logout button not found");
       }
-    } catch (error) {
+  } catch (error) {
       // Enhanced error handling - same pattern as successful role-based tests
       const hasFirebaseError = await page.locator('text=/Firebase.*network-request-failed/i').count() > 0;
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -408,7 +408,7 @@ test.describe("Authentication - Integration Tests", () => {
 
       // Only fail for unexpected errors
       console.log(`❌ Unexpected error in logout test: ${errorMessage}`);
-      throw error;
+    throw error; // rethrow unexpected errors
     }
   });
 });

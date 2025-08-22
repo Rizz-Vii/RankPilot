@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import type { Configuration as WebpackConfiguration } from 'webpack';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isFirebaseDeployment = process.env.FIREBASE_DEPLOY === 'true';
@@ -51,7 +52,7 @@ const nextConfig: NextConfig = {
         ];
     },
 
-    // Headers configuration  
+    // Headers configuration
     async headers() {
         return [
             {
@@ -75,7 +76,7 @@ const nextConfig: NextConfig = {
     },
 
     // Webpack configuration for clean builds
-    webpack: (config: any, _opts?: any) => {
+    webpack: (config: WebpackConfiguration, _opts?: { isServer: boolean; dev: boolean; buildId: string; defaultLoaders: { babel: unknown }; webpack: unknown }) => {
         // Suppress webpack warnings during deployment
         if (isFirebaseDeployment) {
             config.stats = 'errors-only';
@@ -87,13 +88,8 @@ const nextConfig: NextConfig = {
         return config;
     },
 
-    // Experimental features
-    experimental: {
-        // Disable verbose logging during deployment
-        logging: {
-            level: isFirebaseDeployment ? 'error' : 'verbose'
-        }
-    }
+    // Experimental features (none currently enabled to satisfy type safety)
+    experimental: {}
 };
 
 export default nextConfig;

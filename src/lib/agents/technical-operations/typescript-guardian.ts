@@ -39,15 +39,15 @@ export interface RankPilotAgent {
     safetyConstraints: SafetyConstraint;
     execute(): Promise<boolean>;
     rollback(): Promise<boolean>;
-    validateFix(error: TypeScriptError): Promise<boolean>;
+    validateFix(): Promise<boolean>;
 }
 
 /**
  * TypeScript Guardian Agent - Autonomous TypeScript error detection and resolution
- * 
+ *
  * Critical Issues Targeted:
  * 1. src/components/ui/polymorphic-card.tsx - Motion props conflict
- * 2. src/lib/scaling/connection-pool.ts - Queue type inference issues  
+ * 2. src/lib/scaling/connection-pool.ts - Queue type inference issues
  * 3. src/lib/security/security-operations-center.ts - Missing error types
  */
 export class TypeScriptGuardianAgent implements RankPilotAgent {
@@ -117,6 +117,7 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
                     if (success) {
                         fixCount++;
 
+                        // Pass error context to validation for potential future heuristics (currently unused)
                         const isValid = await this.validateFix();
                         if (!isValid) {
                             console.warn(`⚠️  Fix validation failed for ${error.file}, rolling back...`);
@@ -179,19 +180,18 @@ export class TypeScriptGuardianAgent implements RankPilotAgent {
      */
     private async analyzeTypeScriptErrors(): Promise<TypeScriptError[]> {
         try {
-            const { stdout, stderr } = await execAsync('npm run typecheck');
+            // Run typecheck; we intentionally ignore stdout/stderr content when successful
+            await execAsync('npm run typecheck');
             // If typecheck passes, no errors to fix
             return [];
         } catch (error: unknown) {
-            let stdout = '';
-            let stderr = '';
+            // Extract compiler output from thrown error
+            let out = '';
             if (typeof error === 'object' && error !== null) {
                 const e = error as { stdout?: unknown; stderr?: unknown };
-                stdout = String(e.stdout ?? '');
-                stderr = String(e.stderr ?? '');
+                out = String(e.stdout || e.stderr || '');
             }
-            const output = stdout || stderr;
-            return this.parseTypeScriptErrors(output);
+            return this.parseTypeScriptErrors(out);
         }
     }
 
@@ -434,7 +434,9 @@ class DataCorruptionError extends Error {
         try {
             const result = await this.runTypeScriptCheck();
             return result.success || result.errorCount < result.previousErrorCount;
-        } catch {
+        } catch (err: unknown) {
+            // Swallow validation errors; return false to trigger rollback logic upstream
+            const _msg = err instanceof Error ? err.message : String(err); // intentional underscore to avoid unused var lint
             return false;
         }
     }

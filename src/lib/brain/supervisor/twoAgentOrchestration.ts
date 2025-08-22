@@ -31,12 +31,28 @@ let appendTask: (t: DelegationQueueTask) => void = (t: DelegationQueueTask) => {
 // Attempt dynamic import of the queue utils to override the global shim when available.
 const queueUtilsPath = path.resolve('scripts/delegation/queue-utils.ts');
 import(queueUtilsPath).then((mod) => {
-    const m: any = mod;
-    const read = m.readQueue ?? m.default?.readQueue;
-    const append = m.appendTask ?? m.default?.appendTask;
-    if (typeof read === 'function') readQueue = read;
-    if (typeof append === 'function') {
-        appendTask = (t: DelegationQueueTask) => append(t as unknown as GenericQueueTask);
+    // Narrow the dynamic module without using explicit any; guard each access.
+    type MaybeQueueUtilsExport = {
+        readQueue?: unknown;
+        appendTask?: unknown;
+        default?: { readQueue?: unknown; appendTask?: unknown };
+    };
+    const m = mod as MaybeQueueUtilsExport;
+    const readCandidate = (typeof m.readQueue === 'function')
+        ? m.readQueue
+        : (m.default && typeof m.default.readQueue === 'function')
+            ? m.default.readQueue
+            : undefined;
+    const appendCandidate = (typeof m.appendTask === 'function')
+        ? m.appendTask
+        : (m.default && typeof m.default.appendTask === 'function')
+            ? m.default.appendTask
+            : undefined;
+    if (readCandidate) {
+        readQueue = readCandidate as () => DelegationQueueTask[];
+    }
+    if (appendCandidate) {
+        appendTask = (t: DelegationQueueTask) => (appendCandidate as (t: GenericQueueTask) => void)(t as unknown as GenericQueueTask);
     }
 }).catch(() => {
     // Keep the global shim defaults if dynamic import fails.
@@ -99,6 +115,8 @@ function ensureParentDir(filePath: string) {
 /** Reviewer: combine ESLint JSON + optional TypeScript diagnostics into prioritized task buckets. */
 export function reviewerEmitTasks(options: { maxTasks?: number; includeWarnings?: boolean } = {}): ReviewerPlanTask[] {
     const { maxTasks = 5, includeWarnings = false } = options;
+    const ruleFilter = (process.env.TWO_AGENT_RULE_FILTER || '').trim();
+    const ruleFilterRegex = ruleFilter ? new RegExp(ruleFilter.split(',').map(r => r.trim().replace(/[.*+?^${}()|[\]\\]/g, r => `\\${r}`)).join('|')) : null;
     const lintReportPath = path.resolve(process.env.TWO_AGENT_LINT_REPORT_PATH || 'artifacts/eslint-report.json');
     const tscDiagPath = path.resolve(process.env.TWO_AGENT_TSC_DIAGNOSTICS_PATH || 'artifacts/tsc-diagnostics.json');
     const combined: ReviewerPlanTask[] = [];
@@ -133,6 +151,7 @@ export function reviewerEmitTasks(options: { maxTasks?: number; includeWarnings?
                 }
                 for (const [key, bucket] of grouped.entries()) {
                     const [file, rule] = key.split('::');
+                    if (ruleFilterRegex && !ruleFilterRegex.test(rule)) continue;
                     const severity = bucket.issues.some(issue => issue.severity === 'error') ? 'error' : 'warning';
                     const task: ReviewerPlanTask = {
                         taskId: `AI-LINT-${rule}-${Math.abs(hashCode(file)) % 10000}`,
@@ -167,6 +186,7 @@ export function reviewerEmitTasks(options: { maxTasks?: number; includeWarnings?
                 }
                 for (const [key, count] of grouped) {
                     const [file, rule] = key.split('::');
+                    if (ruleFilterRegex && !ruleFilterRegex.test(rule)) continue;
                     const task: ReviewerPlanTask = {
                         taskId: `AI-TSC-${rule}-${Math.abs(hashCode(file)) % 10000}`,
                         summary: `Fix TypeScript ${rule} diagnostics in ${path.basename(file)} (${count}) [error]`,
@@ -400,11 +420,26 @@ export async function runTwoAgentLintCycle(opts?: { maxTasks?: number; includeWa
         if (enableCodex) {
             const maxCodex = Math.max(0, Number(process.env.TWO_AGENT_CODEX_MAX_PER_BATCH || 2));
             let tagged = 0;
+            // Extra explicit rule list (comma separated) to always tag for Codex even if not TS diagnostics.
+            // Example: "@typescript-eslint/no-explicit-any,@typescript-eslint/no-floating-promises"
+            const extraCodexRulesRaw = (process.env.TWO_AGENT_CODEX_EXTRA_RULES || '').trim();
+            const extraCodexRules = new Set(
+                extraCodexRulesRaw
+                    ? extraCodexRulesRaw.split(',').map(r => r.trim()).filter(Boolean)
+                    : []
+            );
+            // If user specified more extra rules than maxCodex, allow expanding soft cap (but keep hard safety at 20)
+            const hardCap = 20;
+            let effectiveMaxCodex = maxCodex;
+            if (extraCodexRules.size > effectiveMaxCodex) {
+                effectiveMaxCodex = Math.min(hardCap, Math.max(extraCodexRules.size, effectiveMaxCodex));
+            }
             for (const t of plan) {
-                if (tagged >= maxCodex) break;
+                if (tagged >= effectiveMaxCodex) break;
                 const isTS = t.rule.startsWith('TS');
                 const isBatch = /\[batch]/i.test(t.summary);
-                if (isTS || isBatch) {
+                const isExtra = extraCodexRules.has(t.rule);
+                if (isTS || isBatch || isExtra) {
                     if (!t.summary.startsWith('[CODEX]')) {
                         t.summary = `[CODEX] ${t.summary}`;
                         tagged++;

@@ -4,7 +4,8 @@
  */
 
 import { LRUCache } from 'lru-cache';
-import { NeuroSEOSuite, type NeuroSEOReport, type KeyInsight } from '../neuroseo';
+// Explicit index import ensures resolution under strict ESM + ts-node
+import { NeuroSEOSuite, type KeyInsight, type NeuroSEOReport } from '../neuroseo/index';
 
 interface CacheConfig {
     max: number;

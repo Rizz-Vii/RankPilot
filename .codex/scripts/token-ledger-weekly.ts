@@ -14,7 +14,7 @@ function load(): Entry[] {
       .map((l) => {
         try {
           return JSON.parse(l) as Entry;
-        } catch (err) {
+        } catch {
           // ignore malformed lines
           return null;
         }

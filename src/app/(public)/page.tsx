@@ -1,11 +1,13 @@
 "use client";
-import React, { useEffect } from "react";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Rocket, Search, TrendingUp, Brain, Link2, Zap, Workflow, Users2, Coins, LineChart } from "lucide-react";
-import { motion } from "framer-motion";
-import Link from "next/link";
 import { AuthAwareHero } from "@/components/auth-aware-homepage";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -14,13 +16,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { Brain, Coins, LineChart, Link2, Rocket, Search, TrendingUp, Users2, Workflow, Zap } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import React, { useEffect } from "react";
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
   visible: (i: number) => ({
@@ -248,9 +248,8 @@ export default function HomePage() {
                           </CardTitle>
                           <div className="w-[90px] h-10 flex items-center justify-center overflow-visible" aria-hidden="true">
                             {/* Icon animation */}
-                            {/* @ts-ignore existing animation map retained */}
                             <motion.span
-                              variants={(iconAnimations as any)[item.title]}
+                              variants={iconAnimations[item.title]}
                               initial="initial"
                               animate={hoveredIdx === i ? "hover" : "animate"}
                               className="text-primary"

@@ -5,8 +5,8 @@
 
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useAIComponentLoader, useProgressiveLoader } from '../../hooks/use-web-vitals';
 import { LoadingSpinner } from '../ui/loading-spinner';
 
@@ -162,11 +162,11 @@ export class AIErrorBoundary extends React.Component<
         return { hasError: true, error };
     }
 
-    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
         console.error('AI Component Error:', error, errorInfo);
 
         // Send to monitoring service
-        const w = typeof window !== 'undefined' ? (window as any) : undefined;
+        const w = typeof window !== 'undefined' ? window as unknown as { gtag?: (...args: unknown[]) => void } : undefined;
         if (w && typeof w.gtag === 'function') {
             w.gtag('event', 'exception', {
                 description: `AI Component Error: ${error.message}`,
@@ -175,7 +175,7 @@ export class AIErrorBoundary extends React.Component<
         }
     }
 
-    render() {
+    override render() {
         if (this.state.hasError) {
             return this.props.fallback || (
                 <div className="flex flex-col items-center justify-center py-12 text-center">

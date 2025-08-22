@@ -4,10 +4,11 @@
  */
 
 import { zapierWorkflowBuilder } from '@/lib/automation/zapier-workflow-builder';
+import { extractErrorMessage } from '@/lib/errors/extract-error-message';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 // Initialize Firebase Admin if not already initialized
@@ -133,7 +134,10 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
 
     } catch (error) {
         console.error('[ZapierWorkflowAPI] Error:', error);
-        return NextResponse.json(enforceProvenance({ success: false, error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error', provenance: 'synthetic' }, { path: 'automation/zapier', note: 'exception' }), { status: 500 });
+        return NextResponse.json(
+            enforceProvenance({ success: false, error: 'Internal server error', details: extractErrorMessage(error), provenance: 'synthetic' }, { path: 'automation/zapier', note: 'exception' }),
+            { status: 500 }
+        );
     }
 }, { path: 'automation/zapier' });
 
@@ -171,6 +175,9 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
 
     } catch (error) {
         console.error('[ZapierWorkflowAPI] Error:', error);
-        return NextResponse.json(enforceProvenance({ success: false, error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error', provenance: 'synthetic' }, { path: 'automation/zapier', note: 'exception' }), { status: 500 });
+        return NextResponse.json(
+            enforceProvenance({ success: false, error: 'Internal server error', details: extractErrorMessage(error), provenance: 'synthetic' }, { path: 'automation/zapier', note: 'exception' }),
+            { status: 500 }
+        );
     }
 }, { path: 'automation/zapier' });

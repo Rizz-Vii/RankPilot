@@ -1,10 +1,11 @@
 import type { Stripe } from "@stripe/stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
-let stripePromise: Promise<Stripe | null>;
+let stripePromise: Promise<Stripe | null> | null = null;
 
 const getStripe = () => {
-  if (!stripePromise) {
+  // Use explicit null comparison to avoid truthiness check on a Promise (lint: no-misused-promises)
+  if (stripePromise === null) {
     const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
     if (!publishableKey) {
@@ -13,7 +14,8 @@ const getStripe = () => {
 
     stripePromise = loadStripe(publishableKey);
   }
-  return stripePromise;
+  // Return the promise (may still be pending); callers must await
+  return stripePromise as Promise<Stripe | null>;
 };
 
 export default getStripe;

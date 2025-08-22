@@ -29,10 +29,13 @@ class RoleBasedTestRunner {
   }
 
   getErrorMessage(error) {
-    if (!error) return String(error);
+    if (error == null) return String(error);
     if (typeof error === "string") return error;
-    if (error && error.message) return error.message;
-    if (error && error.stack) return String(error.stack).split("\n")[0];
+    if (typeof error === "object") {
+      const maybe = error;
+      if ("message" in maybe && typeof maybe.message === "string") return maybe.message;
+      if ("stack" in maybe && typeof maybe.stack === "string") return maybe.stack.split("\n")[0];
+    }
     return String(error);
   }
 
@@ -45,7 +48,7 @@ class RoleBasedTestRunner {
     // Write to log file
     try {
       fs.appendFileSync(this.logFile, logMessage + "\n");
-    } catch (error) {
+    } catch {
       // Ignore file write errors
     }
   }
@@ -59,7 +62,7 @@ class RoleBasedTestRunner {
         stdio: "ignore",
       });
       this.log("✅ Development server is running");
-    } catch (error) {
+    } catch {
       this.log("❌ Development server is not running", "ERROR");
       this.log(
         "💡 Please start the development server with: npm run dev",
@@ -169,9 +172,9 @@ class RoleBasedTestRunner {
         });
       }
 
-      this.log("✅ Mobile Tests completed successfully");
-    } catch (error) {
-      this.log(`⚠️ Mobile Tests had issues: ${this.getErrorMessage(error)}`, "WARN");
+    this.log("✅ Mobile Tests completed successfully");
+  } catch (error) {
+    this.log(`⚠️ Mobile Tests had issues: ${this.getErrorMessage(error)}`, "WARN");
       // Don't fail the entire test run for mobile issues
     }
   }

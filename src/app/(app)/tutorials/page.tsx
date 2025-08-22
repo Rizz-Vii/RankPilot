@@ -1,5 +1,6 @@
 "use client";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,8 +27,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
+import { isDemoContentEnabled } from "@/lib/flags/demo";
 import {
   ArrowRight,
   BookOpen,
@@ -46,8 +47,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import { isDemoContentEnabled } from "@/lib/flags/demo";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface Tutorial {
   id: string;
@@ -107,7 +106,8 @@ const TUTORIAL_CATEGORIES = [
 ];
 
 export default function TutorialsPage() {
-  const { user, loading: authLoading } = useAuth();
+  // Auth context currently unused in this static/demonstration page – omit to satisfy no-unused-vars
+  // const { user, loading: authLoading } = useAuth();
   const { subscription, canUseFeature } = useSubscription();
   const tier = subscription?.tier || "free";
   const demoEnabled = isDemoContentEnabled();
@@ -166,7 +166,8 @@ export default function TutorialsPage() {
         setLoading(false);
       }
     }
-    fetchTutorials();
+    void fetchTutorials();
+    // demoEnabled is stable boolean; fetchTutorials has no external deps beyond it
   }, [demoEnabled]);
 
   // Apply filters to tutorials list

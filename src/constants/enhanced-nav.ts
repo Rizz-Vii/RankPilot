@@ -1,41 +1,41 @@
-/* eslint-disable @typescript-eslint/no-unused-vars -- Some icons/types are exported for external consumers; keep imports for API stability */
-import type { LucideIcon } from "lucide-react";
+// Some icons/types are exported for external consumers; keep imports for API stability.
 import { TIER_HIERARCHY, type SubscriptionTier } from "@/lib/access-control";
+import type { LucideIcon } from "lucide-react";
 import {
-  LayoutDashboard,
-  KeyRound,
-  ScanText,
-  Users,
-  Search,
-  ListChecks,
-  Link,
-  Rocket,
+  Activity,
+  BarChart3,
   BookText,
-  Shield,
-  Lightbulb,
-  User,
-  Settings,
   Brain,
+  Briefcase,
+  CreditCard,
+  DollarSign,
   Eye,
+  FileText,
   Fingerprint,
+  FolderOpen,
+  KeyRound,
   Layers,
+  LayoutDashboard,
+  Lightbulb,
+  Link,
+  ListChecks,
+  Mail,
+  Map,
+  Megaphone,
+  MessageCircle,
+  PenTool,
   RefreshCw,
+  Rocket,
+  ScanText,
+  Search,
+  Settings,
+  Share2,
+  Shield,
   Target,
   TrendingUp,
+  User,
+  Users,
   Zap,
-  BarChart3,
-  Map,
-  MessageCircle,
-  FolderOpen,
-  Megaphone,
-  Mail,
-  Share2,
-  PenTool,
-  Briefcase,
-  DollarSign,
-  CreditCard,
-  FileText,
-  Activity,
 } from "lucide-react";
 
 export interface NavItem {
@@ -652,14 +652,18 @@ export const AppName = "RankPilot";
 
 // Navigation state management
 export interface NavState {
-  expandedGroups: Set<string>;
+  // Changed from Set<string> to string[] to simplify serialization, persistence
+  // and align with component logic that already treats this as an array
+  // (using .includes, JSON.stringify for localStorage, length checks, etc.).
+  // A Set caused type mismatches and unnecessary complexity for single-open group logic.
+  expandedGroups: string[];
   activeGroup?: string;
   activeItem?: string;
 }
 
 export const defaultNavState: NavState = {
   // With single-group expansion we open only Management by default
-  expandedGroups: new Set(["management"]),
+  expandedGroups: ["management"],
   activeGroup: undefined,
   activeItem: undefined,
 };
@@ -681,11 +685,14 @@ export const handleNavError = (error: Error, context: string) => {
 
 // Navigation analytics
 export const trackNavigation = (itemHref: string, groupId?: string) => {
-  if (typeof window !== "undefined" && typeof (window as any).gtag === "function") {
-    (window as any).gtag("event", "navigation_click", {
-      event_category: "navigation",
-      event_label: itemHref,
-      custom_parameter_1: groupId,
-    });
+  if (typeof window !== "undefined") {
+    const w = window as unknown as { gtag?: (...args: unknown[]) => void };
+    if (typeof w.gtag === "function") {
+      w.gtag("event", "navigation_click", {
+        event_category: "navigation",
+        event_label: itemHref,
+        custom_parameter_1: groupId,
+      });
+    }
   }
 };

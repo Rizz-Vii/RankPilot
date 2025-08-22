@@ -4,7 +4,7 @@ import type { ToolRunner } from '../../../types/brain';
 
 export interface BrainPluginModule {
     runners?: ToolRunner[];
-    validators?: Array<(ctx: any) => Promise<{ name: string; status: string; note?: string }>>;
+    validators?: Array<(ctx: unknown) => Promise<{ name: string; status: string; note?: string }>>;
 }
 
 export interface LoadedPlugins {

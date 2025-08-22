@@ -1,7 +1,7 @@
 /**
  * D3.js Visualizations API Routes
  * Implements Priority 2 Enterprise Features from DevReady Phase 3
- * 
+ *
  * Features:
  * - RESTful API for chart management
  * - Export functionality with multiple formats
@@ -12,9 +12,9 @@
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 // Note: adminStorage will be imported after fixing corrupted code below.
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
-import { generateChartExport, generateDashboardExport, persistExportArtifact, persistBufferToStorage } from '@/lib/visualizations/server-exports';
-import type { NextRequest } from 'next/server';
+import { generateChartExport, generateDashboardExport, persistExportArtifact } from '@/lib/visualizations/server-exports';
 import type { ExportFormat, ServerChartArtifactData, ServerDashboardArtifactData } from '@/types/visualization-exports';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 export const POST = withProvenance(async function POST(request: NextRequest) {

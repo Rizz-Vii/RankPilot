@@ -7,7 +7,7 @@ const { exec } = require('child_process');
 let sharp = null;
 try {
   sharp = require('sharp');
-} catch (err) {
+} catch {
   sharp = null;
 }
 
@@ -63,8 +63,8 @@ async function convertFaviconsToPNG() {
   try {
     fs.writeFileSync(safariIconPath, safariSvg);
     console.log('✅ Created: safari-pinned-tab.svg (monochrome)');
-  } catch (err) {
-    console.error(`❌ Failed to write safari-pinned-tab.svg: ${err && err.message ? err.message : String(err)}`);
+  } catch {
+    console.error('❌ Failed to write safari-pinned-tab.svg');
   }
 
   console.log('\n🎯 Favicon conversion complete! All formats ready for production.');

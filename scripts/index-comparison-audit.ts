@@ -20,7 +20,7 @@ interface FirestoreIndex {
 
 interface IndexConfig {
     indexes: FirestoreIndex[];
-    fieldOverrides?: any[];
+    fieldOverrides?: Array<Record<string, unknown>>;
 }
 
 class IndexComparisonAuditor {
@@ -70,8 +70,9 @@ class IndexComparisonAuditor {
             this.deployedIndexes = deployedConfig.indexes || [];
 
             console.log(`✅ Loaded ${this.deployedIndexes.length} deployed indexes`);
-        } catch (error) {
-            throw new Error(`Failed to fetch deployed indexes: ${error}`);
+        } catch (error: unknown) {
+            const msg = error && typeof error === 'object' && 'message' in error ? String((error as { message?: unknown }).message) : String(error);
+            throw new Error(`Failed to fetch deployed indexes: ${msg}`);
         }
     } private async compareIndexes() {
         console.log('\n🔍 Comparing local vs deployed indexes...\n');

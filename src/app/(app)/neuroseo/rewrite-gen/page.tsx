@@ -1,40 +1,40 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from "@/components/tool-page-header";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  PenTool, 
-  Sparkles, 
-  TrendingUp,
-  Download,
-  RefreshCw,
-  Copy,
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/context/AuthContext";
+import { useProvenance } from "@/hooks/useProvenance";
+import { db } from "@/lib/firebase";
+import { createDeterministicRng, randomFloat, randomInt, tagSynthetic } from '@/lib/synthetic/synthetic-utils';
+import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
+import { addDoc, collection } from "firebase/firestore";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  ArrowRight,
   BarChart3,
   CheckCircle2,
-  ArrowRight,
+  Copy,
+  Download,
+  FileText,
   Lightbulb,
-  FileText
+  PenTool,
+  RefreshCw,
+  Sparkles,
+  TrendingUp
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { createDeterministicRng, randomInt, randomFloat, tagSynthetic } from '@/lib/synthetic/synthetic-utils';
-import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
-import { useProvenance } from "@/hooks/useProvenance";
-import { useAuth } from "@/context/AuthContext";
-import { db } from "@/lib/firebase";
-import { collection, addDoc } from "firebase/firestore";
+import { useState } from "react";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { toast } from "sonner";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { FeatureGate } from '@/components/subscription/FeatureGate';
 
 interface ContentSuggestion {
   section: string;
@@ -109,8 +109,8 @@ export default function RewriteGenPage() {
   const [copiedSuggestion, setCopiedSuggestion] = useState<string | null>(null);
 
   const simulateRewriteAnalysis = async (
-    content: string, 
-    keywords: string[], 
+    content: string,
+    keywords: string[],
     type: string
   ): Promise<RewriteGenResult> => {
     setProvenance(null);
@@ -121,7 +121,7 @@ export default function RewriteGenPage() {
     }
 
     const sampleSections = ['Introduction', 'Main Content', 'Conclusion', 'Call to Action'];
-    const improvementTypes: Array<'seo' | 'readability' | 'engagement' | 'conversion' | 'clarity'> = 
+    const improvementTypes: Array<'seo' | 'readability' | 'engagement' | 'conversion' | 'clarity'> =
       ['seo', 'readability', 'engagement', 'conversion', 'clarity'];
 
     const rng = createDeterministicRng([inputUrl || content.slice(0,50), keywords.sort().join(','), type]);
@@ -250,7 +250,7 @@ export default function RewriteGenPage() {
     try {
   const keywords = targetKeywords.split(',').map(k => k.trim()).filter(Boolean);
       const content = contentText || `Content from ${inputUrl}`;
-      
+
       const result = await simulateRewriteAnalysis(content, keywords, analysisType);
       setCurrentResult(result);
 
@@ -273,7 +273,7 @@ export default function RewriteGenPage() {
   };
 
   const handleCopySuggestion = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
+    void navigator.clipboard.writeText(text);
     setCopiedSuggestion(id);
     setTimeout(() => setCopiedSuggestion(null), 2000);
     toast.success("Copied to clipboard!");
@@ -281,13 +281,13 @@ export default function RewriteGenPage() {
 
   const exportResults = () => {
     if (!currentResult) return;
-    
+
     const exportData = {
       url: currentResult.url,
       analysis: currentResult,
       exportedAt: new Date().toISOString()
     };
-    
+
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -297,7 +297,7 @@ export default function RewriteGenPage() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
+
     toast.success("Results exported successfully!");
   };
 
@@ -379,8 +379,8 @@ export default function RewriteGenPage() {
           </div>
 
           <div className="flex justify-end">
-            <Button 
-              onClick={handleAnalyze}
+              <Button
+                onClick={() => void handleAnalyze()}
               disabled={isAnalyzing || (!inputUrl && !contentText)}
               className="min-w-[160px]"
             >
@@ -671,9 +671,9 @@ export default function RewriteGenPage() {
                             <div>
                               <Label className="text-sm">Length</Label>
                               <div className="flex items-center gap-2 mt-1">
-                                <Progress 
-                                  value={(meta.length / 160) * 100} 
-                                  className="flex-1" 
+                                <Progress
+                                  value={(meta.length / 160) * 100}
+                                  className="flex-1"
                                 />
                                 <span className="text-sm font-medium">{meta.length}/160</span>
                               </div>
@@ -777,7 +777,7 @@ export default function RewriteGenPage() {
                           <div className="flex items-center gap-2">
                             <h4 className="font-semibold">{rec.title}</h4>
                             <Badge variant={
-                              rec.priority === 'high' ? 'destructive' : 
+                              rec.priority === 'high' ? 'destructive' :
                               rec.priority === 'medium' ? 'default' : 'secondary'
                             }>
                               {rec.priority} priority
@@ -786,9 +786,9 @@ export default function RewriteGenPage() {
                               {rec.category}
                             </Badge>
                           </div>
-                          
+
                           <p className="text-sm text-muted-foreground">{rec.description}</p>
-                          
+
                           <div>
                             <Label className="text-sm font-medium">Implementation Examples:</Label>
                             <ul className="text-sm mt-2 space-y-1">

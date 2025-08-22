@@ -12,9 +12,9 @@ import { adminDb } from '../src/lib/firebase-admin';
 type Row = {
     metric: string;
     value: string;
-    valueNum: number;
+    valueNum?: number;
     change: string;
-    changeNum: number;
+    changeNum?: number;
     createdAt: Date;
     teamId?: string;
     userId?: string;
@@ -57,9 +57,9 @@ async function main() {
         rows.push({
             metric: `Metric ${String(i + 1).padStart(2, '0')}`,
             value: stringOnly ? `${value}` : value,
-            valueNum: stringOnly ? undefined as any : valueNum,
+            valueNum: stringOnly ? undefined : valueNum,
             change: stringOnly ? `${change}` : change,
-            changeNum: stringOnly ? undefined as any : changeNum,
+            changeNum: stringOnly ? undefined : changeNum,
             createdAt: new Date(),
             teamId,
             userId,

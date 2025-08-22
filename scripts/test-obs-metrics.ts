@@ -1,7 +1,7 @@
 #!/usr/bin/env ts-node
 /** OBS-01 dedicated counters test */
-import http from 'http';
 import assert from 'assert';
+import http from 'http';
 
 const get = (path: string): Promise<unknown> => {
     return new Promise((resolve, reject) => {
@@ -69,7 +69,6 @@ const postStreamAwait = (path: string, body: unknown, waitMs = 10000): Promise<v
             },
             (res) => {
                 let buf = '';
-                const deadline = Date.now() + waitMs;
                 res.on('data', (c) => {
                     buf += c;
                     if (buf.includes('\n\nevent: end')) {
@@ -88,7 +87,8 @@ const postStreamAwait = (path: string, body: unknown, waitMs = 10000): Promise<v
 
 async function main() {
     const before = await get('/api/neuroseo/metrics');
-    const base = before.neuro || {};
+    const bObj = (before && typeof before === 'object') ? before as Record<string, unknown> : {};
+    const base = (bObj.neuro && typeof bObj.neuro === 'object') ? bObj.neuro as Record<string, number> : {};
     // Trigger guard strip (empty urls)
     await postJson('/api/neuroseo/stream', { urls: [], userId: 'obs-test' });
     // Trigger workflow run (valid)
@@ -99,15 +99,19 @@ async function main() {
     // Persist snapshot (optional)
     await postJson('/api/neuroseo/metrics-export', {});
     const after = await get('/api/neuroseo/metrics');
-    const neuro = after.neuro;
-    assert(neuro.workflowRuns >= (base.workflowRuns || 0) + 1, 'workflowRuns did not increment');
-    assert(neuro.guardStrips >= (base.guardStrips || 0) + 1, 'guardStrips did not increment');
-    assert(neuro.stripeWebhookErrors >= (base.stripeWebhookErrors || 0) + 1, 'stripeWebhookErrors did not increment');
+    const aObj = (after && typeof after === 'object') ? after as Record<string, unknown> : {};
+    const neuro = (aObj.neuro && typeof aObj.neuro === 'object') ? aObj.neuro as Record<string, number> : {};
+    const br = Number(base.workflowRuns || 0); const ar = Number(neuro.workflowRuns || 0);
+    const bg = Number(base.guardStrips || 0); const ag = Number(neuro.guardStrips || 0);
+    const bs = Number(base.stripeWebhookErrors || 0); const asE = Number(neuro.stripeWebhookErrors || 0);
+    assert(ar >= br + 1, 'workflowRuns did not increment');
+    assert(ag >= bg + 1, 'guardStrips did not increment');
+    assert(asE >= bs + 1, 'stripeWebhookErrors did not increment');
     console.log('OBS METRICS TEST PASS', {
         delta: {
-            workflowRuns: neuro.workflowRuns - (base.workflowRuns || 0),
-            guardStrips: neuro.guardStrips - (base.guardStrips || 0),
-            stripeWebhookErrors: neuro.stripeWebhookErrors - (base.stripeWebhookErrors || 0)
+            workflowRuns: ar - br,
+            guardStrips: ag - bg,
+            stripeWebhookErrors: asE - bs
         }
     });
 }

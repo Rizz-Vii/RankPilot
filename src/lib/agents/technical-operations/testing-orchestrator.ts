@@ -12,7 +12,7 @@ const execAsync = promisify(exec) as unknown as (command: string, opts?: { timeo
 
 /**
  * Testing Orchestrator Agent - Autonomous testing validation and optimization
- * 
+ *
  * Targets:
  * 1. 153 Playwright tests execution and validation
  * 2. Role-based authentication across 5 tiers
@@ -148,14 +148,14 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
 
                 console.log(`Testing ${tier} tier authentication...`);
 
-                const { stdout, stderr } = await execAsync(
+                const { stdout: _stdout, stderr: _stderr } = await execAsync(
                     `npx playwright test --config=playwright.config.role-based.ts --grep="${tier}"`,
                     { timeout: 120000 }
                 );
 
                 const duration = Date.now() - startTime;
 
-                if ((stdout || '').includes('passed') || !(stderr || '').includes('failed')) {
+                if ((_stdout || '').includes('passed') || !(_stderr || '').includes('failed')) {
                     this.testResults.push({
                         name: `Role-based test: ${tier}`,
                         passed: true,
@@ -171,7 +171,7 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
                     });
                 }
 
-            } catch (error) {
+            } catch {
                 console.log(`⚠️  ${tier} tier test execution failed, continuing with next tier...`);
                 this.testResults.push({
                     name: `Role-based test: ${tier}`,
@@ -192,13 +192,14 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
             const startTime = Date.now();
 
             // Run Lighthouse performance tests
-            const { stdout: lighthouseOutput } = await execAsync(
+            // Lighthouse performance tests (output not directly used)
+            await execAsync(
                 'npx lighthouse http://localhost:3000 --output=json --output-path=./lighthouse-report.json --chrome-flags="--headless"',
                 { timeout: 180000 }
             );
 
             // Run Playwright performance tests
-            const { stdout: playwrightOutput } = await execAsync(
+            await execAsync(
                 'npx playwright test --config=playwright.config.performance.ts',
                 { timeout: 120000 }
             );
@@ -213,7 +214,7 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
 
             console.log(`✅ Performance tests completed (${duration}ms)`);
 
-        } catch (error) {
+        } catch {
             console.log('⚠️  Performance tests encountered issues, but infrastructure validated');
             this.testResults.push({
                 name: 'Performance Tests (Core Web Vitals)',
@@ -232,7 +233,7 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
         try {
             const startTime = Date.now();
 
-            const { stdout } = await execAsync(
+            await execAsync(
                 'npx playwright test --config=playwright.config.mobile.ts',
                 { timeout: 120000 }
             );
@@ -247,7 +248,7 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
 
             console.log(`✅ Mobile tests completed (${duration}ms)`);
 
-        } catch (error) {
+        } catch {
             console.log('⚠️  Mobile tests encountered issues, validating mobile-responsive utilities...');
 
             // Validate mobile utilities exist
@@ -276,7 +277,7 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
             const startTime = Date.now();
 
             // Check for axe-core accessibility testing
-            const { stdout } = await execAsync(
+            await execAsync(
                 'npx playwright test --grep="accessibility|a11y|wcag"',
                 { timeout: 120000 }
             );
@@ -291,7 +292,7 @@ export class TestingOrchestratorAgent implements RankPilotAgent {
 
             console.log(`✅ Accessibility tests completed (${duration}ms)`);
 
-        } catch (error) {
+        } catch {
             console.log('⚠️  Accessibility tests need enhancement, validating touch targets...');
 
             // Validate 48px touch targets in CSS
@@ -433,7 +434,7 @@ export class TestingUtility {
     static async initialize() {
         return true;
     }
-    
+
     static async cleanup() {
         return true;
     }
@@ -520,8 +521,9 @@ export default {
             // No destructive changes made, just validation and report generation
             console.log('✅ Rollback completed (no destructive changes to rollback)');
             return true;
-        } catch (error) {
-            console.error('❌ Rollback failed:', error);
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            console.error('❌ Rollback failed:', msg);
             return false;
         }
     }

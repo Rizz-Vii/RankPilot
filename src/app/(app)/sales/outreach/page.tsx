@@ -1,26 +1,30 @@
 "use client";
 // Sales - Outreach
-import { useEffect, useState } from 'react';
-import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { MetricCard } from '@/components/metrics/MetricCard';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
-import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
-import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { ActionCard } from '@/components/shared/action-card';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { ToolPageHeader } from '@/components/tool-page-header';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/context/AuthContext';
-import { fetchRecentSalesMetricsSnapshots } from '@/lib/services/sales-automation-snapshots';
-import { ActionCard } from '@/components/shared/action-card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/context/AuthContext';
 import { useAutomationTrigger } from '@/hooks/useAutomationTrigger';
+import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
 import { useProvenance } from '@/hooks/useProvenance';
+import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { fetchRecentSalesMetricsSnapshots } from '@/lib/services/sales-automation-snapshots';
+import { useEffect, useState } from 'react';
 import { NewSequenceModal } from '../_parts/new-sequence-modal';
 
 export default function SalesOutreachPage() {
   const { data } = useMockDomainMetrics('sales', true);
   const { user } = useAuth();
   const userId = user?.uid;
-  const teamId = (user as any)?.teamId as string | undefined;
+  const teamId: string | undefined = ((): string | undefined => {
+    if (!user || typeof user !== 'object') return undefined;
+    const possible = (user as unknown as { teamId?: unknown }).teamId;
+    return typeof possible === 'string' ? possible : undefined;
+  })();
   interface OutreachHistory { pipeline: number; ts: Date }
   interface SalesMetricsSnapshot { pipeline: number; deals: number; won: number; ts: Date }
   const [snapMetrics, setSnapMetrics] = useState<SalesMetricsSnapshot | null>(null);
@@ -30,9 +34,52 @@ export default function SalesOutreachPage() {
   const [seqOpen, setSeqOpen] = useState(false);
   const { markLive, markFallback, ProvenanceLegend } = useProvenance();
   useEffect(() => { trackDashboardView('sales'); }, []);
-  useEffect(()=> { if(!userId) return; setLoadingSnap(true); let active=true; (async()=> { try { const m = await fetchRecentSalesMetricsSnapshots(userId, teamId,6) as any[]; if(active){ if(m.length){ setSnapMetrics({ pipeline: m[0].pipeline, deals: m[0].totalDeals, won: m[0].closedWon, ts: (m[0].createdAt as any)?.toDate?.()||m[0].createdAt||new Date() }); setHistory(m.map((s:any)=> ({ pipeline: s.pipeline, ts: (s.createdAt as any)?.toDate?.()||s.createdAt||new Date() }))); markLive(); } else { markFallback(); } } } finally { if(active) setLoadingSnap(false);} })(); return ()=> {active=false;}; }, [userId, teamId]);
+  function toDateLike(v: unknown): Date {
+    if (v instanceof Date) return v;
+    if (v && typeof v === 'object' && 'toDate' in (v as Record<string, unknown>)) {
+      const fn = (v as { toDate?: () => unknown }).toDate;
+      if (typeof fn === 'function') {
+        const d = fn();
+        if (d instanceof Date) return d;
+      }
+    }
+    return new Date();
+  }
+  useEffect(() => {
+    if (!userId) return;
+    setLoadingSnap(true);
+    let active = true;
+    void (async () => {
+      try {
+        const snapsRaw = await fetchRecentSalesMetricsSnapshots(userId, teamId, 6);
+        if (!active) return;
+        const toNum = (v: unknown) => (typeof v === 'number' ? v : 0);
+        if (Array.isArray(snapsRaw) && snapsRaw.length) {
+          const first = snapsRaw[0];
+          setSnapMetrics({
+            pipeline: toNum(first.pipeline),
+            deals: toNum(first.totalDeals),
+            won: toNum(first.closedWon),
+            ts: toDateLike(first.createdAt)
+          });
+          setHistory(
+            snapsRaw.map((s) => ({
+              pipeline: toNum(s.pipeline),
+              ts: toDateLike(s.createdAt)
+            }))
+          );
+          markLive();
+        } else {
+          markFallback();
+        }
+      } finally {
+        if (active) setLoadingSnap(false);
+      }
+    })();
+    return () => { active = false; };
+  }, [userId, teamId, markLive, markFallback]);
 
-  function runRefresh() { trigger('salesRefreshMetrics', { optimistic: () => setSnapMetrics(s => s? { ...s, ts:new Date() }: s) }); }
+  function runRefresh() { void trigger('salesRefreshMetrics', { optimistic: () => setSnapMetrics(s => s ? { ...s, ts: new Date() } : s) }); }
   return (
     <FeatureGate feature="sales_outreach" requiredTier="agency" showUpgrade>
       <div className="p-6 space-y-10">

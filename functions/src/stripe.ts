@@ -1,8 +1,8 @@
-import { onRequest } from "firebase-functions/v2/https";
-import { setGlobalOptions } from "firebase-functions/v2";
-import Stripe from "stripe";
-import { initializeApp, getApps } from "firebase-admin/app";
+import { getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import { setGlobalOptions } from "firebase-functions/v2";
+import { onRequest } from "firebase-functions/v2/https";
+import Stripe from "stripe";
 
 // Initialize Firebase Admin if not already initialized
 if (!getApps().length) {
@@ -115,9 +115,10 @@ export const stripeWebhook = onRequest(
         sig as string,
         process.env.STRIPE_WEBHOOK_SECRET!
       );
-    } catch (err: any) {
-      console.error("Webhook signature verification failed:", err.message);
-      response.status(400).send(`Webhook Error: ${err.message}`);
+    } catch (err: unknown) {
+      const msg = err && typeof err === 'object' && 'message' in err ? String((err as { message?: unknown }).message) : String(err);
+      console.error("Webhook signature verification failed:", msg);
+      response.status(400).send(`Webhook Error: ${msg}`);
       return;
     }
 
@@ -247,7 +248,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
-  const subscriptionId = invoice.subscription as string | null;
+  const subscriptionId = (invoice as unknown as { subscription?: string | null }).subscription as string | null;
   if (subscriptionId && typeof subscriptionId === "string") {
     const subscription =
       await getStripe().subscriptions.retrieve(subscriptionId);

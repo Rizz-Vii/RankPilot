@@ -1,22 +1,22 @@
 "use client";
 // Enterprise Marketing - Marketing Content Generation
-import { useEffect, useState } from 'react';
-import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { MetricCard } from '@/components/metrics/MetricCard';
+import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
-import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
+import { ActionCard } from '@/components/shared/ActionCard';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { generateContentAsset, generateVariants, adjustTone } from '@/lib/ai/marketing-automation';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { useMarketingCampaignMetrics } from '@/hooks/useMarketingCampaignMetrics';
-import { PeriodSelector } from '@/components/metrics/PeriodSelector';
-import { ActionCard } from '@/components/shared/ActionCard';
-import { LazyDataTable } from '@/components/metrics/LazyDataTable';
-import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
 import { useProvenance } from '@/hooks/useProvenance';
+import { adjustTone, generateContentAsset, generateVariants } from '@/lib/ai/marketing-automation';
+import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { useEffect, useState } from 'react';
 
 interface GenerateDialogProps { open:boolean; onClose:()=>void; onGenerate:(type:string, topic:string)=>Promise<void>; loading:boolean; }
 function GenerateDialog({ open, onClose, onGenerate, loading }: GenerateDialogProps){
@@ -29,7 +29,7 @@ function GenerateDialog({ open, onClose, onGenerate, loading }: GenerateDialogPr
         <label className="text-xs font-medium flex flex-col gap-1">Type<select className="h-9 border rounded-md bg-background px-2 text-sm" value={type} onChange={e=> setType(e.target.value)}><option value="blog">Blog</option><option value="email">Email</option><option value="ad">Ad Copy</option><option value="landing">Landing</option></select></label>
         <label className="text-xs font-medium flex flex-col gap-1">Topic<Input value={topic} onChange={e=> setTopic(e.target.value)} /></label>
       </div>
-      <div className="flex justify-end gap-2"><Button size="sm" variant="ghost" onClick={onClose} disabled={loading}>Cancel</Button><Button size="sm" onClick={()=> onGenerate(type, topic)} disabled={loading}>{loading? 'Generating…':'Generate'}</Button></div>
+      <div className="flex justify-end gap-2"><Button size="sm" variant="ghost" onClick={onClose} disabled={loading}>Cancel</Button><Button size="sm" onClick={() => { void onGenerate(type, topic); }} disabled={loading}>{loading ? 'Generating…' : 'Generate'}</Button></div>
     </div>
   </div>;
 }
@@ -69,13 +69,17 @@ export default function MarketingContentGenerationPage() {
   const live = useMarketingCampaignMetrics(months);
   const { data: mock } = useMockDomainMetrics('marketing', true);
   interface MarketingMetric { key: string; label: string; value: number; delta: number; trend: number[]; intent?: string }
-  interface MarketingLive { kpis: MarketingMetric[]; rows: any[]; loading: boolean; addOptimistic: (row: any)=>void; }
+  interface MarketingRow { id: string; period: string; name?: string; channel?: string; impressions?: number; clicks?: number; leads?: number; spend?: number; revenue?: number; __provenance?: string;[k: string]: unknown }
+  interface MarketingLive { kpis: MarketingMetric[]; rows: MarketingRow[]; loading: boolean; addOptimistic: (row: MarketingRow) => void; }
   const data: MarketingLive = (live.kpis.length ? live : { kpis: (mock?.kpis || []), rows: [], loading:false, addOptimistic: live.addOptimistic }) as MarketingLive;
   useEffect(() => { trackDashboardView('marketing'); }, []);
   const { toast } = useToast();
   const { user } = useAuth();
   const userId = user?.uid || 'dev-user';
-  const teamId = (user as any)?.teamId as string | undefined;
+  const teamId: string | undefined = (() => {
+    const possible = (user as unknown as { teamId?: unknown })?.teamId;
+    return typeof possible === 'string' ? possible : undefined;
+  })();
   const [genOpen,setGenOpen]=useState(false);
   const [varOpen,setVarOpen]=useState(false);
   const [toneOpen,setToneOpen]=useState(false);
@@ -89,14 +93,18 @@ export default function MarketingContentGenerationPage() {
   async function handleGenerate(type:string, topic:string){
     try {
       setBusy('generate');
-      live.addOptimistic({ id: `tmp-${Date.now()}`, period: new Date().toISOString().slice(0,7), name: `${type}:${topic.slice(0,40)}`, channel:'content', impressions:0, clicks:0, leads:0, spend:0, revenue:0, __provenance:'optimistic' } as any);
+      live.addOptimistic({ id: `tmp-${Date.now()}`, period: new Date().toISOString().slice(0, 7), name: `${type}:${topic.slice(0, 40)}`, channel: 'content', impressions: 0, clicks: 0, leads: 0, spend: 0, revenue: 0, __provenance: 'optimistic' });
       const res = await generateContentAsset(type, topic, userId, teamId);
       toast({ title:'Asset generated', description: res.id });
       setLastContent(topic + ' ' + res.body.slice(0,80)+'...');
       setGenOpen(false);
     } catch(e: unknown) {
-      const err = (e as any);
-      toast({ title:'Generation failed', description: err?.message || 'Unknown error', variant:'destructive'});
+      const msg = e instanceof Error
+        ? e.message
+        : (e && typeof e === 'object' && 'message' in e
+          ? String((e as { message?: unknown }).message)
+          : 'Unknown error');
+      toast({ title: 'Generation failed', description: msg, variant: 'destructive' });
     } finally { setBusy(null);} }
   function openVariants(){ setVarOpen(true); }
   function openTone(){ setToneOpen(true); }

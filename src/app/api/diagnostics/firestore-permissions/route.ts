@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
-import { collection, query, limit, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { collection, getDocs, limit, query } from 'firebase/firestore';
+import { NextResponse } from 'next/server';
 
 // Dev-only diagnostics endpoint: validates current user Firestore read access for key collections
 // Returns status per collection; avoid exposing data (only sizes / error codes)
@@ -24,8 +24,15 @@ export async function GET() {
             const snap = await getDocs(q);
             results[colName] = { ok: true, count: snap.size };
         } catch (e: unknown) {
-            const err = e as any;
-            results[colName] = { ok: false, error: err?.code || err?.message };
+            const code = ((): string => {
+                if (e && typeof e === 'object') {
+                    const rec = e as Record<string, unknown>;
+                    if (typeof rec.code === 'string') return rec.code;
+                    if (typeof rec.message === 'string') return rec.message;
+                }
+                return 'unknown_error';
+            })();
+            results[colName] = { ok: false, error: code };
         }
     }
     return NextResponse.json({ ts: new Date().toISOString(), results });

@@ -19,11 +19,17 @@ test.describe('Feature - data-cleansing', () => {
         try {
             const testUser = UNIFIED_TEST_USERS.agency;
             await auth.loginAndGoToDashboard(testUser);
-        } catch (error: any) {
+        } catch (error: unknown) {
+            let msg: string;
+            if (error && typeof error === 'object' && 'message' in error) {
+                msg = String((error as { message?: unknown }).message);
+            } else {
+                msg = String(error);
+            }
             try {
-                featureDataCleansingDiagnostics.errors.push({ message: String(error?.message || error), phase: 'beforeEach-login' });
+                featureDataCleansingDiagnostics.errors.push({ message: msg, phase: 'beforeEach-login' });
             } catch { }
-            console.warn('Login failed, using fallback:', error?.message);
+            console.warn('Login failed, using fallback:', msg);
             await page.goto('/dashboard');
             await page.waitForTimeout(2000);
         }

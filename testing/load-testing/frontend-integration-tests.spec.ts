@@ -346,7 +346,7 @@ test.describe('RankPilot Frontend-Backend Integration', () => {
         test('Network Resource Loading', async ({ page }) => {
             console.log('🌐 Testing Resource Loading...');
 
-            const responses: any[] = [];
+            const responses: { url: string; status: number; size: string | undefined }[] = [];
 
             page.on('response', response => {
                 responses.push({

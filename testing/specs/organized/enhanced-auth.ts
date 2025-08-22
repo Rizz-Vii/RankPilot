@@ -114,7 +114,7 @@ export class EnhancedAuth {
           waitUntil: 'domcontentloaded'
         });
         console.log(`✅ Navigation to ${expectedPath} successful`);
-      } catch (navError) {
+      } catch {
         // Check current URL if navigation fails
         const currentUrl = this.page.url();
         console.log(`⚠️ Navigation timeout. Current URL: ${currentUrl}`);
@@ -260,7 +260,7 @@ export class EnhancedAuth {
       );
 
       console.log("✅ Body is now visible");
-    } catch (error) {
+    } catch {
       console.log("⚠️ Body visibility check failed, continuing anyway");
       await this.page.screenshot({
         path: `test-results/body-visibility-debug-${Date.now()}.png`,
@@ -303,7 +303,7 @@ export class EnhancedAuth {
       await this.page.waitForURL(/\/(login|$)/, { timeout: 10000 });
       console.log("✅ Successfully logged out");
 
-    } catch (error) {
+    } catch {
       console.log("⚠️ Logout may have failed, continuing...");
     }
   }

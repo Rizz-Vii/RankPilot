@@ -7,25 +7,23 @@ describe('SSE abort should not error (streaming route)', () => {
     const target = `${url}/api/streaming?action=sse&clientId=unit-abort`;
     const controller = new AbortController();
 
-  const res = await fetch(target as any, { signal: controller.signal as any, headers: { accept: 'text/event-stream' } } as any);
+    const res = await fetch(target, { signal: controller.signal, headers: { accept: 'text/event-stream' } });
     assert.equal(res.status, 200, 'SSE endpoint should return 200');
     const ct = res.headers.get('content-type') || '';
     assert.ok(ct.includes('text/event-stream'), 'content-type should be text/event-stream');
 
     // Start reading one chunk to ensure the stream is live
-    const body: any = (res as any).body;
-    const hasWebReader = !!body?.getReader;
-    let gotFirst = false;
-    let errored = false;
+    const body = (res as Response).body as ReadableStream<Uint8Array> | (NodeJS.ReadableStream & { once?: (ev: string, fn: (...args: unknown[]) => void) => void; off?: (ev: string, fn: (...args: unknown[]) => void) => void; on?: (ev: string, fn: (...args: unknown[]) => void) => void });
+    const hasWebReader = typeof (body as ReadableStream<Uint8Array> | undefined)?.getReader === 'function';
 
     if (hasWebReader) {
-      const reader: ReadableStreamDefaultReader<Uint8Array> = body.getReader();
+      const reader: ReadableStreamDefaultReader<Uint8Array> = (body as ReadableStream<Uint8Array>).getReader();
       try {
-        const first = await Promise.race([
+        await Promise.race([
           reader.read(),
           new Promise((resolve) => setTimeout(() => resolve({ done: true }), 500)),
-        ]) as any;
-        gotFirst = !!first && !first.done;
+        ]);
+        // First chunk read or timeout (non-blocking)
       } catch {
         // Ignore first read failure; stream may be slow
       }
@@ -37,16 +35,17 @@ describe('SSE abort should not error (streaming route)', () => {
           new Promise((resolve) => setTimeout(() => resolve({ done: true }), 250)),
         ]);
       } catch {
-        errored = true;
+        // swallow post-abort read error
       }
-    } else if (body && typeof body.on === 'function') {
+    } else if (body && typeof (body as { on?: unknown }).on === 'function') {
       // Node Readable stream path (node-fetch or older environments)
       await new Promise<void>((resolve) => {
-        const onData = () => { gotFirst = true; cleanup(); resolve(); };
-        const onError = () => { errored = true; cleanup(); resolve(); };
-        const cleanup = () => { try { body.off('data', onData); body.off('error', onError); } catch {} };
-        body.once('data', onData);
-        body.once('error', onError);
+        const nodeBody = body as NodeJS.ReadableStream & { off?: (ev: string, fn: (...args: unknown[]) => void) => void; once?: (ev: string, fn: (...args: unknown[]) => void) => void };
+        const onData = () => { cleanup(); resolve(); };
+        const onError = () => { cleanup(); resolve(); };
+        const cleanup = () => { try { nodeBody.off?.('data', onData); nodeBody.off?.('error', onError); } catch { } };
+        nodeBody.once?.('data', onData);
+        nodeBody.once?.('error', onError);
         setTimeout(() => { cleanup(); resolve(); }, 500);
       });
       controller.abort();

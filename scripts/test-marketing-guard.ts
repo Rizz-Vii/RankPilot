@@ -1,9 +1,9 @@
 import { sanitizeMarketingCampaignDoc } from '../src/lib/firebase/marketing-write-guard';
 
-function assert(cond: any, msg: string) { if (!cond) { console.error('Assertion failed:', msg); process.exitCode = 1; } }
+function assert(cond: unknown, msg: string) { if (!Boolean(cond)) { console.error('Assertion failed:', msg); process.exitCode = 1; } }
 
 function testStripDerived() {
-    const raw = { name: 'X', ctr: 0.5, roi: 3, spend: 10, period: '2025-08' } as any;
+    const raw = { name: 'X', ctr: 0.5, roi: 3, spend: 10, period: '2025-08' };
     const cleaned = sanitizeMarketingCampaignDoc(raw);
     assert(!('ctr' in cleaned), 'ctr should be stripped');
     assert(!('roi' in cleaned), 'roi should be stripped');
@@ -11,7 +11,7 @@ function testStripDerived() {
 }
 
 function testNumericNormalize() {
-    const raw = { impressions: '100', clicks: '25', spend: '7.5', roi: 2, period: '2025-08-09T00:00:00Z' } as any;
+    const raw = { impressions: '100', clicks: '25', spend: '7.5', roi: 2, period: '2025-08-09T00:00:00Z' };
     const cleaned = sanitizeMarketingCampaignDoc(raw);
     assert(cleaned.impressions === 100, 'impressions numeric');
     assert(cleaned.clicks === 25, 'clicks numeric');
@@ -20,7 +20,7 @@ function testNumericNormalize() {
 }
 
 function testInvalidNumeric() {
-    const raw = { impressions: 'abc', clicks: '??', spend: 'nan', period: '2025-08' } as any;
+    const raw = { impressions: 'abc', clicks: '??', spend: 'nan', period: '2025-08' };
     const cleaned = sanitizeMarketingCampaignDoc(raw);
     assert(cleaned.impressions === 0, 'impressions fallback 0');
     assert(cleaned.clicks === 0, 'clicks fallback 0');

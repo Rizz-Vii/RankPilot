@@ -1,37 +1,37 @@
 // src/components/profile-form.tsx
  "use client";
- 
- import { zodResolver } from "@hookform/resolvers/zod";
- import { useForm } from "react-hook-form";
- import { z } from "zod";
- import { useState } from "react";
- import type { User } from "firebase/auth";
- import { doc, updateDoc } from "firebase/firestore";
- import { Loader2 } from "lucide-react";
- 
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { User } from "firebase/auth";
+import { doc, updateDoc } from "firebase/firestore";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
  import { Button } from "@/components/ui/button";
- import {
-   Form,
-   FormControl,
-   FormDescription,
-   FormField,
-   FormItem,
-   FormLabel,
-   FormMessage,
- } from "@/components/ui/form";
- import { Input } from "@/components/ui/input";
- import { Textarea } from "@/components/ui/textarea";
- import {
-   Card,
-   CardContent,
-   CardDescription,
-   CardFooter,
-   CardHeader,
-   CardTitle,
- } from "@/components/ui/card";
- import { db } from "@/lib/firebase";
- import { useToast } from "@/hooks/use-toast";
- import { asUserProfile, type UserProfile } from "@/types/user-profile";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { db } from "@/lib/firebase";
+import { asUserProfile, type UserProfile } from "../../types/user-profile"; // corrected relative path to project root types
 
 const formSchema = z.object({
   displayName: z
@@ -99,7 +99,7 @@ export default function ProfileForm({ user, profile }: ProfileFormProps): JSX.El
         title: "Profile Updated",
         description: "Your SEO profile has been successfully updated.",
       });
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Update Failed",
@@ -121,7 +121,7 @@ export default function ProfileForm({ user, profile }: ProfileFormProps): JSX.El
       </CardHeader>
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(handleFormSubmit)}
+          onSubmit={(e) => { void form.handleSubmit(handleFormSubmit)(e); }}
           className="space-y-8"
         >
           <CardContent className="space-y-4">

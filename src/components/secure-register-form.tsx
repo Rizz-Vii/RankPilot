@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { usePasswordToggle } from "@/hooks/usePasswordToggle";
 import { useCaptcha } from "@/hooks/useCaptcha";
+import { usePasswordToggle } from "@/hooks/usePasswordToggle";
 import { useRateLimiter } from "@/hooks/useRateLimiter";
+import { useState } from "react";
 export interface SecureRegisterFormProps {
   onRegister: (args: {
     email: string;
@@ -33,28 +33,29 @@ export function SecureRegisterForm({
   const { captchaToken, CaptchaComponent } = useCaptcha();
   const { canProceed } = useRateLimiter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
-    if (!email) return setErrors((e) => ({ ...e, email: "Email required" }));
+    if (!email) return setErrors((err) => ({ ...err, email: "Email required" }));
     if (!password)
-      return setErrors((e) => ({ ...e, password: "Password required" }));
+      return setErrors((err) => ({ ...err, password: "Password required" }));
     if (password !== confirmPassword)
-      return setErrors((e) => ({
-        ...e,
+      return setErrors((err) => ({
+        ...err,
         confirmPassword: "Passwords do not match",
       }));
     if (!captchaToken)
-      return setErrors((e) => ({
-        ...e,
+      return setErrors((err) => ({
+        ...err,
         form: "Please verify that you're human.",
       }));
     if (!canProceed())
-      return setErrors((e) => ({
-        ...e,
+      return setErrors((err) => ({
+        ...err,
         form: "Please wait before trying again.",
       }));
-    await onRegister({ email, password, confirmPassword, captchaToken });
+    // Fire and forget registration – internal promise handled by caller
+    void onRegister({ email, password, confirmPassword, captchaToken });
   };
 
   return (

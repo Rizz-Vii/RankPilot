@@ -1,24 +1,24 @@
 "use client";
 // Finance - Revenue Analytics
-import React, { useEffect, useState } from 'react';
-import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { LazyDataTable } from '@/components/metrics/LazyDataTable';
 import { MetricCard } from '@/components/metrics/MetricCard';
+import { PeriodSelector } from '@/components/metrics/PeriodSelector';
 import { TrendSparkline } from '@/components/metrics/TrendSparkline';
-import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
-import { allowFinanceMocks } from '@/lib/flags/finance';
-import { fetchRecentFinanceRevenueSnapshots } from '@/lib/services/finance-automation-snapshots';
-import { useAuth } from '@/context/AuthContext';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ActionCard } from '@/components/shared/action-card';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/context/AuthContext';
 import { useAutomationTrigger } from '@/hooks/useAutomationTrigger';
 import { useFinanceInvoiceMetrics } from '@/hooks/useFinanceInvoiceMetrics';
-import { PeriodSelector } from '@/components/metrics/PeriodSelector';
-import { LazyDataTable } from '@/components/metrics/LazyDataTable';
-import type { RevenueSnapshot , SubscriptionEvent } from '@/lib/finance/revenue-metrics';
-import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
-import { computeRevenueMetrics } from '@/lib/finance/revenue-metrics';
-import { deriveSubscriptionEvents } from '@/lib/finance/derive-subscription-events';
+import { useMockDomainMetrics } from '@/hooks/useMockDomainMetrics';
 import { useProvenance } from '@/hooks/useProvenance';
+import { trackDashboardView } from '@/lib/domain/dashboardAnalytics';
+import { deriveSubscriptionEvents } from '@/lib/finance/derive-subscription-events';
+import type { RevenueSnapshot, SubscriptionEvent } from '@/lib/finance/revenue-metrics';
+import { computeRevenueMetrics } from '@/lib/finance/revenue-metrics';
+import { allowFinanceMocks } from '@/lib/flags/finance';
+import { fetchRecentFinanceRevenueSnapshots } from '@/lib/services/finance-automation-snapshots';
+import { useEffect, useState } from 'react';
 
 // Top-level types moved out of the component to avoid re-creation on each render.
 interface FinanceRevenueSnapshot { mrr: number; onTime: number; outstanding: number; ts: Date; period: string; }
@@ -32,7 +32,15 @@ export default function RevenueAnalyticsPage() {
   const live = useFinanceInvoiceMetrics(months);
   const { user } = useAuth();
   const userId = user?.uid;
-  const teamId = (user as any)?.teamId as string|undefined;
+  // Narrow optional teamId off user without using any
+  const teamId = (() => {
+    const u = user as unknown;
+    if (u && typeof u === 'object' && 'teamId' in (u as Record<string, unknown>)) {
+      const v = (u as Record<string, unknown>).teamId;
+      return typeof v === 'string' ? v : undefined;
+    }
+    return undefined;
+  })();
   // FinanceRevenueSnapshot moved to top-level
   const [revSnap, setRevSnap] = useState<FinanceRevenueSnapshot|null>(null);
   const [loadingSnap, setLoadingSnap] = useState(false);
@@ -40,23 +48,24 @@ export default function RevenueAnalyticsPage() {
   useEffect(() => {
     if (!userId) return;
     setLoadingSnap(true);
-    (async () => {
+    void (async () => {
       try {
         const r = await fetchRecentFinanceRevenueSnapshots(userId, teamId, 1);
         if (r.length) {
-          const first: any = r[0];
+          const first = r[0] as unknown as Record<string, unknown>;
           const ts =
-            first.createdAt &&
+            first &&
             typeof first.createdAt === 'object' &&
-            first.createdAt.toDate
-              ? first.createdAt.toDate()
+              first.createdAt && 'toDate' in (first.createdAt as Record<string, unknown>) &&
+              typeof (first.createdAt as { toDate?: () => Date }).toDate === 'function'
+              ? (first.createdAt as { toDate?: () => Date }).toDate?.() as Date
               : new Date();
           setRevSnap({
-            mrr: first.mrr,
-            onTime: first.onTimePct,
-            outstanding: first.outstanding,
+            mrr: typeof first.mrr === 'number' ? first.mrr : 0,
+            onTime: typeof first.onTimePct === 'number' ? first.onTimePct : 0,
+            outstanding: typeof first.outstanding === 'number' ? first.outstanding : 0,
             ts,
-            period: first.period
+            period: typeof first.period === 'string' ? first.period : ''
           });
         }
       } finally {
@@ -66,16 +75,17 @@ export default function RevenueAnalyticsPage() {
   }, [userId, teamId]);
   const { data: mock } = useMockDomainMetrics('finance', allowFinanceMocks());
   // Metric and Invoice types moved to top-level to reduce allocations per render.
-  const adaptInvoice = (r: any): InvoiceRow | null => {
+  const adaptInvoice = (r: unknown): InvoiceRow | null => {
     if(!r || typeof r !== 'object') return null;
-    if(typeof r.period !== 'string' || typeof r.planTier !== 'string') return null;
+    const o = r as Record<string, unknown>;
+    if (typeof o.period !== 'string' || typeof o.planTier !== 'string') return null;
     return {
-      period: r.period,
-      planTier: r.planTier,
-      amount: typeof r.amount === 'number'? r.amount : 0,
-      status: typeof r.status === 'string'? r.status : 'pending',
-      issuedAt: r.issuedAt && typeof r.issuedAt === 'object'? r.issuedAt : undefined,
-      paidAt: r.paidAt && typeof r.paidAt === 'object'? r.paidAt : undefined
+      period: o.period,
+      planTier: o.planTier,
+      amount: typeof o.amount === 'number' ? o.amount : 0,
+      status: typeof o.status === 'string' ? o.status : 'pending',
+      issuedAt: o.issuedAt && typeof o.issuedAt === 'object' ? (o.issuedAt as { toDate?: () => Date }) : undefined,
+      paidAt: o.paidAt && typeof o.paidAt === 'object' ? (o.paidAt as { toDate?: () => Date } | null) : undefined
     };
   };
   const data: InvoiceMetrics = (Array.isArray(live.kpis) && live.kpis.length) ? ({ kpis: live.kpis as KpiItem[], rows: (Array.isArray(live.rows) ? live.rows.map(adaptInvoice).filter((x): x is InvoiceRow => x !== null) : []), loading: live.loading }) : { kpis: allowFinanceMocks()? ((mock?.kpis as KpiItem[] | undefined) || []) : [], rows: [], loading:false };
@@ -87,7 +97,7 @@ export default function RevenueAnalyticsPage() {
   useEffect(()=> {
     if (!live.rows?.length) { setDerived(null); return; }
     try {
-  const invoices = live.rows as any[];
+      const invoices: unknown[] = Array.isArray(live.rows) ? live.rows : [];
   const subs: SubscriptionEvent[] = deriveSubscriptionEvents(invoices);
   const snapshot = computeRevenueMetrics(subs);
       setDerived(snapshot);
@@ -137,10 +147,22 @@ export default function RevenueAnalyticsPage() {
                 { key:'planTier', header:'Tier'},
                 { key:'amount', header:'Amount'},
                 { key:'status', header:'Status'},
-                { key:'issuedAt', header:'Issued', render:(r:InvoiceRow)=> (r.issuedAt && typeof r.issuedAt === 'object' && typeof (r.issuedAt as any).toDate === 'function')? (r.issuedAt as any).toDate().toISOString().slice(0,10): '-'},
-                { key:'paidAt', header:'Paid', render:(r:InvoiceRow)=> (r.paidAt && typeof r.paidAt === 'object' && typeof (r.paidAt as any).toDate === 'function')? (r.paidAt as any).toDate().toISOString().slice(0,10): '-'}
+              {
+                key: 'issuedAt', header: 'Issued', render: (r) => {
+                  const rec = r as unknown as InvoiceRow;
+                  const d = rec.issuedAt && typeof rec.issuedAt === 'object' && typeof rec.issuedAt.toDate === 'function' ? rec.issuedAt.toDate?.() : undefined;
+                  return d ? d.toISOString().slice(0, 10) : '-';
+                }
+              },
+              {
+                key: 'paidAt', header: 'Paid', render: (r) => {
+                  const rec = r as unknown as InvoiceRow;
+                  const d = rec.paidAt && typeof rec.paidAt === 'object' && typeof rec.paidAt?.toDate === 'function' ? rec.paidAt.toDate?.() : undefined;
+                  return d ? d.toISOString().slice(0, 10) : '-';
+                }
+              }
               ]}
-            rows={data.rows}
+            rows={data.rows as unknown as Record<string, unknown>[]}
             loading={data.loading}
             empty="No invoice data"
           />

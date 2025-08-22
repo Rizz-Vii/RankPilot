@@ -1,23 +1,23 @@
 /**
  * Admin Analytics Dashboard - Leveraging 1.2M+ Database Records
- * 
+ *
  * Comprehensive admin interface utilizing all 25 composite indexes
  * for real-time platform insights and user management.
- * 
+ *
  * Generated: July 26, 2025
  * Dependencies: Enhanced auth service, dashboard service
  */
 
-import { useState, useEffect, type ReactElement } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EnhancedAuthService, type UserAnalytics } from '@/lib/services/enhanced-auth.service';
+import { useEffect, useState, type ReactElement } from 'react';
 
 interface AdminDashboardProps {
   className?: string;
 }
 
-interface PlatformMetrics { growth?: { new_subscriptions?: number }; [key:string]: any }
+interface PlatformMetrics { growth?: { new_subscriptions?: number };[key: string]: unknown }
 
 export function AdminAnalyticsDashboard({ className }: AdminDashboardProps): ReactElement {
   const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
@@ -28,7 +28,7 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps): Rea
     async function loadAdminData() {
       try {
         setLoading(true);
-        
+
         // Fetch comprehensive admin analytics using our indexes
         const [userAnalytics, subscriptionInsights] = await Promise.all([
           EnhancedAuthService.getUserAnalytics(),
@@ -37,7 +37,7 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps): Rea
 
         setAnalytics(userAnalytics);
         setPlatformMetrics(subscriptionInsights);
-        
+
       } catch (error) {
         console.error('Error loading admin dashboard:', error);
       } finally {
@@ -45,7 +45,7 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps): Rea
       }
     }
 
-    loadAdminData();
+    void loadAdminData();
   }, []);
 
   if (loading) {
@@ -144,7 +144,7 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps): Rea
               {(analytics?.subscriptionTrends ?? []).map((tier) => (
                 <div key={tier.tier} className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Badge 
+                    <Badge
                       variant={tier.tier === 'free' ? 'outline' : 'default'}
                       className="capitalize"
                     >
@@ -175,7 +175,7 @@ export function AdminAnalyticsDashboard({ className }: AdminDashboardProps): Rea
               {Object.entries(analytics?.usersByRole || {}).map(([role, count]) => (
                 <div key={role} className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Badge 
+                    <Badge
                       variant={role === 'admin' ? 'destructive' : 'secondary'}
                       className="capitalize"
                     >

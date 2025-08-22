@@ -1,0 +1,38 @@
+{
+  "steps": [
+    {
+      "taskId": "resolve-ts-errors",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Resolve top TypeScript errors to ensure type stability."
+    },
+    {
+      "taskId": "run-eslint-autofix",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Run ESLint autofix for safe rules to reduce toil and surface structural issues."
+    },
+    {
+      "taskId": "triage-lint-warnings",
+      "kind": "do-task",
+      "runners": [
+        "codex"
+      ],
+      "domain": "docs",
+      "reason": "Triage remaining lint warnings to convert noisy rules or batch address readability issues."
+    }
+  ],
+  "strategy": "openai",
+  "meta": {
+    "model": "gpt-4o-mini",
+    "promptTokens": 1618,
+    "completionTokens": 124,
+    "totalTokens": 1742
+  }
+}

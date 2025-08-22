@@ -640,13 +640,11 @@ export class ZapierWorkflowBuilder extends EventEmitter {
      * Execute email action via Zapier MCP
      */
     private async executeEmailAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<unknown> {
-        const mappedData = this.mapTriggerDataToAction(action.mapping, triggerData);
-
-        // Use Zapier MCP for email sending
+        const mapped = this.mapTriggerDataToAction(action.mapping, triggerData);
         return {
             status: 'sent',
             recipients: action.config.recipients,
-            subject: mappedData.subject || 'SEO Alert from RankPilot',
+            subject: (mapped.subject as string | undefined) || 'SEO Alert from RankPilot',
             timestamp: Date.now()
         };
     }
@@ -655,12 +653,11 @@ export class ZapierWorkflowBuilder extends EventEmitter {
      * Execute Slack action via Zapier MCP
      */
     private async executeSlackAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<unknown> {
-        const mappedData = this.mapTriggerDataToAction(action.mapping, triggerData);
-
+        const mapped = this.mapTriggerDataToAction(action.mapping, triggerData);
         return {
             status: 'posted',
             channel: action.config.channel || '#seo-alerts',
-            message: mappedData.message || 'SEO update from RankPilot automation',
+            message: (mapped.message as string | undefined) || 'SEO update from RankPilot automation',
             timestamp: Date.now()
         };
     }
@@ -669,13 +666,12 @@ export class ZapierWorkflowBuilder extends EventEmitter {
      * Execute task creation action
      */
     private async executeTaskAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<unknown> {
-        const mappedData = this.mapTriggerDataToAction(action.mapping, triggerData);
-
+        const mapped = this.mapTriggerDataToAction(action.mapping, triggerData);
         return {
             status: 'created',
             taskId: `task_${Date.now()}`,
-            title: mappedData.title || 'SEO Action Required',
-            description: mappedData.description || 'Automated task from RankPilot workflow',
+            title: (mapped.title as string | undefined) || 'SEO Action Required',
+            description: (mapped.description as string | undefined) || 'Automated task from RankPilot workflow',
             timestamp: Date.now()
         };
     }
@@ -684,8 +680,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
      * Execute dashboard update action
      */
     private async executeDashboardAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<unknown> {
-        const mappedData = this.mapTriggerDataToAction(action.mapping, triggerData);
-
+        const mapped = this.mapTriggerDataToAction(action.mapping, triggerData);
         // Integration with Custom Dashboard Builder
         try {
             const response = await fetch('/api/dashboard/custom/workflow-update', {
@@ -694,7 +689,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
                 body: JSON.stringify({
                     userId: workflow.userId,
                     workflowId: workflow.id,
-                    data: mappedData
+                    data: mapped
                 })
             });
 
@@ -712,8 +707,8 @@ export class ZapierWorkflowBuilder extends EventEmitter {
      * Execute report generation action
      */
     private async executeReportAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<unknown> {
-        const mappedData = this.mapTriggerDataToAction(action.mapping, triggerData);
-
+        // mapped currently unused but keep for symmetry & future expansion
+        const _mapped = this.mapTriggerDataToAction(action.mapping, triggerData);
         // Integration with report generation system
         return {
             status: 'generated',
@@ -728,8 +723,7 @@ export class ZapierWorkflowBuilder extends EventEmitter {
      * Execute sheet update action
      */
     private async executeSheetAction(action: ZapierAction, triggerData: unknown[], workflow: ZapierWorkflow): Promise<unknown> {
-        const mappedData = this.mapTriggerDataToAction(action.mapping, triggerData);
-
+        const _mapped = this.mapTriggerDataToAction(action.mapping, triggerData); // currently unused
         return {
             status: 'updated',
             sheetId: action.config.sheetId,
@@ -758,8 +752,18 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Get value from nested object path
      */
-    private getValueFromPath(data: any, path: string): any {
-        return path.split('.').reduce((obj, key) => obj && obj[key], data);
+    private getValueFromPath<T = unknown>(data: unknown, path: string): T | undefined {
+        if (!path) return undefined;
+        const parts = path.split('.');
+        let current: unknown = data;
+        for (const key of parts) {
+            if (current && typeof current === 'object' && key in (current as Record<string, unknown>)) {
+                current = (current as Record<string, unknown>)[key];
+            } else {
+                return undefined;
+            }
+        }
+        return current as T;
     }
 
     /**
@@ -873,10 +877,11 @@ export class ZapierWorkflowBuilder extends EventEmitter {
     /**
      * Get workflow analytics
      */
-    getWorkflowAnalytics(workflowId: string): any {
+    getWorkflowAnalytics(workflowId: string): {
+        id: string; name: string; status: ZapierWorkflow['status']; runCount: number; successRate: number; lastRun: ZapierWorkflow['lastRun']; created: number; updated: number;
+    } | null {
         const workflow = this.workflows.get(workflowId);
         if (!workflow) return null;
-
         return {
             id: workflowId,
             name: workflow.name,

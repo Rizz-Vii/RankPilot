@@ -1,4 +1,4 @@
-import type { CollectionReference, DocumentReference} from 'firebase/firestore';
+import type { CollectionReference, DocumentReference } from 'firebase/firestore';
 import { addDoc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 
 export interface GuardOptions { requireTeamId?: boolean; stripUndefined?: boolean; }
@@ -45,6 +45,19 @@ export async function guardedUpdate<T = unknown>(docRef: DocumentReference, data
 type Unsub = () => void;
 const activeCounts: Record<string, number> = {};
 
+// Centralized refcounted registry for Firestore subscriptions
+type RegistryEntry = {
+    refCount: number;
+    unsubscribe: Unsub;
+    callbacks: Set<(snap: unknown) => void>;
+    errorCallbacks: Set<(err: unknown) => void>;
+    lastSnap?: unknown;
+    timer: ReturnType<typeof setTimeout> | null;
+    debounceMs: number;
+};
+
+const registry = new Map<string, RegistryEntry>();
+
 export function snapshotKey(parts: unknown[]): string {
     return parts.map(p => typeof p === 'string' ? p : JSON.stringify(p)).join('|');
 }
@@ -70,15 +83,82 @@ export interface ManagedSnapshotOptions { debounceMs?: number; }
 export function managedOnSnapshot(q: unknown, onData: (snap: unknown) => void, onError?: (e: unknown) => void, opts: ManagedSnapshotOptions = {}): Unsub {
     const debounceMs = opts.debounceMs ?? 150;
     const key = deriveReadableKey(q);
-    trackListener(key);
-    let timeout: ReturnType<typeof setTimeout> | null = null;
+
+    // If an entry exists, reuse the single underlying subscription and just attach callbacks
+    const existing = registry.get(key);
+    if (existing) {
+        existing.refCount += 1;
+        existing.callbacks.add(onData);
+        if (onError) existing.errorCallbacks.add(onError);
+        // Optionally deliver last snapshot to new subscriber
+        if (existing.lastSnap !== undefined) {
+            queueMicrotask(() => {
+                try { onData(existing.lastSnap as unknown); } catch { /* ignore */ }
+            });
+        }
+        return () => {
+            existing.callbacks.delete(onData);
+            if (onError) existing.errorCallbacks.delete(onError);
+            existing.refCount -= 1;
+            if (existing.refCount <= 0) {
+                if (existing.timer) clearTimeout(existing.timer);
+                existing.unsubscribe();
+                registry.delete(key);
+                untrackListener(key);
+            }
+        };
+    }
+
+    // Create a new underlying subscription for this key
     type OnSnapshotFn = (query: unknown, next: (snap: unknown) => void, error?: (err: unknown) => void) => () => void;
     const invokeOnSnapshot = onSnapshot as unknown as OnSnapshotFn;
-    const unsub = invokeOnSnapshot(q, (snap: unknown) => {
-        if (timeout) clearTimeout(timeout);
-        timeout = setTimeout(() => onData(snap), debounceMs);
-    }, (err: unknown) => { if (onError) onError(err); });
-    return () => { if (timeout) clearTimeout(timeout); unsub(); untrackListener(key); };
+
+    const entry: RegistryEntry = {
+        refCount: 1,
+        unsubscribe: () => { },
+        callbacks: new Set([(snap: unknown) => onData(snap)]),
+        errorCallbacks: new Set(onError ? [(err: unknown) => onError(err)] : []),
+        lastSnap: undefined,
+        timer: null,
+        debounceMs,
+    };
+
+    const debouncedNext = (snap: unknown) => {
+        if (entry.timer) clearTimeout(entry.timer);
+        entry.timer = setTimeout(() => {
+            entry.lastSnap = snap;
+            // Fan-out to all current callbacks
+            for (const cb of Array.from(entry.callbacks)) {
+                try { cb(snap); } catch { /* ignore */ }
+            }
+        }, entry.debounceMs);
+    };
+
+    const onErr = (err: unknown) => {
+        for (const ecb of Array.from(entry.errorCallbacks)) {
+            try { ecb(err); } catch { /* ignore */ }
+        }
+        // Do not auto re-subscribe here; let Firestore manage reconnects
+    };
+
+    entry.unsubscribe = invokeOnSnapshot(q, debouncedNext, onErr);
+    registry.set(key, entry);
+    trackListener(key);
+
+    // Return per-subscriber unsubscribe
+    return () => {
+        const current = registry.get(key);
+        if (!current) return;
+        current.callbacks.delete(onData);
+        if (onError) current.errorCallbacks.delete(onError);
+        current.refCount -= 1;
+        if (current.refCount <= 0) {
+            if (current.timer) clearTimeout(current.timer);
+            current.unsubscribe();
+            registry.delete(key);
+            untrackListener(key);
+        }
+    };
 }
 
 export function getActiveListenerSummary() {
@@ -125,4 +205,20 @@ function deriveReadableKey(q: unknown): string {
         // ignore and fall through
     }
     return 'query:unknown';
+}
+
+// Hot Module Reloading cleanup to avoid lingering listeners across Fast Refresh
+try {
+    const meta = import.meta as unknown as { hot?: { dispose?: (fn: () => void) => void } };
+    if (meta && meta.hot && typeof meta.hot.dispose === 'function') {
+        meta.hot.dispose(() => {
+            for (const [key, entry] of Array.from(registry.entries())) {
+                try { if (entry.timer) clearTimeout(entry.timer); entry.unsubscribe(); } catch { /* ignore */ }
+                registry.delete(key);
+                untrackListener(key);
+            }
+        });
+    }
+} catch {
+    // ignore in environments without import.meta.hot
 }

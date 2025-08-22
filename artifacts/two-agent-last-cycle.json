@@ -1,0 +1,13 @@
+{
+  "planned": 0,
+  "adaptiveMax": 5,
+  "considered": 5,
+  "taskIds": [
+    "AI-LINT-@typescript-eslint/no-explicit-any-1802",
+    "AI-LINT-@typescript-eslint/no-require-imports-2803",
+    "AI-LINT-@typescript-eslint/no-require-imports-3180",
+    "AI-LINT-@typescript-eslint/no-require-imports-522",
+    "AI-LINT-@typescript-eslint/no-require-imports-7633"
+  ],
+  "timestamp": "2025-08-20T13:12:24.881Z"
+}

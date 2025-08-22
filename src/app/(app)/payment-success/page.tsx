@@ -1,29 +1,29 @@
 ﻿"use client";
 
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import confetti from "canvas-confetti";
+import { motion } from "framer-motion";
 import {
+  ArrowRight,
+  Calendar,
   CheckCircle,
+  CreditCard,
   Download,
   Mail,
-  Calendar,
-  CreditCard,
-  ArrowRight,
-  Star,
   Rocket,
+  Star,
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import confetti from "canvas-confetti";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 // Simple loading component
 const LoadingScreen = ({
@@ -117,8 +117,8 @@ export default function PaymentSuccess() {
       setIsLoading(false);
       setShowConfetti(true);
 
-      // Trigger confetti animation
-      confetti({
+      // Trigger confetti animation (fire-and-forget)
+      void confetti({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },

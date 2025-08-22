@@ -1,10 +1,15 @@
 // src/components/serp-view-form.tsx
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -14,17 +19,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
-import { Loader2 } from "lucide-react";
 import { useHydration } from "@/components/HydrationContext";
+import { asVoidHandler } from "@/lib/react/handlers";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   keyword: z.string().min(2, { message: "Please enter a keyword." }),
@@ -57,7 +58,10 @@ export default function SerpViewForm({
         </CardDescription>
       </CardHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form
+          onSubmit={asVoidHandler(form.handleSubmit((vals) => onSubmit(vals)))}
+          className="space-y-8"
+        >
           <CardContent>
             <FormField
               control={form.control}

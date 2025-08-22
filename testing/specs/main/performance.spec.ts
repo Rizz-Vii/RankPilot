@@ -1,6 +1,7 @@
-import { test, expect } from "@playwright/test";
-import { EnhancedAuth } from "../../utils/enhanced-auth";
+import { expect, test } from "@playwright/test";
 import { UNIFIED_TEST_USERS } from "../../config/unified-test-users";
+import { EnhancedAuth } from "../../utils/enhanced-auth";
+import { errorMessage } from "../../utils/test-error"; // adjusted relative path
 
 test.describe("Performance Optimization Features", () => {
   let auth: EnhancedAuth;
@@ -18,8 +19,8 @@ test.describe("Performance Optimization Features", () => {
         await auth.loginAndGoToDashboard(testUser);
         isLoggedIn = true;
         console.log("✅ Shared authentication successful");
-      } catch (authError: any) {
-        console.log(`⚠️ Shared authentication failed: ${authError.message}`);
+      } catch (authError: unknown) {
+        console.log(`⚠️ Shared authentication failed: ${errorMessage(authError)}`);
         // Continue with public page testing
       }
     }
@@ -57,8 +58,8 @@ test.describe("Performance Optimization Features", () => {
       const mainContent = page.locator('[data-testid="performance-content"], main, .main-content');
       await expect(mainContent).toBeVisible({ timeout: 10000 });
 
-    } catch (error: any) {
-      console.log(`⚠️ Performance page error: ${error.message}`);
+    } catch (error: unknown) {
+      console.log(`⚠️ Performance page error: ${errorMessage(error)}`);
       // Fallback to dashboard test
       await page.goto("/dashboard", { timeout: 20000, waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle", { timeout: 20000 });
@@ -102,8 +103,8 @@ test.describe("Performance Optimization Features", () => {
 
       console.log(`Found ${keywordElements} keyword-related elements`);
 
-    } catch (error: any) {
-      console.log(`⚠️ Keyword tool access error: ${error.message}`);
+    } catch (error: unknown) {
+      console.log(`⚠️ Keyword tool access error: ${errorMessage(error)}`);
       // Fallback to public page test
       await page.goto("/login", { timeout: 10000 });
       await expect(page.locator("body")).toBeVisible();
@@ -148,7 +149,7 @@ test.describe("Performance Optimization Features", () => {
         }
         await expect(page.locator("body")).toBeVisible({ timeout: 15000 });
         await page.waitForTimeout(500); // Recovery time
-      } catch (navError) {
+      } catch {
         console.log("⚠️ Navigation issue (login fallback), continuing with basic test");
       }
 
@@ -156,8 +157,8 @@ test.describe("Performance Optimization Features", () => {
         path: "test-results/mobile-nav-performance.png",
         fullPage: true,
       });
-    } catch (error: any) {
-      console.log(`⚠️ Mobile navigation test error: ${error.message}`);
+    } catch (error: unknown) {
+      console.log(`⚠️ Mobile navigation test error: ${errorMessage(error)}`);
       // Fallback: just verify basic mobile layout on login page
       await page.setViewportSize({ width: 375, height: 667 });
       await page.goto("/login", { timeout: 25000, waitUntil: "domcontentloaded" });
@@ -201,26 +202,26 @@ test.describe("Performance Optimization Features", () => {
               path: `test-results/responsive-${breakpoint.name}.png`,
               fullPage: true,
             });
-          } catch (screenshotError) {
+          } catch {
             console.log(`⚠️ Screenshot failed for ${breakpoint.name}`);
           }
 
           // Memory recovery between iterations
           await page.waitForTimeout(500);
 
-        } catch (breakpointError: any) {
-          console.log(`⚠️ Error testing ${breakpoint.name}: ${breakpointError.message}`);
+        } catch (breakpointError: unknown) {
+          console.log(`⚠️ Error testing ${breakpoint.name}: ${errorMessage(breakpointError)}`);
           // Try to recover by going to a simple page
           try {
             await page.goto("/login", { timeout: 10000 });
             await expect(page.locator("body")).toBeVisible();
-          } catch (recoveryError) {
+          } catch {
             console.log(`⚠️ Recovery failed for ${breakpoint.name}`);
           }
         }
       }
-    } catch (error: any) {
-      console.log(`⚠️ Responsive design test error: ${error.message}`);
+    } catch (error: unknown) {
+      console.log(`⚠️ Responsive design test error: ${errorMessage(error)}`);
       // Final fallback - test just one breakpoint
       await page.setViewportSize({ width: 1024, height: 768 });
       await page.goto("/");
@@ -291,8 +292,8 @@ test.describe("Performance Optimization Features", () => {
 
             console.log(`Found ${breadcrumbs} breadcrumb elements on ${pagePath}`);
 
-          } catch (pageError: any) {
-            console.log(`⚠️ Error accessing ${pagePath}: ${pageError.message}`);
+          } catch (pageError: unknown) {
+            console.log(`⚠️ Error accessing ${pagePath}: ${errorMessage(pageError)}`);
             // Continue with next page
           }
         }
@@ -301,8 +302,8 @@ test.describe("Performance Optimization Features", () => {
         await page.goto("/", { timeout: 10000 });
         await expect(page.locator("body")).toBeVisible();
       }
-    } catch (error: any) {
-      console.log(`⚠️ Breadcrumb test error: ${error.message}`);
+    } catch (error: unknown) {
+      console.log(`⚠️ Breadcrumb test error: ${errorMessage(error)}`);
       // Fallback to login page test
       await page.goto("/login", { timeout: 10000 });
       await expect(page.locator("body")).toBeVisible();

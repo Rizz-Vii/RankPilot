@@ -232,7 +232,7 @@ export class SecurityTestSuite {
     private async testDataEncryption(): Promise<void> {
         try {
             // Check HTTPS enforcement
-            const httpResponse = await this.page.goto('http://localhost:3000');
+            await this.page.goto('http://localhost:3000');
             const finalUrl = this.page.url();
 
             const httpsEnforced = finalUrl.startsWith('https://') || process.env.NODE_ENV === 'development';
@@ -374,8 +374,7 @@ export class MobileTestSuite {
             // Test Core Web Vitals
             const vitals = await this.page.evaluate(() => {
                 return new Promise((resolve) => {
-                    const metrics = { lcp: 0, fid: 0, cls: 0 };
-                    let collected = 0;
+                    // Placeholder: simulate metrics if real web-vitals not available
 
                     if ('web-vitals' in window) {
                         // Would use actual web-vitals if available
@@ -425,7 +424,7 @@ export class MobileTestSuite {
                 coreWebVitals,
                 accessibility: accessibilityScore,
             };
-        } catch (error) {
+        } catch {
             return {
                 device: deviceName,
                 passed: false,

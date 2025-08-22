@@ -1,14 +1,14 @@
-import { strict as assert } from 'assert';
-import React from 'react';
-import { createRoot } from 'react-dom/client';
+import CustomerChatBot from '@/components/chat/CustomerChatBot';
 import type { AuthContextType } from '@/context/AuthContext';
 import { AuthContext } from '@/context/AuthContext';
-import CustomerChatBot from '@/components/chat/CustomerChatBot';
+import { strict as assert } from 'assert';
+import { createRoot } from 'react-dom/client';
 
 // Minimal fetch mock for chat history GET
-function mockFetchWithMessages(messages: any[]) {
-  // @ts-ignore
-  global.fetch = async (url: string, init?: any) => {
+interface ChatMessage { id: string; isUser: boolean; timestamp: string; message?: string; type?: string; mediaUrl?: string; response?: string; tokensUsed?: number }
+function mockFetchWithMessages(messages: ChatMessage[]) {
+  // @ts-ignore override global for test
+  global.fetch = async (url: string, init?: { method?: string }) => {
     if (typeof url === 'string' && url.startsWith('/api/chat/customer')) {
       return new Response(JSON.stringify({
         messages,
@@ -23,7 +23,7 @@ function mockFetchWithMessages(messages: any[]) {
 describe('CustomerChatBot attachments rendering', () => {
   it('renders image and audio bubbles from GET history', async () => {
     const authValue: AuthContextType = {
-      user: { uid: 'user_1', getIdToken: async () => 't' } as any,
+      user: { uid: 'user_1', getIdToken: async () => 't' } as unknown as AuthContextType['user'],
       loading: false,
       role: 'user',
       profile: { subscriptionTier: 'starter' },
@@ -64,7 +64,7 @@ describe('CustomerChatBot attachments rendering', () => {
 function delay(ms: number){ return new Promise(res => setTimeout(res, ms)); }
 async function waitFor<T>(fn: () => T | null, timeout = 1000, interval = 25): Promise<T> {
   const start = Date.now();
-   
+
   while(true){
     const v = fn();
     if (v) return v;

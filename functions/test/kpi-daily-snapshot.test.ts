@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import type { AppOptions } from 'firebase-admin/app';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { runKpiDailySnapshot } from '../src/scheduled/kpi-daily-snapshot';
@@ -12,7 +13,7 @@ import { runKpiDailySnapshot } from '../src/scheduled/kpi-daily-snapshot';
 describe('kpiDailySnapshot', () => {
     before(() => {
         process.env.FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
-        if (!getApps().length) initializeApp({ projectId: 'demo-test' } as any);
+        if (!getApps().length) initializeApp({ projectId: 'demo-test' } as AppOptions);
     });
 
     it('aggregates today ai usage, revenue metrics, and enforces retention', async () => {
@@ -66,7 +67,7 @@ describe('kpiDailySnapshot', () => {
 
         const snap = await db.collection('kpiDaily').doc(dateKey).get();
         expect(snap.exists).to.equal(true);
-        const data: any = snap.data();
+        const data = snap.data() as Record<string, unknown>;
         expect(data.aiTokensIn).to.be.at.least(150);
         expect(data.aiTokensOut).to.be.at.least(220);
         // Revenue assertions
@@ -113,7 +114,7 @@ describe('kpiDailySnapshot', () => {
         await runKpiDailySnapshot(today);
         const snap = await db.collection('kpiDaily').doc(dateKey).get();
         expect(snap.exists).to.equal(true);
-        const data: any = snap.data();
+        const data = snap.data() as Record<string, unknown>;
         expect(data.provenanceCoveragePct).to.equal(99.5);
         expect(data.p90LatencyOverall).to.equal(450);
         expect(data.p95LatencyOverall).to.equal(550);
@@ -141,7 +142,7 @@ describe('kpiDailySnapshot', () => {
         });
         await runKpiDailySnapshot(today);
         const snap = await db.collection('kpiDaily').doc(dateKey).get();
-        const data: any = snap.data();
+        const data = snap.data() as Record<string, unknown>;
         expect(data.cacheHitRatio).to.equal(52.5);
         expect(data.rateLimitRejectionRate).to.equal(1.2);
     });

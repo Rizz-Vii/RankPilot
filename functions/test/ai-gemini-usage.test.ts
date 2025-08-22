@@ -7,16 +7,16 @@ import { aiMemoryManager } from '../src/lib/ai-memory-manager';
 
 describe('AI Memory Manager - Gemini usage metadata extraction', () => {
     it('extracts usage.in/out from promptTokens + completionTokens', async () => {
-        const mm: any = aiMemoryManager;
+        const mm = aiMemoryManager as unknown as Record<string, unknown>;
         // Provide Gemini service config
         mm.services = new Map([['gemini', { model: 'gemini-pro', apiKey: 'test', timeout: 2000, temperature: 0.1, maxTokens: 64 }]]);
-        mm.__setGenkitFactoryForTest(() => ({
+        (mm.__setGenkitFactoryForTest as unknown as (f: () => { generate: (p: string) => Promise<{ text: () => string; usage?: { promptTokens?: number; completionTokens?: number } }> }) => void)(() => ({
             generate: (prompt: string) => Promise.resolve({
                 text: () => `Gemini Echo:${prompt.slice(0, 10)}`,
                 usage: { promptTokens: 17, completionTokens: 29 }
             })
         }));
-        const res = await mm.processRequest({ prompt: 'Hello Gemini usage accounting', model: 'gemini-pro' });
+        const res = await (mm.processRequest as (x: { prompt: string; model: string }) => Promise<{ content: string }>)({ prompt: 'Hello Gemini usage accounting', model: 'gemini-pro' });
         // Content may be tokenized or echo; ensure we received non-empty string
         expect(res.content.length).to.be.greaterThan(0);
         // usage not directly exposed on response, so seed daily usage via persist stub to capture tokens
@@ -25,17 +25,21 @@ describe('AI Memory Manager - Gemini usage metadata extraction', () => {
     });
 
     it('falls back to estimator when usage fields missing', async () => {
-        const mm: any = aiMemoryManager;
+        const mm = aiMemoryManager as unknown as Record<string, unknown>;
         mm.services = new Map([['gemini', { model: 'gemini-pro', apiKey: 'test', timeout: 2000 }]]);
-        mm.__setGenkitFactoryForTest(() => ({
+        (mm.__setGenkitFactoryForTest as unknown as (f: () => { generate: (p: string) => Promise<{ text: () => string }> }) => void)(() => ({
             generate: (prompt: string) => Promise.resolve({
                 text: () => 'No usage fields here'
             })
         }));
-        let captured: any = null; mm.persistDailyUsage = async (_p: string, inT: number, outT: number) => { captured = { inT, outT }; };
-        await mm.processRequest({ prompt: 'Short', model: 'gemini-pro' });
+        let captured: { inT: number; outT: number } | null = null;
+        (mm.persistDailyUsage as unknown as (p: string, inT: number, outT: number) => Promise<void>) = async (_p: string, inT: number, outT: number) => { captured = { inT, outT }; };
+        await (mm.processRequest as (x: { prompt: string; model: string }) => Promise<unknown>)({ prompt: 'Short', model: 'gemini-pro' });
         expect(captured).to.not.equal(null);
-        expect(captured.inT).to.be.greaterThan(0);
-        expect(captured.outT).to.be.greaterThan(0);
+        if (captured) {
+            const cap = captured as unknown as { inT: number; outT: number };
+            expect(cap.inT).to.be.greaterThan(0);
+            expect(cap.outT).to.be.greaterThan(0);
+        }
     });
 });

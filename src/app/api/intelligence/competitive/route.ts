@@ -3,11 +3,13 @@
  * Handles competitor tracking and analysis via Firecrawl MCP
  */
 
+import { extractErrorMessage } from '@/lib/errors/extract-error-message';
+import type { CompetitorMetric } from '@/lib/intelligence/firecrawl-competitive-intelligence';
 import { firecrawlCompetitiveIntelligence } from '@/lib/intelligence/firecrawl-competitive-intelligence';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 // Initialize Firebase Admin if not already initialized
@@ -35,6 +37,37 @@ interface CompetitorRequestBody {
         competitorIds: string[];
         analysisType: 'overview' | 'keyword-gap' | 'content-gap' | 'technical' | 'comprehensive';
     };
+}
+
+type TrackingConfig = {
+    crawlFrequency: 'daily' | 'weekly' | 'monthly';
+    pages: string[];
+    metrics: CompetitorMetric[];
+    alertThresholds: Record<string, number>;
+};
+
+function narrowTrackingConfig(input: unknown): TrackingConfig | undefined {
+    if (!input || typeof input !== 'object') return undefined;
+    const obj = input as Record<string, unknown>;
+    if (!('crawlFrequency' in obj)) return undefined;
+    const cf = obj.crawlFrequency;
+    if (cf !== 'daily' && cf !== 'weekly' && cf !== 'monthly') return undefined;
+    const pages = Array.isArray(obj.pages) ? obj.pages.filter(p => typeof p === 'string') as string[] : [];
+    // Convert raw metric identifiers to placeholder CompetitorMetric objects; downstream logic can enrich later.
+    const metrics = Array.isArray(obj.metrics)
+        ? obj.metrics.filter(m => typeof m === 'string').map(m => ({
+            name: m as string,
+            type: 'seo' as const,
+            value: 0,
+            timestamp: Date.now(),
+            source: 'user'
+        }))
+        : [];
+    const alertThresholds: Record<string, number> = (typeof obj.alertThresholds === 'object' && obj.alertThresholds !== null)
+        ? Object.entries(obj.alertThresholds as Record<string, unknown>)
+            .reduce<Record<string, number>>((acc, [k, v]) => { if (typeof v === 'number') acc[k] = v; return acc; }, {})
+        : {};
+    return { crawlFrequency: cf, pages, metrics, alertThresholds };
 }
 
 export const POST = withProvenance(async function POST(request: NextRequest) {
@@ -67,17 +100,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         const body: CompetitorRequestBody = await nreq.json();
 
         // Narrow trackingConfig if present
-        const tc = body.trackingConfig;
-        const trackingConfig = (tc && typeof tc === 'object' && 'crawlFrequency' in tc)
-            ? {
-                crawlFrequency: (tc as any).crawlFrequency as 'daily' | 'weekly' | 'monthly',
-                pages: Array.isArray((tc as any).pages) ? (tc as any).pages as string[] : [],
-                metrics: Array.isArray((tc as any).metrics) ? (tc as any).metrics as any[] : [],
-                alertThresholds: (typeof (tc as any).alertThresholds === 'object' && (tc as any).alertThresholds)
-                    ? (tc as any).alertThresholds as Record<string, number>
-                    : {}
-            }
-            : undefined;
+        const trackingConfig = narrowTrackingConfig(body.trackingConfig);
 
         switch (body.action) {
             case 'add':
@@ -178,7 +201,10 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
 
     } catch (error) {
         console.error('[CompetitiveIntelligenceAPI] Error:', error);
-        return NextResponse.json(enforceProvenance({ success: false, error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'exception' }), { status: 500 });
+        return NextResponse.json(
+            enforceProvenance({ success: false, error: 'Internal server error', details: extractErrorMessage(error), provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'exception' }),
+            { status: 500 }
+        );
     }
 }, { path: 'intelligence/competitive' });
 
@@ -233,6 +259,9 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
 
     } catch (error) {
         console.error('[CompetitiveIntelligenceAPI] Error:', error);
-        return NextResponse.json(enforceProvenance({ success: false, error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'exception' }), { status: 500 });
+        return NextResponse.json(
+            enforceProvenance({ success: false, error: 'Internal server error', details: extractErrorMessage(error), provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'exception' }),
+            { status: 500 }
+        );
     }
 }, { path: 'intelligence/competitive' });

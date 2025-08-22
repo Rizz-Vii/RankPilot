@@ -3,13 +3,13 @@
 
 'use client';
 
+import { TierChip, TierIcon } from '@/components/tiers/tier-icons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check } from 'lucide-react';
-import { TierIcon, TierChip } from '@/components/tiers/tier-icons';
-import { useState } from 'react';
 import { STRIPE_PLANS } from '@/lib/stripe';
+import { Check } from 'lucide-react';
+import { useState } from 'react';
 
 interface PricingTableProps {
     currentTier?: string;
@@ -138,7 +138,7 @@ export function PricingTable({ currentTier = 'free', onUpgrade }: PricingTablePr
                                     className="w-full mt-8"
                                     variant={tier.popular ? 'default' : 'outline'}
                                     disabled={currentTier === tier.key || loading === tier.key}
-                                    onClick={() => handleUpgrade(tier.key)}
+                                    onClick={() => { void handleUpgrade(tier.key); }}
                                 >
                                     {loading === tier.key
                                         ? 'Processing...'

@@ -1,22 +1,22 @@
 "use client";
 
-import Link from "next/link";
-import { motion } from "framer-motion";
-import { AppLogo, AppName } from "@/constants/nav";
-import {
-  FaLinkedin,
-  FaTwitter,
-  FaYoutube,
-  FaEnvelope,
-  FaPhone,
-  FaMapMarkerAlt,
-  FaGithub,
-} from "react-icons/fa";
-import { useState } from "react";
 import { EnhancedButton } from "@/components/ui/enhanced-button";
 import { Input } from "@/components/ui/input";
-import { ChevronUp, ExternalLink } from "lucide-react";
+import { AppLogo, AppName } from "@/constants/nav";
 import { useIsMobile } from "@/lib/mobile-responsive-utils";
+import { motion } from "framer-motion";
+import { ChevronUp, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import {
+  FaEnvelope,
+  FaGithub,
+  FaLinkedin,
+  FaMapMarkerAlt,
+  FaPhone,
+  FaTwitter,
+  FaYoutube,
+} from "react-icons/fa";
 
 const footerSections = {
   services: {
@@ -173,7 +173,7 @@ export default function SiteFooter() {
             delivered to your inbox.
           </p>
           <form
-            onSubmit={handleNewsletterSubmit}
+            onSubmit={(e) => { void handleNewsletterSubmit(e); }}
             className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
             aria-label="Newsletter subscription"
           >

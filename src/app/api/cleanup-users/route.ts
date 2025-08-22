@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
 import { db } from "@/lib/firebase/index";
 import {
   collection,
-  getDocs,
   doc,
+  getDocs,
   writeBatch,
 } from "firebase/firestore";
+import { NextResponse } from "next/server";
 
 // Define types for better type safety
 interface UserQuotas {
@@ -166,12 +166,11 @@ export async function POST(): Promise<NextResponse> {
 
         Object.keys(expectedQuotas).forEach((quotaKey) => {
           const key = quotaKey as keyof UserQuotas;
-          if (
-            currentQuotas[key] !== expectedQuotas[key] &&
-            typeof currentQuotas[key] === "number" &&
-            typeof expectedQuotas[key] === "number"
-          ) {
-            (updatedQuotas as any)[key] = expectedQuotas[key];
+          const currentVal = currentQuotas[key];
+          const expectedVal = expectedQuotas[key];
+          if (typeof currentVal === 'number' && typeof expectedVal === 'number' && currentVal !== expectedVal) {
+            // Preserve structural typing while updating without any
+            (updatedQuotas as Record<keyof UserQuotas, UserQuotas[keyof UserQuotas]>)[key] = expectedVal as UserQuotas[keyof UserQuotas];
             quotasNeedUpdate = true;
           }
         });

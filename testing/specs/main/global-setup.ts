@@ -116,7 +116,7 @@ async function globalSetup(config: FullConfig) {
               });
               // Shorter delay for deployed sites
               await page.waitForTimeout(isDeployedSite ? 1000 : 2000);
-            } catch (error) {
+            } catch {
               console.log(
                 `   ⚠️  ${path} not available (this is OK if not implemented yet)`
               );

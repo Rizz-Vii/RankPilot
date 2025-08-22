@@ -140,11 +140,14 @@ async function writeCreateOnlyViaModular(
   data: Record<string, unknown>
 ) {
   // Lazy import to avoid adding weight when unused in tests
-  const mod = await import('firebase/firestore');
+  const mod = await import('firebase/firestore') as {
+    doc: (firestore: unknown, path: string, ...pathSegments: string[]) => unknown;
+    getDoc: (ref: unknown) => Promise<{ exists(): boolean }>;
+    setDoc: (ref: unknown, data: Record<string, unknown>, opts: { merge: boolean }) => Promise<void>;
+  };
   const { doc, getDoc, setDoc } = mod;
-  // The modular Firestore instance is opaque here; use any to satisfy overload while retaining runtime safety.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ref = doc(db as unknown as any, docPath);
+  // The modular Firestore instance is opaque; cast narrowly to unknown and let runtime module validate
+  const ref = doc(db as unknown, docPath);
   const snap = await getDoc(ref);
   if (snap.exists()) {
     throw new Error('DOC_EXISTS');

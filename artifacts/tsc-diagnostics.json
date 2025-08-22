@@ -1,0 +1,10 @@
+[
+  {
+    "file": "src/app/api/seo-audit/firecrawl/firecrawl-quota.ts",
+    "line": 28,
+    "column": 36,
+    "category": "error",
+    "code": 1005,
+    "message": "'=>' expected."
+  }
+]

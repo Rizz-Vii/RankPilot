@@ -2,11 +2,17 @@
  "use client";
 
 import CompetitorAnalysisForm from "@/components/competitor-analysis-form";
+import KPIGrid from '@/components/metrics/KPIGrid';
+import { LazyDataTable } from '@/components/metrics/LazyDataTable';
+import { MetricCard } from '@/components/metrics/MetricCard';
+import { PeriodSelector } from '@/components/metrics/PeriodSelector';
+import { TrendSparkline } from '@/components/metrics/TrendSparkline';
 import { FeatureGate } from '@/components/subscription/FeatureGate';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToolPageHeader } from "@/components/tool-page-header";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type {
-  ChartConfig} from "@/components/ui/chart";
+  ChartConfig
+} from "@/components/ui/chart";
 import {
   ChartContainer,
   ChartTooltip,
@@ -22,25 +28,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/context/AuthContext";
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useToast } from '@/hooks/use-toast';
+import { useCompetitorAnalysisMetrics } from '@/hooks/useCompetitorAnalysisMetrics';
 import { ACTIVITY_TYPES, TOOL_NAMES } from "@/lib/activity-types";
 import { db } from "@/lib/firebase";
 import type { NeuroSEOAnalysisRequest, NeuroSEOReport } from "@/lib/neuroseo";
-import { submitOrQueue, queueAnalysisRequest } from "@/lib/offline-queue";
+import { queueAnalysisRequest, submitOrQueue } from "@/lib/offline-queue";
 import { TimeoutError } from "@/lib/timeout";
 import { cn } from "@/lib/utils";
 import type { CompetitorAnalysisOutput } from "@/types";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, BarChart3, Users } from "lucide-react";
-import { useCompetitorAnalysisMetrics } from '@/hooks/useCompetitorAnalysisMetrics';
-import { MetricCard } from '@/components/metrics/MetricCard';
-import KPIGrid from '@/components/metrics/KPIGrid';
-import { TrendSparkline } from '@/components/metrics/TrendSparkline';
-import { PeriodSelector } from '@/components/metrics/PeriodSelector';
-import { LazyDataTable } from '@/components/metrics/LazyDataTable';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { useEffect, useRef, useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import {
   Bar,
   BarChart,
@@ -415,19 +416,41 @@ export default function CompetitorsPage() {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Competitive Analyses</h2>
           <LazyDataTable
             columns={[
-              { key: 'period', header: 'Period', render: (r: unknown) => (r as any).period || '-' },
-              { key: 'competitors', header: 'Competitors', render: (r: unknown) => ((r as any).competitors ? (r as any).competitors.length : ((r as any).competitorUrls ? (r as any).competitorUrls.length : '-')) },
+                {
+                  key: 'period', header: 'Period', render: (r: unknown) => {
+                    const rec = r as Record<string, unknown>;
+                    return (typeof rec.period === 'string' ? rec.period : '-') as string;
+                  }
+                },
+                {
+                  key: 'competitors', header: 'Competitors', render: (r: unknown) => {
+                    const rec = r as Record<string, unknown>;
+                    const comp = rec.competitors;
+                    const compUrls = rec.competitorUrls;
+                    if (Array.isArray(comp)) return comp.length;
+                    if (Array.isArray(compUrls)) return compUrls.length;
+                    return '-';
+                  }
+                },
               { key: 'avgDA', header: 'Avg DA', render: (r: unknown) => {
-                  const over = ((r as any).analysis?.overview || []) as Array<{ domainAuthority?: number }>;
-                  if (!over.length) return '-';
-                  const avg = over.reduce((s: number, o) => s + (o.domainAuthority || 0), 0) / over.length;
+                const rec = r as Record<string, unknown>;
+                const analysis = rec.analysis as unknown;
+                const overview = (analysis && typeof analysis === 'object' && Array.isArray((analysis as Record<string, unknown>).overview))
+                  ? ((analysis as Record<string, unknown>).overview as Array<{ domainAuthority?: number }>)
+                  : [];
+                if (!overview.length) return '-';
+                const avg = overview.reduce((s: number, o) => s + (o.domainAuthority || 0), 0) / overview.length;
                   return avg.toFixed(1);
                 } },
               { key: 'gaps', header: 'Gaps', render: (r: unknown) => {
-                  const over = ((r as any).analysis?.overview || []) as Array<{ domainAuthority?: number }>;
-                  if (!over.length) return '-';
-                  const max = over.reduce((m: number, o) => Math.max(m, o.domainAuthority || 0), 0);
-                  return over.filter((o) => (o.domainAuthority || 0) < max - 5).length;
+                const rec = r as Record<string, unknown>;
+                const analysis = rec.analysis as unknown;
+                const overview = (analysis && typeof analysis === 'object' && Array.isArray((analysis as Record<string, unknown>).overview))
+                  ? ((analysis as Record<string, unknown>).overview as Array<{ domainAuthority?: number }>)
+                  : [];
+                if (!overview.length) return '-';
+                const max = overview.reduce((m: number, o) => Math.max(m, o.domainAuthority || 0), 0);
+                return overview.filter((o) => (o.domainAuthority || 0) < max - 5).length;
                 } },
             ]}
             rows={comp.rows}

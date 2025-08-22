@@ -8,7 +8,7 @@
 
 interface DummyResponse { data: string }
 
-function hasProvenance(obj: any): boolean {
+function hasProvenance(obj: unknown): boolean {
     return !!obj && typeof obj === 'object' && ('__provenance' in obj || 'provenance' in obj);
 }
 

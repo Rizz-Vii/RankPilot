@@ -1,7 +1,7 @@
 // Automation Recipes data model & execution utilities
 // Minimal scaffolding for Automation Phase – deterministic friendly & Firebase aware
-import { Timestamp, addDoc, collection, doc, getDoc, getDocs, limit, orderBy, query, updateDoc, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Timestamp, addDoc, collection, doc, getDoc, getDocs, limit, orderBy, query, updateDoc, where } from 'firebase/firestore';
 
 export type AutomationActionType =
     | 'runNeuroSEOAnalysis'
@@ -147,15 +147,16 @@ export async function listRecentAutomationRuns(recipeId: string, max = 5): Promi
     const q = query(collection(db, 'automationRuns'), where('recipeId', '==', recipeId), orderBy('startedAt', 'desc'), limit(max));
     const snap = await getDocs(q);
     return snap.docs.map(d => {
-        const data = d.data() as Record<string, any>;
+        const raw = d.data() as Record<string, unknown>;
+        const data: Record<string, unknown> = raw;
         return {
             id: d.id,
             recipeId,
-            startedAt: data.startedAt?.toDate?.() || new Date(),
-            finishedAt: data.finishedAt?.toDate?.() || new Date(),
-            actions: Array.isArray(data.actions) ? data.actions : [],
-            status: (data.status === 'ok' || data.status === 'partial' || data.status === 'error') ? data.status : 'ok',
-            createdAt: data.createdAt?.toDate?.() || new Date(),
+            startedAt: (data.startedAt as Timestamp | undefined)?.toDate?.() || new Date(),
+            finishedAt: (data.finishedAt as Timestamp | undefined)?.toDate?.() || new Date(),
+            actions: Array.isArray(data.actions) ? (data.actions as AutomationRunResult['actions']) : [],
+            status: (data.status === 'ok' || data.status === 'partial' || data.status === 'error') ? data.status as AutomationRunLog['status'] : 'ok',
+            createdAt: (data.createdAt as Timestamp | undefined)?.toDate?.() || new Date(),
         } as AutomationRunLog;
     });
 }
@@ -185,21 +186,21 @@ function serializeRecipe(r: AutomationRecipe) {
     };
 }
 
-function deserializeRecipe(data: Record<string, any>): AutomationRecipe {
+function deserializeRecipe(data: Record<string, unknown>): AutomationRecipe {
     return {
         id: data.id as string | undefined,
         userId: String(data.userId),
         teamId: data.teamId ? String(data.teamId) : undefined,
         name: String(data.name || 'Untitled'),
         active: Boolean(data.active),
-        schedule: (typeof data.schedule === 'object' && data.schedule) ? data.schedule : {},
+        schedule: (typeof data.schedule === 'object' && data.schedule) ? data.schedule as AutomationRecipe['schedule'] : {},
         actions: Array.isArray(data.actions) ? data.actions.filter(a => typeof a === 'string') as AutomationActionType[] : [],
-        actionConfigs: (typeof data.actionConfigs === 'object' && data.actionConfigs) ? data.actionConfigs : {},
-        config: (typeof data.config === 'object' && data.config) ? data.config : {},
-        lastRun: data.lastRun?.toDate?.() || null,
-        nextRun: data.nextRun?.toDate?.() || null,
-        createdAt: data.createdAt?.toDate?.() || new Date(),
-        updatedAt: data.updatedAt?.toDate?.() || new Date(),
+        actionConfigs: (typeof data.actionConfigs === 'object' && data.actionConfigs) ? data.actionConfigs as Record<string, unknown> : {},
+        config: (typeof data.config === 'object' && data.config) ? data.config as Record<string, unknown> : {},
+        lastRun: (data.lastRun as Timestamp | undefined)?.toDate?.() || null,
+        nextRun: (data.nextRun as Timestamp | undefined)?.toDate?.() || null,
+        createdAt: (data.createdAt as Timestamp | undefined)?.toDate?.() || new Date(),
+        updatedAt: (data.updatedAt as Timestamp | undefined)?.toDate?.() || new Date(),
     };
 }
 

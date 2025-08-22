@@ -18,7 +18,7 @@ const SCOPED_EMPTY_WIDGET = process.env.SCOPED_EMPTY_WIDGET_ID || 'edge-scoped-e
 const SCOPED_TEAM = process.env.TEST_TEAM_ID || 'team-edge';
 const SCOPED_USER = process.env.TEST_USER_ID || 'user-edge';
 
-function assert(cond: any, msg: string) {
+function assert(cond: unknown, msg: string) {
     if (!cond) {
         console.error('Assertion failed:', msg);
         process.exitCode = 1;
@@ -34,7 +34,7 @@ async function json(params: Record<string, string>) {
     const qs = new URLSearchParams({ widgetId, format: 'json', ...params }).toString();
     const res = await http('GET', `/api/table-data?${qs}`);
     assert(res.ok, `JSON request failed: ${res.status}`);
-    return res.json() as Promise<{ rows: any[]; total?: number }>;
+    return res.json() as Promise<{ rows: Array<Record<string, unknown>>; total?: number }>;
 }
 
 async function csv(params: Record<string, string>) {
@@ -52,7 +52,7 @@ async function run() {
 
     // 2) String-only values: verify ordering on fallback dataset using numeric parse from strings
     // Use a widget that triggers fallback (no Firestore data) so values are strings; verify non-decreasing order for value.asc
-    const toNum = (v: any) => Number(String(v ?? '').replace(/[^0-9.-]/g, ''));
+    const toNum = (v: unknown) => Number(String((v as unknown) ?? '').replace(/[^0-9.-]/g, ''));
     const stringAsc = await json({ widgetId: STR_ONLY_WIDGET, sort: 'value.asc', page: '1', pageSize: '25' });
     assert(stringAsc.rows.length > 0, 'String-only dataset request returned no rows');
     for (let i = 1; i < stringAsc.rows.length; i++) {

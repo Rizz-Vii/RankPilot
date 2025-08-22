@@ -6,8 +6,8 @@
  * 3. Emit JSON summary and non-zero exit if any missing
  */
 import fs from 'fs';
-import path from 'path';
 import http from 'http';
+import path from 'path';
 
 interface EndpointResult { path: string; method: string; ok: boolean; provenance?: string; status?: number; error?: string; }
 
@@ -34,7 +34,7 @@ function discover(): string[] {
     return Array.from(new Set(found)).sort();
 }
 
-function fetchJson(ep: string, method: string): Promise<{ status: number; body: any }> {
+function fetchJson(ep: string, method: string): Promise<{ status: number; body: unknown }> {
     return new Promise((resolve, reject) => {
         const data = method === 'POST' ? JSON.stringify({ ping: true }) : undefined;
         const req = http.request({ hostname: 'localhost', port: process.env.PORT || 3000, path: ep, method, headers: data ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } : undefined }, res => {
@@ -53,10 +53,15 @@ async function main() {
         const method = ep.includes('/stream') ? 'GET' : 'GET'; // default to GET to avoid side effects; enhance per endpoint as needed
         try {
             const { status, body } = await fetchJson(ep, method);
-            const prov = body && typeof body === 'object' ? body.__provenance : undefined;
-            results.push({ path: ep, method, ok: prov !== undefined, provenance: prov, status });
-        } catch (e: any) {
-            results.push({ path: ep, method, ok: false, error: e?.message });
+            let provenance: string | undefined;
+            if (body && typeof body === 'object' && body !== null && '__provenance' in body) {
+                const p = (body as Record<string, unknown>).__provenance;
+                provenance = typeof p === 'string' ? p : undefined;
+            }
+            results.push({ path: ep, method, ok: provenance !== undefined, provenance, status });
+        } catch (e: unknown) {
+            const msg = e && typeof e === 'object' && 'message' in e ? String((e as { message?: unknown }).message) : String(e);
+            results.push({ path: ep, method, ok: false, error: msg });
         }
     }
     const missing = results.filter(r => !r.ok);

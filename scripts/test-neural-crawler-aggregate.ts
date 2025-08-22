@@ -1,9 +1,9 @@
 #!/usr/bin/env ts-node
 /* T14: Validate neural crawler aggregate doc size & field parity counts */
 import assert from 'assert';
-import { initializeApp, getApps } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
 import { randomUUID } from 'crypto';
+import { getApps, initializeApp } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
 async function simulateClientCrawl(url: string) {
     // Direct write emulates client legacy + aggregate dual-write (flag must be on in app for real). Here we simulate both.
@@ -54,7 +54,7 @@ async function simulateClientCrawl(url: string) {
 async function main() {
     if (!getApps().length) initializeApp();
     const url = `https://example.com/test-${randomUUID()}`;
-    const { legacyDoc, aggregate } = await simulateClientCrawl(url);
+    const { legacyDoc, aggregate: _aggregate } = await simulateClientCrawl(url);
     // Fetch one created aggregate doc (latest)
     const snap = await getFirestore().collection('neuralCrawlerResultsAgg').orderBy('createdAt', 'desc').limit(1).get();
     assert.strictEqual(snap.size, 1, 'aggregate doc missing');

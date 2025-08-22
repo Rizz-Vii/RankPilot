@@ -9,9 +9,8 @@ declare module 'webpack-bundle-analyzer' {
         openAnalyzer?: boolean;
         generateStatsFile?: boolean;
         statsFilename?: string;
-        // TODO:TRACKD-DEFER:typing narrow statsOptions structure (webpack stats config shape)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        statsOptions?: any;
+        // TODO:TRACKD-DEFER: refine statsOptions structure (webpack stats config shape)
+        statsOptions?: unknown;
         logLevel?: 'info' | 'warn' | 'error' | 'silent';
     }
     class BundleAnalyzerPlugin implements WebpackPluginInstance {

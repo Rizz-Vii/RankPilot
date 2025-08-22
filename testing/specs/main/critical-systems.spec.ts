@@ -153,8 +153,8 @@ test.describe("🔍 Lean Channel Specific Tests", () => {
 
         // Check if Firebase is initialized (look for Firebase-related scripts or config)
         const firebaseConfig = await page.evaluate(() => {
-            return typeof window !== "undefined" &&
-                (window as any).firebase !== undefined ||
+            const w = window as unknown as { firebase?: unknown };
+            return (typeof window !== "undefined" && (w.firebase !== undefined)) ||
                 document.querySelector("script[src*='firebase']") !== null;
         });
 

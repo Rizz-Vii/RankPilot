@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -7,19 +8,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { formatDistanceToNow } from "date-fns";
 import {
-  Search,
-  FileText,
-  TrendingUp,
-  Target,
   Clock,
   ExternalLink,
+  FileText,
+  Search,
+  Target,
+  TrendingUp,
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
 
 interface TimestampLike { toDate: () => Date }
-function isTimestampLike(v: unknown): v is TimestampLike { return typeof v === 'object' && v !== null && typeof (v as any).toDate === 'function'; }
+function isTimestampLike(v: unknown): v is TimestampLike { return typeof v === 'object' && v !== null && 'toDate' in v && typeof (v as { toDate?: unknown }).toDate === 'function'; }
 
 interface Activity {
   id: string;
@@ -144,7 +144,11 @@ export default function SEOActivitiesTimeline({
                   </h4>
                   <time className="text-xs text-muted-foreground flex-shrink-0 ml-2">
                     {formatDistanceToNow(
-                      isTimestampLike(activity.timestamp) ? activity.timestamp.toDate() : new Date(activity.timestamp as any), {
+                      isTimestampLike(activity.timestamp) ? activity.timestamp.toDate() : new Date(
+                        typeof activity.timestamp === 'string' || typeof activity.timestamp === 'number'
+                          ? activity.timestamp
+                          : Date.now()
+                      ), {
                       addSuffix: true,
                     })}
                   </time>

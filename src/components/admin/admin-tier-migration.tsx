@@ -1,18 +1,18 @@
 // Admin component for user tier migration
 "use client";
 
-import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { RefreshCw, CheckCircle, AlertTriangle, Info } from "lucide-react";
 import { identifyAndCorrectUserTiers } from "@/lib/user-tier-migration";
+import { AlertTriangle, CheckCircle, Info, RefreshCw } from "lucide-react";
+import { useState } from "react";
 
 
 export default function AdminTierMigration() {
@@ -86,7 +86,7 @@ export default function AdminTierMigration() {
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
             <Button
-              onClick={runMigration}
+              onClick={() => { void runMigration(); }}
               disabled={isRunning}
               className="flex items-center gap-2"
             >

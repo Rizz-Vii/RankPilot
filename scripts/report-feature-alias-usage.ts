@@ -6,7 +6,7 @@
  * Output: Logs match lines; optional OUTPUT_FILE JSON.
  * Exit Code: 0 (always) unless STRICT=1 then 2 on unauthorized matches.
  */
-import { readFileSync, readdirSync, statSync, mkdirSync, writeFileSync } from 'fs';
+import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
 interface Match { file: string; line: number; alias: string; context: string; allowed: boolean; }
@@ -69,8 +69,9 @@ async function main() {
             mkdirSync(require('path').dirname(out), { recursive: true });
             writeFileSync(out, JSON.stringify({ generatedAt: new Date().toISOString(), aliasKeys, results }, null, 2));
             console.log('[alias-usage] wrote', out);
-        } catch (e) {
-            console.error('[alias-usage] failed write', (e as any)?.message);
+        } catch (e: unknown) {
+            const msg = e && typeof e === 'object' && 'message' in e ? String((e as { message?: unknown }).message) : String(e);
+            console.error('[alias-usage] failed write', msg);
         }
     }
     if (strict && unauthorized.length > 0) process.exit(2);
