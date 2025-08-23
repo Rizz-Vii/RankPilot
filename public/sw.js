@@ -7,7 +7,7 @@
  * - Background sync for data synchronization
  * - Push notifications for critical SEO alerts
  * - Cache-first strategy for static assets
- * - Network-first strategy for dynamic data
+ * - Network-first strategy removed (APIs are never cached; app uses cache-first/SWR)
  */
 
 const STATIC_CACHE = 'rankpilot-static-v1';
@@ -97,9 +97,20 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Handle API requests with network-first strategy
+    // Handle API requests: never cache responses to avoid leaking authenticated data
     if (url.pathname.startsWith('/api/')) {
-        event.respondWith(networkFirstStrategy(request));
+        event.respondWith((async () => {
+            try {
+                const networkResponse = await fetch(request, { cache: 'no-store' });
+                return networkResponse;
+            } catch {
+                // If offline, return a minimal 503 JSON; do not serve potentially stale cached API data
+                return new Response(
+                    JSON.stringify({ error: 'Offline', message: 'API unavailable offline' }),
+                    { status: 503, headers: { 'Content-Type': 'application/json' } }
+                );
+            }
+        })());
         return;
     }
 
@@ -116,38 +127,7 @@ self.addEventListener('fetch', (event) => {
     }
 });
 
-// Network-first strategy for dynamic content
-async function networkFirstStrategy(request) {
-    try {
-        const networkResponse = await fetch(request);
-
-        if (networkResponse.ok) {
-            const cache = await caches.open(DYNAMIC_CACHE);
-            cache.put(request, networkResponse.clone());
-        }
-
-        return networkResponse;
-    } catch {
-        console.log('[SW] Network failed, trying cache:', request.url);
-        const cachedResponse = await caches.match(request);
-
-        if (cachedResponse) {
-            return cachedResponse;
-        }
-
-        // Return offline page for failed requests
-        return new Response(
-            JSON.stringify({
-                error: 'Offline',
-                message: 'This feature requires an internet connection'
-            }),
-            {
-                status: 503,
-                headers: { 'Content-Type': 'application/json' }
-            }
-        );
-    }
-}
+// Network-first strategy was removed as API paths bypass caching and other paths use cache-first/SWR.
 
 // Cache-first strategy for static assets
 async function cacheFirstStrategy(request) {

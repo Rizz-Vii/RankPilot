@@ -1,6 +1,8 @@
-import type { NextRequest} from "next/server";
-import { NextResponse } from "next/server";
+import { getLogger } from '@/lib/logging/app-logger';
+import { recordRateLimitRejection, recordTeamRateLimitAllowed } from '@/lib/metrics/unified-metrics';
 import { getToken } from "next-auth/jwt";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 // Avoid importing Node-only admin SDK on Edge runtime. We'll dynamically import
 // the team rate limiter only when not running in Edge.
 type ApplyTeamRateLimit = (teamId?: string) => Promise<{ allowed: boolean; headers: Record<string, string> } | null>;
@@ -18,6 +20,7 @@ const API_MAX_REQUESTS = DEV_RELAX ? 600 : 50; // Lower limit for API endpoints
 
 export async function rateLimit(req: NextRequest) {
   try {
+    const logger = getLogger('middleware.rate-limit');
     // Get token to identify user
     const token = await getToken({ req });
     const userId =
@@ -55,7 +58,8 @@ export async function rateLimit(req: NextRequest) {
 
     // Check if per-user rate limit exceeded
     if (userData.count > limit) {
-      console.warn(`Rate limit exceeded for user ${userId}`);
+      logger.warn('user.rate.limit.exceeded', { userId, path: req.nextUrl.pathname });
+      recordRateLimitRejection('user');
       return new NextResponse(
         JSON.stringify({
           error: "Too many requests",
@@ -87,9 +91,11 @@ export async function rateLimit(req: NextRequest) {
         teamResult = await _applyTeamRateLimit?.(teamId) ?? null;
       }
     } catch (e) {
-      console.warn('[rate-limit] team rate limiter unavailable in this runtime', e);
+      const msg = e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string' ? (e as { message: string }).message : String(e);
+      logger.warn('team.rate.limit.unavailable', { error: msg });
     }
     if (teamResult && !teamResult.allowed) {
+      recordRateLimitRejection(teamId || 'team');
       return new NextResponse(
         JSON.stringify({ error: 'Team rate limit exceeded' }),
         { status: 429, headers: teamResult.headers }
@@ -109,10 +115,15 @@ export async function rateLimit(req: NextRequest) {
     );
     if (teamResult && teamResult.allowed) {
       Object.entries(teamResult.headers).forEach(([k, v]) => response.headers.set(k, v));
+      if (teamId) recordTeamRateLimitAllowed(teamId);
     }
     return response;
   } catch (error) {
-    console.error("Rate limiting error:", error);
+    const logger = getLogger('middleware.rate-limit');
+    const msg = error && typeof error === 'object' && 'message' in error && typeof (error as { message?: unknown }).message === 'string'
+      ? (error as { message: string }).message
+      : String(error);
+    logger.error('rate.limit.error', { error: msg });
     // Allow request through on error
     return NextResponse.next();
   }

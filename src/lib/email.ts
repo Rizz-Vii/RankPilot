@@ -2,6 +2,23 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import nodemailer from "nodemailer";
 
+// Resolve theme-like colors to hex fallbacks for email clients (no CSS vars support)
+const emailColorPalette = () => {
+  // Fallback RGBs tuned to brand tokens
+  const hex = (r: number, g: number, b: number) => `#${[r, g, b].map(n => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0')).join('')}`;
+  return {
+    primary500: hex(79, 70, 229),
+    primary600: hex(67, 56, 202),
+    primaryFg: hex(255, 255, 255),
+    gray50: hex(249, 250, 251),
+    gray200: hex(229, 231, 235),
+    gray500: hex(107, 114, 128),
+    gray600: hex(75, 85, 99),
+    gray800: hex(31, 41, 55),
+    white: hex(255, 255, 255),
+  } as const;
+};
+
 // Email transporter configuration
 const createTransporter = () => {
   return nodemailer.createTransport({
@@ -22,24 +39,24 @@ const getReceiptEmailTemplate = (data: {
   transactionId: string;
   invoiceUrl?: string;
 }) => {
+  const C = emailColorPalette();
   return `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="utf-8">
       <title>Payment Receipt - RankPilot</title>
-      <style>
-  body { font-family: Arial, sans-serif; line-height: 1.6; color: var(--color-gray-800); }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-  /* Using approximate gradient mapped to primary + accent tokens */
-  .header { background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-  .content { background: var(--color-gray-50); padding: 30px; border-radius: 0 0 10px 10px; }
-        .receipt-details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
-  .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--color-gray-200); }
-        .detail-row:last-child { border-bottom: none; font-weight: bold; }
-  .btn { display: inline-block; background: var(--color-primary-500); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 0; }
-  .footer { text-align: center; margin-top: 30px; color: var(--color-gray-600); font-size: 14px; }
-      </style>
+  <style>
+  body { font-family: Arial, sans-serif; line-height: 1.6; color: ${C.gray800}; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+  .header { background: linear-gradient(135deg, ${C.primary500} 0%, ${C.primary600} 100%); color: ${C.primaryFg}; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+  .content { background: ${C.gray50}; padding: 30px; border-radius: 0 0 10px 10px; }
+    .receipt-details { background: ${C.white}; padding: 20px; border-radius: 8px; margin: 20px 0; }
+  .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid ${C.gray200}; }
+    .detail-row:last-child { border-bottom: none; font-weight: bold; }
+  .btn { display: inline-block; background: ${C.primary500}; color: ${C.primaryFg}; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 0; }
+  .footer { text-align: center; margin-top: 30px; color: ${C.gray600}; font-size: 14px; }
+  </style>
     </head>
     <body>
       <div class="container">
@@ -109,7 +126,7 @@ const getReceiptEmailTemplate = (data: {
             `
         : ""
     }
-          ${data.invoiceUrl ? `<a href="${data.invoiceUrl}" class="btn">Download Invoice</a>` : ""}
+          ${data.invoiceUrl ? `<a href="${data.invoiceUrl}" class="btn" style="background:${C.primary500};color:${C.primaryFg}">Download Invoice</a>` : ""}
 
           <h3>What's Next?</h3>
           <ul>
@@ -136,24 +153,25 @@ const getWelcomeEmailTemplate = (data: {
   customerName: string;
   plan: string;
 }) => {
+  const C = emailColorPalette();
   return `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="utf-8">
       <title>Welcome to RankPilot ${data.plan}!</title>
-      <style>
-  body { font-family: Arial, sans-serif; line-height: 1.6; color: var(--color-gray-800); }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-  .header { background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-  .content { background: var(--color-gray-50); padding: 30px; border-radius: 0 0 10px 10px; }
-        .feature-list { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
-  .feature-item { padding: 10px 0; border-bottom: 1px solid var(--color-gray-200); display: flex; align-items: center; }
-        .feature-item:last-child { border-bottom: none; }
-  .feature-icon { color: var(--color-primary-500); margin-right: 10px; }
-  .btn { display: inline-block; background: var(--color-primary-500); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 5px; }
-  .footer { text-align: center; margin-top: 30px; color: var(--color-gray-600); font-size: 14px; }
-      </style>
+  <style>
+  body { font-family: Arial, sans-serif; line-height: 1.6; color: ${C.gray800}; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+  .header { background: linear-gradient(135deg, ${C.primary500} 0%, ${C.primary600} 100%); color: ${C.primaryFg}; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+  .content { background: ${C.gray50}; padding: 30px; border-radius: 0 0 10px 10px; }
+    .feature-list { background: ${C.white}; padding: 20px; border-radius: 8px; margin: 20px 0; }
+  .feature-item { padding: 10px 0; border-bottom: 1px solid ${C.gray200}; display: flex; align-items: center; }
+    .feature-item:last-child { border-bottom: none; }
+  .feature-icon { color: ${C.primary500}; margin-right: 10px; }
+  .btn { display: inline-block; background: ${C.primary500}; color: ${C.primaryFg}; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 5px; }
+  .footer { text-align: center; margin-top: 30px; color: ${C.gray600}; font-size: 14px; }
+  </style>
     </head>
     <body>
       <div class="container">
@@ -232,8 +250,8 @@ const getWelcomeEmailTemplate = (data: {
           </ol>
 
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" class="btn">Get Started</a>
-            <a href="${process.env.NEXT_PUBLIC_APP_URL}/getting-started" class="btn" style="background: var(--color-gray-500);">View Guide</a>
+            <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" class="btn" style="background:${C.primary500};color:${C.primaryFg}">Get Started</a>
+            <a href="${process.env.NEXT_PUBLIC_APP_URL}/getting-started" class="btn" style="background: ${C.gray500}; color:${C.primaryFg}">View Guide</a>
           </div>
 
           <div class="footer">

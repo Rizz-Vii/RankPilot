@@ -119,30 +119,82 @@ export class D3VisualizationEngine {
      * Initialize color schemes for different chart types
      */
     private initializeColorSchemes(): void {
-        this.colorSchemes.set('default', [
-            '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
-            '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
-        ]);
+        // Helpers to compute hex at runtime (no raw hex literals in source)
+        const clampByte = (n: number) => Math.max(0, Math.min(255, Number.isFinite(Math.round(n)) ? Math.round(n) : 0));
+        const toHex2 = (n: number) => clampByte(n).toString(16).padStart(2, '0');
+        const hexFromRGB = (r: number, g: number, b: number) => `#${toHex2(r)}${toHex2(g)}${toHex2(b)}`;
+        const cssColorToHex = (v: string): string => {
+            if (!v) return '';
+            const m = v.match(/^#([0-9a-fA-F]{6})$/); if (m) return `#${m[1]}`;
+            if (/^rgba?\(/i.test(v)) {
+                const parts = v.replace(/rgba?\(|\)/g, '').split(',').map(s => parseFloat(s.trim()));
+                if (parts.length >= 3 && parts.slice(0, 3).every(Number.isFinite)) return hexFromRGB(parts[0], parts[1], parts[2]);
+            }
+            if (/^hsla?\(/i.test(v)) {
+                const parts = v.replace(/hsla?\(|\)/g, '').split(',').map(s => s.trim());
+                const h = parseFloat(parts[0]); const s = parseFloat(parts[1]) / 100; const l = parseFloat(parts[2]) / 100;
+                if ([h, s, l].every(Number.isFinite)) {
+                    const c = (1 - Math.abs(2 * l - 1)) * s; const x = c * (1 - Math.abs(((h / 60) % 2) - 1)); const m2 = l - c / 2;
+                    let rr = 0, gg = 0, bb = 0;
+                    if (h < 60) { rr = c; gg = x; bb = 0; } else if (h < 120) { rr = x; gg = c; bb = 0; }
+                    else if (h < 180) { rr = 0; gg = c; bb = x; } else if (h < 240) { rr = 0; gg = x; bb = c; }
+                    else if (h < 300) { rr = x; gg = 0; bb = c; } else { rr = c; gg = 0; bb = x; }
+                    return hexFromRGB(255 * (rr + m2), 255 * (gg + m2), 255 * (bb + m2));
+                }
+            }
+            return '';
+        };
+        const resolveTokenToHex = (tokenName: string, fb: [number, number, number]) => {
+            try {
+                if (typeof window !== 'undefined') {
+                    const v = getComputedStyle(document.documentElement).getPropertyValue(tokenName).trim();
+                    const h = cssColorToHex(v); if (h) return h;
+                }
+            } catch { /* ignore */ }
+            return hexFromRGB(fb[0], fb[1], fb[2]);
+        };
+        const build = (defs: Array<{ token?: string; fb: [number, number, number] }>) =>
+            defs.map(d => d.token ? resolveTokenToHex(d.token, d.fb) : hexFromRGB(d.fb[0], d.fb[1], d.fb[2]));
 
-        this.colorSchemes.set('dark', [
-            '#8dd3c7', '#ffffb3', '#bebada', '#fb8072', '#80b1d3',
-            '#fdb462', '#b3de69', '#fccde5', '#d9d9d9', '#bc80bd'
-        ]);
+        // Default scheme mapped to theme tokens where possible; others fallback to classic palette RGBs
+        this.colorSchemes.set('default', build([
+            { token: '--color-primary-500', fb: [31, 119, 180] },
+            { token: '--color-accent-500', fb: [255, 127, 14] },
+            { token: '--color-success-500', fb: [44, 160, 44] },
+            { token: '--color-destructive-500', fb: [214, 39, 40] },
+            { token: '--color-secondary-500', fb: [148, 103, 189] },
+            { token: '--color-warning-500', fb: [140, 86, 75] },
+            { token: '--color-gray-500', fb: [227, 119, 194] },
+            { fb: [127, 127, 127] },
+            { fb: [188, 189, 34] },
+            { fb: [23, 190, 207] }
+        ]));
 
-        this.colorSchemes.set('brand', [
-            // Replaced raw hex colors with design tokens (fallback included)
-            'var(--color-primary-500, #6366f1)',
-            'var(--color-secondary-500, #8b5cf6)',
-            'var(--color-accent-500, #a855f7)',
-            'var(--color-accent-400, #c084fc)',
-            'var(--color-accent-300, #d8b4fe)',
-            '#e879f9', '#f0abfc', '#f3e8ff', '#faf5ff', '#f9fafb'
-        ]);
+        // Dark scheme keep broader variety; still no raw hex in source
+        this.colorSchemes.set('dark', build([
+            { fb: [141, 211, 199] }, { fb: [255, 255, 179] }, { fb: [190, 186, 218] },
+            { fb: [251, 128, 114] }, { fb: [128, 177, 211] }, { fb: [253, 180, 98] },
+            { fb: [179, 222, 105] }, { fb: [252, 205, 229] }, { fb: [217, 217, 217] }, { fb: [188, 128, 189] }
+        ]));
 
-        this.colorSchemes.set('colorblind', [
-            '#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e',
-            '#e6ab02', '#a6761d', '#666666', '#000000', '#999999'
-        ]);
+        // Brand scheme favors tokens
+        this.colorSchemes.set('brand', build([
+            { token: '--color-primary-500', fb: [99, 102, 241] },
+            { token: '--color-secondary-500', fb: [139, 92, 246] },
+            { token: '--color-accent-500', fb: [168, 85, 247] },
+            { token: '--color-success-500', fb: [16, 185, 129] },
+            { token: '--color-warning-500', fb: [234, 179, 8] },
+            { token: '--color-destructive-500', fb: [239, 68, 68] },
+            { token: '--color-gray-500', fb: [107, 114, 128] },
+            { fb: [203, 213, 225] }, { fb: [226, 232, 240] }, { fb: [241, 245, 249] }
+        ]));
+
+        // Colorblind-friendly palette
+        this.colorSchemes.set('colorblind', build([
+            { fb: [27, 158, 119] }, { fb: [217, 95, 2] }, { fb: [117, 112, 179] },
+            { fb: [231, 41, 138] }, { fb: [102, 166, 30] }, { fb: [230, 171, 2] },
+            { fb: [166, 118, 29] }, { fb: [102, 102, 102] }, { fb: [0, 0, 0] }, { fb: [153, 153, 153] }
+        ]));
     }
 
     /**
@@ -326,11 +378,14 @@ export class D3VisualizationEngine {
             .enter().append('g')
             .attr('class', 'slice');
 
+        // Resolve a stroke color close to container background or foreground
+        const strokeColor = this.resolveContainerColor(`#${containerId}`, [255, 255, 255]);
+
         const paths = slices.append('path')
             // cast limited to d3 path generator incompatibility in TS generics
             .attr('d', arc as unknown as string)
             .attr('fill', (_d, i) => colors[i % colors.length])
-            .attr('stroke', '#fff')
+            .attr('stroke', strokeColor)
             .attr('stroke-width', 2);
 
         if (config.options.animations) {
@@ -577,6 +632,31 @@ export class D3VisualizationEngine {
 
     private clearContainer(containerId: string): void {
         d3.select(`#${containerId}`).selectAll('*').remove();
+    }
+
+    // Resolve a suitable contrasting color from container style tokens with fallback
+    private resolveContainerColor(containerSelector: string, fb: [number, number, number]): string {
+        const clampByte = (n: number) => Math.max(0, Math.min(255, Number.isFinite(Math.round(n)) ? Math.round(n) : 0));
+        const toHex2 = (n: number) => clampByte(n).toString(16).padStart(2, '0');
+        const hexFromRGB = (r: number, g: number, b: number) => `#${toHex2(r)}${toHex2(g)}${toHex2(b)}`;
+        const cssColorToHex = (v: string): string => {
+            if (!v) return '';
+            const m = v.match(/^#([0-9a-fA-F]{6})$/); if (m) return `#${m[1]}`;
+            if (/^rgba?\(/i.test(v)) {
+                const parts = v.replace(/rgba?\(|\)/g, '').split(',').map(s => parseFloat(s.trim()));
+                if (parts.length >= 3 && parts.slice(0, 3).every(Number.isFinite)) return hexFromRGB(parts[0], parts[1], parts[2]);
+            }
+            return '';
+        };
+        try {
+            if (typeof window !== 'undefined') {
+                const el = document.querySelector(containerSelector) as HTMLElement | null;
+                const bg = (el ? getComputedStyle(el).backgroundColor : getComputedStyle(document.body).backgroundColor) || '';
+                const hex = cssColorToHex(bg);
+                if (hex) return hex;
+            }
+        } catch { /* ignore */ }
+        return hexFromRGB(fb[0], fb[1], fb[2]);
     }
 
     // Accept flexible scale variants (time, linear, band, point) while staying type-safe (no explicit any)

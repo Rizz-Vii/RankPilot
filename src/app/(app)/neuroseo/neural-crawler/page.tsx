@@ -18,7 +18,7 @@ import { dualWriteNeuralCrawlerAggregate } from '@/lib/neural-crawler/aggregate'
 import { tagSynthetic } from '@/lib/synthetic/synthetic-utils';
 import { composeToolHeaderBadges } from "@/lib/tool-badge-utils";
 import { safeErrorMessage, toJsDate } from '@/lib/utils';
-import { addDoc, collection, doc, getDoc, getDocs, limit, orderBy, query, where } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, getDocs, limit, orderBy, query, serverTimestamp, where } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
@@ -271,8 +271,8 @@ export default function NeuralCrawlerPage() {
             setCurrentResult(docData as CrawlResult);
           }
         }
-      } catch (e) {
-        console.warn('[neuralCrawler] hydrate failed', safeErrorMessage(e));
+      } catch (err) {
+        console.warn('[neuralCrawler] hydrate failed', safeErrorMessage(err));
       }
     };
     void run();
@@ -382,32 +382,42 @@ Key areas of focus include content quality assessment, competitive analysis, per
     setCurrentResult(null);
 
     try {
-      // Save crawl request to history
-      const historyDoc = await addDoc(collection(db, 'neuralCrawlerHistory'), {
-        userId: currentUserId,
-        url: crawlUrl,
-        status: 'processing',
-        createdAt: new Date()
-      });
+      // Save crawl request to history (permission errors are caught and downgraded)
+      let historyId = `local_${Date.now()}`;
+      try {
+        const historyDoc = await addDoc(collection(db, 'neuralCrawlerHistory'), {
+          userId: currentUserId,
+          url: crawlUrl,
+          status: 'processing',
+          createdAt: serverTimestamp()
+        });
+        historyId = historyDoc.id;
+      } catch {
+        console.warn('[neuralCrawler] history write denied, continuing locally');
+      }
 
       // Simulate analysis
       const result = await simulateAnalysis(crawlUrl);
       setCurrentResult(result);
 
-  // Save complete result (legacy full document)
+      // Save complete result (legacy full document)
       const fullResult: CrawlResult & { userId: string; historyId: string } = {
         userId: currentUserId,
-        historyId: historyDoc.id,
+        historyId,
         ...result,
         createdAt: new Date()
       };
       if (!pruneFlag) {
-        await addDoc(collection(db, 'neuralCrawlerResults'), fullResult);
+        try {
+          await addDoc(collection(db, 'neuralCrawlerResults'), fullResult);
+        } catch {
+          console.warn('[neuralCrawler] result write denied, proceeding without persistence');
+        }
       }
-      // Dual-write compact aggregate (optional, non-blocking) still executed for monitoring until legacy fully retired
+      // Dual-write compact aggregate (optional, non-blocking)
       void dualWriteNeuralCrawlerAggregate(fullResult);
 
-      await loadCrawlHistory();
+      try { await loadCrawlHistory(); } catch { }
       toast.success("Website analysis completed successfully!");
 
     } catch (error) {

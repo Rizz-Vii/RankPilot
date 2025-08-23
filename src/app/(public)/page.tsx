@@ -17,7 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
-import { Brain, Coins, LineChart, Link2, Rocket, Search, TrendingUp, Users2, Workflow, Zap } from "lucide-react";
+import { Brain, Coins, LineChart, Link2, Rocket, TrendingUp, Users2, Workflow, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect } from "react";
@@ -31,7 +31,6 @@ const fadeIn = {
 };
 
 type FeatureTitle =
-  | "Site Audit"
   | "Keyword Intelligence"
   | "Competitor Tracking"
   | "NeuroSemantic Engine"
@@ -45,22 +44,22 @@ type FeatureTitle =
 import type { Variants } from "framer-motion";
 
 const iconAnimations: Record<FeatureTitle, Variants> = {
-  "Site Audit": {
-    initial: { x: -24, opacity: 0, scale: 0.7, rotate: -20 },
-    animate: {
-      x: 0,
-      opacity: 1,
-      scale: 1,
-      rotate: 0,
-      transition: { type: "spring", stiffness: 300, damping: 18 },
-    },
-    hover: {
-      scale: 1.2,
-      rotate: 15,
-      x: 40,
-      transition: { type: "spring", stiffness: 200, damping: 15 },
-    },
-  },
+  // "Site Audit": {
+  //   initial: { x: -24, opacity: 0, scale: 0.7, rotate: -20 },
+  //   animate: {
+  //     x: 0,
+  //     opacity: 1,
+  //     scale: 1,
+  //     rotate: 0,
+  //     transition: { type: "spring", stiffness: 300, damping: 18 },
+  //   },
+  //   hover: {
+  //     scale: 1.2,
+  //     rotate: 15,
+  //     x: 40,
+  //     transition: { type: "spring", stiffness: 200, damping: 15 },
+  //   },
+  // },
   "Keyword Intelligence": {
     initial: { x: 4, opacity: 0, scale: 0.7, rotate: 20 },
     animate: {
@@ -136,13 +135,13 @@ const features: {
   icon: React.ComponentType<{ className?: string }>;
   detailedDescription: string;
 }[] = [
-  {
-    title: "Site Audit",
-  desc: "160+ technical checks • JS rendering • Core Web Vitals • Structured data & link graph scoring.",
-    icon: Search,
-    detailedDescription:
-      "The audit core combines deterministic crawling + AI heuristic evaluation. We surface prioritized issues across rendering, performance, accessibility, structured data, indexation signals, internal linking flow and Core Web Vitals—ranked by projected organic impact and ease of implementation.",
-  },
+    // {
+    //   title: "Site Audit",
+    // desc: "160+ technical checks • JS rendering • Core Web Vitals • Structured data & link graph scoring.",
+    //   icon: Search,
+    //   detailedDescription:
+    //     "The audit core combines deterministic crawling + AI heuristic evaluation. We surface prioritized issues across rendering, performance, accessibility, structured data, indexation signals, internal linking flow and Core Web Vitals—ranked by projected organic impact and ease of implementation.",
+    // },
   {
     title: "Keyword Intelligence",
   desc: "Intent clustering • Opportunity scoring • SERP feature deltas • Competitive gap surfacing.",

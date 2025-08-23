@@ -1,7 +1,7 @@
 /**
  * Language Selector Component
  * Priority 3 Feature Implementation - DevReady Phase 3
- * 
+ *
  * Features:
  * - Multi-language support with visual selection
  * - RTL layout support
@@ -9,17 +9,17 @@
  */
 
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { SupportedLanguage} from '@/lib/i18n/internationalization-system';
-import { LANGUAGE_CONFIGS, useI18n } from '@/lib/i18n/internationalization-system';
 import { useToast } from '@/hooks/use-toast';
+import type { SupportedLanguage } from '@/lib/i18n/internationalization-system';
+import { LANGUAGE_CONFIGS, useI18n } from '@/lib/i18n/internationalization-system';
 import { Check, Globe } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 interface LanguageSelectorProps {
     variant?: 'button' | 'compact' | 'inline';
@@ -36,12 +36,23 @@ export function LanguageSelector({
     const [a11yMessage, setA11yMessage] = useState('');
     const { toast } = useToast();
 
-    const handleLanguageChange = (newLanguage: SupportedLanguage) => {
-        setLanguage(newLanguage);
+    const pending = useRef<SupportedLanguage | null>(null);
+    const debounceRef = useRef<number | null>(null);
+    const commitChange = (lng: SupportedLanguage) => {
+        setLanguage(lng);
         const msg = translate('feedback.language.changed');
         setA11yMessage(msg);
         toast({ title: msg });
     };
+    const handleLanguageChange = (newLanguage: SupportedLanguage) => {
+        pending.current = newLanguage;
+        if (debounceRef.current) window.clearTimeout(debounceRef.current);
+        debounceRef.current = window.setTimeout(() => {
+            if (pending.current) commitChange(pending.current);
+            pending.current = null;
+        }, 600);
+    };
+    useEffect(() => () => { if (debounceRef.current) window.clearTimeout(debounceRef.current); }, []);
 
     const currentLanguageConfig = LANGUAGE_CONFIGS[language];
 

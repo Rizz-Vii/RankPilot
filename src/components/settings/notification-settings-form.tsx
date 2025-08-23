@@ -20,10 +20,11 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
+import { getLogger } from "@/lib/logging/app-logger";
 import { asVoidHandler } from "@/lib/react/handlers";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { User } from "firebase/auth";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { Bell, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -52,6 +53,7 @@ export default function NotificationSettingsForm({
   profile,
 }: NotificationSettingsFormProps): JSX.Element {
   const { toast } = useToast();
+  const logger = getLogger('settings.notifications');
   const [isLoading, setIsLoading] = useState(false);
   const prof: UserProfile | undefined = asUserProfile(profile);
 
@@ -74,14 +76,17 @@ export default function NotificationSettingsForm({
       const userDocRef = doc(db, "users", user.uid);
       await updateDoc(userDocRef, {
         notifications: values,
-        updatedAt: new Date(),
+        updatedAt: serverTimestamp(),
       });
+      logger.audit('notifications.updated', { userId: user.uid });
 
       toast({
         title: "Notifications Updated",
         description: "Your notification preferences have been saved.",
       });
-    } catch {
+    } catch (e: unknown) {
+      const msg = (e && typeof e === 'object' && 'message' in e) ? (e as { message?: string }).message : undefined;
+      logger.error('notifications.update.error', { userId: user.uid, error: msg });
       toast({
         variant: "destructive",
         title: "Update Failed",
@@ -136,7 +141,7 @@ export default function NotificationSettingsForm({
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
-                        disabled={isLoading}
+                        disabled={isLoading || !form.watch('emailNotifications')}
                       />
                     </FormControl>
                   </FormItem>
@@ -192,7 +197,7 @@ export default function NotificationSettingsForm({
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
-                        disabled={isLoading}
+                        disabled={isLoading || !form.watch('emailNotifications')}
                       />
                     </FormControl>
                   </FormItem>
@@ -216,7 +221,7 @@ export default function NotificationSettingsForm({
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
-                        disabled={isLoading}
+                        disabled={isLoading || !form.watch('emailNotifications')}
                       />
                     </FormControl>
                   </FormItem>
@@ -238,7 +243,7 @@ export default function NotificationSettingsForm({
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
-                        disabled={isLoading}
+                        disabled={isLoading || !form.watch('emailNotifications')}
                       />
                     </FormControl>
                   </FormItem>
@@ -270,7 +275,7 @@ export default function NotificationSettingsForm({
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
-                        disabled={isLoading}
+                        disabled={isLoading || !form.watch('emailNotifications')}
                       />
                     </FormControl>
                   </FormItem>

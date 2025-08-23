@@ -166,7 +166,7 @@ const BriefResults: FC<{ briefResult: ContentBriefOutput }> = ({ briefResult }) 
           <ul className="space-y-2 list-disc pl-5 font-body">
             {briefResult.competitorInsights.map((insight, i) => (
               <li
-                key={i}
+          key={`${i}-${typeof insight === 'string' ? insight.slice(0, 24) : 'insight'}`}
                 className="p-1 rounded transition-colors hover:bg-muted/50"
               >
                 {insight}
@@ -183,7 +183,7 @@ const BriefResults: FC<{ briefResult: ContentBriefOutput }> = ({ briefResult }) 
         <ul className="space-y-2 list-disc pl-5">
           {briefResult.llmGeneratedOutline.map((heading, i) => (
             <li
-              key={i}
+          key={`${i}-${heading.title}-${heading.level}`}
               className="font-body p-1 -ml-1 rounded transition-colors hover:bg-muted/50"
             >
               <div>

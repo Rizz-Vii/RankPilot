@@ -56,7 +56,38 @@ type RegistryEntry = {
     debounceMs: number;
 };
 
-const registry = new Map<string, RegistryEntry>();
+// Keep registry stable across HMR by storing it on globalThis and cleaning up on reload
+const GLOBAL_REG_KEY = '__RP_FS_SNAPSHOT_REG__';
+const GLOBAL_LOADED_KEY = '__RP_FS_SNAPSHOT_LOADED__';
+
+function getGlobal<T extends Record<string, unknown>>(): T | undefined {
+    try {
+        return globalThis as unknown as T;
+    } catch {
+        return undefined;
+    }
+}
+
+function getRegistry(): Map<string, RegistryEntry> {
+    const g = getGlobal<Record<string, unknown>>() || ({} as Record<string, unknown>);
+    let reg = g[GLOBAL_REG_KEY] as Map<string, RegistryEntry> | undefined;
+    const wasLoaded = Boolean(g[GLOBAL_LOADED_KEY]);
+    if (!reg) {
+        reg = new Map<string, RegistryEntry>();
+        g[GLOBAL_REG_KEY] = reg as unknown as Record<string, unknown>;
+    } else if (wasLoaded) {
+        // Module was reloaded; proactively clean up any lingering subscriptions
+        for (const [key, entry] of Array.from(reg.entries())) {
+            try { if (entry.timer) clearTimeout(entry.timer); entry.unsubscribe(); } catch { /* ignore */ }
+            reg.delete(key);
+            untrackListener(key);
+        }
+    }
+    g[GLOBAL_LOADED_KEY] = true as unknown as Record<string, unknown>;
+    return reg;
+}
+
+const registry = getRegistry();
 
 export function snapshotKey(parts: unknown[]): string {
     return parts.map(p => typeof p === 'string' ? p : JSON.stringify(p)).join('|');
@@ -207,18 +238,4 @@ function deriveReadableKey(q: unknown): string {
     return 'query:unknown';
 }
 
-// Hot Module Reloading cleanup to avoid lingering listeners across Fast Refresh
-try {
-    const meta = import.meta as unknown as { hot?: { dispose?: (fn: () => void) => void } };
-    if (meta && meta.hot && typeof meta.hot.dispose === 'function') {
-        meta.hot.dispose(() => {
-            for (const [key, entry] of Array.from(registry.entries())) {
-                try { if (entry.timer) clearTimeout(entry.timer); entry.unsubscribe(); } catch { /* ignore */ }
-                registry.delete(key);
-                untrackListener(key);
-            }
-        });
-    }
-} catch {
-    // ignore in environments without import.meta.hot
-}
+// HMR cleanup handled via global registry re-initialization above; no import.meta/module.hot used.

@@ -23,9 +23,10 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
+import { getLogger } from "@/lib/logging/app-logger";
 import { asVoidHandler } from "@/lib/react/handlers";
 import type { User } from "firebase/auth";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { AlertTriangle, Download, Lock, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -41,6 +42,7 @@ export default function PrivacySettingsCard({
   profile,
 }: PrivacySettingsCardProps): JSX.Element {
   const { toast } = useToast();
+  const logger = getLogger('settings.privacy');
   const [isLoading, setIsLoading] = useState(false);
   const [profileVisibility, setProfileVisibility] = useState(
     asUserProfile(profile)?.privacy?.profileVisibility ?? false
@@ -58,14 +60,17 @@ export default function PrivacySettingsCard({
       const userDocRef = doc(db, "users", user.uid);
       await updateDoc(userDocRef, {
         [`privacy.${setting}`]: value,
-        updatedAt: new Date(),
+        updatedAt: serverTimestamp(),
       });
+      logger.audit('privacy.setting.updated', { userId: user.uid, setting, value });
 
       toast({
         title: "Privacy Settings Updated",
         description: "Your privacy preferences have been saved.",
       });
-    } catch {
+    } catch (e: unknown) {
+      const msg = (e && typeof e === 'object' && 'message' in e) ? (e as { message?: string }).message : undefined;
+      logger.error('privacy.setting.update.error', { userId: user.uid, setting, value, error: msg });
       toast({
         variant: "destructive",
         title: "Update Failed",
@@ -82,13 +87,8 @@ export default function PrivacySettingsCard({
       const functions = getFunctions();
       const exportFn = httpsCallable(functions, "exportUserData");
   const res: unknown = await exportFn({ userId: user.uid });
-      // Record export timestamp for audit trail
-      try {
-        const userDocRef = doc(db, 'users', user.uid);
-        await updateDoc(userDocRef, { lastExportAt: new Date(), updatedAt: new Date() });
-      } catch (e) {
-        console.warn('Failed to record lastExportAt', e);
-      }
+      logger.audit('privacy.data.export.requested', { userId: user.uid });
+      // Audit timestamp now recorded server-side in export function.
       // Trigger download locally
       const data = (res && typeof res === 'object' && 'data' in res) ? (res as { data?: unknown }).data : res;
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -103,6 +103,7 @@ export default function PrivacySettingsCard({
       toast({ title: 'Export Ready', description: 'Your data export has downloaded.' });
     } catch (e: unknown) {
       const msg = (e && typeof e === 'object' && 'message' in e) ? (e as { message?: string }).message : undefined;
+      logger.error('privacy.data.export.error', { userId: user.uid, error: msg });
       toast({ variant: 'destructive', title: 'Export Failed', description: msg || 'Unable to export data.' });
     } finally {
       setIsLoading(false);
@@ -115,16 +116,12 @@ export default function PrivacySettingsCard({
       const functions = getFunctions();
       const delFn = httpsCallable(functions, "requestAccountDeletion");
       await delFn({ userId: user.uid });
-      // Mark deletion requested timestamp
-      try {
-        const userDocRef = doc(db, 'users', user.uid);
-        await updateDoc(userDocRef, { deletionRequestedAt: new Date(), updatedAt: new Date() });
-      } catch (e) {
-        console.warn('Failed to record deletionRequestedAt', e);
-      }
+      // Deletion audit recorded server-side.
+      logger.audit('privacy.account.deletion.requested', { userId: user.uid });
       toast({ variant: 'destructive', title: 'Deletion Scheduled', description: 'Your account has been scheduled for deletion.' });
     } catch (e: unknown) {
       const msg = (e && typeof e === 'object' && 'message' in e) ? (e as { message?: string }).message : undefined;
+      logger.error('privacy.account.deletion.error', { userId: user.uid, error: msg });
       toast({ variant: 'destructive', title: 'Deletion Failed', description: msg || 'Unable to schedule deletion.' });
     } finally {
       setIsLoading(false);

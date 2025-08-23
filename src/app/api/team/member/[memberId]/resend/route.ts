@@ -1,4 +1,6 @@
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { getLogger } from '@/lib/logging/app-logger';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
@@ -21,27 +23,41 @@ async function getTeam(uid: string): Promise<{ id: string; data: TeamDoc } | nul
 
 // Next.js generated types (in .next/types) currently expect RouteContext.params to be a Promise.
 // We accept either a direct object (runtime) or a Promise (type expectation) and normalize.
-export const POST: (req: NextRequest, context: { params: Promise<{ memberId: string }> }) => Promise<NextResponse> = async (req, context) => {
+export const POST = withProvenance(async function POST(req: NextRequest, context: { params: Promise<{ memberId: string }> }) {
+    const logger = getLogger('api.team.member.resend');
     const params = await context.params; // Next types expect a Promise; awaiting a plain object is fine.
     try {
         const authHeader = req.headers.get('authorization');
-        if (!authHeader) return NextResponse.json({ error: 'Missing auth' }, { status: 401 });
+        if (!authHeader) {
+            const b = enforceProvenance({ error: 'Missing auth' }, { path: 'team/member/resend', note: 'auth' });
+            return NextResponse.json(b, { status: 401 });
+        }
         const token = authHeader.replace(/^Bearer\s+/i, '');
         const decoded = await adminAuth.verifyIdToken(token);
 
         const team = await getTeam(decoded.uid);
-        if (!team) return NextResponse.json({ error: "Team not found" }, { status: 404 });
+        if (!team) {
+            const b = enforceProvenance({ error: 'Team not found' }, { path: 'team/member/resend', note: 'not_found' });
+            return NextResponse.json(b, { status: 404 });
+        }
         const data: TeamDoc = (team.data as TeamDoc) || {};
         const members: TeamMember[] = Array.isArray(data.members) ? [...data.members] : [];
 
         const acting = members.find((m) => m.userId === decoded.uid || m.id === decoded.uid || m.email === decoded.email);
         if (!acting || !['owner', 'admin'].includes(acting.role || '')) {
-            return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+            const b = enforceProvenance({ error: 'Insufficient permissions' }, { path: 'team/member/resend', note: 'perm' });
+            return NextResponse.json(b, { status: 403 });
         }
 
         const target = members.find((m) => m.userId === params.memberId || m.id === params.memberId || m.email === params.memberId);
-        if (!target) return NextResponse.json({ error: "Member not found" }, { status: 404 });
-        if (target.status !== 'pending') return NextResponse.json({ error: "Member not pending" }, { status: 400 });
+        if (!target) {
+            const b = enforceProvenance({ error: 'Member not found' }, { path: 'team/member/resend', note: 'member_not_found' });
+            return NextResponse.json(b, { status: 404 });
+        }
+        if (target.status !== 'pending') {
+            const b = enforceProvenance({ error: 'Member not pending' }, { path: 'team/member/resend', note: 'status' });
+            return NextResponse.json(b, { status: 400 });
+        }
 
         // Simple cooldown enforcement using invitedAt timestamp
         const now = Date.now();
@@ -50,7 +66,8 @@ export const POST: (req: NextRequest, context: { params: Promise<{ memberId: str
             ? (invitedAtValue as { toMillis: () => number }).toMillis()
             : (typeof invitedAtValue === 'number' ? invitedAtValue : new Date(String(invitedAtValue)).getTime());
         if (now - invitedAtTs < 60_000) {
-            return NextResponse.json({ error: "Please wait before resending" }, { status: 429 });
+            const b = enforceProvenance({ error: 'Please wait before resending' }, { path: 'team/member/resend', note: 'cooldown' });
+            return NextResponse.json(b, { status: 429 });
         }
 
         // Update invitedAt & queue email
@@ -65,15 +82,18 @@ export const POST: (req: NextRequest, context: { params: Promise<{ memberId: str
                     payload: { teamId: team.id, role: target.role },
                 });
             } else {
-                console.warn('Skipping enqueue: target has no email', target);
+                logger.warn('resend.skip_no_email', { memberId: params.memberId });
             }
         } catch (err: unknown) {
-            console.warn('Failed to enqueue resend email', err);
+        const msg = err instanceof Error ? err.message : String(err);
+        logger.warn('resend.enqueue.error', { error: msg });
         }
-        return NextResponse.json({ success: true });
+        const ok = enforceProvenance({ success: true }, { path: 'team/member/resend', note: 'ok' });
+        return NextResponse.json(ok);
     } catch (err: unknown) {
-        console.error('Resend invite error', err);
         const msg = err instanceof Error ? err.message : 'Internal error';
-        return NextResponse.json({ error: msg }, { status: 500 });
+        logger.error('resend.error', { error: msg });
+        const b = enforceProvenance({ error: msg }, { path: 'team/member/resend', note: 'exception' });
+        return NextResponse.json(b, { status: 500 });
     }
-};
+}, { path: 'team/member/resend' });

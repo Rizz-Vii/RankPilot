@@ -13,12 +13,11 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthContext';
 import { useAccessibility } from '@/lib/accessibility/accessibility-system';
-import { db } from '@/lib/firebase';
 import { useI18n } from '@/lib/i18n/internationalization-system';
 import { useTheme, type ThemeMode, type ThemePreferences } from '@/lib/themes/theme-system';
 import { toJsDate } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
-import { doc, updateDoc } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { Accessibility, Bell, CreditCard, ExternalLink, Globe, Lock, Palette, Shield, User } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -35,6 +34,7 @@ export default function SettingsPage() {
     const { preferences, setPreferences, theme, setTheme } = useTheme();
     const { language, translate, isRTL, formatNumber, formatCurrency, formatDate } = useI18n();
         const { isVoiceSupported, isVoiceEnabled, setIsVoiceEnabled, announcements } = useAccessibility();
+    const [micStatus, setMicStatus] = useState<'idle' | 'granted' | 'blocked' | 'error'>('idle');
     const [activeTab, setActiveTab] = useState('account');
 
     const profileData = profile as unknown as Record<string, unknown>;
@@ -47,6 +47,7 @@ export default function SettingsPage() {
     const formatRelative = (date: Date) => formatDistanceToNow(date, { addSuffix: true });
 
     useEffect(() => {
+        // Hydrate and pick initial tab from URL once
         setHydrated(true);
         if (typeof window !== 'undefined') {
             const searchParams = new URLSearchParams(window.location.search);
@@ -58,8 +59,10 @@ export default function SettingsPage() {
     useEffect(() => {
         if (typeof window === 'undefined') return;
         const url = new URL(window.location.href);
-        url.searchParams.set('tab', activeTab);
-        window.history.replaceState({}, '', url.toString());
+        if (url.searchParams.get('tab') !== activeTab) {
+            url.searchParams.set('tab', activeTab);
+            window.history.replaceState({}, '', url.toString());
+        }
     }, [activeTab]);
 
         // Initialize preference toggles & theme from profile once hydrated
@@ -89,7 +92,7 @@ export default function SettingsPage() {
                 void (async () => {
                     try {
                     const token = await user.getIdToken?.();
-                    const prefPayload = {
+                        const prefPayload = {
                         preferences: {
                             highContrast: preferences.highContrast ?? false,
                             reducedMotion: preferences.reducedMotion ?? false,
@@ -97,6 +100,7 @@ export default function SettingsPage() {
                             colorBlindnessSupport: preferences.colorBlindnessSupport ?? false,
                             mode: theme,
                             voiceCommands: isVoiceEnabled ?? false,
+                                customColors: preferences.customColors || undefined,
                         }
                     };
 
@@ -125,7 +129,17 @@ export default function SettingsPage() {
                 })();
             }, 500); // debounce 500ms
             return () => clearTimeout(timeout);
-    }, [preferences.highContrast, preferences.reducedMotion, preferences.fontSize, preferences.colorBlindnessSupport, theme, isVoiceEnabled, user, hydrated]);
+        }, [
+            preferences.highContrast,
+            preferences.reducedMotion,
+            preferences.fontSize,
+            preferences.colorBlindnessSupport,
+            preferences.customColors,
+            theme,
+            isVoiceEnabled,
+            user,
+            hydrated,
+        ]);
 
             // Persist language preference via API with offline queue fallback
             useEffect(() => {
@@ -255,7 +269,29 @@ export default function SettingsPage() {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <Switch checked={isVoiceEnabled} onCheckedChange={(c) => { setIsVoiceEnabled(c); }} disabled={!isVoiceSupported} />
-                                            {!isVoiceSupported && <Badge variant="secondary">Unsupported</Badge>}
+                                            {!isVoiceSupported && <Badge variant="secondary">{tr('settings.accessibility.unsupported', 'Unsupported')}</Badge>}
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    void (async () => {
+                                                        try {
+                                                            if (!navigator.mediaDevices?.getUserMedia) { setMicStatus('error'); return; }
+                                                            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                                                            // stop tracks immediately
+                                                            stream.getTracks().forEach(t => t.stop());
+                                                            setMicStatus('granted');
+                                                        } catch {
+                                                            setMicStatus('blocked');
+                                                        }
+                                                    })();
+                                                }}
+                                            >{tr('settings.accessibility.checkMic', 'Check microphone')}</Button>
+                                            {micStatus !== 'idle' && (
+                                                <Badge variant={micStatus === 'granted' ? 'secondary' : 'destructive'}>
+                                                    {micStatus === 'granted' ? tr('settings.accessibility.micGranted', 'Granted') : tr('settings.accessibility.micBlocked', 'Blocked')}
+                                                </Badge>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -371,7 +407,7 @@ export default function SettingsPage() {
                                                     <span>{tr('settings.privacy.deletionRequested','Deletion Requested')}:</span>
                                                     <span>{formatRelative(toJsDate(profileData.deletionRequestedAt))}</span>
                                                 </div>
-                                                <Button
+                                        <Button
                                                     variant="outline"
                                                     size="sm"
                                                     className="self-end h-7 text-xs"
@@ -380,8 +416,8 @@ export default function SettingsPage() {
                                                     const confirmMsg = tr('settings.privacy.cancelDeletionConfirm', 'Cancel scheduled deletion and keep your account?');
                                                     if (!window.confirm(confirmMsg)) return;
                                                     try {
-                                                        const userRef = doc(db, 'users', user.uid);
-                                                        await updateDoc(userRef, { deletionRequestedAt: null, status: 'active', updatedAt: new Date() });
+                                                        const fn = httpsCallable(getFunctions(), 'cancelAccountDeletion');
+                                                        await fn({ userId: user.uid });
                                                     } catch (e) {
                                                         console.warn('Failed to cancel deletion', e);
                                                     }

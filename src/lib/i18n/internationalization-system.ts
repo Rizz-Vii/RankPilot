@@ -484,6 +484,37 @@ const DEFAULT_TRANSLATIONS: Record<string, Record<SupportedLanguage, string | Pl
     'settings.language': {
         en: 'Language', es: 'Idioma', fr: 'Langue', de: 'Sprache', pt: 'Idioma', it: 'Lingua', nl: 'Taal', ru: 'Язык', zh: '语言', ja: '言語', ko: '언어', ar: 'اللغة', he: 'שפה'
     },
+    // Expanded Language settings keys (provide English defaults; other locales will fallback to en)
+    'settings.language.title': {
+        en: 'Language Settings', es: 'Language Settings', fr: 'Language Settings', de: 'Language Settings', pt: 'Language Settings', it: 'Language Settings', nl: 'Language Settings', ru: 'Language Settings', zh: 'Language Settings', ja: 'Language Settings', ko: 'Language Settings', ar: 'Language Settings', he: 'Language Settings'
+    },
+    'settings.language.desc': {
+        en: 'Configure your interface language and localization samples.', es: 'Configure your interface language and localization samples.', fr: 'Configure your interface language and localization samples.', de: 'Configure your interface language and localization samples.', pt: 'Configure your interface language and localization samples.', it: 'Configure your interface language and localization samples.', nl: 'Configure your interface language and localization samples.', ru: 'Configure your interface language and localization samples.', zh: 'Configure your interface language and localization samples.', ja: 'Configure your interface language and localization samples.', ko: 'Configure your interface language and localization samples.', ar: 'Configure your interface language and localization samples.', he: 'Configure your interface language and localization samples.'
+    },
+    'settings.language.info': {
+        en: 'Your language controls interface text, number/date formats, and layout direction.', es: 'Your language controls interface text, number/date formats, and layout direction.', fr: 'Your language controls interface text, number/date formats, and layout direction.', de: 'Your language controls interface text, number/date formats, and layout direction.', pt: 'Your language controls interface text, number/date formats, and layout direction.', it: 'Your language controls interface text, number/date formats, and layout direction.', nl: 'Your language controls interface text, number/date formats, and layout direction.', ru: 'Your language controls interface text, number/date formats, and layout direction.', zh: 'Your language controls interface text, number/date formats, and layout direction.', ja: 'Your language controls interface text, number/date formats, and layout direction.', ko: 'Your language controls interface text, number/date formats, and layout direction.', ar: 'Your language controls interface text, number/date formats, and layout direction.', he: 'Your language controls interface text, number/date formats, and layout direction.'
+    },
+    'settings.language.current': {
+        en: 'Current language: {{lang}}', es: 'Current language: {{lang}}', fr: 'Current language: {{lang}}', de: 'Current language: {{lang}}', pt: 'Current language: {{lang}}', it: 'Current language: {{lang}}', nl: 'Current language: {{lang}}', ru: 'Current language: {{lang}}', zh: 'Current language: {{lang}}', ja: 'Current language: {{lang}}', ko: 'Current language: {{lang}}', ar: 'Current language: {{lang}}', he: 'Current language: {{lang}}'
+    },
+    'settings.language.direction': {
+        en: 'Direction: {{dir}}', es: 'Direction: {{dir}}', fr: 'Direction: {{dir}}', de: 'Direction: {{dir}}', pt: 'Direction: {{dir}}', it: 'Direction: {{dir}}', nl: 'Direction: {{dir}}', ru: 'Direction: {{dir}}', zh: 'Direction: {{dir}}', ja: 'Direction: {{dir}}', ko: 'Direction: {{dir}}', ar: 'Direction: {{dir}}', he: 'Direction: {{dir}}'
+    },
+    'settings.language.interfaceLabel': {
+        en: 'Interface language', es: 'Interface language', fr: 'Interface language', de: 'Interface language', pt: 'Interface language', it: 'Interface language', nl: 'Interface language', ru: 'Interface language', zh: 'Interface language', ja: 'Interface language', ko: 'Interface language', ar: 'Interface language', he: 'Interface language'
+    },
+    'settings.language.interfaceDesc': {
+        en: 'Choose the language used across the RankPilot interface.', es: 'Choose the language used across the RankPilot interface.', fr: 'Choose the language used across the RankPilot interface.', de: 'Choose the language used across the RankPilot interface.', pt: 'Choose the language used across the RankPilot interface.', it: 'Choose the language used across the RankPilot interface.', nl: 'Choose the language used across the RankPilot interface.', ru: 'Choose the language used across the RankPilot interface.', zh: 'Choose the language used across the RankPilot interface.', ja: 'Choose the language used across the RankPilot interface.', ko: 'Choose the language used across the RankPilot interface.', ar: 'Choose the language used across the RankPilot interface.', he: 'Choose the language used across the RankPilot interface.'
+    },
+    'settings.language.sampleNumber': {
+        en: 'Sample number', es: 'Sample number', fr: 'Sample number', de: 'Sample number', pt: 'Sample number', it: 'Sample number', nl: 'Sample number', ru: 'Sample number', zh: 'Sample number', ja: 'Sample number', ko: 'Sample number', ar: 'Sample number', he: 'Sample number'
+    },
+    'settings.language.sampleCurrency': {
+        en: 'Sample currency', es: 'Sample currency', fr: 'Sample currency', de: 'Sample currency', pt: 'Sample currency', it: 'Sample currency', nl: 'Sample currency', ru: 'Sample currency', zh: 'Sample currency', ja: 'Sample currency', ko: 'Sample currency', ar: 'Sample currency', he: 'Sample currency'
+    },
+    'settings.language.sampleDate': {
+        en: 'Sample date', es: 'Sample date', fr: 'Sample date', de: 'Sample date', pt: 'Sample date', it: 'Sample date', nl: 'Sample date', ru: 'Sample date', zh: 'Sample date', ja: 'Sample date', ko: 'Sample date', ar: 'Sample date', he: 'Sample date'
+    },
     'settings.selectLanguage': {
         en: 'Select Language', es: 'Seleccionar idioma', fr: 'Sélectionner la langue', de: 'Sprache wählen', pt: 'Selecionar idioma', it: 'Seleziona lingua', nl: 'Selecteer taal', ru: 'Выберите язык', zh: '选择语言', ja: '言語を選択', ko: '언어 선택', ar: 'اختر اللغة', he: 'בחר שפה'
     },
@@ -536,6 +567,20 @@ const DEFAULT_TRANSLATIONS: Record<string, Record<SupportedLanguage, string | Pl
     'settings.accessibility.voiceCommandsDesc': { en: 'Use voice commands to navigate the interface', es: 'Usa comandos de voz para navegar', fr: 'Utilisez des commandes vocales pour naviguer', de: 'Verwenden Sie Sprachbefehle zur Navigation', pt: 'Use comandos de voz para navegar', it: 'Usa comandi vocali per navigare', nl: 'Gebruik spraakopdrachten om te navigeren', ru: 'Используйте голосовые команды для навигации', zh: '使用语音命令进行导航', ja: '音声で操作', ko: '음성 명령으로 탐색', ar: 'استخدم الأوامر الصوتية للتنقل', he: 'שימוש בפקודות קוליות' },
     'settings.accessibility.liveAnnouncements': { en: 'Live Announcements', es: 'Anuncios en vivo', fr: 'Annonces en direct', de: 'Live-Ankündigungen', pt: 'Anúncios em tempo real', it: 'Annunci in tempo reale', nl: 'Live aankondigingen', ru: 'Живые объявления', zh: '实时公告', ja: 'ライブアナウンス', ko: '실시간 안내', ar: 'إعلانات مباشرة', he: 'הודעות בזמן אמת' },
     'settings.accessibility.noAnnouncements': { en: 'No recent announcements', es: 'Sin anuncios recientes', fr: 'Aucune annonce récente', de: 'Keine aktuellen Ankündigungen', pt: 'Sem anúncios recentes', it: 'Nessun annuncio recente', nl: 'Geen recente aankondigingen', ru: 'Нет недавних объявлений', zh: '暂无公告', ja: '最近の通知なし', ko: '최근 공지 없음', ar: 'لا إعلانات حديثة', he: 'אין הודעות אחרונות' },
+
+    // Accessibility: Device/mic checks and statuses
+    'settings.accessibility.checkMic': {
+        en: 'Check microphone', es: 'Verificar micrófono', fr: 'Vérifier le microphone', de: 'Mikrofon prüfen', pt: 'Verificar microfone', it: 'Verifica microfono', nl: 'Microfoon controleren', ru: 'Проверить микрофон', zh: '检查麦克风', ja: 'マイクを確認', ko: '마이크 확인', ar: 'تحقق من الميكروفون', he: 'בדוק מיקרופון'
+    },
+    'settings.accessibility.micGranted': {
+        en: 'Granted', es: 'Concedido', fr: 'Accordé', de: 'Erteilt', pt: 'Concedido', it: 'Concesso', nl: 'Toegewezen', ru: 'Разрешено', zh: '已授权', ja: '許可', ko: '허용됨', ar: 'ممنوح', he: 'אושר'
+    },
+    'settings.accessibility.micBlocked': {
+        en: 'Blocked', es: 'Bloqueado', fr: 'Bloqué', de: 'Blockiert', pt: 'Bloqueado', it: 'Bloccato', nl: 'Geblokkeerd', ru: 'Заблокировано', zh: '已阻止', ja: 'ブロック', ko: '차단됨', ar: 'محظور', he: 'חסום'
+    },
+    'settings.accessibility.unsupported': {
+        en: 'Unsupported', es: 'No compatible', fr: 'Non pris en charge', de: 'Nicht unterstützt', pt: 'Não suportado', it: 'Non supportato', nl: 'Niet ondersteund', ru: 'Не поддерживается', zh: '不支持', ja: '未対応', ko: '지원되지 않음', ar: 'غير مدعوم', he: 'לא נתמך'
+    },
 
     // Billing
     'settings.billing.title': { en: 'Billing & Subscription', es: 'Facturación y suscripción', fr: 'Facturation et abonnement', de: 'Abrechnung & Abonnement', pt: 'Faturamento e assinatura', it: 'Fatturazione e abbonamento', nl: 'Facturering & abonnement', ru: 'Выставление счетов и подписка', zh: '账单与订阅', ja: '請求とサブスクリプション', ko: '청구 및 구독', ar: 'الفوترة والاشتراك', he: 'חיוב ומנוי' },

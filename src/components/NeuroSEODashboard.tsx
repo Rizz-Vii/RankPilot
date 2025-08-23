@@ -89,8 +89,30 @@ export default function NeuroSEODashboard({
         cache: networkStatus.downlink < 5 ? "force-cache" : "default",
       });
       if (response.ok) {
-        const stats: UsageStats = await response.json();
-        setUsageStats(stats);
+        // API responses are provenance-wrapped: { success, data, __provenance }
+        const raw = await response.json();
+        const unwrapped: unknown = raw && typeof raw === 'object' && 'data' in (raw as Record<string, unknown>)
+          ? (raw as { data?: unknown }).data
+          : raw;
+        let stats: UsageStats | null = null;
+        if (unwrapped && typeof unwrapped === 'object') {
+          type Dict = Record<string, unknown>;
+          const root = unwrapped as Dict;
+          const usage = root.usage as unknown;
+          if (usage && typeof usage === 'object') {
+            const current = (usage as Dict).current_period as unknown;
+            if (current && typeof current === 'object') {
+              interface Current { analyses_used?: number | string; analyses_limit?: number | string }
+              const cur = current as Current;
+              const usedRaw = cur.analyses_used;
+              const limitRaw = cur.analyses_limit;
+              const used = typeof usedRaw === 'number' ? usedRaw : Number(usedRaw ?? 0);
+              const limit = typeof limitRaw === 'number' ? limitRaw : Number(limitRaw ?? 0);
+              stats = { used: Number.isFinite(used) ? used : 0, limit: Number.isFinite(limit) ? limit : 0 };
+            }
+          }
+        }
+        if (stats) setUsageStats(stats);
       } else {
         throw new Error(`Failed to load usage stats: ${response.statusText}`);
       }
@@ -220,7 +242,8 @@ export default function NeuroSEODashboard({
         }
 
         setLoadingProgress(98); // Almost done
-        const analysisReport = await response.json();
+        const raw = await response.json();
+        const analysisReport = raw && typeof raw === 'object' && 'data' in raw ? (raw as { data?: unknown }).data : raw;
         setLoadingProgress(100); // Complete
         return analysisReport;
       };
@@ -238,7 +261,7 @@ export default function NeuroSEODashboard({
         return;
       }
 
-      // Result is expected to conform to NeuroSEOReport shape
+      // Result is provenance-unwrapped above; conform to NeuroSEOReport shape
       setReport(result as NeuroSEOReport);
       toast({ title: 'Analysis complete', description: 'NeuroSEO report is ready.' });
       void loadUsageStats(); // Refresh usage stats (fire-and-forget)

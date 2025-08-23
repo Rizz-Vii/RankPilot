@@ -317,6 +317,17 @@ export const FEATURE_ACCESS: Record<string, FeatureConfig> = {
     requiredTier: "starter",
     description: "Technical SEO audit engine",
   },
+
+  // Admin observability & marketplace
+  // Aligns with admin Events explorer and nav gating
+  observability: {
+    requiresAdmin: true,
+    description: "Observability dashboards & event explorer (admin-only)",
+  },
+  marketplace_templates: {
+    requiredTier: "enterprise",
+    description: "Template marketplace discovery (enterprise)",
+  },
 } as const;
 
 // =============================================================================
@@ -443,17 +454,21 @@ export function getRemainingUsage(
  * Get all accessible features for a user
  */
 export function getAccessibleFeatures(userAccess: UserAccess): string[] {
-  return Object.keys(FEATURE_ACCESS).filter((feature) =>
-    canAccessFeature(userAccess, feature)
-  );
+  const entitlements = DEFAULT_ENTITLEMENTS as Record<string, unknown>;
+  return Object.keys(FEATURE_ACCESS)
+    .filter((feature) => !Object.prototype.hasOwnProperty.call(entitlements, feature))
+    .filter((feature) => canAccessFeature(userAccess, feature));
 }
 
 /**
  * Get features available at a specific tier
  */
 export function getFeaturesForTier(tier: SubscriptionTier): string[] {
+  const entitlements = DEFAULT_ENTITLEMENTS as Record<string, unknown>;
   return Object.entries(FEATURE_ACCESS)
-    .filter(([_, config]) => {
+    .filter(([feature, config]) => {
+      // Exclude entitlement keys from feature-tier listing to avoid legacy warnings
+      if (Object.prototype.hasOwnProperty.call(entitlements, feature)) return false;
       if (config.requiresAdmin) return false;
       if (!config.requiredTier) return true;
       return canAccessTier(tier, config.requiredTier);
@@ -522,10 +537,18 @@ export function normalizeUserAccess(dbUser: unknown): UserAccess {
     mappedTier = "enterprise"; // Admin gets enterprise-level features
     mappedRole = "admin"; // But with admin role for special permissions
   } else {
+    // Enforce role domain; auto-correct invalid values
+    if (u.role !== undefined && u.role !== "admin" && u.role !== "user") {
+      console.warn(`normalizeUserAccess: invalid role '${u.role}', coercing to 'user'`);
+    }
     mappedRole = (u.role === "admin" ? "admin" : "user") as UserRole;
     mappedTier = (TIER_HIERARCHY.includes(u.subscriptionTier as SubscriptionTier)
-      ? u.subscriptionTier
-      : "free") as SubscriptionTier;
+      ? (u.subscriptionTier as SubscriptionTier)
+      : "free");
+    // Policy: admin implies enterprise tier access
+    if (mappedRole === "admin" && mappedTier !== "enterprise") {
+      mappedTier = "enterprise";
+    }
   }
 
   return {

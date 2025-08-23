@@ -81,7 +81,9 @@ export default [
       'custom-rules/no-raw-hex-colors': ['error', {
         allowPaletteFiles: [
           'src/lib/visualizations/d3-visualization-engine.ts',
-          'src/lib/visualizations/chart-export-manager.ts'
+          'src/lib/visualizations/chart-export-manager.ts',
+          // Temporarily exempt ThemeConfiguration while color picker uses dynamic hex composition
+          'src/components/theme/ThemeConfiguration.tsx'
         ], allow: ['#FFFFFF', '#fff', '#4F46E5', '#10B981']
       }],
       'custom-rules/no-focused-tests': 'error'

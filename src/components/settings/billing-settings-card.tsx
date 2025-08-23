@@ -11,7 +11,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { getErrorMessage } from "@/lib/errors";
 import { db, functions } from "@/lib/firebase";
+import { useI18n } from "@/lib/i18n/internationalization-system";
+import { getLogger } from "@/lib/logging/app-logger";
 import { asVoidHandler } from "@/lib/react/handlers";
 import type { User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
@@ -30,7 +33,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const createPortalSession = httpsCallable(functions, "createPortalSession");
@@ -110,9 +113,13 @@ const planFeatures = {
 };
 
 export default function BillingSettingsCard({ user }: BillingSettingsCardProps) {
+  const logger = useMemo(() => getLogger('settings.billing'), []);
   const [isLoading, setIsLoading] = useState(false);
   const [billingData, setBillingData] = useState<BillingData | null>(null);
   const [isUpgrading, setIsUpgrading] = useState(false);
+  const { formatCurrency, formatDate: fmtDate } = useI18n();
+
+  // using shared helper from lib/errors
 
   // Real-time subscription data from Firestore
   useEffect(() => {
@@ -147,13 +154,14 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
         }
       },
       (error) => {
-        console.error("Error fetching billing data:", error);
+        const msg = getErrorMessage(error);
+        logger.error('billing.data.load.error', { error: msg });
         toast.error("Failed to load billing information");
       }
     );
 
     return () => unsubscribe();
-  }, [user?.uid]);
+  }, [user?.uid, logger]);
 
   const handleManageBilling = async () => {
     try {
@@ -165,8 +173,10 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
 
       const { url } = result.data as { url: string };
       window.open(url, "_blank");
+      logger.info('billing.portal.open', { userId: user.uid });
     } catch (error: unknown) {
-      console.error("Error opening billing portal:", error);
+      const msg = getErrorMessage(error);
+      logger.error('billing.portal.open.error', { userId: user.uid, error: msg });
       toast.error("Failed to open billing portal");
     } finally {
       setIsLoading(false);
@@ -174,7 +184,7 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
   };
 
   const handleUpgrade = async (
-    plan: string,
+    plan: "starter" | "agency",
     interval: "monthly" | "yearly"
   ) => {
     try {
@@ -189,8 +199,10 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
 
       const { url } = result.data as { url: string };
       window.location.href = url;
+      logger.info('billing.checkout.start', { userId: user.uid, plan, interval });
     } catch (error: unknown) {
-      console.error("Error creating checkout session:", error);
+      const msg = getErrorMessage(error);
+      logger.error('billing.checkout.error', { userId: user.uid, plan, interval, error: msg });
       toast.error("Failed to start upgrade process");
     } finally {
       setIsUpgrading(false);
@@ -218,11 +230,7 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    return fmtDate(new Date(dateString));
   };
 
   if (!billingData) {
@@ -271,7 +279,7 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
               <p className="text-muted-foreground">
                 {billingData.subscriptionTier === "free"
                   ? "Free plan"
-                  : `$${currentPrice}/${billingData.billingInterval}`}
+                  : `${formatCurrency(currentPrice)}/${billingData.billingInterval}`}
               </p>
             </div>
             {billingData.subscriptionTier !== "free" && (
@@ -313,7 +321,7 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
                           <Button
                             className="w-full mb-2"
                             size="sm"
-                            onClick={asVoidHandler(() => handleUpgrade(key, "monthly"))}
+                            onClick={asVoidHandler(() => handleUpgrade(key as "starter" | "agency", "monthly"))}
                             disabled={isUpgrading}
                           >
                             {isUpgrading ? (
@@ -526,7 +534,7 @@ export default function BillingSettingsCard({ user }: BillingSettingsCardProps) 
                   </div>
                     <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <p className="font-semibold">${invoice.amount}</p>
+                      <p className="font-semibold">{formatCurrency(invoice.amount)}</p>
                       <div className="flex items-center gap-1">
                         {invoice.status === 'paid' && (
                           <CheckCircle className="h-3 w-3 text-success" />

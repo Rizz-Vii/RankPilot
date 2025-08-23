@@ -13,6 +13,7 @@ import { typography } from "@/lib/design-system/typography";
 import { cn } from "@/lib/utils";
 import { Activity, BarChart3, Clock, Zap } from "lucide-react";
 import React, { useEffect, useState } from 'react';
+import { onCLS, onFCP, onINP, onLCP, onTTFB } from 'web-vitals';
 
 interface WebVitalsMetric {
     name: string;
@@ -52,29 +53,22 @@ export function CoreWebVitalsMonitor() {
     useEffect(() => {
         setMounted(true);
 
-        // Initialize Core Web Vitals monitoring
-        const initWebVitals = async () => {
-            try {
-                const { onCLS, onINP, onFCP, onLCP, onTTFB } = await import('web-vitals');
+        // Initialize Core Web Vitals monitoring (static import avoids chunk URL resolution issues)
+        try {
+            type BasicMetric = { value: number };
+            const base: WebVitalsData = { lcp: 0, fid: 0, cls: 0, ttfb: 0, fcp: 0 };
+            const update = (patch: Partial<WebVitalsData>) => {
+                setVitals(prev => ({ ...(prev || base), ...patch }));
+            };
 
-                type BasicMetric = { value: number };
-                const base: WebVitalsData = { lcp: 0, fid: 0, cls: 0, ttfb: 0, fcp: 0 };
-                const update = (patch: Partial<WebVitalsData>) => {
-                    setVitals(prev => ({ ...(prev || base), ...patch }));
-                };
-
-                onCLS((metric: BasicMetric) => { update({ cls: metric.value }); });
-                onINP((metric: BasicMetric) => { update({ fid: metric.value }); }); // INP used as FID proxy
-                onFCP((metric: BasicMetric) => { update({ fcp: metric.value }); });
-                onLCP((metric: BasicMetric) => { update({ lcp: metric.value }); });
-                onTTFB((metric: BasicMetric) => { update({ ttfb: metric.value }); });
-
-            } catch (error) {
-                console.warn('Web Vitals not available:', error);
-            }
-        };
-
-        void initWebVitals();
+            onCLS((metric: BasicMetric) => { update({ cls: metric.value }); });
+            onINP((metric: BasicMetric) => { update({ fid: metric.value }); }); // INP used as FID proxy
+            onFCP((metric: BasicMetric) => { update({ fcp: metric.value }); });
+            onLCP((metric: BasicMetric) => { update({ lcp: metric.value }); });
+            onTTFB((metric: BasicMetric) => { update({ ttfb: metric.value }); });
+        } catch (error) {
+            console.warn('Web Vitals not available:', error);
+        }
     }, []);
 
     if (!mounted || !vitals) {
@@ -215,36 +209,30 @@ export function CoreWebVitalsWidget() {
     const [rating, setRating] = useState<'good' | 'needs-improvement' | 'poor'>('good');
 
     useEffect(() => {
-        const calculateScore = async () => {
-            try {
-                const { onCLS, onINP, onLCP } = await import('web-vitals');
-                type BasicMetric = { value: number };
-                let metrics: { cls: number; fid: number; lcp: number } = { cls: 0, fid: 0, lcp: 0 };
-                let count = 0;
+        try {
+            type BasicMetric = { value: number };
+            let metrics: { cls: number; fid: number; lcp: number } = { cls: 0, fid: 0, lcp: 0 };
+            let count = 0;
 
-                const updateScore = () => {
-                    count++;
-                    if (count >= 3) { // Wait for all core metrics
-                        const lcpScore = metrics.lcp <= 2500 ? 25 : metrics.lcp <= 4000 ? 15 : 5;
-                        const fidScore = metrics.fid <= 100 ? 25 : metrics.fid <= 300 ? 15 : 5;
-                        const clsScore = metrics.cls <= 0.1 ? 25 : metrics.cls <= 0.25 ? 15 : 5;
+            const updateScore = () => {
+                count++;
+                if (count >= 3) { // Wait for all core metrics
+                    const lcpScore = metrics.lcp <= 2500 ? 25 : metrics.lcp <= 4000 ? 15 : 5;
+                    const fidScore = metrics.fid <= 100 ? 25 : metrics.fid <= 300 ? 15 : 5;
+                    const clsScore = metrics.cls <= 0.1 ? 25 : metrics.cls <= 0.25 ? 15 : 5;
 
-                        const totalScore = lcpScore + fidScore + clsScore + 25; // Base score for having vitals
-                        setScore(totalScore);
-                        setRating(totalScore >= 90 ? 'good' : totalScore >= 60 ? 'needs-improvement' : 'poor');
-                    }
-                };
+                    const totalScore = lcpScore + fidScore + clsScore + 25; // Base score for having vitals
+                    setScore(totalScore);
+                    setRating(totalScore >= 90 ? 'good' : totalScore >= 60 ? 'needs-improvement' : 'poor');
+                }
+            };
 
-                onCLS((metric: BasicMetric) => { metrics.cls = metric.value; updateScore(); });
-                onINP((metric: BasicMetric) => { metrics.fid = metric.value; updateScore(); }); // INP as FID
-                onLCP((metric: BasicMetric) => { metrics.lcp = metric.value; updateScore(); });
-
-            } catch (error) {
-                console.warn('Web Vitals widget not available:', error);
-            }
-        };
-
-        void calculateScore();
+            onCLS((metric: BasicMetric) => { metrics.cls = metric.value; updateScore(); });
+            onINP((metric: BasicMetric) => { metrics.fid = metric.value; updateScore(); }); // INP as FID
+            onLCP((metric: BasicMetric) => { metrics.lcp = metric.value; updateScore(); });
+        } catch (error) {
+            console.warn('Web Vitals widget not available:', error);
+        }
     }, []);
 
     const ratingColors = getRatingColor(rating);

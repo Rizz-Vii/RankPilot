@@ -1,4 +1,5 @@
 #!/usr/bin/env ts-node
+import { recordQueueEnqueue } from '@/lib/metrics/queue-metrics';
 import type { DelegationQueueTask } from './queue-utils';
 import { appendTask, readQueue } from './queue-utils';
 
@@ -44,4 +45,5 @@ const task: DelegationQueueTask = {
 };
 
 appendTask(task);
+try { recordQueueEnqueue(1); } catch { /* metric optional */ }
 console.log('Enqueued', taskId, 'files:', files.length);

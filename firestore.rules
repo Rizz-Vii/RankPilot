@@ -8,7 +8,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
@@ -17,7 +17,7 @@ service cloud.firestore {
     }
 
     function isValidUser() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
         exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
@@ -124,35 +124,35 @@ service cloud.firestore {
 
     // NeuroSEO™ Analyses Collection - NEW
     match /neuroSeoAnalyses/{analysisId} {
-      allow read: if isAuthenticated() && 
+      allow read: if isAuthenticated() &&
                      (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isAuthenticated() && 
+      allow create: if isAuthenticated() &&
                        request.auth.uid == request.resource.data.userId;
-      allow update: if isAuthenticated() && 
+      allow update: if isAuthenticated() &&
                        (resource.data.userId == request.auth.uid || isAdmin());
-      allow delete: if isAuthenticated() && 
+      allow delete: if isAuthenticated() &&
                        (resource.data.userId == request.auth.uid || isAdmin());
     }
 
-    // Keyword Research Collection - NEW  
+    // Keyword Research Collection - NEW
     match /keywordResearch/{researchId} {
-      allow read: if isAuthenticated() && 
+      allow read: if isAuthenticated() &&
                      (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isAuthenticated() && 
+      allow create: if isAuthenticated() &&
                        request.auth.uid == request.resource.data.userId;
-      allow update: if isAuthenticated() && 
+      allow update: if isAuthenticated() &&
                        (resource.data.userId == request.auth.uid || isAdmin());
-      allow delete: if isAuthenticated() && 
+      allow delete: if isAuthenticated() &&
                        (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     // Usage Tracking Collection - NEW
     match /usage/{usageId} {
-      allow read: if isAuthenticated() && 
+      allow read: if isAuthenticated() &&
                      (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isAuthenticated() && 
+      allow create: if isAuthenticated() &&
                        request.auth.uid == request.resource.data.userId;
-      allow update: if isAuthenticated() && 
+      allow update: if isAuthenticated() &&
                        (resource.data.userId == request.auth.uid || isAdmin());
     }
 
@@ -160,58 +160,58 @@ service cloud.firestore {
     match /projects/{projectId} {
     allow read: if isAuthenticated() && (
              // Owner can read
-             resource.data.userId == request.auth.uid 
+             resource.data.userId == request.auth.uid
              // Team members can read team projects
              || (resource.data.teamId != null && isTeamMember(resource.data.teamId))
              // Admin override
              || isAdmin()
            );
-      allow create: if isAuthenticated() && 
+      allow create: if isAuthenticated() &&
                        request.auth.uid == request.resource.data.userId;
-      allow update: if isAuthenticated() && 
+      allow update: if isAuthenticated() &&
              (resource.data.userId == request.auth.uid || isAdmin());
-      allow delete: if isAuthenticated() && 
+      allow delete: if isAuthenticated() &&
                        (resource.data.userId == request.auth.uid || isAdmin());
     }
 
-    // Backlinks Collection - FIXED MISSING RULES  
+    // Backlinks Collection - FIXED MISSING RULES
     match /backlinks/{backlinkId} {
-      allow read: if isAuthenticated() && 
+      allow read: if isAuthenticated() &&
                      (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isAuthenticated() && 
+      allow create: if isAuthenticated() &&
                        request.auth.uid == request.resource.data.userId;
-      allow update: if isAuthenticated() && 
+      allow update: if isAuthenticated() &&
                        (resource.data.userId == request.auth.uid || isAdmin());
-      allow delete: if isAuthenticated() && 
+      allow delete: if isAuthenticated() &&
                        (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     // Domain Authority Collection - FIXED MISSING RULES
     match /domainAuthority/{domainId} {
-      allow read: if isAuthenticated() && 
+      allow read: if isAuthenticated() &&
                      (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isAuthenticated() && 
+      allow create: if isAuthenticated() &&
                        request.auth.uid == request.resource.data.userId;
-      allow update: if isAuthenticated() && 
+      allow update: if isAuthenticated() &&
                        (resource.data.userId == request.auth.uid || isAdmin());
-      allow delete: if isAuthenticated() && 
+      allow delete: if isAuthenticated() &&
                        (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     // CRITICAL MISSING COLLECTIONS - Fix for localhost errors
-    
+
     // SEO Audits Collection - MISSING RULES CAUSING PERMISSION ERRORS
     match /seoAudits/{auditId} {
-      allow read: if isAuthenticated() && 
+      allow read: if isAuthenticated() &&
                      (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isAuthenticated() && 
+      allow create: if isAuthenticated() &&
                        request.auth.uid == request.resource.data.userId;
-      allow update: if isAuthenticated() && 
+      allow update: if isAuthenticated() &&
                        (resource.data.userId == request.auth.uid || isAdmin());
-      allow delete: if isAuthenticated() && 
+      allow delete: if isAuthenticated() &&
                        (resource.data.userId == request.auth.uid || isAdmin());
     }
-    
+
     // Teams Collection - tightened (TEAM-01 Phase 1)
     match /teams/{teamId} {
       // Read allowed only for members or admin
@@ -275,15 +275,15 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    // Link Analyses Collection - MISSING RULES CAUSING PERMISSION ERRORS  
+    // Link Analyses Collection - MISSING RULES CAUSING PERMISSION ERRORS
     match /linkAnalyses/{analysisId} {
-      allow read: if isAuthenticated() && 
+      allow read: if isAuthenticated() &&
                      (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isAuthenticated() && 
+      allow create: if isAuthenticated() &&
                        request.auth.uid == request.resource.data.userId;
-      allow update: if isAuthenticated() && 
+      allow update: if isAuthenticated() &&
                        (resource.data.userId == request.auth.uid || isAdmin());
-      allow delete: if isAuthenticated() && 
+      allow delete: if isAuthenticated() &&
                        (resource.data.userId == request.auth.uid || isAdmin());
     }
 
@@ -329,6 +329,82 @@ service cloud.firestore {
       );
     }
 
+    // Automation Recipes (project-scoped)
+    match /automationRecipes/{recipeId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        (resource.data.teamId != null && isTeamMember(resource.data.teamId)) ||
+        isAdmin()
+      );
+      allow create: if isAuthenticated() && (
+        request.auth.uid == request.resource.data.userId
+      );
+      allow update: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        (resource.data.teamId != null && isTeamMember(resource.data.teamId)) ||
+        isAdmin()
+      );
+      allow delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+    }
+
+    // Automation Runs (read-only for clients; writes by server/automation)
+    match /automationRuns/{runId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        (resource.data.teamId != null && isTeamMember(resource.data.teamId)) ||
+        isAdmin()
+      );
+      allow create, update, delete: if false; // server only
+    }
+
+    // Email Queue (read only counts; no client writes)
+    match /emailQueue/{itemId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        (resource.data.teamId != null && isTeamMember(resource.data.teamId)) ||
+        isAdmin()
+      );
+      allow create, update, delete: if false; // server only
+    }
+
+    // Neural Crawler History (project-scoped)
+    match /neuralCrawlerHistory/{historyId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+      allow create: if isAuthenticated() && (
+        request.auth.uid == request.resource.data.userId
+      );
+      allow update, delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+    }
+
+    // Neural Crawler Results (legacy full docs) - allow read; writes server or guarded client
+    match /neuralCrawlerResults/{resultId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+      allow create: if isAuthenticated() && (
+        request.auth.uid == request.resource.data.userId
+      );
+      allow update, delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+    }
+
+    // Neural Crawler Aggregate (compact docs) - read for owner/team; writes server only
+    match /neuralCrawlerResultsAgg/{aggId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        (resource.data.teamId != null && isTeamMember(resource.data.teamId)) ||
+        isAdmin()
+      );
+      allow create, update, delete: if false; // server/automation only
+    }
+
     // Rate Limiting Buckets - server-managed only
     // Team-level fixed window counters
     match /teamRateLimits/{docId} {
@@ -366,14 +442,14 @@ service cloud.firestore {
       allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
       allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
     }
-    
+
     // User Presence System - Fix for presence tracking errors
     match /presence/{userId} {
       allow read: if isAuthenticated();
       allow write: if isAuthenticated() && request.auth.uid == userId;
       allow delete: if isAuthenticated() && request.auth.uid == userId;
     }
-    
+
     // Team Chat System - Fix for team management errors
     match /teamChats/{teamId} {
       // Team messages subcollection

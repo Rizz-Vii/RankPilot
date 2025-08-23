@@ -1,38 +1,44 @@
 ﻿// src/app/(app)/layout.tsx
 "use client";
 
+import AppNav from "@/components/app-nav";
+import { DevUserSwitcher } from "@/components/dev/DevUserSwitcher";
+import { HydrationProvider } from "@/components/HydrationContext";
 import {
   FeedbackToast,
   GlobalLoadingIndicator,
-  ScrollArea,
   MainPanel,
+  ScrollArea,
   TopLoader,
 } from "@/components/ui";
-import { HydrationProvider } from "@/components/HydrationContext";
+import { Button } from "@/components/ui/button";
+import LoadingScreen from "@/components/ui/loading-screen";
 import {
-  SidebarProvider,
   Sidebar,
-  SidebarHeader,
   SidebarContent,
   SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuLink,
+  SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { AppLogo, AppName } from "@/constants/nav";
-import Link from "next/link";
-import LoadingScreen from "@/components/ui/loading-screen";
-import useProtectedRoute from "@/hooks/useProtectedRoute";
-import AppNav from "@/components/app-nav";
-import { Button } from "@/components/ui/button";
-import { LogOut, Crown, Zap, Settings } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useSubscription } from "@/hooks/useSubscription";
-import { DevUserSwitcher } from "@/components/dev/DevUserSwitcher";
 import { AppMobileSidebar } from "@/components/unified-mobile-sidebar";
+import { AppLogo, AppName } from "@/constants/nav";
+import { useAuth } from "@/context/AuthContext";
+import useProtectedRoute from "@/hooks/useProtectedRoute";
+import { useSubscription } from "@/hooks/useSubscription";
+import { Crown, LogOut, Settings, Zap } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user: authUser, loading: authLoading } = useProtectedRoute();
   const { user, role } = useAuth();
   const { subscription } = useSubscription();
+
+  const pathname = usePathname();
 
   if (authLoading || !authUser) {
     return <LoadingScreen fullScreen />;
@@ -82,44 +88,45 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {/* Desktop User Menu Footer */}
             <SidebarFooter className="p-4 border-t border-sidebar-border bg-sidebar shrink-0">
               <div className="space-y-3">
-                {/* User Info - Clickable Profile Button */}
-                <Button
-                  asChild
-                  variant="ghost"
-                  className="flex items-center gap-3 px-2 py-2 rounded-lg bg-sidebar-accent/50 h-auto hover:bg-sidebar-accent hover:text-sidebar-accent-foreground w-full justify-start"
-                >
-                  <Link
-                    href="/profile"
-                    className="flex items-center gap-3 w-full"
-                  >
-                    <div className="h-10 w-10 bg-primary rounded-full flex items-center justify-center shrink-0">
-                      <span className="text-primary-foreground font-medium text-sm">
-                        {user?.email?.[0].toUpperCase() || "U"}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0 group-data-[state=collapsed]:hidden">
-                      <p className="text-sm font-medium text-sidebar-foreground truncate">
-                        {user?.email}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <p className="text-xs text-sidebar-foreground/70">
-                          {role === "admin" ? "Administrator" : "User"}
-                        </p>
-                        <div className="flex items-center gap-1">
-                          {(subscription?.tier === "agency" || subscription?.tier === "enterprise") && (
-                            <Crown className="h-3 w-3 text-accent" />
-                          )}
-                          {subscription?.tier === "starter" && (
-                            <Zap className="h-3 w-3 text-primary" />
-                          )}
-                          <span className="text-xs font-medium capitalize text-sidebar-foreground/90">
-                            {subscription?.planName || "Free"}
+                {/* User Info - Unified Sidebar Styling */}
+                <SidebarMenu asChild>
+                  <ul>
+                    <SidebarMenuItem>
+                      <SidebarMenuLink
+                        href="/profile"
+                        isActive={pathname === "/profile" || pathname?.startsWith("/profile/")}
+                        className="w-full"
+                      >
+                        <div className="h-10 w-10 bg-primary rounded-full flex items-center justify-center shrink-0">
+                          <span className="text-primary-foreground font-medium text-sm">
+                            {user?.email?.[0].toUpperCase() || "U"}
                           </span>
                         </div>
-                      </div>
-                    </div>
-                  </Link>
-                </Button>
+                        <div className="flex-1 min-w-0 group-data-[state=collapsed]:hidden">
+                          <p className="text-sm font-medium text-sidebar-foreground truncate">
+                            {user?.email}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs text-sidebar-foreground/70">
+                              {role === "admin" ? "Administrator" : "User"}
+                            </p>
+                            <div className="flex items-center gap-1">
+                              {(subscription?.tier === "agency" || subscription?.tier === "enterprise") && (
+                                <Crown className="h-3 w-3 text-accent" />
+                              )}
+                              {subscription?.tier === "starter" && (
+                                <Zap className="h-3 w-3 text-primary" />
+                              )}
+                              <span className="text-xs font-medium capitalize text-sidebar-foreground/90">
+                                {subscription?.planName || "Free"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </SidebarMenuLink>
+                    </SidebarMenuItem>
+                  </ul>
+                </SidebarMenu>
 
                 {/* Action Buttons */}
                 <div className="space-y-2">
@@ -144,20 +151,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     </Button>
                   )}
 
-                  {/* Standalone Settings Button */}
-                  <Button
-                    asChild
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start h-10 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:px-2"
-                  >
-                    <Link href="/settings" className="flex items-center gap-3">
-                      <Settings className="h-4 w-4 shrink-0" />
-                      <span className="group-data-[state=collapsed]:hidden">
-                        Settings
-                      </span>
-                    </Link>
-                  </Button>
+                  {/* Settings Link (unified sidebar styling) */}
+                  <SidebarMenu asChild>
+                    <ul>
+                      <SidebarMenuItem>
+                        <SidebarMenuLink
+                          href="/settings"
+                          isActive={pathname === "/settings" || pathname?.startsWith("/settings/")}
+                          className="w-full"
+                        >
+                          <Settings className="h-4 w-4 shrink-0" />
+                          <span className="group-data-[state=collapsed]:hidden">Settings</span>
+                        </SidebarMenuLink>
+                      </SidebarMenuItem>
+                    </ul>
+                  </SidebarMenu>
 
                   <Button
                     asChild

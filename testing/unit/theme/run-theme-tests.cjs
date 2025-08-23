@@ -12,3 +12,4 @@ Module._resolveFilename = function(request, parent, isMain, options){
 	return origResolve.call(this, request, parent, isMain, options);
 };
 require('./theme-cycle.spec.ts');
+require('./to-hsl-triplet.spec.cjs');

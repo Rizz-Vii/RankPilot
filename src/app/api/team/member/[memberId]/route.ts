@@ -1,5 +1,6 @@
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
-import { enforceProvenance } from "@/lib/middleware/provenance";
+import { getLogger } from '@/lib/logging/app-logger';
+import { enforceProvenance, withProvenance } from "@/lib/middleware/provenance";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -19,7 +20,8 @@ async function getTeam(uid: string): Promise<{ id: string; data: TeamDoc } | nul
     return null;
 }
 
-export const DELETE: (req: NextRequest, context: { params: Promise<{ memberId: string }> }) => Promise<NextResponse> = async (req, context) => {
+export const DELETE = withProvenance(async function DELETE(req: NextRequest, context: { params: Promise<{ memberId: string }> }) {
+    const logger = getLogger('api.team.member.delete');
     const params = await context.params;
     try {
         const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
@@ -69,9 +71,9 @@ export const DELETE: (req: NextRequest, context: { params: Promise<{ memberId: s
         const okBody = enforceProvenance({ success: true }, { path: 'team/member', note: 'removed' });
         return NextResponse.json(okBody);
     } catch (err: unknown) {
-        console.error("Remove member error", err);
         const msg = err instanceof Error ? err.message : String(err);
+        logger.error('member.remove.error', { error: msg });
         const errBody = enforceProvenance({ error: msg }, { path: 'team/member', note: 'exception' });
         return NextResponse.json(errBody, { status: 500 });
     }
-};
+}, { path: 'team/member', note: 'delete' });

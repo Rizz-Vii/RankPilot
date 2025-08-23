@@ -1,3 +1,5 @@
+import { getLogger } from '@/lib/logging/app-logger';
+import { recordRateLimitRejection, recordTeamRateLimitAllowed } from '@/lib/metrics/unified-metrics';
 import { Timestamp } from 'firebase-admin/firestore';
 import { adminDb } from '../firebase-admin';
 
@@ -35,6 +37,7 @@ function readConfig() {
  * Firestore doc path strategy: rateLimits/{teamId}
  */
 export async function applyTeamRateLimit(teamId?: string): Promise<TeamRateLimitResult | null> {
+    const logger = getLogger('team-rate-limit');
     const { enabled, cap, refillPerMin } = readConfig();
     if (!enabled || !teamId) return null;
 
@@ -80,6 +83,7 @@ export async function applyTeamRateLimit(teamId?: string): Promise<TeamRateLimit
     // Decision
     if (state.remaining <= 0) {
         const msUntilNext = 60000 / (refillPerMin || 1) - (now - state.updatedAt);
+        recordRateLimitRejection(teamId);
         const retryAfterSeconds = Math.max(1, Math.ceil(msUntilNext / 1000));
         return {
             allowed: false,
@@ -116,9 +120,11 @@ export async function applyTeamRateLimit(teamId?: string): Promise<TeamRateLimit
             }
         });
     } catch (e) {
-        console.warn('[team-rate-limit] write failed; allowing request', e);
+        const msg = e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string' ? (e as { message: string }).message : String(e);
+        logger.warn('write.failed.allow', { error: msg, teamId });
     }
 
+    recordTeamRateLimitAllowed(teamId);
     return {
         allowed: true,
         state,

@@ -1,4 +1,5 @@
 #!/usr/bin/env ts-node
+import { recordQueueDone, recordQueueStart } from '@/lib/metrics/queue-metrics';
 import { execSync, spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
@@ -215,6 +216,7 @@ for (const task of tasks) {
     task.updatedAt = new Date().toISOString();
     changed = true;
     writeQueue(tasks);
+    try { recordQueueStart(1); } catch { /* optional metric */ }
     console.log(`Processing ${task.taskId} (${task.files.length} files) mode=${AIDER_AUTORUN ? 'autorun' : 'manual'}`);
     const validation = validateTask(task);
     if (validation.risk !== 'ok') {
@@ -349,6 +351,7 @@ Rules Focus: infer rule id from summary; fix occurrences safely.
         } catch { /* ignore token stats errors */ }
         if (res.status === 0) {
             task.status = 'done';
+            try { recordQueueDone(true, 1); } catch { /* optional metric */ }
             const { added, removed } = computeLocDelta(task.files);
             const baseEntry: { taskId: string; filesChanged: number; locAdded: number; locRemoved: number; status: string; ts: string; qa?: { lint: string; tests: string; error?: string } } = { taskId: task.taskId, filesChanged: task.files.length, locAdded: added, locRemoved: removed, status: 'pass', ts: new Date().toISOString() };
             if (RUN_TESTS) {
@@ -376,12 +379,14 @@ Rules Focus: infer rule id from summary; fix occurrences safely.
             appendLog(baseEntry);
         } else {
             task.status = 'failed';
+            try { recordQueueDone(false, 1); } catch { /* optional metric */ }
             // @ts-ignore
             task.notes = `exit ${res.status}`;
             appendLog({ taskId: task.taskId, filesChanged: task.files.length, locAdded: 0, locRemoved: 0, status: 'failed', ts: new Date().toISOString(), notes: task.notes });
         }
     } catch (err: unknown) {
         task.status = 'failed';
+        try { recordQueueDone(false, 1); } catch { /* optional metric */ }
         // Safely extract message from unknown error
         let errMsg = 'unknown error';
         if (err && typeof err === 'object') {

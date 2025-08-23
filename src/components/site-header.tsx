@@ -41,7 +41,7 @@ export default function SiteHeader() {
   const hydrated = useHydration();
 
   const [scrolled, setScrolled] = useState(false);
-  const { theme, setTheme, isDark } = useTheme();
+  const { theme, setTheme, isDark, isHighContrast, setPreferences } = useTheme();
   const { translate } = useI18n();
   const [a11yMessage, setA11yMessage] = useState("");
   const { toast } = useToast();
@@ -49,8 +49,17 @@ export default function SiteHeader() {
   const toggleTheme = (): void => {
     // cycle light -> dark -> high-contrast -> auto -> light
     const order: ThemeMode[] = ["light", "dark", "high-contrast", "auto"];
-    const idx = order.indexOf(theme as ThemeMode);
+    const current: ThemeMode = isHighContrast() ? "high-contrast" : (theme as ThemeMode);
+    const idx = order.indexOf(current);
     const next = order[(idx + 1) % order.length];
+    // If currently in effective HC due to preference, clear it when leaving HC stage
+    if (current === "high-contrast" && next !== "high-contrast") {
+      setPreferences({ highContrast: false });
+    }
+    // When entering HC stage via mode toggle, ensure pref doesn't force override
+    if (next === "high-contrast") {
+      setPreferences({ highContrast: false });
+    }
     setTheme(next);
     const msg = translate('feedback.theme.cycled');
     setA11yMessage(msg);
@@ -136,7 +145,7 @@ export default function SiteHeader() {
                       onClick={toggleTheme}
                     >
                       {hydrated ? (
-                        theme === 'high-contrast' ? (
+                          isHighContrast() ? (
                           <span className="relative inline-flex">
                             <Sun className="h-5 w-5" />
                             <span className="absolute -top-1 -right-1 text-[8px] px-1 py-[1px] leading-none rounded bg-warning text-warning-foreground font-bold">HC</span>
@@ -193,7 +202,7 @@ export default function SiteHeader() {
                       onClick={toggleTheme}
                     >
                       {hydrated ? (
-                        theme === 'high-contrast' ? (
+                          isHighContrast() ? (
                           <span className="relative inline-flex">
                             <Sun className="h-5 w-5" />
                             <span className="absolute -top-1 -right-1 text-[8px] px-1 py-[1px] leading-none rounded bg-warning text-warning-foreground font-bold">HC</span>

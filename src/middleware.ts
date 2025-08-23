@@ -15,8 +15,12 @@ export async function middleware(request: NextRequest) {
     return rl;
   }
 
-  // Non-API: proceed with security headers response
-  const response = NextResponse.next();
+  // Non-API: proceed with security headers response, attach a CSP nonce to request headers for server components
+  const requestHeaders = new Headers(request.headers);
+  // Use a simple UUID as nonce token; acceptable for CSP nonces
+  const nonce = crypto.randomUUID();
+  requestHeaders.set('x-rp-csp-nonce', nonce);
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
 
 
 
@@ -25,7 +29,8 @@ export async function middleware(request: NextRequest) {
     // Default directives
     "default-src 'self'",
     // Scripts - Complete coverage for all third-party services
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' " +
+    // In production, drop 'unsafe-inline' and allow only our per-request nonce
+    `script-src 'self' 'nonce-${nonce}' ` +
     "https://apis.google.com " +
     "https://*.firebaseapp.com " +
     "https://*.firebase.com " +

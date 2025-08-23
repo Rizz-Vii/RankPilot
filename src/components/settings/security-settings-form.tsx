@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { getErrorInfo } from "@/lib/errors";
+import { getLogger } from "@/lib/logging/app-logger";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { User } from "firebase/auth";
 import {
@@ -69,10 +71,13 @@ export default function SecuritySettingsForm({
   user,
 }: SecuritySettingsFormProps) {
   const { toast } = useToast();
+  const logger = getLogger('settings.security');
   const [isLoading, setIsLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const isPasswordProvider = Array.isArray(user.providerData) && user.providerData.some((p) => p?.providerId === 'password');
 
   const form = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
@@ -84,17 +89,20 @@ export default function SecuritySettingsForm({
   });
 
   async function handlePasswordUpdate(values: PasswordFormValues) {
+    if (cooldown) return;
     setIsLoading(true);
     try {
       // Re-authenticate user before password change
+      const email = user.email || '';
       const credential = EmailAuthProvider.credential(
-        user.email!,
+        email,
         values.currentPassword
       );
       await reauthenticateWithCredential(user, credential);
 
       // Update password
       await updatePassword(user, values.newPassword);
+      logger.audit('security.password.updated', { userId: user.uid });
 
       toast({
         title: "Password Updated",
@@ -105,14 +113,13 @@ export default function SecuritySettingsForm({
       form.reset();
     } catch (error: unknown) {
       let errorMessage = "Failed to update password. Please try again.";
-      if (typeof error === 'object' && error) {
-        const anyErr = error as { code?: unknown };
-        if (anyErr.code === "auth/wrong-password") {
-          errorMessage = "Current password is incorrect.";
-        } else if (anyErr.code === "auth/weak-password") {
-          errorMessage = "New password is too weak.";
-        }
+      const { code, message } = getErrorInfo(error);
+      if (code === "auth/wrong-password") {
+        errorMessage = "Current password is incorrect.";
+      } else if (code === "auth/weak-password") {
+        errorMessage = "New password is too weak.";
       }
+      logger.error('security.password.update.error', { userId: user.uid, error: message });
 
       toast({
         variant: "destructive",
@@ -121,6 +128,8 @@ export default function SecuritySettingsForm({
       });
     } finally {
       setIsLoading(false);
+      setCooldown(true);
+      setTimeout(() => setCooldown(false), 10000);
     }
   }
 
@@ -131,6 +140,7 @@ export default function SecuritySettingsForm({
   return (
     <div className="space-y-6">
       {/* Password Change Card */}
+      {isPasswordProvider ? (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -173,6 +183,20 @@ export default function SecuritySettingsForm({
                           {...field}
                           disabled={isLoading}
                         />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
                         <Button
                           type="button"
                           variant="ghost"
@@ -269,7 +293,7 @@ export default function SecuritySettingsForm({
               />
             </CardContent>
             <CardFooter>
-              <Button type="submit" disabled={isLoading}>
+                <Button type="submit" disabled={isLoading || cooldown}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Update Password
               </Button>
@@ -277,6 +301,19 @@ export default function SecuritySettingsForm({
           </form>
         </Form>
       </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Manage Your Password
+            </CardTitle>
+            <CardDescription>
+              Your account is signed in via an external provider. Password changes are managed by your provider.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
 
       {/* Account Security Info */}
       <Card>

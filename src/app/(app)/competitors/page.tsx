@@ -75,7 +75,7 @@ const RankingsChart = ({
     ...competitorUrls.map((url, index) => {
       const competitorData = (firstKeywordData as Record<string, unknown>)[String(url)] as { rank?: number } | undefined;
       return {
-        name: new URL(String(url)).hostname,
+        name: safeHostname(url),
         rank:
           typeof competitorData?.rank === "number" ? competitorData.rank : 101,
         fill: `hsl(var(--chart-${(index % 5) + 2}))`,
@@ -136,14 +136,39 @@ const RankingsChart = ({
   );
 };
 
+// Safe helpers local to this page (avoid broader refactors)
+const ensureHttpUrl = (raw: unknown): string | null => {
+  const s = typeof raw === 'string' ? raw.trim() : '';
+  if (!s) return null;
+  const withProto = /^https?:\/\//i.test(s) ? s : `https://${s}`;
+  try {
+    const u = new URL(withProto);
+    // only allow http/https
+    if (u.protocol === 'http:' || u.protocol === 'https:') return u.toString();
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+const safeHostname = (raw: unknown): string => {
+  const u = ensureHttpUrl(raw);
+  if (!u) return String(raw ?? '');
+  try { return new URL(u).hostname; } catch { return String(raw ?? ''); }
+};
+
 const CompetitorResults = ({
   results,
 }: {
   results: CompetitorAnalysisOutput;
 }) => {
+  const rankings = Array.isArray((results as unknown as { rankings?: unknown }).rankings)
+    ? ((results as unknown as { rankings: Array<Record<string, unknown>> }).rankings)
+    : [];
+
   const competitorHeaders = Array.from(
     new Set(
-      results.rankings.flatMap((r) =>
+      rankings.flatMap((r) =>
         Object.keys(r).filter((k) => k !== "keyword" && k !== "yourRank")
       )
     )
@@ -156,7 +181,9 @@ const CompetitorResults = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <RankingsChart rankings={results.rankings} />
+      {rankings.length > 0 ? (
+        <RankingsChart rankings={rankings as CompetitorAnalysisOutput["rankings"]} />
+      ) : null}
 
       <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300">
         <CardHeader>
@@ -176,17 +203,21 @@ const CompetitorResults = ({
                     className="text-center truncate"
                     title={String(url)}
                   >
-                    {new URL(String(url)).hostname}
+            {safeHostname(url)}
                   </TableHead>
                 ))}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {results.rankings.map((item) => (
-                <TableRow key={item.keyword}>
-                  <TableCell className="font-medium">{item.keyword}</TableCell>
+              {rankings.map((item) => {
+                const keyword = (item as Record<string, unknown>).keyword as string | undefined;
+                const yourRank = (item as Record<string, unknown>).yourRank as { rank?: number } | undefined;
+                const rowKey = keyword || JSON.stringify(item).slice(0, 24);
+                return (
+                  <TableRow key={rowKey}>
+                    <TableCell className="font-medium">{keyword || '-'}</TableCell>
                   <TableCell className="text-center">
-                    {item.yourRank?.rank ?? "N/A"}
+                      {typeof yourRank?.rank === 'number' ? yourRank.rank : "N/A"}
                   </TableCell>
                   {competitorHeaders.map((url) => (
                     <TableCell key={String(url)} className="text-center">
@@ -194,7 +225,8 @@ const CompetitorResults = ({
                     </TableCell>
                   ))}
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
@@ -210,9 +242,9 @@ const CompetitorResults = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {results.contentGaps.length > 0 ? (
+          {Array.isArray((results as unknown as { contentGaps?: unknown }).contentGaps) && (results as unknown as { contentGaps: string[] }).contentGaps.length > 0 ? (
             <ul className="list-disc pl-5 space-y-2">
-              {results.contentGaps.map((gap) => (
+              {(results as unknown as { contentGaps: string[] }).contentGaps.map((gap) => (
                 <li key={`gap-${gap.slice(0, 32)}`}>{gap}</li>
               ))}
             </ul>
@@ -307,10 +339,25 @@ export default function CompetitorsPage() {
     setReport(null);
 
     try {
+      // Normalize and validate URLs up-front
+      const normalizedYour = ensureHttpUrl(values.yourUrl);
+      if (!normalizedYour) {
+        setError("Your website URL is invalid. Please include a valid domain (e.g., https://example.com)");
+        setIsAnalyzing(false);
+        return;
+      }
+      const competitorList = values.competitorUrls.split(',').map(u => u.trim()).filter(Boolean);
+      const normalizedCompetitors = competitorList.map(ensureHttpUrl).filter((u): u is string => Boolean(u));
+      if (!normalizedCompetitors.length) {
+        setError("All competitor URLs are invalid. Please enter at least one valid URL.");
+        setIsAnalyzing(false);
+        return;
+      }
+      const keywordsList = values.keywords.split(',').map(k => k.trim()).filter(Boolean);
       const analysisRequest: NeuroSEOAnalysisRequest = {
-        urls: [values.yourUrl.trim()],
-        targetKeywords: values.keywords.split(',').map(k => k.trim()).filter(Boolean),
-        competitorUrls: values.competitorUrls.split(',').map(u => u.trim()).filter(Boolean),
+        urls: [normalizedYour],
+        targetKeywords: keywordsList,
+        competitorUrls: normalizedCompetitors,
         analysisType: "competitive",
         userPlan: userTier,
         userId: user.uid,
@@ -356,11 +403,11 @@ export default function CompetitorsPage() {
           tool: TOOL_NAMES.COMPETITOR_ANALYSIS,
           timestamp: serverTimestamp(),
           details: {
-            yourUrl: values.yourUrl.trim(),
-            competitors: values.competitorUrls.split(',').map(u => u.trim()).filter(Boolean),
-            keywords: values.keywords.split(',').map(k => k.trim()).filter(Boolean),
+            yourUrl: normalizedYour,
+            competitors: normalizedCompetitors,
+            keywords: keywordsList,
           },
-          resultsSummary: `NeuroSEO™ competitive analysis completed for ${values.yourUrl.trim()} vs ${values.competitorUrls.split(',').length} competitors.`,
+          resultsSummary: `NeuroSEO™ competitive analysis completed for ${normalizedYour} vs ${normalizedCompetitors.length} competitors.`,
         });
       }
     } catch (e: unknown) {

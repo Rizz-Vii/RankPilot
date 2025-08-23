@@ -3,8 +3,8 @@
  * (Rebuilt after corruption) – Provides deterministic, accessible theming.
  */
 
+import { setFlag, setThemeClass } from '@/lib/dom/classListManager';
 import React from 'react';
-import { setThemeClass, setFlag } from '@/lib/dom/classListManager';
 
 export type ThemeMode = 'light' | 'dark' | 'high-contrast' | 'auto';
 
@@ -14,6 +14,11 @@ export interface ThemePreferences {
     fontSize: 'small' | 'medium' | 'large' | 'extra-large';
     colorBlindnessSupport: boolean;
     highContrast: boolean; // explicit high contrast override (can be system derived)
+    customColors?: {
+        primary?: string;
+        secondary?: string;
+        accent?: string;
+    };
 }
 
 export interface ThemeTokens {
@@ -213,14 +218,17 @@ export const highContrastTheme: ThemeTokens = {
 
 export class ThemeSystem {
     private static instance: ThemeSystem;
-    private currentTheme: ThemeMode = 'light';
+    private currentTheme: ThemeMode = 'dark';
     private preferences: ThemePreferences = {
-        mode: 'light',
+        mode: 'dark',
         reducedMotion: false,
         fontSize: 'medium',
         colorBlindnessSupport: false,
         highContrast: false,
     };
+    // Track whether the user explicitly set these prefs to avoid being overwritten by system changes
+    private userSetHighContrast = false;
+    private userSetReducedMotion = false;
     private listeners: Set<(theme: ThemeMode, preferences: ThemePreferences) => void> = new Set();
 
     private constructor() {
@@ -236,6 +244,7 @@ export class ThemeSystem {
                     reducedMotion: this.preferences.reducedMotion,
                     colorBlind: this.preferences.colorBlindnessSupport,
                     highContrast: this.preferences.highContrast,
+                    customColors: this.preferences.customColors,
                 };
                 const value = encodeURIComponent(JSON.stringify(cookiePayload));
                 document.cookie = `rp_theme=${value}; Path=/; Max-Age=31536000; SameSite=Lax`;
@@ -256,7 +265,11 @@ export class ThemeSystem {
         try {
             const stored = localStorage.getItem('rankpilot-theme-preferences');
             if (stored) {
-                this.preferences = { ...this.preferences, ...JSON.parse(stored) };
+                // Parse raw to detect which keys were explicitly present
+                const parsed = JSON.parse(stored) as Partial<ThemePreferences> & Record<string, unknown>;
+                this.preferences = { ...this.preferences, ...parsed };
+                if (Object.prototype.hasOwnProperty.call(parsed, 'highContrast')) this.userSetHighContrast = true;
+                if (Object.prototype.hasOwnProperty.call(parsed, 'reducedMotion')) this.userSetReducedMotion = true;
             }
         } catch (error) {
             console.warn('Failed to load theme preferences:', error);
@@ -288,8 +301,8 @@ export class ThemeSystem {
             this.currentTheme = prefersDark ? 'dark' : 'light';
         }
 
-        this.preferences.reducedMotion = prefersReducedMotion;
-        this.preferences.highContrast = prefersHighContrast;
+        if (!this.userSetReducedMotion) this.preferences.reducedMotion = prefersReducedMotion;
+        if (!this.userSetHighContrast) this.preferences.highContrast = prefersHighContrast;
 
         // Listen for system preference changes
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
@@ -301,15 +314,19 @@ export class ThemeSystem {
         });
 
         window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (e) => {
-            this.preferences.reducedMotion = e.matches;
-            this.applyTheme();
-            this.notifyListeners();
+            if (!this.userSetReducedMotion) {
+                this.preferences.reducedMotion = e.matches;
+                this.applyTheme();
+                this.notifyListeners();
+            }
         });
 
         window.matchMedia('(prefers-contrast: high)').addEventListener('change', (e) => {
-            this.preferences.highContrast = e.matches;
-            this.applyTheme();
-            this.notifyListeners();
+            if (!this.userSetHighContrast) {
+                this.preferences.highContrast = e.matches;
+                this.applyTheme();
+                this.notifyListeners();
+            }
         });
     }
 
@@ -318,12 +335,72 @@ export class ThemeSystem {
         const root = document.documentElement;
         const tokens = this.getThemeTokens();
 
-        // Colors (dual naming: legacy --color-* and Tailwind expected --background / --primary-foreground)
-        Object.entries(tokens.colors).forEach(([k, v]) => {
-            root.style.setProperty(`--color-${k}`, v);
-            const kebab = k.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-            root.style.setProperty(`--${kebab}`, v);
-        });
+        // Helpers to normalize color to HSL triplet string for Tailwind tokens
+        const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
+        const toHslTriplet = (color: string): string => {
+            const hslMatch = color.match(/^hsla?\(([^)]+)\)$/i);
+            if (hslMatch) {
+                const inner = hslMatch[1].replace(/\//g, ' ').trim();
+                const parts = inner.split(/[\s,]+/).filter(Boolean);
+                const h = parseFloat(parts[0]);
+                const s = parseFloat(parts[1]);
+                const l = parseFloat(parts[2]);
+                if (Number.isFinite(h) && Number.isFinite(s) && Number.isFinite(l)) return `${h} ${s}% ${l}%`;
+            }
+            const rgbMatch = color.match(/^rgba?\(([^)]+)\)$/i);
+            if (rgbMatch) {
+                const parts = rgbMatch[1].split(',').map(p => parseFloat(p.trim()));
+                if (parts.length >= 3 && parts.slice(0, 3).every(Number.isFinite)) {
+                    const [r, g, b] = parts.map(v => clamp01(v / 255));
+                    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+                    let h = 0, s = 0, l = (max + min) / 2;
+                    if (max !== min) {
+                        const d = max - min;
+                        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                        switch (max) {
+                            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                            case g: h = (b - r) / d + 2; break;
+                            case b: h = (r - g) / d + 4; break;
+                        }
+                        h *= 60;
+                    }
+                    return `${h} ${s * 100}% ${l * 100}%`;
+                }
+            }
+            const hexMatch = color.match(/^#([0-9a-fA-F]{6})$/);
+            if (hexMatch) {
+                const hex = hexMatch[1];
+                const r = parseInt(hex.slice(0, 2), 16) / 255;
+                const g = parseInt(hex.slice(2, 4), 16) / 255;
+                const b = parseInt(hex.slice(4, 6), 16) / 255;
+                const max = Math.max(r, g, b), min = Math.min(r, g, b);
+                let h = 0, s = 0, l = (max + min) / 2;
+                if (max !== min) {
+                    const d = max - min;
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                    switch (max) {
+                        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                        case g: h = (b - r) / d + 2; break;
+                        case b: h = (r - g) / d + 4; break;
+                    }
+                    h *= 60;
+                }
+                return `${h} ${s * 100}% ${l * 100}%`;
+            }
+            // Fallback sane triplet
+            return `210 10% 50%`;
+        };
+
+        const setColorPair = (key: string, cssColor: string) => {
+            // Legacy full CSS color
+            root.style.setProperty(`--color-${key}`, cssColor);
+            // Tailwind expects hsl(var(--primary)) => store triplet in --primary
+            const kebab = key.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+            root.style.setProperty(`--${kebab}`, toHslTriplet(cssColor));
+        };
+
+        // Colors (dual naming: --color-* full CSS color; --* HSL triplet)
+        Object.entries(tokens.colors).forEach(([k, v]) => setColorPair(k, v));
 
         // Typography sizes
         Object.entries(tokens.typography.fontSize).forEach(([k, v]) => root.style.setProperty(`--font-size-${k}`, v));
@@ -343,6 +420,20 @@ export class ThemeSystem {
         }
         // Font scale variable (consumed in CSS where needed)
         root.style.setProperty('--font-scale', this.getFontSizeScale().toString());
+
+        // Apply user custom color overrides last (primary/secondary/accent)
+        const cc = this.preferences.customColors;
+        if (cc && typeof cc === 'object') {
+            if (cc.primary && typeof cc.primary === 'string') {
+                setColorPair('primary', cc.primary);
+            }
+            if (cc.secondary && typeof cc.secondary === 'string') {
+                setColorPair('secondary', cc.secondary);
+            }
+            if (cc.accent && typeof cc.accent === 'string') {
+                setColorPair('accent', cc.accent);
+            }
+        }
 
         // Centralized body class updates
         setThemeClass(this.currentTheme, this.preferences.highContrast);
@@ -365,6 +456,7 @@ export class ThemeSystem {
                 reducedMotion: this.preferences.reducedMotion,
                 colorBlind: this.preferences.colorBlindnessSupport,
                 highContrast: this.preferences.highContrast,
+                customColors: this.preferences.customColors,
             };
             document.cookie = `rp_theme=${encodeURIComponent(JSON.stringify(payload))}; Path=/; Max-Age=31536000; SameSite=Lax`;
         } catch { /* ignore */ }
@@ -382,32 +474,67 @@ export class ThemeSystem {
     getTheme(): ThemeMode { return this.currentTheme; }
 
     setTheme(mode: ThemeMode): void {
-        this.preferences.mode = mode;
+        // No-op if effective mode/theme unchanged
+        const prevMode = this.preferences.mode;
+        let nextTheme: ThemeMode = mode;
         if (mode === 'auto') {
             const prefersDark = typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)').matches : false;
-            this.currentTheme = prefersDark ? 'dark' : 'light';
-        } else {
-            this.currentTheme = mode;
+            nextTheme = prefersDark ? 'dark' : 'light';
         }
-        // Reset explicit high contrast flag if leaving high-contrast mode directly
-        if (mode !== 'high-contrast' && this.preferences.highContrast) this.preferences.highContrast = false;
-        if (mode === 'high-contrast') this.preferences.highContrast = true;
+        const effectiveUnchanged = prevMode === mode && this.currentTheme === nextTheme;
+        if (effectiveUnchanged) return;
+
+        // Update only mode and derived currentTheme (do not mutate highContrast here)
+        this.preferences = { ...this.preferences, mode };
+        this.currentTheme = nextTheme;
         this.applyTheme();
         this.savePreferences();
         this.notifyListeners();
     }
 
+    private shallowEqualPrefs(a: Partial<ThemePreferences>, b: Partial<ThemePreferences>): boolean {
+        const keys = new Set<keyof ThemePreferences>([
+            'mode',
+            'reducedMotion',
+            'fontSize',
+            'colorBlindnessSupport',
+            'highContrast',
+            'customColors',
+        ]);
+        for (const k of keys) {
+            const av = (a as Record<string, unknown>)[k as string];
+            const bv = (b as Record<string, unknown>)[k as string];
+            if (k === 'customColors') {
+                const ap = (av as { primary?: string; secondary?: string; accent?: string } | undefined) || {};
+                const bp = (bv as { primary?: string; secondary?: string; accent?: string } | undefined) || {};
+                if (ap.primary !== bp.primary || ap.secondary !== bp.secondary || ap.accent !== bp.accent) return false;
+                continue;
+            }
+            if (av !== bv) return false;
+        }
+        return true;
+    }
+
     setPreferences(preferences: Partial<ThemePreferences>): void {
-        const modeChange = preferences.mode && preferences.mode !== this.preferences.mode;
-        this.preferences = { ...this.preferences, ...preferences };
-        if (modeChange) {
-            this.setTheme(this.preferences.mode);
+        // If only mode provided, delegate to setTheme for idempotency
+        if ('mode' in preferences && typeof preferences.mode !== 'undefined') {
+            const { mode, ...rest } = preferences as Required<Pick<ThemePreferences, 'mode'>> & Partial<ThemePreferences>;
+            // Apply non-mode prefs first if they actually change anything
+            const nextPrefs = { ...this.preferences, ...rest } as ThemePreferences;
+            const restChanged = !this.shallowEqualPrefs(nextPrefs, this.preferences);
+            if (restChanged) this.preferences = nextPrefs;
+            this.setTheme(mode);
             return;
         }
-        // Maintain currentTheme vs highContrast interplay
-        if (this.preferences.highContrast) {
-            // keep currentTheme as underlying base but highContrast overrides tokens
-        }
+
+        // Mark user-intent for system-tied preferences when keys provided
+        if (Object.prototype.hasOwnProperty.call(preferences, 'highContrast')) this.userSetHighContrast = true;
+        if (Object.prototype.hasOwnProperty.call(preferences, 'reducedMotion')) this.userSetReducedMotion = true;
+
+        const merged = { ...this.preferences, ...preferences } as ThemePreferences;
+        // No-op if nothing actually changed
+        if (this.shallowEqualPrefs(merged, this.preferences)) return;
+        this.preferences = merged;
         this.applyTheme();
         this.savePreferences();
         this.notifyListeners();
@@ -438,7 +565,7 @@ export function useTheme() {
     }, []);
 
     return {
-        theme: mounted ? theme : 'light',
+        theme: mounted ? theme : 'dark',
         preferences,
         setTheme: themeSystem.setTheme.bind(themeSystem),
         setPreferences: themeSystem.setPreferences.bind(themeSystem),

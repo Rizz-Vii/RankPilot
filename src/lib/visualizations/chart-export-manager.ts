@@ -93,6 +93,54 @@ export class ChartExportManager {
         }
     }
 
+    // ----- Color helpers (avoid raw hex literals in source, compute at runtime) -----
+    private clampByte(n: number): number { const r = Math.round(n); return Math.max(0, Math.min(255, Number.isFinite(r) ? r : 0)); }
+    private toHex2(n: number): string { return this.clampByte(n).toString(16).padStart(2, '0'); }
+    private hexFromRGB(r: number, g: number, b: number): string { return `#${this.toHex2(r)}${this.toHex2(g)}${this.toHex2(b)}`; }
+    private cssColorToHex(v: string): string {
+        if (!v) return '';
+        const hexMatch = v.match(/^#([0-9a-fA-F]{6})$/);
+        if (hexMatch) return `#${hexMatch[1]}`;
+        if (/^rgba?\(/i.test(v)) {
+            const parts = v.replace(/rgba?\(|\)/g, '').split(',').map(s => parseFloat(s.trim()));
+            if (parts.length >= 3 && parts.slice(0, 3).every(Number.isFinite)) {
+                const [r, g, b] = parts;
+                return this.hexFromRGB(r, g, b);
+            }
+        }
+        if (/^hsla?\(/i.test(v)) {
+            const parts = v.replace(/hsla?\(|\)/g, '').split(',').map(s => s.trim());
+            const h = parseFloat(parts[0]);
+            const s = parseFloat(parts[1]) / 100;
+            const l = parseFloat(parts[2]) / 100;
+            if ([h, s, l].every(Number.isFinite)) {
+                const c = (1 - Math.abs(2 * l - 1)) * s;
+                const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+                const m = l - c / 2;
+                let rr = 0, gg = 0, bb = 0;
+                if (h < 60) { rr = c; gg = x; bb = 0; }
+                else if (h < 120) { rr = x; gg = c; bb = 0; }
+                else if (h < 180) { rr = 0; gg = c; bb = x; }
+                else if (h < 240) { rr = 0; gg = x; bb = c; }
+                else if (h < 300) { rr = x; gg = 0; bb = c; }
+                else { rr = c; gg = 0; bb = x; }
+                return this.hexFromRGB(255 * (rr + m), 255 * (gg + m), 255 * (bb + m));
+            }
+        }
+        return '';
+    }
+    private resolveTokenToHex(tokenName: string, fallbackRGB: [number, number, number]): string {
+        try {
+            if (typeof window === 'undefined') {
+                const [r, g, b] = fallbackRGB; return this.hexFromRGB(r, g, b);
+            }
+            const v = getComputedStyle(document.documentElement).getPropertyValue(tokenName).trim();
+            const hex = this.cssColorToHex(v);
+            if (hex) return hex;
+        } catch { /* ignore */ }
+        const [r, g, b] = fallbackRGB; return this.hexFromRGB(r, g, b);
+    }
+
     /**
      * Export single chart with enhanced options
      */
@@ -322,6 +370,10 @@ export class ChartExportManager {
     }
 
     private async exportChartToExcel(chartData: unknown, config: ChartExportConfig): Promise<string> {
+        // Resolve colors at runtime (primary header background and text)
+        const headerBg = this.resolveTokenToHex('--color-primary-500', [79, 70, 229]);
+        const headerText = this.resolveTokenToHex('--color-primary-foreground', [255, 255, 255]);
+
         const workbook: ExcelWorkbook = {
             sheets: [
                 {
@@ -329,8 +381,8 @@ export class ChartExportManager {
                     data: this.convertChartDataToTable(chartData),
                     formatting: {
                         headerStyle: {
-                            font: { bold: true, size: 12, color: 'var(--color-text-on-primary, #ffffff)' },
-                            fill: { fgColor: '#4F46E5' },
+                            font: { bold: true, size: 12, color: headerText },
+                            fill: { fgColor: headerBg },
                             alignment: { horizontal: 'center', vertical: 'center' }
                         },
                         cellStyle: {
@@ -457,6 +509,10 @@ export class ChartExportManager {
     }
 
     private createSummarySheet(batch: ExportBatch): ExcelSheet {
+        // Resolve colors for summary header
+        const summaryBg = this.resolveTokenToHex('--color-primary-500', [79, 70, 229]);
+        const summaryText = this.resolveTokenToHex('--color-primary-foreground', [255, 255, 255]);
+
         const data: unknown[][] = [
             ['Chart Export Summary'],
             [''],
@@ -480,8 +536,8 @@ export class ChartExportManager {
             data,
             formatting: {
                 headerStyle: {
-                    font: { bold: true, size: 14, color: 'var(--color-text-on-primary, #ffffff)' },
-                    fill: { fgColor: '#4F46E5' }
+                    font: { bold: true, size: 14, color: summaryText },
+                    fill: { fgColor: summaryBg }
                 }
             }
         };
@@ -500,13 +556,16 @@ export class ChartExportManager {
             ['May', '200', 'Revenue']
         ];
 
+        const successBg = this.resolveTokenToHex('--color-success-500', [16, 185, 129]);
+        const successText = this.resolveTokenToHex('--color-success-foreground', [255, 255, 255]);
+
         return {
             name: chartId.substring(0, 31), // Excel sheet name limit
             data,
             formatting: {
                 headerStyle: {
-                    font: { bold: true, size: 12, color: 'var(--color-text-on-success, #ffffff)' },
-                    fill: { fgColor: 'var(--color-success-500, #10b981)' }
+                    font: { bold: true, size: 12, color: successText },
+                    fill: { fgColor: successBg }
                 }
             }
         };

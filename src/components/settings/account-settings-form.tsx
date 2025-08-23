@@ -21,12 +21,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { getErrorInfo } from "@/lib/errors";
 import { db } from "@/lib/firebase";
+import { getLogger } from "@/lib/logging/app-logger";
 import { asVoidHandler } from "@/lib/react/handlers";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { User } from "firebase/auth";
 import { updateEmail } from "firebase/auth";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { AlertTriangle, Loader2, Mail } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -56,8 +58,11 @@ export default function AccountSettingsForm({
   profile,
 }: AccountSettingsFormProps): JSX.Element {
   const { toast } = useToast();
+  const logger = getLogger('settings.account');
   const [isLoading, setIsLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(false);
   const prof: UserProfile | undefined = asUserProfile(profile);
+  const isPasswordProvider = Array.isArray(user.providerData) && user.providerData.some((p) => p?.providerId === 'password');
 
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(formSchema),
@@ -72,11 +77,16 @@ export default function AccountSettingsForm({
   });
 
   async function handleFormSubmit(values: AccountFormValues): Promise<void> {
+    if (cooldown) return;
     setIsLoading(true);
     try {
       // Update email in Firebase Auth if changed
       if (values.email !== user.email) {
+        if (!isPasswordProvider) {
+          throw new Error("Email managed by your sign-in provider.");
+        }
         await updateEmail(user, values.email);
+        logger.audit('account.email.updated', { userId: user.uid });
       }
 
       // Update profile in Firestore
@@ -87,17 +97,20 @@ export default function AccountSettingsForm({
         company: values.company,
         timezone: values.timezone,
         email: values.email,
-        updatedAt: new Date(),
+        updatedAt: serverTimestamp(),
       });
+      logger.audit('account.profile.updated', { userId: user.uid });
 
       toast({
         title: "Account Updated",
         description: "Your account information has been successfully updated.",
       });
     } catch (error: unknown) {
-      const msg = (error && typeof error === 'object' && 'message' in error)
-        ? String((error as { message?: unknown }).message)
-        : undefined;
+      const { message, code } = getErrorInfo(error);
+      const msg = code === 'auth/requires-recent-login'
+        ? 'Please re-authenticate to change your email.'
+        : message;
+      logger.error('account.update.error', { userId: user.uid, error: msg });
       toast({
         variant: "destructive",
         title: "Update Failed",
@@ -106,6 +119,8 @@ export default function AccountSettingsForm({
       });
     } finally {
       setIsLoading(false);
+      setCooldown(true);
+      setTimeout(() => setCooldown(false), 2000);
     }
   }
 
@@ -144,11 +159,15 @@ export default function AccountSettingsForm({
                       type="email"
                       placeholder="your.email@example.com"
                       {...field}
-                      disabled={isLoading}
+                      disabled={isLoading || !isPasswordProvider}
                     />
                   </FormControl>
                   <FormDescription>
-                    This email is used for login and important notifications.
+                    {isPasswordProvider ? (
+                      <>This email is used for login and important notifications.</>
+                    ) : (
+                      <>Your email is managed by your sign-in provider. Update it in your provider settings.</>
+                    )}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -234,7 +253,7 @@ export default function AccountSettingsForm({
             />
           </CardContent>
           <CardFooter>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || cooldown}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
             </Button>

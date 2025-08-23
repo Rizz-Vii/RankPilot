@@ -1,10 +1,10 @@
 // Development-only module load guard to detect excessive re-import loops.
-// Usage: registerModuleLoad(import.meta.url, { threshold: 10, label: 'SeoScoreTrend' })
+// Usage example: registerModuleLoad(/* module id or URL string */, { threshold: 10, label: 'SeoScoreTrend' })
 
 const globalKey = '__RP_MODULE_LOAD_COUNTS__';
 interface CounterMap { [k: string]: { count: number; first: number } }
 declare global {
-     
+
     var __RP_MODULE_LOAD_COUNTS__: CounterMap | undefined;
 }
 
@@ -26,7 +26,7 @@ export function registerModuleLoad(rawId: string | undefined, opts: { threshold?
         store[id] = rec;
         const threshold = opts.threshold ?? 12;
         if (rec.count === threshold) {
-             
+
             console.warn(`[ModuleLoadGuard] Module '${opts.label || id}' loaded ${rec.count} times. Potential circular re-export or dynamic import loop.`);
         }
     } catch { /* swallow */ }

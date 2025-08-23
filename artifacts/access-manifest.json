@@ -1,0 +1,660 @@
+{
+  "generatedAt": "2025-08-23T04:51:17.075Z",
+  "features": {
+    "free": {},
+    "starter": {},
+    "agency": {},
+    "enterprise": {},
+    "dashboard": {},
+    "keyword_analysis": {},
+    "serp_analysis": {
+      "requiredTier": "starter"
+    },
+    "competitor_analysis": {
+      "requiredTier": "agency"
+    },
+    "bulk_operations": {
+      "requiredTier": "agency"
+    },
+    "white_label": {
+      "requiredTier": "agency"
+    },
+    "api_access": {
+      "requiredTier": "agency"
+    },
+    "priority_support": {
+      "requiredTier": "agency"
+    },
+    "custom_integrations": {
+      "requiredTier": "enterprise"
+    },
+    "dedicated_support": {
+      "requiredTier": "enterprise"
+    },
+    "enterprise_sla": {
+      "requiredTier": "enterprise"
+    },
+    "advanced_security": {
+      "requiredTier": "enterprise"
+    },
+    "admin_panel": {
+      "requiresAdmin": true
+    },
+    "user_management": {
+      "requiresAdmin": true
+    },
+    "system_settings": {
+      "requiresAdmin": true
+    },
+    "analytics_admin": {
+      "requiresAdmin": true
+    },
+    "export_formats": {
+      "requiredTier": "starter"
+    },
+    "integration_hub": {
+      "requiredTier": "enterprise",
+      "requiresAdmin": true
+    },
+    "ai_insights": {
+      "requiredTier": "starter"
+    },
+    "team_management": {
+      "requiredTier": "agency"
+    },
+    "advanced_analytics": {
+      "requiredTier": "enterprise"
+    },
+    "marketing_email_campaigns": {
+      "requiredTier": "enterprise"
+    },
+    "marketing_lead_generation": {
+      "requiredTier": "enterprise"
+    },
+    "marketing_social_presence": {
+      "requiredTier": "enterprise"
+    },
+    "marketing_content_generation": {
+      "requiredTier": "enterprise"
+    },
+    "automation_recipes": {
+      "requiredTier": "agency"
+    },
+    "sales_pipeline": {
+      "requiredTier": "starter"
+    },
+    "sales_deals": {
+      "requiredTier": "agency"
+    },
+    "sales_outreach": {
+      "requiredTier": "agency"
+    },
+    "finance_billing_overview": {
+      "requiredTier": "starter"
+    },
+    "finance_invoices": {
+      "requiredTier": "starter"
+    },
+    "finance_revenue_analytics": {
+      "requiredTier": "agency"
+    },
+    "finance_accounting": {
+      "requiredTier": "agency"
+    },
+    "content_briefs": {
+      "requiredTier": "agency"
+    },
+    "neural_crawler": {
+      "requiredTier": "starter"
+    },
+    "semantic_map": {
+      "requiredTier": "starter"
+    },
+    "trust_block": {
+      "requiredTier": "starter"
+    },
+    "ai_visibility": {
+      "requiredTier": "agency"
+    },
+    "rewrite_gen": {
+      "requiredTier": "agency"
+    },
+    "link_view": {
+      "requiredTier": "agency"
+    },
+    "sales_dashboard": {
+      "requiredTier": "starter"
+    },
+    "finance_dashboard": {
+      "requiredTier": "starter"
+    },
+    "marketing_dashboard": {
+      "requiredTier": "enterprise"
+    },
+    "content_analyzer": {
+      "requiredTier": "starter"
+    },
+    "seo_audit": {
+      "requiredTier": "starter"
+    },
+    "observability": {
+      "requiresAdmin": true
+    },
+    "marketplace_templates": {
+      "requiredTier": "enterprise"
+    }
+  },
+  "routes": [
+    {
+      "href": "/neuroseo"
+    },
+    {
+      "href": "/neuroseo/neural-crawler",
+      "feature": "neural_crawler",
+      "requiredTier": "starter"
+    },
+    {
+      "href": "/neuroseo/semantic-map",
+      "feature": "semantic_map",
+      "requiredTier": "starter"
+    },
+    {
+      "href": "/neuroseo/adoption",
+      "feature": "semantic_map",
+      "requiredTier": "starter"
+    },
+    {
+      "href": "/neuroseo/trust-block",
+      "feature": "trust_block",
+      "requiredTier": "starter"
+    },
+    {
+      "href": "/neuroseo/ai-visibility",
+      "feature": "ai_visibility",
+      "requiredTier": "agency"
+    },
+    {
+      "href": "/neuroseo/rewrite-gen",
+      "feature": "rewrite_gen",
+      "requiredTier": "agency"
+    },
+    {
+      "href": "/automation/recipes",
+      "feature": "automation_recipes",
+      "requiredTier": "agency"
+    },
+    {
+      "href": "/keyword-tool"
+    },
+    {
+      "href": "/content-analyzer",
+      "feature": "content_analyzer",
+      "requiredTier": "starter"
+    },
+    {
+      "href": "/seo-audit",
+      "feature": "seo_audit",
+      "requiredTier": "starter"
+    },
+    {
+      "href": "/content-brief",
+      "feature": "content_briefs",
+      "requiredTier": "agency"
+    },
+    {
+      "href": "/content-briefs",
+      "feature": "content_briefs",
+      "requiredTier": "agency"
+    },
+    {
+      "href": "/serp-view"
+    },
+    {
+      "href": "/competitors",
+      "feature": "competitor_analysis",
+      "requiredTier": "starter"
+    },
+    {
+      "href": "/link-view",
+      "feature": "link_view",
+      "requiredTier": "agency"
+    },
+    {
+      "href": "/team/chat",
+      "feature": "team_management",
+      "requiredTier": "agency"
+    },
+    {
+      "href": "/team/settings",
+      "feature": "team_management",
+      "requiredTier": "agency"
+    },
+    {
+      "href": "/team/projects",
+      "feature": "team_management",
+      "requiredTier": "enterprise"
+    },
+    {
+      "href": "/team/reports",
+      "feature": "team_management",
+      "requiredTier": "enterprise"
+    },
+    {
+      "href": "/sales/pipeline",
+      "feature": "sales_pipeline",
+      "requiredTier": "starter"
+    },
+    {
+      "href": "/sales/deals",
+      "feature": "sales_deals",
+      "requiredTier": "agency"
+    },
+    {
+      "href": "/sales/outreach",
+      "feature": "sales_outreach",
+      "requiredTier": "agency"
+    },
+    {
+      "href": "/finance/billing",
+      "feature": "finance_billing_overview",
+      "requiredTier": "starter"
+    },
+    {
+      "href": "/finance/invoices",
+      "feature": "finance_invoices",
+      "requiredTier": "starter"
+    },
+    {
+      "href": "/finance/revenue",
+      "feature": "finance_revenue_analytics",
+      "requiredTier": "agency"
+    },
+    {
+      "href": "/finance/accounting",
+      "feature": "finance_accounting",
+      "requiredTier": "agency"
+    },
+    {
+      "href": "/dashboard"
+    },
+    {
+      "href": "/insights",
+      "requiredTier": "starter"
+    },
+    {
+      "href": "/performance",
+      "requiredTier": "starter"
+    },
+    {
+      "href": "/team",
+      "feature": "team_management",
+      "requiredTier": "agency"
+    },
+    {
+      "href": "/sales",
+      "feature": "sales_dashboard",
+      "requiredTier": "starter"
+    },
+    {
+      "href": "/finance",
+      "feature": "finance_dashboard",
+      "requiredTier": "starter"
+    },
+    {
+      "href": "/marketing",
+      "feature": "marketing_dashboard",
+      "requiredTier": "enterprise"
+    },
+    {
+      "href": "/adminonly",
+      "adminOnly": true
+    },
+    {
+      "href": "/admin/observability",
+      "adminOnly": true
+    },
+    {
+      "href": "/admin/events",
+      "feature": "observability",
+      "adminOnly": true
+    },
+    {
+      "href": "/integration-hub",
+      "feature": "integration_hub",
+      "requiredTier": "enterprise",
+      "adminOnly": true
+    },
+    {
+      "href": "/profile"
+    },
+    {
+      "href": "/settings"
+    },
+    {
+      "href": "/marketing/email-campaigns",
+      "feature": "marketing_email_campaigns",
+      "requiredTier": "enterprise"
+    },
+    {
+      "href": "/marketing/lead-generation",
+      "feature": "marketing_lead_generation",
+      "requiredTier": "enterprise"
+    },
+    {
+      "href": "/marketing/social-presence",
+      "feature": "marketing_social_presence",
+      "requiredTier": "enterprise"
+    },
+    {
+      "href": "/marketing/content-generation",
+      "feature": "marketing_content_generation",
+      "requiredTier": "enterprise"
+    }
+  ],
+  "pages": [
+    {
+      "file": "src/app/(app)/admin/events/page.tsx",
+      "route": "/admin/events",
+      "feature": "observability"
+    },
+    {
+      "file": "src/app/(app)/automation/recipes/page.tsx",
+      "route": "/automation/recipes",
+      "feature": "automation_recipes",
+      "requiredTier": "agency"
+    },
+    {
+      "file": "src/app/(app)/competitors/page.tsx",
+      "route": "/competitors",
+      "feature": "competitor_analysis",
+      "requiredTier": "starter"
+    },
+    {
+      "file": "src/app/(app)/content-analyzer/page.tsx",
+      "route": "/content-analyzer",
+      "feature": "content_analyzer",
+      "requiredTier": "starter"
+    },
+    {
+      "file": "src/app/(app)/content-brief/page.tsx",
+      "route": "/content-brief",
+      "feature": "content_briefs",
+      "requiredTier": "agency"
+    },
+    {
+      "file": "src/app/(app)/content-briefs/page.tsx",
+      "route": "/content-briefs",
+      "feature": "content_briefs",
+      "requiredTier": "agency"
+    },
+    {
+      "file": "src/app/(app)/finance/accounting/page.tsx",
+      "route": "/finance/accounting",
+      "feature": "finance_accounting",
+      "requiredTier": "agency"
+    },
+    {
+      "file": "src/app/(app)/finance/billing/page.tsx",
+      "route": "/finance/billing",
+      "feature": "finance_billing_overview",
+      "requiredTier": "starter"
+    },
+    {
+      "file": "src/app/(app)/finance/invoices/page.tsx",
+      "route": "/finance/invoices",
+      "feature": "finance_invoices",
+      "requiredTier": "starter"
+    },
+    {
+      "file": "src/app/(app)/finance/page.tsx",
+      "route": "/finance",
+      "feature": "finance_dashboard",
+      "requiredTier": "starter"
+    },
+    {
+      "file": "src/app/(app)/finance/revenue/page.tsx",
+      "route": "/finance/revenue",
+      "feature": "finance_revenue_analytics",
+      "requiredTier": "agency"
+    },
+    {
+      "file": "src/app/(app)/integration-hub/page.tsx",
+      "route": "/integration-hub",
+      "feature": "integration_hub",
+      "requiredTier": "enterprise"
+    },
+    {
+      "file": "src/app/(app)/integrations/page.tsx",
+      "route": "/integrations",
+      "feature": "custom_integrations",
+      "requiredTier": "enterprise"
+    },
+    {
+      "file": "src/app/(app)/link-view/page.tsx",
+      "route": "/link-view",
+      "feature": "link_view",
+      "requiredTier": "agency"
+    },
+    {
+      "file": "src/app/(app)/marketing/content-generation/page.tsx",
+      "route": "/marketing/content-generation",
+      "feature": "marketing_content_generation",
+      "requiredTier": "enterprise"
+    },
+    {
+      "file": "src/app/(app)/marketing/email-campaigns/page.tsx",
+      "route": "/marketing/email-campaigns",
+      "feature": "marketing_email_campaigns",
+      "requiredTier": "enterprise"
+    },
+    {
+      "file": "src/app/(app)/marketing/lead-generation/page.tsx",
+      "route": "/marketing/lead-generation",
+      "feature": "marketing_lead_generation",
+      "requiredTier": "enterprise"
+    },
+    {
+      "file": "src/app/(app)/marketing/page.tsx",
+      "route": "/marketing",
+      "feature": "marketing_dashboard",
+      "requiredTier": "enterprise"
+    },
+    {
+      "file": "src/app/(app)/marketing/social-presence/page.tsx",
+      "route": "/marketing/social-presence",
+      "feature": "marketing_social_presence",
+      "requiredTier": "enterprise"
+    },
+    {
+      "file": "src/app/(app)/marketplace/templates/page.tsx",
+      "route": "/marketplace/templates",
+      "feature": "marketplace_templates",
+      "requiredTier": "enterprise"
+    },
+    {
+      "file": "src/app/(app)/neuroseo/adoption/page.tsx",
+      "route": "/neuroseo/adoption",
+      "feature": "semantic_map",
+      "requiredTier": "starter"
+    },
+    {
+      "file": "src/app/(app)/neuroseo/ai-visibility/page.tsx",
+      "route": "/neuroseo/ai-visibility",
+      "feature": "ai_visibility",
+      "requiredTier": "agency"
+    },
+    {
+      "file": "src/app/(app)/neuroseo/neural-crawler/page.tsx",
+      "route": "/neuroseo/neural-crawler",
+      "feature": "neural_crawler",
+      "requiredTier": "starter"
+    },
+    {
+      "file": "src/app/(app)/neuroseo/rewrite-gen/page.tsx",
+      "route": "/neuroseo/rewrite-gen",
+      "feature": "rewrite_gen",
+      "requiredTier": "agency"
+    },
+    {
+      "file": "src/app/(app)/neuroseo/semantic-map/page.tsx",
+      "route": "/neuroseo/semantic-map",
+      "feature": "semantic_map",
+      "requiredTier": "starter"
+    },
+    {
+      "file": "src/app/(app)/neuroseo/trust-block/page.tsx",
+      "route": "/neuroseo/trust-block",
+      "feature": "trust_block",
+      "requiredTier": "starter"
+    },
+    {
+      "file": "src/app/(app)/sales/deals/page.tsx",
+      "route": "/sales/deals",
+      "feature": "sales_deals",
+      "requiredTier": "agency"
+    },
+    {
+      "file": "src/app/(app)/sales/outreach/page.tsx",
+      "route": "/sales/outreach",
+      "feature": "sales_outreach",
+      "requiredTier": "agency"
+    },
+    {
+      "file": "src/app/(app)/sales/page.tsx",
+      "route": "/sales",
+      "feature": "sales_dashboard",
+      "requiredTier": "starter"
+    },
+    {
+      "file": "src/app/(app)/sales/pipeline/page.tsx",
+      "route": "/sales/pipeline",
+      "feature": "sales_pipeline",
+      "requiredTier": "starter"
+    },
+    {
+      "file": "src/app/(app)/seo-audit/page.tsx",
+      "route": "/seo-audit",
+      "feature": "seo_audit",
+      "requiredTier": "starter"
+    },
+    {
+      "file": "src/app/(app)/settings/api/page.tsx",
+      "route": "/settings/api",
+      "feature": "api_access",
+      "requiredTier": "enterprise"
+    },
+    {
+      "file": "src/app/(app)/settings/branding/page.tsx",
+      "route": "/settings/branding",
+      "feature": "white_label",
+      "requiredTier": "enterprise"
+    },
+    {
+      "file": "src/app/(app)/team/chat/page.tsx",
+      "route": "/team/chat",
+      "feature": "team_management",
+      "requiredTier": "agency"
+    },
+    {
+      "file": "src/app/(app)/team/page.tsx",
+      "route": "/team",
+      "feature": "team_management",
+      "requiredTier": "agency"
+    },
+    {
+      "file": "src/app/(app)/team/projects/page.tsx",
+      "route": "/team/projects",
+      "feature": "team_management",
+      "requiredTier": "enterprise"
+    },
+    {
+      "file": "src/app/(app)/team/reports/page.tsx",
+      "route": "/team/reports",
+      "feature": "team_management",
+      "requiredTier": "enterprise"
+    },
+    {
+      "file": "src/app/(app)/team/settings/page.tsx",
+      "route": "/team/settings",
+      "feature": "team_management",
+      "requiredTier": "agency"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "INFO",
+      "code": "ORPHAN_FEATURE",
+      "message": "Feature free not referenced in nav or pages"
+    },
+    {
+      "severity": "INFO",
+      "code": "ORPHAN_FEATURE",
+      "message": "Feature starter not referenced in nav or pages"
+    },
+    {
+      "severity": "INFO",
+      "code": "ORPHAN_FEATURE",
+      "message": "Feature agency not referenced in nav or pages"
+    },
+    {
+      "severity": "INFO",
+      "code": "ORPHAN_FEATURE",
+      "message": "Feature enterprise not referenced in nav or pages"
+    },
+    {
+      "severity": "INFO",
+      "code": "ORPHAN_FEATURE",
+      "message": "Feature dashboard not referenced in nav or pages"
+    },
+    {
+      "severity": "INFO",
+      "code": "ORPHAN_FEATURE",
+      "message": "Feature keyword_analysis not referenced in nav or pages"
+    },
+    {
+      "severity": "INFO",
+      "code": "ORPHAN_FEATURE",
+      "message": "Feature serp_analysis not referenced in nav or pages"
+    },
+    {
+      "severity": "INFO",
+      "code": "ORPHAN_FEATURE",
+      "message": "Feature bulk_operations not referenced in nav or pages"
+    },
+    {
+      "severity": "INFO",
+      "code": "ORPHAN_FEATURE",
+      "message": "Feature priority_support not referenced in nav or pages"
+    },
+    {
+      "severity": "INFO",
+      "code": "ORPHAN_FEATURE",
+      "message": "Feature dedicated_support not referenced in nav or pages"
+    },
+    {
+      "severity": "INFO",
+      "code": "ORPHAN_FEATURE",
+      "message": "Feature enterprise_sla not referenced in nav or pages"
+    },
+    {
+      "severity": "INFO",
+      "code": "ORPHAN_FEATURE",
+      "message": "Feature advanced_security not referenced in nav or pages"
+    },
+    {
+      "severity": "INFO",
+      "code": "ORPHAN_FEATURE",
+      "message": "Feature export_formats not referenced in nav or pages"
+    },
+    {
+      "severity": "INFO",
+      "code": "ORPHAN_FEATURE",
+      "message": "Feature ai_insights not referenced in nav or pages"
+    },
+    {
+      "severity": "INFO",
+      "code": "ORPHAN_FEATURE",
+      "message": "Feature advanced_analytics not referenced in nav or pages"
+    }
+  ]
+}
