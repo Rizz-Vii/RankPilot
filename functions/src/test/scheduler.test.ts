@@ -1,4 +1,5 @@
 import { expect } from "chai";
+import type { Firestore } from 'firebase-admin/firestore';
 import { describe, it } from "mocha";
 import { runDueAutomationTick } from "../scheduled/run-due-automation";
 
@@ -53,7 +54,7 @@ function createDbDouble() {
         doc: (id: string) => ({ get: async () => ({ exists: true, data: () => data[name].find((d: Doc) => String((d as Record<string, unknown>).id || "") === id) }) }),
     });
 
-    return {
+    const db = {
         _data: data,
         collection: coll,
         runTransaction: async (fn: (tx: { get: (docRef: { _doc?: Doc }) => Promise<{ data: () => Doc | {} }>; update: (ref: unknown, u: unknown) => Promise<void> }) => Promise<unknown>) => fn({
@@ -61,6 +62,7 @@ function createDbDouble() {
             update: async (_ref: unknown, _u: unknown) => { /* noop for double */ },
         }),
     };
+    return db;
 }
 
 describe("Scheduler backoff", () => {
@@ -88,11 +90,13 @@ describe("Scheduler backoff", () => {
             failureCount: 0,
         });
 
-        const res = await runDueAutomationTick(db, now);
+        const res = await runDueAutomationTick(db as unknown as Firestore, now);
         expect(res.processed).to.equal(1);
-        const recipe = db._data.automationRecipes[0];
+        const recipe = (db as unknown as { _data: Record<string, Record<string, unknown>[]> })._data.automationRecipes[0] as Record<string, unknown>;
         expect(recipe.failureCount).to.equal(1);
-        expect(new Date(recipe.nextRun).getTime()).to.be.greaterThan(now.getTime());
+        const nr = recipe.nextRun as unknown;
+        const nrDate = (nr instanceof Date) ? nr : new Date(String(nr));
+        expect(nrDate.getTime()).to.be.greaterThan(now.getTime());
         expect(db._data.schedulerFailures.length).to.equal(1);
         expect(db._data.automationRuns.length).to.equal(1);
     });

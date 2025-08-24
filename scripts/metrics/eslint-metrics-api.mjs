@@ -1,5 +1,4 @@
 // Programmatic ESLint metrics collector (isolated, minimal flat config) to bypass Next.js/rushstack patch issues.
-import { ESLint } from 'eslint';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 
@@ -8,7 +7,7 @@ export async function runMetrics() {
     const { FlatESLint } = await import('eslint/use-at-your-own-risk');
     const eslint = new FlatESLint({
       overrideConfig: [
-        { ignores: ['**/node_modules/**','**/.next/**','**/dist/**','**/out/**','functions/lib/**'] },
+        { ignores: ['**/node_modules/**', '**/.next/**', '**/.firebase/**', '**/dist/**', '**/out/**', 'functions/lib/**'] },
         {
           languageOptions: { parser: tsParser, parserOptions: { ecmaVersion: 2022, sourceType: 'module' } },
           plugins: { '@typescript-eslint': tsPlugin },
@@ -58,7 +57,7 @@ async function fallbackLinter() {
   function walk(dir) {
     for (const entry of fs.readdirSync(dir)) {
       const full = path.join(dir, entry);
-      if (entry === 'node_modules' || entry === '.next' || entry === 'dist' || entry === 'out') continue;
+      if (entry === 'node_modules' || entry === '.next' || entry === '.firebase' || entry === 'dist' || entry === 'out') continue;
       const stat = fs.statSync(full);
       if (stat.isDirectory()) walk(full); else if (exts.has(path.extname(entry))) files.push(full);
     }

@@ -8,7 +8,7 @@ import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import OpenAI from "openai";
-import { getAI as getManagedAI } from "./lib/ai-memory-manager";
+import type { AdminContext, AuditContext, ChatContext, SiteContext } from "./context";
 import {
   getAdminContext,
   getAuditContext,
@@ -16,7 +16,7 @@ import {
   getNeuroSEOContext,
   getSiteContext
 } from "./context";
-import type { AdminContext, AuditContext, ChatContext, SiteContext } from "./context";
+import { getAI as getManagedAI } from "./lib/ai-memory-manager";
 
 // Initialize services
 const db = getFirestore();
@@ -130,18 +130,21 @@ export const customerChatHandler = onCall(
 
       // Add conversation history for context
       if (chatContext.recentConversations.length > 0) {
-        type ConversationHistoryItem = { question?: string; response?: string };
         const recentHistory = (chatContext.recentConversations as unknown[])
           .slice(0, 3) // Last 3 conversations
           .reverse();
 
         recentHistory.forEach((raw) => {
-          const conv = raw as ConversationHistoryItem;
-          if (typeof conv.question === 'string' && typeof conv.response === 'string') {
-            messages.splice(-1, 0,
-              { role: "user", content: conv.question },
-              { role: "assistant", content: conv.response }
-            );
+          const r = raw as unknown;
+          if (r && typeof r === 'object') {
+            const q = (r as Record<string, unknown>).question;
+            const a = (r as Record<string, unknown>).response;
+            if (typeof q === 'string' && typeof a === 'string') {
+              messages.splice(-1, 0,
+                { role: "user", content: q },
+                { role: "assistant", content: a }
+              );
+            }
           }
         });
       }
@@ -282,12 +285,17 @@ export const adminChatHandler = onCall(
           .slice(0, 2) // Last 2 conversations for admins
           .reverse();
 
-        recentHistory.forEach(conv => {
-          if (conv.question && conv.response) {
-            messages.splice(-1, 0,
-              { role: "user", content: conv.question },
-              { role: "assistant", content: conv.response }
-            );
+        recentHistory.forEach((raw) => {
+          const r = raw as unknown;
+          if (r && typeof r === 'object') {
+            const q = (r as Record<string, unknown>).question;
+            const a = (r as Record<string, unknown>).response;
+            if (typeof q === 'string' && typeof a === 'string') {
+              messages.splice(-1, 0,
+                { role: "user", content: q },
+                { role: "assistant", content: a }
+              );
+            }
           }
         });
       }

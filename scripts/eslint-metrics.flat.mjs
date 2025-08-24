@@ -7,6 +7,7 @@ export default [
     ignores: [
       '**/node_modules/**',
       '**/.next/**',
+      '**/.firebase/**',
       '**/dist/**',
       '**/out/**',
       'functions/lib/**'

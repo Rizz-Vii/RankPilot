@@ -654,8 +654,17 @@ export const runSeoAudit = onCall(httpsOptions, async (request) => coreSeoAudit(
 
 // Test helper for invoking callable without Firebase function harness
 export async function __testRunSeoAudit(data: unknown, auth?: unknown) {
-  if (process.env.GENKIT_TEST_STUB === '1') return coreSeoAudit({ data, auth });
-  return (runSeoAudit as unknown as (x: unknown) => unknown)({ data, auth });
+  const toAuth = (x: unknown): { uid?: string } | null | undefined => {
+    if (x == null) return null;
+    if (typeof x === 'object' && x && 'uid' in (x as Record<string, unknown>) && typeof (x as { uid?: unknown }).uid === 'string') {
+      return { uid: (x as { uid: string }).uid };
+    }
+    // Unknown shape – treat as unauthenticated for tests
+    return undefined;
+  };
+  const authPayload = toAuth(auth);
+  if (process.env.GENKIT_TEST_STUB === '1') return coreSeoAudit({ data, auth: authPayload });
+  return (runSeoAudit as unknown as (x: unknown) => unknown)({ data, auth: authPayload });
 }
 
 // Test helper to apply AI JSON enrichment logic (schema parse + normalization)

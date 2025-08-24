@@ -147,8 +147,10 @@ export function managedOnSnapshot(q: unknown, onData: (snap: unknown) => void, o
     const entry: RegistryEntry = {
         refCount: 1,
         unsubscribe: () => { },
-        callbacks: new Set([(snap: unknown) => onData(snap)]),
-        errorCallbacks: new Set(onError ? [(err: unknown) => onError(err)] : []),
+    // Store the exact onData reference so unsubscribe can delete it reliably
+        callbacks: new Set([onData]),
+    // Also keep exact onError reference if provided
+    errorCallbacks: new Set(onError ? [onError] : []),
         lastSnap: undefined,
         timer: null,
         debounceMs,
@@ -172,7 +174,15 @@ export function managedOnSnapshot(q: unknown, onData: (snap: unknown) => void, o
         // Do not auto re-subscribe here; let Firestore manage reconnects
     };
 
-    entry.unsubscribe = invokeOnSnapshot(q, debouncedNext, onErr);
+    try {
+        entry.unsubscribe = invokeOnSnapshot(q, debouncedNext, onErr);
+    } catch (e) {
+        // If onSnapshot throws synchronously (rare), surface error and avoid leaking registry entry
+        for (const ecb of Array.from(entry.errorCallbacks)) {
+            try { ecb(e); } catch { /* ignore */ }
+        }
+        return () => { /* no-op: subscription never established */ };
+    }
     registry.set(key, entry);
     trackListener(key);
 
@@ -200,13 +210,15 @@ export function getActiveListenerSummary() {
 function deriveReadableKey(q: unknown): string {
     try {
         const anyQ = q as Record<string, unknown>;
+        // Unique identity fallback to avoid collisions when internals are opaque
+        const identity = getObjectIdentity(anyQ);
         // Prefer public API first: DocumentReference/CollectionReference expose path
         const pathVal = anyQ && typeof anyQ === 'object' ? (anyQ as { path?: unknown }).path : undefined;
         const path: string | undefined = typeof pathVal === 'string' ? pathVal : undefined;
         if (path) {
             const segments = path.split('/');
             const kind = segments.length % 2 === 0 ? 'doc' : 'col';
-            return `${kind}:${path}`;
+            return `${kind}:${path}#${identity}`;
         }
 
         const qInternal = (anyQ as { _query?: unknown; _ref?: { _query?: unknown }; _delegate?: { _query?: unknown } })._query
@@ -221,7 +233,15 @@ function deriveReadableKey(q: unknown): string {
         const filters = (qInternal as { filters?: unknown[]; filter?: unknown } | undefined)?.filters
             || (qInternal as { filter?: unknown } | undefined)?.filter
             || (anyQ as { _queryOptions?: { filters?: unknown[] } })._queryOptions?.filters;
-        if (Array.isArray(filters)) constraints.push(`where:${filters.length}`);
+        let filterSig = '';
+        if (Array.isArray(filters)) {
+            constraints.push(`where:${filters.length}`);
+            // Build a lightweight, stable signature for filters to prevent cross-user collisions
+            try {
+                const parts = filters.map((f: unknown) => summarizeFilter(f)).filter(Boolean) as string[];
+                if (parts.length) filterSig = hashSmall(parts.join('|'));
+            } catch { /* ignore */ }
+        }
         const orderBy = (qInternal as { orderBy?: unknown[] } | undefined)?.orderBy
             || (anyQ as { _queryOptions?: { orderBy?: unknown[] } })._queryOptions?.orderBy;
         if (Array.isArray(orderBy)) constraints.push(`orderBy:${orderBy.length}`);
@@ -230,12 +250,83 @@ function deriveReadableKey(q: unknown): string {
         if (typeof limit === 'number') constraints.push(`limit:${limit}`);
 
         if (basePath) {
-            return constraints.length ? `query:${basePath}?${constraints.join(',')}` : `query:${basePath}`;
+            const base = constraints.length ? `query:${basePath}?${constraints.join(',')}` : `query:${basePath}`;
+            return filterSig ? `${base}#${filterSig}` : `${base}#${identity}`;
         }
     } catch {
         // ignore and fall through
     }
-    return 'query:unknown';
+    return `query:unknown#${Math.random().toString(36).slice(2, 8)}`;
 }
 
 // HMR cleanup handled via global registry re-initialization above; no import.meta/module.hot used.
+
+// --- helpers for key derivation ---
+const _objIdMap: WeakMap<object, string> = new WeakMap();
+let _objIdSeq = 0;
+function getObjectIdentity(obj: unknown): string {
+    if (!obj || (typeof obj !== 'object' && typeof obj !== 'function')) return 'lit';
+    const o = obj as object;
+    let id = _objIdMap.get(o);
+    if (!id) { id = `q${++_objIdSeq}`; _objIdMap.set(o, id); }
+    return id;
+}
+
+function summarizeFilter(f: unknown): string {
+    if (!f || typeof f !== 'object') return typeof f;
+    const anyF = f as Record<string, unknown>;
+    const field = extractFieldName(anyF);
+    const op = (anyF['op'] || anyF['operator'] || anyF['opStr'] || '').toString();
+    const val = extractValueSignature(anyF);
+    return `${field}:${op}:${val}`;
+}
+
+function extractFieldName(anyF: Record<string, unknown>): string {
+    const field = anyF['field'] as unknown;
+    if (field && typeof field === 'object') {
+        const f = field as { canonicalString?: () => string; toString?: () => string; fieldPath?: { segments?: string[] } };
+        try {
+            if (typeof f.canonicalString === 'function') return f.canonicalString();
+            if (typeof f.toString === 'function') return f.toString();
+            const segs = f.fieldPath?.segments;
+            if (Array.isArray(segs) && segs.length) return segs.join('.');
+        } catch { /* ignore */ }
+    }
+    const fieldPath = (anyF['fieldPath'] as { segments?: string[] } | undefined)?.segments;
+    if (Array.isArray(fieldPath) && fieldPath.length) return fieldPath.join('.');
+    return 'unknownField';
+}
+
+function extractValueSignature(anyF: Record<string, unknown>): string {
+    const v: unknown = anyF['value'];
+    if (v == null) return 'null';
+    if (typeof v === 'string') return `s:${hashSmall(v)}`;
+    if (typeof v === 'number' || typeof v === 'bigint') return `n:${String(v)}`;
+    if (typeof v === 'boolean') return `b:${v ? 1 : 0}`;
+    if (typeof v === 'object') {
+        // Timestamp, GeoPoint, arrays, etc. -> compact signature
+        try {
+            if (Array.isArray(v)) return `a:${v.length}:${hashSmall(JSON.stringify(v).slice(0, 200))}`;
+            // Firestore Timestamp
+            const ts = (v as { toMillis?: () => number }).toMillis?.();
+            if (typeof ts === 'number') return `ts:${ts}`;
+            return `o:${hashSmall(JSON.stringify(v, replacerLimited) ?? '')}`;
+        } catch { return 'o:?'; }
+    }
+    return typeof v;
+}
+
+function replacerLimited(_k: string, val: unknown) {
+    if (typeof val === 'string') return val.length > 64 ? `${val.slice(0, 64)}…` : val;
+    return val;
+}
+
+function hashSmall(s: string): string {
+    // Tiny FNV-1a 32-bit hash, hex string
+    let h = 0x811c9dc5;
+    for (let i = 0; i < s.length; i++) {
+        h ^= s.charCodeAt(i);
+        h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return ('0000000' + h.toString(16)).slice(-8);
+}

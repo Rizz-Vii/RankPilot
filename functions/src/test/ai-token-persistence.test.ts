@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { describe, it, beforeEach } from 'mocha';
+import { beforeEach, describe, it } from 'mocha';
 
 type OpenAIResult = { ok: boolean; content?: string; usage?: { in: number; out: number } };
 interface AIModule { aiMemoryManager: { persistDailyUsage?: (provider: string, inT: number, outT: number, model: string) => Promise<void>; invokeOpenAI?: (...args: unknown[]) => Promise<OpenAIResult>; }; getAI: (prompt: string, model: string) => Promise<string>; }
@@ -24,8 +24,10 @@ describe('AI Memory Manager - token persistence', () => {
         const out = await aiModule.getAI('Hello world prompt for counting tokens', 'gpt-4o');
         expect(out).to.equal('TOKENIZED');
         expect(called).to.not.equal(null);
-        expect(called.provider).to.equal('openai');
-        expect(called.inT).to.equal(50);
-        expect(called.outT).to.equal(75);
+        const c = called as { provider?: unknown; inT?: unknown; outT?: unknown } | null;
+        expect(c).to.not.equal(null);
+        expect(c && c.provider).to.equal('openai');
+        expect(c && c.inT).to.equal(50);
+        expect(c && c.outT).to.equal(75);
     });
 });

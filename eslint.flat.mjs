@@ -43,7 +43,7 @@ const TEST_GLOBS = [
 ];
 
 export default [
-  { ignores: ['**/node_modules/**', '**/.next/**', '**/dist/**', '**/out/**', 'functions/lib/**', 'artifacts/**', 'coverage/**'] },
+  { ignores: ['**/node_modules/**', '**/.next/**', '**/dist/**', '**/out/**', 'functions/lib/**', 'artifacts/**', 'coverage/**', '**/.firebase/**', '.firebase/**'] },
   {
     files: ['**/*.{ts,tsx,js,jsx}'],
     languageOptions: { parser: tsParser, parserOptions: { ecmaVersion: 2022, sourceType: 'module', ecmaFeatures: { jsx: true } } },
