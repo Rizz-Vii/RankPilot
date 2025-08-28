@@ -8,6 +8,8 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 const logger = getLogger('neuroseo-live-route');
 
 // Feature gate simple env flag (rolling_out). In future, read FEATURE_KEYS.

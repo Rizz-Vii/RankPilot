@@ -1,6 +1,6 @@
 import { getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import { setGlobalOptions } from "firebase-functions/v2";
+// No global options here; use index.ts for setGlobalOptions
 import { onRequest } from "firebase-functions/v2/https";
 import Stripe from "stripe";
 
@@ -9,7 +9,7 @@ if (!getApps().length) {
   initializeApp();
 }
 
-setGlobalOptions({ region: "australia-southeast2" });
+// Region is controlled globally in index.ts or per-function
 
 // Lazy initialization of Stripe to avoid deployment issues
 let stripe: Stripe;
@@ -29,7 +29,7 @@ const db = getFirestore();
 
 // Create Checkout Session
 export const createCheckoutSession = onRequest(
-  { cors: true, secrets: ["STRIPE_SECRET_KEY"] },
+  { cors: true, secrets: ["STRIPE_SECRET_KEY"], region: "australia-southeast2" },
   async (request, response) => {
     try {
       const { planId, billingInterval, userId } = request.body;
@@ -103,169 +103,10 @@ export const createCheckoutSession = onRequest(
 );
 
 // Handle Stripe Webhooks
-export const stripeWebhook = onRequest(
-  { cors: true, secrets: ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"] },
-  async (request, response) => {
-    const sig = request.headers["stripe-signature"];
-    let event: Stripe.Event;
-
-    try {
-      event = getStripe().webhooks.constructEvent(
-        request.rawBody,
-        sig as string,
-        process.env.STRIPE_WEBHOOK_SECRET!
-      );
-    } catch (err: unknown) {
-      const msg = err && typeof err === 'object' && 'message' in err ? String((err as { message?: unknown }).message) : String(err);
-      console.error("Webhook signature verification failed:", msg);
-      response.status(400).send(`Webhook Error: ${msg}`);
-      return;
-    }
-
-    try {
-      switch (event.type) {
-        case "checkout.session.completed": {
-          const session = event.data.object as Stripe.Checkout.Session;
-          await handleSubscriptionCreated(session);
-          break;
-        }
-        case "customer.subscription.updated": {
-          const subscription = event.data.object as Stripe.Subscription;
-          await handleSubscriptionUpdated(subscription);
-          break;
-        }
-        case "customer.subscription.deleted": {
-          const subscription = event.data.object as Stripe.Subscription;
-          await handleSubscriptionCanceled(subscription);
-          break;
-        }
-        case "invoice.payment_succeeded": {
-          const invoice = event.data.object as Stripe.Invoice;
-          await handlePaymentSucceeded(invoice);
-          break;
-        }
-        case "invoice.payment_failed": {
-          const invoice = event.data.object as Stripe.Invoice;
-          await handlePaymentFailed(invoice);
-          break;
-        }
-        default:
-          console.log(`Unhandled event type: ${event.type}`);
-      }
-
-      response.json({ received: true });
-    } catch (error) {
-      console.error("Error processing webhook:", error);
-      response.status(500).json({ error: "Webhook processing failed" });
-    }
-  }
-);
-
-async function handleSubscriptionCreated(session: Stripe.Checkout.Session) {
-  const userId = session.metadata?.userId;
-  if (!userId) return;
-
-  const subscription = await getStripe().subscriptions.retrieve(
-    session.subscription as string
-  );
-  const customer = await getStripe().customers.retrieve(
-    session.customer as string
-  );
-
-  // Cast subscription to access current_period_end
-  const sub = subscription as unknown as { current_period_end?: number };
-
-  await db
-    .collection("users")
-    .doc(userId)
-    .update({
-      subscriptionStatus: "active",
-      subscriptionTier: session.metadata?.planId || "agency",
-      stripeCustomerId: (customer as Stripe.Customer).id,
-      stripeSubscriptionId: subscription.id,
-      subscriptionStartDate: new Date(),
-      nextBillingDate: sub.current_period_end
-        ? new Date(sub.current_period_end * 1000)
-        : new Date(),
-      updatedAt: new Date(),
-    });
-}
-
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
-  const userId = subscription.metadata?.userId;
-  if (!userId) return;
-
-  // Cast subscription to access current_period_end
-  const sub = subscription as unknown as { current_period_end?: number };
-
-  await db
-    .collection("users")
-    .doc(userId)
-    .update({
-      subscriptionStatus: subscription.status,
-      nextBillingDate: sub.current_period_end
-        ? new Date(sub.current_period_end * 1000)
-        : new Date(),
-      updatedAt: new Date(),
-    });
-}
-
-async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
-  const userId = subscription.metadata?.userId;
-  if (!userId) return;
-
-  await db.collection("users").doc(userId).update({
-    subscriptionStatus: "canceled",
-    subscriptionEndDate: new Date(),
-    updatedAt: new Date(),
-  });
-}
-
-async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
-  const subscriptionId = (invoice as unknown as { subscription?: string | null }).subscription as string | null;
-  if (subscriptionId && typeof subscriptionId === "string") {
-    const subscription =
-      await getStripe().subscriptions.retrieve(subscriptionId);
-    const userId = subscription.metadata?.userId;
-
-    if (userId) {
-      // Cast subscription to access current_period_end
-      const sub = subscription as unknown as { current_period_end?: number };
-
-      await db
-        .collection("users")
-        .doc(userId)
-        .update({
-          lastPaymentDate: new Date(),
-          nextBillingDate: sub.current_period_end
-            ? new Date(sub.current_period_end * 1000)
-            : new Date(),
-          subscriptionStatus: "active",
-          updatedAt: new Date(),
-        });
-    }
-  }
-}
-
-async function handlePaymentFailed(invoice: Stripe.Invoice) {
-  const subscriptionId = (invoice as unknown as { subscription?: string | null }).subscription as string | null;
-  if (subscriptionId && typeof subscriptionId === "string") {
-    const subscription =
-      await getStripe().subscriptions.retrieve(subscriptionId);
-    const userId = subscription.metadata?.userId;
-
-    if (userId) {
-      await db.collection("users").doc(userId).update({
-        subscriptionStatus: "past_due",
-        updatedAt: new Date(),
-      });
-    }
-  }
-}
 
 // Create Customer Portal Session
 export const createPortalSession = onRequest(
-  { cors: true, secrets: ["STRIPE_SECRET_KEY"] },
+  { cors: true, secrets: ["STRIPE_SECRET_KEY"], region: "australia-southeast2" },
   async (request, response) => {
     try {
       const { userId } = request.body;

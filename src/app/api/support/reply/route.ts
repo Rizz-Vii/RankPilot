@@ -1,10 +1,12 @@
+import { adminDb } from '@/lib/firebase-admin';
+import { noStoreHeaders } from '@/lib/http/cache';
+import { handleCors } from '@/lib/http/cors';
+import { getLogger } from '@/lib/logging/app-logger';
+import * as admin from 'firebase-admin';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { getLogger } from '@/lib/logging/app-logger';
 import nodemailer from 'nodemailer';
 import { z } from 'zod';
-import { adminDb } from '@/lib/firebase-admin';
-import * as admin from 'firebase-admin';
 
 const replySchema = z.object({
     messageId: z.string().min(1),
@@ -30,19 +32,27 @@ function getTransport() {
     } as unknown as nodemailer.Transporter;
 }
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
+export async function POST(req: NextRequest): Promise<Response> {
+    const cors = handleCors(req, { allowMethods: ['POST', 'OPTIONS'] });
+    if ('preflight' in cors) return cors.preflight as Response;
     try {
         const body = await req.json();
         const parsed = replySchema.safeParse(body);
         if (!parsed.success) {
-            return NextResponse.json({ message: "Invalid input", errors: parsed.error.flatten() }, { status: 400 });
+            return NextResponse.json(
+                { message: "Invalid input", errors: parsed.error.flatten() },
+                { status: 400, headers: { ...noStoreHeaders(), ...cors.headers } }
+            );
         }
 
         const { messageId, subject, reply } = parsed.data;
         const docRef = adminDb.collection("supportMessages").doc(messageId);
         const docSnap = await docRef.get();
         if (!docSnap.exists) {
-            return NextResponse.json({ message: "Message not found" }, { status: 404 });
+            return NextResponse.json(
+                { message: "Message not found" },
+                { status: 404, headers: { ...noStoreHeaders(), ...cors.headers } }
+            );
         }
         type SupportMessageData = { email?: string } | undefined;
         const data = docSnap.data() as SupportMessageData;
@@ -55,7 +65,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             to: toEmail,
             subject,
             text: reply,
-            html: `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111; white-space: pre-wrap">${reply}</div>`,
+            html: `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: rgb(17,17,17); white-space: pre-wrap">${reply}</div>`,
         });
 
         const serverTimestamp = admin.firestore.FieldValue.serverTimestamp;
@@ -75,10 +85,21 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             createdAt: serverTimestamp(),
         });
 
-        return NextResponse.json({ success: true, id: info.messageId });
+        return NextResponse.json(
+            { success: true, id: info.messageId },
+            { headers: { ...noStoreHeaders(), ...cors.headers } }
+        );
     } catch (err: unknown) {
         const errMessage = err instanceof Error ? err.message : String(err);
         getLogger('support-reply').error('reply.error', { error: errMessage });
-        return NextResponse.json({ message: errMessage || "Internal error" }, { status: 500 });
+        return NextResponse.json(
+            { message: errMessage || "Internal error" },
+            { status: 500, headers: { ...noStoreHeaders(), ...cors.headers } }
+        );
     }
+}
+
+export async function OPTIONS(req: NextRequest): Promise<Response> {
+    const cors = handleCors(req, { allowMethods: ['POST', 'OPTIONS'] });
+    return 'preflight' in cors ? (cors.preflight as Response) : new Response(null, { status: 204, headers: cors.headers });
 }

@@ -97,6 +97,19 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // Bypass Next.js Flight/RSC, Server Actions, prefetch, and streaming (SSE) requests.
+    // These requests are sensitive to interception and caching; handling them here can
+    // break streams and cause client errors like "Connection closed.".
+    const accept = (request.headers.get('accept') || '').toLowerCase();
+    const secFetchDest = (request.headers.get('sec-fetch-dest') || '').toLowerCase();
+    const isRSC = accept.includes('text/x-component') || accept.includes('application/x-component') || request.headers.has('rsc') || request.headers.has('next-action') || request.headers.has('next-router-state-tree') || request.headers.has('next-router-prefetch') || request.headers.has('next-router-segment-prefetch');
+    const isSSE = accept.includes('text/event-stream');
+    const isNextData = request.headers.has('x-nextjs-data') || request.url.includes('/_next/data/');
+    const isNextPrefetch = request.headers.get('next-router-prefetch') === '1' || request.headers.get('x-middleware-prefetch') === '1';
+    if (isRSC || isSSE || isNextData || isNextPrefetch) {
+        return; // Let the network handle it untouched
+    }
+
     // Handle API requests: never cache responses to avoid leaking authenticated data
     if (url.pathname.startsWith('/api/')) {
         event.respondWith((async () => {
@@ -114,15 +127,15 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Handle static assets with cache-first strategy
-    if (isStaticAsset(url.pathname)) {
+    // Handle static assets with cache-first strategy (includes Next.js static assets)
+    if (isStaticAsset(url.pathname) || url.pathname.startsWith('/_next/static/')) {
         event.respondWith(cacheFirstStrategy(request));
         return;
     }
 
-    // Handle app routes with stale-while-revalidate
-    if (isAppRoute(url.pathname)) {
-        event.respondWith(staleWhileRevalidateStrategy(request));
+    // Do NOT intercept document navigations. Let the browser and Next.js handle streaming/hydration.
+    const isDocumentNavigation = request.mode === 'navigate' || secFetchDest === 'document' || accept.includes('text/html') || accept.includes('text/x-component');
+    if (isDocumentNavigation) {
         return;
     }
 });
@@ -152,40 +165,15 @@ async function cacheFirstStrategy(request) {
     }
 }
 
-// Stale-while-revalidate strategy for app routes
-async function staleWhileRevalidateStrategy(request) {
-    const cache = await caches.open(DYNAMIC_CACHE);
-    const cachedResponse = await cache.match(request);
-
-    const fetchPromise = fetch(request).then((networkResponse) => {
-        if (networkResponse.ok) {
-            cache.put(request, networkResponse.clone());
-        }
-        return networkResponse;
-    });
-
-    return cachedResponse || fetchPromise;
-}
+// Note: Stale-while-revalidate strategy removed; not used by current routing.
 
  // Helper functions
 function isStaticAsset(pathname) {
     // Return a boolean indicating whether this path is a static asset by testing the file extension.
-    return /\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/.test(pathname);
+    return /\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|map)$/.test(pathname);
 }
 
-function isAppRoute(pathname) {
-    const appRoutes = [
-        '/',
-        '/dashboard',
-        '/settings',
-        '/neuroseo',
-        '/analytics',
-        '/competitors',
-        '/reports'
-    ];
-
-    return appRoutes.some(route => pathname.startsWith(route));
-}
+// Note: isAppRoute helper removed; not used by current SW logic.
 
 // Background sync for data synchronization
 self.addEventListener('sync', (event) => {

@@ -13,11 +13,12 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthContext';
 import { useAccessibility } from '@/lib/accessibility/accessibility-system';
+import { functions as regionFunctions } from '@/lib/firebase';
 import { useI18n } from '@/lib/i18n/internationalization-system';
 import { useTheme, type ThemeMode, type ThemePreferences } from '@/lib/themes/theme-system';
 import { toJsDate } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { httpsCallable } from 'firebase/functions';
 import { Accessibility, Bell, CreditCard, ExternalLink, Globe, Lock, Palette, Shield, User } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -416,7 +417,7 @@ export default function SettingsPage() {
                                                     const confirmMsg = tr('settings.privacy.cancelDeletionConfirm', 'Cancel scheduled deletion and keep your account?');
                                                     if (!window.confirm(confirmMsg)) return;
                                                     try {
-                                                        const fn = httpsCallable(getFunctions(), 'cancelAccountDeletion');
+                                                        const fn = httpsCallable(regionFunctions, 'cancelAccountDeletion');
                                                         await fn({ userId: user.uid });
                                                     } catch (e) {
                                                         console.warn('Failed to cancel deletion', e);

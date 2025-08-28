@@ -1,15 +1,15 @@
 // Sales Metrics Service - Firestore aggregation with graceful mock fallback
 // NOTE: Collections assumed: salesDeals, salesForecastSnapshots. Adjust to real schema.
-import type { Unsubscribe, DocumentData, QuerySnapshot, QueryConstraint } from 'firebase/firestore';
-import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
+import { getMockMetrics } from '@/lib/domain/mockMetrics';
+import { db } from '@/lib/firebase';
+import { mapDocs } from '@/lib/firebase/snapshot-map';
 import { managedOnSnapshot } from '@/lib/firebase/write-guard';
-import { db } from '@/lib/firebase/connection-manager';
+import type { ForecastSnapshotFirestore, SalesDealFirestore } from '@/types/firestore-docs';
+import { mapForecastSnapshot, mapSalesDeal } from '@/types/firestore-docs';
+import type { DocumentData, QueryConstraint, QuerySnapshot, Unsubscribe } from 'firebase/firestore';
+import { collection, getDocs, query, Timestamp, where } from 'firebase/firestore';
 // Local diagnostics for sales metrics ingestion
 const salesDiagnostics: { lastIngestError?: string } = {};
-import { getMockMetrics } from '@/lib/domain/mockMetrics';
-import type { SalesDealFirestore, ForecastSnapshotFirestore} from '@/types/firestore-docs';
-import { mapSalesDeal, mapForecastSnapshot } from '@/types/firestore-docs';
-import { mapDocs } from '@/lib/firebase/snapshot-map';
 
 export interface SalesDealDoc { stage: string; amount: number; probability?: number; createdAt?: unknown; updatedAt?: unknown; status?: string; cycleDays?: number; userId?: string; teamId?: string; }
 export interface ForecastSnapshotDoc { period: string; forecast: number; actual?: number; createdAt?: unknown; userId?: string; teamId?: string; }

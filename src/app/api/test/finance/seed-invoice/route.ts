@@ -13,7 +13,10 @@ import { NextResponse } from 'next/server';
  */
 export const POST = withProvenance(async function POST(req: NextRequest) {
     if (process.env.NODE_ENV === 'production') {
-        return NextResponse.json({ error: 'disabled' }, { status: 404 });
+        return NextResponse.json(
+            enforceProvenance({ error: 'disabled' }, { path: 'test/finance/seed-invoice', note: 'disabled' }),
+            { status: 404 }
+        );
     }
     try {
         const authHeader = req.headers.get('authorization') ?? req.headers.get('Authorization');

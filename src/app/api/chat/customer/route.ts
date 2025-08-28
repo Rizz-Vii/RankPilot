@@ -17,6 +17,7 @@ import { NextResponse } from 'next/server';
 // Force dynamic to avoid any accidental caching of auth state in edge/runtime
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+export const maxDuration = 45;
 
 // Types
 interface ChatRequest {
@@ -107,27 +108,36 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         try {
             body = await request.json();
         } catch {
-            return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+            return NextResponse.json(
+                enforceProvenance({ error: 'Invalid JSON body' }, { path: 'chat/customer', note: 'validation' }),
+                { status: 400 }
+            );
         }
         const { message, url, sessionId, attachments } = body || {} as ChatRequest;
 
         const isAttachmentOnly = (!message || !message.trim()) && Array.isArray(attachments) && attachments.length > 0;
         if (!isAttachmentOnly && !message?.trim()) {
-            return NextResponse.json({ error: 'Message is required' }, { status: 400 });
+            return NextResponse.json(
+                enforceProvenance({ error: 'Message is required' }, { path: 'chat/customer', note: 'validation' }),
+                { status: 400 }
+            );
         }
 
         // Get user from authentication header
         const authHeaderRaw = request.headers.get('authorization') || '';
         if (!authHeaderRaw.startsWith('Bearer ')) {
             return NextResponse.json(
-                { error: 'Authentication required: missing Bearer token' },
+                enforceProvenance({ error: 'Authentication required: missing Bearer token' }, { path: 'chat/customer', note: 'auth' }),
                 { status: 401 }
             );
         }
 
         const idToken = authHeaderRaw.split(' ')[1];
         if (!idToken) {
-            return NextResponse.json({ error: 'Authentication required: empty token' }, { status: 401 });
+            return NextResponse.json(
+                enforceProvenance({ error: 'Authentication required: empty token' }, { path: 'chat/customer', note: 'auth' }),
+                { status: 401 }
+            );
         }
 
         // Verify ID token and get UID
@@ -136,7 +146,10 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
             const decoded = await adminAuth.verifyIdToken(idToken);
             uid = decoded.uid;
         } catch (e: unknown) {
-            return NextResponse.json({ error: 'Invalid or expired token. Try reloading to refresh your session.', details: process.env.NODE_ENV !== 'production' ? safeErrorMessage(e) : undefined }, { status: 401 });
+            return NextResponse.json(
+                enforceProvenance({ error: 'Invalid or expired token. Try reloading to refresh your session.', details: process.env.NODE_ENV !== 'production' ? safeErrorMessage(e) : undefined }, { path: 'chat/customer', note: 'auth' }),
+                { status: 401 }
+            );
         }
 
         // Load user doc (for teamId before any limiting)
@@ -219,7 +232,8 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
 
         // Call the callable HTTPS endpoint so request.auth is populated server-side
         const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'rankpilot-h3jpc';
-        const region = 'australia-southeast2';
+        // Match deployed Functions region (see functions/src/chatbot.ts)
+        const region = process.env.NEXT_PUBLIC_FUNCTIONS_REGION || process.env.FIREBASE_REGION || process.env.FUNCTIONS_REGION || 'australia-southeast2';
         const useEmulator = false; // Force production Functions URL when testing locally without emulators
         const emulatorHost = process.env.FUNCTIONS_EMULATOR_HOST || 'localhost';
         const emulatorPort = process.env.FUNCTIONS_EMULATOR_PORT || '5001';
@@ -240,7 +254,10 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
                 }),
             });
         } catch (e: unknown) {
-            return NextResponse.json({ error: 'Chat service unreachable', details: process.env.NODE_ENV !== 'production' ? safeErrorMessage(e) : undefined }, { status: 503 });
+            return NextResponse.json(
+                enforceProvenance({ error: 'Chat service unreachable', details: process.env.NODE_ENV !== 'production' ? safeErrorMessage(e) : undefined }, { path: 'chat/customer', note: 'upstream' }),
+                { status: 503 }
+            );
         }
 
         const rawText = await res.text();

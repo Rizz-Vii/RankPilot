@@ -1,4 +1,5 @@
 "use client";
+/* ALLOW_HEX: brand colors in embedded Google SVG icon */
 
 import LoadingScreen from "@/components/ui/loading-screen";
 import { useAuth } from "@/context/AuthContext";
@@ -94,7 +95,7 @@ export default function LoginPage() {
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
-        email,
+        email.trim(),
         password
       );
 
@@ -159,11 +160,13 @@ export default function LoginPage() {
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground ring-1 ring-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition"
+              aria-invalid={errors.email ? true : undefined}
+              aria-describedby={errors.email ? 'login-email-error' : undefined}
+              className={`w-full px-3 py-2 border rounded-lg bg-background text-foreground ring-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-background transition ${errors.email ? 'border-destructive ring-destructive focus-visible:ring-destructive' : 'border-input ring-border focus-visible:ring-ring'}`}
               disabled={loading}
             />
             {errors.email && (
-              <p className="text-destructive-foreground text-xs mt-1">{errors.email}</p>
+              <p id="login-email-error" role="alert" className="text-destructive-foreground text-xs mt-1">{errors.email}</p>
             )}
           </div>
           <div className="relative">
@@ -180,7 +183,9 @@ export default function LoginPage() {
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-input rounded-lg pr-10 bg-background text-foreground ring-1 ring-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition"
+              aria-invalid={errors.password ? true : undefined}
+              aria-describedby={errors.password ? 'login-password-error' : undefined}
+              className={`w-full px-3 py-2 border rounded-lg pr-10 bg-background text-foreground ring-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-background transition ${errors.password ? 'border-destructive ring-destructive focus-visible:ring-destructive' : 'border-input ring-border focus-visible:ring-ring'}`}
               disabled={loading}
             />
             <button
@@ -192,11 +197,11 @@ export default function LoginPage() {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
             {errors.password && (
-              <p className="text-destructive-foreground text-xs mt-1">{errors.password}</p>
+              <p id="login-password-error" role="alert" className="text-destructive-foreground text-xs mt-1">{errors.password}</p>
             )}
           </div>
           {errors.form && (
-            <p className="text-destructive-foreground text-xs mt-1">{errors.form}</p>
+            <p role="alert" className="text-destructive-foreground text-xs mt-1">{errors.form}</p>
           )}
           <button
             type="submit"

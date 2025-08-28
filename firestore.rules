@@ -109,8 +109,14 @@ service cloud.firestore {
     }
 
     // Subscription data
+    // Doc shape may include teamId when a subscription is team-owned. Permit team members to read.
     match /subscriptions/{userId} {
-      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow read: if isAuthenticated() && (
+        isOwner(userId) ||
+        isAdmin() ||
+        (resource.data.teamId != null && isTeamMember(resource.data.teamId))
+      );
+      // Writes restricted to owner or admin only; team members cannot mutate subscription docs client-side
       allow create, update: if isAuthenticated() && (isOwner(userId) || isAdmin());
       allow delete: if isAdmin();
     }

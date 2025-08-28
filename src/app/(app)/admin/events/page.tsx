@@ -1,4 +1,7 @@
-import React from 'react';
+// Ensure this route is not statically prerendered during export
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { FeatureGate } from '@/components/subscription/FeatureGate';
 
 // Admin Event Explorer scaffold (T29 / DQ1)

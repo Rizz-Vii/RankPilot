@@ -1,7 +1,10 @@
 import { ClientLayout } from "@/components/client-layout";
+import { ErrorBoundary } from "@/components/system/ErrorBoundary";
+import { PWAInit } from "@/components/system/PWAInit";
 import { AuthProvider } from "@/context/AuthContext";
 import "@/styles/globals.css";
 import type { Metadata } from "next";
+import { PT_Sans, Space_Grotesk } from "next/font/google";
 import { cookies, headers as reqHeaders } from "next/headers";
 import type React from "react";
 
@@ -33,6 +36,10 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
 };
+
+// Load fonts via next/font to avoid per-page loading warning
+const ptSans = PT_Sans({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-pt-sans", display: "swap" });
+const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"], variable: "--font-space-grotesk", display: "swap" });
 
 export function generateViewport() {
   return {
@@ -80,7 +87,7 @@ export default async function RootLayout({
       const lang = decodeURIComponent(l.value);
       if (/^[a-z]{2}$/i.test(lang)) {
         htmlLang = lang.toLowerCase();
-        if (['ar','he'].includes(htmlLang)) htmlDir = 'rtl';
+        if (['ar', 'he'].includes(htmlLang)) htmlDir = 'rtl';
       }
     }
   } catch {
@@ -95,7 +102,7 @@ export default async function RootLayout({
   if (bodyExtra.includes('reduced-motion')) flags.push('reduced-motion');
   if (bodyExtra.includes('colorblind-support')) flags.push('colorblind-support');
   const addDarkClass = (ssrThemeMode === 'dark' && !ssrHighContrast) || themeClass === 'theme-dark';
-  const bodyClass = ['font-body','antialiased','h-full',...flags,`lang-${htmlLang}`,themeClass || 'theme-dark', addDarkClass ? 'dark' : ''].filter(Boolean).join(' ');
+  const bodyClass = ['font-body', 'antialiased', 'h-full', ...flags, `lang-${htmlLang}`, themeClass || 'theme-dark', addDarkClass ? 'dark' : ''].filter(Boolean).join(' ');
 
   // Dynamically import dev-only AgentsToggle server-side to avoid synchronous require() usage
   let agentsToggleElement: React.ReactNode = null;
@@ -112,24 +119,20 @@ export default async function RootLayout({
   }
 
   // Fetch CSP nonce from request headers (set in middleware) for inline scripts
-  const cspNonce = (await reqHeaders()).get('x-rp-csp-nonce') ?? undefined;
+  // Align with Next's standard header key to ensure consistency with CSP
+  // Use nonce only in production to avoid hydration mismatches in dev tooling
+  const hdrs = await reqHeaders();
+  const headerNonce = hdrs.get('x-nextjs-csp-nonce') ?? hdrs.get('x-rp-csp-nonce') ?? undefined;
+  const cspNonce = process.env.NODE_ENV === 'production' ? headerNonce : undefined;
   return (
-    <html lang={htmlLang} dir={htmlDir} suppressHydrationWarning className="h-full">
+    <html lang={htmlLang} dir={htmlDir} suppressHydrationWarning className={`h-full ${ptSans.variable} ${spaceGrotesk.variable}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&family=Space+Grotesk:wght@300..700&display=swap"
-          rel="stylesheet"
-        />
+        {/* Head content only; font files handled by next/font */}
       </head>
-  {/* Deterministic ordering: base -> flags -> lang -> theme */}
-  <body suppressHydrationWarning className={bodyClass}>
+      {/* Deterministic ordering: base -> flags -> lang -> theme */}
+      <body suppressHydrationWarning className={bodyClass}>
         <script
+          suppressHydrationWarning
           // Inline no-flash script: reconstructs class list deterministically (same ordering) before React hydrates
           dangerouslySetInnerHTML={{
             __html: `(()=>{try{var DEV=location.hostname==='localhost';function log(){if(DEV){try{console.debug.apply(console,arguments);}catch{}}}var b=document.body,de=document.documentElement;function toTriplet(color){try{if(!color||typeof color!=='string')return '210 10% 50%';var m=color.match(/^hsla?\\(([^)]+)\\)$/i);if(m){var inner=m[1].replace(/\\\//g,' ').trim();var p=inner.split(/[\\s,]+/).filter(Boolean);var h=parseFloat(p[0]);var s=parseFloat(p[1]);var l=parseFloat(p[2]);if(isFinite(h)&&isFinite(s)&&isFinite(l))return h+' '+s+'% '+l+'%';}
@@ -141,9 +144,13 @@ function rebuild(data){if(!b||!de)return;var lang=de.lang||'en';var desired=(dat
           }}
           nonce={cspNonce}
         />
+        {/* Centralized PWA initializer: unregister SWs when PWA is disabled */}
+        <PWAInit />
         <AuthProvider>
           <ClientLayout>
-            {children}
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
             {/* Dev-only Agents feature toggle */}
             {agentsToggleElement}
             {/* DevListenerBadge temporarily disabled in server layout (dynamic ssr:false not allowed). Reintroduce inside a client component if needed. */}

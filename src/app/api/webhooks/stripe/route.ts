@@ -1,15 +1,13 @@
-// Stripe Webhook Handler - Enhanced Security
-import { type NextRequest, NextResponse } from "next/server";
+import { enforceProvenance } from '@/lib/middleware/provenance';
+import { NextResponse } from "next/server";
 
-/**
- * POST /api/webhooks/stripe
- * Note: This handler intentionally consumes the raw request body.
- * In production, verify the Stripe signature header and parse the raw body.
- */
-export async function POST(req: NextRequest): Promise<NextResponse> {
-  // Read raw body to satisfy linters and to allow signature verification downstream.
-  const _raw = await req.text();
-  void _raw; // explicitly mark intentionally unused
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
-  return NextResponse.json({ received: true, enhanced: true });
+// Deprecated duplicate. Use /api/stripe/webhook
+export async function POST(): Promise<NextResponse> {
+  return NextResponse.json(
+    enforceProvenance({ error: 'gone', use: '/api/stripe/webhook' }, { path: 'webhooks/stripe', note: 'deprecated' }),
+    { status: 410 }
+  );
 }

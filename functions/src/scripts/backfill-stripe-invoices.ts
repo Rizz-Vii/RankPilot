@@ -3,10 +3,10 @@
  * Usage (with env STRIPE_SECRET_KEY set):
  *  npx ts-node functions/src/scripts/backfill-stripe-invoices.ts [--limit=500] [--teamId=TEAM123] [--dryRun]
  */
-import Stripe from 'stripe';
-import { initializeApp, getApps } from 'firebase-admin/app';
+import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { upsertFinanceInvoice } from '../lib/billing/invoice-upsert';
+import Stripe from 'stripe';
+import { upsertFinanceInvoice } from '../lib/billing/invoice-upsert.js';
 
 if (!getApps().length) initializeApp();
 getFirestore();

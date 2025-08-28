@@ -75,17 +75,8 @@ export default function UnifiedMobileSidebar({
   const closeMenu = () => setIsOpen(false);
 
   if (!isMounted || !isMobile) {
-    return (
-      <Button
-        variant="ghost"
-        size="icon"
-        className="md:hidden h-12 w-12 min-h-[48px] min-w-[48px] opacity-0"
-        aria-label="Loading menu"
-        disabled
-      >
-        <Menu className="h-6 w-6" />
-      </Button>
-    );
+    // Pre-hydration: avoid layout shift and disabled/opacity artifacts
+    return <span className="md:hidden inline-block h-12 w-12 min-h-[48px] min-w-[48px]" aria-hidden />;
   }
 
   return (

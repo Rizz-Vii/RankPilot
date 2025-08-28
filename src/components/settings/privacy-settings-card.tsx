@@ -22,12 +22,12 @@ import {
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { db } from "@/lib/firebase";
+import { db, functions as regionFunctions } from "@/lib/firebase";
 import { getLogger } from "@/lib/logging/app-logger";
 import { asVoidHandler } from "@/lib/react/handlers";
 import type { User } from "firebase/auth";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
 import { AlertTriangle, Download, Lock, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { asUserProfile } from "../../../types/user-profile";
@@ -84,8 +84,7 @@ export default function PrivacySettingsCard({
   const handleDataExport = async (): Promise<void> => {
     try {
       setIsLoading(true);
-      const functions = getFunctions();
-      const exportFn = httpsCallable(functions, "exportUserData");
+      const exportFn = httpsCallable(regionFunctions, "exportUserData");
   const res: unknown = await exportFn({ userId: user.uid });
       logger.audit('privacy.data.export.requested', { userId: user.uid });
       // Audit timestamp now recorded server-side in export function.
@@ -113,8 +112,7 @@ export default function PrivacySettingsCard({
   const handleAccountDeletion = async (): Promise<void> => {
     try {
       setIsLoading(true);
-      const functions = getFunctions();
-      const delFn = httpsCallable(functions, "requestAccountDeletion");
+      const delFn = httpsCallable(regionFunctions, "requestAccountDeletion");
       await delFn({ userId: user.uid });
       // Deletion audit recorded server-side.
       logger.audit('privacy.account.deletion.requested', { userId: user.uid });

@@ -3,7 +3,11 @@
 
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
+function getStripe(): Stripe {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) throw new Error('Stripe not configured');
+    return new Stripe(key);
+}
 type StripeSubLike = {
     current_period_end?: number;
     trial_end?: number;
@@ -72,6 +76,7 @@ export async function createCheckoutSession(
         throw new Error(`${tier} tier does not require Stripe checkout`);
     }
 
+    const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: [
@@ -110,6 +115,7 @@ export async function createCheckoutSession(
 
 // Handle successful subscription creation
 export async function handleSubscriptionSuccess(sessionId: string) {
+    const stripe = getStripe();
     const session = await stripe.checkout.sessions.retrieve(sessionId, {
         expand: ['subscription', 'customer']
     });
@@ -141,6 +147,7 @@ export async function updateSubscription(
         throw new Error('Cannot update to free tier via Stripe');
     }
 
+    const stripe = getStripe();
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
     return await stripe.subscriptions.update(subscriptionId, {
@@ -161,8 +168,10 @@ export async function updateSubscription(
 // Cancel subscription
 export async function cancelSubscription(subscriptionId: string, immediately = false) {
     if (immediately) {
+        const stripe = getStripe();
         return await stripe.subscriptions.cancel(subscriptionId);
     } else {
+        const stripe = getStripe();
         return await stripe.subscriptions.update(subscriptionId, {
             cancel_at_period_end: true
         });
@@ -174,6 +183,7 @@ export async function createCustomerPortalSession(
     customerId: string,
     returnUrl: string
 ) {
+    const stripe = getStripe();
     return await stripe.billingPortal.sessions.create({
         customer: customerId,
         return_url: returnUrl,

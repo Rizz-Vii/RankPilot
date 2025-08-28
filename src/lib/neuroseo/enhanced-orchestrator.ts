@@ -427,7 +427,17 @@ export class EnhancedNeuroSEOOrchestrator {
             type: request.analysisType,
             options: request.options || {}
         };
-        return btoa(JSON.stringify(keyData)).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
+        const raw = JSON.stringify(keyData);
+        let b64: string;
+        try {
+            // Node-safe base64 with browser fallback
+            if (typeof Buffer !== 'undefined') b64 = Buffer.from(raw).toString('base64');
+            else if (typeof btoa !== 'undefined') b64 = btoa(raw);
+            else b64 = raw;
+        } catch {
+            b64 = raw;
+        }
+        return b64.replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
     }
 
     private generateAnalysisId(): string {

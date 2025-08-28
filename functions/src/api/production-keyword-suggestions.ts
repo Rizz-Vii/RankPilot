@@ -9,8 +9,8 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 // Use consolidated AI memory manager (path adjusted for actual location)
 import { getApps, initializeApp } from "firebase-admin/app";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
-import { getAI as getGenkitAI } from "../ai/genkit"; // real AI engine
-import { getAI as getMockAI } from "../lib/ai-memory-manager";
+import { getAI as getGenkitAI } from "../ai/genkit.js"; // real AI engine
+import { getAI as getMockAI } from "../lib/ai-memory-manager.js";
 
 // Ensure Admin SDK initialized
 try {
@@ -29,7 +29,7 @@ const httpsOptions: HttpsOptions = {
   minInstances: 0,
   maxInstances: 10,
   concurrency: 80,
-  region: "australia-southeast2",
+  region: "australia-southeast1",
   // secrets: ["GOOGLE_AI_API_KEY", "GEMINI_API_KEY"], // Temporarily disabled for deployment
 };
 

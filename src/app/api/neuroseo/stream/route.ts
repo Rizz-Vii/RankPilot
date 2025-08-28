@@ -12,6 +12,7 @@ import type { NextRequest } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 const logger = getLogger('api.neuroseo.stream').withTrace();
 
@@ -61,12 +62,16 @@ export async function POST(request: NextRequest): Promise<Response> {
     const stream = new ReadableStream({
         async start(controller) {
             const write = sseEncoder();
+            const hb = setInterval(() => {
+                try { write(controller as unknown as ReadableStreamDefaultController, 'heartbeat', { t: Date.now() }); } catch { /* ignore */ }
+            }, 15000);
             const finalize = (provenance: string, ok = true) => {
                 if (finished) return; finished = true;
                 const durationMs = Number(process.hrtime.bigint() - startHr) / 1_000_000;
                 recordRouteLatency('neuroseo/stream', durationMs);
                 write(controller, 'end', { ok, durationMs, provenance: finalProvenance || provenance });
                 try { controller.close(); } catch { }
+                clearInterval(hb as unknown as number);
             };
             request.signal.addEventListener('abort', () => { logger.warn('client.disconnected'); finalize(finalProvenance || 'aborted', false); });
             write(controller, 'ack', { received: urls.length, analysisType });
@@ -130,5 +135,6 @@ export async function POST(request: NextRequest): Promise<Response> {
             }
         }
     });
-    return new Response(stream, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', 'Connection': 'keep-alive' } });
+    // Do not set 'Connection' header on HTTP/2; proxies/CDNs may drop the stream. Keep cache-control no-transform to prevent buffering.
+    return new Response(stream, { headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', 'X-Accel-Buffering': 'no' } });
 }

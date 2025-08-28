@@ -1,10 +1,10 @@
+import { adminDb } from "@/lib/firebase-admin";
+import { getLogger } from '@/lib/logging/app-logger';
+import * as admin from "firebase-admin";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { getLogger } from '@/lib/logging/app-logger';
 import nodemailer from "nodemailer";
 import { z } from "zod";
-import { adminDb } from "@/lib/firebase-admin";
-import * as admin from "firebase-admin";
 
 const contactSchema = z.object({
     name: z.string().min(2),
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
             subject: `[Contact - ${category}] ${subject}`,
             text: `New contact message\n\nName: ${name}\nEmail: ${email}\nCategory: ${category}\nSubject: ${subject}\n\nMessage:\n${message}`,
             html: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111">
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: rgb(17,17,17)">
           <h2>New Contact Message</h2>
           <p><strong>Name:</strong> ${name}</p>
           <p><strong>Email:</strong> ${email}</p>

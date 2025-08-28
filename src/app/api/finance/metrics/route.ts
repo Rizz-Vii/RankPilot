@@ -1,13 +1,14 @@
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { handleCors } from '@/lib/http/cors';
 import { getLogger } from '@/lib/logging/app-logger';
-import { withProvenance, enforceProvenance } from '@/lib/middleware/provenance';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import type {
   FinanceInvoiceFirestore,
   FinanceInvoiceRuntime,
 } from '@/types/firestore-docs';
 import { mapFinanceInvoiceDoc } from '@/types/firestore-docs';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 type FinanceInvoiceDoc = FinanceInvoiceRuntime;
 
@@ -144,6 +145,8 @@ function aggregateInvoices(invoices: FinanceInvoiceDoc[], months: number): Aggre
 
 export const GET = withProvenance(
   async function GET(req: NextRequest) {
+    const cors = handleCors(req, { allowMethods: ['GET', 'OPTIONS'], exposeHeaders: ['x-finance-diagnostics'] });
+    if ('preflight' in cors) return cors.preflight;
     const logger = getLogger('api.finance.metrics');
 
     try {
@@ -177,7 +180,7 @@ export const GET = withProvenance(
             { error: 'auth_required' },
             { path: 'finance/metrics', note: 'auth' },
           );
-          const res = NextResponse.json(authBody, { status: 401 });
+          const res = NextResponse.json(authBody, { status: 401, headers: cors.headers });
           res.headers.set('x-finance-diagnostics', 'auth=missing');
           return res;
         }
@@ -234,7 +237,7 @@ export const GET = withProvenance(
         { ...payload, __provenance: 'live' },
         { path: 'finance/metrics', note: 'ok' },
       );
-      const res = NextResponse.json(okBody);
+      const res = NextResponse.json(okBody, { headers: cors.headers });
       res.headers.set('x-finance-diagnostics', diag);
       return res;
     } catch (e: unknown) {
@@ -244,10 +247,15 @@ export const GET = withProvenance(
         { error: 'internal_error' },
         { path: 'finance/metrics', note: 'exception' },
       );
-      const res = NextResponse.json(errBody, { status: 500 });
+      const res = NextResponse.json(errBody, { status: 500, headers: cors.headers });
       res.headers.set('x-finance-diagnostics', 'auth=unknown; error=exception');
       return res;
     }
   },
   { path: 'finance/metrics' },
 );
+
+export async function OPTIONS(req: NextRequest) {
+  const cors = handleCors(req, { allowMethods: ['GET', 'OPTIONS'], exposeHeaders: ['x-finance-diagnostics'] });
+  return 'preflight' in cors ? cors.preflight : new Response(null, { status: 204, headers: cors.headers });
+}

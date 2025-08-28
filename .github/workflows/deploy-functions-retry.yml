@@ -1,0 +1,40 @@
+name: "⚡ Firebase Functions Deploy (Retry)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_attempts:
+        description: "Max retry attempts"
+        required: false
+        default: "8"
+        type: string
+
+env:
+  NODE_VERSION: "20"
+  FIREBASE_PROJECT_ID: "rankpilot-h3jpc"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install deps
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Make retry script executable
+        run: chmod +x scripts/firebase-deploy-retry.sh
+
+      - name: Deploy Functions with retries
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          MAX_ATTEMPTS: ${{ inputs.max_attempts }}
+        run: |
+          ./scripts/firebase-deploy-retry.sh "npx firebase deploy --only functions --project $FIREBASE_PROJECT_ID --token $FIREBASE_TOKEN"

@@ -1,8 +1,15 @@
 "use client";
-import React from 'react';
-import { useFinanceContext } from './finance-context';
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { ChartContainer } from '@/components/ui/chart';
+import dynamic from 'next/dynamic';
+import { useFinanceContext } from './finance-context';
+
+// Defer heavy Recharts components to client-only dynamic imports
+const LineChart = dynamic(() => import('recharts').then(m => m.LineChart), { ssr: false });
+const Line = dynamic(() => import('recharts').then(m => m.Line), { ssr: false });
+const XAxis = dynamic(() => import('recharts').then(m => m.XAxis), { ssr: false });
+const YAxis = dynamic(() => import('recharts').then(m => m.YAxis), { ssr: false });
+const Tooltip = dynamic(() => import('recharts').then(m => m.Tooltip), { ssr: false });
+const CartesianGrid = dynamic(() => import('recharts').then(m => m.CartesianGrid), { ssr: false });
 
 export default function MrrTrend(){
   const { data } = useFinanceContext();

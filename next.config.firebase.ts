@@ -1,3 +1,6 @@
+// NOTE (2025-08): This file is NOT used by Next.js. The active config is next.config.ts.
+// Kept for historical reference only to avoid drift. Do not modify headers here.
+// Consider deleting in a future cleanup once all references are removed.
 import type { NextConfig } from 'next';
 import type { Configuration as WebpackConfiguration } from 'webpack';
 

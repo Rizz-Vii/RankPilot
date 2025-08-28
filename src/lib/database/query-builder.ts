@@ -3,9 +3,11 @@
  * Provides standardized, reusable query patterns across the application
  */
 
+import { db } from '@/lib/firebase';
 import type {
     DocumentSnapshot,
-    Query} from 'firebase/firestore';
+    Query
+} from 'firebase/firestore';
 import {
     collection,
     limit,
@@ -14,7 +16,6 @@ import {
     startAfter,
     where
 } from 'firebase/firestore';
-import { db } from '../firebase/connection-manager';
 
 export class FirestoreQueryBuilder {
     /**

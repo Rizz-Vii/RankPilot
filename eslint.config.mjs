@@ -1,5 +1,6 @@
 // Enhanced ESLint flat config (Next.js aware) with resilient fallback.
 // Minimal parse-only pass, but load plugins so inline disable directives don't error.
+import nextPlugin from '@next/eslint-plugin-next';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import reactHooks from 'eslint-plugin-react-hooks';
@@ -20,9 +21,15 @@ export default [
       'eslint.flat.mjs',
       'eslint.config.mjs',
       '**/next.config*.{js,mjs,ts}',
-      'serviceAccount.json'
+      'serviceAccount.json',
+      'scripts/legacy-eslint/**'
     ]
   },
+  // Include Next.js plugin via its flat config so Next build detects it.
+  // Prefer coreWebVitals; fall back to recommended if unavailable.
+  ...(nextPlugin.flatConfig?.coreWebVitals
+    ? [nextPlugin.flatConfig.coreWebVitals]
+    : (nextPlugin.flatConfig?.recommended ? [nextPlugin.flatConfig.recommended] : [])),
   {
     files: ['**/*.{ts,tsx,js,jsx}'],
     languageOptions: {
@@ -39,10 +46,9 @@ export default [
     },
     plugins: {
       '@typescript-eslint': tsPlugin,
-      'react-hooks': reactHooks
+      'react-hooks': reactHooks,
+      // Note: Next.js plugin is provided by the flat config above. Do not redefine it here.
     },
-    rules: {
-      // No rules: keep this pass lightweight and crash-free
-    }
+    rules: {}
   }
 ];

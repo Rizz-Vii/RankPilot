@@ -287,7 +287,10 @@ export async function runKpiDailySnapshot(now: Date = new Date()) {
 export const kpiDailySnapshot = onSchedule({
     schedule: 'every 24 hours',
     timeZone: 'Etc/UTC',
-    region: 'australia-southeast2'
+    region: 'australia-southeast1'
 }, async () => {
     await runKpiDailySnapshot();
 });
+
+// Alias to create a new Cloud Scheduler job under a distinct function name
+export const kpiDailySnapshotV2 = kpiDailySnapshot;

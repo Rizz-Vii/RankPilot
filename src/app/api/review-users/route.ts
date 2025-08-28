@@ -1,7 +1,8 @@
 import { extractErrorMessage } from '@/lib/errors/extract-error-message';
-import { db } from "@/lib/firebase/index";
-import { collection, getDocs } from "firebase/firestore";
+import { adminDb } from "@/lib/firebase-admin";
 import { NextResponse } from "next/server";
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 // Local interfaces to provide structure for analysis objects (avoid explicit any)
 interface ActivityRecord {
@@ -68,21 +69,34 @@ function getExpectedQuotasForTier(tier: string): Record<string, number> {
   return quotaMap[tier] || quotaMap.free;
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: Request): Promise<NextResponse> {
   try {
     console.log("🔍 Starting comprehensive user data review...");
 
-    const usersSnapshot = await getDocs(collection(db, "users"));
+    const usersSnapshot = await adminDb.collection("users").get();
     const userAnalysis: UserAnalysisItem[] = [];
 
-    for (const userDoc of usersSnapshot.docs) {
+    // Simple pagination over users; default small to prevent huge payloads
+    const url = new URL(request.url);
+    const pageParam = parseInt(url.searchParams.get('page') || '1', 10);
+    const sizeParam = parseInt(url.searchParams.get('pageSize') || '25', 10);
+    const pageSize = Number.isFinite(sizeParam) ? Math.min(Math.max(sizeParam, 1), 100) : 25;
+    const page = Number.isFinite(pageParam) ? Math.max(pageParam, 1) : 1;
+    const totalUsers = usersSnapshot.size;
+    const start = (page - 1) * pageSize;
+    const end = Math.min(start + pageSize, totalUsers);
+    const pageDocs = usersSnapshot.docs.slice(start, end);
+
+    for (const userDoc of pageDocs) {
       const userId = userDoc.id;
-      const userData = userDoc.data();
+    const userData = userDoc.data() as Record<string, unknown>;
 
       // Get user's activities
-      const activitiesSnapshot = await getDocs(
-        collection(db, "users", userId, "activities")
-      );
+    const activitiesSnapshot = await adminDb
+      .collection("users")
+      .doc(userId)
+      .collection("activities")
+      .get();
       const activities: ActivityRecord[] = [];
 
       for (const activityDoc of activitiesSnapshot.docs) {
@@ -96,9 +110,11 @@ export async function GET(): Promise<NextResponse> {
       }
 
       // Get user's keywords
-      const keywordsSnapshot = await getDocs(
-        collection(db, "users", userId, "keywords")
-      );
+    const keywordsSnapshot = await adminDb
+      .collection("users")
+      .doc(userId)
+      .collection("keywords")
+      .get();
       const keywords: Array<Record<string, unknown>> = [];
 
       for (const keywordDoc of keywordsSnapshot.docs) {
@@ -111,9 +127,11 @@ export async function GET(): Promise<NextResponse> {
       }
 
       // Get user's competitors
-      const competitorsSnapshot = await getDocs(
-        collection(db, "users", userId, "competitors")
-      );
+    const competitorsSnapshot = await adminDb
+      .collection("users")
+      .doc(userId)
+      .collection("competitors")
+      .get();
       const competitors: Array<Record<string, unknown>> = [];
 
       for (const compDoc of competitorsSnapshot.docs) {
@@ -126,9 +144,11 @@ export async function GET(): Promise<NextResponse> {
       }
 
       // Get user's content analyses
-      const contentSnapshot = await getDocs(
-        collection(db, "users", userId, "content-analyses")
-      );
+    const contentSnapshot = await adminDb
+      .collection("users")
+      .doc(userId)
+      .collection("content-analyses")
+      .get();
       const contentAnalyses: Array<Record<string, unknown>> = [];
 
       for (const contentDoc of contentSnapshot.docs) {
@@ -141,9 +161,11 @@ export async function GET(): Promise<NextResponse> {
       }
 
       // Get user's achievements
-      const achievementsSnapshot = await getDocs(
-        collection(db, "users", userId, "achievements")
-      );
+    const achievementsSnapshot = await adminDb
+      .collection("users")
+      .doc(userId)
+      .collection("achievements")
+      .get();
       const achievements: Array<Record<string, unknown>> = [];
 
       for (const achDoc of achievementsSnapshot.docs) {
@@ -156,17 +178,22 @@ export async function GET(): Promise<NextResponse> {
       }
 
       // Analyze subscription tier consistency
-      const subscriptionTier = userData.subscriptionTier || "free";
-      const role = userData.role;
-      const plan = userData.plan;
-      const planType = userData.planType;
+    const subscriptionTier = typeof userData.subscriptionTier === 'string' && userData.subscriptionTier.length > 0
+      ? userData.subscriptionTier
+      : "free";
+    const role = typeof userData.role === 'string' ? userData.role : undefined;
+    const plan = typeof userData.plan === 'string' ? userData.plan : undefined;
+    const planType = typeof userData.planType === 'string' ? userData.planType : undefined;
 
       // Check for tier-related inconsistencies
       const tierInconsistencies: string[] = [];
 
       // Check if quotas match tier expectations
       const expectedQuotas = getExpectedQuotasForTier(subscriptionTier);
-      const actualQuotas = (userData?.quotas ?? {}) as Record<string, number>;
+    const actualQuotas = (userData && typeof userData.quotas === 'object' && userData.quotas !== null
+      ? (userData.quotas as Record<string, number>)
+      : ({} as Record<string, number>)
+    );
 
       for (const quotaKey of Object.keys(expectedQuotas)) {
         const actualValue = actualQuotas[quotaKey];
@@ -202,14 +229,14 @@ export async function GET(): Promise<NextResponse> {
         userData: {
           email: userData.email,
           displayName: userData.displayName,
-          subscriptionTier: userData.subscriptionTier,
-          role: userData.role,
-          plan: userData.plan,
-          planType: userData.planType,
+          subscriptionTier,
+          role,
+          plan,
+          planType,
           createdAt: userData.createdAt,
           lastLoginAt: userData.lastLoginAt,
           preferences: userData.preferences,
-          quotas: userData.quotas,
+          quotas: actualQuotas,
           // Full user data for analysis
           fullData: userData,
         },
@@ -320,7 +347,7 @@ export async function GET(): Promise<NextResponse> {
       );
     });
 
-    return NextResponse.json({
+    const responsePayload = {
       success: true,
       summary: {
         ...summary,
@@ -328,6 +355,18 @@ export async function GET(): Promise<NextResponse> {
         achievementTypes: Array.from(summary.achievementTypes),
       },
       users: userAnalysis,
+      page,
+      pageSize,
+      total: totalUsers,
+      returned: userAnalysis.length,
+    };
+    return NextResponse.json(responsePayload, {
+      headers: {
+        'X-Result-Total': String(totalUsers),
+        'X-Result-Page': String(page),
+        'X-Result-PageSize': String(pageSize),
+        'X-Result-Returned': String(userAnalysis.length),
+      }
     });
   } catch (error) {
     console.error("Error reviewing user data:", error);

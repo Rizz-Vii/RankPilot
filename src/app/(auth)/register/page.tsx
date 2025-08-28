@@ -8,7 +8,8 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import type React from "react";
+import { useRef, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 
 export default function RegisterPage() {
@@ -23,6 +24,13 @@ export default function RegisterPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  // Refs for focus management
+  const emailRef = useRef<HTMLInputElement | null>(null);
+  const passwordRef = useRef<HTMLInputElement | null>(null);
+  const confirmRef = useRef<HTMLInputElement | null>(null);
+  const termsRef = useRef<HTMLInputElement | null>(null);
+  const recaptchaRef = useRef<{ reset: () => void } | null>(null);
   const [errors, setErrors] = useState<{
     email?: string;
     password?: string;
@@ -31,6 +39,11 @@ export default function RegisterPage() {
     captcha?: string;
     form?: string;
   }>({});
+
+  // Safe handler for ReCAPTCHA change without loosening types
+  function handleCaptchaChange(value: unknown) {
+    setCaptchaToken(typeof value === 'string' ? value : "");
+  }
 
   if (loading) {
     return <LoadingScreen fullScreen text="Setting up your account..." />;
@@ -59,12 +72,71 @@ export default function RegisterPage() {
     return newErrors;
   }
 
+  function focusFirstError(errs: typeof errors) {
+    if (errs.email) {
+      emailRef.current?.focus();
+      emailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    if (errs.password) {
+      passwordRef.current?.focus();
+      passwordRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    if (errs.confirmPassword) {
+      confirmRef.current?.focus();
+      confirmRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    if (errs.captcha) {
+      // Attempt to reset captcha if available, using unknown + local narrow
+      recaptchaRef.current?.reset?.();
+      return;
+    }
+    if (errs.terms) {
+      termsRef.current?.focus();
+      termsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     const newErrors = validate();
     setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
+    if (Object.keys(newErrors).length > 0) {
+      focusFirstError(newErrors);
+      return;
+    }
     try {
+      setSubmitting(true);
+      // If captcha enabled, verify server-side before account creation
+      if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && captchaToken) {
+        try {
+          const resp = await fetch('/api/verify-captcha', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: captchaToken }),
+          });
+          if (!resp.ok) {
+            const data = await resp.json().catch(() => ({}));
+            const msg = (data && typeof data === 'object' && 'error' in data)
+              ? 'Captcha verification failed. Please try again.'
+              : 'Captcha verification failed. Please try again.';
+            const errState = { ...newErrors, captcha: msg };
+            setErrors(errState);
+            focusFirstError(errState);
+            setSubmitting(false);
+            return;
+          }
+        } catch {
+          const errState = { ...newErrors, captcha: 'Unable to verify captcha. Check your network and retry.' };
+          setErrors(errState);
+          focusFirstError(errState);
+          setSubmitting(false);
+          return;
+        }
+      }
+
       await createUserWithEmailAndPassword(
         auth,
         email.trim(),
@@ -78,6 +150,8 @@ export default function RegisterPage() {
       setErrors({
         form: message,
       });
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -97,13 +171,15 @@ export default function RegisterPage() {
             role="textbox"
             autoComplete="email"
             aria-label="Email address"
-            aria-describedby="email-error"
+            aria-invalid={errors.email ? true : undefined}
+            aria-describedby={errors.email ? "email-error" : undefined}
               placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground ring-1 ring-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition"
+            ref={emailRef}
+            className={`w-full px-3 py-2 border rounded-lg bg-background text-foreground ring-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-background transition ${errors.email ? 'border-destructive ring-destructive focus-visible:ring-destructive' : 'border-input ring-border focus-visible:ring-ring'}`}
           />
-          <p id="email-error" className="text-xs text-destructive-foreground mt-1">{errors.email}</p>
+          {errors.email && <p id="email-error" role="alert" className="text-xs text-destructive-foreground mt-1">{errors.email}</p>}
         </div>
         <div className="relative">
           <label htmlFor="password" className="block font-medium mb-1 text-foreground">Password</label>
@@ -113,11 +189,13 @@ export default function RegisterPage() {
             role="textbox"
             autoComplete="new-password"
             aria-label="Password"
-            aria-describedby="password-error"
+            aria-invalid={errors.password ? true : undefined}
+            aria-describedby={errors.password ? "password-error" : undefined}
               placeholder="Create a password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-input rounded-lg pr-10 bg-background text-foreground ring-1 ring-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition"
+            ref={passwordRef}
+            className={`w-full px-3 py-2 border rounded-lg pr-10 bg-background text-foreground ring-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-background transition ${errors.password ? 'border-destructive ring-destructive focus-visible:ring-destructive' : 'border-input ring-border focus-visible:ring-ring'}`}
           />
           <button
             type="button"
@@ -128,7 +206,7 @@ export default function RegisterPage() {
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
-          <p id="password-error" className="text-xs text-destructive-foreground mt-1">{errors.password}</p>
+          {errors.password && <p id="password-error" role="alert" className="text-xs text-destructive-foreground mt-1">{errors.password}</p>}
         </div>
         <div className="relative">
           <label htmlFor="confirmPassword" className="block font-medium mb-1 text-foreground">Confirm Password</label>
@@ -138,11 +216,13 @@ export default function RegisterPage() {
             role="textbox"
             autoComplete="new-password"
             aria-label="Confirm password"
-            aria-describedby="confirmPassword-error"
+            aria-invalid={errors.confirmPassword ? true : undefined}
+            aria-describedby={errors.confirmPassword ? "confirmPassword-error" : undefined}
               placeholder="Re-enter your password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-input rounded-lg pr-10 bg-background text-foreground ring-1 ring-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition"
+            ref={confirmRef}
+            className={`w-full px-3 py-2 border rounded-lg pr-10 bg-background text-foreground ring-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-background transition ${errors.confirmPassword ? 'border-destructive ring-destructive focus-visible:ring-destructive' : 'border-input ring-border focus-visible:ring-ring'}`}
           />
           <button
             type="button"
@@ -153,15 +233,26 @@ export default function RegisterPage() {
           >
             {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
-          <p id="confirmPassword-error" className="text-xs text-destructive-foreground mt-1">{errors.confirmPassword}</p>
+          {errors.confirmPassword && <p id="confirmPassword-error" role="alert" className="text-xs text-destructive-foreground mt-1">{errors.confirmPassword}</p>}
         </div>
         {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
-          <div>
-            <ReCAPTCHA
-              sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
-              onChange={(token) => setCaptchaToken(token || "")}
-            />
-            <p className="text-xs text-destructive-foreground mt-1">{errors.captcha}</p>
+          <div className="mt-2 flex justify-center">
+            <div className="max-w-full overflow-x-auto" data-testid="recaptcha">
+              <ReCAPTCHA
+                ref={(el: unknown) => {
+                  // Narrow unknown instance to minimal shape without widening types
+                  if (el && typeof el === 'object' && 'reset' in el && typeof (el as { reset: unknown }).reset === 'function') {
+                    const resetFn = (el as { reset: () => void }).reset;
+                    recaptchaRef.current = { reset: () => resetFn() };
+                  } else {
+                    recaptchaRef.current = null;
+                  }
+                }}
+                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+                onChange={handleCaptchaChange}
+              />
+              {errors.captcha && <p role="alert" className="text-xs text-destructive-foreground mt-1 text-center">{errors.captcha}</p>}
+            </div>
           </div>
         )}
         <div className="flex flex-col items-center justify-center">
@@ -171,7 +262,10 @@ export default function RegisterPage() {
               type="checkbox"
               checked={agreeTerms}
               onChange={(e) => setAgreeTerms(e.target.checked)}
+              aria-invalid={errors.terms ? true : undefined}
+              aria-describedby={errors.terms ? 'terms-error' : undefined}
               className="mr-2"
+              ref={termsRef}
             />
             <label htmlFor="terms" className="text-sm text-foreground">
               I agree to the{" "}
@@ -181,17 +275,18 @@ export default function RegisterPage() {
             </label>
           </div>
           {errors.terms && (
-            <p className="text-xs text-destructive-foreground mt-1">{errors.terms}</p>
+            <p id="terms-error" role="alert" className="text-xs text-destructive-foreground mt-1">{errors.terms}</p>
           )}
         </div>
         {errors.form && (
-          <p className="text-xs text-destructive-foreground mt-1">{errors.form}</p>
+          <p role="alert" className="text-xs text-destructive-foreground mt-1">{errors.form}</p>
         )}
         <button
           type="submit"
-          className="w-full py-2 rounded-lg bg-primary text-primary-foreground font-semibold text-lg hover:bg-primary/90 transition"
+          disabled={submitting}
+          className="w-full py-2 rounded-lg bg-primary text-primary-foreground font-semibold text-lg hover:bg-primary/90 transition disabled:opacity-70"
         >
-          Register
+          {submitting ? 'Creating account…' : 'Register'}
         </button>
         <p className="text-center text-sm text-muted-foreground">
           Already have an account? <Link href="/login" className="text-primary hover:underline">Log in</Link>

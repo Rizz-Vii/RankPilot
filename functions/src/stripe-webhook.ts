@@ -1,16 +1,15 @@
 import { getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import { setGlobalOptions } from "firebase-functions/v2";
 import { onRequest } from "firebase-functions/v2/https";
 import Stripe from "stripe";
-import { upsertFinanceInvoice } from './lib/billing/invoice-upsert';
+import { upsertFinanceInvoice } from './lib/billing/invoice-upsert.js';
 
 // Initialize Firebase Admin if not already initialized
 if (!getApps().length) {
   initializeApp();
 }
 
-setGlobalOptions({ region: "australia-southeast2" });
+// Note: Do not call setGlobalOptions here; use per-function region below to avoid double global configuration.
 
 // Lazy initialization of Stripe to avoid deployment issues
 let stripe: Stripe;
@@ -59,8 +58,14 @@ export const stripeWebhook = onRequest(
     let event: Stripe.Event;
 
     try {
+      // Prefer the raw, unparsed body for signature verification
+      const rawBody: Buffer | undefined = (req as unknown as { rawBody?: Buffer }).rawBody;
+      const payload: Buffer | string = rawBody ?? (req.body as unknown as string | Buffer);
+      if (!rawBody) {
+        console.warn("⚠️ req.rawBody missing; falling back to req.body. Ensure raw body is available to verify Stripe signatures safely.");
+      }
       // Verify webhook signature
-      event = getStripe().webhooks.constructEvent(req.body, sig, webhookSecret);
+      event = getStripe().webhooks.constructEvent(payload, sig, webhookSecret);
       console.log("✅ Webhook signature verified");
     } catch (err) {
       console.log("❌ Webhook signature verification failed:", err);

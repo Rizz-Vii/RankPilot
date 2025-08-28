@@ -1,7 +1,7 @@
 // Finance Automation Snapshot fetchers
 // Collections: financeRevenueSnapshots, financeInvoiceAgingSummaries
+import { db } from '@/lib/firebase';
 import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase/connection-manager';
 import { z } from 'zod';
 
 export interface FinanceRevenueSnapshotDoc {

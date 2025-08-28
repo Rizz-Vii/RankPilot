@@ -3,9 +3,9 @@
  * Fixes Firestore internal assertion failures and connection issues
  */
 
-import type { FirebaseApp} from 'firebase/app';
+import type { FirebaseApp } from 'firebase/app';
 import { getApp, getApps, initializeApp } from 'firebase/app';
-import type { Firestore} from 'firebase/firestore';
+import type { Firestore } from 'firebase/firestore';
 import { connectFirestoreEmulator, initializeFirestore, terminate } from 'firebase/firestore';
 
 // Firebase configuration - kept in sync with legacy defaults previously duplicated in firebase/index.ts
@@ -19,7 +19,7 @@ const firebaseConfig = {
     projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "rankpilot-h3jpc",
     storageBucket:
         process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
-        "rankpilot-h3jpc.firebasestorage.app",
+        "rankpilot-h3jpc.appspot.com",
     messagingSenderId:
         process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "283736429782",
     appId:
@@ -75,12 +75,14 @@ class FirestoreConnectionManager {
             // Ensure single app instance - prevents "Firebase App named '[DEFAULT]' already exists" errors
             if (getApps().length === 0) {
                 this.app = initializeApp(firebaseConfig);
-                // Only log once per process (or dev multi-worker session) using a global sentinel
+                // Only log once per process in the browser
                 try {
-                    const g = globalThis as Record<string, unknown>;
-                    if (!g[CLIENT_INIT_SENTINEL]) {
-                        console.log('🔥 Firebase app initialized');
-                        g[CLIENT_INIT_SENTINEL] = true;
+                    if (typeof window !== 'undefined') {
+                        const g = globalThis as Record<string, unknown>;
+                        if (!g[CLIENT_INIT_SENTINEL]) {
+                            console.log('🔥 Firebase app initialized');
+                            g[CLIENT_INIT_SENTINEL] = true;
+                        }
                     }
                 } catch { /* ignore sentinel issues */ }
             } else {
@@ -94,15 +96,23 @@ class FirestoreConnectionManager {
             // Initialize Firestore with robust browser settings (before any Firestore use)
             const settings: Record<string, unknown> = { ignoreUndefinedProperties: true };
             if (typeof window !== 'undefined') {
-                // Auto-detect long polling by default for proxy/firewall environments
-                if (process.env.NEXT_PUBLIC_FIRESTORE_AUTODETECT_LONG_POLLING !== 'false') {
+                // Always prefer conservative transport to avoid proxy/CDN issues
+                // Decide mode first to avoid mutually-exclusive flag conflict
+                const envForce = process.env.NEXT_PUBLIC_FIRESTORE_FORCE_LONG_POLLING;
+                const shouldForceLongPolling = envForce === 'true' || (process.env.NODE_ENV === 'production' && envForce !== 'false');
+                const wantAutoDetect = process.env.NEXT_PUBLIC_FIRESTORE_AUTODETECT_LONG_POLLING !== 'false';
+
+                if (shouldForceLongPolling) {
+                    // Force long polling: DO NOT set autoDetect alongside this
+                    settings.experimentalForceLongPolling = true;
+                } else if (wantAutoDetect) {
+                // Otherwise allow the SDK to auto-detect when to use long polling
                     settings.experimentalAutoDetectLongPolling = true;
                 }
-                // Optionally force long polling via env
-                if (process.env.NEXT_PUBLIC_FIRESTORE_FORCE_LONG_POLLING === 'true') {
-                    settings.experimentalForceLongPolling = true;
-                    settings.useFetchStreams = false;
-                }
+
+                // Disable fetch streams which can be blocked by some edges/CDNs
+                // (Firestore will fallback to XHR/WebChannel or long polling)
+                settings.useFetchStreams = false;
             }
 
             this.db = initializeFirestore(this.app, settings);
@@ -163,11 +173,12 @@ class FirestoreConnectionManager {
     }
 }
 
-// Export singleton instance
+// Export singleton instance (no side effects)
 export const connectionManager = FirestoreConnectionManager.getInstance();
-// Export primary singletons
-export const db = connectionManager.getDatabase();
-export const app = connectionManager.getAppInstance();
+
+// Lazy, explicit getters to avoid initializing during SSR/import time
+export const getClientDb = (): Firestore => connectionManager.getDatabase();
+export const getClientApp = (): FirebaseApp => connectionManager.getAppInstance();
 export const resetFirestoreConnection = () => connectionManager.resetConnection();
 
 // Health check function

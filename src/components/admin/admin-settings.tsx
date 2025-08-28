@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,18 +9,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
-  Settings,
-  Database,
-  Key,
   Bell,
-  Shield,
-  Globe,
-  Mail,
-  Zap,
+  Database,
   ExternalLink,
+  Globe,
+  Key,
+  Mail,
+  Settings,
+  Shield,
+  Zap,
 } from "lucide-react";
 
 export default function AdminSettings() {
@@ -324,7 +323,7 @@ export default function AdminSettings() {
             </div>
             <div>
               <label className="text-sm font-medium">Build Number</label>
-              <p className="text-sm text-muted-foreground">#1247</p>
+              <p className="text-sm text-muted-foreground">1247</p>
             </div>
           </div>
         </CardContent>

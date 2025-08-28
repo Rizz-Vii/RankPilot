@@ -12,7 +12,6 @@
  */
 
 import * as d3 from 'd3';
-import jsPDF from 'jspdf';
 import type { ChartDatum, SeriesSpec } from './types';
 
 // Core data point used by visualizations. We deliberately keep x/y/value flexible
@@ -1033,6 +1032,7 @@ export class D3VisualizationEngine {
         const pngData = await this.exportAsPNG(svg, config);
 
         // Create a PDF and embed the PNG
+        const { default: jsPDF } = await import('jspdf');
         const pdf = new jsPDF({ orientation: (config.width || 842) >= (config.height || 595) ? 'landscape' : 'portrait', unit: 'pt', format: 'a4' });
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();

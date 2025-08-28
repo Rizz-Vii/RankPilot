@@ -5,24 +5,12 @@
 
 import { zapierWorkflowBuilder } from '@/lib/automation/zapier-workflow-builder';
 import { extractErrorMessage } from '@/lib/errors/extract-error-message';
+import { adminAuth } from '@/lib/firebase-admin';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-// Initialize Firebase Admin if not already initialized
-if (!getApps().length) {
-    const projectId = process.env.FIREBASE_PROJECT_ID || 'rankpilot-h3jpc';
-
-    try {
-        initializeApp({
-            projectId,
-        });
-    } catch (error) {
-        console.error('[ZapierWorkflowAPI] Firebase Admin initialization error:', error);
-    }
-}
+// Firebase Admin is initialized centrally in '@/lib/firebase-admin'.
 
 interface WorkflowRequestBody {
     action: 'create' | 'execute' | 'list' | 'update' | 'delete' | 'templates' | 'analytics';
@@ -41,11 +29,9 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         }
 
         const token = authHeader.split('Bearer ')[1];
-        const auth = getAuth();
-
         let decodedToken;
         try {
-            decodedToken = await auth.verifyIdToken(token);
+            decodedToken = await adminAuth.verifyIdToken(token);
         } catch (error) {
             console.error('[ZapierWorkflowAPI] Token verification error:', error);
             return NextResponse.json(enforceProvenance({ success: false, error: 'Invalid authentication token', provenance: 'synthetic' }, { path: 'automation/zapier', note: 'auth' }), { status: 401 });
@@ -149,11 +135,9 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
         }
 
         const token = authHeader.split('Bearer ')[1];
-        const auth = getAuth();
-
         let decodedToken;
         try {
-            decodedToken = await auth.verifyIdToken(token);
+            decodedToken = await adminAuth.verifyIdToken(token);
         } catch (error) {
             console.error('[ZapierWorkflowAPI] Token verification error:', error);
             return NextResponse.json(enforceProvenance({ success: false, error: 'Invalid authentication token', provenance: 'synthetic' }, { path: 'automation/zapier', note: 'auth' }), { status: 401 });

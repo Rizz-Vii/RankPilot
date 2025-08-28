@@ -537,14 +537,21 @@ export function normalizeUserAccess(dbUser: unknown): UserAccess {
     mappedTier = "enterprise"; // Admin gets enterprise-level features
     mappedRole = "admin"; // But with admin role for special permissions
   } else {
-    // Enforce role domain; auto-correct invalid values
-    if (u.role !== undefined && u.role !== "admin" && u.role !== "user") {
+    // Determine if role is mistakenly holding a tier value
+    const roleLooksLikeTier = typeof u.role === 'string' && (TIER_HIERARCHY as string[]).includes(u.role);
+    // Enforce role domain; auto-correct invalid values (but don't warn if it's a known tier alias)
+    if (u.role !== undefined && u.role !== "admin" && u.role !== "user" && !roleLooksLikeTier) {
       console.warn(`normalizeUserAccess: invalid role '${u.role}', coercing to 'user'`);
     }
     mappedRole = (u.role === "admin" ? "admin" : "user") as UserRole;
-    mappedTier = (TIER_HIERARCHY.includes(u.subscriptionTier as SubscriptionTier)
-      ? (u.subscriptionTier as SubscriptionTier)
-      : "free");
+    // Resolve tier from subscriptionTier -> tier -> role (if tier-like) -> free
+    const rawTier = ((): string | undefined => {
+      if (typeof u.subscriptionTier === 'string' && (TIER_HIERARCHY as string[]).includes(u.subscriptionTier)) return u.subscriptionTier;
+      if (typeof u.tier === 'string' && (TIER_HIERARCHY as string[]).includes(u.tier)) return u.tier;
+      if (roleLooksLikeTier) return u.role as string;
+      return undefined;
+    })();
+    mappedTier = (rawTier ?? "free") as SubscriptionTier;
     // Policy: admin implies enterprise tier access
     if (mappedRole === "admin" && mappedTier !== "enterprise") {
       mappedTier = "enterprise";

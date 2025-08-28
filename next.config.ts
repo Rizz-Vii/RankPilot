@@ -1,13 +1,16 @@
 import type { NextConfig } from "next";
+// Enable bundle analyzer when ANALYZE=true (ESM import)
+import bundleAnalyzer from '@next/bundle-analyzer';
+const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
 
 // Check if this is a Firebase deployment build
 const isFirebaseDeployment = process.env.FIREBASE_DEPLOY === 'true';
 
-const nextConfig: NextConfig = {
+const baseConfig: NextConfig = {
   // Enable React strict mode for better development practices
   reactStrictMode: true,
 
-  // Disable ESLint during build for deployment
+  // ESLint/TS settings
   eslint: {
     ignoreDuringBuilds: false,
   },
@@ -23,6 +26,12 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "placehold.co",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "firebasestorage.googleapis.com",
         port: "",
         pathname: "/**",
       },
@@ -70,6 +79,33 @@ const nextConfig: NextConfig = {
       config.stats = "errors-only";
     }
 
+    // Reduce noisy critical dependency warnings from dynamic requires in optional instrumentation libs
+    // (e.g., @opentelemetry/instrumentation used via genkit). This does not affect bundling correctness.
+    // See: https://webpack.js.org/configuration/module/#moduleexprcontextcritical
+    // and https://webpack.js.org/configuration/other-options/#ignorewarnings
+    // Safely set exprContextCritical=false
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (config.module as any) = config.module || {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (config.module as any).exprContextCritical = false;
+    // Ignore specific noisy warning: "Critical dependency: the request of a dependency is an expression"
+    // originating from optional OpenTelemetry dynamic requires pulled in by genkit tracing.
+    const otelCriticalPredicate = (warning: unknown) => {
+      // webpack 5 Warning type shape guard
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const w = warning as any;
+      return (
+        typeof w?.message === 'string' &&
+        w.message.includes('Critical dependency: the request of a dependency is an expression') &&
+        /@opentelemetry\/instrumentation/.test(String(w?.module?.resource || w?.moduleName || ''))
+      );
+    };
+    // Merge with existing ignoreWarnings entries
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings || []),
+      otelCriticalPredicate,
+    ];
+
     return config;
   },  // Experimental features
   experimental: {
@@ -77,14 +113,20 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "2mb",
       allowedOrigins: (() => {
-        const base = ["localhost:3000"];
+        const list = new Set<string>(["localhost:3000"]);
         if (process.env.NODE_ENV !== "production") {
           const csName = process.env.CODESPACE_NAME;
           const csDomain = process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN; // e.g., app.github.dev
           const port = process.env.PORT || "3000";
-          if (csName && csDomain) base.push(`${csName}-${port}.${csDomain}`);
+          if (csName && csDomain) list.add(`${csName}-${port}.${csDomain}`);
+        } else {
+          // Allow Firebase Hosting default domain and custom domain if provided
+          const fbProj = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID && `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.web.app`;
+          const fbApp = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN;
+          const customDomain = process.env.NEXT_PUBLIC_APP_DOMAIN;
+          [fbProj, fbApp, customDomain].filter(Boolean).forEach((h) => list.add(String(h)));
         }
-        return base;
+        return Array.from(list);
       })(),
     },
   },
@@ -108,51 +150,27 @@ const nextConfig: NextConfig = {
 
   // Configure HTTP compression
   compress: true,
-
-  // Add custom headers
-  async headers() {
-    return [
-      {
-        source: "/:path*",
-        headers: [
-          {
-            key: "X-DNS-Prefetch-Control",
-            value: "on",
-          },
-          {
-            key: "Permissions-Policy",
-            // Mirror middleware.ts logic (source of truth) to avoid mismatch during static asset requests not passing through middleware.
-            value: (() => {
-              const isLocal = process.env.NODE_ENV !== 'production';
-              const mic = process.env.RP_DISABLE_MIC === '1' ? 'microphone=()' : 'microphone=(self)';
-              return `camera=(), ${mic}, geolocation=(), interest-cohort=(), payment=${isLocal ? '(self)' : '()'}`;
-            })(),
-          },
-          {
-            key: "Strict-Transport-Security",
-            value: "max-age=31536000; includeSubDomains",
-          },
-          {
-            key: "X-Frame-Options",
-            value: "SAMEORIGIN",
-          },
-          {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
-          },
-          {
-            key: "Referrer-Policy",
-            value: "origin-when-cross-origin",
-          },
-          {
-            // Intentionally no CSP here; handled via middleware to avoid duplicates
-            key: "X-Permitted-Cross-Domain-Policies",
-            value: "none",
-          },
-        ],
-      },
-    ];
-  },
+  // All security and CSP headers are consolidated in src/middleware.ts to avoid duplication.
 };
+
+const nextConfig = withBundleAnalyzer({
+  ...baseConfig,
+  modularizeImports: {
+    'date-fns': {
+      transform: 'date-fns/{{member}}',
+    },
+    'lodash-es': {
+      transform: 'lodash-es/{{member}}',
+    },
+    'lucide-react': {
+      transform: 'lucide-react/dist/esm/icons/{{member}}',
+      skipDefaultConversion: true,
+    },
+    'react-icons/fa': {
+      // Import only the used FontAwesome icons to avoid bundling the whole pack
+      transform: 'react-icons/fa/{{member}}',
+    },
+  },
+});
 
 export default nextConfig;

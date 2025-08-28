@@ -1,4 +1,5 @@
 import { adminDb } from '@/lib/firebase-admin';
+import { enforceProvenance } from '@/lib/middleware/provenance';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
@@ -49,7 +50,7 @@ async function seed(dateKey: string, alertsIn: Array<unknown>, ma7Override?: Rec
 // Backward compatible single-alert seeding via GET + ability to set multiple MA7 fields through query params.
 export async function GET(req: NextRequest) {
     if (process.env.NODE_ENV === 'production' || process.env.CI_PRODUCTION === '1') {
-        return NextResponse.json({ ok: false, reason: 'disabled' }, { status: 404 });
+        return NextResponse.json(enforceProvenance({ ok: false, reason: 'disabled' }, { path: 'test/observability/seed-alert', note: 'disabled' }), { status: 404 });
     }
     const url = new URL(req.url);
     const now = new Date();
@@ -85,19 +86,19 @@ export async function GET(req: NextRequest) {
 
     try {
         await seed(dateKey, [{ type, level, message, value, threshold: 0 }], ma7Override);
-        return NextResponse.json({ ok: true, date: dateKey, seeded: { type, level, value }, ma7Override });
+        return NextResponse.json(enforceProvenance({ ok: true, date: dateKey, seeded: { type, level, value }, ma7Override }, { path: 'test/observability/seed-alert' }));
     } catch (e: unknown) {
         const msg = (e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string')
             ? (e as { message: string }).message
             : 'seed_failed';
-        return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+        return NextResponse.json(enforceProvenance({ ok: false, error: msg }, { path: 'test/observability/seed-alert', note: 'error' }), { status: 500 });
     }
 }
 
 // New: POST supports batch seeding: { alerts: [{type, level?, value?, ma7?, message?}], ma7: { ma7LatencyP95:123, ... } }
 export async function POST(req: NextRequest) {
     if (process.env.NODE_ENV === 'production' || process.env.CI_PRODUCTION === '1') {
-        return NextResponse.json({ ok: false, reason: 'disabled' }, { status: 404 });
+        return NextResponse.json(enforceProvenance({ ok: false, reason: 'disabled' }, { path: 'test/observability/seed-alert', note: 'disabled' }), { status: 404 });
     }
     let body: unknown = {};
     try { body = await req.json(); } catch { /* ignore */ }
@@ -126,9 +127,9 @@ export async function POST(req: NextRequest) {
     });
     try {
         await seed(dateKey, alerts, ma7Overrides);
-        return NextResponse.json({ ok: true, date: dateKey, count: alerts.length, ma7Override: ma7Overrides });
+        return NextResponse.json(enforceProvenance({ ok: true, date: dateKey, count: alerts.length, ma7Override: ma7Overrides }, { path: 'test/observability/seed-alert' }));
     } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : 'seed_failed';
-        return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+        return NextResponse.json(enforceProvenance({ ok: false, error: msg }, { path: 'test/observability/seed-alert', note: 'error' }), { status: 500 });
     }
 }

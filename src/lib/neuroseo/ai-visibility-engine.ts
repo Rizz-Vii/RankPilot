@@ -287,7 +287,8 @@ export class AIVisibilityEngine {
   }
 
   private generateSourceTitle(query: LLMQuery, url: string): string {
-    const domain = new URL(url).hostname.replace("www.", "");
+    let domain = 'example.com';
+    try { domain = new URL(url).hostname.replace("www.", ""); } catch { /* keep default */ }
     const keyword = query.targetKeywords[0];
 
     const titleTemplates = [
@@ -354,7 +355,9 @@ export class AIVisibilityEngine {
 
     // Add content from top sources
     sources.slice(0, 3).forEach((source) => {
-      response += `According to ${new URL(source.url).hostname}, ${source.snippet} `;
+      let host = 'source';
+      try { host = new URL(source.url).hostname; } catch { /* noop */ }
+      response += `According to ${host}, ${source.snippet} `;
     });
 
     return response.trim();
@@ -429,7 +432,8 @@ export class AIVisibilityEngine {
 
   private extractCitationContext(responseText: string, url: string): string {
     // Extract the sentence that mentions the domain
-    const domain = new URL(url).hostname.replace("www.", "");
+    let domain = '';
+    try { domain = new URL(url).hostname.replace("www.", ""); } catch { domain = url; }
     const sentences = responseText.split(/[.!?]+/);
 
     const relevantSentence = sentences.find((sentence) =>

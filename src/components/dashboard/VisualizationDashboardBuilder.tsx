@@ -27,13 +27,7 @@ import type {
 import {
     chartExportManager
 } from '@/lib/visualizations/chart-export-manager';
-import type {
-    ChartConfig,
-    ChartDataPoint
-} from '@/lib/visualizations/d3-visualization-engine';
-import {
-    d3VisualizationEngine
-} from '@/lib/visualizations/d3-visualization-engine';
+import type { ChartConfig, ChartDataPoint } from '@/lib/visualizations/d3-visualization-engine';
 import {
     ArrowUpDown,
     BarChart3,
@@ -237,7 +231,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
         setSampleData(data);
     }, []);
 
-    const renderChart = useCallback((widget: DashboardWidget) => {
+    const renderChart = useCallback(async (widget: DashboardWidget) => {
         if (!widget.chartConfig) return;
 
         const chartElement = chartRefs.current.get(widget.id);
@@ -254,6 +248,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
         };
 
         try {
+            const { d3VisualizationEngine } = await import('@/lib/visualizations/d3-visualization-engine');
             // Clear previous chart
             chartElement.innerHTML = '';
             chartElement.id = `chart-${widget.id}`;
@@ -288,7 +283,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
         layout.widgets.forEach(widget => {
             if (widget.type === 'chart' && widget.chartConfig) {
                 const chartElement = chartRefs.current.get(widget.id);
-                if (chartElement) renderChart(widget);
+                if (chartElement) void renderChart(widget);
             }
         });
     }, [layout.widgets, sampleData, renderChart]);
@@ -436,7 +431,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                 next.set(w.id, { rows: curr?.rows || [], total: curr?.total || 0, loading: true, error: undefined });
                 return next;
             });
-            fetch(`/api/table-data?${buildTableQuery(w.id, state)}`, { signal: controller.signal })
+            void fetch(`/api/table-data?${buildTableQuery(w.id, state)}`, { signal: controller.signal })
                 .then(async (res) => {
                     if (!res.ok) throw new Error(`Failed to load table data (${res.status})`);
                     const json = await res.json();
@@ -501,7 +496,12 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
         }
 
         // Remove chart from D3 engine
-        d3VisualizationEngine.removeChart(widgetId);
+        void (async () => {
+            try {
+                const { d3VisualizationEngine } = await import('@/lib/visualizations/d3-visualization-engine');
+                d3VisualizationEngine.removeChart(widgetId);
+            } catch { /* ignore */ }
+        })();
 
         // Remote deletion best-effort
         void (async () => {
@@ -912,7 +912,7 @@ export const VisualizationDashboardBuilder: React.FC<VisualizationDashboardBuild
                                                 if (el) {
                                                     chartRefs.current.set(widget.id, el);
                                                     // Render chart after ref is set
-                                                    setTimeout(() => renderChart(widget), 0);
+                                                    setTimeout(() => { void renderChart(widget); }, 0);
                                                 }
                                             }}
                                             className="w-full h-64"

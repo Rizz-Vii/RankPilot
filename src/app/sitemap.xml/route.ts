@@ -22,20 +22,15 @@ function generateSiteMap(paths: string[]) {
  `;
 }
 
+export const dynamic = 'force-static';
+export const revalidate = 86400; // 24h
+
 export async function GET() {
   const publicPaths = [
     "/",
     "/features",
     "/pricing",
-    "/seo-audit",
-    "/keyword-tool",
-    "/content-analyzer",
-    "/competitors",
-    "/serp-view",
-    "/link-view",
-    "/content-brief",
-    "/finance/accounting",
-    "/neuroseo",
+    // Public marketing pages only; app pages require auth and are excluded
     "/privacy",
     "/guides/broken-links",
     "/guides/xml-sitemap",
@@ -47,13 +42,20 @@ export async function GET() {
     "/blog/competitor-analysis",
   ];
 
-  const body = generateSiteMap(publicPaths);
-
-  return new Response(body, {
-    status: 200,
-    headers: {
-      "Content-Type": "application/xml",
-      "Cache-control": "public, s-maxage=86400, stale-while-revalidate",
-    },
-  });
+  try {
+    const body = generateSiteMap(publicPaths);
+    return new Response(body, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/xml",
+        "Cache-control": "public, s-maxage=86400, stale-while-revalidate",
+      },
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return new Response(`<!-- sitemap error: ${msg} -->`, {
+      status: 200,
+      headers: { "Content-Type": "application/xml" },
+    });
+  }
 }

@@ -395,9 +395,9 @@ export class AutomatedPentestingFramework extends EventEmitter {
     /**
      * Register a test module
      */
-    registerModule(module: TestModule): void {
-        this.modules.set(module.id, module);
-        this.emit('moduleRegistered', module);
+    registerModule(mod: TestModule): void {
+        this.modules.set(mod.id, mod);
+        this.emit('moduleRegistered', { testModule: mod });
     }
 
     /**
@@ -519,16 +519,16 @@ export class AutomatedPentestingFramework extends EventEmitter {
         try {
             // Get applicable modules for test type
             const modules = Array.from(this.modules.values())
-                .filter(module =>
-                    module.enabled &&
-                    (test.type === 'custom' || module.category === test.type || test.type === 'owasp-top-10')
+                .filter(mod =>
+                    mod.enabled &&
+                    (test.type === 'custom' || mod.category === test.type || test.type === 'owasp-top-10')
                 );
 
             // Execute modules
-            for (const module of modules) {
+            for (const mod of modules) {
                 try {
                     const vulnerabilities = await Promise.race([
-                        module.execute(test.target),
+                        mod.execute(test.target),
                         new Promise<Vulnerability[]>((_, reject) =>
                             setTimeout(() => reject(new Error('Module timeout')), test.configuration.timeLimit / modules.length)
                         )
@@ -536,9 +536,9 @@ export class AutomatedPentestingFramework extends EventEmitter {
 
                     test.results.vulnerabilities.push(...vulnerabilities);
 
-                    this.emit('moduleCompleted', { test, module, vulnerabilities });
+                    this.emit('moduleCompleted', { test, testModule: mod, vulnerabilities });
                 } catch (error) {
-                    this.emit('moduleError', { test, module, error });
+                    this.emit('moduleError', { test, testModule: mod, error });
                 }
             }
 

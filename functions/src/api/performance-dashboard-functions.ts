@@ -5,12 +5,12 @@
 
 import type { CallableRequest, HttpsOptions } from "firebase-functions/v2/https";
 import { onCall } from "firebase-functions/v2/https";
-import { StructuredLogger } from "../lib/structured-logger";
-import { MetricsCollector } from "../lib/metrics-collector";
-import { AIResponseCache } from "../lib/ai-response-cache";
+import { AIResponseCache } from "../lib/ai-response-cache.js";
+import { MetricsCollector } from "../lib/metrics-collector.js";
+import { StructuredLogger } from "../lib/structured-logger.js";
 
 const httpsOptions: HttpsOptions = {
-  region: "australia-southeast2",
+  region: "australia-southeast1",
   memory: "1GiB",
   timeoutSeconds: 60,
   cors: true
@@ -62,7 +62,11 @@ export const performanceDashboard = onCall(httpsOptions, async (request: Callabl
       metrics: {
         summary: metricsReport.summary,
         topFunctions: Object.entries(metricsReport.functions)
-          .sort(([, a], [, b]) => b.executionCount - a.executionCount)
+          .sort(([, a], [, b]) => {
+            const aExec = (a as { executionCount?: number })?.executionCount ?? 0;
+            const bExec = (b as { executionCount?: number })?.executionCount ?? 0;
+            return bExec - aExec;
+          })
           .slice(0, 10)
       },
       cache: {

@@ -159,6 +159,7 @@ export default function TeamChatPage() {
   // Removed unused isTyping state (could be reintroduced when implementing live typing notices)
   // Typing users displayed; setter currently unused (future enhancement). Avoid unused var warning.
   const [typingUsers] = useState<string[]>([]);
+  const [isComposing, setIsComposing] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -370,7 +371,15 @@ export default function TeamChatPage() {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Prevent global handlers from interfering
+    e.stopPropagation();
+    // IME composition guard (avoid sending mid-composition)
+    const nativeEvt = e.nativeEvent as unknown as { isComposing?: boolean; stopImmediatePropagation?: () => void };
+    if (typeof nativeEvt?.stopImmediatePropagation === 'function') {
+      nativeEvt.stopImmediatePropagation();
+    }
+    if (nativeEvt?.isComposing || isComposing) return;
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       void sendMessage();
@@ -734,9 +743,16 @@ export default function TeamChatPage() {
                   placeholder={`Message #${channels.find(c => c.id === activeChannel)?.name || 'general'}`}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
+                    onKeyDown={handleKeyDown}
+                    onCompositionStart={() => setIsComposing(true)}
+                    onCompositionEnd={() => setIsComposing(false)}
                   className="min-h-[44px] max-h-32 resize-none"
                   rows={1}
+                    // Mobile typing hints
+                    enterKeyHint="send"
+                    spellCheck
+                    autoCorrect="on"
+                    autoCapitalize="sentences"
                 />
               </div>
               <div className="flex items-center gap-1">

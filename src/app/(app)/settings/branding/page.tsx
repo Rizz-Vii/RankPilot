@@ -27,6 +27,7 @@ import {
   Smartphone,
   Upload,
 } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -234,10 +235,13 @@ export default function WhiteLabelPage() {
                       <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
                         {branding.logo ? (
                           <div className="space-y-2">
-                            <img
+                            <Image
                               src={branding.logo}
                               alt="Company Logo"
-                              className="h-16 mx-auto object-contain"
+                              width={240}
+                              height={72}
+                              unoptimized
+                              className="h-16 mx-auto object-contain w-auto"
                             />
                             <p className="text-sm text-muted-foreground">
                               Current logo
@@ -544,10 +548,13 @@ export default function WhiteLabelPage() {
                   >
                     <div className="flex items-center justify-between">
                       {branding.logo && (
-                        <img
+                        <Image
                           src={branding.logo}
                           alt="Company Logo"
-                          className="h-12 object-contain"
+                          width={220}
+                          height={66}
+                          unoptimized
+                          className="h-12 w-auto object-contain"
                         />
                       )}
                       <div className="text-right">

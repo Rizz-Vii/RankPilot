@@ -5,26 +5,13 @@
 
 import { customDashboardBuilder } from '@/lib/dashboard/custom-dashboard-builder';
 import { extractErrorMessage } from '@/lib/errors/extract-error-message';
+import { adminAuth } from '@/lib/firebase-admin';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getAuth, type DecodedIdToken } from 'firebase-admin/auth';
+import type { DecodedIdToken } from 'firebase-admin/auth';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-// Initialize Firebase Admin if not already initialized
-if (!getApps().length) {
-    const projectId = process.env.FIREBASE_PROJECT_ID || 'rankpilot-h3jpc';
-
-    try {
-        initializeApp({
-            projectId,
-            // For production, you'd use service account credentials
-            // credential: cert({...})
-        });
-    } catch (error) {
-        console.error('[DashboardAPI] Firebase Admin initialization error:', error);
-    }
-}
+// Firebase Admin is initialized centrally in '@/lib/firebase-admin'.
 
 import { sanitizeWidgetCreate, sanitizeWidgetMutation, type WidgetCreateInput, type WidgetMutation } from '@/types/dashboard-widget-mutation';
 
@@ -55,7 +42,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         const token = authHeader.split('Bearer ')[1];
         let user: DecodedIdToken | undefined;
         try {
-            user = await getAuth().verifyIdToken(token);
+            user = await adminAuth.verifyIdToken(token);
         } catch (error) {
             console.error('[DashboardAPI] Token verification failed:', error);
             return NextResponse.json(enforceProvenance({ error: 'Unauthorized - Invalid token' }, { path: 'dashboard/custom', note: 'auth' }), { status: 401 });
@@ -138,7 +125,7 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
         const token = authHeader.split('Bearer ')[1];
         let user: DecodedIdToken | undefined;
         try {
-            user = await getAuth().verifyIdToken(token);
+            user = await adminAuth.verifyIdToken(token);
         } catch (error) {
             console.error('[DashboardAPI] Token verification failed:', error);
             return NextResponse.json(enforceProvenance({ error: 'Unauthorized - Invalid token' }, { path: 'dashboard/custom', note: 'auth' }), { status: 401 });

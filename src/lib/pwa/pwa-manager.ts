@@ -64,24 +64,8 @@ export class PWAManager {
     }
 
     private async initializePWA() {
-        const enablePWA = process.env.NEXT_PUBLIC_ENABLE_PWA === 'true' || process.env.NODE_ENV === 'production';
-
-        // In development, proactively unregister any existing service workers to avoid stale caches
-        if (!enablePWA && 'serviceWorker' in navigator) {
-            try {
-                const regs = await navigator.serviceWorker.getRegistrations();
-                for (const reg of regs) {
-                    await reg.unregister();
-                }
-                // Also prompt the controller to stop if present
-                if (navigator.serviceWorker.controller) {
-                    navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
-                }
-                console.info('[PWA] Service workers unregistered in development');
-            } catch (e) {
-                console.warn('[PWA] Failed to unregister service workers in development:', e);
-            }
-        }
+        // Gate PWA strictly behind explicit env flag to avoid unintended SW interference in production.
+        const enablePWA = process.env.NEXT_PUBLIC_ENABLE_PWA === 'true';
 
         // Register service worker only when enabled
         if (enablePWA && 'serviceWorker' in navigator) {

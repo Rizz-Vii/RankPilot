@@ -9,6 +9,20 @@ import { setTimeout as sleep } from 'timers/promises';
 
 const ROOT = path.resolve(process.cwd(), 'src/app/api');
 const CONFIG_PATH = path.resolve(process.cwd(), '.provenance-audit.json');
+// Phase 3: standardized provenance reason codes (informational in report)
+const PROVENANCE_REASON_CODES = [
+    'error-path',
+    'disabled',
+    'auth-required',
+    'rate-limited',
+    'cache-hit',
+    'policy-skip',
+    'validation-failed',
+    'timeout',
+    'backend-error',
+    'unsupported',
+    'other',
+];
 // Narrow hints to reduce false positives on non-AI operational endpoints.
 const AI_HINTS = [
     /\/ai\//i,
@@ -103,7 +117,10 @@ function finalize() {
     try {
         const outDir = path.resolve(process.cwd(), 'testing/reports');
         fs.mkdirSync(outDir, { recursive: true });
-        fs.writeFileSync(path.join(outDir, 'provenance-audit.json'), JSON.stringify({ count: violations.length, violations }, null, 2));
+        fs.writeFileSync(
+            path.join(outDir, 'provenance-audit.json'),
+            JSON.stringify({ count: violations.length, violations, allowedReasonCodes: PROVENANCE_REASON_CODES }, null, 2)
+        );
     } catch { }
 
     if (violations.length) {

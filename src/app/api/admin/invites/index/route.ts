@@ -1,6 +1,10 @@
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
+
+// Ensure Node.js runtime and disable static optimization for this dev/test admin route
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 interface TeamMember {
   userId?: string;

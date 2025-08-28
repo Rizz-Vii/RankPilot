@@ -5,7 +5,7 @@
 
 import { getApps, initializeApp } from 'firebase/app';
 // Reuse unified client singleton (default app) to avoid duplicate init/log noise
-import { app as defaultClientApp } from '@/lib/firebase/connection-manager';
+import { getClientApp } from '@/lib/firebase/connection-manager';
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 
 interface QueueItem {
@@ -71,8 +71,8 @@ export class ConnectionPoolManager {
       if (existingApp) {
         app = existingApp;
       } else if (appName === 'default') {
-        // Ensure we do not create a new default app; leverage connection-manager exported singleton
-        app = defaultClientApp;
+        // Ensure we do not create a new default app; leverage connection-manager singleton
+        app = getClientApp();
       } else {
         // Rare named app case (keep minimal config) – consider consolidating if unused
         app = initializeApp({

@@ -1,12 +1,12 @@
 // Finance Metrics Service - aggregates invoice data with mock fallback
-import type { Unsubscribe} from 'firebase/firestore';
-import { collection, getDocs, orderBy, query, where, limit, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
-import { managedOnSnapshot } from '@/lib/firebase/write-guard';
-import { db } from '@/lib/firebase/connection-manager';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
+import { db } from '@/lib/firebase';
+import { managedOnSnapshot } from '@/lib/firebase/write-guard';
 import { allowFinanceMocks } from '@/lib/flags/finance';
-import type { FinanceInvoiceFirestore, FinanceInvoiceRuntime} from '@/types/firestore-docs';
+import type { FinanceInvoiceFirestore, FinanceInvoiceRuntime } from '@/types/firestore-docs';
 import { mapFinanceInvoiceDoc } from '@/types/firestore-docs';
+import type { Unsubscribe } from 'firebase/firestore';
+import { collection, getDocs, limit, orderBy, query, where, type DocumentData, type QuerySnapshot } from 'firebase/firestore';
 
 // Legacy export kept for downstream code expecting FinanceInvoiceDoc name
 export interface FinanceInvoiceDoc extends FinanceInvoiceRuntime { }

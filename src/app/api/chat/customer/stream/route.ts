@@ -3,8 +3,9 @@ import { maybeEmbedMessage } from '@/lib/chat/embedding';
 import { buildQueryEmbedding, maybeClusterKeywords, retrieveSimilarMessages } from '@/lib/chat/retrievalAndClustering';
 import { maybeSummarizeSession } from '@/lib/chat/sessionSummarizer';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { sse } from '@/lib/http/sse';
 import { recordError, recordFallback, recordRateLimitRejection, recordRouteLatency } from '@/lib/metrics/unified-metrics';
-import { enforceProvenanceOnChunk } from '@/lib/middleware/provenance';
+import { enforceProvenance, enforceProvenanceOnChunk } from '@/lib/middleware/provenance';
 import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
 import { retrieveSiteChunks } from '@/lib/site-ingestion/retrieval';
 import { FieldValue } from 'firebase-admin/firestore';
@@ -84,6 +85,7 @@ function estimateTokens(text: string): number {
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 async function getUserTier(uid: string): Promise<string> {
     try {
@@ -145,7 +147,10 @@ export async function POST(req: NextRequest): Promise<Response> {
         if (!message?.trim()) {
             recordError('chat/customer/stream', '4xx_user');
             recordRouteLatency('chat/customer/stream', Date.now() - start);
-            return NextResponse.json({ error: 'Message required' }, { status: 400 });
+            return NextResponse.json(
+                enforceProvenance({ error: 'Message required' }, { path: 'chat/customer/stream', note: 'validation' }),
+                { status: 400 }
+            );
         }
 
         const openaiKey = process.env.OPENAI_API_KEY; // may be absent; we will fallback
@@ -180,7 +185,10 @@ export async function POST(req: NextRequest): Promise<Response> {
             recordError('chat/customer/stream', '4xx_user');
             recordRouteLatency('chat/customer/stream', Date.now() - start);
             const msg = qErr instanceof Error ? qErr.message : 'Quota exceeded';
-            return NextResponse.json({ error: msg }, { status: 429 });
+            return NextResponse.json(
+                enforceProvenance({ error: msg }, { path: 'chat/customer/stream', note: 'quota' }),
+                { status: 429 }
+            );
         }
 
         // Retrieval augmentation (if embeddings enabled)
@@ -278,100 +286,91 @@ export async function POST(req: NextRequest): Promise<Response> {
             recordFallback(reason);
         }
 
-        const encoder = new TextEncoder();
-        const readable = new ReadableStream({
-            async start(controller) {
-                let fullResponse = '';
-                let metaBuffer = '';
-                let tokensUsed = 0;
-                try {
-                    // Emit provider info early
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ info: 'provider_selected', provider, openaiCircuitOpen: openAICircuitOpen(), provenance: provider === 'openai' ? 'live' : 'synthetic' }, { path: 'chat/customer/stream' }))}\n\n`));
-                    if (openAIStream) {
-                        for await (const part of openAIStream) {
-                            const content = part?.choices?.[0]?.delta?.content;
-                            if (content) {
-                                fullResponse += content;
-                                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: content, provenance: provider === 'openai' ? 'live' : 'synthetic' })}\n\n`));
-                            }
+        return sse(req, async (client) => {
+            let fullResponse = '';
+            let metaBuffer = '';
+            let tokensUsed = 0;
+            try {
+        // Emit provider info early
+                client.send(enforceProvenanceOnChunk({ info: 'provider_selected', provider, openaiCircuitOpen: openAICircuitOpen(), provenance: provider === 'openai' ? 'live' : 'synthetic' }, { path: 'chat/customer/stream' }));
+                if (openAIStream) {
+                    for await (const part of openAIStream) {
+                        const content = part?.choices?.[0]?.delta?.content;
+                        if (content) {
+                            fullResponse += content;
+                            client.send({ token: content, provenance: provider === 'openai' ? 'live' : 'synthetic' });
                         }
-                    } else {
-                        // One-shot fallback (non-streaming)
-                        fullResponse = await fallbackOneShot(finalSystemPrompt, message, 800);
-                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: fullResponse, fallback: true, provenance: 'synthetic' })}\n\n`));
                     }
-                    // Persist conversation to Firestore
-                    try {
-                        tokensUsed = estimateTokens(fullResponse);
-                        let intent: string | undefined; let actions: string[] | undefined; let priority: number | undefined;
-                        const metaMatch = fullResponse.match(/<rp_meta>([\s\S]*?)<\/rp_meta>/);
-                        if (metaMatch) {
-                            metaBuffer = metaMatch[1];
-                            try {
-                                const parsed = JSON.parse(metaBuffer.trim());
-                                intent = parsed.intent;
-                                actions = Array.isArray(parsed.actions) ? parsed.actions.slice(0, 5) : undefined;
-                                priority = typeof parsed.priority === 'number' ? parsed.priority : undefined;
-                                fullResponse = fullResponse.replace(metaMatch[0], '').trim();
-                            } catch { /* ignore */ }
-                        }
-                        await incrementTokenUsage(uid, tier, tokensUsed);
-                        const msgCollection = adminDb.collection('chatLogs').doc(uid).collection('sessions').doc(currentSessionId).collection('messages');
-                        const addedRef = await msgCollection.add({
-                            question: message,
-                            response: fullResponse,
-                            timestamp: FieldValue.serverTimestamp(),
-                            tokensUsed,
-                            chatType: 'customer',
-                            metadata: { streamed: true, url: url || null, intent, actions, priority, provider, fallback: provider !== 'openai', openaiCircuitOpen: openAICircuitOpen() }
-                        });
-                        await adminDb.collection('chatLogs').doc(uid).collection('sessions').doc(currentSessionId).set({
-                            lastMessage: fullResponse.slice(0, 100),
-                            lastActivity: FieldValue.serverTimestamp(),
-                            messageCount: FieldValue.increment(1),
-                            chatType: 'customer',
-                            lastProvider: provider,
-                            lastProviderAt: FieldValue.serverTimestamp(),
-                            openAICircuitOpen: openAICircuitOpen()
-                        }, { merge: true });
-                        // Provider usage analytics (per-day doc)
-                        try {
-                            const dateKey = new Date().toISOString().slice(0, 10);
-                            await adminDb.collection('usageCounters').doc(`${uid}_${dateKey}`).set({ [`providerCounts.${provider}`]: FieldValue.increment(1) }, { merge: true });
-                        } catch { }
-                        void maybeSummarizeSession({ uid, sessionId: currentSessionId, latestUserMessage: message, latestAIResponse: fullResponse })
-                            .then(r => { if (r.updated) { controller.enqueue(encoder.encode(`data: ${JSON.stringify({ info: 'summary_updated' })}\n\n`)); } })
-                            .catch(() => { });
-                        maybeEmbedMessage({ uid, sessionId: currentSessionId, messageDocId: addedRef.id, question: message })
-                            .then(() => openaiKey ? maybeClusterKeywords({ uid, sessionId: currentSessionId, apiKey: openaiKey }).catch(() => { }) : null)
-                            .catch(() => { });
-                    } catch { /* ignore persistence errors */ }
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ final: true, sessionId: currentSessionId, timestamp: new Date().toISOString(), tokensUsed, provider, fallback: provider !== 'openai', openaiCircuitOpen: openAICircuitOpen(), provenance: provider === 'openai' ? 'live' : 'synthetic' }, { path: 'chat/customer/stream' }))}\n\n`));
-                    controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-                    controller.close();
-                } catch (err: unknown) {
-                    recordError('chat/customer/stream', '5xx_server');
-                    const msg = err instanceof Error ? err.message : 'stream_error';
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(enforceProvenanceOnChunk({ error: msg, providerTried: provider, openAICircuitOpen: openAICircuitOpen(), provenance: 'synthetic' }, { path: 'chat/customer/stream' }))}\n\n`));
-                    controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-                    controller.close();
+                } else {
+                    // One-shot fallback (non-streaming)
+                    fullResponse = await fallbackOneShot(finalSystemPrompt, message, 800);
+                    client.send({ token: fullResponse, fallback: true, provenance: 'synthetic' });
                 }
+                // Persist conversation to Firestore
+                try {
+                    tokensUsed = estimateTokens(fullResponse);
+                    let intent: string | undefined; let actions: string[] | undefined; let priority: number | undefined;
+                    const metaMatch = fullResponse.match(/<rp_meta>([\s\S]*?)<\/rp_meta>/);
+                    if (metaMatch) {
+                        metaBuffer = metaMatch[1];
+                        try {
+                            const parsed = JSON.parse(metaBuffer.trim());
+                            intent = parsed.intent;
+                            actions = Array.isArray(parsed.actions) ? parsed.actions.slice(0, 5) : undefined;
+                            priority = typeof parsed.priority === 'number' ? parsed.priority : undefined;
+                            fullResponse = fullResponse.replace(metaMatch[0], '').trim();
+                        } catch { /* ignore */ }
+                    }
+                    await incrementTokenUsage(uid, tier, tokensUsed);
+                    const msgCollection = adminDb.collection('chatLogs').doc(uid).collection('sessions').doc(currentSessionId).collection('messages');
+                    const addedRef = await msgCollection.add({
+                        question: message,
+                        response: fullResponse,
+                        timestamp: FieldValue.serverTimestamp(),
+                        tokensUsed,
+                        chatType: 'customer',
+                        metadata: { streamed: true, url: url || null, intent, actions, priority, provider, fallback: provider !== 'openai', openaiCircuitOpen: openAICircuitOpen() }
+                    });
+                    await adminDb.collection('chatLogs').doc(uid).collection('sessions').doc(currentSessionId).set({
+                        lastMessage: fullResponse.slice(0, 100),
+                        lastActivity: FieldValue.serverTimestamp(),
+                        messageCount: FieldValue.increment(1),
+                        chatType: 'customer',
+                        lastProvider: provider,
+                        lastProviderAt: FieldValue.serverTimestamp(),
+                        openAICircuitOpen: openAICircuitOpen()
+                    }, { merge: true });
+                    // Provider usage analytics (per-day doc)
+                    try {
+                        const dateKey = new Date().toISOString().slice(0, 10);
+                        await adminDb.collection('usageCounters').doc(`${uid}_${dateKey}`).set({ [`providerCounts.${provider}`]: FieldValue.increment(1) }, { merge: true });
+                    } catch { }
+                    void maybeSummarizeSession({ uid, sessionId: currentSessionId, latestUserMessage: message, latestAIResponse: fullResponse })
+                        .then(r => { if (r.updated) { client.send({ info: 'summary_updated' }); } })
+                        .catch(() => { });
+                    maybeEmbedMessage({ uid, sessionId: currentSessionId, messageDocId: addedRef.id, question: message })
+                        .then(() => openaiKey ? maybeClusterKeywords({ uid, sessionId: currentSessionId, apiKey: openaiKey }).catch(() => { }) : null)
+                        .catch(() => { });
+                } catch { /* ignore persistence errors */ }
+                client.send(enforceProvenanceOnChunk({ final: true, sessionId: currentSessionId, timestamp: new Date().toISOString(), tokensUsed, provider, fallback: provider !== 'openai', openaiCircuitOpen: openAICircuitOpen(), provenance: provider === 'openai' ? 'live' : 'synthetic' }, { path: 'chat/customer/stream' }));
+                client.sendRaw('data: [DONE]\n\n');
+                recordRouteLatency('chat/customer/stream', Date.now() - start);
+                client.close();
+            } catch (err: unknown) {
+                recordError('chat/customer/stream', '5xx_server');
+                const msg = err instanceof Error ? err.message : 'stream_error';
+                client.send(enforceProvenanceOnChunk({ error: msg, providerTried: provider, openAICircuitOpen: openAICircuitOpen(), provenance: 'synthetic' }, { path: 'chat/customer/stream' }));
+                client.sendRaw('data: [DONE]\n\n');
+                recordRouteLatency('chat/customer/stream', Date.now() - start);
+                client.close();
             }
-        });
-
-        const response = new Response(readable, {
-            headers: {
-                'Content-Type': 'text/event-stream',
-                'Cache-Control': 'no-cache, no-transform',
-                'Connection': 'keep-alive',
-                'Transfer-Encoding': 'chunked'
-            }
-        });
-        recordRouteLatency('chat/customer/stream', Date.now() - start);
-        return response;
+        }, { heartbeatMs: 15000 });
     } catch (e: unknown) {
         recordError('chat/customer/stream', '5xx_server');
         recordRouteLatency('chat/customer/stream', Date.now() - start);
-        return NextResponse.json({ error: e instanceof Error ? e.message : String(e ?? 'Stream init failed') }, { status: 500 });
+        return NextResponse.json(
+            enforceProvenance({ error: e instanceof Error ? e.message : String(e ?? 'Stream init failed') }, { path: 'chat/customer/stream', note: 'exception' }),
+            { status: 500 }
+        );
     }
 }

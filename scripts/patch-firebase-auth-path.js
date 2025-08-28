@@ -44,6 +44,35 @@ function run() {
     const firebaseNodeModules = path.join(root, 'node_modules', 'firebase', 'node_modules');
     const destAtFirebase = path.join(firebaseNodeModules, '@firebase');
     ensureSymlink(atFirebaseRoot, destAtFirebase);
+
+    // Also normalize hashed @firebase subpackages like ".firestore-<hash>" to "@firebase/firestore"
+    // Some package managers produce hashed folders which break TS path/exports resolution.
+    try {
+        const entries = fs.readdirSync(atFirebaseRoot, { withFileTypes: true });
+        for (const entry of entries) {
+            if (!entry.isDirectory()) continue;
+            const name = entry.name; // e.g. ".firestore-abc123" or "app-types" or "database"
+            // Only handle hidden hashed folders like ".firestore-<hash>" and similar
+            if (!name.startsWith('.')) continue;
+            // Try to read its package.json to discover canonical package name
+            const pkgJsonPath = path.join(atFirebaseRoot, name, 'package.json');
+            if (!fs.existsSync(pkgJsonPath)) continue;
+            let pkg;
+            try {
+                pkg = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
+            } catch {
+                continue;
+            }
+            const pkgName = typeof pkg?.name === 'string' ? pkg.name : '';
+            if (!pkgName.startsWith('@firebase/')) continue;
+            const subdir = pkgName.split('/')[1]; // e.g. "firestore"
+            if (!subdir) continue;
+            const canonicalDir = path.join(atFirebaseRoot, subdir);
+            ensureSymlink(path.join(atFirebaseRoot, name), canonicalDir);
+        }
+    } catch (e) {
+        console.warn(`[firebase-patch] Failed to normalize @firebase subpackages: ${e && e.message}`);
+    }
 }
 
 run();

@@ -1,17 +1,25 @@
-import { db } from '@/lib/firebase';
-import { getLogger } from '@/lib/logging/app-logger';
-import { addDoc, collection, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
-import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
+// Canonical Stripe webhook is handled by Firebase Cloud Functions (functions/src/stripe-webhook.ts).
+// This Next.js route is intentionally disabled to prevent duplicate processing.
+// If you need to re-enable, coordinate with Functions and remove the 410 response below.
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export async function POST() {
+    return NextResponse.json({ error: 'Stripe webhook handled by Cloud Functions' }, { status: 410 });
+}
+/*
+import { adminDb } from '@/lib/firebase-admin';
+import { getLogger } from '@/lib/logging/app-logger';
+import { enforceProvenance } from '@/lib/middleware/provenance';
+import { headers } from 'next/headers';
 import Stripe from 'stripe';
-// NOTE: Functions env centralizes invoice persistence. For ISR / local dev parity we duplicate minimal upsert using client Firestore.
-async function upsertFinanceInvoiceClient(invoice: unknown) {
+// Minimal invoice upsert using Admin SDK (keep in sync with any Functions implementation)
+async function upsertFinanceInvoice(invoice: unknown) {
     try {
         const invoiceObj = invoice as Stripe.Invoice;
         const customerId = invoiceObj?.customer as string | undefined;
         if (!customerId) return;
-        const usersQ = query(collection(db, 'users'), where('stripeCustomerId', '==', customerId));
-        const snap = await getDocs(usersQ);
+        const snap = await adminDb.collection('users').where('stripeCustomerId', '==', customerId).get();
         if (snap.empty) return;
         const userId = snap.docs[0].id;
         const period = new Date(((invoiceObj?.period_end ?? invoiceObj?.created) as number) * 1000).toISOString().slice(0, 7);
@@ -35,10 +43,8 @@ async function upsertFinanceInvoiceClient(invoice: unknown) {
         const planTier = (priceMeta && typeof priceMeta.planTier === 'string' ? priceMeta.planTier as string : undefined)
             || (invoiceObj?.metadata?.planTier as string | undefined)
             || null;
-        const ref = doc(db, 'financeInvoices', invoiceObj?.id as string);
-        // merge keeps createdAt if exists
-        await setDoc(
-            ref,
+        const ref = adminDb.collection('financeInvoices').doc(invoiceObj?.id as string);
+        await ref.set(
             { userId, period, amount, status, issuedAt, dueAt, paidAt, planTier, currency: invoiceObj?.currency, updatedAt: new Date(), createdAt: new Date() },
             { merge: true }
         );
@@ -48,7 +54,11 @@ async function upsertFinanceInvoiceClient(invoice: unknown) {
     }
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
+function getStripe(): Stripe | null {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) return null;
+    return new Stripe(key);
+}
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? '';
 
 export async function POST(request: Request) {
@@ -58,29 +68,48 @@ export async function POST(request: Request) {
     const logger = getLogger('stripe-webhook');
     if (!signature) {
         logger.warn('signature.missing');
-        return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
+        return NextResponse.json(
+            enforceProvenance({ error: 'Missing stripe-signature header' }, { path: 'stripe/webhook', note: 'signature' }),
+            { status: 400 }
+        );
     }
     if (!webhookSecret) {
         logger.error('webhook.missing_secret');
-        return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+        return NextResponse.json(
+            enforceProvenance({ error: 'Webhook secret not configured' }, { path: 'stripe/webhook', note: 'config' }),
+            { status: 500 }
+        );
     }
 
     let event: Stripe.Event;
+    const stripe = getStripe();
+    if (!stripe) {
+        logger.error('webhook.misconfigured', { reason: 'missing_secret_key' });
+        return NextResponse.json(
+            enforceProvenance({ error: 'Stripe not configured' }, { path: 'stripe/webhook', note: 'config' }),
+            { status: 500 }
+        );
+    }
 
     try {
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err) {
         logger.warn('signature.verification_failed', { error: (err as Error).message });
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+        return NextResponse.json(
+            enforceProvenance({ error: 'Invalid signature' }, { path: 'stripe/webhook', note: 'signature' }),
+            { status: 400 }
+        );
     }
 
     try {
         // FIN-01 Idempotency: skip if event already processed
-        const processedRef = doc(db, 'stripeProcessedEvents', event.id);
-        const processedSnap = await getDoc(processedRef);
-        if (processedSnap.exists()) {
+        const processedRef = adminDb.collection('stripeProcessedEvents').doc(event.id);
+        const processedSnap = await processedRef.get();
+        if (processedSnap.exists) {
             logger.info('event.duplicate', { eventId: event.id, type: event.type });
-            return NextResponse.json({ received: true, duplicate: true });
+        return NextResponse.json(
+            enforceProvenance({ received: true, duplicate: true }, { path: 'stripe/webhook', note: 'duplicate' })
+        );
         }
         switch (event.type) {
             // TODO(T6): unify financeInvoices upsert with functions webhook implementation (invoice events)
@@ -115,7 +144,7 @@ export async function POST(request: Request) {
             case 'invoice.payment_succeeded': {
                 const invoice = event.data.object as Stripe.Invoice;
                 logger.info('invoice.payment_succeeded', { invoiceId: invoice.id });
-                await upsertFinanceInvoiceClient(invoice);
+                await upsertFinanceInvoice(invoice);
                 await handlePaymentSucceeded(invoice);
                 break;
             }
@@ -123,20 +152,20 @@ export async function POST(request: Request) {
             case 'invoice.payment_failed': {
                 const invoice = event.data.object as Stripe.Invoice;
                 logger.warn('invoice.payment_failed', { invoiceId: invoice.id });
-                await upsertFinanceInvoiceClient(invoice);
+                await upsertFinanceInvoice(invoice);
                 await handleFailedPayment(invoice);
                 break;
             }
             case 'invoice.created': {
                 const invoice = event.data.object as Stripe.Invoice;
                 logger.info('invoice.created', { invoiceId: invoice.id });
-                await upsertFinanceInvoiceClient(invoice);
+                await upsertFinanceInvoice(invoice);
                 break;
             }
             case 'invoice.finalized': {
                 const invoice = event.data.object as Stripe.Invoice;
                 logger.info('invoice.finalized', { invoiceId: invoice.id });
-                await upsertFinanceInvoiceClient(invoice);
+                await upsertFinanceInvoice(invoice);
                 break;
             }
 
@@ -145,13 +174,15 @@ export async function POST(request: Request) {
         }
 
         // Mark as processed (non-blocking if fails)
-        try { await setDoc(processedRef, { id: event.id, type: event.type, createdAt: new Date() }, { merge: false }); } catch (e) { logger.degraded('processedEvent.persist_failed', { eventId: event.id, error: (e as Error).message }); }
-        return NextResponse.json({ received: true, processed: true });
+        try { await processedRef.set({ id: event.id, type: event.type, createdAt: new Date() }, { merge: false }); } catch (e) { logger.degraded('processedEvent.persist_failed', { eventId: event.id, error: (e as Error).message }); }
+        return NextResponse.json(
+            enforceProvenance({ received: true, processed: true }, { path: 'stripe/webhook', note: 'ok' })
+        );
 
     } catch (error) {
         logger.error('webhook.handler_error', { error: (error as Error).message });
         return NextResponse.json(
-            { error: 'Webhook handler failed' },
+            enforceProvenance({ error: 'Webhook handler failed' }, { path: 'stripe/webhook', note: 'exception' }),
             { status: 500 }
         );
     }
@@ -168,7 +199,7 @@ async function updateUserSubscription(session: Stripe.Checkout.Session) {
     }
 
     try {
-        await updateDoc(doc(db, 'users', userId), {
+        await adminDb.collection('users').doc(userId).update({
             subscriptionTier: tier,
             stripeCustomerId: session.customer,
             subscriptionId: session.subscription,
@@ -190,7 +221,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     if (!userId) { logger.warn('subscription.created.metadata_missing'); return; }
 
     try {
-        await updateDoc(doc(db, 'users', userId), {
+        await adminDb.collection('users').doc(userId).update({
             subscriptionTier: tier,
             subscriptionId: subscription.id,
             subscriptionStatus: subscription.status,
@@ -211,7 +242,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     if (!userId) { logger.warn('subscription.updated.metadata_missing'); return; }
 
     try {
-        await updateDoc(doc(db, 'users', userId), {
+        await adminDb.collection('users').doc(userId).update({
             subscriptionStatus: subscription.status,
             updatedAt: new Date(),
         });
@@ -229,7 +260,7 @@ async function downgradeToFreeTier(subscription: Stripe.Subscription) {
     if (!userId) { logger.warn('subscription.deleted.metadata_missing'); return; }
 
     try {
-        await updateDoc(doc(db, 'users', userId), {
+        await adminDb.collection('users').doc(userId).update({
             subscriptionTier: 'free',
             subscriptionStatus: 'canceled',
             subscriptionId: null,
@@ -259,12 +290,11 @@ async function handleFailedPayment(invoice: Stripe.Invoice) {
     try {
         logger.warn('payment.failed', { customerId });
         // Lookup user by stripeCustomerId
-        const usersQ = query(collection(db, 'users'), where('stripeCustomerId', '==', customerId));
-        const snap = await getDocs(usersQ);
+        const snap = await adminDb.collection('users').where('stripeCustomerId', '==', customerId).get();
         if (!snap.empty) {
             const userDoc = snap.docs[0];
-            await updateDoc(userDoc.ref, { subscriptionStatus: 'past_due', updatedAt: new Date() });
-            await addDoc(collection(db, 'email_logs'), {
+            await userDoc.ref.update({ subscriptionStatus: 'past_due', updatedAt: new Date() });
+            await adminDb.collection('email_logs').add({
                 userId: userDoc.id,
                 type: 'payment_failed',
                 invoiceId: invoice.id,
@@ -277,3 +307,4 @@ async function handleFailedPayment(invoice: Stripe.Invoice) {
         logger.degraded('payment.failure_handler_failed', { customerId, error: (error as Error).message });
     }
 }
+*/

@@ -7,6 +7,9 @@ export const EVENT_TYPES = [
   'automation.run.completed',
   'automation.run.failed',
   'finance.invoice.created',
+  // BI & Metrics (Phase 2 minimal)
+  'bi.snapshot.requested',
+  'bi.export.requested',
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];

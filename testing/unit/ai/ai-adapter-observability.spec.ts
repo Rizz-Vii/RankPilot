@@ -1,5 +1,5 @@
-import { runAiInference } from '@/../functions/src/lib/ai-memory-manager';
 import { expect } from 'chai';
+import { runAiInference } from '../../../functions/src/lib/ai-memory-manager';
 
 interface AIMetrics { count: number; p95: number; failovers?: number }
 // Narrow global accessor with runtime guard

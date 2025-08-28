@@ -1,6 +1,7 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { enforceProvenance } from '@/lib/middleware/provenance';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 // Health Alerts History API
 // Returns recent persisted alert snapshots from kpiAlertsDaily (newest first).
@@ -14,9 +15,9 @@ export async function GET(req: Request) {
     try {
         const snap = await adminDb.collection('kpiAlertsDaily').orderBy('date', 'desc').limit(limitParam).get();
         const rows = snap.docs.map(d => ({ id: d.id, ...(d.data() as Record<string, unknown>) } as Record<string, unknown>));
-        return NextResponse.json({ ok: true, rows }, { status: 200 });
+        return NextResponse.json(enforceProvenance({ ok: true, rows }, { path: 'health/alerts' }), { status: 200 });
     } catch (e: unknown) {
         const err = e as { message?: string };
-        return NextResponse.json({ ok: false, error: err.message || 'internal_error' }, { status: 500 });
+        return NextResponse.json(enforceProvenance({ ok: false, error: err.message || 'internal_error' }, { path: 'health/alerts', note: 'error' }), { status: 500 });
     }
 }

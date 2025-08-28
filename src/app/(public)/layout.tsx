@@ -1,6 +1,10 @@
 // src/app/(public)/layout.tsx
-import SiteHeader from "@/components/site-header";
 import { HydrationProvider } from "@/components/HydrationContext";
+import SiteHeader from "@/components/site-header";
+
+// Public marketing pages are static by default; dynamic client islands are allowed
+export const dynamic = "force-static";
+export const revalidate = false;
 
 export default function PublicLayout({
   children,

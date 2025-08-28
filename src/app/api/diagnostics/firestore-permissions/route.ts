@@ -1,5 +1,4 @@
-import { db } from '@/lib/firebase';
-import { collection, getDocs, limit, query } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase-admin';
 import { NextResponse } from 'next/server';
 
 // Dev-only diagnostics endpoint: validates current user Firestore read access for key collections
@@ -20,8 +19,7 @@ export async function GET() {
     const results: Record<string, unknown> = {};
     for (const colName of targets) {
         try {
-            const q = query(collection(db, colName), limit(1));
-            const snap = await getDocs(q);
+            const snap = await adminDb.collection(colName).limit(1).get();
             results[colName] = { ok: true, count: snap.size };
         } catch (e: unknown) {
             const code = ((): string => {

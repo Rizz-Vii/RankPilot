@@ -1,57 +1,90 @@
-import { functions } from '@/lib/firebase';
-import { httpsCallable } from 'firebase/functions';
+import { adminAuth } from '@/lib/firebase-admin';
+import { STRIPE_PLANS, type BillingInterval, type PlanType } from '@/lib/stripe';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
-// Use the currently generated union literal accepted by Stripe typings; avoid hard‑coding an outdated version.
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', { apiVersion: '2025-07-30.basil' });
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+function getStripe(): Stripe | null {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) return null;
+    return new Stripe(key);
+}
 
 export async function POST(request: NextRequest) {
     try {
-        const { tier, billingInterval, successUrl, cancelUrl } = await request.json();
+        const { tier, billingInterval, successUrl, cancelUrl } = await request.json() as {
+            tier: PlanType | 'free';
+            billingInterval?: BillingInterval;
+            successUrl?: string;
+            cancelUrl?: string;
+        };
 
-        // Validate required fields
         if (!tier) {
             return NextResponse.json({ error: 'Subscription tier is required' }, { status: 400 });
         }
-
-        // Free tier doesn't need Stripe
         if (tier === 'free') {
             return NextResponse.json({ error: 'Free tier does not require payment' }, { status: 400 });
         }
-
-        // Validate tier
-        const validTiers = ['starter', 'agency', 'enterprise'];
-        if (!validTiers.includes(tier)) {
+        if (!(tier in STRIPE_PLANS)) {
             return NextResponse.json({ error: 'Invalid subscription tier' }, { status: 400 });
         }
 
-        // Create checkout session via Firebase Function
-        const result = await createCheckoutSession({
-            planId: tier,
-            billingInterval: billingInterval || 'monthly',
-            successUrl: successUrl || `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
-            cancelUrl: cancelUrl || `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true`,
-        });
-
-        const { sessionId } = result.data as { sessionId: string; };
-
-        return NextResponse.json({
-            sessionId,
-            url: `https://checkout.stripe.com/pay/${sessionId}`,
-        });
-
-    } catch (error: unknown) {
-        const err = error as { code?: string; message?: string };
-        console.error('❌ Stripe checkout error:', err);
-
-        // Handle Firebase Function errors
-        if (err.code === 'unauthenticated') {
-            return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+        const stripe = getStripe();
+        if (!stripe) {
+            return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
         }
 
+        const plan = STRIPE_PLANS[tier as PlanType];
+        const interval: BillingInterval = billingInterval || 'monthly';
+        const priceId = plan.priceId?.[interval];
+        if (!priceId) {
+            return NextResponse.json({ error: 'Price not configured for tier/interval' }, { status: 400 });
+        }
+
+        // Try to infer userId from Authorization if present (Bearer Firebase ID token)
+        let userId: string | undefined;
+        const authHeader = request.headers.get('authorization') || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : undefined;
+        if (token) {
+            try {
+                const decoded = await adminAuth.verifyIdToken(token);
+                userId = decoded.uid;
+            } catch {
+                // ignore; allow anonymous creation with no userId
+            }
+        }
+
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const session = await stripe.checkout.sessions.create({
+            mode: 'subscription',
+            line_items: [
+                { price: priceId, quantity: 1 }
+            ],
+            success_url: (successUrl || `${appUrl}/payment-success`) + '?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url: cancelUrl || `${appUrl}/pricing?canceled=true`,
+            allow_promotion_codes: true,
+            billing_address_collection: 'auto',
+            metadata: {
+                planId: tier,
+                billingInterval: interval,
+                ...(userId ? { userId } : {}),
+            },
+            subscription_data: {
+                metadata: {
+                    planId: tier,
+                    billingInterval: interval,
+                    ...(userId ? { userId } : {}),
+                }
+            }
+        });
+
+        return NextResponse.json({ sessionId: session.id, url: session.url });
+
+    } catch (error: unknown) {
+        const err = error as { message?: string };
         return NextResponse.json(
             { error: err.message || 'Failed to create checkout session' },
             { status: 500 }
@@ -59,7 +92,7 @@ export async function POST(request: NextRequest) {
     }
 }
 
- // Handle checkout session retrieval
+// Handle checkout session retrieval
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
@@ -70,6 +103,10 @@ export async function GET(request: NextRequest) {
         }
 
         // Retrieve session details from Stripe
+        const stripe = getStripe();
+        if (!stripe) {
+            return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
+        }
         const session = await stripe.checkout.sessions.retrieve(sessionId);
 
         return NextResponse.json({

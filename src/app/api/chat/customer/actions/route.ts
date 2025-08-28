@@ -1,7 +1,7 @@
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withProvenance } from '@/lib/middleware/provenance';
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -14,7 +14,7 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
     try {
         const authHeader = req.headers.get('authorization');
         if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Auth required' }, { status: 401 });
+            return NextResponse.json(enforceProvenance({ error: 'Auth required' }, { path: 'chat/customer/actions', note: 'auth' }), { status: 401 });
         }
         const idToken = authHeader.split(' ')[1];
         const decoded = await adminAuth.verifyIdToken(idToken);
@@ -23,13 +23,23 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const sessionId = searchParams.get('sessionId');
         if (!sessionId) {
-            return NextResponse.json({ error: 'sessionId required' }, { status: 400 });
+            return NextResponse.json(enforceProvenance({ error: 'sessionId required' }, { path: 'chat/customer/actions', note: 'validation' }), { status: 400 });
         }
 
         const body = await req.json().catch(() => ({}));
         const progress = body?.progress || {};
         if (typeof progress !== 'object' || Array.isArray(progress)) {
-            return NextResponse.json({ error: 'Invalid progress payload' }, { status: 400 });
+            return NextResponse.json(enforceProvenance({ error: 'Invalid progress payload' }, { path: 'chat/customer/actions', note: 'validation' }), { status: 400 });
+        }
+        // Forbidden-field guard: disallow client attempts to set server-managed fields
+        const forbidden = ['__provenance', 'provenance', 'updatedAt', 'actionStats'];
+        for (const k of Object.keys(progress)) {
+            if (forbidden.includes(k)) {
+                return NextResponse.json(
+                    enforceProvenance({ error: `Field not allowed: ${k}` }, { path: 'chat/customer/actions', note: 'forbidden-field' }),
+                    { status: 400 }
+                );
+            }
         }
 
         const sessionRef = adminDb
@@ -62,11 +72,11 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
             { merge: true }
         );
 
-        return NextResponse.json({ __provenance: { source: 'chat-actions', kind: 'mutation' }, success: true, actionStats: { totalCompleted, totalPending, completionRate } });
+        return NextResponse.json(enforceProvenance({ success: true, actionStats: { totalCompleted, totalPending, completionRate } }, { path: 'chat/customer/actions', note: 'ok' }));
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e);
         return NextResponse.json(
-            { error: message || 'Failed to update actions' },
+            enforceProvenance({ error: message || 'Failed to update actions' }, { path: 'chat/customer/actions', note: 'exception' }),
             { status: 500 }
         );
     }

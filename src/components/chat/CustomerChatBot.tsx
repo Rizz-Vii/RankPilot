@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/context/AuthContext';
+import { canAccessTier, type SubscriptionTier } from '@/lib/access-control';
 import { extractRpMeta } from '@/lib/chat/rpMeta';
 import { auth, storage } from '@/lib/firebase';
 import { useIsMobile } from '@/lib/mobile-responsive-utils';
@@ -19,8 +20,11 @@ import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage
 import { AnimatePresence, motion } from 'framer-motion';
 import DOMPurify from 'isomorphic-dompurify';
 import { Bot, Loader2, Maximize2, MessageCircle, Minimize2, Send, User, X } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { renderMarkdownToHtml } from './markdown-render';
+import { canNavigateTo, resolveSuggestionRoute } from './nav-map';
 
 // Types
 type ChatMessageType = 'text' | 'image' | 'audio' | 'system';
@@ -73,6 +77,134 @@ interface CustomerChatBotProps {
     initialSuggestions?: string[];
 }
 
+// Memoized message row to avoid re-rendering unchanged rows (module scope for stable identity)
+const MessageRow = memo(function MessageRow({
+    msg,
+    isStreaming,
+    streamingId,
+    onCancelStreaming,
+}: {
+    msg: ChatMessage;
+    isStreaming: boolean;
+    streamingId: string | null;
+    onCancelStreaming: (id: string) => void;
+}) {
+    const isCurrentStreaming = isStreaming && streamingId === msg.id;
+    return (
+        <div
+            className={cn('flex gap-3 group', msg.isUser ? 'justify-end' : 'justify-start')}
+            role="listitem"
+            aria-roledescription={msg.isUser ? 'User message' : 'AI message'}
+            aria-label={msg.isUser ? `User message ${msg.message?.slice(0, 40)}` : 'AI message'}
+            data-message-type={msg.type || (msg.isUser ? 'user' : 'ai')}
+        >
+            {!msg.isUser && (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-4 h-4 text-white" />
+                </div>
+            )}
+
+            <div
+                className={cn(
+                    'relative max-w-[78%] rounded-2xl px-3 py-2 text-sm leading-relaxed ring-1 ring-inset',
+                    msg.isUser
+                        ? 'bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-sm'
+                        : msg.type === 'system'
+                            ? 'bg-warning/15 text-warning ring-warning/30'
+                            : 'bg-muted text-foreground ring-border'
+                )}
+            >
+                {msg.type === 'image' && msg.mediaUrl && (
+                    <Image
+                        src={msg.mediaUrl}
+                        alt={msg.message || 'uploaded image'}
+                        width={512}
+                        height={512}
+                        className="rounded mb-2 max-h-60 object-contain shadow-sm w-auto h-auto"
+                        unoptimized
+                    />
+                )}
+                {msg.type === 'audio' && msg.mediaUrl && (
+                    <audio controls className="w-full mb-2">
+                        <source src={msg.mediaUrl} />
+                    </audio>
+                )}
+                {msg.isUser ? (
+                    <div className="whitespace-pre-wrap break-words">
+                        {msg.message}
+                    </div>
+                ) : (
+                    <div
+                        className="prose prose-sm max-w-none dark:prose-invert break-words [&_table]:w-full [&_table]:text-left [&_table]:border [&_table]:border-collapse [&_th]:bg-muted [&_td]:align-top [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_pre]:bg-secondary [&_pre]:text-secondary-foreground [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:shadow-inner overflow-x-auto"
+                        dangerouslySetInnerHTML={{ __html: msg.response || '' }}
+                    />
+                )}
+                {!msg.isUser && isCurrentStreaming && (
+                    <div className="flex items-center gap-2 mt-2 text-[11px] text-primary select-none" role="status" aria-live="polite">
+                        <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
+                        <span>Responding…</span>
+                        <button
+                            onClick={() => onCancelStreaming(msg.id)}
+                            className="ml-1 underline hover:text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary rounded-sm"
+                            aria-label="Cancel streaming response"
+                        >Cancel</button>
+                    </div>
+                )}
+
+                {!msg.isUser && msg.tokensUsed && (
+                    <div className="mt-2 flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">
+                            {msg.tokensUsed} tokens
+                        </Badge>
+                    </div>
+                )}
+            </div>
+
+            {msg.isUser && (
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                    <User className="w-4 h-4 text-muted-foreground" />
+                </div>
+            )}
+        </div>
+    );
+});
+
+// Helper to safely coerce an arbitrary raw type value into a permitted ChatMessage['type'] union.
+const coerceMsgType = (val: unknown): ChatMessage['type'] => {
+    return typeof val === 'string' && (CHAT_MESSAGE_TYPES as readonly string[]).includes(val)
+        ? (val as ChatMessageType)
+        : undefined;
+};
+
+// Normalize and dedupe messages by id; guarantees stable, non-empty ids
+const normalizeMessages = (items: unknown[]): ChatMessage[] => {
+    const seenCounts = new Map<string, number>();
+    const result: ChatMessage[] = [];
+    for (const m of items) {
+        const mm = m as RawMessage;
+        const fallbackTs = typeof mm.timestamp === 'string' && mm.timestamp ? mm.timestamp : new Date().toISOString();
+        const isUser = !!mm.isUser;
+        const baseId = (typeof mm.id === 'string' && mm.id.trim())
+            ? mm.id.trim()
+            : `${fallbackTs}_${isUser ? 'user' : 'ai'}`;
+        const count = (seenCounts.get(baseId) ?? 0) + 1;
+        seenCounts.set(baseId, count);
+        const uniqueId = count === 1 ? baseId : `${baseId}__${count}`;
+        const msg: ChatMessage = {
+            id: uniqueId,
+            message: isUser ? (mm.message || '') : '',
+            response: !isUser ? (mm.response || '') : '',
+            timestamp: fallbackTs,
+            isUser,
+            tokensUsed: typeof mm.tokensUsed === 'number' ? mm.tokensUsed : undefined,
+            type: coerceMsgType(mm.type),
+            mediaUrl: typeof mm.mediaUrl === 'string' ? mm.mediaUrl : undefined,
+        };
+        result.push(msg);
+    }
+    return result;
+};
+
 export default function CustomerChatBot({ currentUrl, className, initialSuggestions }: CustomerChatBotProps) {
     // State management
     const [isOpen, setIsOpen] = useState(false);
@@ -108,7 +240,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [sessionSummary, setSessionSummary] = useState<string>('');
     const [pendingActions, setPendingActions] = useState<string[]>([]);
-    const [previousActions, setPreviousActions] = useState<Set<string>>(new Set());
+    const [_previousActions, setPreviousActions] = useState<Set<string>>(new Set());
     const [newActionHighlights, setNewActionHighlights] = useState<Set<string>>(new Set());
     const newActionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [actionStats, setActionStats] = useState<{ totalCompleted: number; totalPending: number; completionRate: number } | null>(null);
@@ -126,9 +258,13 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
 
     // Auth
     const { user, profile } = useAuth();
+    // Determine effective tier from profile; gate chatbot to starter+ tiers
+    const userTier = (profile?.subscriptionTier as SubscriptionTier | undefined) || 'free';
+    const eligibleForChat = canAccessTier(userTier, 'starter');
 
     const isMobile = useIsMobile('md');
     const [reducedMotion, setReducedMotion] = useState(false);
+    const router = useRouter();
 
     // Detect prefers-reduced-motion & low performance devices
     useEffect(() => {
@@ -205,12 +341,12 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
         }
         // messagesViewportRef not included intentionally; isNearBottom reads it dynamically
     }, [messages, streaming, scrolledAway]);
-    const handleManualScroll: React.UIEventHandler<HTMLDivElement> = (e) => {
+    const handleManualScroll: React.UIEventHandler<HTMLDivElement> = useCallback((e) => {
         const el = e.currentTarget;
         const away = el.scrollHeight - el.scrollTop - el.clientHeight > 240;
         userScrolledUpRef.current = away;
         setScrolledAway(away);
-    };
+    }, []);
     // If new messages arrive and we're near bottom, clear scrolledAway
     useEffect(() => {
         if (scrolledAway && isNearBottom()) {
@@ -227,6 +363,25 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
         }
     }, [isOpen, isMinimized]);
 
+    // Guard against unexpected input blur per keystroke (focus stealing/remounts)
+    // If the input loses focus while typing, immediately restore focus and caret.
+    useEffect(() => {
+        if (!isOpen || isMinimized) return;
+        const el = inputRef.current;
+        if (!el) return;
+        if (document.activeElement !== el) {
+            try {
+                el.focus();
+                const len = el.value.length;
+                // Preserve caret at the end without selecting all text
+                el.setSelectionRange(len, len);
+            } catch {
+                // noop
+            }
+        }
+        // Run on input changes or window state changes to avoid unnecessary refocusing
+    }, [inputValue, isOpen, isMinimized]);
+
     // Seed suggestions if provided (e.g., in unit tests) when chat opens
     const initSugKey = Array.isArray(initialSuggestions) ? initialSuggestions.join('|') : '';
     useEffect(() => {
@@ -238,7 +393,19 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
     // Initialize with welcome message
     useEffect(() => {
         if (isOpen && messages.length === 0 && !restoring) {
-            const welcomeMarkdown = `👋 **Hi! I'm RankPilot AI** — your SEO assistant.\n\n**I can help with:**\n1. **SEO Audit Analysis** – Explain performance scores\n2. **Content Optimization** – Improve on-page signals\n3. **Technical SEO** – Crawl & index fixes\n4. **Keyword Strategy** – Opportunity discovery\n5. **NeuroSEO™ Insights** – Advanced AI recommendations\n\n_Try asking:_\n• "Analyze my Core Web Vitals"\n• "Suggest schema markup for a product page"`;
+            const welcomeMarkdown = `👋 **Welcome to RankPilot AI**
+
+I’m your friendly SEO copilot. I can help with:
+
+• SEO audits and Core Web Vitals
+• Content optimization and internal linking
+• Technical SEO (crawl, index, robots, sitemaps)
+• Keyword clustering and opportunity discovery
+• NeuroSEO™ insights and action plans
+
+Try one of these to start:
+• Analyze my Core Web Vitals
+• Suggest schema markup for a product page`;
             const welcomeMessage: ChatMessage = {
                 id: `welcome_${Date.now()}`,
                 message: '',
@@ -250,12 +417,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
         }
     }, [isOpen, messages.length, restoring]);
 
-    // Helper to safely coerce an arbitrary raw type value into a permitted ChatMessage['type'] union.
-    const coerceMsgType = (val: unknown): ChatMessage['type'] => {
-        return typeof val === 'string' && (CHAT_MESSAGE_TYPES as readonly string[]).includes(val)
-            ? (val as ChatMessageType)
-            : undefined;
-    };
+    // (helpers moved to module scope below)
 
     // Restore last session from Firestore via API GET when opening
     useEffect(() => {
@@ -270,20 +432,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                     const data = await res.json();
                     if (Array.isArray(data.messages) && data.messages.length) {
                         setSessionId(prev => data.sessionId || prev);
-                        const mapped: ChatMessage[] = (data.messages as unknown[]).map((m: unknown): ChatMessage => {
-                            const mm = m as RawMessage;
-                            const msg: ChatMessage = {
-                                id: String(mm.id || ''),
-                                message: mm.isUser ? (mm.message || '') : '',
-                                response: !mm.isUser ? (mm.response || '') : '',
-                                timestamp: String(mm.timestamp || new Date().toISOString()),
-                                isUser: !!mm.isUser,
-                                tokensUsed: typeof mm.tokensUsed === 'number' ? mm.tokensUsed : undefined,
-                                type: coerceMsgType(mm.type),
-                                mediaUrl: typeof mm.mediaUrl === 'string' ? mm.mediaUrl : undefined,
-                            };
-                            return msg;
-                        });
+                        const mapped: ChatMessage[] = normalizeMessages(data.messages as unknown[]);
                         setMessages(() => mapped);
                         oldestMessageTsRef.current = mapped[0]?.timestamp || null;
                         setHasMore(data.hasMore ?? false);
@@ -329,11 +478,28 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
             if (cached) {
                 const parsed = JSON.parse(cached);
                 if (Array.isArray(parsed) && parsed.length) {
-                    setMessages(parsed);
+                    setMessages(normalizeMessages(parsed as unknown[]));
                 }
             }
         } catch {}
     }, [isOpen, messages.length]);
+
+    // Compute attachment count after (re)load
+    useEffect(() => {
+        const count = messages.reduce((acc, m) => acc + ((m.type === 'image' || m.type === 'audio') ? 1 : 0), 0);
+        setAttachmentsUsed(count);
+    }, [messages]);
+
+    // Attachment quota by subscription tier
+    const getAttachmentLimit = (tier?: string) => {
+        switch (tier) {
+            case 'starter': return 10;
+            case 'agency': return 15;
+            case 'enterprise': return 25;
+            case 'admin': return 100;
+            default: return 3; // free
+        }
+    };
 
     // Send message to API
     const applySendCooldown = () => {
@@ -346,24 +512,30 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
 
     // Highlight new pending actions that appear after updates
     useEffect(() => {
-        if (!pendingActions.length) return;
-        const prev = previousActions;
-        const newlyAdded = pendingActions.filter(a => !prev.has(a));
-        if (newlyAdded.length) {
-            const updatedSet = new Set(newActionHighlights);
-            newlyAdded.forEach(a => updatedSet.add(a));
-            setNewActionHighlights(updatedSet);
-            if (newActionTimeoutRef.current) clearTimeout(newActionTimeoutRef.current);
-            newActionTimeoutRef.current = setTimeout(() => {
+        if (!pendingActions.length) {
+            return;
+        }
+        // Use functional update to compare against the real previous set without creating a dependency loop
+        setPreviousActions(prev => {
+            const newlyAdded = pendingActions.filter(a => !prev.has(a));
+            if (newlyAdded.length) {
                 setNewActionHighlights(prevSet => {
                     const clone = new Set(prevSet);
-                    newlyAdded.forEach(a => clone.delete(a));
+                    newlyAdded.forEach(a => clone.add(a));
                     return clone;
                 });
-            }, 8000);
-        }
-        setPreviousActions(new Set(pendingActions));
-    }, [pendingActions, newActionHighlights, previousActions, newActionTimeoutRef]);
+                if (newActionTimeoutRef.current) clearTimeout(newActionTimeoutRef.current);
+                newActionTimeoutRef.current = setTimeout(() => {
+                    setNewActionHighlights(prevSet => {
+                        const clone = new Set(prevSet);
+                        newlyAdded.forEach(a => clone.delete(a));
+                        return clone;
+                    });
+                }, 8000);
+            }
+            return new Set(pendingActions);
+        });
+    }, [pendingActions]);
 
     // Add copy buttons to code blocks (progressive enhancement)
     useEffect(() => {
@@ -391,22 +563,6 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
             pre._rpCopyBtn = true;
         });
     }, [messages.length]);
-
-    // Compute attachment count after restore
-    useEffect(() => {
-        const count = messages.filter(m => m.type === 'image' || m.type === 'audio').length;
-        setAttachmentsUsed(count);
-    }, [messages]);
-
-    const getAttachmentLimit = (tier?: string) => {
-        switch (tier) {
-            case 'starter': return 10;
-            case 'agency': return 15;
-            case 'enterprise': return 25;
-            case 'admin': return 100;
-            default: return 3; // free
-        }
-    };
 
     const sendMessage = async () => {
         const messageToSend = inputValue.trim();
@@ -774,7 +930,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
     };
 
     // Infinite scroll / load older messages when scrolled to top
-    const onScrollAreaScroll: React.UIEventHandler<HTMLDivElement> = (e) => {
+    const onScrollAreaScroll: React.UIEventHandler<HTMLDivElement> = useCallback((e) => {
         const target = e.currentTarget;
         const now = Date.now();
         if (now - lastScrollFetchRef.current < 400) return; // debounce ~400ms
@@ -790,23 +946,15 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                     if (res.ok) {
                         const data = await res.json();
                         if (Array.isArray(data.messages) && data.messages.length) {
-                            const mapped: ChatMessage[] = (data.messages as unknown[]).map((m: unknown): ChatMessage => {
-                                const mm = m as RawMessage;
-                                const msg: ChatMessage = {
-                                    id: String(mm.id || ''),
-                                    message: mm.isUser ? (mm.message || '') : '',
-                                    response: !mm.isUser ? (mm.response || '') : '',
-                                    timestamp: String(mm.timestamp || new Date().toISOString()),
-                                    isUser: !!mm.isUser,
-                                    tokensUsed: typeof mm.tokensUsed === 'number' ? mm.tokensUsed : undefined,
-                                    type: coerceMsgType(mm.type),
-                                    mediaUrl: typeof mm.mediaUrl === 'string' ? mm.mediaUrl : undefined,
-                                };
-                                return msg;
-                            });
+                            const mapped: ChatMessage[] = normalizeMessages(data.messages as unknown[]);
                             oldestMessageTsRef.current = mapped[0]?.timestamp || oldestMessageTsRef.current;
                             setHasMore(data.hasMore ?? false);
-                            setMessages((prev: ChatMessage[]) => [...mapped, ...prev]);
+                            // Prepend only truly new messages to avoid duplicate keys
+                            setMessages((prev: ChatMessage[]) => {
+                                const existing = new Set(prev.map(m => m.id));
+                                const newOnes = mapped.filter(m => !existing.has(m.id));
+                                return [...newOnes, ...prev];
+                            });
                             requestAnimationFrame(() => {
                                 target.scrollTop = target.scrollHeight / 4; // heuristic
                             });
@@ -818,7 +966,25 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                 setLoadingMore(false);
             })();
         }
-    };
+    }, [hasMore, loadingMore, user]);
+
+    // Streaming cancel (stable reference for memoized children)
+    const onCancelStreaming = useCallback((msgId: string) => {
+        if (streamAbortRef.current) {
+            streamAbortRef.current.abort();
+            setStreaming(false);
+            setMessages(prev => prev.map(m => m.id === msgId ? { ...m, response: (m.response || '') + '<br/><em>[Canceled]</em>', type: 'system' } : m));
+            setAnnouncements(a => [...a.slice(-3), 'Generation canceled']);
+        }
+    }, []);
+
+    // Precompute rendered messages to avoid remapping on unrelated state updates
+    const renderedMessages = useMemo(() => {
+        const streamingId = streamingMessageIdRef.current;
+        return messages.map((msg) => (
+            <MessageRow key={msg.id} msg={msg} isStreaming={streaming} streamingId={streamingId} onCancelStreaming={onCancelStreaming} />
+        ));
+    }, [messages, streaming, onCancelStreaming]);
 
     // Handle Enter key press
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -841,8 +1007,8 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
         }
     };
 
-    // Chat toggle button
-    const ChatToggleButton = () => (
+    // Chat toggle button (inline element to preserve identity across renders)
+    const chatToggleButton = (
         <motion.div
             initial={reducedMotion ? false : { scale: 0 }}
             animate={reducedMotion ? { scale: 1 } : { scale: 1 }}
@@ -868,7 +1034,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
         </motion.div>
     );
 
-    // Chat window
+    // Chat window (inline element to avoid component-type churn that causes remount + focus loss)
     const ChatWindow = () => (
         <motion.div
             ref={chatWindowRef}
@@ -882,7 +1048,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
             exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: 20 }}
             transition={reducedMotion ? { duration: 0.05 } : { duration: 0.2 }}
             className={cn(
-                'fixed z-50 bg-white rounded-2xl shadow-2xl border border-border',
+                'fixed z-50 bg-white rounded-2xl shadow-2xl border border-border overflow-hidden',
                 isMobile ? 'bottom-0 right-0 left-0 mx-auto w-full max-w-[520px] mb-0' : 'bottom-6 right-6 w-96',
                 isMinimized && 'h-auto'
             )}
@@ -919,7 +1085,7 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                 </CardHeader>
 
                 {!isMinimized && (
-                    <CardContent className={cn('relative flex flex-col p-0', isMobile ? 'h-[calc(min(75vh,85dvh)-80px)]' : 'h-[calc(600px-80px)]')} style={isMobile ? { paddingBottom: 'env(safe-area-inset-bottom)' } : undefined}>
+                    <CardContent className={cn('relative flex flex-col min-h-0 p-0', isMobile ? 'h-[calc(min(75vh,85dvh)-80px)]' : 'h-[calc(600px-80px)]')} style={isMobile ? { paddingBottom: 'env(safe-area-inset-bottom)' } : undefined}>
                         {sessionSummary && (
                             <div className="mb-2 rounded-xl border border-primary/20 bg-primary/10 p-3 text-[11px] leading-relaxed text-primary shadow-sm">
                                 <div className="font-semibold text-xs mb-1 flex items-center gap-2">
@@ -990,90 +1156,12 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                                 )}
                             </div>
                         )}
-                        <ScrollArea className={cn('flex-1 p-4', isMobile && 'pt-3 pb-3')} onScrollCapture={(e) => { onScrollAreaScroll(e); handleManualScroll(e); }}>
-                            <div ref={messagesViewportRef} role="log" aria-live={streaming ? 'polite' : 'off'} aria-label="Chat messages" className="space-y-4">
+                        <ScrollArea className={cn('flex-1 h-full p-4', isMobile && 'pt-3 pb-3')} onScrollCapture={(e) => { onScrollAreaScroll(e); handleManualScroll(e); }}>
+                            <div ref={messagesViewportRef} role="log" aria-live={streaming ? 'polite' : 'polite'} aria-relevant="additions text" aria-atomic="false" aria-busy={streaming} aria-label="Chat messages" className="space-y-5">
                                 {loadingMore && (
                                     <div className="text-center text-xs text-muted-foreground">Loading…</div>
                                 )}
-                                {messages.map((msg) => (
-                                    <div
-                                        key={msg.id}
-                                        className={cn('flex gap-3 group', msg.isUser ? 'justify-end' : 'justify-start')}
-                                        role="listitem"
-                                        aria-label={msg.isUser ? `User message ${msg.message?.slice(0,40)}` : 'AI message'}
-                                        data-message-type={msg.type || (msg.isUser ? 'user' : 'ai')}
-                                    >
-                                        {!msg.isUser && (
-                                            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
-                                                <Bot className="w-4 h-4 text-white" />
-                                            </div>
-                                        )}
-
-                                        <div
-                                            className={cn(
-                                                'relative max-w-[78%] rounded-2xl px-3 py-2 text-sm leading-relaxed ring-1 ring-inset',
-                                                msg.isUser
-                                                    ? 'bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-sm'
-                                                    : msg.type === 'system'
-                                                        ? 'bg-warning/15 text-warning ring-warning/30'
-                                                        : 'bg-muted text-foreground ring-border'
-                                            )}
-                                        >
-                                            {msg.type === 'image' && msg.mediaUrl && (
-                                                <img loading="lazy" src={msg.mediaUrl} alt={msg.message || 'uploaded image'} className="rounded mb-2 max-h-60 object-contain shadow-sm" />
-                                            )}
-                                            {msg.type === 'audio' && msg.mediaUrl && (
-                                                <audio controls className="w-full mb-2">
-                                                    <source src={msg.mediaUrl} />
-                                                </audio>
-                                            )}
-                                            {msg.isUser ? (
-                                                <div className="whitespace-pre-wrap break-words">
-                                                    {msg.message}
-                                                </div>
-                                            ) : (
-                                                <div
-                                                    className="prose prose-sm max-w-none dark:prose-invert [&_table]:w-full [&_table]:text-left [&_table]:border [&_table]:border-collapse [&_th]:bg-muted [&_td]:align-top [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_pre]:bg-secondary [&_pre]:text-secondary-foreground [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:shadow-inner overflow-x-auto"
-                                                    dangerouslySetInnerHTML={{
-                                                        __html: msg.response || ''
-                                                    }}
-                                                />
-                                            )}
-                                            {!msg.isUser && streaming && streamingMessageIdRef.current === msg.id && (
-                                                <div className="flex items-center gap-2 mt-2 text-[11px] text-primary select-none">
-                                                    <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
-                                                    <span aria-live="polite">Streaming…</span>
-                                                    <button
-                                                        onClick={() => {
-                                                            if (streamAbortRef.current) {
-                                                                streamAbortRef.current.abort();
-                                                                setStreaming(false);
-                                                                setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, response: (m.response || '') + '<br/><em>[Canceled]</em>', type: 'system' } : m));
-                                                                setAnnouncements(a => [...a.slice(-3), 'Generation canceled']);
-                                                            }
-                                                        }}
-                                                        className="ml-1 underline hover:text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary rounded-sm"
-                                                        aria-label="Cancel streaming response"
-                                                    >Cancel</button>
-                                                </div>
-                                            )}
-
-                                            {!msg.isUser && msg.tokensUsed && (
-                                                <div className="mt-2 flex items-center gap-2">
-                                                    <Badge variant="secondary" className="text-xs">
-                                                        {msg.tokensUsed} tokens
-                                                    </Badge>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {msg.isUser && (
-                                            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                                                <User className="w-4 h-4 text-muted-foreground" />
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
+                                {renderedMessages}
 
                                 {isLoading && (
                                     <div className="flex gap-3 justify-start">
@@ -1083,14 +1171,14 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                                         <div className="bg-muted rounded-lg p-3 text-sm">
                                             <div className="flex items-center gap-2">
                                                 <Loader2 className="w-4 h-4 animate-spin" />
-                                                <span>Thinking...</span>
+                                                <span>Writing a response…</span>
                                             </div>
                                         </div>
                                     </div>
                                 )}
 
                                 {error && (
-                                    <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 text-sm text-destructive">
+                                    <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 text-sm text-destructive" role="alert" aria-live="assertive">
                                         {error}
                                     </div>
                                 )}
@@ -1128,13 +1216,22 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
 
                         {/* Input */}
                         {suggestions.length > 0 && (
-                            <div className="px-4 pb-2 pt-1 border-t border-border bg-gradient-to-r from-muted/50 via-background to-muted/50 overflow-x-auto scrollbar-none">
+                            <div className="px-4 pb-2 pt-1 border-t border-border bg-gradient-to-r from-muted/50 via-background to-muted/50 overflow-x-auto scrollbar-none" aria-label="Suggested actions">
                                 <div className="flex gap-2 min-h-[40px] items-center">
                                     {suggestions.map(s => (
                                         <button
                                             key={s}
-                                            onClick={() => { setInputValue(s); scrollToBottom(); }}
-                                            className="shrink-0 rounded-full bg-muted hover:bg-muted/80 active:bg-muted/70 text-xs px-3 py-1.5 transition focus:outline-none focus:ring-2 focus:ring-primary"
+                                            onClick={() => {
+                                                const route = resolveSuggestionRoute(s);
+                                                if (route && canNavigateTo(userTier as SubscriptionTier, route)) {
+                                                    try { router.push(route); } catch { }
+                                                    setIsOpen(false);
+                                                } else {
+                                                    setInputValue(s);
+                                                    scrollToBottom();
+                                                }
+                                            }}
+                                            className="shrink-0 rounded-full bg-primary/10 text-primary hover:bg-primary/15 active:bg-primary/20 text-xs px-3 py-1.5 transition focus:outline-none focus:ring-2 focus:ring-primary"
                                             aria-label={`Suggestion: ${s}`}
                                         >{s}</button>
                                     ))}
@@ -1169,9 +1266,13 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
                                     onKeyDown={handleKeyDown}
                                     onCompositionStart={() => setIsComposing(true)}
                                     onCompositionEnd={() => setIsComposing(false)}
-                                    placeholder="Ask about your SEO performance..."
+                                    placeholder="Ask about SEO — e.g., Improve LCP on product pages"
                                     disabled={isLoading || !user}
                                     className={cn('flex-1', isMobile && 'h-11 text-sm')}
+                                    enterKeyHint="send"
+                                    spellCheck
+                                    autoCorrect="on"
+                                    autoCapitalize="sentences"
                                 />
                                 <Button
                                     onClick={() => { void sendMessage(); }}
@@ -1203,14 +1304,14 @@ export default function CustomerChatBot({ currentUrl, className, initialSuggesti
         </motion.div>
     );
 
-    if (!user) {
+    if (!user || !eligibleForChat) {
         return null; // Don't show chatbot if user is not authenticated
     }
 
     return (
         <>
             <AnimatePresence>
-                {!isOpen && <ChatToggleButton />}
+                {!isOpen && chatToggleButton}
             </AnimatePresence>
 
             <AnimatePresence>

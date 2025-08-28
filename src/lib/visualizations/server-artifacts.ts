@@ -3,7 +3,6 @@
  * Splitting this out avoids importing client code on the server and keeps SSR clean.
  */
 import type { ExportFormat, ServerChartArtifactData } from '@/types/visualization-exports';
-import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 
 // Helper to safely extract a 2D table from mixed chart data shapes
@@ -27,6 +26,7 @@ export async function generateServerArtifact(
   config: Partial<ServerArtifactConfig> = {}
 ): Promise<{ buffer: Buffer; contentType: string; ext: string }> {
   if (format === 'pdf') {
+    const { default: jsPDF } = await import('jspdf');
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();

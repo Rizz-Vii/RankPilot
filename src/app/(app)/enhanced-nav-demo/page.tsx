@@ -6,19 +6,20 @@
  * Use this to test the navigation before integrating it fully.
  */
 
-import React, { useState } from "react";
 import {
   EnhancedAppNav,
   EnhancedMobileNav,
 } from "@/components/enhanced-app-nav";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Eye, Settings, Users } from "lucide-react";
 import type { NavItem } from "@/constants/enhanced-nav";
+import { Brain, Eye, Settings, Users } from "lucide-react";
+import { useState } from "react";
 
 export default function EnhancedNavigationDemo() {
+  const isProd = process.env.NODE_ENV === 'production';
   const [selectedTier, setSelectedTier] = useState<string>("agency");
   const [isAdmin, setIsAdmin] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -29,6 +30,17 @@ export default function EnhancedNavigationDemo() {
     setLastClicked(item);
     console.log("Navigation clicked:", item);
   };
+
+  if (isProd) {
+    return (
+      <div className="min-h-[50vh] grid place-items-center p-6">
+        <div className="text-center">
+          <h1 className="text-xl font-semibold">Demo disabled</h1>
+          <p className="text-muted-foreground">This demo page isn’t available in production.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">

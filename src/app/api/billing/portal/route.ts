@@ -1,11 +1,19 @@
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { getLogger } from '@/lib/logging/app-logger';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { NextResponse, type NextRequest } from 'next/server';
 import Stripe from 'stripe';
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
-import { withProvenance, enforceProvenance } from '@/lib/middleware/provenance';
-import { getLogger } from '@/lib/logging/app-logger';
 
-const STRIPE_API_VERSION = '2025-07-30.basil' as const;
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: STRIPE_API_VERSION });
+// Ensure runtime doesn't attempt to pre-render at build time
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+function getStripe(): Stripe | null {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) return null;
+    // Use account default API version to avoid build-time/type union drift
+    return new Stripe(key);
+}
 
 export const POST = withProvenance(async function POST(req: NextRequest) {
     const logger = getLogger('api.billing.portal');
@@ -26,6 +34,11 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         }
 
         const returnUrl = process.env.NEXT_PUBLIC_APP_URL ? `${process.env.NEXT_PUBLIC_APP_URL}/settings?tab=billing` : undefined;
+        const stripe = getStripe();
+        if (!stripe) {
+            logger.error('billing.portal.misconfigured', { reason: 'missing_secret_key' });
+            return NextResponse.json(enforceProvenance({ error: 'stripe_misconfigured' }, { path: 'billing/portal', note: 'config' }), { status: 500 });
+        }
         const session = await stripe.billingPortal.sessions.create({ customer: customerId, return_url: returnUrl });
 
         logger.info('billing.portal.created', { uid });

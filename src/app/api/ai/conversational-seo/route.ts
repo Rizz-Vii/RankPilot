@@ -11,6 +11,9 @@ import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 45;
 
 export const POST = withProvenance(async function POST(request: NextRequest) {
     const start = Date.now();

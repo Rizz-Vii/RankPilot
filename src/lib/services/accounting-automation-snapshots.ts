@@ -1,7 +1,7 @@
 // Accounting Automation Snapshot fetchers
 // Collection: accountingReportSnapshots (types: pnl, balance_sheet, reconciliation)
+import { db } from '@/lib/firebase';
 import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase/connection-manager';
 
 export interface AccountingReportSnapshotDoc {
     id: string;

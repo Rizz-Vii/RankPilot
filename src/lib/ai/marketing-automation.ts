@@ -1,5 +1,5 @@
 // Marketing Automation AI Utility (deterministic pseudo-AI for offline/dev use)
-import { db } from '@/lib/firebase/connection-manager';
+import { db } from '@/lib/firebase';
 import { stripForbiddenDerivedFields } from '@/lib/guards/forbidden-derived-fields';
 import { addDoc, collection, doc, getDocs, limit, query, Timestamp, updateDoc, where } from 'firebase/firestore';
 

@@ -1,7 +1,7 @@
-import { onSchedule } from "firebase-functions/v2/scheduler";
-import { logger } from "firebase-functions/v2";
 import { getApps, initializeApp } from "firebase-admin/app";
 import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
+import { logger } from "firebase-functions/v2";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 
 // Lightweight scheduler for Automation Recipes
 // Scans for due recipes and executes supported actions server-side
@@ -302,7 +302,10 @@ export const runDueAutomationScheduler = onSchedule(
     {
         schedule: "every 15 minutes",
         timeZone: "Etc/UTC",
-        region: "australia-southeast2",
+        region: "australia-southeast1",
     },
     async () => { await runDueAutomationTick(); }
 );
+
+// Alias to create a new Cloud Scheduler job under a new function name
+export const runDueAutomationSchedulerV2 = runDueAutomationScheduler;

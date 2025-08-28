@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
 import { UserSubscriptionDebugger } from "@/components/debug/UserSubscriptionDebugger";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,12 +9,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { fixAbbaUser } from "@/lib/admin-user-management";
 
 export default function DebugPage() {
+  const isProd = process.env.NODE_ENV === 'production';
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -34,6 +34,17 @@ export default function DebugPage() {
       });
     }
   };
+
+  if (isProd) {
+    return (
+      <div className="min-h-[50vh] grid place-items-center p-6">
+        <div className="text-center">
+          <h1 className="text-xl font-semibold">Debug tools disabled</h1>
+          <p className="text-muted-foreground">These development tools are not available in production.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">

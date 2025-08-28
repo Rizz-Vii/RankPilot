@@ -86,7 +86,7 @@ export interface OutputGuardrailDefinition {
 function agentsEnabled(): boolean {
     if (process.env.RANKPILOT_AGENTS_ENABLED === 'true' || process.env.RANKPILOT_AGENTS_ENABLED === '1') return true;
     // client-side cookie override (dev only) - lightweight parse
-    if (typeof document !== 'undefined') {
+    if (typeof document !== 'undefined' && process.env.NODE_ENV !== 'production') {
         try {
             const m = document.cookie.match(/(?:^|; )rp_agents=(?<v>1)/);
             if (m && (m.groups?.v === '1')) return true;

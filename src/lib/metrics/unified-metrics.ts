@@ -41,6 +41,15 @@ export interface UnifiedMetricsSnapshot {
     semanticMap?: { aggregateHits: number; legacyFallbacks: number };
     governance?: { provenanceInjected: number; forbiddenFieldStrips: number }; // Phase 1 governance counters
     queue?: QueueMetricsSnapshot; // DEV-QUEUE-01
+    // Phase 3 optional counters (additive; BI may consume later)
+    phase3?: {
+        developerFeedbackRecordsTotal: number;
+        predictiveForecastsGeneratedTotal: number;
+        reportSummariesGeneratedTotal: number;
+        eventRetriesTotal: number;
+        eventRetrySuccessTotal: number;
+        eventDeadLettersTotal: number;
+    };
 }
 
 const provenanceCounters = {
@@ -61,6 +70,17 @@ const crawlerCounters = { success: 0, errors: 0, totalCrawlMs: 0, totalAnalysisM
 const semanticMapCounters = { aggregateHits: 0, legacyFallbacks: 0 };
 // Governance counters (Phase 1 – PROV-01 / MKT-01)
 const governanceCounters = { provenanceInjected: 0, forbiddenFieldStrips: 0 };
+// Provenance reason code counts (Phase 3 extension) — metrics-only, not part of public snapshot shape
+const provenanceReasonCounts: Record<string, number> = {};
+// Phase 3 counters (advisory modules)
+const phase3Counters = {
+    developerFeedbackRecordsTotal: 0,
+    predictiveForecastsGeneratedTotal: 0,
+    reportSummariesGeneratedTotal: 0,
+    eventRetriesTotal: 0,
+    eventRetrySuccessTotal: 0,
+    eventDeadLettersTotal: 0,
+};
 // Queue metrics dynamic import handled above (no circular deps; queue-metrics has no imports of unified)
 
 export function recordProvenanceObservation(hasProvenance: boolean) {
@@ -74,6 +94,36 @@ export function recordProvenanceInjection() {
 
 export function recordForbiddenFieldStrip(count = 1) {
     governanceCounters.forbiddenFieldStrips += count;
+}
+
+export function recordProvenanceReason(code: string | undefined) {
+    if (!code) return;
+    const k = String(code).slice(0, 40);
+    provenanceReasonCounts[k] = (provenanceReasonCounts[k] || 0) + 1;
+}
+
+export function getProvenanceReasonCounts(): Record<string, number> {
+    return { ...provenanceReasonCounts };
+}
+
+// Phase 3 increments (small helpers)
+export function recordDeveloperFeedbackRecord(delta = 1) {
+    phase3Counters.developerFeedbackRecordsTotal += Math.max(0, delta);
+}
+export function recordPredictiveForecastGenerated(delta = 1) {
+    phase3Counters.predictiveForecastsGeneratedTotal += Math.max(0, delta);
+}
+export function recordReportSummariesGenerated(delta = 1) {
+    phase3Counters.reportSummariesGeneratedTotal += Math.max(0, delta);
+}
+export function recordEventRetry(delta = 1) {
+    phase3Counters.eventRetriesTotal += Math.max(0, delta);
+}
+export function recordEventRetrySuccess(delta = 1) {
+    phase3Counters.eventRetrySuccessTotal += Math.max(0, delta);
+}
+export function recordEventDeadLetter(delta = 1) {
+    phase3Counters.eventDeadLettersTotal += Math.max(0, delta);
 }
 
 export function recordRouteLatency(routeKey: string, ms: number) {
@@ -141,6 +191,7 @@ export function getUnifiedMetricsSnapshot(): UnifiedMetricsSnapshot {
         , semanticMap: { ...semanticMapCounters }
         , governance: { ...governanceCounters }
         , queue: getQueueMetricsSnapshot()
+        , phase3: { ...phase3Counters }
     };
 }
 
@@ -231,4 +282,6 @@ export function __resetUnifiedMetricsTestOnly() {
     crawlerCounters.success = 0; crawlerCounters.errors = 0; crawlerCounters.totalCrawlMs = 0; crawlerCounters.totalAnalysisMs = 0; crawlerCounters.aggregateHits = 0; crawlerCounters.legacyFallbacks = 0; crawlerCounters.quotaLimit = 0; crawlerCounters.quotaRemaining = 0; crawlerCounters.crawlSamples.length = 0; crawlerCounters.analysisSamples.length = 0;
     semanticMapCounters.aggregateHits = 0; semanticMapCounters.legacyFallbacks = 0;
     governanceCounters.provenanceInjected = 0; governanceCounters.forbiddenFieldStrips = 0;
+    for (const k of Object.keys(provenanceReasonCounts)) delete provenanceReasonCounts[k];
+    phase3Counters.developerFeedbackRecordsTotal = 0; phase3Counters.predictiveForecastsGeneratedTotal = 0; phase3Counters.reportSummariesGeneratedTotal = 0; phase3Counters.eventRetriesTotal = 0; phase3Counters.eventRetrySuccessTotal = 0; phase3Counters.eventDeadLettersTotal = 0;
 }

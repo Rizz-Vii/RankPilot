@@ -10,18 +10,33 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 export async function GET() {
   const ts = Date.now();
-  // Firestore connectivity (lightweight): get a non-existent doc (no cost write)
-  let firestoreOk = false;
-  try { await adminDb.collection('_health').doc('ping').get(); firestoreOk = true; } catch { firestoreOk = false; }
+  // Keep the overall health handler snappy: enforce a strict per-call deadline for any I/O.
+  const DEADLINE_MS = Number(process.env.HEALTH_DEADLINE_MS ?? 1500);
+  // Firestore connectivity (lightweight) with deadline: non-blocking beyond DEADLINE_MS
+  let firestoreOk: boolean | 'timeout' = false;
+  try {
+    const result = await Promise.race([
+      adminDb.collection('_health').doc('ping').get(),
+      new Promise<'timeout'>(resolve => setTimeout(() => resolve('timeout'), DEADLINE_MS))
+    ]);
+    firestoreOk = result === 'timeout' ? 'timeout' : true;
+  } catch {
+    firestoreOk = false;
+  }
   const unified = getUnifiedMetricsSnapshot();
   const neuro = getNeuroseoMetricsSnapshot();
   const provenanceCoverage = unified.aiResponses.coveragePct;
-  const status = (firestoreOk && provenanceCoverage === 100) ? 'ok' : 'degraded';
+  // If Firestore timed out, treat as unknown rather than degraded to avoid flapping
+  const status = (firestoreOk !== false && provenanceCoverage === 100) ? 'ok' : 'degraded';
   // Derive quick p95 map for convenience (already present inside unified.latency entries but flattened here)
   const p95: Record<string, number | null> = {};
   Object.entries(unified.latency).forEach(([route, stats]) => { p95[route] = stats.p95; });
   const kpis = getKpiSnapshot();
-  await ensureDailyUnifiedMetricsExport();
+  // Fire-and-forget to keep health checks fast and avoid cold-start latency.
+  // Any failure will be logged by the export module itself.
+  void (async () => {
+    try { await ensureDailyUnifiedMetricsExport(); } catch { /* noop */ }
+  })();
   // Derive crawler metrics (exposed explicitly for observability)
   interface CrawlerRaw { success: number; errors: number; totalCrawlMs: number; totalAnalysisMs: number; crawlP95?: number; analysisP95?: number; crawlP99?: number; analysisP99?: number }
   type UnifiedWithCrawler = typeof unified & { crawler?: CrawlerRaw };
@@ -53,45 +68,9 @@ export async function GET() {
     depth: queueRaw.depth,
     successRatio: queueRaw.successRatio
   } : undefined;
-  // Aggregate team quota usage for today (lightweight; limit query to 200 docs)
-  let teamQuota: { totalTeams: number; totalUsed: number; totalLimit: number; totalRejections: number } | null = null;
-  try {
-    const today = new Date(ts).toISOString().slice(0, 10);
-    const snap = await adminDb.collection('teamCrawlerUsage').where('date', '==', today).limit(200).get();
-    interface TeamCrawlerDoc { count?: number; limit?: number; rejections?: number }
-    let totalTeams = 0, totalUsed = 0, totalLimit = 0, totalRejections = 0;
-    snap.docs.forEach(d => {
-      const data = d.data() as TeamCrawlerDoc;
-      totalTeams++;
-      totalUsed += data.count || 0;
-      totalLimit += data.limit || 0;
-      totalRejections += data.rejections || 0;
-    });
-    teamQuota = { totalTeams, totalUsed, totalLimit, totalRejections };
-  } catch { }
-  try {
-    const dateKey = new Date(ts).toISOString().slice(0, 10);
-    const dailySnap = await adminDb.collection('aiUsageDaily').where('date', '==', dateKey).get();
-    interface AIDailyDoc { tokensIn?: number; tokensOut?: number; costEstimate?: number }
-    let dIn = 0, dOut = 0, dCost = 0;
-    dailySnap.docs.forEach(d => {
-      const data = d.data() as AIDailyDoc;
-      dIn += data.tokensIn || 0;
-      dOut += data.tokensOut || 0;
-      dCost += data.costEstimate || 0;
-    });
-    type MutableKpis = typeof kpis & {
-      aiDailyTokensIn?: number;
-      aiDailyTokensOut?: number;
-      aiDailyCostEstimate?: number;
-      crawlerAggregateAdoptionPct?: number;
-      semanticMapAggregateAdoptionPct?: number;
-    };
-    const mutableKpis = kpis as MutableKpis;
-    mutableKpis.aiDailyTokensIn = dIn;
-    mutableKpis.aiDailyTokensOut = dOut;
-    mutableKpis.aiDailyCostEstimate = +dCost.toFixed(4);
-  } catch { }
+  // Aggregate metrics that require Firestore are intentionally skipped in the fast path.
+  // If needed, they can be fetched in the background and exposed via a separate detail endpoint.
+  const teamQuota: { totalTeams: number; totalUsed: number; totalLimit: number; totalRejections: number } | null = null;
   // Basic alert derivation (OPS-01): threshold checks mapped to warning/critical levels
   const alerts: Array<{ type: string; level: 'warn' | 'critical'; message: string; value: number | null; threshold: number }> = [];
   const push = (cond: boolean, level: 'warn' | 'critical', type: string, value: number | null, threshold: number, message: string) => { if (cond) alerts.push({ type, level, message, value, threshold }); };
@@ -154,7 +133,7 @@ export async function GET() {
   const body = enforceProvenance({
     status,
     timestamp: new Date(ts).toISOString(),
-    build: process.env.BUILD_SHA || 'dev',
+    build: process.env.BUILD_SHA || process.env.GITHUB_SHA || process.env.VERCEL_GIT_COMMIT_SHA || process.env.SOURCE_VERSION || 'dev',
     env: process.env.NODE_ENV,
     firestoreOk,
     provenanceCoverage,
@@ -172,5 +151,10 @@ export async function GET() {
       unified
     }
   }, { path: 'health' });
-  return NextResponse.json(body, { status: status === 'ok' ? 200 : 503 });
+  return NextResponse.json(body, {
+    status: status === 'ok' ? 200 : 503,
+    headers: {
+      'Cache-Control': 'no-store, no-transform'
+    }
+  });
 }

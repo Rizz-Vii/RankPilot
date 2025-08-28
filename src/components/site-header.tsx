@@ -133,9 +133,9 @@ export default function SiteHeader() {
             <div className="hidden xl:block flex-1 min-w-[200px] max-w-[420px]">
               <GlobalSearch />
             </div>
-            {/* Utility cluster: theme + language (language only from xl to prevent collision) */}
+              {/* Utility cluster: theme + language (visible from xl to prevent lg collisions) */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="hidden lg:flex items-center gap-2">
+                <div className="hidden xl:flex items-center gap-2">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <EnhancedButton
@@ -257,13 +257,7 @@ export default function SiteHeader() {
               </DropdownMenu>
             ) : (
               <div className="flex items-center gap-4">
-                <Link
-                  href="/demo"
-                  className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {translate('nav.features')}
-                </Link>
-                {/* Streamlined CTA: remove muted login button per request; keep single primary trial entry */}
+                      {/* Streamlined CTA: keep a single primary trial entry */}
                   <EnhancedButton asChild className="mobile-touch-target" aria-label="Start Free Trial" role="button">
                     <Link href="/register">{translate('cta.startFreeTrial')}</Link>
                   </EnhancedButton>

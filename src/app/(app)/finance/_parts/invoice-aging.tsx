@@ -1,8 +1,16 @@
 "use client";
-import React from 'react';
-import { useFinanceContext } from './finance-context';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, LabelList } from 'recharts';
 import { ChartContainer } from '@/components/ui/chart';
+import dynamic from 'next/dynamic';
+import { useFinanceContext } from './finance-context';
+
+// Defer heavy Recharts components to client-only dynamic imports
+const BarChart = dynamic(() => import('recharts').then(m => m.BarChart), { ssr: false });
+const Bar = dynamic(() => import('recharts').then(m => m.Bar), { ssr: false });
+const XAxis = dynamic(() => import('recharts').then(m => m.XAxis), { ssr: false });
+const YAxis = dynamic(() => import('recharts').then(m => m.YAxis), { ssr: false });
+const Tooltip = dynamic(() => import('recharts').then(m => m.Tooltip), { ssr: false });
+const Cell = dynamic(() => import('recharts').then(m => m.Cell), { ssr: false });
+const LabelList = dynamic(() => import('recharts').then(m => m.LabelList), { ssr: false });
 
 export default function InvoiceAging(){
   const { data } = useFinanceContext();

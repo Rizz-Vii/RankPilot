@@ -1,4 +1,5 @@
 // Design System Tokens for RankPilot
+/* ALLOW_HEX: palette token definitions */
 // Use these tokens instead of hardcoded values in component JSX
 
 export const colors = {

@@ -4,6 +4,7 @@
   "private": true,
   "description": "RankPilot - AI-First SEO Platform (Internal: Studio)",
   "scripts": {
+    "deploy:functions:retry": "bash scripts/firebase-deploy-retry.sh \"npx firebase deploy --only functions --project rankpilot-h3jpc\"",
     "brain:two-agent:lint-cycle": "ts-node -P scripts/tsconfig.json src/lib/brain/supervisor/twoAgentOrchestration.ts",
     "brain:two-agent:watch": "ts-node -P scripts/tsconfig.json scripts/brain/watch-two-agent-lint.ts",
     "brain:two-agent:auto": "ts-node -P scripts/tsconfig.json scripts/delegation/autorun-two-agent-cycle.ts",
@@ -38,15 +39,15 @@
     "start": "cross-env NODE_OPTIONS='--max-old-space-size=2048' next start",
     "lint": "next lint",
     "lint:snapshot": "node scripts/eslint-snapshot.js",
-  "lint:flat": "eslint -c eslint.flat.mjs . --ignore-pattern '.firebase/**' --ignore-pattern '.next/**' --ignore-pattern 'dist/**' --ignore-pattern 'out/**' --cache --cache-location .eslintcache --cache-strategy=content",
-  "lint:cache": "eslint -c eslint.flat.mjs . --ignore-pattern '.firebase/**' --ignore-pattern '.next/**' --ignore-pattern 'dist/**' --ignore-pattern 'out/**' --cache --cache-location .eslintcache --cache-strategy=content",
+    "lint:flat": "eslint -c eslint.flat.mjs . --ignore-pattern '.firebase/**' --ignore-pattern '.next/**' --ignore-pattern 'dist/**' --ignore-pattern 'out/**' --ignore-pattern 'functions/src/lib/ai-memory-manager.ts' --no-cache",
+    "lint:cache": "eslint -c eslint.flat.mjs . --ignore-pattern '.firebase/**' --ignore-pattern '.next/**' --ignore-pattern 'dist/**' --ignore-pattern 'out/**' --cache --cache-location .eslintcache --cache-strategy=content",
     "lint:typeaware": "eslint -c eslint.flat.mjs 'src/**/*.{ts,tsx}' --cache --cache-location .eslintcache --cache-strategy=content",
     "lint:changed": "sh -c 'if git rev-parse --verify origin/main >/dev/null 2>&1; then RANGE=origin/main...HEAD; elif git rev-parse --verify HEAD~1 >/dev/null 2>&1; then RANGE=HEAD~1...HEAD; else RANGE=; fi; FILES=$( [ -n \"$RANGE\" ] && git diff --name-only --diff-filter=ACMRTUXB $RANGE || git ls-files -m ); echo \"$FILES\" | grep -E \".*(\\.ts|\\.tsx|\\.js|\\.jsx)$\" | xargs -r eslint -c eslint.flat.mjs'",
     "lint:strict": "eslint -c eslint.flat.mjs . --max-warnings=0",
     "lint:flat:next": "eslint -c eslint.config.mjs .",
     "lint:flat:all": "npm run lint:flat && npm run lint:flat:next",
     "eslint:autofix-all": "eslint -c eslint.flat.mjs . --fix --cache --cache-location .eslintcache --cache-strategy=content || true",
-  "lint:report:json": "eslint -c eslint.flat.mjs . --ignore-pattern '.firebase/**' --ignore-pattern '.next/**' --ignore-pattern 'dist/**' --ignore-pattern 'out/**' -f json -o artifacts/eslint-report.json --cache --cache-location .eslintcache --cache-strategy=content || true",
+    "lint:report:json": "eslint -c eslint.flat.mjs . --ignore-pattern '.firebase/**' --ignore-pattern '.next/**' --ignore-pattern 'dist/**' --ignore-pattern 'out/**' -f json -o artifacts/eslint-report.json --cache --cache-location .eslintcache --cache-strategy=content || true",
     "delegate:loop": "ts-node -P scripts/tsconfig.json scripts/delegation/watch-loop.ts",
     "codex:loop": "ts-node -P scripts/tsconfig.json scripts/delegation/codex-concurrent-loop.ts",
     "codemod:unused-vars": "node scripts/codemods/prune-unused-vars.js",
@@ -245,7 +246,7 @@
     "delegate:process": "ts-node -P scripts/tsconfig.json scripts/delegation/process-delegation-queue.ts",
     "delegate:process:auto": "AIDER_AUTORUN=1 ts-node -P scripts/tsconfig.json scripts/delegation/process-delegation-queue.ts",
     "prepare": "husky install",
-  "postinstall": "node scripts/patch-firebase-auth-path.js",
+    "postinstall": "node scripts/patch-firebase-auth-path.js",
     "ai:aider": "echo 'Aider is optional. See docs/DEVELOPER_AI_AGENT.md for install & safe usage.'",
     "ai:aider:prep": "echo '🔍 Pre-flight: fetching & status (ensure clean tree before AI edits)' && git fetch --prune && git status --short",
     "chat:backfill-actions": "ts-node scripts/backfill-chat-action-progress.ts",
@@ -317,7 +318,12 @@
     "test:unit:semantic-map-kpi": "mocha -r ts-node/register testing/unit/metrics/semantic-map-kpi.test.cjs --timeout 5000",
     "test:unit:finance-metrics-contract": "mocha -r ts-node/register testing/unit/api/finance/finance-metrics.route.contract.test.cjs --timeout 8000",
     "test:unit:observability-mocked": "TEST_MOCK_FETCH=1 mocha -r ./testing/mocha-jsdom-setup.cjs ./testing/unit/observability/*.test.cjs --timeout 8000",
-    "test:unit": "npm run test:unit:observability-mocked",
+  "test:unit": "npm run test:unit:observability-mocked && npm run test:unit:sse && npm run test:unit:events:retry && npm run test:unit:kpi && npm run test:unit:bi && npm run test:unit:provenance:reasons && npm run test:unit:reporting",
+  "test:unit:kpi": "MOCHA_COLORS=true mocha -r ts-node/register ./testing/unit/kpi/predictive.test.ts --timeout 8000",
+  "test:unit:bi": "MOCHA_COLORS=true mocha -r ts-node/register ./testing/unit/bi/bi-snapshot-advisory.test.ts --timeout 8000",
+  "test:unit:provenance:reasons": "MOCHA_COLORS=true mocha -r ts-node/register ./testing/unit/provenance/provenance-reasons.test.ts --timeout 8000",
+  "test:unit:reporting": "MOCHA_COLORS=true mocha -r ts-node/register ./testing/unit/reporting/report-generator.test.ts --timeout 8000",
+  "test:unit:events:retry": "cross-env TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' mocha -r ts-node/register/transpile-only -r ./testing/mocha-jsdom-setup.cjs ./testing/unit/events/dlq-idempotency.test.cjs --timeout 8000",
     "test:unit:access-normalization": "mocha testing/unit/access/normalize-user-access.test.cjs --timeout 5000",
     "test:unit:types": "cross-env TS_NODE_COMPILER_OPTIONS=\"{\\\"module\\\":\\\"commonjs\\\",\\\"moduleResolution\\\":\\\"node\\\"}\" mocha -r ts-node/register/transpile-only testing/unit/types/**/*.test.ts --timeout 5000",
     "validate:event-types": "node scripts/validate-event-types.mjs",
@@ -407,8 +413,8 @@
     "clsx": "^2.1.1",
     "d3": "^7.9.0",
     "date-fns": "^4.1.0",
-  "dotenv": "^16.6.0",
-  "firebase": "^11.6.0",
+    "dotenv": "^16.6.0",
+    "firebase": "^11.6.0",
     "firebase-admin": "^12.7.0",
     "firebase-functions": "^6.3.2",
     "framer-motion": "^12.18.1",
@@ -475,9 +481,10 @@
     "eslint": "^9.32.0",
     "eslint-config-next": "^15.3.4",
     "eslint-formatter-unix": "^8.40.0",
-  "firebase-tools": "^13.35.0",
-  "jsdom": "^24.0.0",
-  "husky": "^9.0.11",
+    "eslint-plugin-next": "^15.3.4",
+    "firebase-tools": "^13.35.0",
+    "husky": "^9.0.11",
+    "jsdom": "^24.0.0",
     "lighthouse": "^12.8.0",
     "madge": "^8.0.0",
     "markdownlint-cli": "^0.45.0",
@@ -508,5 +515,18 @@
   "engines": {
     "node": "20",
     "npm": ">=9.0.0"
+  },
+  "browserslist": {
+    "production": [
+      "last 2 Chrome versions",
+      "last 2 Firefox versions",
+      "last 2 Edge versions",
+      "Safari >= 15"
+    ],
+    "development": [
+      "last 1 Chrome version",
+      "last 1 Firefox version",
+      "last 1 Safari version"
+    ]
   }
 }

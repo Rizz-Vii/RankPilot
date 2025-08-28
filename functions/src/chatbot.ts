@@ -4,6 +4,7 @@
  * Integrates with OpenAI, Firebase, and RankPilot systems
  */
 
+import { getApps, initializeApp } from "firebase-admin/app";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
@@ -16,28 +17,31 @@ import {
   getNeuroSEOContext,
   getSiteContext
 } from "./context";
-import { getAI as getManagedAI } from "./lib/ai-memory-manager";
+import { getAI as getManagedAI } from "./lib/ai-memory-manager.js";
 
-// Initialize services
+// Initialize services (ensure Admin SDK is initialized before Firestore usage)
+try {
+  if (!getApps().length) initializeApp();
+} catch {
+  // already initialized
+}
 const db = getFirestore();
 
-// Get API key from environment variables (Firebase Functions v2 pattern)
-const openaiApiKey = process.env.OPENAI_API_KEY;
-
-// Initialize OpenAI only if API key is available
-let openai: OpenAI | null = null;
-try {
-  if (openaiApiKey) {
-    openai = new OpenAI({
-      apiKey: openaiApiKey,
-    });
-    logger.info("OpenAI client initialized successfully");
-  } else {
-    logger.warn("OPENAI_API_KEY not found in config or environment");
+// Lazy OpenAI initialization to avoid deploy-time warnings (secrets not yet injected)
+let openaiClient: OpenAI | null = null;
+function getOpenAIClient(): OpenAI | null {
+  if (openaiClient) return openaiClient;
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) return null;
+  try {
+    openaiClient = new OpenAI({ apiKey: key });
+    return openaiClient;
+  } catch (error) {
+    logger.error("Failed to initialize OpenAI client", error);
+    return null;
   }
-} catch (error) {
-  logger.error("Failed to initialize OpenAI client", error);
-}// Types for request/response
+}
+// Types for request/response
 interface ChatRequest {
   uid: string;
   message: string;
@@ -83,7 +87,7 @@ function composePrompt(system: string, history: Array<{ role: "user" | "assistan
  */
 export const customerChatHandler = onCall(
   {
-    region: "australia-southeast2",
+    region: "australia-southeast1",
     memory: "1GiB",
     timeoutSeconds: 30,
     secrets: ["OPENAI_API_KEY"], // Firebase Functions v2 secrets
@@ -149,11 +153,6 @@ export const customerChatHandler = onCall(
         });
       }
 
-      // Validate OpenAI availability
-      if (!openai) {
-        throw new HttpsError("failed-precondition", "AI service is currently unavailable");
-      }
-
       // Prefer centralized AI manager (env-driven provider with mock fallback), then fall back to OpenAI SDK
       let aiResponse = "";
       let tokensUsed = 0;
@@ -170,6 +169,7 @@ export const customerChatHandler = onCall(
         tokensUsed = aiResponse ? Math.min(1500, Math.ceil(aiResponse.split(/\s+/).length * 1.3)) : 0;
       } catch (e) {
         // Fallback to OpenAI SDK if configured
+        const openai = getOpenAIClient();
         if (!openai) throw e;
         const completion = await openai.chat.completions.create({
           model: "gpt-4o",
@@ -232,7 +232,7 @@ export const customerChatHandler = onCall(
  */
 export const adminChatHandler = onCall(
   {
-    region: "australia-southeast2",
+    region: "australia-southeast1",
     memory: "1GiB",
     timeoutSeconds: 45,
     secrets: ["OPENAI_API_KEY"], // Firebase Functions v2 secrets
@@ -300,11 +300,6 @@ export const adminChatHandler = onCall(
         });
       }
 
-      // Validate OpenAI availability
-      if (!openai) {
-        throw new HttpsError("failed-precondition", "AI service is currently unavailable");
-      }
-
       // Prefer centralized AI manager; fall back to OpenAI SDK if needed
       let aiResponse = "";
       let tokensUsed = 0;
@@ -320,6 +315,7 @@ export const adminChatHandler = onCall(
         aiResponse = await getManagedAI(prompt, "gpt-4o", { latencyBudgetMs: Number(process.env.AI_LATENCY_BUDGET_MS || 8000) });
         tokensUsed = aiResponse ? Math.min(1800, Math.ceil(aiResponse.split(/\s+/).length * 1.3)) : 0;
       } catch (e) {
+        const openai = getOpenAIClient();
         if (!openai) throw e;
         const completion = await openai.chat.completions.create({
           model: "gpt-4o",

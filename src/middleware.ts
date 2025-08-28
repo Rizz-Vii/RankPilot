@@ -5,6 +5,12 @@ import { rateLimit } from "./middleware/rate-limit";
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname || "";
   const isApi = pathname.startsWith("/api/");
+  // Detect Next.js RSC/Flight requests (used for streaming server components/prefetch)
+  // These requests expect a special streamed response; avoid mutating headers/body.
+  const accept = request.headers.get('accept') || '';
+  const isRSC = accept.includes('text/x-component') || accept.includes('application/x-component')
+    || request.headers.has('RSC')
+    || request.headers.has('Next-Router-State-Tree');
   // For API routes, run rate limiter first and short-circuit on 429
   if (isApi) {
     const rl = await rateLimit(request);
@@ -15,10 +21,20 @@ export async function middleware(request: NextRequest) {
     return rl;
   }
 
+  // For RSC/Flight fetches (not API), do not attach CSP or mutate streaming responses
+  if (isRSC) {
+    // Do not mutate headers/body for RSC/Flight streams; let Next.js control streaming semantics.
+    // Some hop-by-hop headers (e.g., Connection/Keep-Alive) are illegal on HTTP/2 and can break streams.
+    return NextResponse.next();
+  }
+
   // Non-API: proceed with security headers response, attach a CSP nonce to request headers for server components
   const requestHeaders = new Headers(request.headers);
-  // Use a simple UUID as nonce token; acceptable for CSP nonces
+  // Use a simple UUID as nonce token; pass via Next.js-recognized header so inline scripts get nonce attributes
   const nonce = crypto.randomUUID();
+  // Next will attach this nonce to inline scripts it generates
+  requestHeaders.set('x-nextjs-csp-nonce', nonce);
+  // Back-compat for any code reading the older custom header
   requestHeaders.set('x-rp-csp-nonce', nonce);
   const response = NextResponse.next({ request: { headers: requestHeaders } });
 
@@ -28,8 +44,7 @@ export async function middleware(request: NextRequest) {
   const cspHeader = [
     // Default directives
     "default-src 'self'",
-    // Scripts - Complete coverage for all third-party services
-    // In production, drop 'unsafe-inline' and allow only our per-request nonce
+    // Scripts - Allow our nonce for inline; disallow generic 'unsafe-inline' in production
     `script-src 'self' 'nonce-${nonce}' ` +
     "https://apis.google.com " +
     "https://*.firebaseapp.com " +
@@ -61,11 +76,16 @@ export async function middleware(request: NextRequest) {
     "https://firebaseappcheck.googleapis.com " +
     "https://content-firebaseappdistribution.googleapis.com " +
     "https://*.googleapis.com " +
+    "https://*.gstatic.com " +
     "https://www.google-analytics.com " +
+    "https://*.sentry.io " +
     "https://api.stripe.com " +
+    "https://m.stripe.com " +
     "https://*.paypal.com " +
     "https://www.paypal.com " +
     "https://*.cloudfunctions.net " +
+    // Allow Firestore WebSocket streams (prod)
+    "wss://*.googleapis.com wss://firestore.googleapis.com " +
     (process.env.NODE_ENV !== "production"
       ? "http://localhost:* ws://localhost:*"
       : ""),
@@ -86,17 +106,22 @@ export async function middleware(request: NextRequest) {
     // Worker
     "worker-src 'self' blob:",
   ].join("; ");
+  // Only attach CSP on full HTML document requests
+  const isHtmlDoc = (request.headers.get('sec-fetch-dest') || '').toLowerCase() === 'document'
+    || (accept.includes('text/html'));
   const securityHeaders = {
     // Content Security Policy (apply only in production to avoid breaking Next dev runtime)
-    ...(process.env.NODE_ENV === "production"
+    ...(process.env.NODE_ENV === "production" && isHtmlDoc
       ? { "Content-Security-Policy": cspHeader }
       : {}),
 
     // Prevent MIME type sniffing
     "X-Content-Type-Options": "nosniff",
 
-    // Prevent clickjacking (align with Next headers)
-    "X-Frame-Options": "SAMEORIGIN",
+    // Clickjacking protection: enforce in production; relax in dev so VS Code webviews/Simple Browser can embed localhost
+    ...(process.env.NODE_ENV === "production"
+      ? { "X-Frame-Options": "SAMEORIGIN" }
+      : {}),
 
     // XSS Protection
     "X-XSS-Protection": "1; mode=block",
@@ -105,21 +130,38 @@ export async function middleware(request: NextRequest) {
     "Referrer-Policy": "strict-origin-when-cross-origin",
 
     // Permissions Policy (central definition – keep in sync with any security modules). We explicitly disable interest-cohort (FLoC).
-    // Microphone optionally disabled via RP_DISABLE_MIC. Camera & geolocation always blocked. Payment directive removed (default browser handling) to reduce console noise.
+    // Microphone optionally disabled via RP_DISABLE_MIC. Camera & geolocation always blocked. Payment directive set to () to avoid noisy console violations.
     "Permissions-Policy": (() => {
       const mic = process.env.RP_DISABLE_MIC === '1' ? 'microphone=()' : 'microphone=(self)';
       const base = `camera=(), ${mic}, geolocation=(), interest-cohort=()`;
-      return base;
+      // Explicitly disable payment to silence violation warnings across environments
+      return `${base}, payment=()`;
     })(),
 
     // HSTS
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+
+    // Cross-domain policies for Adobe products etc. – disallow
+    "X-Permitted-Cross-Domain-Policies": "none",
+
+    // Hint DNS prefetch
+    "X-DNS-Prefetch-Control": "on",
+    // Cross-Origin Isolation (apply only to HTML docs in production; avoid breaking embeddings/payments)
   };
 
   // Apply headers
   Object.entries(securityHeaders).forEach(([key, value]) => {
     response.headers.set(key, value);
   });
+
+  // Apply COOP/COEP only to full HTML documents in production to enable better performance APIs
+  if (process.env.NODE_ENV === 'production' && isHtmlDoc) {
+    response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+    response.headers.set('Cross-Origin-Resource-Policy', 'same-site');
+    // COEP is intentionally omitted to avoid breaking third-party iframes; add when all deps are compatible
+  }
+
+  // Avoid adding hop-by-hop headers that may break HTTP/2 or streaming semantics.
 
   return response;
 }

@@ -1,12 +1,13 @@
-import type {
-  CallableRequest} from "firebase-functions/v2/https";
-import {
-  onCall,
-  HttpsError
-} from "firebase-functions/v2/https";
-import { logger } from "firebase-functions";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
+import { logger } from "firebase-functions";
+import type {
+  CallableRequest
+} from "firebase-functions/v2/https";
+import {
+  HttpsError,
+  onCall
+} from "firebase-functions/v2/https";
 
 const db = getFirestore();
 const auth = getAuth();
@@ -38,7 +39,7 @@ interface BillingReminderData {
 // Send payment receipt email
 export const sendPaymentReceipt = onCall<PaymentReceiptData>(
   {
-    region: "australia-southeast2",
+    region: "australia-southeast1",
     timeoutSeconds: 60,
     memory: "256MiB",
   },
@@ -102,7 +103,7 @@ export const sendPaymentReceipt = onCall<PaymentReceiptData>(
 // Send welcome email
 export const sendWelcomeEmailFunction = onCall<WelcomeEmailData>(
   {
-    region: "australia-southeast2",
+    region: "australia-southeast1",
     timeoutSeconds: 60,
     memory: "256MiB",
   },
@@ -155,7 +156,7 @@ export const sendWelcomeEmailFunction = onCall<WelcomeEmailData>(
 // Send billing reminder email
 export const sendBillingReminder = onCall<BillingReminderData>(
   {
-    region: "australia-southeast2",
+    region: "australia-southeast1",
     timeoutSeconds: 60,
     memory: "256MiB",
   },

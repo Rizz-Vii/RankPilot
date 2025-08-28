@@ -1,7 +1,7 @@
 // Sales Automation Snapshot lightweight fetchers
 // Mirrors collections written by automation actions: salesMetricsSnapshots, salesForecastSnapshots
+import { db } from '@/lib/firebase';
 import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase/connection-manager';
 
 export interface SalesMetricsSnapshotDoc {
     id: string;

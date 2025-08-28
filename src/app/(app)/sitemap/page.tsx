@@ -1,24 +1,24 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { motion } from "framer-motion";
 import {
-  Home,
   BarChart3,
+  BookOpen,
   CreditCard,
-  HelpCircle,
+  ExternalLink,
   FileText,
-  Shield,
+  HelpCircle,
+  Home,
   Mail,
-  Users,
-  Zap,
+  Phone,
+  Shield,
   Target,
   TrendingUp,
-  BookOpen,
-  Phone,
-  ExternalLink,
+  Users,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -53,33 +53,33 @@ const sitemapSections = [
     links: [
       {
         name: "Link Analysis",
-        href: "/tools/link-analysis",
+        href: "/link-view",
         description: "Analyze backlink quality and opportunities",
       },
       {
         name: "SERP Analysis",
-        href: "/tools/serp-analysis",
+        href: "/serp-view",
         description: "Understand search engine results",
       },
       {
         name: "Keyword Research",
-        href: "/tools/keyword-research",
+        href: "/keyword-tool",
         description: "Discover valuable keywords",
       },
       {
         name: "Site Audit",
-        href: "/tools/site-audit",
+        href: "/seo-audit",
         description: "Comprehensive website analysis",
       },
       {
         name: "Competitor Analysis",
-        href: "/tools/competitor-analysis",
+        href: "/competitors",
         description: "Spy on your competition",
       },
       {
-        name: "Rank Tracking",
-        href: "/tools/rank-tracking",
-        description: "Monitor your search rankings",
+        name: "Performance",
+        href: "/performance",
+        description: "Monitor key site performance metrics",
       },
     ],
   },
@@ -94,29 +94,20 @@ const sitemapSections = [
       },
       {
         name: "Billing Settings",
-        href: "/profile?tab=billing",
+        href: "/settings/billing",
         description: "Manage subscription and payments",
       },
       {
         name: "Team Management",
-        href: "/profile?tab=team",
+        href: "/team",
         description: "Invite and manage team members",
       },
       {
         name: "API Keys",
-        href: "/profile?tab=api",
+        href: "/settings/api",
         description: "Generate and manage API access",
       },
-      {
-        name: "Notifications",
-        href: "/profile?tab=notifications",
-        description: "Control email and app notifications",
-      },
-      {
-        name: "Security",
-        href: "/profile?tab=security",
-        description: "Two-factor auth and login settings",
-      },
+      // Notifications/Security pages are not available yet
     ],
   },
   {
@@ -138,21 +129,7 @@ const sitemapSections = [
         href: "/tutorials",
         description: "Step-by-step video guides",
       },
-      {
-        name: "Community Forum",
-        href: "/community",
-        description: "Connect with other users",
-      },
-      {
-        name: "Feature Requests",
-        href: "/feedback",
-        description: "Suggest new features",
-      },
-      {
-        name: "Bug Reports",
-        href: "/bugs",
-        description: "Report issues and bugs",
-      },
+      // Community/Feedback/Bug routes not available yet
     ],
   },
   {
@@ -175,20 +152,11 @@ const sitemapSections = [
         description: "Our use of cookies",
       },
       {
-        name: "GDPR Compliance",
-        href: "/gdpr",
-        description: "Data protection information",
-      },
-      {
         name: "Security Policy",
         href: "/security",
         description: "Our security practices",
       },
-      {
-        name: "Acceptable Use",
-        href: "/acceptable-use",
-        description: "Platform usage guidelines",
-      },
+      // GDPR/Acceptable Use pages not available yet
     ],
   },
   {
@@ -206,25 +174,11 @@ const sitemapSections = [
         description: "Success stories from our users",
       },
       {
-        name: "SEO Guide",
-        href: "/guide/seo",
+        name: "Guides",
+        href: "/guides",
         description: "Complete guide to SEO",
       },
-      {
-        name: "Link Building Guide",
-        href: "/guide/link-building",
-        description: "Master the art of link building",
-      },
-      {
-        name: "Technical SEO",
-        href: "/guide/technical-seo",
-        description: "Advanced technical optimization",
-      },
-      {
-        name: "Local SEO",
-        href: "/guide/local-seo",
-        description: "Dominate local search results",
-      },
+      // Specific guide deep-links not available yet
     ],
   },
   {
@@ -246,57 +200,15 @@ const sitemapSections = [
         href: "/careers",
         description: "Join our growing team",
       },
-      {
-        name: "Press Kit",
-        href: "/press",
-        description: "Media resources and brand assets",
-      },
-      {
-        name: "Partner Program",
-        href: "/partners",
-        description: "Become a RankPilot partner",
-      },
-      {
-        name: "Affiliate Program",
-        href: "/affiliates",
-        description: "Earn by referring customers",
-      },
+      // Press/Partners/Affiliates pages not available yet
     ],
   },
   {
     title: "Integrations",
     icon: <Zap className="h-5 w-5" />,
     links: [
-      {
-        name: "Google Analytics",
-        href: "/integrations/google-analytics",
-        description: "Connect your GA account",
-      },
-      {
-        name: "Search Console",
-        href: "/integrations/search-console",
-        description: "Import GSC data",
-      },
-      {
-        name: "Google Ads",
-        href: "/integrations/google-ads",
-        description: "Sync advertising data",
-      },
-      {
-        name: "Shopify",
-        href: "/integrations/shopify",
-        description: "E-commerce SEO integration",
-      },
-      {
-        name: "WordPress",
-        href: "/integrations/wordpress",
-        description: "WordPress plugin",
-      },
-      {
-        name: "Zapier",
-        href: "/integrations/zapier",
-        description: "Automate your workflow",
-      },
+      { name: "Integration Hub", href: "/integration-hub", description: "Explore available integrations" },
+      { name: "All Integrations", href: "/integrations", description: "Browse integration catalog" },
     ],
   },
 ];
@@ -304,7 +216,7 @@ const sitemapSections = [
 const quickActions = [
   {
     name: "Start Free Trial",
-    href: "/signup",
+    href: "/register",
     icon: <Target className="h-4 w-4" />,
     variant: "default" as const,
   },
@@ -332,7 +244,7 @@ const popularPages = [
   { name: "Link Analysis Tool", href: "/tools/link-analysis", visits: "12.3k" },
   { name: "SERP Checker", href: "/tools/serp-analysis", visits: "8.7k" },
   { name: "Pricing Plans", href: "/pricing", visits: "15.2k" },
-  { name: "API Documentation", href: "/docs/api", visits: "5.4k" },
+  { name: "API Documentation", href: "/api-docs", visits: "5.4k" },
   { name: "SEO Blog", href: "/blog", visits: "9.8k" },
   { name: "Help Center", href: "/help", visits: "7.1k" },
 ];

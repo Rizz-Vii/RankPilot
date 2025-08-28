@@ -1,10 +1,4 @@
-import { db } from "@/lib/firebase/index";
-import {
-  collection,
-  doc,
-  getDocs,
-  writeBatch,
-} from "firebase/firestore";
+import { adminDb } from "@/lib/firebase-admin";
 import { NextResponse } from "next/server";
 
 // Define types for better type safety
@@ -92,7 +86,7 @@ export async function POST(): Promise<NextResponse> {
   try {
     console.log("🚨 Starting comprehensive user data cleanup...");
 
-    const usersSnapshot = await getDocs(collection(db, "users"));
+    const usersSnapshot = await adminDb.collection("users").get();
     const cleanupResults: CleanupResults = {
       totalUsers: usersSnapshot.docs.length,
       quotasFixed: 0,
@@ -103,13 +97,13 @@ export async function POST(): Promise<NextResponse> {
       errors: [],
     };
 
-    const batch = writeBatch(db);
+    let batch = adminDb.batch();
     let batchCount = 0;
 
     for (const userDoc of usersSnapshot.docs) {
       const userId = userDoc.id;
       const userData = userDoc.data() as UserData;
-      const userRef = doc(db, "users", userId);
+      const userRef = adminDb.collection("users").doc(userId);
 
       // Identify if this is a test user
       const isTestUser = TEST_USER_PATTERNS.some((pattern) =>
@@ -220,12 +214,13 @@ export async function POST(): Promise<NextResponse> {
         updates.cleanupVersion = "2025-07-25-tier-consistency";
         updates.isTestUser = isTestUser;
 
-        batch.update(userRef, updates);
+        batch.update(userRef, updates as FirebaseFirestore.UpdateData<Record<string, unknown>>);
         batchCount++;
 
         // Commit batch every 500 operations to avoid limits
         if (batchCount >= 500) {
           await batch.commit();
+          batch = adminDb.batch();
           batchCount = 0;
         }
       }

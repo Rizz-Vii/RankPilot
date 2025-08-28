@@ -1,12 +1,12 @@
 // Marketing Metrics Service - aggregates campaign data with realtime subscription
-import type { Unsubscribe, DocumentData, QuerySnapshot } from 'firebase/firestore';
-import { collection, getDocs, orderBy, query, where, limit } from 'firebase/firestore';
-import { managedOnSnapshot } from '@/lib/firebase/write-guard';
-import { db } from '@/lib/firebase/connection-manager';
 import { getMockMetrics } from '@/lib/domain/mockMetrics';
-import type { MarketingCampaignFirestore} from '@/types/firestore-docs';
-import { mapMarketingCampaignDoc } from '@/types/firestore-docs';
+import { db } from '@/lib/firebase';
 import { mapDocs } from '@/lib/firebase/snapshot-map';
+import { managedOnSnapshot } from '@/lib/firebase/write-guard';
+import type { MarketingCampaignFirestore } from '@/types/firestore-docs';
+import { mapMarketingCampaignDoc } from '@/types/firestore-docs';
+import type { DocumentData, QuerySnapshot, Unsubscribe } from 'firebase/firestore';
+import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
 
 export interface MarketingCampaignDoc { id?: string; userId?: string; teamId?: string; period: string; name?: string; channel?: string; impressions?: number; clicks?: number; leads?: number; spend?: number; revenue?: number; status?: string; createdAt?: unknown; }
 

@@ -1,6 +1,5 @@
-import type { ChartExportConfig } from '@/lib/visualizations/d3-visualization-engine';
-import { d3VisualizationEngine } from '@/lib/visualizations/d3-visualization-engine';
 import { auth } from '@/lib/firebase';
+import type { ChartExportConfig } from '@/lib/visualizations/d3-visualization-engine';
 
 export type ChartExportFormat = ChartExportConfig['format'];
 
@@ -56,6 +55,7 @@ export async function exportChartClient(
     options?: { openInNewTab?: boolean }
 ): Promise<ExportResult> {
     // Generate client-side artifact (data URL)
+    const { d3VisualizationEngine } = await import('@/lib/visualizations/d3-visualization-engine');
     let artifact = await d3VisualizationEngine.exportChart(chartId, exportConfig);
     artifact = await normalizeArtifactForUpload(artifact, exportConfig.format);
 

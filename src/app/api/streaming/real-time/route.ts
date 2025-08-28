@@ -5,11 +5,16 @@
 
 import { extractErrorMessage } from '@/lib/errors/extract-error-message';
 import { allowStreamingMockUser } from '@/lib/flags/demo';
+import { handleCors } from '@/lib/http/cors';
+import { sse } from '@/lib/http/sse';
 import { recordError, recordRouteLatency } from '@/lib/metrics/unified-metrics';
 import { enforceProvenance, enforceProvenanceOnChunk } from '@/lib/middleware/provenance';
 import { realTimeDataStreamer } from '@/lib/streaming/real-time-data-streamer';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 interface StreamingRequest {
   action: 'register' | 'subscribe' | 'collaborate' | 'metrics';
@@ -21,13 +26,15 @@ interface StreamingRequest {
 }
 
 export async function POST(request: NextRequest) {
+  const cors = handleCors(request);
+  if ('preflight' in cors) return cors.preflight;
   const start = Date.now();
   try {
     const body = (await request.json()) as StreamingRequest;
     const authHeader = request.headers.get('authorization');
 
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(enforceProvenance({ error: 'Unauthorized - Missing token' }, { path: 'streaming/real-time:POST', note: 'auth-missing' }), { status: 401 });
+      return NextResponse.json(enforceProvenance({ error: 'Unauthorized - Missing token' }, { path: 'streaming/real-time:POST', note: 'auth-missing' }), { status: 401, headers: cors.headers });
     }
 
     // For demo purposes, we can use a mock user only if explicitly allowed
@@ -37,7 +44,7 @@ export async function POST(request: NextRequest) {
       : null;
 
     if (!mockUser) {
-      const res = NextResponse.json(enforceProvenance({ error: 'Unauthorized - Mock user disabled' }, { path: 'streaming/real-time:POST', note: 'mock-user-disabled' }), { status: 401 });
+      const res = NextResponse.json(enforceProvenance({ error: 'Unauthorized - Mock user disabled' }, { path: 'streaming/real-time:POST', note: 'mock-user-disabled' }), { status: 401, headers: cors.headers });
       recordRouteLatency('streaming/real-time:POST', Date.now() - start);
       return res;
     }
@@ -45,14 +52,14 @@ export async function POST(request: NextRequest) {
     switch (body.action) {
       case 'register': {
         if (!body.clientId) {
-          const res = NextResponse.json(enforceProvenance({ error: 'Client ID is required' }, { path: 'streaming/real-time:POST', note: 'register-missing-clientId' }), { status: 400 });
+          const res = NextResponse.json(enforceProvenance({ error: 'Client ID is required' }, { path: 'streaming/real-time:POST', note: 'register-missing-clientId' }), { status: 400, headers: cors.headers });
           recordRouteLatency('streaming/real-time:POST', Date.now() - start);
           return res;
         }
 
         // Explicitly reject WebSocket registration on node runtime to avoid silent close
         if ((body.connectionType || 'websocket') === 'websocket') {
-          const res = NextResponse.json(enforceProvenance({ error: 'websocket_unsupported_in_node_runtime', hint: 'Use SSE via GET ?action=sse&clientId=…' }, { path: 'streaming/real-time:POST', note: 'ws-rejected' }), { status: 400 });
+          const res = NextResponse.json(enforceProvenance({ error: 'websocket_unsupported_in_node_runtime', hint: 'Use SSE via GET ?action=sse&clientId=…' }, { path: 'streaming/real-time:POST', note: 'ws-rejected' }), { status: 400, headers: cors.headers });
           recordRouteLatency('streaming/real-time:POST', Date.now() - start);
           return res;
         }
@@ -66,21 +73,21 @@ export async function POST(request: NextRequest) {
         );
 
         if (!registrationResult.success) {
-          return NextResponse.json(enforceProvenance({ error: registrationResult.error }, { path: 'streaming/real-time:POST', note: 'register-failed' }), { status: 400 });
+          return NextResponse.json(enforceProvenance({ error: registrationResult.error }, { path: 'streaming/real-time:POST', note: 'register-failed' }), { status: 400, headers: cors.headers });
         }
 
         const res = NextResponse.json(enforceProvenance({
           success: true,
           client: registrationResult.client,
           message: 'Client registered successfully'
-        }, { path: 'streaming/real-time:POST', note: 'register-ok' }));
+        }, { path: 'streaming/real-time:POST', note: 'register-ok' }), { headers: cors.headers });
         recordRouteLatency('streaming/real-time:POST', Date.now() - start);
         return res;
       }
 
       case 'subscribe': {
         if (!body.clientId || !body.streamTypes) {
-          const res = NextResponse.json(enforceProvenance({ error: 'Client ID and stream types are required' }, { path: 'streaming/real-time:POST', note: 'subscribe-missing-params' }), { status: 400 });
+          const res = NextResponse.json(enforceProvenance({ error: 'Client ID and stream types are required' }, { path: 'streaming/real-time:POST', note: 'subscribe-missing-params' }), { status: 400, headers: cors.headers });
           recordRouteLatency('streaming/real-time:POST', Date.now() - start);
           return res;
         }
@@ -94,14 +101,14 @@ export async function POST(request: NextRequest) {
           message: subscriptionResult.success
             ? `Subscribed to ${subscriptionResult.subscribed.length} streams`
             : 'Subscription failed'
-        }, { path: 'streaming/real-time:POST', note: subscriptionResult.success ? 'subscribe-ok' : 'subscribe-failed' }));
+        }, { path: 'streaming/real-time:POST', note: subscriptionResult.success ? 'subscribe-ok' : 'subscribe-failed' }), { headers: cors.headers });
         recordRouteLatency('streaming/real-time:POST', Date.now() - start);
         return res;
       }
 
       case 'collaborate': {
         if (!body.collaborationEvent) {
-          const res = NextResponse.json(enforceProvenance({ error: 'Collaboration event data is required' }, { path: 'streaming/real-time:POST', note: 'collab-missing-event' }), { status: 400 });
+          const res = NextResponse.json(enforceProvenance({ error: 'Collaboration event data is required' }, { path: 'streaming/real-time:POST', note: 'collab-missing-event' }), { status: 400, headers: cors.headers });
           recordRouteLatency('streaming/real-time:POST', Date.now() - start);
           return res;
         }
@@ -123,20 +130,20 @@ export async function POST(request: NextRequest) {
         const res = NextResponse.json(enforceProvenance({
           success: true,
           message: 'Collaboration event broadcasted'
-        }, { path: 'streaming/real-time:POST', note: 'collab-ok' }));
+        }, { path: 'streaming/real-time:POST', note: 'collab-ok' }), { headers: cors.headers });
         recordRouteLatency('streaming/real-time:POST', Date.now() - start);
         return res;
       }
 
       case 'metrics': {
         const metrics = realTimeDataStreamer.getMetrics();
-        const res = NextResponse.json(enforceProvenance({ success: true, metrics }, { path: 'streaming/real-time:POST', note: 'metrics' }));
+        const res = NextResponse.json(enforceProvenance({ success: true, metrics }, { path: 'streaming/real-time:POST', note: 'metrics' }), { headers: cors.headers });
         recordRouteLatency('streaming/real-time:POST', Date.now() - start);
         return res;
       }
 
       default:
-        const res = NextResponse.json(enforceProvenance({ error: 'Invalid action' }, { path: 'streaming/real-time:POST', note: 'invalid-action' }), { status: 400 });
+        const res = NextResponse.json(enforceProvenance({ error: 'Invalid action' }, { path: 'streaming/real-time:POST', note: 'invalid-action' }), { status: 400, headers: cors.headers });
         recordRouteLatency('streaming/real-time:POST', Date.now() - start);
         return res;
     }
@@ -149,12 +156,14 @@ export async function POST(request: NextRequest) {
         error: 'Internal server error',
         details: extractErrorMessage(error)
       }, { path: 'streaming/real-time:POST', note: 'exception' }),
-      { status: 500 }
+      { status: 500, headers: cors.headers }
     );
   }
 }
 
 export async function GET(request: NextRequest) {
+  const cors = handleCors(request, { allowMethods: ['GET', 'OPTIONS'] });
+  if ('preflight' in cors) return cors.preflight;
   const start = Date.now();
   try {
     const url = new URL(request.url);
@@ -169,65 +178,29 @@ export async function GET(request: NextRequest) {
         return res;
       }
 
-      // Create SSE response
-      const encoder = new TextEncoder();
+      // Create SSE response via helper
+      const res = sse(request, (client) => {
+      // Advise client retry interval and initial message
+    client.sendRaw('retry: 10000\n\n');
+    client.send(enforceProvenanceOnChunk({ type: 'connection', message: 'SSE connection established', timestamp: Date.now() }, { path: 'streaming/real-time:sse' }));
 
-      const customReadable = new ReadableStream({
-        start(controller) {
-          // Send initial connection message
-          const safeEnqueue = (payload: unknown) => {
-            try {
-              const body: Record<string, unknown> = (payload && typeof payload === 'object')
-                ? payload as Record<string, unknown>
-                : { message: String(payload) };
-              const wrapped = enforceProvenanceOnChunk(body, { path: 'streaming/real-time:sse' });
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify(wrapped)}\n\n`));
-            } catch {
-              try { controller.close(); } catch { /* noop */ }
-            }
-          };
+    // Listen for SSE data events
+    const handleSSEData = (id: string, data: unknown): void => {
+      if (id === clientId) {
+            client.send(enforceProvenanceOnChunk((data && typeof data === 'object') ? data as Record<string, unknown> : { message: String(data) }, { path: 'streaming/real-time:sse' }));
+          }
+        };
 
-          // Advise client retry interval and initial message
-          try { controller.enqueue(encoder.encode('retry: 10000\n\n')); } catch { /* ignore */ }
-          safeEnqueue({ type: 'connection', message: 'SSE connection established', timestamp: Date.now() });
+    realTimeDataStreamer.on('sse-data', handleSSEData);
 
-          // Listen for SSE data events
-          const handleSSEData = (id: string, data: unknown): void => {
-            if (id === clientId) {
-              safeEnqueue(data);
-            }
-          };
-
-          realTimeDataStreamer.on('sse-data', handleSSEData);
-
-          // Heartbeat to keep connection alive
-          const heartbeat = setInterval(() => {
-            safeEnqueue({ type: 'heartbeat', timestamp: Date.now() });
-          }, 15000);
-
-          // Cleanup on close
-          const onAbort = (): void => {
-            clearInterval(heartbeat as unknown as number);
-            realTimeDataStreamer.off('sse-data', handleSSEData);
-            void realTimeDataStreamer.disconnectClient(clientId);
-            controller.close();
-          };
-
-          request.signal.addEventListener('abort', onAbort);
-        }
-      });
-
-      const res = new NextResponse(customReadable, {
-        headers: {
-          'Content-Type': 'text/event-stream; charset=utf-8',
-          'Cache-Control': 'no-cache, no-transform',
-          Connection: 'keep-alive',
-          'Keep-Alive': 'timeout=60',
-          'X-Accel-Buffering': 'no',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Headers': 'Cache-Control'
-        }
-      });
+    // Cleanup on close/abort
+    const onAbort = async (): Promise<void> => {
+      realTimeDataStreamer.off('sse-data', handleSSEData);
+          await realTimeDataStreamer.disconnectClient(clientId);
+          client.close();
+        };
+    request.signal.addEventListener('abort', onAbort);
+  }, { heartbeatMs: 15000, headers: cors.headers });
       recordRouteLatency('streaming/real-time:GET', Date.now() - start);
       return res;
     }
@@ -236,7 +209,7 @@ export async function GET(request: NextRequest) {
     switch (action) {
       case 'metrics': {
         const metrics = realTimeDataStreamer.getMetrics();
-        const res = NextResponse.json(enforceProvenance({ success: true, metrics }, { path: 'streaming/real-time:GET', note: 'metrics' }));
+        const res = NextResponse.json(enforceProvenance({ success: true, metrics }, { path: 'streaming/real-time:GET', note: 'metrics' }), { headers: cors.headers });
         recordRouteLatency('streaming/real-time:GET', Date.now() - start);
         return res;
       }
@@ -247,13 +220,13 @@ export async function GET(request: NextRequest) {
           status: 'healthy',
           uptime: process.uptime(),
           connections: realTimeDataStreamer.getMetrics().totalConnections
-        }, { path: 'streaming/real-time:GET', note: 'health' }));
+        }, { path: 'streaming/real-time:GET', note: 'health' }), { headers: cors.headers });
         recordRouteLatency('streaming/real-time:GET', Date.now() - start);
         return res;
       }
 
       default:
-        const res = NextResponse.json(enforceProvenance({ error: 'Invalid action' }, { path: 'streaming/real-time:GET', note: 'invalid-action' }), { status: 400 });
+        const res = NextResponse.json(enforceProvenance({ error: 'Invalid action' }, { path: 'streaming/real-time:GET', note: 'invalid-action' }), { status: 400, headers: cors.headers });
         recordRouteLatency('streaming/real-time:GET', Date.now() - start);
         return res;
     }
@@ -266,19 +239,21 @@ export async function GET(request: NextRequest) {
         error: 'Internal server error',
         details: extractErrorMessage(error)
       }, { path: 'streaming/real-time:GET', note: 'exception' }),
-      { status: 500 }
+      { status: 500, headers: cors.headers }
     );
   }
 }
 
 export async function DELETE(request: NextRequest) {
+  const cors = handleCors(request);
+  if ('preflight' in cors) return cors.preflight;
   const start = Date.now();
   try {
     const url = new URL(request.url);
     const clientId = url.searchParams.get('clientId');
 
     if (!clientId) {
-      const res = NextResponse.json(enforceProvenance({ error: 'Client ID is required' }, { path: 'streaming/real-time:DELETE', note: 'missing-clientId' }), { status: 400 });
+      const res = NextResponse.json(enforceProvenance({ error: 'Client ID is required' }, { path: 'streaming/real-time:DELETE', note: 'missing-clientId' }), { status: 400, headers: cors.headers });
       recordRouteLatency('streaming/real-time:DELETE', Date.now() - start);
       return res;
     }
@@ -288,7 +263,7 @@ export async function DELETE(request: NextRequest) {
     const res = NextResponse.json(enforceProvenance({
       success: disconnected,
       message: disconnected ? 'Client disconnected successfully' : 'Client not found'
-    }, { path: 'streaming/real-time:DELETE' }));
+    }, { path: 'streaming/real-time:DELETE' }), { headers: cors.headers });
     recordRouteLatency('streaming/real-time:DELETE', Date.now() - start);
     return res;
   } catch (error) {
@@ -300,7 +275,12 @@ export async function DELETE(request: NextRequest) {
         error: 'Internal server error',
         details: extractErrorMessage(error)
       }, { path: 'streaming/real-time:DELETE', note: 'exception' }),
-      { status: 500 }
+      { status: 500, headers: cors.headers }
     );
   }
+}
+
+export async function OPTIONS(request: NextRequest) {
+  const cors = handleCors(request);
+  return 'preflight' in cors ? cors.preflight : new Response(null, { status: 204, headers: cors.headers });
 }

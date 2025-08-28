@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import Link from 'next/link';
 
 export default function NotFound() {
   return (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted font-body">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted font-body">
       <div className="max-w-2xl w-full mx-auto p-8">
         <div className="rounded-2xl border bg-card text-card-foreground shadow-sm p-10 text-center">
           <div className="mb-6">

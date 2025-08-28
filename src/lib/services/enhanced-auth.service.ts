@@ -1,26 +1,26 @@
 /**
  * Enhanced Auth Service - Leveraging Database Indexes
- * 
+ *
  * Optimized authentication service utilizing our comprehensive
  * database structure with 25 composite indexes for performance.
- * 
+ *
  * Generated: July 26, 2025
  * Indexes Used: users (subscriptionTier+createdAt, subscriptionStatus+lastLoginAt, role+createdAt)
  */
 
+import { db } from "@/lib/firebase";
 import {
     collection,
-    query,
-    where,
-    orderBy,
-    limit,
-    getDocs,
     doc,
     getDoc,
+    getDocs,
+    limit,
+    orderBy,
+    query,
+    Timestamp,
     updateDoc,
-    Timestamp
+    where
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 
 export interface UserAnalytics {
     totalUsers: number;
@@ -49,6 +49,10 @@ export class EnhancedAuthService {
      */
     static async getUserAnalytics(): Promise<UserAnalytics> {
         try {
+            if (typeof window === 'undefined') {
+                // Avoid Firestore client calls during SSR; return empty analytics
+                return { totalUsers: 0, usersByTier: {}, usersByRole: {}, recentLogins: 0, subscriptionTrends: [] };
+            }
             // Query users by subscription tier (uses subscriptionTier+createdAt index)
             const tiers = ['free', 'starter', 'agency', 'enterprise', 'admin'];
             const tierCounts: Record<string, number> = {};
@@ -168,9 +172,11 @@ export class EnhancedAuthService {
     static async updateLoginTracking(userId: string): Promise<void> {
         try {
             const userRef = doc(db, "users", userId);
+            const snap = await getDoc(userRef);
+            const prev = (snap.exists() ? (snap.data()?.loginCount as number | undefined) : undefined) ?? 0;
             await updateDoc(userRef, {
                 lastLoginAt: Timestamp.now(),
-                loginCount: (await getDoc(userRef)).data()?.loginCount || 0 + 1
+                loginCount: prev + 1,
             });
         } catch (error) {
             console.error("Error updating login tracking:", error);

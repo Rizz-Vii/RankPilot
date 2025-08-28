@@ -1,6 +1,7 @@
 // Lightweight provenance enforcement helpers.
 // Ensures every AI-related payload includes an allowed provenance tag.
-import { recordProvenanceInjection, recordProvenanceObservation } from '@/lib/metrics/unified-metrics';
+import { recordProvenanceInjection, recordProvenanceObservation, recordProvenanceReason } from '@/lib/metrics/unified-metrics';
+import { isProvenanceReasonCode } from './provenance-reasons';
 
 export type ProvenanceTag = 'live' | 'cache' | 'synthetic' | 'hybrid' | 'mixed' | 'unknown' | 'error'; // 'error' treated internally and normalized to 'synthetic'
 
@@ -39,7 +40,11 @@ export function enforceProvenance<T extends Record<string, unknown>>(obj: T, ctx
     delete cloned.provenance; // prevent dual-field confusion
     cloned.__provenance = tag;
     if (ctx.path) cloned.__prov_path = ctx.path;
-    if (ctx.note) cloned.__prov_note = ctx.note;
+    if (ctx.note) {
+        const note = isProvenanceReasonCode(ctx.note) ? ctx.note : 'other';
+        cloned.__prov_note = note;
+        recordProvenanceReason(note);
+    }
     recordProvenanceObservation(true);
     return cloned as T & { __provenance: ProvenanceTag; provenance?: never };
 }
@@ -60,7 +65,11 @@ export function enforceProvenanceOnChunk<T extends Record<string, unknown>>(chun
     }
     target.provenance = tag;
     if (ctx.path) target.prov_path = ctx.path;
-    if (ctx.note) target.prov_note = ctx.note;
+    if (ctx.note) {
+        const note = isProvenanceReasonCode(ctx.note) ? ctx.note : 'other';
+        target.prov_note = note;
+        recordProvenanceReason(note);
+    }
     recordProvenanceObservation(true);
     return chunk;
 }

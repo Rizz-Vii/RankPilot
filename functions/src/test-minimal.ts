@@ -5,7 +5,7 @@ import { onCall } from "firebase-functions/v2/https";
 
 export const testMinimal = onCall(
   {
-    region: "australia-southeast2",
+    region: "australia-southeast1",
     memory: "256MiB",
     timeoutSeconds: 10,
   },

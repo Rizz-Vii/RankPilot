@@ -1,17 +1,17 @@
 /**
  * Push Notifications API - Subscribe Endpoint
  * Advanced Architecture Enhancement - DevReady Phase 3
- * 
+ *
  * Features:
  * - Subscription storage in Firestore
  * - User-specific notification preferences
  * - Rate limiting protection
  */
 
-import { db } from '@/lib/firebase';
+import { adminDb } from '@/lib/firebase-admin';
 import { rateLimit } from '@/lib/utils/rate-limit';
-import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
-import type { NextRequest} from 'next/server';
+import { serverTimestamp } from 'firebase/firestore';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 interface PushSubscription {
@@ -117,13 +117,12 @@ export async function POST(request: NextRequest) {
 
         // Use subscription endpoint as document ID for easy deduplication
         const subscriptionId = Buffer.from(body.subscription.endpoint).toString('base64');
-        const subscriptionRef = doc(db, 'pushSubscriptions', subscriptionId);
-
-        await setDoc(subscriptionRef, subscriptionData, { merge: true });
+        const subscriptionRef = adminDb.collection('pushSubscriptions').doc(subscriptionId);
+        await subscriptionRef.set(subscriptionData, { merge: true });
 
         // Update user's notification settings
-        const userRef = doc(db, 'users', body.userId);
-        await setDoc(userRef, {
+        const userRef = adminDb.collection('users').doc(body.userId);
+        await userRef.set({
             notificationsEnabled: true,
             lastNotificationUpdate: serverTimestamp()
         }, { merge: true });
@@ -182,9 +181,8 @@ export async function DELETE(request: NextRequest) {
 
         // Remove subscription from Firestore
         const subscriptionId = Buffer.from(body.subscription.endpoint).toString('base64');
-        const subscriptionRef = doc(db, 'pushSubscriptions', subscriptionId);
-
-        await setDoc(subscriptionRef, {
+        const subscriptionRef = adminDb.collection('pushSubscriptions').doc(subscriptionId);
+        await subscriptionRef.set({
             isActive: false,
             deletedAt: serverTimestamp(),
             updatedAt: serverTimestamp()

@@ -1,10 +1,14 @@
-import OpenAI from "openai";
 import { gemini15Flash } from "@genkit-ai/googleai"; // Import the model reference
-import { ai } from "./genkit";
+import OpenAI from "openai";
 import type { ZodType } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-// Initialize the OpenAI client for fallback
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { ai } from "./genkit";
+// Lazy initialize OpenAI in fallback only to avoid build-time credentials errors
+function getOpenAI(): OpenAI | null {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) return null;
+  return new OpenAI({ apiKey: key });
+}
 
 /**
  * Generates a JSON object from an AI model using a specified prompt.
@@ -60,7 +64,9 @@ export async function generateJson(
       zodToJsonSchema(outputSchema)
     )}`;
 
-    const response = await openai.chat.completions.create({
+    const client = getOpenAI();
+    if (!client) throw new Error("OpenAI not configured");
+    const response = await client.chat.completions.create({
       model: "gpt-4o",
       messages: [
         { role: "system", content: openAISystemPrompt },

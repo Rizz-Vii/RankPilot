@@ -1,13 +1,6 @@
 // src/components/serp-view-results.tsx
 import type { SerpViewOutput } from "@/ai/flows/serp-view";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -15,15 +8,22 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import {
-  ListOrdered,
-  HelpCircle,
-  Link as LinkIcon,
-  Image as ImageIcon,
-  Video,
-  Newspaper,
-  Award,
-} from "lucide-react";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { motion } from "framer-motion";
+import {
+  Award,
+  HelpCircle,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  ListOrdered,
+  Newspaper,
+  Video,
+} from "lucide-react";
 
 interface SerpViewResultsProps {
   results: SerpViewOutput;
@@ -161,7 +161,7 @@ export default function SerpViewResults({ results }: SerpViewResultsProps) {
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
                 {results.peopleAlsoAsk.map((item, index) => (
-                  <motion.div key={index} variants={itemVariant}>
+                  <motion.div key={`${item.question}-${index}`} variants={itemVariant}>
                     <AccordionItem value={`item-${index}`}>
                       <AccordionTrigger className="font-body text-left hover:no-underline">
                         {item.question}

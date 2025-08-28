@@ -1,215 +1,19 @@
-"use client";
-import { AuthAwareHero } from "@/components/auth-aware-homepage";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { motion } from "framer-motion";
-import { Brain, Coins, LineChart, Link2, Rocket, TrendingUp, Users2, Workflow, Zap } from "lucide-react";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useEffect } from "react";
-const fadeIn = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.15, duration: 0.6 },
-  }),
-};
+// Load client components dynamically (client-only) to keep the shared chunk lean and avoid SSR coupling
+// Import client components directly – they are client boundaries and will be code-split automatically
+import { AuthAwareHero } from "@/components/auth-aware-homepage";
+import HomeFeaturesGrid from "@/components/home/HomeFeaturesGrid";
 
-type FeatureTitle =
-  | "Keyword Intelligence"
-  | "Competitor Tracking"
-  | "NeuroSemantic Engine"
-  | "Backlink Intelligence"
-  | "Automation Recipes"
-  | "Content RewriteGen"
-  | "Revenue & Attribution"
-  | "Team Collaboration"
-  | "Performance & Core Web Vitals";
+// Force static generation for the public homepage to avoid SSR runtime variability
+// Use ISR to refresh at most once per hour, while client islands hydrate as usual
+export const dynamic = "force-static";
+export const revalidate = 3600; // 1 hour
 
-import type { Variants } from "framer-motion";
-
-const iconAnimations: Record<FeatureTitle, Variants> = {
-  // "Site Audit": {
-  //   initial: { x: -24, opacity: 0, scale: 0.7, rotate: -20 },
-  //   animate: {
-  //     x: 0,
-  //     opacity: 1,
-  //     scale: 1,
-  //     rotate: 0,
-  //     transition: { type: "spring", stiffness: 300, damping: 18 },
-  //   },
-  //   hover: {
-  //     scale: 1.2,
-  //     rotate: 15,
-  //     x: 40,
-  //     transition: { type: "spring", stiffness: 200, damping: 15 },
-  //   },
-  // },
-  "Keyword Intelligence": {
-    initial: { x: 4, opacity: 0, scale: 0.7, rotate: 20 },
-    animate: {
-      y: 0,
-      opacity: 1,
-      scale: 1,
-      rotate: 0,
-      transition: { type: "spring", stiffness: 300, damping: 18 },
-    },
-    hover: {
-      scale: 1.2,
-      rotate: 15,
-      x: 30,
-      transition: { type: "spring", stiffness: 200, damping: 15 },
-    },
-  },
-  "Competitor Tracking": {
-    initial: { x: 24, opacity: 0, scale: 0.7, rotate: 20 },
-    animate: {
-      x: 0,
-      opacity: 1,
-      scale: 1,
-      rotate: 0,
-      transition: { type: "spring", stiffness: 320, damping: 18 },
-    },
-    hover: {
-      scale: 1.2,
-      rotate: 2,
-      x: 40,
-      transition: { type: "spring", stiffness: 200, damping: 15 },
-    },
-  },
-  "NeuroSemantic Engine": {
-    initial: { y: -20, opacity: 0, scale: 0.7, rotate: -10 },
-    animate: { y: 0, opacity: 1, scale: 1, rotate: 0, transition: { type: 'spring', stiffness: 280, damping: 20 } },
-    hover: { scale: 1.18, rotate: 8, y: -10, transition: { type: 'spring', stiffness: 220, damping: 16 } }
-  },
-  "Backlink Intelligence": {
-    initial: { x: -20, opacity: 0, scale: 0.7 },
-    animate: { x: 0, opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 20 } },
-    hover: { scale: 1.16, x: 10, transition: { type: 'spring', stiffness: 240, damping: 18 } }
-  },
-  "Automation Recipes": {
-    initial: { x: 15, opacity: 0, scale: 0.7, rotate: 15 },
-    animate: { x: 0, opacity: 1, scale: 1, rotate: 0, transition: { type: 'spring', stiffness: 300, damping: 20 } },
-    hover: { scale: 1.22, rotate: 12, x: 25, transition: { type: 'spring', stiffness: 220, damping: 16 } }
-  },
-  "Content RewriteGen": {
-    initial: { y: 30, opacity: 0, scale: 0.7 },
-    animate: { y: 0, opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 320, damping: 18 } },
-    hover: { scale: 1.18, y: -6, transition: { type: 'spring', stiffness: 240, damping: 16 } }
-  },
-  "Revenue & Attribution": {
-    initial: { x: -30, opacity: 0, scale: 0.7 },
-    animate: { x: 0, opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 18 } },
-    hover: { scale: 1.2, x: 35, transition: { type: 'spring', stiffness: 230, damping: 16 } }
-  },
-  "Team Collaboration": {
-    initial: { x: 20, opacity: 0, scale: 0.7 },
-    animate: { x: 0, opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 18 } },
-    hover: { scale: 1.16, x: 12, transition: { type: 'spring', stiffness: 240, damping: 16 } }
-  },
-  "Performance & Core Web Vitals": {
-    initial: { y: -24, opacity: 0, scale: 0.7 },
-    animate: { y: 0, opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 18 } },
-    hover: { scale: 1.2, y: -12, transition: { type: 'spring', stiffness: 240, damping: 16 } }
-  }
-};
-
-const features: {
-  title: FeatureTitle;
-  desc: string;
-  icon: React.ComponentType<{ className?: string }>;
-  detailedDescription: string;
-}[] = [
-    // {
-    //   title: "Site Audit",
-    // desc: "160+ technical checks • JS rendering • Core Web Vitals • Structured data & link graph scoring.",
-    //   icon: Search,
-    //   detailedDescription:
-    //     "The audit core combines deterministic crawling + AI heuristic evaluation. We surface prioritized issues across rendering, performance, accessibility, structured data, indexation signals, internal linking flow and Core Web Vitals—ranked by projected organic impact and ease of implementation.",
-    // },
-  {
-    title: "Keyword Intelligence",
-  desc: "Intent clustering • Opportunity scoring • SERP feature deltas • Competitive gap surfacing.",
-    icon: TrendingUp,
-    detailedDescription:
-      "Advanced embedding & transformer pipelines map searcher intent clusters, uncover adjacent demand, and score expansion vectors. Automatic SERP feature tracking + competitive gap delta streams feed always-fresh content briefs and rank defense intelligence.",
-  },
-  {
-    title: "Competitor Tracking",
-  desc: "Live competitor graph: content velocity, backlink momentum, authority & visibility share shifts.",
-    icon: Rocket,
-    detailedDescription:
-      "We continuously profile competitor inventories—tracking publishing cadence, link acquisition slope, SERP volatility pockets and authority concentration. Receive proactive alerts when emerging entrants threaten share or when defensive refresh windows open.",
-  },
-  {
-    title: "NeuroSemantic Engine",
-    desc: "Entity graphing • topical coverage gaps • semantic depth scoring.",
-    icon: Brain,
-    detailedDescription:
-      "Maps your domain's semantic surface area vs. market demand, revealing entity gaps, internal linking reinforcement vectors and latent topic clusters to accelerate authoritative depth construction.",
-  },
-  {
-    title: "Backlink Intelligence",
-    desc: "Acquisition slope • authority velocity • toxicity dampening patterns.",
-    icon: Link2,
-    detailedDescription:
-      "Consolidated backlink profiling with momentum detection, emerging referrers, decay risk forecasting and trust-layer heuristics—informing safer acquisition prioritization.",
-  },
-  {
-    title: "Automation Recipes",
-    desc: "Trigger → transform → action flows across audits, content & outreach.",
-    icon: Workflow,
-    detailedDescription:
-      "Composable, reusable automation graph: schedule or event-trigger technical rescans, content refresh scoring, outreach queue hydration and structured export pushes without brittle scripting.",
-  },
-  {
-    title: "Content RewriteGen",
-    desc: "On‑demand refactors • tone adaptation • semantic enrichment layers.",
-    icon: Zap,
-    detailedDescription:
-      "Guided, constraint-aware regeneration preserving factual anchors while boosting semantic density, intent alignment and internal link anchor optimization—human-in-the-loop safe guards included.",
-  },
-  {
-    title: "Revenue & Attribution",
-    desc: "Pipeline influence • assisted conversions • growth cohort lift.",
-    icon: Coins,
-    detailedDescription:
-      "Connect visibility movements to commercial impact via blended attribution heuristics, cohort progression slope tracking and assisted contribution modeling—finally prove organic's compounding delta.",
-  },
-  {
-    title: "Team Collaboration",
-    desc: "Shared workspaces • context-preserving comments • role / tier gating.",
-    icon: Users2,
-    detailedDescription:
-      "Align stakeholders with prioritized queues, inline threaded discussions, change tracking snapshots and progressive disclosure of advanced modules by role & subscription tier.",
-  },
-  {
-    title: "Performance & Core Web Vitals",
-    desc: "Real-time lab + field blend • regression detection • impact modeling.",
-    icon: LineChart,
-    detailedDescription:
-      "Unified performance telemetry overlays indexation & ranking volatility to highlight causal chains; regression early-warning layers feed into automation recipes for proactive remediation.",
-  },
-];
 
 export default function HomePage() {
-  const [hoveredIdx, setHoveredIdx] = React.useState<number | null>(null);
-  // Future: unify CTA variant selection with server hint if experimentation platform added.
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <main
@@ -218,68 +22,12 @@ export default function HomePage() {
       >
         {/* Hero with language selector */}
         <div className="w-full max-w-6xl flex flex-col items-stretch gap-4">
-          {/* Removed duplicate language selector (already present in global header) */}
+          {/* Client-only hero loaded lazily to avoid blocking server stream */}
           <AuthAwareHero />
         </div>
 
-        {/* Feature Highlights with animated icons (semantic list) */}
-        <section id="features" className="section-gap max-w-6xl w-full text-left" aria-labelledby="features-heading">
-          <h2 id="features-heading" className="sr-only">Platform Feature Modules</h2>
-          <ul className="grid md:grid-cols-3 gap-8 list-none p-0 m-0" role="list">
-            {features.map((item, i) => (
-              <li key={item.title} className="h-full">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <motion.div
-                      variants={fadeIn}
-                      initial="hidden"
-                      animate="visible"
-                      custom={i}
-                      className="cursor-pointer h-full micro-hover-lift focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-lg"
-                      onMouseEnter={() => setHoveredIdx(i)}
-                      onMouseLeave={() => setHoveredIdx(null)}
-                      aria-label={`${item.title} – ${item.desc}`}
-                    >
-                      <Card className="h-full" role="group" aria-labelledby={`feature-${i}-title`}>
-                        <CardHeader className="flex flex-row items-center gap-1">
-                          <CardTitle id={`feature-${i}-title`} className="text-lg font-semibold">
-                            {item.title}
-                          </CardTitle>
-                          <div className="w-[90px] h-10 flex items-center justify-center overflow-visible" aria-hidden="true">
-                            {/* Icon animation */}
-                            <motion.span
-                              variants={iconAnimations[item.title]}
-                              initial="initial"
-                              animate={hoveredIdx === i ? "hover" : "animate"}
-                              className="text-primary"
-                              style={{ display: "inline-block" }}
-                            >
-                              <item.icon className="h-6 w-6" />
-                            </motion.span>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-muted-foreground text-sm leading-relaxed">{item.desc}</p>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2 font-headline text-2xl">
-                        <item.icon className="h-6 w-6 text-primary" />
-                        {item.title}
-                      </DialogTitle>
-                      <DialogDescription className="pt-4 font-body text-base leading-relaxed">
-                        {item.detailedDescription}
-                      </DialogDescription>
-                    </DialogHeader>
-                  </DialogContent>
-                </Dialog>
-              </li>
-            ))}
-          </ul>
-        </section>
+        {/* Feature Highlights loaded client-side to avoid framer-motion in shared chunk */}
+        <HomeFeaturesGrid />
 
         {/* Screenshot */}
         <section className="section-gap-sm w-full max-w-6xl text-center">
@@ -305,7 +53,7 @@ export default function HomePage() {
         </section>
 
         {/* About Us */}
-        <motion.section
+        <section
           id="about"
           className="section-gap w-full max-w-4xl text-center"
         >
@@ -326,14 +74,10 @@ export default function HomePage() {
               </p>
             </Card>
           </div>
-        </motion.section>
+        </section>
 
         {/* CTA */}
-        <motion.section
-          initial="hidden"
-          animate="visible"
-          variants={fadeIn}
-          custom={7}
+        <section
           className="section-gap-lg max-w-4xl w-full bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-10 text-primary-foreground text-center shadow-xl hover:shadow-2xl transition-shadow duration-300 micro-hover-lift"
         >
           <h2 className="text-3xl font-bold mb-4">Activate Compounding Organic Growth</h2>
@@ -350,7 +94,7 @@ export default function HomePage() {
               <li className="px-2 py-1 rounded bg-primary/20">No CC required</li>
             </ul>
           </div>
-        </motion.section>
+        </section>
 
         {/* Testimonials */}
         <section className="section-gap-lg text-center max-w-4xl w-full">
@@ -373,13 +117,7 @@ export default function HomePage() {
                 text: "Consolidated 5 legacy tools → single workspace; doubled monthly deliverable throughput.",
               },
             ].map((t, i) => (
-              <motion.div
-                key={i}
-                variants={fadeIn}
-                initial="hidden"
-                animate="visible"
-                custom={i}
-              >
+              <div key={i}>
                 <Card className="h-full">
                   <CardContent className="p-6">
                     <p className="text-muted-foreground italic mb-4">
@@ -390,7 +128,7 @@ export default function HomePage() {
                     </p>
                   </CardContent>
                 </Card>
-              </motion.div>
+              </div>
             ))}
           </div>
         </section>
@@ -436,26 +174,10 @@ export default function HomePage() {
 
 // Primary CTA with lightweight A/B variant (client-side persistence)
 function PrimaryCta() {
-  const [label, setLabel] = React.useState("Start 7‑Day Free Trial");
-  useEffect(() => {
-    try {
-      if (typeof window === 'undefined') return;
-      const key = 'rp_cta_variant_v1';
-      let variant = window.localStorage.getItem(key);
-      if (!variant) {
-        variant = Math.random() < 0.5 ? 'A' : 'B';
-        window.localStorage.setItem(key, variant);
-      }
-      const text = variant === 'A' ? 'Start 7‑Day Free Trial' : 'Get Started Free';
-      setLabel(text);
-      window.dispatchEvent(new CustomEvent('cta-variant-shown', { detail: { variant } }));
-    } catch {}
-  }, []);
+  // Render static CTA server-side; enhance on client via a tiny script to avoid bundling state code in shared chunk
   return (
-    <Button size="lg" variant="secondary" asChild data-cta-variant={label} className="micro-hover-lift" onClick={() => {
-      try { window.dispatchEvent(new CustomEvent('cta-click', { detail: { label } })); } catch {}
-    }}>
-      <Link href="/register">{label}</Link>
+    <Button size="lg" variant="secondary" asChild className="micro-hover-lift">
+      <Link href="/register">Start 7‑Day Free Trial</Link>
     </Button>
   );
 }

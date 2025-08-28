@@ -8,27 +8,34 @@
  */
 
 import { DashboardDataService, type DashboardData } from "@/lib/services/dashboard-data.service";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 // Hook for real-time dashboard data
 export const useRealTimeDashboardData = (userId: string | null) => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const activeUserRef = useRef<string | null>(null);
   useEffect(() => {
     if (!userId) { setLoading(false); return; }
-    if (activeUserRef.current === userId) return; // prevent unnecessary resubscribe
-    activeUserRef.current = userId;
     console.log(`🔄 Setting up real-time dashboard data for user: ${userId}`);
     setLoading(true); setError(null);
     let cancelled = false;
+
+    // Prime with initial data
     void DashboardDataService.getUserDashboardData(userId)
       .then(d => { if (!cancelled) { setData(d); setLoading(false); } })
       .catch(err => { if (!cancelled) { console.error('Error fetching initial dashboard data:', err); setError('Failed to load dashboard data'); setLoading(false); } });
-    const unsubscribe = DashboardDataService.subscribeToUserDashboardData(userId, upd => { if (!cancelled) { console.log('📊 Dashboard data updated in real-time'); setData(upd); setError(null); } });
-    return () => { cancelled = true; console.log('🔌 Unsubscribing from dashboard data'); unsubscribe(); };
+
+    // Subscribe for realtime updates (StrictMode-safe: re-subscribes on remount)
+    const unsubscribe = DashboardDataService.subscribeToUserDashboardData(userId, upd => {
+      if (!cancelled) { console.log('📊 Dashboard data updated in real-time'); setData(upd); setError(null); }
+    });
+
+    return () => {
+      cancelled = true;
+      console.log('🔌 Unsubscribing from dashboard data');
+      unsubscribe();
+    };
   }, [userId]);
 
   const refresh = useCallback(async () => {

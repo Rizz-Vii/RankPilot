@@ -22,7 +22,7 @@ function toMillis(v: unknown): number | undefined {
 export const cleanupInvites = onSchedule({
     schedule: "every 24 hours",
     timeZone: "Etc/UTC",
-    region: "australia-southeast2"
+    region: "australia-southeast1"
 }, async () => {
     if (!getApps().length) initializeApp();
     const db = getFirestore();
@@ -72,3 +72,6 @@ export const cleanupInvites = onSchedule({
         throw e;
     }
 });
+
+// Alias for creating a new Cloud Scheduler job in valid region via different function name
+export const cleanupInvitesV2 = cleanupInvites;

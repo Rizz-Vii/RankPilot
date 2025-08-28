@@ -4,8 +4,10 @@ import * as admin from "firebase-admin";
 import fs from "fs";
 import path from "path";
 
-// Load environment variables
-dotenv.config({ path: ".env.local" });
+// Load environment variables in non-production for local dev
+if (process.env.NODE_ENV !== 'production') {
+  try { dotenv.config({ path: ".env.local" }); } catch { /* optional */ }
+}
 
 // Enhanced Firebase Admin initialization with fallbacks (named app)
 let app: admin.app.App;

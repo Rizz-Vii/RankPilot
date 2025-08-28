@@ -5,6 +5,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { enforceFirecrawlQuota } from './firecrawl-quota';
 
+export const runtime = 'nodejs';
+export const maxDuration = 120;
+
  // GET /api/seo-audit/firecrawl?url=...&depth=1&limit=5
  export const GET = withProvenance(async function GET(req: NextRequest) {
      const started = Date.now();
@@ -12,7 +15,12 @@ import { enforceFirecrawlQuota } from './firecrawl-quota';
         const urlObj = new URL(req.url);
         const target = urlObj.searchParams.get('url');
         const depth = Number(urlObj.searchParams.get('depth') || '1');
-        const limit = Number(urlObj.searchParams.get('limit') || '5');
+        // Clamp crawl expansion to sane bounds to avoid oversized responses
+        const limitRaw = Number(urlObj.searchParams.get('limit') || '5');
+        const limit = Math.max(1, Math.min(20, Number.isFinite(limitRaw) ? limitRaw : 5));
+        // Optional hard cap on response size (number of pages returned)
+        const respMaxRaw = Number(urlObj.searchParams.get('max') || process.env.FIRECRAWL_RESPONSE_MAX || '50');
+        const respMax = Math.max(1, Math.min(200, Number.isFinite(respMaxRaw) ? respMaxRaw : 50));
         if (!target) {
             return NextResponse.json(enforceProvenance({ success: false, error: 'url_required', provenance: 'synthetic' }, { path: 'seo-audit/firecrawl', note: 'validation' }), { status: 400 });
         }
@@ -63,9 +71,16 @@ import { enforceFirecrawlQuota } from './firecrawl-quota';
         const elapsedMs = Date.now() - started; recordRouteLatency('seo-audit/firecrawl', elapsedMs);
         if (crawl.fallback) { recordCrawlerError(crawlTimeMs); } else { recordCrawlerSuccess(crawlTimeMs, 0); }
         const analysisTimeMs = elapsedMs - quotaTimeMs - crawlTimeMs;
-        const res = NextResponse.json(enforceProvenance({ success: true, provenance: crawl.fallback ? 'synthetic' : 'live', data: { pages: crawl.pages, fallback: !!crawl.fallback, degradedReason: crawl.degradedReason, timings: { quota_time_ms: quotaTimeMs, crawl_time_ms: crawlTimeMs, analysis_time_ms: analysisTimeMs, total_time_ms: elapsedMs }, quota: { remaining: quota.remaining, resetAt: quota.resetAt.toISOString(), scope: scopeKey } } }, { path: 'seo-audit/firecrawl' }));
+        // Apply response payload cap with truncation signal
+        const totalPages = Array.isArray(crawl.pages) ? crawl.pages.length : 0;
+        const pages = totalPages > respMax ? crawl.pages.slice(0, respMax) : crawl.pages;
+        const truncated = totalPages > respMax;
+        const res = NextResponse.json(enforceProvenance({ success: true, provenance: crawl.fallback ? 'synthetic' : 'live', data: { pages, total: totalPages, returned: pages.length, truncated, fallback: !!crawl.fallback, degradedReason: crawl.degradedReason, timings: { quota_time_ms: quotaTimeMs, crawl_time_ms: crawlTimeMs, analysis_time_ms: analysisTimeMs, total_time_ms: elapsedMs }, quota: { remaining: quota.remaining, resetAt: quota.resetAt.toISOString(), scope: scopeKey } } }, { path: 'seo-audit/firecrawl' }));
         res.headers.set('X-Quota-Remaining', String(quota.remaining));
         res.headers.set('X-Quota-Reset', quota.resetAt.toISOString());
+        res.headers.set('X-Result-Total', String(totalPages));
+        res.headers.set('X-Result-Returned', String(pages.length));
+        if (truncated) res.headers.set('X-Data-Truncated', '1');
         return res;
     } catch (e: unknown) {
         const msg = ((): string => {

@@ -1,6 +1,5 @@
 import { extractErrorMessage } from '@/lib/errors/extract-error-message';
-import { db } from "@/lib/firebase/index";
-import { collection, doc, getDocs, writeBatch } from "firebase/firestore";
+import { adminDb } from "@/lib/firebase-admin";
 import { NextResponse } from "next/server";
 
 const ACTIVITY_TYPE_MIGRATION_MAP: Record<string, string> = {
@@ -17,15 +16,17 @@ export async function POST() {
   try {
     console.log("🚨 Starting activity schema migration...");
 
-    const usersSnapshot = await getDocs(collection(db, "users"));
+    const usersSnapshot = await adminDb.collection("users").get();
     const activitiesToUpdate = [];
     let totalActivitiesScanned = 0;
 
     for (const userDoc of usersSnapshot.docs) {
       const userId = userDoc.id;
-      const activitiesSnapshot = await getDocs(
-        collection(db, "users", userId, "activities")
-      );
+      const activitiesSnapshot = await adminDb
+        .collection("users")
+        .doc(userId)
+        .collection("activities")
+        .get();
 
       for (const activityDoc of activitiesSnapshot.docs) {
         totalActivitiesScanned++;
@@ -45,16 +46,14 @@ export async function POST() {
     }
 
     if (activitiesToUpdate.length > 0) {
-      const batch = writeBatch(db);
+      const batch = adminDb.batch();
 
       for (const activity of activitiesToUpdate) {
-        const activityRef = doc(
-          db,
-          "users",
-          activity.userId,
-          "activities",
-          activity.activityId
-        );
+        const activityRef = adminDb
+          .collection("users")
+          .doc(activity.userId)
+          .collection("activities")
+          .doc(activity.activityId);
         batch.update(activityRef, {
           type: activity.newType,
           originalType: activity.currentType,

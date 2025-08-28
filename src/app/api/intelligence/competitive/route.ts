@@ -4,26 +4,17 @@
  */
 
 import { extractErrorMessage } from '@/lib/errors/extract-error-message';
+import { adminAuth } from '@/lib/firebase-admin';
 import type { CompetitorMetric } from '@/lib/intelligence/firecrawl-competitive-intelligence';
 import { firecrawlCompetitiveIntelligence } from '@/lib/intelligence/firecrawl-competitive-intelligence';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
-// Initialize Firebase Admin if not already initialized
-if (!getApps().length) {
-    const projectId = process.env.FIREBASE_PROJECT_ID || 'rankpilot-h3jpc';
-
-    try {
-        initializeApp({
-            projectId,
-        });
-    } catch (error) {
-        console.error('[CompetitiveIntelligenceAPI] Firebase Admin initialization error:', error);
-    }
-}
+// Firebase Admin is initialized centrally in '@/lib/firebase-admin'.
 
 interface CompetitorRequestBody {
     action: 'add' | 'analyze' | 'list' | 'update' | 'delete' | 'report' | 'get';
@@ -79,11 +70,9 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         }
 
         const token = authHeader.split('Bearer ')[1];
-        const auth = getAuth();
-
         let decodedToken: { uid: string; tier?: string } | null = null;
         try {
-            decodedToken = await auth.verifyIdToken(token) as { uid: string; tier?: string };
+            decodedToken = await adminAuth.verifyIdToken(token) as { uid: string; tier?: string };
         } catch (error) {
             console.error('[CompetitiveIntelligenceAPI] Token verification error:', error);
             return NextResponse.json(enforceProvenance({ success: false, error: 'Invalid authentication token', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'auth' }), { status: 401 });
@@ -130,10 +119,20 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
 
                 return NextResponse.json(enforceProvenance({ success: true, message: 'Analysis completed successfully', provenance: 'live' }, { path: 'intelligence/competitive', note: 'analyze' }));
 
-            case 'list':
+            case 'list': {
+                const url = new URL(nreq.url);
+                const pageRaw = Number(url.searchParams.get('page') || '1');
+                const pageSizeRaw = Number(url.searchParams.get('pageSize') || '25');
+                const page = Math.max(1, Number.isFinite(pageRaw) ? pageRaw : 1);
+                const pageSize = Math.max(1, Math.min(100, Number.isFinite(pageSizeRaw) ? pageSizeRaw : 25));
                 const userCompetitors = firecrawlCompetitiveIntelligence.getUserCompetitors(userId);
+                const total = userCompetitors.length;
+                const start = (page - 1) * pageSize;
+                const end = Math.min(total, start + pageSize);
+                const slice = start < total ? userCompetitors.slice(start, end) : [];
 
-                return NextResponse.json(enforceProvenance({ success: true, competitors: userCompetitors.map(c => ({ id: c.id, domain: c.domain, name: c.name, industry: c.industry, trackingFrequency: c.trackingConfig.crawlFrequency, lastAnalysis: c.lastAnalysis ? { timestamp: c.lastAnalysis.timestamp, status: c.lastAnalysis.status, changesCount: c.lastAnalysis.changes.length } : null, analysisCount: c.metadata.analysisCount, created: c.metadata.created })), provenance: 'live' }, { path: 'intelligence/competitive', note: 'list' }));
+                return NextResponse.json(enforceProvenance({ success: true, page, pageSize, total, competitors: slice.map(c => ({ id: c.id, domain: c.domain, name: c.name, industry: c.industry, trackingFrequency: c.trackingConfig.crawlFrequency, lastAnalysis: c.lastAnalysis ? { timestamp: c.lastAnalysis.timestamp, status: c.lastAnalysis.status, changesCount: c.lastAnalysis.changes.length } : null, analysisCount: c.metadata.analysisCount, created: c.metadata.created })), provenance: 'live' }, { path: 'intelligence/competitive', note: 'list' }));
+            }
 
             case 'update':
                 if (!body.competitorId) {
@@ -217,11 +216,9 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
         }
 
         const token = authHeader.split('Bearer ')[1];
-        const auth = getAuth();
-
         let decodedToken: { uid: string; tier?: string } | null = null;
         try {
-            decodedToken = await auth.verifyIdToken(token) as { uid: string; tier?: string };
+            decodedToken = await adminAuth.verifyIdToken(token) as { uid: string; tier?: string };
         } catch (error) {
             console.error('[CompetitiveIntelligenceAPI] Token verification error:', error);
             return NextResponse.json(enforceProvenance({ success: false, error: 'Invalid authentication token', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'auth' }), { status: 401 });
@@ -235,8 +232,17 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
             return NextResponse.json(enforceProvenance({ success: false, error: 'Competitive intelligence requires Agency tier or higher', provenance: 'synthetic' }, { path: 'intelligence/competitive', note: 'tier' }), { status: 403 });
         }
 
-        // Get user's competitive intelligence overview
+        // Get user's competitive intelligence overview with pagination
+        const url = new URL(nreq.url);
+        const pageRaw = Number(url.searchParams.get('page') || '1');
+        const pageSizeRaw = Number(url.searchParams.get('pageSize') || '25');
+        const page = Math.max(1, Number.isFinite(pageRaw) ? pageRaw : 1);
+        const pageSize = Math.max(1, Math.min(100, Number.isFinite(pageSizeRaw) ? pageSizeRaw : 25));
         const userCompetitors = firecrawlCompetitiveIntelligence.getUserCompetitors(userId);
+        const total = userCompetitors.length;
+        const start = (page - 1) * pageSize;
+        const end = Math.min(total, start + pageSize);
+        const slice = start < total ? userCompetitors.slice(start, end) : [];
 
         const overview = {
             totalCompetitors: userCompetitors.length,
@@ -255,7 +261,7 @@ export const GET = withProvenance(async function GET(request: NextRequest) {
             }
         };
 
-        return NextResponse.json(enforceProvenance({ success: true, overview, competitors: userCompetitors.map(c => ({ id: c.id, domain: c.domain, name: c.name, industry: c.industry, trackingFrequency: c.trackingConfig.crawlFrequency, lastAnalysis: c.lastAnalysis ? { timestamp: c.lastAnalysis.timestamp, status: c.lastAnalysis.status, changesCount: c.lastAnalysis.changes.length } : null, analysisCount: c.metadata.analysisCount, created: c.metadata.created })), provenance: 'live' }, { path: 'intelligence/competitive', note: 'overview' }));
+        return NextResponse.json(enforceProvenance({ success: true, overview, page, pageSize, total, competitors: slice.map(c => ({ id: c.id, domain: c.domain, name: c.name, industry: c.industry, trackingFrequency: c.trackingConfig.crawlFrequency, lastAnalysis: c.lastAnalysis ? { timestamp: c.lastAnalysis.timestamp, status: c.lastAnalysis.status, changesCount: c.lastAnalysis.changes.length } : null, analysisCount: c.metadata.analysisCount, created: c.metadata.created })), provenance: 'live' }, { path: 'intelligence/competitive', note: 'overview' }));
 
     } catch (error) {
         console.error('[CompetitiveIntelligenceAPI] Error:', error);

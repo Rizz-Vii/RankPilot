@@ -48,3 +48,10 @@ Rollback: Delete `queue-metrics.ts`, remove lazy import/addition in `unified-met
 - Added unit test `testing/unit/metrics/team-rate-limit-metrics.test.cjs` verifying independent increment of `rateLimitRejections` and `teamRateLimitAllows`.
 - No production logic changes beyond exported helper; governance counters wiring unchanged.
 Rollback: Remove helper export and test file; no side effects (helper unused in prod paths).
+
+### 25-08-2025 (Phase Transition – Phase 2 ➜ Phase 3)
+
+- Completed Phase 2 core deliverables: BI export breadth (CSV/JSON with provenance metrics), sampler hardening tests, minimal typed event bus wiring in BI/metrics paths, and provenance negative tests.
+- Promoted Phase 3 to Active Focus per `.github/copilot-instructions.md` and `PROJECT_EXECUTION_PLAN.md`.
+- Deferred residual Phase 2 items to avoid scope creep: two-agent loop hardening (non-UI), server-dependent rate-limit validators, optional local-only sampler persistence shim.
+- Governance unchanged: provenance enforcement intact; no UI or schema changes.
