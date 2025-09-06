@@ -1,8 +1,8 @@
 "use client";
-import React from 'react';
+import { statusBarBg } from '@/lib/metrics/status-colors';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { statusBarBg } from '@/lib/metrics/status-colors';
+import React from 'react';
 
 interface MetricCardProps {
   label: string;
@@ -20,6 +20,7 @@ interface MetricCardProps {
   badge?: React.ReactNode; // small badge (target progress, etc.)
   targetValue?: number; // numeric target for inline progress bar
   invertTarget?: boolean; // when lower is better
+  'data-testid'?: string; // forwarding for tests
 }
 
 const intentStyles: Record<string, string> = {
@@ -45,7 +46,8 @@ export function MetricCard({
   size = 'md',
   badge,
   targetValue,
-  invertTarget
+  invertTarget,
+  'data-testid': testId
 }: MetricCardProps) {
   const formattedDelta = delta != null ? (typeof delta === 'number' ? delta.toFixed(precision) : delta) : null;
   const positive = delta != null && typeof delta === 'number' ? delta >= 0 : undefined;
@@ -58,6 +60,7 @@ export function MetricCard({
   return (
   <motion.div
       layout
+      data-testid={testId}
       className={cn(
     'relative overflow-hidden rounded-xl border p-4 flex flex-col gap-2 shadow-sm backdrop-blur-sm transition-shadow hover:shadow-md focus-within:shadow-md',
         intentStyles[intent],

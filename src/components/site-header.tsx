@@ -259,7 +259,7 @@ export default function SiteHeader() {
               <div className="flex items-center gap-4">
                       {/* Streamlined CTA: keep a single primary trial entry */}
                   <EnhancedButton asChild className="mobile-touch-target" aria-label="Start Free Trial" role="button">
-                    <Link href="/register">{translate('cta.startFreeTrial')}</Link>
+                        <Link href="/register" prefetch={false}>{translate('cta.startFreeTrial')}</Link>
                   </EnhancedButton>
               </div>
             )}

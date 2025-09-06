@@ -1,2 +1,0 @@
-{"ts": 1755577247000, "taskId": "LINT-@typescript-eslint_no-explicit-any-P2A", "profile": "balanced", "input_tokens": 16898, "output_tokens": 1333, "tool_calls": 0, "success": true}
-{"ts": 1755577247001, "taskId": "LINT-@typescript-eslint_no-explicit-any-P2B", "profile": "balanced", "input_tokens": 16898, "output_tokens": 1333, "tool_calls": 0, "success": true}

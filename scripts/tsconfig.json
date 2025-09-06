@@ -6,10 +6,17 @@
     "moduleResolution": "NodeNext",
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
-    "baseUrl": ".."
+    "baseUrl": "..",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
+    }
   },
   "include": [
-    "./**/*.ts"
+    "./**/*.ts",
+    "../src/**/*.ts",
+    "../src/**/*.tsx"
   ],
   "exclude": ["node_modules", "dist", "build", "lib"]
 }

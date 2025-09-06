@@ -7,6 +7,10 @@ import { NextResponse } from 'next/server';
 const cache = new Map<string, { ts: number; data: unknown }>();
 const TTL_MS = 1000 * 60 * 5; // 5 minutes
 
+// Ensure this route runs on the Node.js runtime and is always dynamic (no static optimization)
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export const POST = withProvenance(async function POST(req: Request) {
     try {
         const body = (await req.json().catch(() => ({}))) ?? {};
@@ -66,12 +70,21 @@ export const POST = withProvenance(async function POST(req: Request) {
             .filter(Boolean)
             .slice(0, 15);
 
-        const platforms = report.competitiveAnalysis.topCompetitors.slice(0, 8).map(comp => ({
-            name: new URL(comp.url).hostname.replace('www.', ''),
-            citations: Math.round(comp.citationRate * 10),
-            position: Math.max(1, Math.round(100 - comp.visibilityScore)),
-            trend: 'stable' as const
-        }));
+        const platforms = report.competitiveAnalysis.topCompetitors.slice(0, 8).map(comp => {
+            let host = comp.url;
+            try {
+                host = new URL(comp.url).hostname.replace('www.', '');
+            } catch {
+                // Accept bare domains w/o scheme by prefixing
+                try { host = new URL(`https://${comp.url}`).hostname.replace('www.', ''); } catch { /* keep as-is */ }
+            }
+            return {
+                name: host,
+                citations: Math.round(comp.citationRate * 10),
+                position: Math.max(1, Math.round(100 - comp.visibilityScore)),
+                trend: 'stable' as const
+            };
+        });
 
         const responsePayload = enforceProvenance({
             score,

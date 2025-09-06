@@ -1,13 +1,15 @@
+import {
+  ArrowRight,
+  BookOpen,
+  Code,
+  ExternalLink,
+  Globe,
+  TrendingUp,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  BookOpen,
-  Globe,
-  Code,
-  TrendingUp,
-  ArrowRight,
-  ExternalLink,
-} from "lucide-react";
+export const dynamic = "force-static";
+export const revalidate = 86400; // 24h
 
 export const metadata: Metadata = {
   title: "SEO Guides | RankPilot",

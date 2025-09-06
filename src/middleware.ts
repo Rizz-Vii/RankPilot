@@ -5,12 +5,15 @@ import { rateLimit } from "./middleware/rate-limit";
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname || "";
   const isApi = pathname.startsWith("/api/");
+  const isStaticHtml = pathname.endsWith('.html');
   // Detect Next.js RSC/Flight requests (used for streaming server components/prefetch)
   // These requests expect a special streamed response; avoid mutating headers/body.
   const accept = request.headers.get('accept') || '';
   const isRSC = accept.includes('text/x-component') || accept.includes('application/x-component')
     || request.headers.has('RSC')
-    || request.headers.has('Next-Router-State-Tree');
+    || request.headers.has('Next-Router-State-Tree')
+    || request.headers.get('next-router-prefetch') === '1'
+    || request.headers.get('x-middleware-prefetch') === '1';
   // For API routes, run rate limiter first and short-circuit on 429
   if (isApi) {
     const rl = await rateLimit(request);
@@ -28,12 +31,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Skip CSP/header injection for static HTML files served from /public (they may contain inline scripts without nonce)
+  if (isStaticHtml) {
+    return NextResponse.next();
+  }
+
   // Non-API: proceed with security headers response, attach a CSP nonce to request headers for server components
   const requestHeaders = new Headers(request.headers);
   // Use a simple UUID as nonce token; pass via Next.js-recognized header so inline scripts get nonce attributes
   const nonce = crypto.randomUUID();
   // Next will attach this nonce to inline scripts it generates
   requestHeaders.set('x-nextjs-csp-nonce', nonce);
+  // Also set the generic header keys Next.js recognizes to auto-apply nonce to its runtime and <Script> tags
+  requestHeaders.set('x-nonce', nonce);
+  requestHeaders.set('x-nextjs-nonce', nonce);
   // Back-compat for any code reading the older custom header
   requestHeaders.set('x-rp-csp-nonce', nonce);
   const response = NextResponse.next({ request: { headers: requestHeaders } });
@@ -45,7 +56,8 @@ export async function middleware(request: NextRequest) {
     // Default directives
     "default-src 'self'",
     // Scripts - Allow our nonce for inline; disallow generic 'unsafe-inline' in production
-    `script-src 'self' 'nonce-${nonce}' ` +
+    // Use strict-dynamic so that nonced seed scripts can load others; keep explicit hosts for older browsers
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ` +
     "https://apis.google.com " +
     "https://*.firebaseapp.com " +
     "https://*.firebase.com " +
@@ -56,8 +68,25 @@ export async function middleware(request: NextRequest) {
     "https://www.gstatic.com " +
     "https://www.googletagmanager.com " +
     "https://www.google-analytics.com",
-    // Styles
+    // Some Next.js App Router streaming responses wrap necessary code in inline <script> tags that do not carry a nonce.
+    // Allow inline script elements (but not attributes) while we await upstream nonce propagation.
+    // Duplicate host allowlist here for older browsers that honor script-src-elem distinctly.
+    "script-src-elem 'self' 'unsafe-inline' " +
+    "https://apis.google.com " +
+    "https://*.firebaseapp.com " +
+    "https://*.firebase.com " +
+    "https://js.stripe.com " +
+    "https://*.paypal.com " +
+    "https://www.paypal.com " +
+    "https://www.google.com " +
+    "https://www.gstatic.com " +
+    "https://www.googletagmanager.com " +
+    "https://www.google-analytics.com",
+    // Forbid inline event handlers/JS URLs
+    "script-src-attr 'none'",
+    // Styles: allow inline for Tailwind/critical styles; permit style attributes to avoid widespread violations in React/Next UIs
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "style-src-attr 'unsafe-inline'",
     // Fonts
     "font-src 'self' https://fonts.gstatic.com",
     // Images
@@ -76,6 +105,9 @@ export async function middleware(request: NextRequest) {
     "https://firebaseappcheck.googleapis.com " +
     "https://content-firebaseappdistribution.googleapis.com " +
     "https://*.googleapis.com " +
+    // Allow Google reCAPTCHA network calls for App Check (e.g., api2/clr) – these hit google.com directly
+    "https://www.google.com " +
+    "https://www.recaptcha.net " +
     "https://*.gstatic.com " +
     "https://www.google-analytics.com " +
     "https://*.sentry.io " +
@@ -153,6 +185,21 @@ export async function middleware(request: NextRequest) {
   Object.entries(securityHeaders).forEach(([key, value]) => {
     response.headers.set(key, value);
   });
+
+  // For full HTML docs, instruct caches and proxies to avoid storing or transforming streamed content
+  if (isHtmlDoc) {
+    response.headers.set('Cache-Control', 'private, no-store, max-age=0, must-revalidate');
+    response.headers.set('Surrogate-Control', 'no-store');
+    // no-transform reduces risk of intermediary altering chunked/RSC streams
+    const vary = response.headers.get('Vary');
+    response.headers.set('Vary', vary ? `${vary}, Accept` : 'Accept');
+    response.headers.set('Pragma', 'no-cache');
+  }
+
+  // Expose the nonce on response headers as well to aid any consumers that read it from the response
+  response.headers.set('x-nextjs-csp-nonce', nonce);
+  response.headers.set('x-nextjs-nonce', nonce);
+  response.headers.set('x-nonce', nonce);
 
   // Apply COOP/COEP only to full HTML documents in production to enable better performance APIs
   if (process.env.NODE_ENV === 'production' && isHtmlDoc) {

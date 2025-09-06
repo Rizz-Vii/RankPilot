@@ -10,8 +10,9 @@
  * - Network-first strategy removed (APIs are never cached; app uses cache-first/SWR)
  */
 
-const STATIC_CACHE = 'rankpilot-static-v1';
-const DYNAMIC_CACHE = 'rankpilot-dynamic-v1';
+// Bump cache versions to ensure old, potentially problematic entries are purged
+const STATIC_CACHE = 'rankpilot-static-v2';
+const DYNAMIC_CACHE = 'rankpilot-dynamic-v2';
 
 // Static assets to cache immediately - FIXED: removed non-existent routes
 const STATIC_ASSETS = [

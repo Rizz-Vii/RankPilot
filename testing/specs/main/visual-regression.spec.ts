@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 /**
  * Visual Regression Test Suite
@@ -11,10 +11,10 @@ test.describe("Visual Regression Tests", () => {
       console.log("📸 Testing dashboard visual appearance...");
 
       // Navigate to dashboard (unauthenticated - should redirect to login)
-      await page.goto("/dashboard", { waitUntil: "networkidle" });
-      
-      // Wait for page to stabilize
-      await page.waitForTimeout(2000);
+      await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+
+      // Wait briefly for dynamic elements to settle
+      await page.waitForTimeout(1500);
 
       // Take screenshot for visual comparison
       await expect(page).toHaveScreenshot("dashboard-redirect.png", {
@@ -28,13 +28,13 @@ test.describe("Visual Regression Tests", () => {
     test("login page visual consistency", async ({ page }) => {
       console.log("📸 Testing login page visual appearance...");
 
-      await page.goto("/login", { waitUntil: "networkidle" });
-      await page.waitForTimeout(2000);
+      await page.goto("/login", { waitUntil: "domcontentloaded" });
+      await page.waitForTimeout(1500);
 
       // Hide dynamic elements that might cause flakiness
       await page.addStyleTag({
         content: `
-          [data-testid="timestamp"], 
+          [data-testid="timestamp"],
           .loading-spinner,
           .animate-pulse {
             visibility: hidden !important;
@@ -58,13 +58,13 @@ test.describe("Visual Regression Tests", () => {
       // Set mobile viewport
       await page.setViewportSize({ width: 375, height: 667 });
 
-      await page.goto("/", { waitUntil: "networkidle" });
-      await page.waitForTimeout(2000);
+      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await page.waitForTimeout(1500);
 
       // Hide dynamic elements
       await page.addStyleTag({
         content: `
-          [data-testid="timestamp"], 
+          [data-testid="timestamp"],
           .loading-spinner,
           .animate-pulse {
             visibility: hidden !important;
@@ -85,12 +85,12 @@ test.describe("Visual Regression Tests", () => {
     test("navigation components render correctly", async ({ page }) => {
       console.log("🧭 Testing navigation component visuals...");
 
-      await page.goto("/", { waitUntil: "networkidle" });
-      await page.waitForTimeout(2000);
+      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await page.waitForTimeout(1500);
 
       // Test desktop navigation
       await page.setViewportSize({ width: 1280, height: 720 });
-      
+
       const navigation = page.locator("nav").first();
       await expect(navigation).toHaveScreenshot("desktop-navigation.png", {
         animations: "disabled",
@@ -98,7 +98,7 @@ test.describe("Visual Regression Tests", () => {
 
       // Test mobile navigation
       await page.setViewportSize({ width: 375, height: 667 });
-      
+
       const mobileNav = page.locator('[data-testid="mobile-menu"]')
         .or(page.locator('button[aria-label*="menu"]'))
         .first();
@@ -126,13 +126,13 @@ test.describe("Visual Regression Tests", () => {
 
       for (const viewport of viewports) {
         await page.setViewportSize({ width: viewport.width, height: viewport.height });
-        await page.goto("/", { waitUntil: "networkidle" });
-        await page.waitForTimeout(1000);
+        await page.goto("/", { waitUntil: "domcontentloaded" });
+        await page.waitForTimeout(800);
 
         // Hide dynamic elements
         await page.addStyleTag({
           content: `
-            [data-testid="timestamp"], 
+            [data-testid="timestamp"],
             .loading-spinner,
             .animate-pulse {
               visibility: hidden !important;
@@ -154,8 +154,8 @@ test.describe("Visual Regression Tests", () => {
     test("404 page visual appearance", async ({ page }) => {
       console.log("❌ Testing 404 page visuals...");
 
-      await page.goto("/non-existent-page", { waitUntil: "networkidle" });
-      await page.waitForTimeout(2000);
+      await page.goto("/non-existent-page", { waitUntil: "domcontentloaded" });
+      await page.waitForTimeout(1500);
 
       await expect(page).toHaveScreenshot("404-page.png", {
         fullPage: true,

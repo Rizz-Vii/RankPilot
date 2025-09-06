@@ -470,8 +470,49 @@ export class EnterpriseAPM extends EventEmitter {
     }
 
     private collectSEOMetrics(): void {
-        // Placeholder for SEO metrics collection
-        // This would integrate with actual NeuroSEO™ monitoring
+        // Collect minimal SEO-related page metrics from DOM heuristics
+        try {
+            if (typeof window === 'undefined' || typeof document === 'undefined') return;
+            const metaDesc = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+            const hasMetaDescription = !!(metaDesc && metaDesc.content && metaDesc.content.trim().length > 0);
+            const metaSnippet = (metaDesc?.content || '').trim();
+            const metaLength = metaSnippet.length;
+            const titleEl = document.querySelector('title');
+            const titleLength = (titleEl?.textContent || '').trim().length;
+            const canonical = !!document.querySelector('link[rel="canonical"]');
+            const h1Count = document.getElementsByTagName('h1').length;
+            const firstH1 = document.getElementsByTagName('h1')[0]?.textContent?.trim() || undefined;
+            const imgs = Array.from(document.getElementsByTagName('img'));
+            const imgsNoAlt = imgs.filter(img => !img.getAttribute('alt'));
+            const imgWithoutAlt = imgsNoAlt.length;
+            const missingAltSamples = imgsNoAlt.slice(0, 3).map(img => img.getAttribute('src') || '');
+
+            this.recordMetric({
+                name: 'seo.meta_description.present',
+                value: hasMetaDescription ? 1 : 0,
+                unit: 'bool',
+                tags: { page: window.location.pathname },
+                metadata: hasMetaDescription ? { length: metaLength, snippet: metaSnippet.slice(0, 180), titleLength, canonical } : { length: 0, titleLength, canonical }
+            });
+
+            this.recordMetric({
+                name: 'seo.h1.count',
+                value: h1Count,
+                unit: 'count',
+                tags: { page: window.location.pathname },
+                metadata: { firstH1 }
+            });
+
+            this.recordMetric({
+                name: 'seo.images.missing_alt',
+                value: imgWithoutAlt,
+                unit: 'count',
+                tags: { page: window.location.pathname },
+                metadata: { samples: missingAltSamples }
+            });
+        } catch {
+            // ignore client-only collection errors
+        }
     }
 
     private checkAlertRules(metric: APMMetric): void {
@@ -589,8 +630,42 @@ export class EnterpriseAPM extends EventEmitter {
         trends: Array<{ metric: string; trend: 'up' | 'down' | 'stable'; change: number; }>;
         predictions: Array<{ metric: string; prediction: number; confidence: number; }>;
     }> {
-    // Placeholder deterministic output; real implementation would analyze _events/_metrics
-        return { summary: 'Performance analysis completed', issues: [], trends: [], predictions: [] };
+        // Simple deterministic analysis: flag high LCP, missing SEO basics; compute naive trend on LCP
+        const issues: Array<{ severity: string; description: string; recommendation: string; }> = [];
+        const lcpSeries = _metrics.filter(m => m.name === 'performance.lcp').sort((a, b) => a.timestamp - b.timestamp);
+        const lastLcp = lcpSeries.at(-1)?.value ?? 0;
+        if (lastLcp > 4000) {
+            issues.push({ severity: 'high', description: `High LCP detected: ${Math.round(lastLcp)}ms`, recommendation: 'Optimize images, reduce render-blocking resources, and defer non-critical scripts.' });
+        }
+        const seoMeta = _metrics.filter(m => m.name === 'seo.meta_description.present').sort((a, b) => b.timestamp - a.timestamp)[0];
+        if (seoMeta && seoMeta.value === 0) {
+            issues.push({ severity: 'medium', description: 'Missing meta description', recommendation: 'Add a concise, keyword-rich meta description for this page.' });
+        }
+        const imgAlt = _metrics.filter(m => m.name === 'seo.images.missing_alt').sort((a, b) => b.timestamp - a.timestamp)[0];
+        if (imgAlt && imgAlt.value > 0) {
+            issues.push({ severity: 'low', description: `${imgAlt.value} images missing alt text`, recommendation: 'Provide descriptive alt text for all images to improve accessibility and SEO.' });
+        }
+
+        // Naive trend: compare average of first half vs second half for LCP
+        let trendChange = 0;
+        let trend: 'up' | 'down' | 'stable' = 'stable';
+        if (lcpSeries.length >= 4) {
+            const mid = Math.floor(lcpSeries.length / 2);
+            const avgA = lcpSeries.slice(0, mid).reduce((s, m) => s + m.value, 0) / mid;
+            const avgB = lcpSeries.slice(mid).reduce((s, m) => s + m.value, 0) / (lcpSeries.length - mid);
+            trendChange = avgB - avgA;
+            if (Math.abs(trendChange) < 50) trend = 'stable';
+            else trend = trendChange > 0 ? 'up' : 'down';
+        }
+
+        const trends = [{ metric: 'performance.lcp', trend, change: Math.round(trendChange) }];
+        // Simple prediction: drift last value slightly towards target 2500ms
+        const prediction = lastLcp + (2500 - lastLcp) * 0.1;
+        const predictions = [{ metric: 'performance.lcp', prediction: Math.round(prediction), confidence: 0.6 }];
+        const summary = issues.length
+            ? `Analysis found ${issues.length} issue(s). Latest LCP ${Math.round(lastLcp)}ms.`
+            : `No critical issues found. Latest LCP ${Math.round(lastLcp)}ms.`;
+        return { summary, issues, trends, predictions };
     }
 
     private exportToCSV(metrics: APMMetric[], events: PerformanceEvent[]): string {
@@ -642,6 +717,30 @@ export class EnterpriseAPM extends EventEmitter {
                         groupBy: ['page']
                     },
                     position: { x: 0, y: 0, width: 6, height: 4 }
+                },
+                {
+                    id: 'seo-meta-desc',
+                    type: 'gauge',
+                    title: 'Meta Description Present',
+                    query: 'seo.meta_description.present',
+                    visualization: { aggregation: 'avg', groupBy: ['page'] },
+                    position: { x: 6, y: 0, width: 3, height: 3 }
+                },
+                {
+                    id: 'seo-h1-count',
+                    type: 'chart',
+                    title: 'H1 Count by Page',
+                    query: 'seo.h1.count',
+                    visualization: { chartType: 'bar', aggregation: 'avg', groupBy: ['page'] },
+                    position: { x: 0, y: 4, width: 4, height: 3 }
+                },
+                {
+                    id: 'seo-images-missing-alt',
+                    type: 'chart',
+                    title: 'Images Missing Alt',
+                    query: 'seo.images.missing_alt',
+                    visualization: { chartType: 'area', aggregation: 'avg', groupBy: ['page'] },
+                    position: { x: 4, y: 4, width: 5, height: 3 }
                 }
             ]
         });

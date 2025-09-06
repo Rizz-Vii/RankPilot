@@ -1,6 +1,7 @@
 // Shared Firestore DTOs and mapping helpers for service layer Firestore reads.
 // Keep persistence shapes minimal; mapping functions normalize runtime values.
-import type { Timestamp } from 'firebase/firestore';
+// Avoid importing Firebase Timestamp as a type to keep bundler type shims simple.
+type FireTsLike = { toDate?: () => Date };
 
 // ----- Firestore Raw DTOs (stored form) -----
 export interface MarketingCampaignFirestore {
@@ -15,7 +16,7 @@ export interface MarketingCampaignFirestore {
     status?: string;
     userId?: string;
     teamId?: string;
-    createdAt?: Timestamp | Date;
+    createdAt?: Date | FireTsLike;
 }
 
 export interface SalesDealFirestore {
@@ -26,15 +27,15 @@ export interface SalesDealFirestore {
     cycleDays?: number;
     userId?: string;
     teamId?: string;
-    createdAt?: Timestamp | Date;
-    updatedAt?: Timestamp | Date;
+    createdAt?: Date | FireTsLike;
+    updatedAt?: Date | FireTsLike;
 }
 
 export interface ForecastSnapshotFirestore {
     period: string;
     forecast?: number;
     actual?: number;
-    createdAt?: Timestamp | Date;
+    createdAt?: Date | FireTsLike;
     userId?: string;
     teamId?: string;
 }
@@ -46,9 +47,9 @@ export interface FinanceInvoiceFirestore {
     period: string;          // YYYY-MM
     amount?: number;
     status?: string;         // 'paid' | 'unpaid' | 'overdue' | etc.
-    issuedAt?: Timestamp | Date;
-    paidAt?: Timestamp | Date;
-    dueAt?: Timestamp | Date;
+    issuedAt?: Date | FireTsLike;
+    paidAt?: Date | FireTsLike;
+    dueAt?: Date | FireTsLike;
     planTier?: string;
 }
 
@@ -104,7 +105,7 @@ export interface FinanceInvoiceRuntime {
 }
 
 // ----- Helpers -----
-export function toDate(v: Timestamp | Date | undefined | null): Date | undefined {
+export function toDate(v: Date | FireTsLike | undefined | null): Date | undefined {
     if (!v) return undefined;
     if (v instanceof Date) return v;
     const maybeTs = v as unknown as { toDate?: () => Date };

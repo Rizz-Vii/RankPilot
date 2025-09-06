@@ -12,13 +12,17 @@ async function globalSetup(config: FullConfig) {
 
     try {
         // Warm up main app (performance testing environment)
-        await page.goto("https://rankpilot-h3jpc--performance-testing-mw0cwov5.web.app", { waitUntil: "networkidle" });
+        await page.goto("https://rankpilot-h3jpc.web.app", { waitUntil: "domcontentloaded" });
+        // Ensure primary app shell rendered before proceeding
+        await page.locator('main, [data-testid="app-root"], #__next').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
         console.log("✅ Performance testing app warmed up");
 
         // Warm up functions
-        await page.goto("https://australia-southeast2-rankpilot-h3jpc.cloudfunctions.net/api/health", {
-            waitUntil: "networkidle"
+        await page.goto("https://rankpilot-h3jpc.web.app/api/health", {
+            waitUntil: "domcontentloaded"
         });
+        // Wait for health endpoint to return a stable response
+        await page.waitForTimeout(500);
         console.log("✅ Firebase Functions warmed up");
 
         console.log("🎯 Performance testing environment ready");

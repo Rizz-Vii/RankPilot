@@ -6,7 +6,8 @@ import { NextResponse } from 'next/server';
 // Accepts SEO audit request JSON and forwards to Cloud Function endpoint.
 // Includes optional Firebase ID token (Authorization header) for auth preservation.
 
-const REGION = 'us-central1';
+// runSeoAudit is currently deployed in us-central1; default accordingly while allowing env override
+const REGION = process.env.FIREBASE_REGION || process.env.NEXT_PUBLIC_FUNCTIONS_REGION || 'us-central1';
 const PROJECT = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'rankpilot-h3jpc';
 const FUNCTION_NAME = 'runSeoAudit';
 const FUNCTION_URL = `https://${REGION}-${PROJECT}.cloudfunctions.net/${FUNCTION_NAME}`;

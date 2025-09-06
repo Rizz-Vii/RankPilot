@@ -1,6 +1,8 @@
 import { extractErrorMessage } from '@/lib/errors/extract-error-message';
 import { adminDb } from "@/lib/firebase-admin";
 import { NextResponse } from "next/server";
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 const ACTIVITY_TYPE_MIGRATION_MAP: Record<string, string> = {
   "SEO Audit": "audit",

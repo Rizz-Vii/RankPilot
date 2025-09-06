@@ -92,8 +92,17 @@ export class AdvancedCacheManager {
         }
     };
 
+    private started = false;
+
     constructor() {
         this.initializeCacheSystem();
+        // Defer background timers until explicitly started
+    }
+
+    /** Initialize background timers once */
+    start(): void {
+        if (this.started) return;
+        this.started = true;
         this.setupCacheWarming();
         this.setupCacheEviction();
     }
@@ -586,5 +595,17 @@ export class AdvancedCacheManager {
     }
 }
 
-// Export singleton instance
-export const advancedCacheManager = new AdvancedCacheManager();
+// Export a singleton instance stored on globalThis to avoid duplicates
+declare global {
+    var __advancedCacheManager__: AdvancedCacheManager | undefined;
+}
+
+type GlobalWithAdvancedCache = typeof globalThis & {
+    __advancedCacheManager__?: AdvancedCacheManager;
+};
+
+const globalForAdvancedCache = globalThis as GlobalWithAdvancedCache;
+
+export const advancedCacheManager: AdvancedCacheManager =
+    globalForAdvancedCache.__advancedCacheManager__ ??
+    (globalForAdvancedCache.__advancedCacheManager__ = new AdvancedCacheManager());

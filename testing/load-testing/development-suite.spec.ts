@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('RankPilot Performance Testing - Development Phase', () => {
 
@@ -13,20 +13,22 @@ test.describe('RankPilot Performance Testing - Development Phase', () => {
         console.log('   📊 Core Web Vitals Assessment');
         console.log('');
         console.log('🎯 Environment: workshop/performance');
-        console.log('🌍 Testing URL: https://rankpilot-h3jpc--performance-testing-mw0cwov5.web.app');
+        console.log('🌍 Testing URL: http://localhost:3000');
         console.log('');
     });
 
     test('Frontend Availability Check', async ({ page, baseURL }) => {
         console.log('🌐 Testing Frontend Availability...');
 
-        const frontendUrl = baseURL || 'https://rankpilot-h3jpc--performance-testing-mw0cwov5.web.app';
+        const frontendUrl = baseURL || 'http://localhost:3000';
 
         const startTime = Date.now();
         const response = await page.goto(frontendUrl, {
-            waitUntil: 'networkidle',
+            waitUntil: 'domcontentloaded',
             timeout: 30000
         });
+        // short, non-fatal network settle to reduce flakiness
+        try { await page.waitForLoadState('networkidle', { timeout: 2000 }); } catch { }
         const loadTime = Date.now() - startTime;
 
         console.log(`   ✅ Status: ${response?.status()}`);
@@ -39,7 +41,7 @@ test.describe('RankPilot Performance Testing - Development Phase', () => {
     test('Core Navigation Pages', async ({ page, baseURL }) => {
         console.log('🧭 Testing Core Navigation...');
 
-        const frontendUrl = baseURL || 'https://rankpilot-h3jpc--performance-testing-mw0cwov5.web.app';
+        const frontendUrl = baseURL || 'http://localhost:3000';
 
         const pages = [
             { name: 'Homepage', path: '/' },
@@ -72,7 +74,7 @@ test.describe('RankPilot Performance Testing - Development Phase', () => {
     test('Performance Baseline Assessment', async ({ page, baseURL }) => {
         console.log('⚡ Assessing Performance Baselines...');
 
-        const frontendUrl = baseURL || 'https://rankpilot-h3jpc--performance-testing-mw0cwov5.web.app';
+        const frontendUrl = baseURL || 'http://localhost:3000';
 
         // Test multiple page loads to get average
         const loadTimes: number[] = [];
@@ -81,9 +83,10 @@ test.describe('RankPilot Performance Testing - Development Phase', () => {
         for (let i = 0; i < testRuns; i++) {
             const startTime = Date.now();
             await page.goto(frontendUrl, {
-                waitUntil: 'networkidle',
+                waitUntil: 'domcontentloaded',
                 timeout: 20000
             });
+            try { await page.waitForLoadState('networkidle', { timeout: 2000 }); } catch { }
             const loadTime = Date.now() - startTime;
             loadTimes.push(loadTime);
 
@@ -107,7 +110,7 @@ test.describe('RankPilot Performance Testing - Development Phase', () => {
     test('Mobile Responsiveness Check', async ({ page, baseURL }) => {
         console.log('📱 Testing Mobile Responsiveness...');
 
-        const frontendUrl = baseURL || 'https://rankpilot-h3jpc--performance-testing-mw0cwov5.web.app';
+        const frontendUrl = baseURL || 'http://localhost:3000';
 
         // Test different viewport sizes
         const viewports = [

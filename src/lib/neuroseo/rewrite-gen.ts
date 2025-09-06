@@ -980,7 +980,37 @@ export class RewriteGenEngine {
 
 // Standalone helper (previously mis-indented inside class)
 export function generateTransitions(input: string): RewriteTransition[] {
-  // TODO: implement actual transition generation; keep deterministic for now
-  void input; // suppress unused param
-  return [];
+  const text = (input || '').toString();
+  if (!text.trim()) return [];
+  // Normalize: lowercase, collapse whitespace, strip most punctuation except hyphens within words
+  const tokens = text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]+/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+  if (tokens.length < 2) return [];
+  // Count bigram frequencies
+  const counts = new Map<string, number>();
+  for (let i = 0; i < tokens.length - 1; i++) {
+    const a = tokens[i];
+    const b = tokens[i + 1];
+    // Skip very short connectors to reduce noise
+    if (a.length < 2 || b.length < 2) continue;
+    const key = `${a}\u0000${b}`;
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+  if (counts.size === 0) return [];
+  // Compute scores (0..100) relative to max frequency; stable order via key
+  const max = Math.max(...counts.values());
+  const entries: Array<{ from: string; to: string; score: number; key: string }> = [];
+  for (const [key, freq] of counts.entries()) {
+    const [from, to] = key.split('\u0000');
+    const score = Math.round((freq / Math.max(1, max)) * 100);
+    entries.push({ from, to, score, key });
+  }
+  // Sort by score desc then key for determinism; pick top 20 transitions
+  entries.sort((a, b) => b.score - a.score || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  const top = entries.slice(0, 20);
+  // Map to RewriteTransition shape
+  return top.map(e => ({ from: e.from, to: e.to, score: e.score }));
 }

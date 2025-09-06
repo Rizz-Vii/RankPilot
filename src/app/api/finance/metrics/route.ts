@@ -9,6 +9,8 @@ import type {
 import { mapFinanceInvoiceDoc } from '@/types/firestore-docs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 type FinanceInvoiceDoc = FinanceInvoiceRuntime;
 

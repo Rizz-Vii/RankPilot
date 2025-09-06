@@ -1,6 +1,6 @@
-// Creates a local symlink so that Next.js resolution from `firebase/*` can find `@firebase/*`
-// under node_modules/firebase/node_modules, avoiding ENOENT errors for @firebase/auth.
-// Safe on Linux/macOS; on Windows, Node will create a junction for directories.
+// Historical patch: attempted to symlink @firebase internals to avoid ENOENT errors.
+// Modern Firebase (v11+) exposes proper exports and does not require any patching.
+// This script is now a NO-OP for firebase@>=11 to prevent breaking installs by clobbering @firebase.
 const fs = require('fs');
 const path = require('path');
 
@@ -33,17 +33,42 @@ function ensureSymlink(src, dest) {
 function run() {
     const root = process.cwd();
     const firebasePkg = path.join(root, 'node_modules', 'firebase', 'package.json');
+    const _rootPkgJson = path.join(root, 'package.json');
     const atFirebaseRoot = path.join(root, 'node_modules', '@firebase');
-    if (!fs.existsSync(firebasePkg) || !fs.existsSync(atFirebaseRoot)) {
+    const nestedAtFirebase = path.join(root, 'node_modules', 'firebase', 'node_modules', '@firebase');
+    if (!fs.existsSync(firebasePkg)) {
         if (process.env.DEBUG || process.env.CI) {
             console.log('[firebase-patch] Skipping: packages not installed.');
         }
         return;
     }
 
+    // If using modern firebase, skip entirely
+    try {
+        const pkg = JSON.parse(fs.readFileSync(firebasePkg, 'utf8'));
+        const version = (pkg && pkg.version) || '';
+        const major = parseInt(String(version).split('.')[0] || '0', 10);
+        if (!isNaN(major) && major >= 11) {
+            if (process.env.DEBUG || process.env.CI) {
+                console.log(`[firebase-patch] Detected firebase@${version} (>=11). No patch needed.`);
+            }
+            return;
+        }
+    } catch { }
+
+    // Legacy behavior below (firebase <11). Guard aggressively to avoid clobbering.
+    // 1) Ensure ROOT @firebase -> nested firebase/node_modules/@firebase only if nested exists with content
+    if (!fs.existsSync(atFirebaseRoot) && fs.existsSync(nestedAtFirebase)) {
+        ensureSymlink(nestedAtFirebase, atFirebaseRoot);
+    }
+
+    // 2) Also ensure nested firebase/node_modules/@firebase -> root @firebase
+    // Some tools expect sub-deps to resolve via firebase's own node_modules path.
     const firebaseNodeModules = path.join(root, 'node_modules', 'firebase', 'node_modules');
     const destAtFirebase = path.join(firebaseNodeModules, '@firebase');
-    ensureSymlink(atFirebaseRoot, destAtFirebase);
+    if (fs.existsSync(atFirebaseRoot)) {
+        ensureSymlink(atFirebaseRoot, destAtFirebase);
+    }
 
     // Also normalize hashed @firebase subpackages like ".firestore-<hash>" to "@firebase/firestore"
     // Some package managers produce hashed folders which break TS path/exports resolution.

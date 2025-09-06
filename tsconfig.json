@@ -19,7 +19,26 @@
       }
     ],
     "baseUrl": ".",
-    "verbatimModuleSyntax": true
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      // Help TS language service resolve Stripe types under Bundler resolution
+      "stripe": [
+        "./node_modules/stripe/types/index.d.ts"
+      ]
+    },
+    "verbatimModuleSyntax": true,
+    "typeRoots": [
+      "./node_modules/@types",
+      "./types"
+    ],
+    "types": [
+      "node",
+      "next",
+      "mocha",
+      "chai"
+    ]
   },
   "include": [
     "middleware.ts",
@@ -27,6 +46,7 @@
     "playwright.config.*.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
+  "src/app/.well-known/**/*.ts",
     "testing/**/*.ts",
     "testing/**/*.tsx",
     "types/**/*.d.ts",

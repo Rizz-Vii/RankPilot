@@ -16,8 +16,13 @@ let app: admin.app.App;
 const firebaseAdminDiagnostics: { errors: Array<{ message: string; code?: string }> } = { errors: [] };
 
 try {
-  // Reuse or initialize a named app to avoid stale default app credentials on HMR
-  app = admin.app('rankpilot-admin');
+  // Test-only escape hatch to force mock admin for unit tests
+  if (process.env.FIREBASE_ADMIN_FORCE_MOCK === '1') {
+    app = createMockAdmin();
+  } else {
+    // Reuse or initialize a named app to avoid stale default app credentials on HMR
+    app = admin.app('rankpilot-admin');
+  }
 } catch {
   try {
     app = initializeFirebaseAdmin('rankpilot-admin');
@@ -31,7 +36,27 @@ try {
 function initializeFirebaseAdmin(name?: string): admin.app.App {
   // Try different configuration methods
 
-  // Method 1: Service Account JSON via env (highest priority in dev)
+  // Prefer explicit admin env vars first (more reliable in CI/tests)
+  const envProjectId = process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const envPrivateKey = (process.env.FIREBASE_ADMIN_PRIVATE_KEY || process.env.FIREBASE_PRIVATE_KEY)?.replace(/\\n/g, "\n");
+  const envClientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL || process.env.FIREBASE_CLIENT_EMAIL;
+  if (envProjectId && envPrivateKey && envClientEmail) {
+    const serviceAccount: Partial<ServiceAccount> = {
+      projectId: envProjectId,
+      privateKey: envPrivateKey,
+      clientEmail: envClientEmail,
+    };
+    try {
+      return admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount as ServiceAccount),
+        projectId: envProjectId,
+      }, name);
+    } catch (e) {
+      console.warn('[Firebase Admin] Admin env var initialization failed, falling back:', e);
+    }
+  }
+
+  // Method 2: Service Account JSON via env
   const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
   if (serviceAccountJson) {
     try {
@@ -60,22 +85,7 @@ function initializeFirebaseAdmin(name?: string): admin.app.App {
     console.warn('[Firebase Admin] Local serviceAccount.json load failed:', e);
   }
 
-  // Method 3: Individual environment variables
-  const serviceAccount: Partial<ServiceAccount> = {
-    projectId: process.env.FIREBASE_ADMIN_PROJECT_ID ||
-      process.env.FIREBASE_PROJECT_ID ||
-      process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    // Support both FIREBASE_ADMIN_* and plain FIREBASE_* env var names
-    privateKey: (process.env.FIREBASE_ADMIN_PRIVATE_KEY || process.env.FIREBASE_PRIVATE_KEY)?.replace(/\\n/g, "\n"),
-    clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL || process.env.FIREBASE_CLIENT_EMAIL,
-  };
-
-  if (serviceAccount.projectId && serviceAccount.privateKey && serviceAccount.clientEmail) {
-    return admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount as ServiceAccount),
-      projectId: serviceAccount.projectId
-    }, name);
-  }
+  // Method 3: Local serviceAccount.json and then ADC handled below
 
   // Method 4: Application Default Credentials (for production)
   if (process.env.NODE_ENV === 'production') {
@@ -100,19 +110,95 @@ function createMockAdmin(): admin.app.App {
     verifyIdToken: async () => ({ uid: 'mock-user' }),
     getUser: async () => ({ uid: 'mock-user', email: 'mock@example.com' })
   });
-  (mockApp as unknown as { firestore: () => unknown }).firestore = () => ({
-    collection: () => ({
-      doc: () => ({
-        get: async () => ({ exists: false, data: () => null }),
-        set: async () => ({}),
-        update: async () => ({})
-      }),
-      add: async () => ({ id: 'mock-id' }),
-      where: () => ({
-        get: async () => ({ empty: true, docs: [] })
-      })
-    })
-  });
+  (mockApp as unknown as { firestore: () => unknown }).firestore = () => {
+    // Minimal in-memory store (no persistence) to satisfy API shape
+    const makeEmptySnap = () => ({ empty: true, size: 0, docs: [] as Array<{ id: string; data: () => unknown }>, forEach: (_: unknown) => { } });
+
+    // Query/Collection builder with chainable methods
+    type MockDocRef = {
+      id: string;
+      get: () => Promise<{ exists: boolean; id: string; data: () => unknown }>;
+      set: (data: unknown, opts?: unknown) => Promise<Record<string, never>>;
+      update: (data: unknown) => Promise<Record<string, never>>;
+      collection: (name: string) => MockQuery;
+    };
+    type MockQuery = {
+      orderBy: () => MockQuery;
+      where: () => MockQuery;
+      limit: () => MockQuery;
+      get: () => Promise<{ empty: boolean; size: number; docs: Array<{ id: string; data: () => unknown }>; forEach: (cb: (d: unknown) => void) => void }>;
+      doc: (id?: string) => MockDocRef;
+      add: (data?: unknown) => Promise<{ id: string }>;
+      collection: (name: string) => MockQuery;
+    };
+
+    const makeQuery = (): MockQuery => {
+      const q: MockQuery = {
+        orderBy: () => q,
+        where: () => q,
+        limit: () => q,
+        get: async () => makeEmptySnap(),
+        doc: (id?: string) => makeDocRef(id),
+        add: async (_data?: unknown) => ({ id: `mock_${Math.random().toString(36).slice(2, 9)}` }),
+        collection: (_name: string) => makeQuery(),
+      };
+      return q;
+    };
+
+    const makeDocRef = (id?: string): MockDocRef => {
+      const ref: MockDocRef = {
+        id: id || `mock_${Math.random().toString(36).slice(2, 9)}`,
+        get: async () => ({ exists: false, id: ref.id, data: () => null }),
+        set: async (_data: unknown, _opts?: unknown) => ({}),
+        update: async (_data: unknown) => ({}),
+        collection: (_name: string) => makeQuery(),
+      };
+      return ref;
+    };
+
+    type MockBatch = {
+      set: (ref: unknown, data: unknown, opts?: unknown) => void;
+      update: (ref: unknown, data: unknown) => void;
+      delete: (ref: unknown) => void;
+      commit: () => Promise<number>;
+    };
+    type MockTx = {
+      get: (ref: unknown) => Promise<{ exists: boolean; data: () => unknown }>;
+      set: (ref: unknown, data: unknown, opts?: unknown) => void;
+      update: (ref: unknown, data: unknown) => void;
+      delete: (ref: unknown) => void;
+    };
+    type MockDb = {
+      collection: (name: string) => MockQuery;
+      batch: () => MockBatch;
+      runTransaction: <T>(fn: (tx: MockTx) => Promise<T>) => Promise<T>;
+      settings: (opts?: unknown) => void;
+    };
+
+    const db: MockDb = {
+      collection: (_name: string) => makeQuery(),
+      batch: () => {
+        const ops: Array<unknown> = [];
+        return {
+          set: (_ref: unknown, _data: unknown, _opts?: unknown) => { ops.push({ type: 'set' }); },
+          update: (_ref: unknown, _data: unknown) => { ops.push({ type: 'update' }); },
+          delete: (_ref: unknown) => { ops.push({ type: 'delete' }); },
+          commit: async () => ops.length,
+        };
+      },
+      runTransaction: async <T>(fn: (tx: MockTx) => Promise<T>): Promise<T> => {
+        const tx: MockTx = {
+          get: async (_ref: unknown) => ({ exists: false, data: () => null }),
+          set: (_ref: unknown, _data: unknown, _opts?: unknown) => { },
+          update: (_ref: unknown, _data: unknown) => { },
+          delete: (_ref: unknown) => { },
+        };
+        return await fn(tx);
+      },
+      settings: (_opts?: unknown) => { },
+    };
+    return db;
+  };
   (mockApp as unknown as { storage: () => unknown }).storage = () => ({ bucket: () => ({}) });
   return mockApp;
 }
@@ -147,3 +233,20 @@ export const adminAuth = app.auth();
 export { app as adminApp };
 // Storage for server-side artifact uploads (exports, reports, etc.)
 export const adminStorage = app.storage();
+
+// --- Lightweight environment diagnostics (PROD only, logs once) ---
+try {
+  const DIAG_KEY = '__RP_ADMIN_INIT_DIAG_LOGGED__';
+  // @ts-ignore
+  if (process.env.NODE_ENV === 'production' && !(global as unknown)[DIAG_KEY]) {
+    const proj = process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || 'unknown';
+    const mode = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
+      ? 'service_account_json'
+      : (process.env.FIREBASE_ADMIN_PRIVATE_KEY && process.env.FIREBASE_ADMIN_CLIENT_EMAIL)
+        ? 'admin_env_vars'
+        : 'application_default';
+    console.info('[Firebase Admin] Initialized', { projectId: proj, credentialMode: mode });
+    // @ts-ignore
+    (global as unknown)[DIAG_KEY] = true;
+  }
+} catch { /* ignore diag errors */ }

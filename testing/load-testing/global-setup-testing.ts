@@ -12,13 +12,13 @@ async function globalSetup(config: FullConfig) {
 
     try {
         // Warm up testing app
-        await page.goto("https://rankpilot-h3jpc--performance-testing-mw0cwov5.web.app", {
+        await page.goto("https://rankpilot-h3jpc.web.app", {
             waitUntil: "networkidle"
         });
         console.log("✅ Testing app warmed up");
 
         // Warm up functions (same endpoint)
-        await page.goto("https://australia-southeast2-rankpilot-h3jpc.cloudfunctions.net/api/health", {
+        await page.goto("https://rankpilot-h3jpc.web.app/api/health", {
             waitUntil: "networkidle"
         });
         console.log("✅ Firebase Functions warmed up");

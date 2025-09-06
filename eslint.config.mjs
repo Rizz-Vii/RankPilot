@@ -18,6 +18,8 @@ export default [
       '**/dist/**',
       'artifacts/**',
       'coverage/**',
+      'playwright/.cache/**',
+      'playwright-report/**',
       'eslint.flat.mjs',
       'eslint.config.mjs',
       '**/next.config*.{js,mjs,ts}',

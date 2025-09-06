@@ -25,6 +25,8 @@ import {
   Sparkles
 } from "lucide-react";
 // Dynamic import of heavy recharts-based components
+import ApmSeoPanel from "@/components/dashboard/ApmSeoPanel";
+import SeoSourcesPanel from "@/components/dashboard/SeoSourcesPanel";
 import SeoScoreTrend from "@/components/dashboard/seo-score-trend";
 import { Skeleton } from "@/components/ui/skeleton";
 import dynamic from "next/dynamic";
@@ -188,6 +190,8 @@ export default function DashboardPage() {
   const isMobile = useIsMobile();
   // Always invoke data hook (user may be null) to satisfy hooks ordering
   const { data: dashboardData, loading: dataLoading, error: dataError, refresh } = useRealTimeDashboardData(user?.uid || null);
+  // SEO provenance sources from the dashboard real-time data service
+  const seoSources = dashboardData?.seoSources;
 
   // Synchronous wrappers for async refresh action to satisfy no-misused-promises (event handlers must not return a Promise)
   const handleRefreshClick = (): void => { void refresh(); };
@@ -490,6 +494,16 @@ export default function DashboardPage() {
   </motion.div>
   )}
       </div>
+
+      {/* On-page SEO APM panel */}
+      <ApmSeoPanel />
+
+      {/* SEO Sources / Provenance Panel */}
+      <motion.div className={styles.chartsGridMedium} variants={containerVariants} initial="hidden" animate="visible">
+        <motion.div variants={itemVariants}>
+          {dataLoading ? <Skeleton shimmer className="h-[240px] w-full" /> : <SeoSourcesPanel sources={seoSources} />}
+        </motion.div>
+      </motion.div>
 
   <motion.div className={styles.chartsGridLarge} variants={containerVariants} initial="hidden" animate="visible">
         <motion.div className={styles.chartLargeSpan} variants={itemVariants}>

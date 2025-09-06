@@ -173,7 +173,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     size="sm"
                     className="w-full justify-start h-10 text-destructive-foreground hover:text-destructive-foreground/80 hover:bg-destructive/10 dark:hover:bg-destructive/20 group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:px-2"
                   >
-                    <Link href="/logout" className="flex items-center gap-3">
+                    <Link href="/logout" prefetch={false} className="flex items-center gap-3">
                       <LogOut className="h-4 w-4 shrink-0" />
                       <span className="group-data-[state=collapsed]:hidden">
                         Sign Out

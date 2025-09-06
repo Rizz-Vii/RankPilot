@@ -24,7 +24,9 @@ test.describe("Team Projects - Comprehensive Suite", () => {
 
       // Test with free tier user (email/password auth works better in headless)
       await orchestrator.userManager.loginAs("free");
-      await page.goto("/team/projects", { waitUntil: "networkidle" });
+      await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
+      // Wait for client-side rendering to show main heading
+      await page.locator("h1").waitFor({ state: "visible", timeout: 30000 });
 
       // Verify page loads correctly
       await expect(page.locator("h1")).toContainText("Team Projects");
@@ -51,7 +53,8 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       console.log("⬅️ Testing back navigation...");
 
       await orchestrator.userManager.loginAs("agency");
-      await page.goto("/team/projects", { waitUntil: "networkidle" });
+      await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
+      await page.locator("button", { hasText: "Back to Team" }).waitFor({ state: "visible", timeout: 20000 });
 
       const backButton = page.locator("button", { hasText: "Back to Team" });
       await expect(backButton).toBeVisible();
@@ -69,7 +72,8 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       console.log("➕ Testing comprehensive project creation...");
 
       await orchestrator.userManager.loginAs("agency");
-      await page.goto("/team/projects", { waitUntil: "networkidle" });
+      await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
+      await page.locator("button", { hasText: "New Project" }).waitFor({ state: "visible", timeout: 20000 });
 
       // Open create dialog
       const newProjectButton = page.locator("button", { hasText: "New Project" });
@@ -120,7 +124,8 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       console.log("📝 Testing form validation...");
 
       await orchestrator.userManager.loginAs("starter");
-      await page.goto("/team/projects", { waitUntil: "networkidle" });
+      await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
+      await page.locator("button", { hasText: "New Project" }).waitFor({ state: "attached", timeout: 20000 });
 
       // Open create dialog
       await page.locator("button", { hasText: "New Project" }).click();
@@ -139,7 +144,8 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       console.log("❌ Testing project creation cancellation...");
 
       await orchestrator.userManager.loginAs("agency");
-      await page.goto("/team/projects", { waitUntil: "networkidle" });
+      await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
+      await page.locator("button", { hasText: "New Project" }).waitFor({ state: "visible", timeout: 20000 });
 
       // Open create dialog
       await page.locator("button", { hasText: "New Project" }).click();
@@ -165,7 +171,8 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       console.log("📋 Testing project display and data...");
 
       await orchestrator.userManager.loginAs("enterprise");
-      await page.goto("/team/projects", { waitUntil: "networkidle" });
+      await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
+      await page.locator("text=E-commerce SEO Campaign").waitFor({ state: "visible", timeout: 30000 });
 
       // Should display mock projects
       await expect(page.locator("text=E-commerce SEO Campaign")).toBeVisible();
@@ -198,7 +205,8 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       console.log("⚙️ Testing project dropdown menu...");
 
       await orchestrator.userManager.loginAs("agency");
-      await page.goto("/team/projects", { waitUntil: "networkidle" });
+      await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
+      await page.locator("button", { hasText: "New Project" }).waitFor({ state: "visible", timeout: 20000 });
 
       // Find first project dropdown button
       const dropdownButton = page.locator("button").filter({ has: page.locator("svg") }).first();
@@ -215,7 +223,8 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       console.log("🗑️ Testing project deletion...");
 
       await orchestrator.userManager.loginAs("enterprise");
-      await page.goto("/team/projects", { waitUntil: "networkidle" });
+      await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
+      await page.locator("text=E-commerce SEO Campaign").waitFor({ state: "visible", timeout: 30000 });
 
       // Create a test project first
       await page.locator("button", { hasText: "New Project" }).click();
@@ -244,7 +253,8 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       console.log("🔍 Testing project search functionality...");
 
       await orchestrator.userManager.loginAs("starter");
-      await page.goto("/team/projects", { waitUntil: "networkidle" });
+      await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
+      await page.locator("input[placeholder*='Search projects']").waitFor({ state: "visible", timeout: 20000 });
 
       // Search for specific project
       const searchInput = page.locator("input[placeholder*='Search projects']");
@@ -265,7 +275,8 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       console.log("🎯 Testing status filtering...");
 
       await orchestrator.userManager.loginAs("agency");
-      await page.goto("/team/projects", { waitUntil: "networkidle" });
+      await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
+      await page.locator("select, [role=combobox]").first().waitFor({ state: "visible", timeout: 20000 });
 
       // Filter by Active status
       const statusFilter = page.locator("select, [role=combobox]").filter({ hasText: "All Statuses" }).first();
@@ -283,7 +294,8 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       console.log("⚡ Testing priority filtering...");
 
       await orchestrator.userManager.loginAs("enterprise");
-      await page.goto("/team/projects", { waitUntil: "networkidle" });
+      await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
+      await page.locator("select, [role=combobox]").first().waitFor({ state: "visible", timeout: 20000 });
 
       // Filter by High priority
       const priorityFilter = page.locator("select, [role=combobox]").filter({ hasText: "All Priorities" }).first();
@@ -301,7 +313,8 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       console.log("📭 Testing empty state display...");
 
       await orchestrator.userManager.loginAs("starter");
-      await page.goto("/team/projects", { waitUntil: "networkidle" });
+      await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
+      await page.locator("input[placeholder*='Search projects']").waitFor({ state: "visible", timeout: 20000 });
 
       // Search for non-existent project
       const searchInput = page.locator("input[placeholder*='Search projects']");
@@ -323,7 +336,8 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       await page.setViewportSize({ width: 375, height: 667 });
 
       await orchestrator.userManager.loginAs("agency");
-      await page.goto("/team/projects", { waitUntil: "networkidle" });
+      await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
+      await page.locator("h1").waitFor({ state: "visible", timeout: 30000 });
 
       // Verify responsive layout
       await expect(page.locator("h1")).toBeVisible();
@@ -352,7 +366,8 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       console.log("♿ Testing accessibility compliance...");
 
       await orchestrator.userManager.loginAs("enterprise");
-      await page.goto("/team/projects", { waitUntil: "networkidle" });
+      await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
+      await page.locator("h1").waitFor({ state: "visible", timeout: 30000 });
 
       // Check for proper heading structure
       await expect(page.locator("h1")).toBeVisible();
@@ -384,7 +399,8 @@ test.describe("Team Projects - Comprehensive Suite", () => {
       await orchestrator.userManager.loginAs("starter");
 
       const startTime = Date.now();
-      await page.goto("/team/projects", { waitUntil: "networkidle" });
+      await page.goto("/team/projects", { waitUntil: "domcontentloaded" });
+      await page.locator('h1').waitFor({ state: 'visible', timeout: 30000 });
       const loadTime = Date.now() - startTime;
 
       // Should load within 5 seconds

@@ -55,3 +55,4 @@ Type values:
 | finance_accounting | agency |  | planned | planned | Accounting snapshots |
 | content_briefs | agency |  | active | core | Briefs dashboard |
 | billing_portal_access | starter |  | active | capability | Billing portal entry (live data) |
+| voice_agent | agency |  | active | core | Outbound/inbound phone agent UI |

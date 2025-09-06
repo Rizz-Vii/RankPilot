@@ -30,7 +30,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
             decodedToken = await adminAuth.verifyIdToken(token);
         } catch (error) {
             console.warn('[Visualizations API] Firebase admin initialization error:', error);
-            return NextResponse.json(enforceProvenance({ error: 'Authentication service unavailable', mock: true, data: [] }, { path: 'visualizations', note: 'auth' }), { status: 503 });
+            return NextResponse.json(enforceProvenance({ error: 'Authentication service unavailable' }, { path: 'visualizations', note: 'auth' }), { status: 503 });
         }
         const userId = decodedToken.uid;
         // Check subscription tier access
@@ -43,8 +43,13 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         if (!['agency', 'enterprise', 'admin'].includes(subscriptionTier)) {
             return NextResponse.json(enforceProvenance({ error: 'Advanced visualizations require Agency tier or higher' }, { path: 'visualizations', note: 'tier' }), { status: 403 });
         }
-        const body = await request.json().catch(() => ({}));
+        const raw = await request.text();
+        let body: unknown = {};
+        try { body = raw ? JSON.parse(raw) : {}; } catch { body = {}; }
         const action: string | undefined = (body && typeof body === 'object') ? (body as { action?: unknown }).action as string | undefined : undefined;
+        if (!action || typeof action !== 'string') {
+            return NextResponse.json(enforceProvenance({ error: 'Invalid action' }, { path: 'visualizations', note: 'invalid_action' }), { status: 400 });
+        }
         const data = (body && typeof body === 'object') ? (body as { data?: unknown }).data : undefined;
         switch (action) {
             case 'create_chart':
@@ -239,14 +244,21 @@ async function exportChart(userId: string, exportData: unknown) {
     const cMetadata = isObj((chartData as { metadata?: unknown }).metadata) ? (chartData as { metadata?: Record<string, unknown> }).metadata : {};
     const cSettings = isObj((chartData as { settings?: unknown }).settings) ? (chartData as { settings?: Record<string, unknown> }).settings : {};
     const exportBase = { id: chartId, userId, config: cConfig, data: cData, metadata: cMetadata, settings: cSettings };
-    const allowedFormats = new Set(['png', 'jpeg', 'json', 'csv', 'pdf']);
-    const safeFormat = (format && allowedFormats.has(format)) ? format : 'json';
-    // Coerce safe format to ExportFormat subset used by server exporters
-    const serverFormatRaw = (safeFormat === 'csv' || safeFormat === 'jpeg') ? 'json' : safeFormat; // fallback unsupported formats to json export path
-    function isExportFormat(v: string): v is ExportFormat {
-        return ['pdf', 'excel', 'json', 'png', 'svg'].includes(v);
-    }
-    const serverFormat: ExportFormat = isExportFormat(serverFormatRaw) ? serverFormatRaw : 'json';
+    const allowedFormats = new Set(['png', 'jpeg', 'json', 'csv', 'pdf', 'svg', 'excel']);
+    const safeFormat = (typeof format === 'string' && allowedFormats.has(format)) ? format : 'json';
+    // Map client format -> server export format
+    const mapToServer = (f: string): ExportFormat => {
+        switch (f) {
+            case 'png': return 'png';
+            case 'pdf': return 'pdf';
+            case 'svg': return 'svg';
+            case 'excel': return 'excel';
+            case 'json': return 'json';
+            // Unsupported server paths -> json fallback (captures csv/jpeg today)
+            default: return 'json';
+        }
+    };
+    const serverFormat: ExportFormat = mapToServer(safeFormat);
     const chartExportBase: ServerChartArtifactData = {
         id: exportBase.id,
         userId: exportBase.userId,
@@ -262,9 +274,18 @@ async function exportChart(userId: string, exportData: unknown) {
         previewImage: undefined
     };
     const chartExportConfig = isObj(config) ? config as Partial<{ title?: string; width?: number; height?: number }> : undefined;
-    const exportUrl = artifact
-        ? await persistExportArtifact({ userId, kind: 'chart', id: chartId, format: safeFormat, artifact: String(artifact), metadata: { chartType: chartExportBase.config?.type } })
-        : await generateChartExport(chartExportBase, serverFormat, chartExportConfig);
+    // Validate artifact if present (data URL or base64)
+    let exportUrl: string;
+    if (typeof artifact === 'string' && artifact.length > 0) {
+        const isDataUrl = /^data:[^;]+;base64,[a-z0-9+/=]+$/i.test(artifact);
+        const isBase64 = /^[a-z0-9+/=]+$/i.test(artifact);
+        if (!(isDataUrl || isBase64)) {
+            return NextResponse.json({ error: 'Invalid artifact encoding' }, { status: 400 });
+        }
+        exportUrl = await persistExportArtifact({ userId, kind: 'chart', id: chartId, format: safeFormat, artifact, metadata: { chartType: chartExportBase.config?.type } });
+    } else {
+        exportUrl = await generateChartExport(chartExportBase, serverFormat, chartExportConfig);
+    }
 
     // Track export in analytics
     await adminDb.collection('analytics').add({
@@ -429,9 +450,18 @@ async function exportDashboard(userId: string, exportData: unknown) {
     const dMetadata = isObj((dashboardData as { metadata?: unknown }).metadata) ? (dashboardData as { metadata?: Record<string, unknown> }).metadata : {};
     const dName = typeof (dashboardData as { name?: unknown }).name === 'string' ? (dashboardData as { name?: string }).name : 'Dashboard';
     const dashboardExportBase = { id: dashboardId, userId, widgets: dWidgets, settings: dSettings, metadata: dMetadata, name: dName };
-    const allowedDashFormats = new Set(['png', 'jpeg', 'json', 'csv', 'pdf']);
-    const safeDashFormat = (format && allowedDashFormats.has(format)) ? format : 'json';
-    const dashServerFormat = (safeDashFormat === 'csv' || safeDashFormat === 'jpeg') ? 'json' : safeDashFormat;
+    const allowedDashFormats = new Set(['png', 'jpeg', 'json', 'csv', 'pdf', 'svg', 'excel']);
+    const safeDashFormat = (typeof format === 'string' && allowedDashFormats.has(format)) ? format : 'json';
+    const dashServerFormat = ((): ExportFormat => {
+        switch (safeDashFormat) {
+            case 'png': return 'png';
+            case 'pdf': return 'pdf';
+            case 'svg': return 'svg';
+            case 'excel': return 'excel';
+            case 'json': return 'json';
+            default: return 'json';
+        }
+    })();
     const dashboardExportObj: ServerDashboardArtifactData = {
         id: dashboardExportBase.id,
         userId: dashboardExportBase.userId,
@@ -445,9 +475,17 @@ async function exportDashboard(userId: string, exportData: unknown) {
     }
     const dashFormat: ExportFormat = isDashExportFormat(dashServerFormat) ? dashServerFormat : 'json';
     const dashExportConfig = isObj(config) ? config as Partial<{ title?: string }> : undefined;
-    const exportUrl = artifact
-        ? await persistExportArtifact({ userId, kind: 'dashboard', id: dashboardId, format: safeDashFormat, artifact: String(artifact), metadata: { widgetCount: (dashboardExportObj.widgets?.length) || 0 } })
-        : await generateDashboardExport(dashboardExportObj, dashFormat, dashExportConfig);
+    let exportUrl: string;
+    if (typeof artifact === 'string' && artifact.length > 0) {
+        const isDataUrl = /^data:[^;]+;base64,[a-z0-9+/=]+$/i.test(artifact);
+        const isBase64 = /^[a-z0-9+/=]+$/i.test(artifact);
+        if (!(isDataUrl || isBase64)) {
+            return NextResponse.json({ error: 'Invalid artifact encoding' }, { status: 400 });
+        }
+        exportUrl = await persistExportArtifact({ userId, kind: 'dashboard', id: dashboardId, format: safeDashFormat, artifact, metadata: { widgetCount: (dashboardExportObj.widgets?.length) || 0 } });
+    } else {
+        exportUrl = await generateDashboardExport(dashboardExportObj, dashFormat, dashExportConfig);
+    }
 
     // Track export in analytics
     await adminDb.collection('analytics').add({

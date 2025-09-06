@@ -1,5 +1,7 @@
 import { adminDb } from '@/lib/firebase-admin';
 import { NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // Dev-only diagnostics endpoint: validates current user Firestore read access for key collections
 // Returns status per collection; avoid exposing data (only sizes / error codes)

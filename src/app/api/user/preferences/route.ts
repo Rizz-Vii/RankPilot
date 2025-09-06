@@ -2,6 +2,8 @@ import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { enforceProvenance } from '@/lib/middleware/provenance';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // Accepts PUT with JSON body containing preference fields; updates users/{uid}.preferences
 export async function PUT(req: NextRequest): Promise<NextResponse> {

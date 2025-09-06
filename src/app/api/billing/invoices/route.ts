@@ -3,6 +3,8 @@ import { getLogger } from '@/lib/logging/app-logger';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // Composite cursor pagination over financeInvoices
 // Refinement (FIN-02): order by period desc, then createdAt desc to avoid skipping invoices when multiple share the same period.

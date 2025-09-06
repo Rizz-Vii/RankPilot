@@ -1,0 +1,1007 @@
+{
+  "steps": [
+    {
+      "taskId": "CLF-0",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-1",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-2",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-3",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-4",
+      "kind": "do-task",
+      "domain": "frontend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-5",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-6",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-7",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-8",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-9",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-10",
+      "kind": "do-task",
+      "domain": "frontend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-11",
+      "kind": "do-task",
+      "domain": "data",
+      "files": []
+    },
+    {
+      "taskId": "CLF-12",
+      "kind": "do-task",
+      "domain": "data",
+      "files": []
+    },
+    {
+      "taskId": "CLF-13",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-14",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-15",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-16",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-17",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-18",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-19",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-20",
+      "kind": "do-task",
+      "domain": "frontend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-21",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-22",
+      "kind": "do-task",
+      "domain": "data",
+      "files": []
+    },
+    {
+      "taskId": "CLF-23",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-24",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-25",
+      "kind": "do-task",
+      "domain": "data",
+      "files": []
+    },
+    {
+      "taskId": "CLF-26",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-27",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-28",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-29",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-30",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-31",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-32",
+      "kind": "do-task",
+      "domain": "data",
+      "files": []
+    },
+    {
+      "taskId": "CLF-33",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-34",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-35",
+      "kind": "do-task",
+      "domain": "ops",
+      "files": []
+    },
+    {
+      "taskId": "CLF-36",
+      "kind": "do-task",
+      "domain": "data",
+      "files": []
+    },
+    {
+      "taskId": "CLF-37",
+      "kind": "do-task",
+      "domain": "data",
+      "files": []
+    },
+    {
+      "taskId": "CLF-38",
+      "kind": "do-task",
+      "domain": "data",
+      "files": []
+    },
+    {
+      "taskId": "CLF-39",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-40",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-41",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-42",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-43",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-44",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-45",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-46",
+      "kind": "do-task",
+      "domain": "infra",
+      "files": []
+    },
+    {
+      "taskId": "CLF-47",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-48",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-49",
+      "kind": "do-task",
+      "domain": "frontend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-50",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-51",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-52",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-53",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-54",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-55",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-56",
+      "kind": "do-task",
+      "domain": "data",
+      "files": []
+    },
+    {
+      "taskId": "CLF-57",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-58",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-59",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-60",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-61",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-62",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-63",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-64",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-65",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-66",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-67",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-68",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-69",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-70",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-71",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-72",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-73",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-74",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-75",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-76",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-77",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-78",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-79",
+      "kind": "do-task",
+      "domain": "frontend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-80",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-81",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-82",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-83",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-84",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-85",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-86",
+      "kind": "do-task",
+      "domain": "infra",
+      "files": []
+    },
+    {
+      "taskId": "CLF-87",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-88",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-89",
+      "kind": "do-task",
+      "domain": "frontend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-90",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-91",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-92",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-93",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-94",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-95",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-96",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-97",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-98",
+      "kind": "do-task",
+      "domain": "frontend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-99",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-100",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-101",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-102",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-103",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-104",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-105",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-106",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-107",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-108",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-109",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-110",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-111",
+      "kind": "do-task",
+      "domain": "ops",
+      "files": []
+    },
+    {
+      "taskId": "CLF-112",
+      "kind": "do-task",
+      "domain": "ops",
+      "files": []
+    },
+    {
+      "taskId": "CLF-113",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-114",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-115",
+      "kind": "do-task",
+      "domain": "infra",
+      "files": []
+    },
+    {
+      "taskId": "CLF-116",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-117",
+      "kind": "do-task",
+      "domain": "data",
+      "files": []
+    },
+    {
+      "taskId": "CLF-118",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-119",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-120",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-121",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-122",
+      "kind": "do-task",
+      "domain": "infra",
+      "files": []
+    },
+    {
+      "taskId": "CLF-123",
+      "kind": "do-task",
+      "domain": "frontend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-124",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-125",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-126",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-127",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-128",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-129",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-130",
+      "kind": "do-task",
+      "domain": "ops",
+      "files": []
+    },
+    {
+      "taskId": "CLF-131",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-132",
+      "kind": "do-task",
+      "domain": "data",
+      "files": []
+    },
+    {
+      "taskId": "CLF-133",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-134",
+      "kind": "do-task",
+      "domain": "frontend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-135",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-136",
+      "kind": "do-task",
+      "domain": "infra",
+      "files": []
+    },
+    {
+      "taskId": "CLF-137",
+      "kind": "do-task",
+      "domain": "data",
+      "files": []
+    },
+    {
+      "taskId": "CLF-138",
+      "kind": "do-task",
+      "domain": "ops",
+      "files": []
+    },
+    {
+      "taskId": "CLF-139",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-140",
+      "kind": "do-task",
+      "domain": "ops",
+      "files": []
+    },
+    {
+      "taskId": "CLF-141",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-142",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-143",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-144",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-145",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-146",
+      "kind": "do-task",
+      "domain": "frontend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-147",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-148",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-149",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-150",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-151",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-152",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-153",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-154",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-155",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-156",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-157",
+      "kind": "do-task",
+      "domain": "frontend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-158",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-159",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-160",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-161",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-162",
+      "kind": "do-task",
+      "domain": "docs",
+      "files": []
+    },
+    {
+      "taskId": "CLF-163",
+      "kind": "do-task",
+      "domain": "frontend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-164",
+      "kind": "do-task",
+      "domain": "frontend",
+      "files": []
+    },
+    {
+      "taskId": "CLF-165",
+      "kind": "do-task",
+      "domain": "ops",
+      "files": []
+    },
+    {
+      "taskId": "CLF-166",
+      "kind": "do-task",
+      "domain": "backend",
+      "files": []
+    }
+  ],
+  "strategy": "heuristic"
+}

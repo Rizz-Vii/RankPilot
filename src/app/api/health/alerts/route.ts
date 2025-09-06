@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 // Query params: ?limit=30 (default 14, max 60)
 // Each row: { date, alerts:[...], ma7Provenance, ma7CrawlerAdoption, ... }
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 export async function GET(req: Request) {
     const nreq = req as NextRequest;
     const url = new URL(nreq.url);

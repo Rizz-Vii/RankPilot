@@ -12,18 +12,21 @@ async function globalSetup(config: FullConfig) {
 
     try {
         // Check localhost dev server
+        // Prefer DOMContentLoaded baseline then do a short optional network settle (non-fatal)
         await page.goto("http://localhost:3000", {
-            waitUntil: "networkidle",
+            waitUntil: "domcontentloaded",
             timeout: 10000
         });
+        try { await page.waitForLoadState('networkidle', { timeout: 3000 }); } catch { /* non-fatal */ }
         console.log("✅ Development server is running");
 
         // Optional: Check if functions emulator is running
         try {
             await page.goto("http://localhost:5001", {
-                waitUntil: "networkidle",
+                waitUntil: "domcontentloaded",
                 timeout: 5000
             });
+            try { await page.waitForLoadState('networkidle', { timeout: 2000 }); } catch { /* non-fatal */ }
             console.log("✅ Functions emulator detected");
         } catch {
             console.log("ℹ️ Functions emulator not running (using production)");

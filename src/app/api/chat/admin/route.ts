@@ -82,7 +82,7 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
         } catch (err) { void err; /* ignore */ }
 
         const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'rankpilot-h3jpc';
-        const region = 'us-central1';
+        const region = process.env.FIREBASE_REGION || process.env.NEXT_PUBLIC_FUNCTIONS_REGION || 'australia-southeast1';
         const useEmulator = false; // Force production Functions URL when testing locally without emulators
         const emulatorHost = process.env.FUNCTIONS_EMULATOR_HOST || 'localhost';
         const emulatorPort = process.env.FUNCTIONS_EMULATOR_PORT || '5001';

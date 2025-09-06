@@ -1,4 +1,4 @@
-import type { Page, Locator } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { randomDelay } from "../utils/test-utils";
 
 export class BasePage {
@@ -22,8 +22,11 @@ export class BasePage {
   }
 
   async waitForNetworkIdle() {
-    await this.page.waitForLoadState("networkidle");
+    // networkidle is flaky in dev/test environments; prefer domcontentloaded + spinner check
+    await this.page.waitForLoadState("domcontentloaded");
     await randomDelay();
+    // Wait for any loading spinner to disappear if present
+    await this.loadingSpinner.waitFor({ state: "hidden", timeout: 30000 }).catch(() => { });
   }
 
   async navigateTo(path: string) {

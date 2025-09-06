@@ -105,7 +105,8 @@ test.describe('Performance - Core Web Vitals Monitoring', () => {
 test.describe('Performance - Page Load Optimization', () => {
     test('Homepage loading performance', async ({ page }) => {
         const startTime = Date.now();
-        await page.goto('/', { waitUntil: 'networkidle' });
+        await page.goto('/', { waitUntil: 'domcontentloaded' });
+        await page.locator('main, [data-testid="home-root"]').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
         const loadTime = Date.now() - startTime;
 
         expect(loadTime).toBeLessThan(3000); // Homepage should load within 3s

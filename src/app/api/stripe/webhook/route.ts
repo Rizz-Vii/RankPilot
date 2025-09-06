@@ -1,11 +1,34 @@
 import { NextResponse } from 'next/server';
 // Canonical Stripe webhook is handled by Firebase Cloud Functions (functions/src/stripe-webhook.ts).
-// This Next.js route is intentionally disabled to prevent duplicate processing.
-// If you need to re-enable, coordinate with Functions and remove the 410 response below.
+// This Next.js route stays disabled by default to prevent duplicate processing.
+// If STRIPE_WEBHOOK_FORWARD_URL is set, we forward the request to the canonical endpoint.
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export async function POST() {
-    return NextResponse.json({ error: 'Stripe webhook handled by Cloud Functions' }, { status: 410 });
+export async function POST(request: Request) {
+    const forwardUrl = process.env.STRIPE_WEBHOOK_FORWARD_URL;
+    if (!forwardUrl) {
+        return NextResponse.json({ error: 'Stripe webhook handled by Cloud Functions' }, { status: 410 });
+    }
+    try {
+        const body = await request.text();
+        const signature = request.headers.get('stripe-signature') || '';
+        const contentType = request.headers.get('content-type') || 'application/json';
+        const res = await fetch(forwardUrl, {
+            method: 'POST',
+            headers: {
+                'stripe-signature': signature,
+                'content-type': contentType,
+            },
+            body,
+        });
+        const text = await res.text();
+        return new NextResponse(text, {
+            status: res.status,
+            headers: { 'content-type': res.headers.get('content-type') || 'application/json' },
+        });
+    } catch {
+        return NextResponse.json({ error: 'Forwarding failed' }, { status: 502 });
+    }
 }
 /*
 import { adminDb } from '@/lib/firebase-admin';
@@ -174,7 +197,7 @@ export async function POST(request: Request) {
         }
 
         // Mark as processed (non-blocking if fails)
-        try { await processedRef.set({ id: event.id, type: event.type, createdAt: new Date() }, { merge: false }); } catch (e) { logger.degraded('processedEvent.persist_failed', { eventId: event.id, error: (e as Error).message }); }
+    try { await processedRef.set({ id: event.id, type: event.type, createdAt: new Date() }, { merge: false }); } catch (err) { logger.degraded('processedEvent.persist_failed', { eventId: event.id, error: (err as Error).message }); }
         return NextResponse.json(
             enforceProvenance({ received: true, processed: true }, { path: 'stripe/webhook', note: 'ok' })
         );

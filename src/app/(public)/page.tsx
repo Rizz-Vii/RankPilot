@@ -177,7 +177,7 @@ function PrimaryCta() {
   // Render static CTA server-side; enhance on client via a tiny script to avoid bundling state code in shared chunk
   return (
     <Button size="lg" variant="secondary" asChild className="micro-hover-lift">
-      <Link href="/register">Start 7‑Day Free Trial</Link>
+      <Link href="/register" prefetch={false}>Start 7‑Day Free Trial</Link>
     </Button>
   );
 }

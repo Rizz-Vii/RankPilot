@@ -67,6 +67,12 @@ export interface DashboardData {
     value: number;
     fill: string;
   }>;
+  seoSources?: Array<{
+    url: string;
+    firstH1?: string;
+    externalAnchors: Array<{ href: string; text: string }>;
+    missingAltSamples: string[];
+  }>;
 }
 
 class DashboardDataService {
@@ -85,14 +91,16 @@ class DashboardDataService {
         projectsData,
         domainAuthorityData,
         backlinkData,
-        trafficData
+        trafficData,
+        seoSources
       ] = await Promise.all([
         this.getSEOScoreTrend(userId),
         this.getKeywordMetrics(userId),
         this.getProjectsData(userId),
         this.getDomainAuthorityData(userId),
         this.getBacklinkData(userId),
-        this.getTrafficSources(userId)
+        this.getTrafficSources(userId),
+        this.getSeoSources(userId)
       ]);
 
       return {
@@ -103,7 +111,8 @@ class DashboardDataService {
         keywordVisibility: keywordData.visibility,
         domainAuthority: domainAuthorityData,
         backlinks: backlinkData,
-        trafficSources: trafficData
+        trafficSources: trafficData,
+        seoSources
       };
 
     } catch (error) {
@@ -158,6 +167,36 @@ class DashboardDataService {
     } catch (error) {
       console.error("Error fetching SEO score trend:", error);
       return { current: 0, change: 0, trend: [] };
+    }
+  }
+
+  /**
+   * Get SEO provenance sources from the latest NeuroSEO analysis
+   */
+  private static async getSeoSources(userId: string) {
+    try {
+      const analysesRef = collection(db, "neuroSeoAnalyses");
+      const q = query(
+        analysesRef,
+        where("userId", "==", userId),
+        where("status", "==", "completed"),
+        orderBy("completedAt", "desc"),
+        limit(1)
+      );
+
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) return [] as DashboardData["seoSources"];
+      const data = snapshot.docs[0].data();
+      const sources = (data?.report?.sources || data?.sources || []) as Array<{ url: string; firstH1?: string; externalAnchors?: Array<{ href: string; text: string }>; missingAltSamples?: string[] }>;
+      return sources.map(s => ({
+        url: s.url,
+        firstH1: s.firstH1,
+        externalAnchors: Array.isArray(s.externalAnchors) ? s.externalAnchors : [],
+        missingAltSamples: Array.isArray(s.missingAltSamples) ? s.missingAltSamples : []
+      }));
+    } catch (error) {
+      console.error("Error fetching SEO sources:", error);
+      return [] as DashboardData["seoSources"];
     }
   }
 
@@ -323,17 +362,39 @@ class DashboardDataService {
       const totalBacklinks = latestAnalysis?.totalBacklinks || 0;
       const newBacklinks = latestAnalysis?.newBacklinks || 0;
 
-      // Generate monthly history
-      const history = [];
+      // Deterministic monthly history
+      const history: Array<{ month: string; new: number; lost: number }> = [];
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+
+      // Simple 32-bit FNV-1a hash for seeding
+      const hashSeed = (str: string): number => {
+        let h = 0x811c9dc5;
+        for (let i = 0; i < str.length; i++) {
+          h ^= str.charCodeAt(i);
+          h = Math.imul(h, 0x01000193);
+        }
+        return h >>> 0;
+      };
+      // Mulberry32 PRNG
+      const seededRng = (seed: number) => {
+        let s = seed >>> 0;
+        return () => {
+          s = (s + 0x6D2B79F5) >>> 0;
+          let t = Math.imul(s ^ (s >>> 15), 1 | s);
+          t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      };
 
       for (let i = 0; i < 6; i++) {
         const analysis = analyses[i];
-        history.unshift({
-          month: months[5 - i],
-          new: analysis?.newBacklinks || Math.floor(Math.random() * 50) + 20,
-          lost: analysis?.lostBacklinks || Math.floor(Math.random() * 20) + 5
-        });
+        const monthLabel = months[5 - i];
+        // If analysis provides values, use them; else derive deterministically from userId + month
+        const seed = hashSeed(`${userId}|${monthLabel}|backlinks`);
+        const rng = seededRng(seed);
+        const newVal = analysis?.newBacklinks ?? (20 + Math.round(rng() * 50));
+        const lostVal = analysis?.lostBacklinks ?? (5 + Math.round(rng() * 20));
+        history.unshift({ month: monthLabel, new: newVal, lost: lostVal });
       }
 
       return {
@@ -383,19 +444,19 @@ class DashboardDataService {
       const socialPercent = 100 - organicPercent - directPercent - referralPercent;
 
       return [
-        { name: "Organic Search", value: Math.round(organicPercent), fill: "var(--color-chart-1)" },
-        { name: "Direct", value: Math.round(directPercent), fill: "var(--color-chart-2)" },
-        { name: "Referral", value: Math.round(referralPercent), fill: "var(--color-chart-3)" },
-        { name: "Social", value: Math.round(socialPercent), fill: "var(--color-chart-4)" }
+        { name: "Organic Search", value: Math.round(organicPercent), fill: "hsl(var(--chart-1))" },
+        { name: "Direct", value: Math.round(directPercent), fill: "hsl(var(--chart-2))" },
+        { name: "Referral", value: Math.round(referralPercent), fill: "hsl(var(--chart-3))" },
+        { name: "Social", value: Math.round(socialPercent), fill: "hsl(var(--chart-4))" }
       ];
 
     } catch (error) {
       console.error("Error fetching traffic sources:", error);
       return [
-        { name: "Organic Search", value: 45, fill: "var(--color-chart-1)" },
-        { name: "Direct", value: 30, fill: "var(--color-chart-2)" },
-        { name: "Referral", value: 15, fill: "var(--color-chart-3)" },
-        { name: "Social", value: 10, fill: "var(--color-chart-4)" }
+        { name: "Organic Search", value: 45, fill: "hsl(var(--chart-1))" },
+        { name: "Direct", value: 30, fill: "hsl(var(--chart-2))" },
+        { name: "Referral", value: 15, fill: "hsl(var(--chart-3))" },
+        { name: "Social", value: 10, fill: "hsl(var(--chart-4))" }
       ];
     }
   }
@@ -457,7 +518,8 @@ class DashboardDataService {
       backlinks: { total: 0, newLast30Days: 0, history: [] },
       trafficSources: [
         { name: "No Data", value: 100, fill: "var(--color-chart-1)" }
-      ]
+      ],
+      seoSources: []
     };
   }
 

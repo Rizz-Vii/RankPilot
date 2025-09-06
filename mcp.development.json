@@ -112,6 +112,33 @@
                 "MCP_SERVER_MAX_MEMORY": "256MB"
             },
             "disabled": true
+        },
+        "playwright": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@playwright/mcp@latest",
+                "--browser",
+                "chromium",
+                "--headless"
+            ],
+            "env": {
+                "MCP_SERVER_MAX_MEMORY": "256MB"
+            },
+            "disabled": false
+        },
+        "puppeteer": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-puppeteer@latest",
+                "--allowed-origins",
+                "http://localhost:3000,https://localhost:3000"
+            ],
+            "env": {
+                "MCP_SERVER_MAX_MEMORY": "256MB"
+            },
+            "disabled": true
         }
     }
 }

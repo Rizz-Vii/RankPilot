@@ -1,7 +1,6 @@
 "use client";
 
-import type { SearchOutput } from "@/ai/flows/search";
-import { searchFeatures } from "@/ai/flows/search";
+type SearchOutput = { results: Array<{ title: string; href: string; description: string }>; };
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useI18n } from '@/lib/i18n/internationalization-system';
@@ -80,8 +79,14 @@ export default function GlobalSearch() {
       }
       setIsLoading(true);
       try {
-        const response = await searchFeatures({ query: debouncedQuery });
-        setResults(response.results);
+        const resp = await fetch('/api/search/features', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: debouncedQuery })
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = (await resp.json()) as SearchOutput & { __provenance?: string };
+        setResults(Array.isArray(data.results) ? data.results : []);
         // store history (dedupe & cap 10) - debounced write
         setHistory(prev => {
           const next = [debouncedQuery, ...prev.filter(q => q !== debouncedQuery)].slice(0,10);

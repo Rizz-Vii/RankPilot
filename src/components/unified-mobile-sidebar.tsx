@@ -218,6 +218,7 @@ export default function UnifiedMobileSidebar({
                 </Link>
                 <Link
                   href="/register"
+                    prefetch={false}
                   onClick={closeMenu}
                   className="flex items-center justify-center px-4 py-3 bg-primary text-primary-foreground rounded-lg font-medium min-h-[48px] hover:bg-primary/90 transition-colors"
                 >

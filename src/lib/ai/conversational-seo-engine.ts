@@ -271,15 +271,19 @@ export class ConversationalSEOEngine {
         const businessContext = context.userPreferences?.businessType || 'general';
 
         // Use multi-model orchestrator for keyword analysis
-        const keywordAnalysis = await multiModelOrchestrator.processRequest({
-            task: 'text-classification',
-            input: `Analyze SEO keywords for ${businessContext}: ${keywords.join(', ')}`,
-            userTier: context.userTier,
-            userId: context.userId,
-            options: {
-                maxTokens: 500
+        const keywordAnalysis = await (async () => {
+            try {
+                return await multiModelOrchestrator.processRequest({
+                    task: 'text-classification',
+                    input: `Analyze SEO keywords for ${businessContext}: ${keywords.join(', ')}`,
+                    userTier: context.userTier,
+                    userId: context.userId,
+                    options: { maxTokens: 500 }
+                });
+            } catch {
+                return { success: false, results: [] } as unknown as MultiModelResponse;
             }
-        });
+        })();
 
         const responseContent = this.generateKeywordResponse(keywords, keywordAnalysis, businessContext);
 
@@ -716,12 +720,18 @@ Would you like me to suggest specific long-tail variations or analyze the compet
     }
 
     private async generateTechnicalResponse(message: string, context: ConversationContext): Promise<string> {
-        const aiResponse = await multiModelOrchestrator.processRequest({
-            task: 'question-answering',
-            input: `Technical SEO question: ${message}`,
-            userTier: context.userTier,
-            userId: context.userId
-        });
+        const aiResponse = await (async () => {
+            try {
+                return await multiModelOrchestrator.processRequest({
+                    task: 'question-answering',
+                    input: `Technical SEO question: ${message}`,
+                    userTier: context.userTier,
+                    userId: context.userId
+                });
+            } catch {
+                return { success: false, results: [] } as unknown as MultiModelResponse;
+            }
+        })();
 
         const answer = this.extractAnswer(aiResponse);
 
@@ -850,12 +860,18 @@ Would you like me to help with any specific optimization technique or review par
 
     private async handleGeneralSEOQuestion(context: ConversationContext, userMessage: string): Promise<ConversationResponse> {
         // Implementation for general SEO questions
-        const aiResponse = await multiModelOrchestrator.processRequest({
-            task: 'question-answering',
-            input: userMessage,
-            userTier: context.userTier,
-            userId: context.userId
-        });
+        const aiResponse = await (async () => {
+            try {
+                return await multiModelOrchestrator.processRequest({
+                    task: 'question-answering',
+                    input: userMessage,
+                    userTier: context.userTier,
+                    userId: context.userId
+                });
+            } catch {
+                return { success: false, results: [] } as unknown as MultiModelResponse;
+            }
+        })();
 
         const message: ConversationMessage = {
             id: this.generateMessageId(),

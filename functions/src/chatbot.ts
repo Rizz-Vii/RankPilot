@@ -90,8 +90,7 @@ export const customerChatHandler = onCall(
     region: "australia-southeast1",
     memory: "1GiB",
     timeoutSeconds: 30,
-    secrets: ["OPENAI_API_KEY"], // Firebase Functions v2 secrets
-    // Allow server-to-server calls from our Next.js API without App Check during development
+    secrets: ["OPENAI_API_KEY"],
     enforceAppCheck: false,
   },
   async (request) => {
@@ -235,8 +234,7 @@ export const adminChatHandler = onCall(
     region: "australia-southeast1",
     memory: "1GiB",
     timeoutSeconds: 45,
-    secrets: ["OPENAI_API_KEY"], // Firebase Functions v2 secrets
-    // Allow server-to-server calls from our Next.js API without App Check during development
+    secrets: ["OPENAI_API_KEY"],
     enforceAppCheck: false,
   },
   async (request) => {

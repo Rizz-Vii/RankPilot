@@ -1,2 +1,0 @@
-{"taskId":"DOC-REFRESH-README","summary":"Refresh root README with link to .codex usage","files":["README.md"],"status":"pending"}
-{"taskId":"LINT-FIX-SMALL","summary":"Mechanical lint autofix for newly added util file","files":["src/lib/utils/new-util.ts"],"status":"pending"}

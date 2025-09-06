@@ -3,6 +3,7 @@ import { maybeEmbedMessage } from '@/lib/chat/embedding';
 import { buildQueryEmbedding, maybeClusterKeywords, retrieveSimilarMessages } from '@/lib/chat/retrievalAndClustering';
 import { maybeSummarizeSession } from '@/lib/chat/sessionSummarizer';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import type { SSEClient } from '@/lib/http/sse';
 import { sse } from '@/lib/http/sse';
 import { recordError, recordFallback, recordRateLimitRejection, recordRouteLatency } from '@/lib/metrics/unified-metrics';
 import { enforceProvenance, enforceProvenanceOnChunk } from '@/lib/middleware/provenance';
@@ -26,7 +27,6 @@ const QUOTA_LIMITS: Record<string, { messages: number; tokens: number }> = {
 type UsageCounter = {
     messages?: number;
     tokens?: number;
-    tier?: string;
     date?: string;
     providerCounts?: Record<string, number>;
 };
@@ -43,17 +43,21 @@ async function checkAndIncrementMessageQuota(uid: string, tier: string) {
     const docRef = adminDb.collection('usageCounters').doc(`${uid}_${dateKey}`);
     await adminDb.runTransaction(async (tx) => {
         const snap = await tx.get(docRef);
-        const data = snap.exists ? (snap.data() as UsageCounter) : { messages: 0, tokens: 0, tier, date: dateKey };
+        const data = snap.exists ? (snap.data() as UsageCounter) : { messages: 0, tokens: 0, date: dateKey };
         if ((data.messages || 0) >= limits.messages) {
             throw new Error('Daily message quota reached');
         }
-        tx.set(docRef, {
-            messages: FieldValue.increment(1),
-            tokens: (data.tokens || 0),
-            tier,
-            date: dateKey,
-            updatedAt: FieldValue.serverTimestamp(),
-        }, { merge: true });
+        tx.set(
+            docRef,
+            {
+                messages: FieldValue.increment(1),
+                tokens: data.tokens || 0,
+                tier,
+                date: dateKey,
+                updatedAt: FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+        );
     });
 }
 
@@ -286,85 +290,89 @@ export async function POST(req: NextRequest): Promise<Response> {
             recordFallback(reason);
         }
 
-        return sse(req, async (client) => {
-            let fullResponse = '';
-            let metaBuffer = '';
-            let tokensUsed = 0;
-            try {
-        // Emit provider info early
-                client.send(enforceProvenanceOnChunk({ info: 'provider_selected', provider, openaiCircuitOpen: openAICircuitOpen(), provenance: provider === 'openai' ? 'live' : 'synthetic' }, { path: 'chat/customer/stream' }));
-                if (openAIStream) {
-                    for await (const part of openAIStream) {
-                        const content = part?.choices?.[0]?.delta?.content;
-                        if (content) {
-                            fullResponse += content;
-                            client.send({ token: content, provenance: provider === 'openai' ? 'live' : 'synthetic' });
-                        }
-                    }
-                } else {
-                    // One-shot fallback (non-streaming)
-                    fullResponse = await fallbackOneShot(finalSystemPrompt, message, 800);
-                    client.send({ token: fullResponse, fallback: true, provenance: 'synthetic' });
-                }
-                // Persist conversation to Firestore
+        const onClient: (client: SSEClient) => void = (client) => {
+            void (async () => {
+                let fullResponse = '';
+                let metaBuffer = '';
+                let tokensUsed = 0;
                 try {
-                    tokensUsed = estimateTokens(fullResponse);
-                    let intent: string | undefined; let actions: string[] | undefined; let priority: number | undefined;
-                    const metaMatch = fullResponse.match(/<rp_meta>([\s\S]*?)<\/rp_meta>/);
-                    if (metaMatch) {
-                        metaBuffer = metaMatch[1];
-                        try {
-                            const parsed = JSON.parse(metaBuffer.trim());
-                            intent = parsed.intent;
-                            actions = Array.isArray(parsed.actions) ? parsed.actions.slice(0, 5) : undefined;
-                            priority = typeof parsed.priority === 'number' ? parsed.priority : undefined;
-                            fullResponse = fullResponse.replace(metaMatch[0], '').trim();
-                        } catch { /* ignore */ }
+                    // Emit provider info early
+                    client.send(enforceProvenanceOnChunk({ info: 'provider_selected', provider, openaiCircuitOpen: openAICircuitOpen(), provenance: provider === 'openai' ? 'live' : 'synthetic' }, { path: 'chat/customer/stream' }));
+                    if (openAIStream) {
+                        for await (const part of openAIStream) {
+                            const content = part?.choices?.[0]?.delta?.content;
+                            if (content) {
+                                fullResponse += content;
+                                client.send({ token: content, provenance: provider === 'openai' ? 'live' : 'synthetic' });
+                            }
+                        }
+                    } else {
+                        // One-shot fallback (non-streaming)
+                        fullResponse = await fallbackOneShot(finalSystemPrompt, message, 800);
+                        client.send({ token: fullResponse, fallback: true, provenance: 'synthetic' });
                     }
-                    await incrementTokenUsage(uid, tier, tokensUsed);
-                    const msgCollection = adminDb.collection('chatLogs').doc(uid).collection('sessions').doc(currentSessionId).collection('messages');
-                    const addedRef = await msgCollection.add({
-                        question: message,
-                        response: fullResponse,
-                        timestamp: FieldValue.serverTimestamp(),
-                        tokensUsed,
-                        chatType: 'customer',
-                        metadata: { streamed: true, url: url || null, intent, actions, priority, provider, fallback: provider !== 'openai', openaiCircuitOpen: openAICircuitOpen() }
-                    });
-                    await adminDb.collection('chatLogs').doc(uid).collection('sessions').doc(currentSessionId).set({
-                        lastMessage: fullResponse.slice(0, 100),
-                        lastActivity: FieldValue.serverTimestamp(),
-                        messageCount: FieldValue.increment(1),
-                        chatType: 'customer',
-                        lastProvider: provider,
-                        lastProviderAt: FieldValue.serverTimestamp(),
-                        openAICircuitOpen: openAICircuitOpen()
-                    }, { merge: true });
-                    // Provider usage analytics (per-day doc)
+                    // Persist conversation to Firestore
                     try {
-                        const dateKey = new Date().toISOString().slice(0, 10);
-                        await adminDb.collection('usageCounters').doc(`${uid}_${dateKey}`).set({ [`providerCounts.${provider}`]: FieldValue.increment(1) }, { merge: true });
-                    } catch { }
-                    void maybeSummarizeSession({ uid, sessionId: currentSessionId, latestUserMessage: message, latestAIResponse: fullResponse })
-                        .then(r => { if (r.updated) { client.send({ info: 'summary_updated' }); } })
-                        .catch(() => { });
-                    maybeEmbedMessage({ uid, sessionId: currentSessionId, messageDocId: addedRef.id, question: message })
-                        .then(() => openaiKey ? maybeClusterKeywords({ uid, sessionId: currentSessionId, apiKey: openaiKey }).catch(() => { }) : null)
-                        .catch(() => { });
-                } catch { /* ignore persistence errors */ }
-                client.send(enforceProvenanceOnChunk({ final: true, sessionId: currentSessionId, timestamp: new Date().toISOString(), tokensUsed, provider, fallback: provider !== 'openai', openaiCircuitOpen: openAICircuitOpen(), provenance: provider === 'openai' ? 'live' : 'synthetic' }, { path: 'chat/customer/stream' }));
-                client.sendRaw('data: [DONE]\n\n');
-                recordRouteLatency('chat/customer/stream', Date.now() - start);
-                client.close();
-            } catch (err: unknown) {
-                recordError('chat/customer/stream', '5xx_server');
-                const msg = err instanceof Error ? err.message : 'stream_error';
-                client.send(enforceProvenanceOnChunk({ error: msg, providerTried: provider, openAICircuitOpen: openAICircuitOpen(), provenance: 'synthetic' }, { path: 'chat/customer/stream' }));
-                client.sendRaw('data: [DONE]\n\n');
-                recordRouteLatency('chat/customer/stream', Date.now() - start);
-                client.close();
-            }
-        }, { heartbeatMs: 15000 });
+                        tokensUsed = estimateTokens(fullResponse);
+                        let intent: string | undefined; let actions: string[] | undefined; let priority: number | undefined;
+                        const metaMatch = fullResponse.match(/<rp_meta>([\s\S]*?)<\/rp_meta>/);
+                        if (metaMatch) {
+                            metaBuffer = metaMatch[1];
+                            try {
+                                const parsed = JSON.parse(metaBuffer.trim());
+                                intent = parsed.intent;
+                                actions = Array.isArray(parsed.actions) ? parsed.actions.slice(0, 5) : undefined;
+                                priority = typeof parsed.priority === 'number' ? parsed.priority : undefined;
+                                fullResponse = fullResponse.replace(metaMatch[0], '').trim();
+                            } catch { /* ignore */ }
+                        }
+                        await incrementTokenUsage(uid, tier, tokensUsed);
+                        const msgCollection = adminDb.collection('chatLogs').doc(uid).collection('sessions').doc(currentSessionId).collection('messages');
+                        const addedRef = await msgCollection.add({
+                            question: message,
+                            response: fullResponse,
+                            timestamp: FieldValue.serverTimestamp(),
+                            tokensUsed,
+                            chatType: 'customer',
+                            metadata: { streamed: true, url: url || null, intent, actions, priority, provider, fallback: provider !== 'openai', openaiCircuitOpen: openAICircuitOpen() }
+                        });
+                        await adminDb.collection('chatLogs').doc(uid).collection('sessions').doc(currentSessionId).set({
+                            lastMessage: fullResponse.slice(0, 100),
+                            lastActivity: FieldValue.serverTimestamp(),
+                            messageCount: FieldValue.increment(1),
+                            chatType: 'customer',
+                            lastProvider: provider,
+                            lastProviderAt: FieldValue.serverTimestamp(),
+                            openAICircuitOpen: openAICircuitOpen()
+                        }, { merge: true });
+                        // Provider usage analytics (per-day doc)
+                        try {
+                            const dateKey = new Date().toISOString().slice(0, 10);
+                            await adminDb.collection('usageCounters').doc(`${uid}_${dateKey}`).set({ [`providerCounts.${provider}`]: FieldValue.increment(1) }, { merge: true });
+                        } catch { }
+                        void maybeSummarizeSession({ uid, sessionId: currentSessionId, latestUserMessage: message, latestAIResponse: fullResponse })
+                            .then(r => { if (r.updated) { client.send({ info: 'summary_updated' }); } })
+                            .catch(() => { });
+                        maybeEmbedMessage({ uid, sessionId: currentSessionId, messageDocId: addedRef.id, question: message })
+                            .then(() => openaiKey ? maybeClusterKeywords({ uid, sessionId: currentSessionId, apiKey: openaiKey }).catch(() => { }) : null)
+                            .catch(() => { });
+                    } catch { /* ignore persistence errors */ }
+                    client.send(enforceProvenanceOnChunk({ final: true, sessionId: currentSessionId, timestamp: new Date().toISOString(), tokensUsed, provider, fallback: provider !== 'openai', openaiCircuitOpen: openAICircuitOpen(), provenance: provider === 'openai' ? 'live' : 'synthetic' }, { path: 'chat/customer/stream' }));
+                    client.sendRaw('data: [DONE]\n\n');
+                    recordRouteLatency('chat/customer/stream', Date.now() - start);
+                    client.close();
+                } catch (err: unknown) {
+                    recordError('chat/customer/stream', '5xx_server');
+                    const msg = err instanceof Error ? err.message : 'stream_error';
+                    client.send(enforceProvenanceOnChunk({ error: msg, providerTried: provider, openAICircuitOpen: openAICircuitOpen(), provenance: 'synthetic' }, { path: 'chat/customer/stream' }));
+                    client.sendRaw('data: [DONE]\n\n');
+                    recordRouteLatency('chat/customer/stream', Date.now() - start);
+                    client.close();
+                }
+            })();
+            return;
+        };
+        return sse(req, onClient, { heartbeatMs: 15000 });
     } catch (e: unknown) {
         recordError('chat/customer/stream', '5xx_server');
         recordRouteLatency('chat/customer/stream', Date.now() - start);

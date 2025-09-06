@@ -29,7 +29,7 @@ const db = getFirestore();
 
 // Create Checkout Session
 export const createCheckoutSession = onRequest(
-  { cors: true, secrets: ["STRIPE_SECRET_KEY"], region: "australia-southeast2" },
+  { cors: true, secrets: ["STRIPE_SECRET_KEY"], region: "australia-southeast1" },
   async (request, response) => {
     try {
       const { planId, billingInterval, userId } = request.body;
@@ -106,7 +106,7 @@ export const createCheckoutSession = onRequest(
 
 // Create Customer Portal Session
 export const createPortalSession = onRequest(
-  { cors: true, secrets: ["STRIPE_SECRET_KEY"], region: "australia-southeast2" },
+  { cors: true, secrets: ["STRIPE_SECRET_KEY"], region: "australia-southeast1" },
   async (request, response) => {
     try {
       const { userId } = request.body;

@@ -9,7 +9,6 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 // Use consolidated AI memory manager (path adjusted for actual location)
 import { getApps, initializeApp } from "firebase-admin/app";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
-import { getAI as getGenkitAI } from "../ai/genkit.js"; // real AI engine
 import { getAI as getMockAI } from "../lib/ai-memory-manager.js";
 
 // Ensure Admin SDK initialized
@@ -30,7 +29,7 @@ const httpsOptions: HttpsOptions = {
   maxInstances: 10,
   concurrency: 80,
   region: "australia-southeast1",
-  // secrets: ["GOOGLE_AI_API_KEY", "GEMINI_API_KEY"], // Temporarily disabled for deployment
+  secrets: ["GOOGLE_AI_API_KEY", "GEMINI_API_KEY", "USE_REAL_AI"],
 };
 
 interface KeywordSuggestionsRequest {
@@ -67,6 +66,26 @@ interface KeywordSuggestionsResponse {
 // Simple in-memory cache for function instances
 const cache = new Map<string, { data: KeywordSuggestionsResponse; expiry: number; }>();
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+// Lazy real-AI accessor to avoid hard dependency on 'genkit' during module load
+type GenAI = { generate: (prompt: string) => Promise<unknown> | unknown };
+let __realAI: GenAI | null = null;
+function getRealAI(): GenAI | null {
+  try {
+    if (__realAI) return __realAI;
+    // Use require to avoid static import resolution at build/load time
+    const mod = require("../ai/genkit.js");
+    const candidate: unknown = (mod && typeof mod === 'object' && 'getAI' in mod)
+      ? (mod as { getAI: () => GenAI }).getAI()
+      : (mod && typeof mod === 'object' && 'ai' in mod)
+        ? (mod as { ai: GenAI }).ai
+        : null;
+    __realAI = (candidate as GenAI) || null;
+    return __realAI;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Enhanced keyword suggestions function with comprehensive error handling
@@ -321,9 +340,13 @@ OUTPUT REQUIREMENTS:
     let rawOutput: unknown;
     if (useReal) {
       try {
-        const ai = getGenkitAI();
-        const gen = await ai.generate(prompt) as { text?: () => string } | string;
-        rawOutput = typeof gen === 'string' ? gen : gen?.text?.();
+        const ai = getRealAI();
+        if (ai) {
+          const gen = await ai.generate(prompt) as { text?: () => string } | string;
+          rawOutput = typeof gen === 'string' ? gen : gen?.text?.();
+        } else {
+          throw new Error('Real AI unavailable');
+        }
       } catch (realErr) {
         logger.warn("Real AI generation failed, falling back to mock", { error: realErr instanceof Error ? realErr.message : String(realErr) });
       }
@@ -369,9 +392,11 @@ async function generateRelatedQueries(query: string, language: string, ctx?: { c
     let output: unknown;
     try {
       if (process.env.USE_REAL_AI === "true") {
-        const ai = getGenkitAI();
-        const gen = await ai.generate(prompt) as { text?: () => string } | string;
-        output = typeof gen === 'string' ? gen : gen?.text?.();
+        const ai = getRealAI();
+        if (ai) {
+          const gen = await ai.generate(prompt) as { text?: () => string } | string;
+          output = typeof gen === 'string' ? gen : gen?.text?.();
+        }
       }
     } catch (e) {
       logger.warn("Real AI related queries failed, falling back to mock", { error: e instanceof Error ? e.message : String(e) });

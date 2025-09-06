@@ -1,3 +1,4 @@
+import { handleCors } from '@/lib/http/cors';
 import { getLogger } from '@/lib/logging/app-logger';
 import { recordError, recordRouteLatency } from '@/lib/metrics/unified-metrics';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
@@ -17,7 +18,20 @@ const ENABLED = true;
 
 export const POST = withProvenance(async function POST(req: NextRequest) {
     const start = Date.now();
-    if (!ENABLED) return NextResponse.json(enforceProvenance({ success: false, error: 'Live backend disabled', provenance: 'synthetic' }, { path: 'neuroseo/live', note: 'feature_gate' }), { status: 503 });
+    // CORS handling and header base
+    const cors = handleCors(req as unknown as Request);
+    if ('preflight' in cors) return cors.preflight as unknown as NextResponse;
+    const baseHeaders: Record<string, string> = {
+        ...('headers' in cors ? cors.headers : {}),
+        'Cache-Control': 'no-store, no-transform',
+        'Vary': 'Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers',
+    };
+    if (!ENABLED) {
+        return NextResponse.json(
+            enforceProvenance({ success: false, error: 'Live backend disabled', provenance: 'synthetic' }, { path: 'neuroseo/live', note: 'feature_gate' }),
+            { status: 503, headers: baseHeaders }
+        );
+    }
     try {
         let body: unknown = {};
         try {
@@ -33,7 +47,7 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         const uid = typeof userId === 'string' && userId ? userId : 'anonymous';
         const force = typeof forceRefresh === 'boolean' ? forceRefresh : false;
         if (!Array.isArray(urls) || urls.length === 0) {
-            return NextResponse.json(enforceProvenance({ success: false, error: 'urls[] required', provenance: 'synthetic' }, { path: 'neuroseo/live', note: 'validation' }), { status: 400 });
+            return NextResponse.json(enforceProvenance({ success: false, error: 'urls[] required', provenance: 'synthetic' }, { path: 'neuroseo/live', note: 'validation' }), { status: 400, headers: baseHeaders });
         }
         // PERF-01 / TEAM-01: Prefer team-aware limiter when teamId supplied; otherwise fallback to legacy per-user neuroseo limiter for backward compatibility during transition.
         try {
@@ -60,19 +74,25 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
                 const retryAfterSeconds = (e && typeof e === 'object' && 'retryAfterSeconds' in e && typeof (e as { retryAfterSeconds?: unknown }).retryAfterSeconds === 'number')
                     ? (e as { retryAfterSeconds: number }).retryAfterSeconds
                     : 60;
-                return NextResponse.json(enforceProvenance({ success: false, error: 'rate_limited', retryAfter: retryAfterSeconds, provenance: 'synthetic' }, { path: 'neuroseo/live', note: 'rate_limit' }), { status: 429, headers: { 'Retry-After': String(retryAfterSeconds) } });
+                return NextResponse.json(
+                    enforceProvenance({ success: false, error: 'rate_limited', retryAfter: retryAfterSeconds, provenance: 'synthetic' }, { path: 'neuroseo/live', note: 'rate_limit' }),
+                    { status: 429, headers: { ...baseHeaders, 'Retry-After': String(retryAfterSeconds) } }
+                );
             }
             throw e;
         }
         const result = await executeNeuroLive({ urls: urlArray, analysisType: atype, userId: uid }, { forceRefresh: force });
-        const resp = NextResponse.json(enforceProvenance({ ...result }, { path: 'neuroseo/live' }), { status: 200 });
+        const resp = NextResponse.json(enforceProvenance({ ...result }, { path: 'neuroseo/live' }), { status: 200, headers: baseHeaders });
         recordRouteLatency('neuroseo/live', Date.now() - start);
         return resp;
     } catch (err: unknown) {
         const errMessage = err instanceof Error ? err.message : String(err);
-        logger.error('live.route.error', { message: errMessage });
+        logger.error('live.route.error', { message: errMessage, origin: (req.headers.get('origin') || 'n/a'), referer: (req.headers.get('referer') || 'n/a') });
         recordRouteLatency('neuroseo/live', Date.now() - start);
         recordError('neuroseo/live', '5xx_server');
-        return NextResponse.json(enforceProvenance({ error: errMessage || 'analysis failed', provenance: 'synthetic' }, { path: 'neuroseo/live' }), { status: 500 });
+        return NextResponse.json(
+            enforceProvenance({ error: errMessage || 'analysis failed', provenance: 'synthetic' }, { path: 'neuroseo/live' }),
+            { status: (errMessage?.includes('timeout') ? 503 : 500), headers: baseHeaders }
+        );
     }
 }, { path: 'neuroseo/live' });

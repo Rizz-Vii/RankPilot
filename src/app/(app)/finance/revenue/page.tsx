@@ -126,22 +126,23 @@ export default function RevenueAnalyticsPage() {
             <time className="text-[10px] text-muted-foreground" dateTime={revSnap.ts.toISOString()}>{revSnap.ts.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit'})}</time>
           </div>
         )}
-        <section className="grid gap-4 md:grid-cols-3">
+        <section className="grid gap-4 md:grid-cols-3" data-testid="finance-kpi-grid">
           {data.kpis.map((k) => (
-              <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} />
+            <MetricCard key={k.key} label={k.label} value={k.value.toLocaleString()} delta={k.delta} deltaLabel="vs last period" trend={<TrendSparkline data={k.trend} />} intent={k.intent || 'neutral'} data-testid={`finance-kpi-${k.key}`} />
           ))}
         </section>
         {derived && (
-          <section className="grid gap-4 md:grid-cols-4" aria-label="Derived revenue metrics">
-            <MetricCard key="mrr_formula" label="MRR (Derived)" value={derived.mrr.toLocaleString()} delta={0} deltaLabel="" trend={<TrendSparkline data={[derived.mrr]} />} intent="neutral" />
-            <MetricCard key="arr_formula" label="ARR" value={derived.arr.toLocaleString()} delta={0} deltaLabel="" trend={<TrendSparkline data={[derived.arr]} />} intent="neutral" />
-            <MetricCard key="churn_formula" label="Churn %" value={derived.churnRatePct.toFixed(1) + '%'} delta={0} deltaLabel="" trend={<TrendSparkline data={[derived.churnRatePct]} />} intent={derived.churnRatePct < 5 ? 'success':'warning'} />
-            <MetricCard key="ltv_formula" label="LTV" value={derived.ltv? derived.ltv.toLocaleString(): '—'} delta={0} deltaLabel="" trend={<TrendSparkline data={[derived.ltv||0]} />} intent={derived.ltv? 'accent':'neutral'} />
+          <section className="grid gap-4 md:grid-cols-4" aria-label="Derived revenue metrics" data-testid="finance-derived-metrics">
+            <MetricCard key="mrr_formula" label="MRR (Derived)" value={derived.mrr.toLocaleString()} delta={0} deltaLabel="" trend={<TrendSparkline data={[derived.mrr]} />} intent="neutral" data-testid="finance-derived-mrr" />
+            <MetricCard key="arr_formula" label="ARR" value={derived.arr.toLocaleString()} delta={0} deltaLabel="" trend={<TrendSparkline data={[derived.arr]} />} intent="neutral" data-testid="finance-derived-arr" />
+            <MetricCard key="churn_formula" label="Churn %" value={derived.churnRatePct.toFixed(1) + '%'} delta={0} deltaLabel="" trend={<TrendSparkline data={[derived.churnRatePct]} />} intent={derived.churnRatePct < 5 ? 'success' : 'warning'} data-testid="finance-derived-churn" />
+            <MetricCard key="ltv_formula" label="LTV" value={derived.ltv ? derived.ltv.toLocaleString() : '—'} delta={0} deltaLabel="" trend={<TrendSparkline data={[derived.ltv || 0]} />} intent={derived.ltv ? 'accent' : 'neutral'} data-testid="finance-derived-ltv" />
           </section>
         )}
-        <section className="space-y-3">
+        <section className="space-y-3" data-testid="finance-invoices-section">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Invoices</h2>
           <LazyDataTable
+            data-testid="finance-invoice-table"
               columns={[
                 { key:'period', header:'Period'},
                 { key:'planTier', header:'Tier'},
@@ -167,14 +168,14 @@ export default function RevenueAnalyticsPage() {
             empty="No invoice data"
           />
         </section>
-        <section className="space-y-4">
+        <section className="space-y-4" data-testid="finance-workbench">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Revenue Workbench</h2>
           <div className="grid gap-4 md:grid-cols-5">
-            <ActionCard title="Run Cohort" desc="Generate churn cohort table" action="Generate" />
-            <ActionCard title="Detect Anomalies" desc="Scan revenue series" action="Scan" />
-            <ActionCard title="Update LTV Model" desc="Recalculate predictive LTV" action="Recalc" />
-            <ActionCard title="Revenue Snapshot" desc="Force revenue snapshot" action="Run" onClick={()=> void trigger('financeRevenueSnapshot')} loading={!!running['financeRevenueSnapshot']} loadingLabel="Running" />
-            <ActionCard title="Aging Digest" desc="Queue invoice aging digest" action="Run" onClick={()=> void trigger('financeInvoiceAgingDigest')} loading={!!running['financeInvoiceAgingDigest']} loadingLabel="Queuing" />
+            <ActionCard data-testid="finance-action-cohort" title="Run Cohort" desc="Generate churn cohort table" action="Generate" />
+            <ActionCard data-testid="finance-action-anomalies" title="Detect Anomalies" desc="Scan revenue series" action="Scan" />
+            <ActionCard data-testid="finance-action-ltv" title="Update LTV Model" desc="Recalculate predictive LTV" action="Recalc" />
+            <ActionCard data-testid="finance-action-snapshot" title="Revenue Snapshot" desc="Force revenue snapshot" action="Run" onClick={() => void trigger('financeRevenueSnapshot')} loading={!!running['financeRevenueSnapshot']} loadingLabel="Running" />
+            <ActionCard data-testid="finance-action-aging" title="Aging Digest" desc="Queue invoice aging digest" action="Run" onClick={() => void trigger('financeInvoiceAgingDigest')} loading={!!running['financeInvoiceAgingDigest']} loadingLabel="Queuing" />
           </div>
         </section>
       </div>

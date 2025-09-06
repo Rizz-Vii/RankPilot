@@ -4,15 +4,18 @@
     "site": "rankpilot-production",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "frameworksBackend": {
-      "region": "us-central1",
+  "region": "australia-southeast2",
       "secrets": [
         "GEMINI_API_KEY",
         "GOOGLE_API_KEY",
         "OPENAI_API_KEY",
+  "FIRECRAWL_API_KEY",
         "NEXT_PUBLIC_RECAPTCHA_SITE_KEY",
         "RECAPTCHA_SECRET_KEY",
         "STRIPE_SECRET_KEY",
         "STRIPE_WEBHOOK_SECRET",
+  "SENTRY_DSN",
+  "CRAWL_PROBE_TOKEN",
         "SMTP_HOST",
         "SMTP_PORT",
         "SMTP_USER",
@@ -49,6 +52,6 @@
   "functions": {
     "source": "functions",
     "runtime": "nodejs20",
-    "region": "australia-southeast2"
+    "region": "australia-southeast1"
   }
 }

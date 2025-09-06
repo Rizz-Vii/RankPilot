@@ -1,4 +1,4 @@
-import type { Page, Locator} from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 import { randomDelay } from "../utils/test-utils";
 
@@ -18,13 +18,15 @@ export class DashboardPage {
   }
 
   async navigateTo(path?: string) {
-    await this.page.goto(path || "/dashboard");
-    await this.page.waitForLoadState("networkidle");
+    await this.page.goto(path || "/dashboard", { waitUntil: "domcontentloaded" });
     await randomDelay();
+    // Wait for representative dashboard content
+    await this.keywordStats.waitFor({ state: "visible", timeout: 30000 }).catch(() => { });
   }
 
   async extractStats() {
-    await this.page.waitForLoadState("networkidle");
+    await this.page.waitForLoadState("domcontentloaded");
+    await this.keywordStats.waitFor({ state: "visible", timeout: 20000 }).catch(() => { });
 
     return {
       keywords: await this.keywordStats.innerText(),

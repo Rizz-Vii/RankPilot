@@ -109,6 +109,49 @@ function hasLegacyCollection(db: Firestore | undefined | null): db is FirestoreL
   return !!db && typeof (db as Record<string, unknown>).collection === 'function';
 }
 
+function stripLeadingSlash(path: string): string {
+  return path.replace(/^\/+/, '');
+}
+
+// Wrap a legacy Firestore-like instance to sanitize collection paths (remove leading '/')
+function wrapLegacyDbSanitize(db: FirestoreLegacyLike): FirestoreLegacyLike {
+  return {
+    collection(path: string): FirestoreLegacyCollectionRef {
+      return db.collection(stripLeadingSlash(path));
+    },
+  } as FirestoreLegacyLike;
+}
+
+// Attempt to lazily resolve a Firestore instance from our app, if not injected
+async function resolveAutoDb(): Promise<{ db: Firestore; legacySanitized: boolean } | null> {
+  // Try client SDK first
+  try {
+    const mod = await import('@/lib/firebase');
+    const clientDb = (mod as { db?: unknown }).db as unknown;
+    if (clientDb) {
+      // If legacy-style, wrap to sanitize; if modular, return as-is
+      if (hasLegacyCollection(clientDb as Firestore)) {
+        return { db: wrapLegacyDbSanitize(clientDb as FirestoreLegacyLike), legacySanitized: true };
+      }
+      return { db: clientDb as FirestoreModularLike, legacySanitized: false };
+    }
+  } catch {
+    // ignore
+  }
+  // Fallback to admin SDK for server environments
+  try {
+    const adminMod = await import('@/lib/firebase-admin');
+    const adminDb = (adminMod as { adminDb?: unknown }).adminDb as unknown;
+    if (adminDb && hasLegacyCollection(adminDb as Firestore)) {
+      // Wrap admin db to sanitize collection paths
+      return { db: wrapLegacyDbSanitize(adminDb as FirestoreLegacyLike), legacySanitized: true };
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
 async function writeCreateOnlyViaLegacy(
   db: FirestoreLegacyLike,
   path: string,
@@ -206,19 +249,25 @@ export async function publishEvent(
 
     const pathBase = `/orgs/${orgId}/events`;
     try {
-      const db = input.db as Firestore | undefined;
+      // Prefer injected db; otherwise, auto-detect client/admin Firestore
+      let db = input.db as Firestore | undefined;
+      let legacySanitized = false;
       if (!db) {
-        // If a central Firestore initializer exists later, wire it here.
-        // TODO(T28): Auto-detect and lazily import client Firestore instance.
-        throw new Error(
-          'NO_FIRESTORE_INSTANCE: Inject db or add initializer (e.g., src/lib/firebase.ts)'
-        );
+        const auto = await resolveAutoDb();
+        if (!auto) {
+          throw new Error(
+            'NO_FIRESTORE_INSTANCE: Inject db or ensure client/admin firebase is configured'
+          );
+        }
+        db = auto.db as Firestore;
+        legacySanitized = auto.legacySanitized;
       }
 
       if (hasLegacyCollection(db)) { // legacy style
-        await writeCreateOnlyViaLegacy(db as FirestoreLegacyLike, pathBase, eventId, docData);
+        const base = legacySanitized ? pathBase : pathBase; // tests rely on leading '/'; wrapper sanitizes for real SDKs
+        await writeCreateOnlyViaLegacy(db as FirestoreLegacyLike, base, eventId, docData);
       } else {
-        const fullPath = `${pathBase}/${eventId}`;
+        const fullPath = stripLeadingSlash(`${pathBase}/${eventId}`);
         await writeCreateOnlyViaModular(db as FirestoreModularLike, fullPath, docData);
       }
       return { eventId };

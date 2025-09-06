@@ -1,6 +1,10 @@
+import { ArrowLeft, Code, Database, ExternalLink } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, Code, Database } from "lucide-react";
+
+// Force static generation and periodic revalidation to avoid dynamic server work
+export const dynamic = "force-static";
+export const revalidate = 86400; // 24h
 
 export const metadata: Metadata = {
   title: "Web Scraping for SEO Guide | RankPilot",
@@ -175,18 +179,18 @@ import time
 def scrape_title_and_meta(url):
     # Add delay to be respectful
     time.sleep(1)
-    
+
     headers = {
         'User-Agent': 'SEO-Bot/1.0 (Educational Purpose)'
     }
-    
+
     try:
         response = requests.get(url, headers=headers)
         soup = BeautifulSoup(response.content, 'html.parser')
-        
+
         title = soup.find('title').text.strip()
         description = soup.find('meta', attrs={'name': 'description'})
-        
+
         return {
             'title': title,
             'description': description['content'] if description else None

@@ -413,3 +413,11 @@ raw.githubusercontent.com
 update documentation. By working iteratively across the phases
 outlined above, the agent can help deliver a robust, scalable and
 secure AI‑first SEO platform.
+
+---
+
+Quick links
+
+- User-journey contract and feature-key alignment: .github/instructions/user-journey-contract.md
+- Agent playbooks (by surface): .github/instructions/agent-playbooks.md
+- Business and product overview: docs/RANKPILOT_BUSINESS_OVERVIEW.md

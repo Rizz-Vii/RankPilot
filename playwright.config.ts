@@ -1,30 +1,34 @@
 import { defineConfig, devices } from "@playwright/test";
-import { getProxyConfig } from "./testing/specs/main/utils/proxy";
 import fs from 'fs';
+import { getProxyConfig } from "./testing/specs/main/utils/proxy";
 const storageStatePath = process.env.PLAYWRIGHT_STORAGE || 'test-results/.auth/admin.json';
 const hasStorage = fs.existsSync(storageStatePath);
 
 export default defineConfig({
   testDir: "./testing",
-  timeout: 30000,
+  // Increase global test timeout for slower dev environment
+  timeout: 60000,
   workers: process.env.CI ? 1 : undefined,
   globalSetup: './testing/specs/main/global-setup.ts',
+  globalTeardown: './testing/specs/main/global-teardown.ts',
   reporter: [
     ["html"],
     ["junit", { outputFile: "test-results/junit.xml" }],
     ["list"],
   ],
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || process.env.TEST_BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     video: 'retain-on-failure',
     screenshot: 'only-on-failure',
     storageState: hasStorage ? storageStatePath : undefined,
-    actionTimeout: 15000,
-    navigationTimeout: 15000,
+    // Allow longer for actions and navigation in the dev container
+    actionTimeout: 30000,
+    navigationTimeout: 45000,
   },
   expect: {
-    timeout: 5000,
+    // Give assertions a bit more time on CI / slow machines
+    timeout: 10000,
     toHaveScreenshot: {
       maxDiffPixelRatio: 0.1,
       threshold: 0.2,
@@ -101,6 +105,67 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1280, height: 720 },
+      },
+    },
+    // Compatibility aliases used by npm scripts
+    {
+      name: "legacy-tests",
+      testMatch: [
+        "testing/specs/main/**/*.spec.ts",
+        "testing/specs/organized/**/*.spec.ts",
+      ],
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1280, height: 720 },
+      },
+    },
+    {
+      name: "api-testing",
+      testMatch: [
+        "testing/specs/api/**/*.spec.ts",
+        "testing/specs/**/?(*.)@(api).spec.ts",
+      ],
+      use: {
+        ...devices["Desktop Chrome"],
+      },
+    },
+    {
+      name: "visual-regression",
+      testMatch: [
+        "**/?(*.)@(visual|screenshot).spec.ts",
+        "testing/specs/main/visual-regression.spec.ts",
+      ],
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1280, height: 720 },
+      },
+    },
+    {
+      name: "enterprise-tier-worker",
+      testMatch: [
+        "testing/specs/main/**/*.spec.ts",
+      ],
+      use: {
+        ...devices["Desktop Chrome"],
+      },
+    },
+    {
+      name: "firefox-compatibility",
+      testMatch: [
+        "testing/specs/main/**/*.spec.ts",
+      ],
+      use: {
+        ...devices["Desktop Firefox"],
+      },
+    },
+    // Performance tests (opt-in; specs themselves are env-gated via E2E_RUN_PERF)
+    {
+      name: "performance",
+      testMatch: [
+        "testing/performance/**/?(*.)spec.ts",
+      ],
+      use: {
+        ...devices["Desktop Chrome"],
       },
     },
   ],

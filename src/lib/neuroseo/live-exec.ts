@@ -170,7 +170,53 @@ async function persistCompactAnalysis(userId: string, urls: string[], analysisTy
 
 // ---------------- Engine Runner (NEU-04) ----------------
 export async function runEngines(context: NeuroSeoJobContext): Promise<EngineResult[]> {
-    // TODO: implement engine execution loop (currently deterministic placeholder to satisfy return type)
-    void context; // unused for now
-    return [];
+    const { userId, urls } = context || ({} as NeuroSeoJobContext);
+    const started = performance.now();
+    try {
+        // Delegate to the enhanced orchestrator to avoid duplicating engine wiring here.
+        const report = await neuroSEOOrchestrator.runAnalysis({
+            urls: Array.isArray(urls) && urls.length ? urls : ['https://example.com'],
+            analysisType: 'comprehensive',
+            userId: typeof userId === 'string' && userId ? userId : 'anonymous'
+        }) as unknown as LiveNeuroSEOReport;
+
+        const results: EngineResult[] = [];
+        // High-level orchestrator summary
+        results.push({
+            engine: 'orchestrator',
+            data: {
+                analysisId: report.analysisId,
+                urls: report.urls,
+                overallScore: report.overallScore,
+                cached: report.cached,
+                modelTag: report.trustMeta?.modelTag,
+            }
+        });
+        // Surface keyword slice if present
+        if (Array.isArray(report.keywords)) {
+            results.push({ engine: 'keywords', data: { keywords: report.keywords.slice(0, 20) } });
+        }
+        // Backlink rollup if available on the orchestrator output
+        if ((report as unknown as { backlinks?: Record<string, unknown> }).backlinks) {
+            const backlinks = (report as unknown as { backlinks: Record<string, unknown> }).backlinks;
+            results.push({ engine: 'backlinks', data: { ...backlinks } });
+        }
+        // Recommendations from orchestrator
+        if (Array.isArray(report.recommendations)) {
+            results.push({ engine: 'recommendations', data: { items: report.recommendations } });
+        }
+        // Trust/meta slice
+        if (report.trustMeta) {
+            results.push({ engine: 'trust-meta', data: report.trustMeta });
+        }
+
+        logger.info('engines.run.success', { tookMs: Math.round(performance.now() - started), parts: results.length });
+        return results;
+    } catch (e: unknown) {
+        const msg = (e && typeof e === 'object' && 'message' in (e as Record<string, unknown>) && typeof (e as { message?: unknown }).message === 'string')
+            ? (e as { message: string }).message
+            : String(e);
+        logger.warn('engines.run.failed', { message: msg });
+        return [];
+    }
 }

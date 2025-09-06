@@ -23,7 +23,7 @@ export interface SSEClient {
  */
 export function sse(
     req: NextRequest,
-    onClient: (client: SSEClient) => void | Promise<void>,
+    onClient: (client: SSEClient) => void,
     options: SSEOptions = {}
 ): Response {
     const heartbeatMs = options.heartbeatMs ?? 15000;
@@ -59,7 +59,9 @@ export function sse(
             // Abort handling
             req.signal.addEventListener('abort', () => close());
 
-            await onClient({ send, sendRaw, close, signal: req.signal });
+            // Invoke client handler synchronously; if it returns a Promise, it will be ignored by design
+            const result = onClient({ send, sendRaw, close, signal: req.signal });
+            void result; // explicitly ignore any potential Promise to satisfy lint rules
         }
     });
 

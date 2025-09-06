@@ -24,8 +24,14 @@ service cloud.firestore {
     // Determine if the authenticated user is a member of a given team
     function isTeamMember(teamId) {
       return isAuthenticated() &&
-        teamId != null &&
-        (request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.memberIds);
+        teamId != null && (
+          // Membership via denormalized memberIds array
+          (request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.memberIds) ||
+          // Membership via members subcollection
+          exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)) ||
+          // Team owner is implicitly a member
+          get(/databases/$(database)/documents/teams/$(teamId)).data.ownerId == request.auth.uid
+        );
     }
 
     // Determines if the authenticated user has elevated team role (owner/admin) via members subcollection.
@@ -42,6 +48,15 @@ service cloud.firestore {
           get(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)).data.role == 'admin' ||
           get(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)).data.role == 'owner'
         )
+      );
+    }
+
+    // Organization membership helper (denormalized memberships collection)
+    function isOrgMember(orgId) {
+      return isAuthenticated() && (
+        exists(/databases/$(database)/documents/orgs/$(orgId)/members/$(request.auth.uid)) ||
+        // Optional: orgs/{orgId} may contain memberIds array
+        (request.auth.uid in get(/databases/$(database)/documents/orgs/$(orgId)).data.memberIds)
       );
     }
 
@@ -85,6 +100,16 @@ service cloud.firestore {
       allow update, delete: if isValidUser() && (
         resource.data.userId == request.auth.uid || isAdmin()
       );
+    }
+
+    // Nested audits structure (user-scoped URLs) — align with app reads: collection(db, 'audits', uid, 'urls')
+    match /audits/{userId} {
+      // Guard parent doc in case it is used to store metadata
+      allow read, create, update, delete: if isOwner(userId) || isAdmin();
+      // URLs subcollection under a user-scoped audits document
+      match /urls/{docId} {
+        allow read, create, update, delete: if isOwner(userId) || isAdmin();
+      }
     }
 
     // Keywords collection
@@ -246,9 +271,11 @@ service cloud.firestore {
       // Phase 2: Invites subcollection (email‐based pending invites)
       match /invites/{inviteId} {
         // States: pending | accepted | expired
+        // Note: Firestore rules do not support lower()/toLowerCase; ensure emails
+        // are normalized (lowercased) at write time in both invite.email and users/{uid}.email.
         allow read: if isTeamMember(teamId) || isAdmin() || (
           isAuthenticated() && resource.data.email != null &&
-          lower(resource.data.email) == lower(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email)
+          resource.data.email == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email
         );
         allow create: if isTeamMember(teamId) && (
           get(/databases/$(database)/documents/teams/$(teamId)).data.ownerId == request.auth.uid || isAdmin()
@@ -259,7 +286,8 @@ service cloud.firestore {
           isAdmin() ||
           // Invited user can mark their invite accepted (write acceptedAt)
           (
-            isAuthenticated() && resource.data.email != null && lower(resource.data.email) == lower(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email) &&
+            // See note above re: email normalization
+            isAuthenticated() && resource.data.email != null && resource.data.email == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email &&
             request.resource.data.status == 'accepted' && resource.data.status == 'pending'
           )
         );
@@ -295,10 +323,54 @@ service cloud.firestore {
 
     // Sales Deals Collection - NEW
     match /salesDeals/{dealId} {
-      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        (resource.data.teamId != null && isTeamMember(resource.data.teamId)) ||
+        isAdmin()
+      );
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
-      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        (resource.data.teamId != null && isTeamMember(resource.data.teamId)) ||
+        isAdmin()
+      );
+      allow delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+    }
+
+    // Sales Metrics Snapshots (automation outputs) — client read-only
+    match /salesMetricsSnapshots/{snapshotId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        (resource.data.teamId != null && isTeamMember(resource.data.teamId)) ||
+        isAdmin()
+      );
+      allow create, update, delete: if false; // written by server/automation only
+    }
+
+    // Sales Forecast Snapshots (automation outputs) — client read-only
+    match /salesForecastSnapshots/{snapshotId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        (resource.data.teamId != null && isTeamMember(resource.data.teamId)) ||
+        isAdmin()
+      );
+      allow create, update, delete: if false; // written by server/automation only
+    }
+
+    // Site Content Pages per user — used by getSiteContext(uid)
+    match /siteContent/{userId} {
+      match /pages/{pageId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create, update, delete: if false; // written via server ingestion pipeline only
+      }
+    }
+
+    // Activity Logs — admin-only visibility
+    match /activityLogs/{logId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
     }
 
     // Marketing Campaigns Collection - NEW
@@ -309,12 +381,7 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
-    // Sales Forecast Snapshots - NEW (read historical forecast data)
-    match /salesForecastSnapshots/{snapshotId} {
-      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || (resource.data.teamId != null && isTeamMember(resource.data.teamId)) || isAdmin());
-      allow create: if false; // server/automation only
-      allow update, delete: if false; // immutable snapshots
-    }
+  // Duplicate salesForecastSnapshots rule block removed (defined above)
 
     // Finance Invoices Collection - NEW
     match /financeInvoices/{invoiceId} {
@@ -490,13 +557,25 @@ service cloud.firestore {
       }
     }
 
-    // TODO: Narrow org membership read scope for events once membership index finalized.
     // Events Backbone (T26/T27) — immutable create-only
     match /orgs/{orgId}/events/{eventId} {
-      allow create: if request.auth != null && request.resource.data.orgId == orgId;
+      allow create: if request.auth != null && request.resource.data.orgId == orgId && isOrgMember(orgId);
       allow update, delete: if false;
-      // Adjust read to align with org membership helper when available
-      allow get, list: if request.auth != null;
+      // Read gated by org membership
+      allow get, list: if isOrgMember(orgId) || isAdmin();
+    }
+
+    // Voice Calls (status stream) — client read, server write only
+    match /voice_calls/{callId} {
+      // Allow reads for authenticated users in dev, or for owners/team members when metadata is present
+      allow read: if isAuthenticated();
+      // Client writes disabled; updates are from server-side (Admin SDK / Functions)
+      allow create, update, delete: if false;
+    }
+
+    // Voice outbound queue — server only
+    match /voice_outbound_queue/{itemId} {
+      allow read, create, update, delete: if false;
     }
   }
 }

@@ -1,0 +1,281 @@
+{
+  "target": "https://rankpilot-h3jpc.web.app",
+  "startedAt": "2025-09-01T02:26:37.073Z",
+  "publicRoutes": [
+    {
+      "url": "https://rankpilot-h3jpc.web.app/",
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "requestFailures": [
+        {
+          "url": "https://www.google.com/recaptcha/api2/anchor?ar=1&k=6Ld_uIErAAAAAP9y8QeWbLeJpmjxmW-7aQ0llyFU&co=aHR0cHM6Ly9yYW5rcGlsb3QtaDNqcGMud2ViLmFwcDo0NDM.&hl=en&v=2sJvksnKlEApLvJt2btz_q7n&size=invisible&anchor-ms=20000&execute-ms=15000&cb=wwggbpatqsrq",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        }
+      ],
+      "status": 200,
+      "csp": "default-src 'self'; script-src 'self' 'nonce-cb489e9e-abfe-4dce-b3f7-f176c220a9e5' 'strict-dynamic' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseapp.com https://*.firebase.com https://api.openai.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://firebaseremoteconfig.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappdistribution.googleapis.com https://*.googleapis.com https://www.google.com https://www.recaptcha.net https://*.gstatic.com https://www.google-analytics.com https://*.sentry.io https://api.stripe.com https://m.stripe.com https://*.paypal.com https://www.paypal.com https://*.cloudfunctions.net wss://*.googleapis.com wss://firestore.googleapis.com ; media-src 'none'; object-src 'none'; frame-src 'self' https://*.firebaseapp.com https://*.firebase.com https://accounts.google.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://*.paypal.com https://www.google.com; worker-src 'self' blob:"
+    },
+    {
+      "url": "https://rankpilot-h3jpc.web.app/pricing",
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "requestFailures": [
+        {
+          "url": "https://www.google.com/recaptcha/api2/anchor?ar=1&k=6Ld_uIErAAAAAP9y8QeWbLeJpmjxmW-7aQ0llyFU&co=aHR0cHM6Ly9yYW5rcGlsb3QtaDNqcGMud2ViLmFwcDo0NDM.&hl=en&v=2sJvksnKlEApLvJt2btz_q7n&size=invisible&anchor-ms=20000&execute-ms=15000&cb=yx0xim4bckru",
+          "method": "GET",
+          "error": "net::ERR_ABORTED"
+        }
+      ],
+      "status": 200,
+      "csp": "default-src 'self'; script-src 'self' 'nonce-2e27fb64-1f2b-4338-a945-e64f746e0c8a' 'strict-dynamic' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseapp.com https://*.firebase.com https://api.openai.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://firebaseremoteconfig.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappdistribution.googleapis.com https://*.googleapis.com https://www.google.com https://www.recaptcha.net https://*.gstatic.com https://www.google-analytics.com https://*.sentry.io https://api.stripe.com https://m.stripe.com https://*.paypal.com https://www.paypal.com https://*.cloudfunctions.net wss://*.googleapis.com wss://firestore.googleapis.com ; media-src 'none'; object-src 'none'; frame-src 'self' https://*.firebaseapp.com https://*.firebase.com https://accounts.google.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://*.paypal.com https://www.google.com; worker-src 'self' blob:"
+    },
+    {
+      "url": "https://rankpilot-h3jpc.web.app/features",
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "requestFailures": [],
+      "status": 200,
+      "csp": "default-src 'self'; script-src 'self' 'nonce-1c661941-9a66-4e0d-9993-07f445bc706f' 'strict-dynamic' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseapp.com https://*.firebase.com https://api.openai.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://firebaseremoteconfig.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappdistribution.googleapis.com https://*.googleapis.com https://www.google.com https://www.recaptcha.net https://*.gstatic.com https://www.google-analytics.com https://*.sentry.io https://api.stripe.com https://m.stripe.com https://*.paypal.com https://www.paypal.com https://*.cloudfunctions.net wss://*.googleapis.com wss://firestore.googleapis.com ; media-src 'none'; object-src 'none'; frame-src 'self' https://*.firebaseapp.com https://*.firebase.com https://accounts.google.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://*.paypal.com https://www.google.com; worker-src 'self' blob:"
+    },
+    {
+      "url": "https://rankpilot-h3jpc.web.app/docs",
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "requestFailures": [],
+      "status": 200,
+      "csp": "default-src 'self'; script-src 'self' 'nonce-b6776362-fafc-4c5b-9aa8-9895abbad795' 'strict-dynamic' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseapp.com https://*.firebase.com https://api.openai.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://firebaseremoteconfig.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappdistribution.googleapis.com https://*.googleapis.com https://www.google.com https://www.recaptcha.net https://*.gstatic.com https://www.google-analytics.com https://*.sentry.io https://api.stripe.com https://m.stripe.com https://*.paypal.com https://www.paypal.com https://*.cloudfunctions.net wss://*.googleapis.com wss://firestore.googleapis.com ; media-src 'none'; object-src 'none'; frame-src 'self' https://*.firebaseapp.com https://*.firebase.com https://accounts.google.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://*.paypal.com https://www.google.com; worker-src 'self' blob:"
+    },
+    {
+      "url": "https://rankpilot-h3jpc.web.app/about",
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "requestFailures": [],
+      "status": 200,
+      "csp": "default-src 'self'; script-src 'self' 'nonce-c9fbe7d7-5125-443c-a214-513d169ce6fd' 'strict-dynamic' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseapp.com https://*.firebase.com https://api.openai.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://firebaseremoteconfig.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappdistribution.googleapis.com https://*.googleapis.com https://www.google.com https://www.recaptcha.net https://*.gstatic.com https://www.google-analytics.com https://*.sentry.io https://api.stripe.com https://m.stripe.com https://*.paypal.com https://www.paypal.com https://*.cloudfunctions.net wss://*.googleapis.com wss://firestore.googleapis.com ; media-src 'none'; object-src 'none'; frame-src 'self' https://*.firebaseapp.com https://*.firebase.com https://accounts.google.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://*.paypal.com https://www.google.com; worker-src 'self' blob:"
+    },
+    {
+      "url": "https://rankpilot-h3jpc.web.app/contact",
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "requestFailures": [],
+      "status": 200,
+      "csp": "default-src 'self'; script-src 'self' 'nonce-4ed61a7e-4b29-437f-a5c2-38cbc3dfe857' 'strict-dynamic' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseapp.com https://*.firebase.com https://api.openai.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://firebaseremoteconfig.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappdistribution.googleapis.com https://*.googleapis.com https://www.google.com https://www.recaptcha.net https://*.gstatic.com https://www.google-analytics.com https://*.sentry.io https://api.stripe.com https://m.stripe.com https://*.paypal.com https://www.paypal.com https://*.cloudfunctions.net wss://*.googleapis.com wss://firestore.googleapis.com ; media-src 'none'; object-src 'none'; frame-src 'self' https://*.firebaseapp.com https://*.firebase.com https://accounts.google.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://*.paypal.com https://www.google.com; worker-src 'self' blob:"
+    }
+  ],
+  "authSessions": [
+    {
+      "user": "enterprise",
+      "loginUrl": "https://rankpilot-h3jpc.web.app/login",
+      "success": true,
+      "pagesVisited": [
+        {
+          "url": "https://rankpilot-h3jpc.web.app/dashboard",
+          "consoleErrors": [
+            "[2025-09-01T02:26:52.274Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:26:53.065Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:26:56.956Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error)."
+          ],
+          "consoleWarnings": [],
+          "requestFailures": [],
+          "status": 200,
+          "csp": "default-src 'self'; script-src 'self' 'nonce-e633bf2c-50c5-42f9-8fb7-277a209314a8' 'strict-dynamic' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseapp.com https://*.firebase.com https://api.openai.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://firebaseremoteconfig.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappdistribution.googleapis.com https://*.googleapis.com https://www.google.com https://www.recaptcha.net https://*.gstatic.com https://www.google-analytics.com https://*.sentry.io https://api.stripe.com https://m.stripe.com https://*.paypal.com https://www.paypal.com https://*.cloudfunctions.net wss://*.googleapis.com wss://firestore.googleapis.com ; media-src 'none'; object-src 'none'; frame-src 'self' https://*.firebaseapp.com https://*.firebase.com https://accounts.google.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://*.paypal.com https://www.google.com; worker-src 'self' blob:"
+        },
+        {
+          "url": "https://rankpilot-h3jpc.web.app/settings",
+          "consoleErrors": [
+            "[2025-09-01T02:26:52.274Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:26:53.065Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:26:59.301Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error)."
+          ],
+          "consoleWarnings": [],
+          "requestFailures": [],
+          "status": 200,
+          "csp": "default-src 'self'; script-src 'self' 'nonce-35a09f3c-3556-4950-ba45-40cbece75c07' 'strict-dynamic' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseapp.com https://*.firebase.com https://api.openai.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://firebaseremoteconfig.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappdistribution.googleapis.com https://*.googleapis.com https://www.google.com https://www.recaptcha.net https://*.gstatic.com https://www.google-analytics.com https://*.sentry.io https://api.stripe.com https://m.stripe.com https://*.paypal.com https://www.paypal.com https://*.cloudfunctions.net wss://*.googleapis.com wss://firestore.googleapis.com ; media-src 'none'; object-src 'none'; frame-src 'self' https://*.firebaseapp.com https://*.firebase.com https://accounts.google.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://*.paypal.com https://www.google.com; worker-src 'self' blob:"
+        },
+        {
+          "url": "https://rankpilot-h3jpc.web.app/billing",
+          "consoleErrors": [
+            "[2025-09-01T02:26:52.274Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:26:53.065Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:27:01.001Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error)."
+          ],
+          "consoleWarnings": [],
+          "requestFailures": [
+            {
+              "url": "https://rankpilot-h3jpc.web.app/keyword-tool?_rsc=1c753",
+              "method": "GET",
+              "error": "net::ERR_ABORTED"
+            },
+            {
+              "url": "https://www.google.com/recaptcha/api2/bframe?hl=en&v=2sJvksnKlEApLvJt2btz_q7n&k=6Ld_uIErAAAAAP9y8QeWbLeJpmjxmW-7aQ0llyFU&bft=0dAFcWeA5NQxfnPDiY_eXAdfhvknKJa4mErm-AisF_P4dX2cYR3TjZO0PDIf4GyeqY7iNzVR0CksHrn6XtsHLlni9UgZrDlwoEdw",
+              "method": "GET",
+              "error": "net::ERR_ABORTED"
+            }
+          ],
+          "status": 200,
+          "csp": "default-src 'self'; script-src 'self' 'nonce-c1c60060-b499-4e30-886a-022ffc1a289d' 'strict-dynamic' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseapp.com https://*.firebase.com https://api.openai.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://firebaseremoteconfig.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappdistribution.googleapis.com https://*.googleapis.com https://www.google.com https://www.recaptcha.net https://*.gstatic.com https://www.google-analytics.com https://*.sentry.io https://api.stripe.com https://m.stripe.com https://*.paypal.com https://www.paypal.com https://*.cloudfunctions.net wss://*.googleapis.com wss://firestore.googleapis.com ; media-src 'none'; object-src 'none'; frame-src 'self' https://*.firebaseapp.com https://*.firebase.com https://accounts.google.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://*.paypal.com https://www.google.com; worker-src 'self' blob:"
+        },
+        {
+          "url": "https://rankpilot-h3jpc.web.app/adminonly",
+          "consoleErrors": [
+            "[2025-09-01T02:26:52.274Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:26:53.065Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:27:02.612Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error)."
+          ],
+          "consoleWarnings": [],
+          "requestFailures": [
+            {
+              "url": "https://www.google.com/recaptcha/api2/bframe?hl=en&v=2sJvksnKlEApLvJt2btz_q7n&k=6Ld_uIErAAAAAP9y8QeWbLeJpmjxmW-7aQ0llyFU&bft=0dAFcWeA4_prA4_XrS1Zve2c7oSVr-bFa0llbq94Dhbi1iHiEHNZWBu5-CmnYd2vogsEHet8mxF2T_kJXlAYtui66yPE8K7hoA3A",
+              "method": "GET",
+              "error": "net::ERR_ABORTED"
+            }
+          ],
+          "status": 200,
+          "csp": "default-src 'self'; script-src 'self' 'nonce-25b213de-e2d6-476d-94b3-bd599a21237d' 'strict-dynamic' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseapp.com https://*.firebase.com https://api.openai.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://firebaseremoteconfig.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappdistribution.googleapis.com https://*.googleapis.com https://www.google.com https://www.recaptcha.net https://*.gstatic.com https://www.google-analytics.com https://*.sentry.io https://api.stripe.com https://m.stripe.com https://*.paypal.com https://www.paypal.com https://*.cloudfunctions.net wss://*.googleapis.com wss://firestore.googleapis.com ; media-src 'none'; object-src 'none'; frame-src 'self' https://*.firebaseapp.com https://*.firebase.com https://accounts.google.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://*.paypal.com https://www.google.com; worker-src 'self' blob:"
+        },
+        {
+          "url": "https://rankpilot-h3jpc.web.app/neuroseo",
+          "consoleErrors": [
+            "[2025-09-01T02:26:52.274Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:26:53.065Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:27:04.484Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error)."
+          ],
+          "consoleWarnings": [],
+          "requestFailures": [
+            {
+              "url": "https://www.google.com/recaptcha/api2/bframe?hl=en&v=2sJvksnKlEApLvJt2btz_q7n&k=6Ld_uIErAAAAAP9y8QeWbLeJpmjxmW-7aQ0llyFU&bft=0dAFcWeA6qf6vJcIT7KGxxBOPGOgW_K7sNpyun7LKoCD1cY9gED8x8urD3bRGc6ZkDUl5tBTxpyXsT76U3QWnW62qWrADsxhQ5dw",
+              "method": "GET",
+              "error": "net::ERR_ABORTED"
+            }
+          ],
+          "status": 200,
+          "csp": "default-src 'self'; script-src 'self' 'nonce-268bc4db-de22-48a5-ab48-6dc17d1bc735' 'strict-dynamic' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseapp.com https://*.firebase.com https://api.openai.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://firebaseremoteconfig.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappdistribution.googleapis.com https://*.googleapis.com https://www.google.com https://www.recaptcha.net https://*.gstatic.com https://www.google-analytics.com https://*.sentry.io https://api.stripe.com https://m.stripe.com https://*.paypal.com https://www.paypal.com https://*.cloudfunctions.net wss://*.googleapis.com wss://firestore.googleapis.com ; media-src 'none'; object-src 'none'; frame-src 'self' https://*.firebaseapp.com https://*.firebase.com https://accounts.google.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://*.paypal.com https://www.google.com; worker-src 'self' blob:"
+        }
+      ],
+      "finalUrl": "https://rankpilot-h3jpc.web.app/dashboard"
+    },
+    {
+      "user": "admin",
+      "loginUrl": "https://rankpilot-h3jpc.web.app/login",
+      "success": true,
+      "pagesVisited": [
+        {
+          "url": "https://rankpilot-h3jpc.web.app/dashboard",
+          "consoleErrors": [
+            "[2025-09-01T02:27:08.674Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:27:09.350Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error)."
+          ],
+          "consoleWarnings": [],
+          "requestFailures": [],
+          "status": 200,
+          "csp": "default-src 'self'; script-src 'self' 'nonce-1a33694f-ec4e-4cd3-b339-a7d43dd090f5' 'strict-dynamic' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseapp.com https://*.firebase.com https://api.openai.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://firebaseremoteconfig.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappdistribution.googleapis.com https://*.googleapis.com https://www.google.com https://www.recaptcha.net https://*.gstatic.com https://www.google-analytics.com https://*.sentry.io https://api.stripe.com https://m.stripe.com https://*.paypal.com https://www.paypal.com https://*.cloudfunctions.net wss://*.googleapis.com wss://firestore.googleapis.com ; media-src 'none'; object-src 'none'; frame-src 'self' https://*.firebaseapp.com https://*.firebase.com https://accounts.google.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://*.paypal.com https://www.google.com; worker-src 'self' blob:"
+        },
+        {
+          "url": "https://rankpilot-h3jpc.web.app/settings",
+          "consoleErrors": [
+            "[2025-09-01T02:27:08.674Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:27:09.350Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:27:14.066Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error)."
+          ],
+          "consoleWarnings": [],
+          "requestFailures": [
+            {
+              "url": "https://rankpilot-h3jpc.web.app/content-analyzer?_rsc=v6mt7",
+              "method": "GET",
+              "error": "net::ERR_ABORTED"
+            },
+            {
+              "url": "https://rankpilot-h3jpc.web.app/link-view?_rsc=v6mt7",
+              "method": "GET",
+              "error": "net::ERR_ABORTED"
+            },
+            {
+              "url": "https://rankpilot-h3jpc.web.app/keyword-tool?_rsc=v6mt7",
+              "method": "GET",
+              "error": "net::ERR_ABORTED"
+            }
+          ],
+          "status": 200,
+          "csp": "default-src 'self'; script-src 'self' 'nonce-715803c5-f065-48ac-83f3-e3f0475e14d4' 'strict-dynamic' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseapp.com https://*.firebase.com https://api.openai.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://firebaseremoteconfig.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappdistribution.googleapis.com https://*.googleapis.com https://www.google.com https://www.recaptcha.net https://*.gstatic.com https://www.google-analytics.com https://*.sentry.io https://api.stripe.com https://m.stripe.com https://*.paypal.com https://www.paypal.com https://*.cloudfunctions.net wss://*.googleapis.com wss://firestore.googleapis.com ; media-src 'none'; object-src 'none'; frame-src 'self' https://*.firebaseapp.com https://*.firebase.com https://accounts.google.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://*.paypal.com https://www.google.com; worker-src 'self' blob:"
+        },
+        {
+          "url": "https://rankpilot-h3jpc.web.app/billing",
+          "consoleErrors": [
+            "[2025-09-01T02:27:08.674Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:27:09.350Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:27:15.579Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error)."
+          ],
+          "consoleWarnings": [],
+          "requestFailures": [
+            {
+              "url": "https://rankpilot-h3jpc.web.app/competitors?_rsc=1c753",
+              "method": "GET",
+              "error": "net::ERR_ABORTED"
+            },
+            {
+              "url": "https://rankpilot-h3jpc.web.app/keyword-tool?_rsc=1c753",
+              "method": "GET",
+              "error": "net::ERR_ABORTED"
+            },
+            {
+              "url": "https://www.google.com/recaptcha/api2/bframe?hl=en&v=2sJvksnKlEApLvJt2btz_q7n&k=6Ld_uIErAAAAAP9y8QeWbLeJpmjxmW-7aQ0llyFU&bft=0dAFcWeA7feEZmaDBb8FVAOlsAqfgcZkiAnCIFJ9zeNvsequlZIOQrC0yN3V2Y6tL7xMJU8wyzyHG7bWG2-oqvo3amuT6v5DGmaA",
+              "method": "GET",
+              "error": "net::ERR_ABORTED"
+            }
+          ],
+          "status": 200,
+          "csp": "default-src 'self'; script-src 'self' 'nonce-93daca37-00f1-44bd-9260-630b56f763ee' 'strict-dynamic' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseapp.com https://*.firebase.com https://api.openai.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://firebaseremoteconfig.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappdistribution.googleapis.com https://*.googleapis.com https://www.google.com https://www.recaptcha.net https://*.gstatic.com https://www.google-analytics.com https://*.sentry.io https://api.stripe.com https://m.stripe.com https://*.paypal.com https://www.paypal.com https://*.cloudfunctions.net wss://*.googleapis.com wss://firestore.googleapis.com ; media-src 'none'; object-src 'none'; frame-src 'self' https://*.firebaseapp.com https://*.firebase.com https://accounts.google.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://*.paypal.com https://www.google.com; worker-src 'self' blob:"
+        },
+        {
+          "url": "https://rankpilot-h3jpc.web.app/adminonly",
+          "consoleErrors": [
+            "[2025-09-01T02:27:08.674Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:27:09.350Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:27:17.440Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error)."
+          ],
+          "consoleWarnings": [],
+          "requestFailures": [
+            {
+              "url": "https://rankpilot-h3jpc.web.app/content-analyzer?_rsc=1k9kh",
+              "method": "GET",
+              "error": "net::ERR_ABORTED"
+            },
+            {
+              "url": "https://rankpilot-h3jpc.web.app/competitors?_rsc=1k9kh",
+              "method": "GET",
+              "error": "net::ERR_ABORTED"
+            },
+            {
+              "url": "https://www.google.com/recaptcha/api2/bframe?hl=en&v=2sJvksnKlEApLvJt2btz_q7n&k=6Ld_uIErAAAAAP9y8QeWbLeJpmjxmW-7aQ0llyFU&bft=0dAFcWeA6VeaHUefDr3n_PgVclQCG7EDkX8gekIdjy-gtQvQSrjEvo6Ywx2svSwXKc5DWnW-yFcz7P9irCnW0nS0Y-Qu0QeW1eZA",
+              "method": "GET",
+              "error": "net::ERR_ABORTED"
+            }
+          ],
+          "status": 200,
+          "csp": "default-src 'self'; script-src 'self' 'nonce-e40ea10e-293c-4083-a737-94cbc8d27b5f' 'strict-dynamic' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseapp.com https://*.firebase.com https://api.openai.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://firebaseremoteconfig.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappdistribution.googleapis.com https://*.googleapis.com https://www.google.com https://www.recaptcha.net https://*.gstatic.com https://www.google-analytics.com https://*.sentry.io https://api.stripe.com https://m.stripe.com https://*.paypal.com https://www.paypal.com https://*.cloudfunctions.net wss://*.googleapis.com wss://firestore.googleapis.com ; media-src 'none'; object-src 'none'; frame-src 'self' https://*.firebaseapp.com https://*.firebase.com https://accounts.google.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://*.paypal.com https://www.google.com; worker-src 'self' blob:"
+        },
+        {
+          "url": "https://rankpilot-h3jpc.web.app/neuroseo",
+          "consoleErrors": [
+            "[2025-09-01T02:27:08.674Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:27:09.350Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error).",
+            "[2025-09-01T02:27:19.308Z]  @firebase/auth: Auth (11.10.0): Error while retrieving App Check token: FirebaseError: AppCheck: ReCAPTCHA error. (appCheck/recaptcha-error)."
+          ],
+          "consoleWarnings": [],
+          "requestFailures": [
+            {
+              "url": "https://www.google.com/recaptcha/api2/bframe?hl=en&v=2sJvksnKlEApLvJt2btz_q7n&k=6Ld_uIErAAAAAP9y8QeWbLeJpmjxmW-7aQ0llyFU&bft=0dAFcWeA4Zpa_FKLB8xsr_u3fgM_Rr2HqoIxfVZAGLHxuX3ctU5WhLSDc_4FG7nPO3V-wNvPLJUahFT5Wbt4ckDK2poU_9T9Ubdg",
+              "method": "GET",
+              "error": "net::ERR_ABORTED"
+            }
+          ],
+          "status": 200,
+          "csp": "default-src 'self'; script-src 'self' 'nonce-7c24703d-6d3d-4f4e-b539-586863d505a9' 'strict-dynamic' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.firebaseapp.com https://*.firebase.com https://js.stripe.com https://*.paypal.com https://www.paypal.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseapp.com https://*.firebase.com https://api.openai.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebase.googleapis.com https://firebaseinstallations.googleapis.com https://firebaseremoteconfig.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappdistribution.googleapis.com https://*.googleapis.com https://www.google.com https://www.recaptcha.net https://*.gstatic.com https://www.google-analytics.com https://*.sentry.io https://api.stripe.com https://m.stripe.com https://*.paypal.com https://www.paypal.com https://*.cloudfunctions.net wss://*.googleapis.com wss://firestore.googleapis.com ; media-src 'none'; object-src 'none'; frame-src 'self' https://*.firebaseapp.com https://*.firebase.com https://accounts.google.com https://js.stripe.com https://*.stripe.com https://hooks.stripe.com https://*.paypal.com https://www.google.com; worker-src 'self' blob:"
+        }
+      ],
+      "finalUrl": "https://rankpilot-h3jpc.web.app/dashboard"
+    }
+  ],
+  "finishedAt": "2025-09-01T02:27:19.695Z"
+}

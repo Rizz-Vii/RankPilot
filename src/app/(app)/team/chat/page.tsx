@@ -32,6 +32,7 @@ import {
   where
 } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
+import DOMPurify from "isomorphic-dompurify";
 import {
   Bell,
   Hash,
@@ -246,7 +247,7 @@ export default function TeamChatPage() {
     });
 
     // Listen to user presence
-  const presenceQuery = query(collection(db, 'presence'));
+    const presenceQuery = query(collection(db, 'presence'));
     const unsubscribePresence = onSnapshot(presenceQuery, (snapshot) => {
       const users: UserPresence[] = [];
       snapshot.forEach((d) => {
@@ -426,6 +427,39 @@ export default function TeamChatPage() {
     );
   });
 
+  // Lightweight safe HTML rendering with URL linkification and newline support
+  const renderMessageContent = useCallback((text: string) => {
+    // Split on URLs while preserving text around them
+    const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+    const parts = String(text).split(urlRegex);
+    let html = "";
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      if (!part) continue;
+      const isUrl = urlRegex.test(part);
+      urlRegex.lastIndex = 0; // reset stateful regex
+      if (isUrl) {
+        const href = part.startsWith("http") ? part : `https://${part}`;
+        const safeHref = encodeURI(href);
+        const safeText = DOMPurify.sanitize(part);
+        html += `<a href="${safeHref}" target="_blank" rel="nofollow noopener noreferrer" class="underline underline-offset-2">${safeText}</a>`;
+      } else {
+        // escape HTML, then preserve newlines
+        const escaped = part
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+        html += escaped;
+      }
+    }
+    // convert newlines to <br/>
+    html = html.replace(/\n/g, "<br/>");
+    const sanitized = DOMPurify.sanitize(html, { ALLOWED_TAGS: ["a", "br"], ALLOWED_ATTR: ["href", "target", "rel", "class"] });
+    return { __html: sanitized } as const;
+  }, []);
+
   function getChannelIcon(type: ChatChannel['type']) {
     switch (type) {
       case 'support':
@@ -465,373 +499,401 @@ export default function TeamChatPage() {
 
   return (
     <FeatureGate feature="team_management" requiredTier="agency" showUpgrade>
-    <main className="container mx-auto py-4 sm:py-6 flex flex-col h-[calc(100vh-6rem)] overscroll-contain">
-      <ToolPageHeader
-        title="Team Chat"
-        description="Real-time collaboration and communication"
-        badges={[
-          { label: "Collaboration", variant: "secondary" },
-          { label: "Enterprise", variant: "outline", className: "text-primary border-primary/40" },
-        ]}
-        showBreadcrumb
-      />
+      <main className="container mx-auto py-4 sm:py-6 flex flex-col h-[calc(100vh-6rem)] overscroll-contain">
+        <ToolPageHeader
+          title="Team Chat"
+          description="Real-time collaboration and communication"
+          badges={[
+            { label: "Collaboration", variant: "secondary" },
+            { label: "Enterprise", variant: "outline", className: "text-primary border-primary/40" },
+          ]}
+          showBreadcrumb
+        />
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-0">
-        {/* Channels Sidebar */}
-        <Card className="lg:col-span-1">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Channels</CardTitle>
-              <Button size="sm" variant="ghost">
-                <UserPlus className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {channelsLoading && (
-              <div className="space-y-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="w-full">
-                    <Skeleton className="h-12 w-full" />
-                  </div>
-                ))}
-              </div>
-            )}
-            {!channelsLoading && channels.map((channel) => {
-              const Icon = getChannelIcon(channel.type);
-              return (
-                <Button
-                  key={channel.id}
-                  variant={activeChannel === channel.id ? "default" : "ghost"}
-                  className="w-full justify-start h-auto p-3"
-                  onClick={() => setActiveChannel(channel.id)}
-                >
-                  <div className="flex items-center gap-3 w-full">
-                    <Icon className="h-4 w-4 text-muted-foreground" />
-                    <div className="flex-1 text-left">
-                      <div className="font-medium">{channel.name}</div>
-                      {channel.lastMessage && (
-                        <div className="text-xs text-muted-foreground truncate">
-                          {channel.lastMessage}
-                        </div>
-                      )}
-                    </div>
-                    {channel.unreadCount > 0 && (
-                      <Badge variant="destructive" className="text-xs">
-                        {channel.unreadCount}
-                      </Badge>
-                    )}
-                  </div>
-                </Button>
-              );
-            })}
-
-            <Separator className="my-4" />
-
-            {/* Online Users */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-muted-foreground">
-                Online ({onlineUsers.length})
-              </Label>
-              {onlineUsers.map((user) => (
-                <div key={user.userId} className="flex items-center gap-2 p-2">
-                  <div className="relative">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={user.userAvatar} />
-                      <AvatarFallback className="text-xs">
-                        {user.userName.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${
-                      user.status === 'online' ? 'bg-success' :
-                      user.status === 'away' ? 'bg-warning' :
-                      user.status === 'busy' ? 'bg-destructive' : 'bg-muted'
-                    }`} />
-                  </div>
-                  <span className="text-sm truncate">{user.userName}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Chat Area */}
-        <Card className="lg:col-span-3 flex flex-col">
-          {/* Chat Header */}
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {(() => {
-                  const channel = channels.find(c => c.id === activeChannel);
-                  const Icon = getChannelIcon(channel?.type || 'general');
-                  return (
-                    <>
-                      <Icon className="h-5 w-5" />
-                      <div>
-                        <h3 className="font-semibold">#{channel?.name || 'General'}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {channel?.description || 'General discussions'}
-                        </p>
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search messages..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 w-64"
-                  />
-                </div>
-                  <Button size="sm" variant="ghost" onClick={() => { void startCall('audio'); }}>
-                  <Phone className="h-4 w-4" />
-                </Button>
-                  <Button size="sm" variant="ghost" onClick={() => { void startCall('video'); }}>
-                  <Video className="h-4 w-4" />
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => setIsSettingsOpen(true)}>
-                  <Settings className="h-4 w-4" />
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-0">
+          {/* Channels Sidebar */}
+          <Card className="lg:col-span-1">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Channels</CardTitle>
+                <Button size="sm" variant="ghost">
+                  <UserPlus className="h-4 w-4" />
                 </Button>
               </div>
-            </div>
-          </CardHeader>
-
-          {/* Messages Area */}
-          <CardContent className="flex-1 flex flex-col min-h-0">
-            <div className="flex-1 mb-4">
-              {messagesLoading && (
-                <div className="space-y-4 pr-4">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="flex gap-3">
-                      <Skeleton className="h-8 w-8 rounded-full" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-4 w-40" />
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-2/3" />
-                      </div>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {channelsLoading && (
+                <div className="space-y-2">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="w-full">
+                      <Skeleton className="h-12 w-full" />
                     </div>
                   ))}
                 </div>
               )}
-              {!messagesLoading && (
-                <VirtualizedMessageList
-                  items={filteredMessages}
-                  className="pr-4"
-                  renderItem={(message, index) => {
-                    const isConsecutive = index > 0 &&
-                      filteredMessages[index - 1].authorId === message.authorId &&
-                      (message.timestamp.getTime() - filteredMessages[index - 1].timestamp.getTime()) < 300000;
+              {!channelsLoading && channels.map((channel) => {
+                const Icon = getChannelIcon(channel.type);
+                return (
+                  <Button
+                    key={channel.id}
+                    variant={activeChannel === channel.id ? "default" : "ghost"}
+                    className="w-full justify-start h-auto p-3"
+                    onClick={() => setActiveChannel(channel.id)}
+                  >
+                    <div className="flex items-center gap-3 w-full">
+                      <Icon className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1 text-left">
+                        <div className="font-medium">{channel.name}</div>
+                        {channel.lastMessage && (
+                          <div className="text-xs text-muted-foreground truncate">
+                            {channel.lastMessage}
+                          </div>
+                        )}
+                      </div>
+                      {channel.unreadCount > 0 && (
+                        <Badge variant="destructive" className="text-xs">
+                          {channel.unreadCount}
+                        </Badge>
+                      )}
+                    </div>
+                  </Button>
+                );
+              })}
+
+              <Separator className="my-4" />
+
+              {/* Online Users */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-muted-foreground">
+                  Online ({onlineUsers.length})
+                </Label>
+                {onlineUsers.map((user) => (
+                  <div key={user.userId} className="flex items-center gap-2 p-2">
+                    <div className="relative">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={user.userAvatar} />
+                        <AvatarFallback className="text-xs">
+                          {user.userName.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${user.status === 'online' ? 'bg-success' :
+                          user.status === 'away' ? 'bg-warning' :
+                            user.status === 'busy' ? 'bg-destructive' : 'bg-muted'
+                        }`} />
+                    </div>
+                    <span className="text-sm truncate">{user.userName}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Chat Area */}
+          <Card className="lg:col-span-3 flex flex-col">
+            {/* Chat Header */}
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {(() => {
+                    const channel = channels.find(c => c.id === activeChannel);
+                    const Icon = getChannelIcon(channel?.type || 'general');
                     return (
-                      <motion.div
-                        key={message.id}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`group relative py-1 ${selectedMessage === message.id ? 'bg-muted/50 rounded-lg px-2' : ''}`}
-                        onMouseEnter={() => setSelectedMessage(message.id)}
-                        onMouseLeave={() => setSelectedMessage(null)}
-                      >
-                        <div className="flex gap-3">
-                          {!isConsecutive && (
-                            <Avatar className="h-8 w-8 mt-1">
-                              <AvatarImage src={message.authorAvatar} />
-                              <AvatarFallback className="text-xs">
-                                {message.authorName.slice(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
+                      <>
+                        <Icon className="h-5 w-5" />
+                        <div>
+                          <h3 className="font-semibold">#{channel?.name || 'General'}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {channel?.description || 'General discussions'}
+                          </p>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search messages..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 w-64"
+                    />
+                  </div>
+                  <Button size="sm" variant="ghost" onClick={() => { void startCall('audio'); }}>
+                    <Phone className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => { void startCall('video'); }}>
+                    <Video className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setIsSettingsOpen(true)}>
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+
+            {/* Messages Area */}
+            <CardContent className="flex-1 flex flex-col min-h-0">
+              <div className="flex-1 mb-4">
+                {messagesLoading && (
+                  <div className="space-y-4 pr-4">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <div key={i} className="flex gap-3">
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-4 w-40" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-2/3" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!messagesLoading && (
+                  <VirtualizedMessageList
+                    items={filteredMessages}
+                    className="pr-4"
+                    renderItem={(message, index) => {
+                      const isOwn = message.authorId === userUid;
+                      const isConsecutive = index > 0 &&
+                        filteredMessages[index - 1].authorId === message.authorId &&
+                        (message.timestamp.getTime() - filteredMessages[index - 1].timestamp.getTime()) < 300000;
+                      const dayChanged = (() => {
+                        if (index === 0) return true;
+                        const prev = filteredMessages[index - 1].timestamp;
+                        const cur = message.timestamp;
+                        return prev.toDateString() !== cur.toDateString();
+                      })();
+                      return (
+                        <motion.div
+                          key={message.id}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className={`group relative py-1 ${selectedMessage === message.id ? 'bg-muted/50 rounded-lg px-2' : ''}`}
+                          onMouseEnter={() => setSelectedMessage(message.id)}
+                          onMouseLeave={() => setSelectedMessage(null)}
+                        >
+                          {/* Day separator */}
+                          {dayChanged && (
+                            <div className="flex items-center my-3">
+                              <div className="flex-1 border-t border-muted" />
+                              <span className="mx-3 text-xs text-muted-foreground whitespace-nowrap">
+                                {message.timestamp.toLocaleDateString()}
+                              </span>
+                              <div className="flex-1 border-t border-muted" />
+                            </div>
                           )}
-                          <div className={`flex-1 ${isConsecutive ? 'ml-11' : ''}`}>
-                            {!isConsecutive && (
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium text-sm">{message.authorName}</span>
-                                <span className="text-xs text-muted-foreground">{formatDistanceToNow(message.timestamp, { addSuffix: true })}</span>
-                                {message.edited && (<Badge variant="outline" className="text-xs">edited</Badge>)}
-                              </div>
-                            )}
-                            {message.replyTo && (
-                              <div className="mb-2 p-2 border-l-2 border-muted bg-muted/50 rounded text-sm">
-                                <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                                  <Reply className="h-3 w-3" />
-                                  Replying to message
+                          {message.type === 'system' ? (
+                            <div className="text-xs text-muted-foreground text-center py-1">
+                              {message.content}
+                            </div>
+                          ) : (
+                            <div className={`flex gap-3 ${isOwn ? 'justify-end' : ''}`}>
+                              {!isConsecutive && !isOwn && (
+                                <Avatar className="h-8 w-8 mt-1">
+                                  <AvatarImage src={message.authorAvatar} />
+                                  <AvatarFallback className="text-xs">
+                                    {message.authorName.slice(0, 2).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                              )}
+                              <div className={`flex-1 ${isConsecutive && !isOwn ? 'ml-11' : ''} flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`max-w-[78%] rounded-lg px-3 py-2 shadow-sm ${isOwn ? 'bg-primary text-primary-foreground' : 'bg-muted'} `}>
+                                  {!isConsecutive && (
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className={`font-medium text-xs ${isOwn ? 'opacity-90' : ''}`}>{message.authorName}</span>
+                                      <span className={`text-[10px] ${isOwn ? 'opacity-80' : 'text-muted-foreground'}`}>{formatDistanceToNow(message.timestamp, { addSuffix: true })}</span>
+                                      {message.edited && (<Badge variant="outline" className="text-[10px]">edited</Badge>)}
+                                    </div>
+                                  )}
+                                  {message.replyTo && (
+                                    <div className={`mb-2 p-2 border-l-2 ${isOwn ? 'border-white/40 bg-white/10' : 'border-muted bg-background/50'} rounded text-xs`}>
+                                      <div className={`flex items-center gap-2 ${isOwn ? 'opacity-90' : 'text-muted-foreground'} mb-1`}>
+                                        <Reply className="h-3 w-3" />
+                                        Replying to message
+                                      </div>
+                                    </div>
+                                  )}
+                                  <div className={`text-sm leading-relaxed break-words ${isOwn ? '' : 'text-foreground'}`} dangerouslySetInnerHTML={renderMessageContent(message.content)} />
+                                  {Object.keys(message.reactions).length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-2">
+                                      {Object.entries(message.reactions).map(([emoji, userIds]) => (
+                                        <Button
+                                          key={emoji}
+                                          size="sm"
+                                          variant="outline"
+                                          className="h-6 px-2 text-xs"
+                                          onClick={() => { void addReaction(message.id, emoji); }}
+                                          aria-label={`Toggle reaction ${emoji}`}
+                                          title={`Toggle reaction ${emoji}`}
+                                        >
+                                          {emoji} {userIds.length}
+                                        </Button>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
-                            )}
-                            <div className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</div>
-                            {Object.keys(message.reactions).length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-2">
-                                {Object.entries(message.reactions).map(([emoji, userIds]) => (
-                                  <Button
-                                    key={emoji}
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-6 px-2 text-xs"
-                                    onClick={() => { void addReaction(message.id, emoji); }}
+                              <AnimatePresence>
+                                {selectedMessage === message.id && (
+                                  <motion.div
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.8 }}
+                                    className="flex items-center gap-1 absolute top-0 right-0 bg-background border rounded shadow-sm"
                                   >
-                                    {emoji} {userIds.length}
-                                  </Button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          <AnimatePresence>
-                            {selectedMessage === message.id && (
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.8 }}
-                                className="flex items-center gap-1 absolute top-0 right-0 bg-background border rounded shadow-sm"
-                              >
-                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0"><Heart className="h-3 w-3" /></Button>
-                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0"><ThumbsUp className="h-3 w-3" /></Button>
-                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setReplyingTo(message)}><Reply className="h-3 w-3" /></Button>
-                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0"><MoreVertical className="h-3 w-3" /></Button>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                      </motion.div>
-                    );
-                  }}
-                />
-              )}
-            </div>
-
-            {/* Typing Indicator */}
-            {typingUsers.length > 0 && (
-              <div className="text-xs text-muted-foreground mb-2 px-2">
-                {typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...
+                                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" aria-label="React with heart" title="React with heart"><Heart className="h-3 w-3" /></Button>
+                                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" aria-label="React with thumbs up" title="React with thumbs up"><ThumbsUp className="h-3 w-3" /></Button>
+                                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setReplyingTo(message)} aria-label="Reply to message" title="Reply to message"><Reply className="h-3 w-3" /></Button>
+                                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" aria-label="More options" title="More options"><MoreVertical className="h-3 w-3" /></Button>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          )}
+                        </motion.div>
+                      );
+                    }}
+                  />
+                )}
               </div>
-            )}
 
-            {/* Reply Preview */}
-            <AnimatePresence>
-              {replyingTo && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="mb-3 p-3 border border-muted rounded-lg bg-muted/50"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Reply className="h-3 w-3" />
-                      Replying to {replyingTo.authorName}
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setReplyingTo(null)}
-                      className="h-6 w-6 p-0"
-                    >
-                      ×
-                    </Button>
-                  </div>
-                  <div className="text-sm truncate">{replyingTo.content}</div>
-                </motion.div>
+              {/* Typing Indicator */}
+              {typingUsers.length > 0 && (
+                <div className="text-xs text-muted-foreground mb-2 px-2">
+                  {typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...
+                </div>
               )}
-            </AnimatePresence>
 
-            {/* Message Input */}
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
-                <Textarea
-                  ref={messageInputRef}
-                  placeholder={`Message #${channels.find(c => c.id === activeChannel)?.name || 'general'}`}
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
+              {/* Reply Preview */}
+              <AnimatePresence>
+                {replyingTo && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mb-3 p-3 border border-muted rounded-lg bg-muted/50"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Reply className="h-3 w-3" />
+                        Replying to {replyingTo.authorName}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setReplyingTo(null)}
+                        className="h-6 w-6 p-0"
+                      >
+                        ×
+                      </Button>
+                    </div>
+                    <div className="text-sm truncate">{replyingTo.content}</div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Message Input */}
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Textarea
+                    ref={messageInputRef}
+                    placeholder={`Message #${channels.find(c => c.id === activeChannel)?.name || 'general'}`}
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
                     onKeyDown={handleKeyDown}
                     onCompositionStart={() => setIsComposing(true)}
                     onCompositionEnd={() => setIsComposing(false)}
-                  className="min-h-[44px] max-h-32 resize-none"
-                  rows={1}
+                    className="min-h-[44px] max-h-32 resize-none"
+                    rows={1}
                     // Mobile typing hints
                     enterKeyHint="send"
                     spellCheck
                     autoCorrect="on"
                     autoCapitalize="sentences"
-                />
-              </div>
-              <div className="flex items-center gap-1">
-                <Button size="sm" variant="ghost">
-                  <Paperclip className="h-4 w-4" />
-                </Button>
-                <Button size="sm" variant="ghost">
+                  />
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button size="sm" variant="ghost" aria-label="Attach file" title="Attach file">
+                    <Paperclip className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" aria-label="Insert image" title="Insert image">
                     <ImageIcon className="h-4 w-4" />
-                </Button>
-                <Button size="sm" variant="ghost">
-                  <Smile className="h-4 w-4" />
-                </Button>
+                  </Button>
+                  <Button size="sm" variant="ghost" aria-label="Insert emoji" title="Insert emoji">
+                    <Smile className="h-4 w-4" />
+                  </Button>
                   <Button
                     onClick={() => { void sendMessage(); }}
-                  disabled={!newMessage.trim()}
-                  className="px-4"
-                >
-                  <Send className="h-4 w-4" />
+                    disabled={!newMessage.trim()}
+                    aria-label="Send message"
+                    title="Send message"
+                    className="px-4"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Settings Dialog */}
+        <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+          <DialogContent>
+            {/* Accessibility: provide hidden description to satisfy dialog requirements */}
+            <div className="sr-only" id="team-chat-dialog-desc">Team chat management dialog</div>
+            {/* existing dialog content follows */}
+            <DialogHeader>
+              <DialogTitle>Channel Settings</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Mute channel</div>
+                  <div className="text-sm text-muted-foreground">Silence notifications for this channel</div>
+                </div>
+                <Button variant={channelMuted ? 'default' : 'outline'} size="sm" onClick={() => setChannelMuted(v => !v)}>
+                  {channelMuted ? 'Muted' : 'Unmuted'}
+                </Button>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Notifications</div>
+                  <div className="text-sm text-muted-foreground">Enable desktop notifications</div>
+                </div>
+                <Button variant={notificationsEnabled ? 'default' : 'outline'} size="sm" onClick={() => setNotificationsEnabled(v => !v)}>
+                  {notificationsEnabled ? 'On' : 'Off'}
                 </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <DialogFooter>
+              <Button onClick={() => setIsSettingsOpen(false)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      {/* Settings Dialog */}
-      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <DialogContent>
-          {/* Accessibility: provide hidden description to satisfy dialog requirements */}
-          <div className="sr-only" id="team-chat-dialog-desc">Team chat management dialog</div>
-          {/* existing dialog content follows */}
-          <DialogHeader>
-            <DialogTitle>Channel Settings</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Mute channel</div>
-                <div className="text-sm text-muted-foreground">Silence notifications for this channel</div>
-              </div>
-              <Button variant={channelMuted ? 'default' : 'outline'} size="sm" onClick={() => setChannelMuted(v => !v)}>
-                {channelMuted ? 'Muted' : 'Unmuted'}
-              </Button>
+        {/* Call Modal */}
+        <Dialog open={isCallOpen} onOpenChange={setIsCallOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{activeCall?.type === 'video' ? 'Video Call' : 'Audio Call'} Started</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2">
+              <div>Channel: #{activeChannel}</div>
+              {activeCall && (
+                <div className="text-sm text-muted-foreground">Call ID: {activeCall.id}</div>
+              )}
+              <div className="text-sm">This is a preview call modal. A system message has been posted in the channel.</div>
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Notifications</div>
-                <div className="text-sm text-muted-foreground">Enable desktop notifications</div>
-              </div>
-              <Button variant={notificationsEnabled ? 'default' : 'outline'} size="sm" onClick={() => setNotificationsEnabled(v => !v)}>
-                {notificationsEnabled ? 'On' : 'Off'}
-              </Button>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setIsSettingsOpen(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Call Modal */}
-      <Dialog open={isCallOpen} onOpenChange={setIsCallOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{activeCall?.type === 'video' ? 'Video Call' : 'Audio Call'} Started</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            <div>Channel: #{activeChannel}</div>
-            {activeCall && (
-              <div className="text-sm text-muted-foreground">Call ID: {activeCall.id}</div>
-            )}
-            <div className="text-sm">This is a preview call modal. A system message has been posted in the channel.</div>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setIsCallOpen(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-  </main>
-  </FeatureGate>
+            <DialogFooter>
+              <Button onClick={() => setIsCallOpen(false)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </main>
+    </FeatureGate>
   );
 }

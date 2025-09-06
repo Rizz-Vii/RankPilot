@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { TestOrchestrator } from '../../../utils/test-orchestrator';
 
 /**
@@ -28,7 +28,8 @@ test.describe('Billing Portal - Manage Subscription', () => {
             });
         });
 
-        await page.goto('/billing', { waitUntil: 'networkidle' });
+        await page.goto('/billing', { waitUntil: 'domcontentloaded' });
+        await page.locator('[data-testid="billing-root"], main, #billing-page').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => { });
 
         // Button may be labeled Manage Subscription (we added it under Payment Method)
         const manageBtn = page.locator('button:has-text("Manage Subscription")');

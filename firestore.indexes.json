@@ -1,6 +1,20 @@
 {
   "indexes": [
     {
+      "collectionGroup": "voice_outbound_queue",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "schedule",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "workflows",
       "queryScope": "COLLECTION",
       "fields": [

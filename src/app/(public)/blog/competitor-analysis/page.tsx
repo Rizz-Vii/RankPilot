@@ -1,6 +1,8 @@
+import { ArrowLeft, Calendar, Search, Target, User } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, Calendar, User, Search, Target } from "lucide-react";
+export const dynamic = "force-static";
+export const revalidate = 86400; // 24h
 
 export const metadata: Metadata = {
   title: "Competitor Analysis: Uncover Your SEO Opportunities | RankPilot Blog",

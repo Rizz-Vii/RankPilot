@@ -1,7 +1,11 @@
 // src/app/(public)/features/page.tsx
 "use client";
 
-import { motion } from "framer-motion";
+// Force static generation and periodic revalidation; page is client-rendered but static content
+export const dynamic = "force-static";
+export const revalidate = 86400; // 24h
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,25 +14,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
+import { motion } from "framer-motion";
 import {
-  Brain,
-  Search,
-  TrendingUp,
-  Users,
-  Shield,
-  Target,
+  ArrowRight,
   BarChart3,
+  Brain,
+  CheckCircle,
   Eye,
-  Link as LinkIcon,
   FileText,
   Lightbulb,
+  Link as LinkIcon,
   Rocket,
-  CheckCircle,
-  ArrowRight,
+  Search,
+  Shield,
   Star,
+  Target,
+  TrendingUp,
+  Users,
 } from "lucide-react";
+import Link from "next/link";
 
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },

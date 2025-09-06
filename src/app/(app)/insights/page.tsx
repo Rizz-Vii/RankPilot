@@ -1,8 +1,7 @@
 // src/app/(app)/insights/page.tsx
 "use client";
 
-// Prefer real AI flow; fallback to stub util if needed
-import { generateInsights as generateInsightsFlow } from "@/ai/flows/generate-insights";
+// Use server API endpoint for generation to avoid mixing server actions in client components
 import type { GenerateInsightsOutput } from "@/types";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -136,8 +135,20 @@ export default function InsightsPage() {
     try {
       let result: GenerateInsightsOutput | null = null;
       try {
-        const aiResult = await generateInsightsFlow({ activities: simplifiedActivities });
-        // Normalize to expected GenerateInsightsOutput shape (if flow returns partial)
+        const token = await user.getIdToken();
+        const resp = await fetch('/api/insights/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ activities: simplifiedActivities })
+        });
+        if (!resp.ok) {
+          throw new Error(`HTTP ${resp.status}`);
+        }
+        const aiResult = await resp.json();
+        // Normalize to expected GenerateInsightsOutput shape (if API returns partial)
         const raw = aiResult as Record<string, unknown> | null | undefined;
         const rawInsights = Array.isArray(raw?.insights) ? (raw.insights as unknown[]) : [];
         const normalizedInsights: GenerateInsightsOutput['insights'] = rawInsights.map((val: unknown) => {

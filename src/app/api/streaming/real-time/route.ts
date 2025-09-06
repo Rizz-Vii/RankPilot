@@ -6,6 +6,7 @@
 import { extractErrorMessage } from '@/lib/errors/extract-error-message';
 import { allowStreamingMockUser } from '@/lib/flags/demo';
 import { handleCors } from '@/lib/http/cors';
+import type { SSEClient } from '@/lib/http/sse';
 import { sse } from '@/lib/http/sse';
 import { recordError, recordRouteLatency } from '@/lib/metrics/unified-metrics';
 import { enforceProvenance, enforceProvenanceOnChunk } from '@/lib/middleware/provenance';
@@ -15,6 +16,12 @@ import { NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
+
+// Utility: run an async operation without awaiting it, ensuring errors are handled
+function fireAndForget(op: () => Promise<unknown>): void {
+  // Intentionally do not return a promise from this function
+  void op().catch(() => { /* swallow in fire-and-forget */ });
+}
 
 interface StreamingRequest {
   action: 'register' | 'subscribe' | 'collaborate' | 'metrics';
@@ -32,6 +39,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as StreamingRequest;
     const authHeader = request.headers.get('authorization');
+    // Ensure background streaming engine is started on first API use
+    realTimeDataStreamer.start();
 
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json(enforceProvenance({ error: 'Unauthorized - Missing token' }, { path: 'streaming/real-time:POST', note: 'auth-missing' }), { status: 401, headers: cors.headers });
@@ -169,6 +178,8 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const action = url.searchParams.get('action');
     const clientId = url.searchParams.get('clientId');
+    // Ensure engine started for GET operations that use it
+    if (action) realTimeDataStreamer.start();
 
     // Server-Sent Events endpoint
     if (action === 'sse') {
@@ -179,7 +190,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Create SSE response via helper
-      const res = sse(request, (client) => {
+      const handleSseClient: (client: SSEClient) => void = (client) => {
       // Advise client retry interval and initial message
     client.sendRaw('retry: 10000\n\n');
     client.send(enforceProvenanceOnChunk({ type: 'connection', message: 'SSE connection established', timestamp: Date.now() }, { path: 'streaming/real-time:sse' }));
@@ -194,13 +205,24 @@ export async function GET(request: NextRequest) {
     realTimeDataStreamer.on('sse-data', handleSSEData);
 
     // Cleanup on close/abort
-    const onAbort = async (): Promise<void> => {
+        // Note: avoid async handler to satisfy @typescript-eslint/no-misused-promises
+        const onAbort = (): void => {
       realTimeDataStreamer.off('sse-data', handleSSEData);
+          fireAndForget(async () => {
+            try {
           await realTimeDataStreamer.disconnectClient(clientId);
-          client.close();
+        } catch {
+          // best-effort
+        }
+        client.close();
+      });
         };
-    request.signal.addEventListener('abort', onAbort);
-  }, { heartbeatMs: 15000, headers: cors.headers });
+        request.signal.addEventListener('abort', function handleAbortEvent(_evt: Event): void {
+          onAbort();
+        });
+        return;
+      };
+      const res = sse(request, handleSseClient, { heartbeatMs: 15000, headers: cors.headers });
       recordRouteLatency('streaming/real-time:GET', Date.now() - start);
       return res;
     }

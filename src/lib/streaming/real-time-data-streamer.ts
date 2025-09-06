@@ -104,6 +104,8 @@ export class RealTimeDataStreamer extends EventEmitter {
         admin: { maxConnections: 100, maxStreams: 200, updateRate: 20 }
     };
 
+    private started = false;
+
     constructor() {
         super();
         this.metrics = {
@@ -116,6 +118,13 @@ export class RealTimeDataStreamer extends EventEmitter {
             uptimePercentage: 100
         };
 
+        // Do not start timers at import time. Defer until explicitly started by API route.
+    }
+
+    /** Initialize timers and generators once */
+    start(): void {
+        if (this.started) return;
+        this.started = true;
         this.startHeartbeat();
         this.startMetricsCollection();
         this.setupDataGenerators();
@@ -187,6 +196,8 @@ export class RealTimeDataStreamer extends EventEmitter {
         clientId: string,
         streamTypes: string[]
     ): Promise<{ success: boolean; subscribed: string[]; error?: string; }> {
+        // Ensure background generators are running when a subscription is requested
+        this.start();
         const client = this.clients.get(clientId);
         if (!client) {
             return { success: false, subscribed: [], error: 'Client not found' };
@@ -591,5 +602,17 @@ export class RealTimeDataStreamer extends EventEmitter {
     }
 }
 
-// Export singleton instance
-export const realTimeDataStreamer = new RealTimeDataStreamer();
+// Export a singleton instance stored on globalThis to avoid duplicate instances with timers
+declare global {
+    var __realTimeDataStreamer__: RealTimeDataStreamer | undefined;
+}
+
+type GlobalWithRealTimeStreamer = typeof globalThis & {
+    __realTimeDataStreamer__?: RealTimeDataStreamer;
+};
+
+const globalForRealTimeStreamer = globalThis as GlobalWithRealTimeStreamer;
+
+export const realTimeDataStreamer: RealTimeDataStreamer =
+    globalForRealTimeStreamer.__realTimeDataStreamer__ ??
+    (globalForRealTimeStreamer.__realTimeDataStreamer__ = new RealTimeDataStreamer());

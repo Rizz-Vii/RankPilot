@@ -9,6 +9,7 @@ import { recordSubtoolRun } from "@/lib/metrics/ai-usage";
 import { FieldValue } from "firebase-admin/firestore";
 import { z } from 'zod';
 import { UsageQuotaManager as ClientUsageQuotaManager, type UsageCheck } from "../usage-quota";
+import { adminUsageQuotaManager as ServerUsageQuotaManager } from "../usage-quota-admin";
 import {
   AIVisibilityEngine,
   type VisibilityReport,
@@ -138,20 +139,14 @@ export interface CompetitivePositioning {
   };
 }
 
-// Lightweight server-safe quota manager stub (avoids client Firestore SDK on server)
-class ServerQuotaStub {
-  async checkUsageLimit(_userId: string, _type: string) {
-    return { allowed: true, remainingQuota: 9999, remaining: 9999, limit: 0, resetDate: new Date() } as UsageCheck;
-  }
-  async incrementUsage(_userId: string, _type: string, _inc: number) { /* no-op */ }
-  async getUsageStats(_userId: string) { return { used: 0, limit: 0 }; }
-}
-
-const quotaManagerFactory = () => {
+// Quota manager factory: use server admin manager on server, client manager in browser
+type QuotaLike = Pick<ClientUsageQuotaManager, 'checkUsageLimit' | 'incrementUsage' | 'getUsageStats'>;
+const quotaManagerFactory = (): QuotaLike => {
   if (typeof window === 'undefined') {
-    return new ServerQuotaStub() as unknown as ClientUsageQuotaManager;
+    // Server
+    return ServerUsageQuotaManager as unknown as QuotaLike;
   }
-  return new ClientUsageQuotaManager();
+  return new ClientUsageQuotaManager() as unknown as QuotaLike;
 };
 
 export class NeuroSEOSuite {
@@ -160,7 +155,7 @@ export class NeuroSEOSuite {
   private visibilityEngine: AIVisibilityEngine;
   private trustEngine: TrustBlockEngine;
   private rewriteEngine: RewriteGenEngine;
-  private quotaManager: ClientUsageQuotaManager | ServerQuotaStub;
+  private quotaManager: QuotaLike;
   // Cache the last fetched competitor contents for keyword gap analysis
   private lastCompetitorContents: Array<{ url: string; content: string; }> | null = null;
   // Simple in-memory cache (process lifetime). Could be swapped for Redis.
@@ -1251,7 +1246,7 @@ function extractErrorMessage(err: unknown, fallback: string): string {
 }
 
 // ---------------- Schema Definition & Validation -------------------------
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 // ---- Fine-grained schemas (incrementally introduced; remaining broad domains marked TODO for future tightening) ----
 const CrawlResultSchema = z.object({
@@ -1355,8 +1350,154 @@ const CompetitivePositioningSchema = z.object({
   }).optional(),
 }).optional();
 
-// TODO:TRACKD-DEFER:typing Tighten schemas for semanticAnalysis / visibilityAnalysis / trustAnalysis / rewriteRecommendations
-// after upstream engines have full exported zod schemas to reference (avoid duplicating logic here).
+// ---- Tight schemas for engine outputs (aligned with engine interfaces) ----
+// Semantic
+const SemanticFingerprintSchema = z.object({
+  topicClusters: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    keywords: z.array(z.string()),
+    relevanceScore: z.number(),
+    coverage: z.number(),
+    subTopics: z.array(z.object({
+      name: z.string(),
+      keywords: z.array(z.string()),
+      coverage: z.number(),
+      missing: z.boolean(),
+    }))
+  })),
+  contentGaps: z.array(z.object({
+    topic: z.string(),
+    description: z.string(),
+    priority: z.enum(['high', 'medium', 'low']),
+    suggestedKeywords: z.array(z.string()),
+    competitorCoverage: z.number(),
+  })),
+  semanticDensity: z.number(),
+  topicalAuthority: z.number(),
+  entityCoverage: z.record(z.object({
+    mentions: z.number(),
+    contexts: z.array(z.string()),
+    sentiment: z.enum(['positive', 'neutral', 'negative'])
+  }))
+});
+
+const SemanticRecommendationSchema = z.object({
+  type: z.enum(['topic_expansion', 'keyword_optimization', 'entity_enhancement', 'content_depth']),
+  title: z.string(),
+  description: z.string(),
+  priority: z.enum(['high', 'medium', 'low']),
+  estimatedImpact: z.number(),
+  implementation: z.string(),
+});
+
+const SemanticAnalysisResultSchema = z.object({
+  fingerprint: SemanticFingerprintSchema,
+  recommendations: z.array(SemanticRecommendationSchema),
+  competitiveInsights: z.array(z.object({
+    competitorUrl: z.string(),
+    advantage: z.string(),
+    gap: z.string(),
+    actionable: z.string(),
+  })),
+  visualizationData: z.object({
+    nodes: z.array(z.object({ id: z.string(), label: z.string(), type: z.enum(['topic', 'keyword', 'entity']), size: z.number(), color: z.string() })),
+    edges: z.array(z.object({ source: z.string(), target: z.string(), weight: z.number(), type: z.enum(['semantic', 'contextual', 'hierarchical']) }))
+  }),
+  overallRelevanceScore: z.number(),
+});
+
+// Visibility
+const LLMQuerySchema = z.object({
+  id: z.string(),
+  query: z.string(),
+  intent: z.enum(['informational', 'navigational', 'transactional', 'commercial']),
+  targetKeywords: z.array(z.string()),
+  expectedAnswerType: z.enum(['definition', 'comparison', 'howto', 'list', 'opinion'])
+});
+const LLMResponseSchema = z.object({
+  queryId: z.string(),
+  response: z.string(),
+  sources: z.array(z.object({ url: z.string(), title: z.string(), snippet: z.string(), relevanceScore: z.number(), citationPosition: z.number() })),
+  confidence: z.number(),
+  responseTime: z.number(),
+});
+const CitationAnalysisSchema = z.object({
+  isCited: z.boolean(),
+  citationPosition: z.number().optional(),
+  citationContext: z.string(),
+  citationType: z.enum(['direct', 'paraphrased', 'referenced', 'none']),
+  relevanceScore: z.number(),
+  competitorCitations: z.array(z.object({ url: z.string(), position: z.number(), context: z.string() }))
+});
+const VisibilityMetricsSchema = z.object({
+  overallVisibilityScore: z.number(),
+  citationRate: z.number(),
+  averageCitationPosition: z.number(),
+  topPerformingQueries: z.array(z.string()),
+  improvementOpportunities: z.array(z.object({ query: z.string(), currentPosition: z.number().nullable(), potentialGain: z.number(), recommendation: z.string() })),
+});
+const VisibilityRecommendationSchema = z.object({
+  type: z.enum(['content_optimization', 'authority_building', 'technical_improvement', 'citation_enhancement']),
+  title: z.string(), description: z.string(), priority: z.enum(['high', 'medium', 'low']), estimatedImpact: z.number(), implementation: z.string(), timeframe: z.string(),
+});
+const CompetitiveVisibilitySchema = z.object({
+  topCompetitors: z.array(z.object({ url: z.string(), visibilityScore: z.number(), citationRate: z.number(), strongQueries: z.array(z.string()) })),
+  gapAnalysis: z.array(z.object({ query: z.string(), competitorAdvantage: z.string(), ourWeakness: z.string(), actionable: z.string() }))
+});
+const VisibilityReportSchema = z.object({
+  url: z.string(),
+  queries: z.array(LLMQuerySchema),
+  responses: z.array(LLMResponseSchema),
+  citations: z.array(CitationAnalysisSchema),
+  metrics: VisibilityMetricsSchema,
+  recommendations: z.array(VisibilityRecommendationSchema),
+  competitiveAnalysis: CompetitiveVisibilitySchema,
+});
+
+// Trust
+const AuthorProfileSchema = z.object({
+  id: z.string(), name: z.string(), email: z.string(), bio: z.string(),
+  credentials: z.array(z.string()), expertise: z.array(z.string()),
+  socialProfiles: z.array(z.object({ platform: z.string(), url: z.string(), verified: z.boolean(), followers: z.number().optional() })),
+  authorityScore: z.number(),
+  publications: z.array(z.object({ title: z.string(), url: z.string(), publication: z.string(), date: z.string(), type: z.enum(['article', 'research', 'book', 'video', 'podcast']) }))
+});
+const ContentCredibilitySchema = z.object({ factualAccuracy: z.number(), sourceQuality: z.number(), expertiseAlignment: z.number(), freshness: z.number(), comprehensiveness: z.number(), overallCredibility: z.number() });
+const TrustSignalSchema = z.object({ type: z.enum(['author', 'source', 'publication', 'citation', 'review', 'endorsement']), value: z.string(), weight: z.number(), confidence: z.number(), impact: z.enum(['high', 'medium', 'low']), description: z.string() });
+const ComplianceCheckSchema = z.object({
+  gdprCompliant: z.boolean(),
+  accessibilityScore: z.number(),
+  contentPolicyViolations: z.array(z.string()),
+  factCheckResults: z.array(z.object({ claim: z.string(), verified: z.boolean(), sources: z.array(z.string()), confidence: z.number() })),
+  disclaimers: z.array(z.object({ type: z.enum(['medical', 'financial', 'legal', 'general']), required: z.boolean(), present: z.boolean(), suggestion: z.string().optional() }))
+});
+const TrustImprovementSchema = z.object({
+  category: z.enum(['expertise', 'authoritativeness', 'trustworthiness', 'compliance']),
+  title: z.string(), description: z.string(), implementation: z.string(),
+  priority: z.enum(['critical', 'high', 'medium', 'low']), estimatedImpact: z.number(), effort: z.enum(['low', 'medium', 'high']), timeframe: z.string()
+});
+const TrustMetricsSchema = z.object({
+  expertiseScore: z.number(), authoritativeness: z.number(), trustworthiness: z.number(), overallEATScore: z.number(), trustSignalCount: z.number(), complianceScore: z.number(), recommendedImprovements: z.array(TrustImprovementSchema)
+});
+const CompetitorTrustAnalysisSchema = z.object({
+  competitors: z.array(z.object({ url: z.string(), domain: z.string(), eatScore: z.number(), strongPoints: z.array(z.string()), weaknesses: z.array(z.string()) })),
+  industryBenchmark: z.object({ averageEATScore: z.number(), topPerformers: z.array(z.string()), commonTrustSignals: z.array(z.string()) }),
+  gapAnalysis: z.array(z.object({ area: z.string(), ourScore: z.number(), competitorAverage: z.number(), improvement: z.string() }))
+});
+const TrustReportSchema = z.object({
+  url: z.string(), contentType: z.string(), authorProfile: AuthorProfileSchema.optional(), credibility: ContentCredibilitySchema, trustSignals: z.array(TrustSignalSchema), compliance: ComplianceCheckSchema, metrics: TrustMetricsSchema, improvements: z.array(TrustImprovementSchema), competitorBenchmark: CompetitorTrustAnalysisSchema
+});
+
+// Rewrite
+const ContentIssueSchema = z.object({ type: z.enum(['keyword_stuffing', 'low_readability', 'poor_structure', 'missing_keywords', 'compliance_risk']), severity: z.enum(['critical', 'high', 'medium', 'low']), description: z.string(), location: z.string(), suggestion: z.string() });
+const ContentAnalysisSchema = z.object({ wordCount: z.number(), readabilityScore: z.number(), keywordDensity: z.record(z.number()), sentimentScore: z.number(), structureScore: z.number(), seoScore: z.number(), issues: z.array(ContentIssueSchema) });
+const RewriteImprovementSchema = z.object({ category: z.enum(['seo', 'readability', 'engagement', 'structure', 'compliance']), description: z.string(), impact: z.enum(['high', 'medium', 'low']), applied: z.boolean(), beforeAfter: z.object({ before: z.string(), after: z.string() }).optional() });
+const PerformanceMetricsSchema = z.object({ searchVisibility: z.number(), userEngagement: z.number(), conversionPotential: z.number(), shareability: z.number(), trustScore: z.number(), overallScore: z.number() });
+const RewriteVariantSchema = z.object({ id: z.string(), content: z.string(), title: z.string(), version: z.number(), seoScore: z.number(), readabilityScore: z.number(), keywordDensity: z.record(z.number()), improvements: z.array(RewriteImprovementSchema), complianceScore: z.number(), estimatedPerformance: PerformanceMetricsSchema });
+const RewriteRecommendationSchema = z.object({ title: z.string(), description: z.string(), category: z.enum(['optimization', 'engagement', 'seo', 'compliance']), priority: z.enum(['high', 'medium', 'low']), estimatedImpact: z.number(), implementation: z.string() });
+const ComparisonMatrixSchema = z.object({ metrics: z.array(z.string()), variants: z.array(z.object({ id: z.string(), title: z.string(), scores: z.array(z.number()) })), winner: z.string(), reasoning: z.string() });
+const RewriteAnalysisSchema = z.object({ originalAnalysis: ContentAnalysisSchema, variants: z.array(RewriteVariantSchema), recommendations: z.array(RewriteRecommendationSchema), bestVariant: z.string(), comparisonMatrix: ComparisonMatrixSchema });
 
 export const NeuroSEOReportSchema = z.object({
   id: z.string(),
@@ -1370,16 +1511,16 @@ export const NeuroSEOReportSchema = z.object({
     userId: z.string(),
   }),
   crawlResults: z.array(CrawlResultSchema),
-  semanticAnalysis: z.array(z.unknown()),
-  visibilityAnalysis: z.array(z.unknown()),
-  trustAnalysis: z.array(z.unknown()),
+  semanticAnalysis: z.array(SemanticAnalysisResultSchema),
+  visibilityAnalysis: z.array(VisibilityReportSchema),
+  trustAnalysis: z.array(TrustReportSchema),
   engagementAnalysis: z.array(z.object({
     url: z.string(),
     engagementScore: z.number(),
     leadPotentialScore: z.number(),
     factors: z.array(z.string()),
   })).optional(),
-  rewriteRecommendations: z.array(z.unknown()).optional(),
+  rewriteRecommendations: z.array(RewriteAnalysisSchema).optional(),
   overallScore: z.number().min(0).max(100),
   keyInsights: z.array(KeyInsightSchema),
   actionableTasks: z.array(ActionableTaskSchema),

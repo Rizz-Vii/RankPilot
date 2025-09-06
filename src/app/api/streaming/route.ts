@@ -1,5 +1,6 @@
 // Real-time Streaming API
 import { handleCors } from '@/lib/http/cors';
+import type { SSEClient } from '@/lib/http/sse';
 import { sse } from '@/lib/http/sse';
 import { enforceProvenance } from '@/lib/middleware/provenance';
 import type { NextRequest } from "next/server";
@@ -21,9 +22,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(enforceProvenance({ success: true, metrics, provenance: 'synthetic' }, { path: 'streaming', note: 'metrics' }), { headers: cors.headers });
     }
   } catch { /* fallthrough to SSE */ }
-  return sse(request, async (client) => {
+  const onClient: (client: SSEClient) => void = (client) => {
+  // synchronous callback; do async work inside IIFE if needed
     client.send({ type: 'connection_established' });
-  }, { headers: cors.headers, heartbeatMs: 30000 });
+    return;
+  };
+  return sse(request, onClient, { headers: cors.headers, heartbeatMs: 30000 });
 }
 export async function OPTIONS(request: NextRequest) {
   const cors = handleCors(request, { allowMethods: ['GET', 'OPTIONS'] });

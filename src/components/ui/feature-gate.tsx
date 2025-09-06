@@ -5,13 +5,13 @@
  * Fixes feature gating bugs by providing consistent frontend restrictions
  */
 
-import { colors } from '@/lib/design-system/colors';
 import { Button } from '@/components/ui/button';
+import { colors } from '@/lib/design-system/colors';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSubscription } from '@/hooks/useSubscription';
-import { canAccessCapability, FEATURE_ACCESS, TIER_HIERARCHY, type SubscriptionTier, type FeatureConfig } from '@/lib/access-control';
+import { canAccessCapability, FEATURE_ACCESS, TIER_HIERARCHY, type FeatureConfig, type SubscriptionTier } from '@/lib/access-control';
 import { Crown, Lock, Star, Zap } from 'lucide-react';
 import type { ComponentType, ReactNode } from 'react';
 
@@ -54,12 +54,12 @@ export function FeatureGate({
 
     // Show fallback or upgrade prompt
     if (fallback) {
-        return <div className={className}>{fallback}</div>;
+        return <div className={className} data-testid="feature-gate-fallback">{fallback}</div>;
     }
 
     if (showUpgrade) {
         return (
-            <div className={className}>
+            <div className={className} data-testid="feature-gate-denied">
                 <UpgradePrompt
                     feature={feature}
                     featureConfig={featureConfig}
@@ -69,7 +69,7 @@ export function FeatureGate({
         );
     }
 
-    return null;
+    return <div className={className} data-testid="feature-gate-denied" />;
 }
 
 /**
@@ -104,7 +104,7 @@ function UpgradePrompt({
     };
 
     return (
-        <Card className="border-dashed border-2 border-muted-foreground/25">
+        <Card data-testid="upgrade-banner" className="border-dashed border-2 border-muted-foreground/25">
             <CardHeader className="text-center">
                 <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-2">
                     <Lock className="h-6 w-6 text-muted-foreground" />

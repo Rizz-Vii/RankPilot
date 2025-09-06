@@ -1,0 +1,440 @@
+{
+    "version": 1,
+    "project": {
+        "name": "RankPilot",
+        "description": "AI-first SEO/marketing SaaS with voice agent, lead gen, creative assembly, and mobile-first UI (Next.js 15 + TypeScript 5.7 + Firebase)."
+    },
+    "principles": {
+        "minimalDiff": true,
+        "smallPRs": true,
+        "highlightChangedLinesOnly": true,
+        "askOnAmbiguity": true,
+        "deterministicOrdering": true,
+        "degradeSilentlyOnNonCriticalFailures": true,
+        "featureGating": [
+            "voice_agent",
+            "outbound_calls",
+            "lead_gen_pipeline",
+            "ads_creatives"
+        ],
+        "provenanceEnforcement": true,
+        "commitLimits": {
+            "maxFiles": 15,
+            "maxLines": 200
+        }
+    },
+    "tiers": [
+        "starter",
+        "agency",
+        "enterprise"
+    ],
+    "featureKeys": {
+        "voice_agent": {
+            "requiredTier": "agency"
+        },
+        "outbound_calls": {
+            "requiredTier": "agency"
+        },
+        "lead_gen_pipeline": {
+            "requiredTier": "enterprise"
+        },
+        "ads_creatives": {
+            "requiredTier": "enterprise"
+        }
+    },
+    "firestore": {
+        "noDerivedRatiosStored": true,
+        "collections": [
+            "tenants",
+            "locations",
+            "services",
+            "staff",
+            "slots",
+            "appointments",
+            "callSessions",
+            "leads",
+            "optOuts",
+            "contentUnits",
+            "templates",
+            "cadences",
+            "campaigns",
+            "adCreatives",
+            "events",
+            "featureAccess",
+            "voice_calls"
+        ],
+        "writeThroughFunctionsOnly": [
+            "appointments",
+            "slots",
+            "callSessions",
+            "events"
+        ],
+        "tenancyIsolationRule": "request.auth.token.tenantId == resource.data.tenantId"
+    },
+    "performanceBudgets": {
+        "mobile": {
+            "LCP_ms": 2500,
+            "INP_ms": 200,
+            "CLS": 0.1
+        },
+        "assetsKB": {
+            "html": 35,
+            "js": 170,
+            "fonts": 100
+        }
+    },
+    "frontend": {
+        "framework": "Next.js App Router",
+        "styling": "TailwindCSS",
+        "images": {
+            "formats": [
+                "avif",
+                "webp"
+            ],
+            "nextImage": true
+        },
+        "fonts": {
+            "subset": true,
+            "display": "swap",
+            "selfHost": true
+        },
+        "islands": {
+            "serverComponentsByDefault": true,
+            "clientOnlyWhereNeeded": true
+        },
+        "design": {
+            "avoidRawHexColors": true,
+            "useDesignTokens": true
+        }
+    },
+    "backend": {
+        "runtime": "Next.js API + Firebase Functions (Node/TS)",
+        "telephony": "Twilio",
+        "queues": "Cloud Tasks",
+        "regionPin": "australia-southeast1",
+        "compliance": {
+            "email": "Spam Act 2003 (AU)",
+            "calls": "ACMA DNC checks required",
+            "pii": "encryptAtRest + redact in logs"
+        }
+    },
+    "observability": {
+        "logger": "getLogger",
+        "provenanceFieldsRequired": [
+            "tenantId",
+            "callId",
+            "source"
+        ],
+        "provenanceFieldsOptional": [
+            "crawlUrl",
+            "fetchedAt",
+            "parser"
+        ],
+        "eventsTracked": [
+            "crawl",
+            "verify",
+            "enrich",
+            "call",
+            "booking",
+            "email_sent",
+            "optout",
+            "ad_publish"
+        ],
+        "cwvLogging": true
+    },
+    "ai": {
+        "client": "unified aiClient with OpenAI primary, Gemini fallback, static last resort",
+        "embeddings": "OpenAI-only for consistent vector space"
+    },
+    "rateLimiting": {
+        "middleware": true,
+        "headers": {
+            "probeTokenHeader": "x-probe-token",
+            "probeTokenExample": "8ab3b3a95a0d9cf1b5bb2b61be5e3981"
+        }
+    },
+    "environments": {
+        "required": [
+            "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
+            "FIREBASE_ADMIN_PRIVATE_KEY",
+            "OPENAI_API_KEY",
+            "GEMINI_API_KEY",
+            "CRAWL_PROBE_TOKEN",
+            "PUBLIC_BASE_URL"
+        ],
+        "telephony": [
+            "TWILIO_ACCOUNT_SID",
+            "TWILIO_AUTH_TOKEN",
+            "TWILIO_FROM_NUMBER",
+            "TWILIO_SAY_VOICE",
+            "TWILIO_SAY_LANGUAGE",
+            "TWILIO_SAY_RATE"
+        ]
+    },
+    "codeGenPolicies": {
+        "lang": "TypeScript",
+        "testing": [
+            "Jest",
+            "Vitest",
+            "Mocha"
+        ],
+        "lint": "ESLint strict",
+        "format": "Respect existing; do not reformat untouched files",
+        "alwaysAwait": true
+    },
+    "fileHints": [
+        {
+            "pattern": "src/app/api/voice/**",
+            "goals": [
+                "Validate Twilio signatures when not in test mode",
+                "Tag all logs with callId and tenantId when available",
+                "Degrade gracefully if Twilio env is missing (503)"
+            ]
+        },
+        {
+            "pattern": "src/app/api/agent/tools/**",
+            "goals": [
+                "Implement getAvailability, holdSlot, createAppointment, sendConfirmation behind RBAC",
+                "Use Firestore transactions for slot hold/commit",
+                "Emit audit logs for booking operations"
+            ]
+        },
+        {
+            "pattern": "functions/src/leads/**",
+            "goals": [
+                "Robots-aware crawling",
+                "Email/phone normalization + verification",
+                "Consent tagging + DNC check before outreach",
+                "Deterministic dedupe via SHA256 over sorted inputs"
+            ]
+        },
+        {
+            "pattern": "functions/src/ads/**",
+            "goals": [
+                "Assemble creatives from approved contentUnits",
+                "No ratios stored; compute in UI",
+                "Locale + jurisdiction guards"
+            ]
+        },
+        {
+            "pattern": "src/app/**",
+            "goals": [
+                "Mobile-first layouts",
+                "Speculation Rules + link prefetch",
+                "Hero image fetchpriority high; skeletons not spinners"
+            ]
+        },
+        {
+            "pattern": "src/app/api/stripe/webhook/**",
+            "goals": [
+                "Create shared invoice upsert util to unify finance invoice upsert across endpoints",
+                "Ensure idempotent write of invoices and add contract tests"
+            ]
+        },
+        {
+            "pattern": "scripts/delegation/**",
+            "goals": [
+                "Implement Phase 2: optional test run flag (DELEGATION_RUN_TESTS=1)",
+                "Add timeout (30m) and pass/fail logging",
+                "Emit delegation metrics"
+            ]
+        },
+        {
+            "pattern": "functions/src/lib/ai-memory-manager.ts",
+            "goals": [
+                "Add circuit breaker and capability metrics dashboards",
+                "Broaden provider ordering and capability tests",
+                "Expose provider metrics via /api/health"
+            ]
+        },
+        {
+            "pattern": "src/app/(app)/finance/**",
+            "goals": [
+                "Replace mock metrics with live data using /api/finance/metrics",
+                "Respect allowFinanceMocks() feature flag"
+            ]
+        },
+        {
+            "pattern": "src/app/(app)/billing/**",
+            "goals": [
+                "Wire real usage and payment method metrics from Stripe and Firestore",
+                "Remove placeholder FIN-02 fields and add tests"
+            ]
+        },
+        {
+            "pattern": "src/app/(app)/insights/**",
+            "goals": [
+                "Gate stub AI util behind feature flag",
+                "Wire to real AI orchestrator or add provenance notes when stub used"
+            ]
+        },
+        {
+            "pattern": "src/components/ui/enhanced-card-stub.tsx",
+            "goals": [
+                "Verify imports removed and delete stub file; replace with enhanced-card.tsx or Tailwind primitives"
+            ]
+        },
+        {
+            "pattern": "src/components/ui/chart-components.tsx",
+            "goals": [
+                "Replace simplistic Progress stub with proper progress component or Tailwind primitive"
+            ]
+        },
+        {
+            "pattern": ".github/workflows/adoption-gate.yml",
+            "goals": [
+                "Schedule deletion after 2025-08-22 and note removal in CHANGE_LOG"
+            ]
+        },
+        {
+            "pattern": "src/components/integration/**",
+            "goals": [
+                "Keep integration hub gated by feature flag; add Playwright tests for admin vs non-admin access",
+                "Prepare code for eventual real integrations while retaining mocks"
+            ]
+        },
+        {
+            "pattern": "src/app/api/streaming/real-time/**",
+            "goals": [
+                "Add provenance headers; clearly annotate mock vs live behaviour",
+                "Ensure allowStreamingMockUser() gate returns 401 when disabled"
+            ]
+        },
+        {
+            "pattern": "src/lib/security/**",
+            "goals": [
+                "Finalize team-aware rate limiting (token or leaky bucket)",
+                "Implement multi-factor authentication checks for sensitive endpoints",
+                "Expose KPIs (rateLimitRejectionRate, provenance coverage) via /api/health"
+            ]
+        },
+        {
+            "pattern": "scripts/prune/**",
+            "goals": [
+                "Add sustained adoption CI guard for NeuroSEO prune",
+                "Implement dry-run report before destructive pruning"
+            ]
+        }
+    ],
+    "banned": [
+        "Store derived ratios/aggregates in Firestore",
+        "Client-side writes to appointments/slots/callSessions/events",
+        "LinkedIn scraping or ToS-violating sources",
+        "Shipping large polyfills or moment.js",
+        "Introducing new AI entrypoints outside approved features",
+        "Using raw hex colors instead of design tokens"
+    ],
+    "allowedLibraries": [
+        "next",
+        "react",
+        "tailwindcss",
+        "lucide-react",
+        "sonner",
+        "date-fns",
+        "zod",
+        "swr",
+        "playwright",
+        "firebase",
+        "firebase-admin",
+        "twilio",
+        "@google-cloud/tasks"
+    ],
+    "scaffolds": {
+        "mustContainAPIs": [
+            "/api/voice/twilio/inbound",
+            "/api/voice/twilio/status",
+            "/api/voice/outbound",
+            "/api/telephony/webhook",
+            "/api/agent/tools",
+            "/api/outbound/enqueueCampaign",
+            "/api/optout"
+        ],
+        "toolActionsOnAgentTools": [
+            "getAvailability",
+            "holdSlot",
+            "createAppointment",
+            "sendConfirmation"
+        ]
+    },
+    "prompts": {
+        "implementations": [
+            "Implement transactional slot hold with TTL and commit-on-confirm.",
+            "Create Next.js API route validating Twilio signature and emitting callId.",
+            "Build creative assembler selecting top-quality contentUnits deterministically.",
+            "Add Cloud Task queue for outbound pacing with tenant gates.",
+            "Create shared invoice upsert utility for Stripe webhook and seeding endpoints; ensure idempotent updates and add contract test.",
+            "Implement Phase 2 for delegation: optional test run flag (DELEGATION_RUN_TESTS=1), 30m timeout and pass/fail logging in script.",
+            "Replace Finance mocks: wire pages to real /api/finance/metrics, respect allowFinanceMocks() flag.",
+            "Add circuit breaker and capability metrics to AI provider adapter; extend tests.",
+            "Add emulator tests and backoff logic for scheduled runner; consider Cloud Tasks.",
+            "Wire billing page to real usage and payment data; remove placeholder FIN-02 fields.",
+            "Gate Insights page fallback or integrate with AI orchestrator; add provenance notes.",
+            "Delete adoption-gate workflow after 2025-08-22; add sustained adoption guard to CI for NeuroSEO prune.",
+            "Remove UI stub files and replace progress stub; verify imports are removed.",
+            "Convert marketing backlog tasks T18–T24 into tracked issues with acceptance criteria.",
+            "Wire Enterprise dashboard to real KPIs; respect allowEnterpriseMocks() flag; add tests.",
+            "Keep integration hub gating (feature + admin); add Playwright tests verifying access.",
+            "Add provenance headers and gating to streaming API and chat; update docs.",
+            "Finalize team-aware rate limiting and MFA checks; expose KPIs via /api/health.",
+            "Add sustained adoption CI guard for NeuroSEO prune and implement dry-run reporting."
+        ],
+        "refactors": [
+            "Convert heavy components to client islands via dynamic import (ssr:false).",
+            "Subset and self-host fonts; wire display:swap.",
+            "Replace placeholder custom dashboard sources with real queries or gate behind flag.",
+            "Remove page-backup.tsx and team page-fixed.tsx when unused."
+        ],
+        "tests": [
+            "Collision test: two holds on same slot must yield one success.",
+            "DST edge: booking across DST change commits correct tz.",
+            "Crawler fixture: extract emails/phones deterministically.",
+            "Test idempotent invoice upsert via Stripe webhook and seeding endpoints.",
+            "Delegation test: verify optional test run logs pass/fail; enforce 30m timeout.",
+            "Finance mocks test: confirm metrics hidden when allowFinanceMocks() false; visible when true.",
+            "AI adapter tests: verify circuit breaker triggers and metrics recorded.",
+            "Scheduled runner tests: ensure due automation tasks run correctly; verify backoff behaviour.",
+            "Enterprise dashboard gating test: ensure real metrics load when mocks disabled; mock values hidden when enabled.",
+            "Integration hub access test: verify only admins with feature flag see content; others get restricted message.",
+            "Streaming API test: verify 401 returned when allowStreamingMockUser() disabled; check provenance headers on successful responses.",
+            "Rate limiter test: ensure team-aware limiter caps requests; verify MFA gating on sensitive actions.",
+            "Adoption prune guard test: ensure CI fails if adoption <95%; verify dry-run produces report."
+        ]
+    },
+    "checks": [
+        {
+            "name": "no-derived-ratios",
+            "match": "**/*.ts",
+            "regex": "(store|set)\\([^)]*(ratio|winRate|conversion|ctr)\\s*[:=]",
+            "message": "Do not store derived ratios in Firestore; compute in UI.",
+            "severity": "error"
+        },
+        {
+            "name": "no-client-writes-to-protected",
+            "match": "src/app/**/*.{ts,tsx}",
+            "regex": "collection\\([\\\"'](appointments|slots|callSessions|events)[\\\"']\\)\\.(add|doc\\().*\\.(set|update)",
+            "message": "Client cannot write to protected collections; use server routes/functions.",
+            "severity": "error"
+        },
+        {
+            "name": "twilio-secret-not-in-client",
+            "match": "src/app/**/*.{ts,tsx}",
+            "regex": "TWILIO_(API|AUTH)_(SID|SECRET|TOKEN)",
+            "message": "Twilio secrets must not appear in client bundles.",
+            "severity": "error"
+        }
+    ],
+    "workflows": {
+        "validate": [
+            "npm run lint:flat:all",
+            "npm run typecheck",
+            "npm run test:unit"
+        ],
+        "dev": [
+            "npm run dev-no-turbopack"
+        ],
+        "deploy": [
+            "npm run secrets:set",
+            "firebase deploy --only hosting,functions --project rankpilot-h3jpc"
+        ]
+    }
+}

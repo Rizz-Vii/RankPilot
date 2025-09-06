@@ -73,7 +73,9 @@ export const WEB_KEY_DEFINITIONS: WebKeyDefinition[] = [
     { key: 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY', category: 'thirdParty', required: true, description: 'Stripe publishable key for client-side Checkout & Elements.', defaultExample: 'pk_test_...' },
 
     // Security / Human Verification
-    { key: 'NEXT_PUBLIC_RECAPTCHA_SITE_KEY', category: 'security', required: false, description: 'reCAPTCHA site key for signup / protected forms.' },
+    { key: 'NEXT_PUBLIC_RECAPTCHA_SITE_KEY', category: 'security', required: false, description: 'reCAPTCHA site key for signup / protected forms and App Check fallback.' },
+    { key: 'NEXT_PUBLIC_APPCHECK_SITE_KEY', category: 'security', required: false, description: 'Firebase App Check reCAPTCHA v3 site key (preferred over NEXT_PUBLIC_RECAPTCHA_SITE_KEY).' },
+    { key: 'NEXT_PUBLIC_APPCHECK_DEBUG', category: 'security', required: false, description: 'Enable App Check debug token in browser (true/false). Do not use in production.', defaultExample: 'false' },
 
     // PWA & Push
     { key: 'NEXT_PUBLIC_ENABLE_PWA', category: 'pwa', required: false, description: 'Enable client PWA features & service worker registration.' },

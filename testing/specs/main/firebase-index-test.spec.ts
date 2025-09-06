@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 /**
  * Firebase Index Verification Test
@@ -17,7 +17,9 @@ test.describe("Firebase Index Verification", () => {
       }
     });
 
-    await page.goto("/login", { waitUntil: "networkidle" });
+    await page.goto("/login", { waitUntil: "domcontentloaded" });
+    // Wait for login form to appear
+    await page.locator('form').first().waitFor({ state: 'visible', timeout: 20000 });
 
     // Verify page loads without Firebase index errors
     expect(consoleErrors.length).toBe(0);
@@ -35,7 +37,7 @@ test.describe("Firebase Index Verification", () => {
     const firebaseErrors: string[] = [];
     page.on('console', (msg) => {
       if (msg.type() === 'error' && (
-        msg.text().includes('Firebase') || 
+        msg.text().includes('Firebase') ||
         msg.text().includes('Firestore') ||
         msg.text().includes('index')
       )) {
@@ -44,7 +46,9 @@ test.describe("Firebase Index Verification", () => {
     });
 
     // Try to access dashboard (should redirect to login but without errors)
-    await page.goto("/dashboard", { waitUntil: "networkidle" });
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    // Allow for potential redirect to login
+    await page.waitForLoadState('domcontentloaded');
 
     // Should either show dashboard or redirect to login without Firebase errors
     expect(firebaseErrors.length).toBe(0);

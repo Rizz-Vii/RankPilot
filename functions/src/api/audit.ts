@@ -9,7 +9,9 @@ import { z } from 'zod';
 type GenAI = { generate: (prompt: string) => Promise<unknown> | unknown };
 let __aiMod: GenAI | null = null;
 function getAIWrapper(): GenAI {
-  if (process.env.GENKIT_TEST_STUB === '1') {
+  // Prefer stub unless explicitly enabled, or when running tests that provide a stub flag
+  const useReal = process.env.USE_REAL_AI === 'true' && process.env.GENKIT_TEST_STUB !== '1';
+  if (!useReal) {
     return { generate: async () => ({ text: () => null }) } as GenAI;
   }
   if (__aiMod) return __aiMod;
@@ -26,6 +28,8 @@ const httpsOptions: HttpsOptions = {
   timeoutSeconds: 180, // SEO audits can take longer
   memory: "2GiB", // Increased from 1GiB for Playwright operations
   minInstances: 0,
+  region: "australia-southeast1",
+  secrets: ["GOOGLE_AI_API_KEY", "GEMINI_API_KEY", "USE_REAL_AI"],
 };
 
 interface AuditRequest {

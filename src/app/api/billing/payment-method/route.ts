@@ -1,15 +1,14 @@
-import { NextResponse } from 'next/server';
-import { withProvenance, enforceProvenance } from '@/lib/middleware/provenance';
-import Stripe from 'stripe';
-import { getLogger } from '@/lib/logging/app-logger';
-import { adminDb, adminAuth } from '@/lib/firebase-admin';
 import { fetchDefaultCard } from '@/lib/billing/payment-method';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { getLogger } from '@/lib/logging/app-logger';
+import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
+import { NextResponse } from 'next/server';
+import Stripe from 'stripe';
 
 const logger = getLogger('billing-payment-method');
 const stripeKey = process.env.STRIPE_SECRET_KEY;
-// Stripe types expect a specific literal; reuse existing pinned version in codebase if enforced.
-const STRIPE_API_VERSION = '2025-07-30.basil' as const;
-const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: STRIPE_API_VERSION }) : null;
+// Use account default API version to avoid literal drift with SDK typings
+const stripe = stripeKey ? new Stripe(stripeKey) : null;
 
 export const GET = withProvenance(async function GET(req: Request) {
     const nreq = req;

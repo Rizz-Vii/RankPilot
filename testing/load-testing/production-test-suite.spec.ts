@@ -23,14 +23,14 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
         console.log('');
         console.log('🎯 Performance Testing Environment: australia-southeast2');
         console.log('🌍 Frontend URL: [Environment Specific]');
-        console.log('⚙️  Functions URL: https://australia-southeast2-rankpilot-h3jpc.cloudfunctions.net');
+        console.log('⚙️  Functions URL: http://localhost:3000');
         console.log('');
     });
 
     test('Production Health Check - System Status', async ({ page, baseURL }) => {
         console.log('🏥 Running Production Health Check...');
 
-        const frontendUrl = baseURL || 'https://rankpilot-h3jpc--performance-testing-mw0cwov5.web.app';
+        const frontendUrl = baseURL || 'http://localhost:3000';
 
         const healthChecks = [
             {
@@ -40,12 +40,12 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
             },
             {
                 name: 'Firebase Functions Health',
-                url: 'https://australia-southeast2-rankpilot-h3jpc.cloudfunctions.net/healthCheck',
+                url: `${baseURL}/api/health`,
                 type: 'function'
             },
             {
                 name: 'Performance Health Check',
-                url: 'https://australia-southeast2-rankpilot-h3jpc.cloudfunctions.net/performanceHealthCheck',
+                url: `${baseURL}/api/health`,
                 type: 'function'
             }
         ];
@@ -150,20 +150,20 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
         expect(testSuites.length).toBeGreaterThanOrEqual(5);
     });
 
-    test('Deployment Status Verification', async ({ page }) => {
+    test('Deployment Status Verification', async ({ page, baseURL }) => {
         console.log('🚀 Verifying Deployment Status...');
 
-        // Check recently deployed functions
+        // Check recently deployed API routes
         const deployedFunctions = [
-            'healthCheck',
-            'performanceHealthCheck',
-            'performanceDashboard',
-            'realtimeMetrics',
-            'functionMetrics',
-            'abTestManagement',
-            'getKeywordSuggestionsEnhanced',
-            'analyzeContent',
-            'runSeoAudit'
+            'health',
+            'health',
+            'health',
+            'health',
+            'health',
+            'health',
+            'ai',
+            'ai',
+            'ai'
         ];
 
         let deployedCount = 0;
@@ -172,10 +172,9 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
 
         for (const functionName of deployedFunctions) {
             try {
-                const response = await page.request.post(
-                    `https://australia-southeast2-rankpilot-h3jpc.cloudfunctions.net/${functionName}`,
+                const response = await page.request.get(
+                    `${baseURL}/api/${functionName}`,
                     {
-                        data: { test: 'deployment-check' },
                         timeout: 10000
                     }
                 );
@@ -220,7 +219,7 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
     test('Performance Baseline Measurement', async ({ page, baseURL }) => {
         console.log('⚡ Establishing Performance Baselines...');
 
-        const frontendUrl = baseURL || 'https://rankpilot-h3jpc--performance-testing-mw0cwov5.web.app';
+        const frontendUrl = baseURL || 'http://localhost:3000';
 
         const performanceTests = [
             {
@@ -236,9 +235,9 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
                 name: 'Health Check Response',
                 action: async () => {
                     const start = Date.now();
-                    await page.request.post(
-                        'https://australia-southeast2-rankpilot-h3jpc.cloudfunctions.net/healthCheck',
-                        { data: {}, timeout: 15000 }
+                    await page.request.get(
+                        `${baseURL}/api/health`,
+                        { timeout: 15000 }
                     );
                     return Date.now() - start;
                 },
@@ -248,9 +247,9 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
                 name: 'Performance Function Response',
                 action: async () => {
                     const start = Date.now();
-                    await page.request.post(
-                        'https://australia-southeast2-rankpilot-h3jpc.cloudfunctions.net/performanceHealthCheck',
-                        { data: {}, timeout: 15000 }
+                    await page.request.get(
+                        `${baseURL}/api/health`,
+                        { timeout: 15000 }
                     );
                     return Date.now() - start;
                 },
@@ -309,7 +308,7 @@ test.describe('RankPilot Production Test Suite - Complete Coverage', () => {
         console.log('   npm run test:database-security        # Test Database & Security');
         console.log('   npm run test:load-testing             # Test Load & Performance');
         console.log('');
-        console.log('📊 Monitoring Dashboard: https://rankpilot.app/admin/monitoring');
+        console.log('📊 Monitoring Dashboard: http://localhost:3000/admin/monitoring');
         console.log('🔍 Function Logs: https://console.firebase.google.com/project/rankpilot-h3jpc/functions/logs');
         console.log('');
     });

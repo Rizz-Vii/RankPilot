@@ -1,7 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-    testDir: "./testing/load-testing",
+    // Include all testing subfolders so dev config can run e2e and load-testing suites
+    testDir: "./testing",
     timeout: 90000, // 1.5 minutes for development
     workers: process.env.CI ? 1 : 2,
     reporter: [
@@ -9,7 +10,7 @@ export default defineConfig({
         ["line"],
     ],
     use: {
-        baseURL: "http://localhost:3000",
+        baseURL: process.env.PLAYWRIGHT_BASE_URL || process.env.TEST_BASE_URL || "http://localhost:3000",
         trace: "retain-on-failure",
         screenshot: "only-on-failure",
         video: "retain-on-failure",
@@ -32,7 +33,7 @@ export default defineConfig({
         },
     ],
 
-    // Global setup for development testing
-    globalSetup: require.resolve("./testing/load-testing/global-setup-dev.ts"),
-    globalTeardown: require.resolve("./testing/load-testing/global-teardown.ts"),
+    // Global setup/teardown: reuse main to avoid missing files
+    globalSetup: require.resolve("./testing/specs/main/global-setup.ts"),
+    globalTeardown: require.resolve("./testing/specs/main/global-teardown.ts"),
 });

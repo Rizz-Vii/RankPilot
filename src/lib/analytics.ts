@@ -5,7 +5,7 @@ import {
   getDoc,
   increment,
   serverTimestamp,
-  updateDoc,
+  setDoc
 } from "firebase/firestore";
 
 // Resolve analytics instance (only set in production via firebase/index)
@@ -254,23 +254,23 @@ export const conversionFunnel = {
       const date = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
       const metricsRef = doc(db, "analytics", "conversion_metrics");
 
-      await updateDoc(metricsRef, {
+      await setDoc(metricsRef, {
         [`daily.${date}.${event}`]: increment(1),
         [`daily.${date}.total_users`]: increment(1),
         [`plans.${plan || "unknown"}.${event}`]: increment(1),
         lastUpdated: serverTimestamp(),
-      });
+  }, { merge: true });
 
       // Track user journey
       if (userId) {
         const userJourneyRef = doc(db, "user_journeys", userId);
-        await updateDoc(userJourneyRef, {
+        await setDoc(userJourneyRef, {
           [`events.${event}`]: {
             timestamp: serverTimestamp(),
             plan: plan || null,
           },
           lastActivity: serverTimestamp(),
-        });
+  }, { merge: true });
       }
     } catch (error) {
       console.error("Error updating conversion metrics:", error);
@@ -340,7 +340,7 @@ export const cohortAnalysis = {
   trackCohort: async (userId: string, cohortDate: string, plan: string) => {
     try {
       const cohortRef = doc(db, "cohorts", cohortDate);
-      await updateDoc(cohortRef, {
+      await setDoc(cohortRef, {
         [`users.${userId}`]: {
           plan,
           joinedAt: serverTimestamp(),
@@ -348,7 +348,7 @@ export const cohortAnalysis = {
         [`totals.${plan}`]: increment(1),
         totalUsers: increment(1),
         lastUpdated: serverTimestamp(),
-      });
+  }, { merge: true });
     } catch (error) {
       console.error("Error tracking cohort:", error);
     }
@@ -366,11 +366,11 @@ export const cohortAnalysis = {
         "retention",
         `${cohortDate}_${retentionPeriod}`
       );
-      await updateDoc(retentionRef, {
+      await setDoc(retentionRef, {
         [`active_users.${userId}`]: serverTimestamp(),
         totalActiveUsers: increment(1),
         lastUpdated: serverTimestamp(),
-      });
+  }, { merge: true });
     } catch (error) {
       console.error("Error tracking retention:", error);
     }

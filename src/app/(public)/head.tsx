@@ -1,9 +1,12 @@
 // src/app/(public)/head.tsx
-import React from 'react';
-import Script from 'next/script';
 import { faqJsonLd, orgAndProductJsonLd } from '@/seo/schema';
+import { headers as reqHeaders } from 'next/headers';
+import Script from 'next/script';
 
-export default function Head() {
+export default async function Head() {
+  const hdrs = await reqHeaders();
+  const headerNonce = hdrs.get('x-nextjs-csp-nonce') ?? hdrs.get('x-nonce') ?? hdrs.get('x-rp-csp-nonce') ?? undefined;
+  const cspNonce = process.env.NODE_ENV === 'production' ? headerNonce : undefined;
   return (
     <>
       <title>RankPilot – NeuroSEO™ Growth Platform</title>
@@ -27,12 +30,14 @@ export default function Head() {
         type="application/ld+json"
         strategy="afterInteractive"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        nonce={cspNonce}
       />
       <Script
         id="org-product-jsonld"
         type="application/ld+json"
         strategy="afterInteractive"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(orgAndProductJsonLd) }}
+        nonce={cspNonce}
       />
     </>
   );

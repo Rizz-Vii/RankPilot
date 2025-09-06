@@ -99,7 +99,11 @@ test.describe("🚨 Critical System Validation", () => {
             }
         });
 
-        await page.waitForLoadState("networkidle");
+        // Prefer DOMContentLoaded then explicit visible checks; networkidle is flaky in CI/dev
+        await page.waitForLoadState("domcontentloaded");
+        await expect(page.locator('body')).toBeVisible({ timeout: 10000 });
+        // give a short settle window for streaming logs
+        await page.waitForTimeout(800);
 
         // Filter out non-critical errors
         const criticalErrors = errors.filter(error =>

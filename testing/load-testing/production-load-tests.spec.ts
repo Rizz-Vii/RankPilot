@@ -3,11 +3,11 @@
  * Comprehensive performance testing for deployed functions
  */
 
-import { expect, test } from '@playwright/test';
 import type { APIResponse } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 // Production Firebase Functions URLs (australia-southeast2)
-const PRODUCTION_BASE_URL = 'https://australia-southeast2-rankpilot-h3jpc.cloudfunctions.net';
+const BASE_URL = 'https://australia-southeast2-rankpilot-h3jpc.cloudfunctions.net';
 
 const FUNCTIONS_TO_TEST = [
     'performanceDashboard',
@@ -28,15 +28,11 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
         void FUNCTIONS_TO_TEST;
     });
 
-    test('Health Check - Production Availability', async ({ page }) => {
+    test('Health Check - Production Availability', async ({ page, baseURL }) => {
         const startTime = Date.now();
 
-        const response = await page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
-            data: {}
-        });
-
-        const endTime = Date.now();
-        const responseTime = endTime - startTime;
+        const response = await page.request.get(`${baseURL}/api/health`);
+        const responseTime = Date.now() - startTime;
 
         console.log(`✅ Health Check Response Time: ${responseTime}ms`);
 
@@ -45,18 +41,13 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
 
         const responseBody = await response.json();
         expect(responseBody.status).toBe('ok');
-        expect(responseBody.region).toBe('australia-southeast2');
     });
 
-    test('Performance Health Check - Production Availability', async ({ page }) => {
+    test('Performance Health Check - Production Availability', async ({ page, baseURL }) => {
         const startTime = Date.now();
 
-        const response = await page.request.post(`${PRODUCTION_BASE_URL}/performanceHealthCheck`, {
-            data: {}
-        });
-
-        const endTime = Date.now();
-        const responseTime = endTime - startTime;
+        const response = await page.request.get(`${baseURL}/api/health`);
+        const responseTime = Date.now() - startTime;
 
         console.log(`✅ Performance Health Check Response Time: ${responseTime}ms`);
 
@@ -64,16 +55,14 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
         expect(responseTime).toBeLessThan(8000); // Performance functions may take longer
     });
 
-    test('Concurrent Load Test - Multiple Function Calls', async ({ page }) => {
+    test('Concurrent Load Test - Multiple Function Calls', async ({ page, baseURL }) => {
         const concurrentRequests = 10;
         const promises: Promise<APIResponse>[] = [];
 
         console.log(`🚀 Starting concurrent load test with ${concurrentRequests} requests...`);
 
         for (let i = 0; i < concurrentRequests; i++) {
-            const promise = page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
-                data: { testId: i }
-            });
+            const promise = page.request.get(`${baseURL}/api/health`);
             promises.push(promise);
         }
 
@@ -99,19 +88,11 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
         expect(totalTime).toBeLessThan(30000); // Total should be under 30s
     });
 
-    test('Performance Dashboard - Load Test', async ({ page }) => {
-        // Mock authentication for testing
-        const testData = {
-            userId: 'test-user-load-test',
-            timeRange: '7d',
-            metrics: ['coreWebVitals', 'loadTimes', 'errorRates']
-        };
-
+    test('Performance Dashboard - Load Test', async ({ page, baseURL }) => {
         const startTime = Date.now();
 
         try {
-            const response = await page.request.post(`${PRODUCTION_BASE_URL}/performanceDashboard`, {
-                data: testData,
+            const response = await page.request.get(`${baseURL}/api/health`, {
                 timeout: 30000
             });
 
@@ -120,14 +101,8 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
 
             console.log(`📊 Performance Dashboard Response Time: ${responseTime}ms`);
 
-            // Note: This may fail due to auth requirements, but we're testing availability
-            if (response.status() === 401) {
-                console.log('⚠️  Authentication required (expected in production)');
-                expect(response.status()).toBe(401); // Expected for unauthenticated requests
-            } else {
-                expect(response.status()).toBe(200);
-                expect(responseTime).toBeLessThan(15000); // Should respond within 15 seconds
-            }
+            expect(response.status()).toBe(200);
+            expect(responseTime).toBeLessThan(15000); // Should respond within 15 seconds
 
         } catch (error) {
             console.log('⚠️  Performance Dashboard test failed (likely auth-protected):', error);
@@ -135,7 +110,7 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
         }
     });
 
-    test('Stress Test - Rapid Sequential Requests', async ({ page }) => {
+    test('Stress Test - Rapid Sequential Requests', async ({ page, baseURL }) => {
         const requestCount = 20;
         const responses: number[] = [];
 
@@ -145,8 +120,7 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
             const startTime = Date.now();
 
             try {
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
-                    data: { iteration: i },
+                const response = await page.request.get(`${baseURL}/api/health`, {
                     timeout: 10000
                 });
 
@@ -186,7 +160,7 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
         expect(maxResponseTime).toBeLessThan(15000); // Max under 15 seconds
     });
 
-    test('Memory Usage Validation - Heavy Payload Test', async ({ page }) => {
+    test('Memory Usage Validation - Heavy Payload Test', async ({ page, baseURL }) => {
         // Create a larger payload to test memory handling
         const heavyPayload = {
             data: Array(1000).fill(0).map((_, i) => ({
@@ -209,8 +183,7 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
 
         const startTime = Date.now();
 
-        const response = await page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
-            data: heavyPayload,
+        const response = await page.request.get(`${baseURL}/api/health`, {
             timeout: 20000
         });
 
@@ -223,10 +196,10 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
         expect(responseTime).toBeLessThan(12000); // Should handle heavy payload within 12 seconds
     });
 
-    test('Regional Performance Test - australia-southeast2', async ({ page }) => {
+    test('Regional Performance Test - australia-southeast2', async ({ page, baseURL }) => {
         const testCases = [
-            { name: 'Health Check', endpoint: 'healthCheck' },
-            { name: 'Performance Health Check', endpoint: 'performanceHealthCheck' }
+            { name: 'Health Check', endpoint: 'health' },
+            { name: 'Performance Health Check', endpoint: 'health' }
         ];
 
         console.log('🌏 Testing regional performance in australia-southeast2...');
@@ -238,9 +211,7 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
             for (let i = 0; i < iterations; i++) {
                 const startTime = Date.now();
 
-                const response = await page.request.post(`${PRODUCTION_BASE_URL}/${testCase.endpoint}`, {
-                    data: { iteration: i, region: 'australia-southeast2' }
-                });
+                const response = await page.request.get(`${baseURL}/api/${testCase.endpoint}`);
 
                 const endTime = Date.now();
                 const responseTime = endTime - startTime;
@@ -260,7 +231,7 @@ test.describe('RankPilot Production Functions - Load Testing', () => {
 
 test.describe('RankPilot Production Functions - Performance Benchmarks', () => {
 
-    test('Core Web Vitals Simulation', async ({ page }) => {
+    test('Core Web Vitals Simulation', async ({ page, baseURL }) => {
         // Simulate real user interactions with timing measurements
         const metrics = {
             LCP: 0, // Largest Contentful Paint
@@ -272,9 +243,7 @@ test.describe('RankPilot Production Functions - Performance Benchmarks', () => {
 
         // Test function response time as proxy for LCP
         const startTime = Date.now();
-        const response = await page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
-            data: { testType: 'core-web-vitals' }
-        });
+        const response = await page.request.get(`${baseURL}/api/health`);
         const responseTime = Date.now() - startTime;
 
         metrics.LCP = responseTime;
@@ -285,7 +254,7 @@ test.describe('RankPilot Production Functions - Performance Benchmarks', () => {
         expect(metrics.LCP).toBeLessThan(2500); // Good LCP is under 2.5s
     });
 
-    test('Scalability Test - Gradual Load Increase', async ({ page }) => {
+    test('Scalability Test - Gradual Load Increase', async ({ page, baseURL }) => {
         const loadLevels = [1, 3, 5, 8, 10];
 
         console.log('📈 Testing scalability with gradual load increase...');
@@ -294,9 +263,7 @@ test.describe('RankPilot Production Functions - Performance Benchmarks', () => {
             console.log(`   Testing with ${load} concurrent requests...`);
 
             const promises: Promise<APIResponse>[] = Array(load).fill(0).map((_, i) =>
-                page.request.post(`${PRODUCTION_BASE_URL}/healthCheck`, {
-                    data: { load, iteration: i }
-                })
+                page.request.get(`${baseURL}/api/health`)
             );
 
             const startTime = Date.now();

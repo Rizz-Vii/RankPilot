@@ -12,9 +12,9 @@ test.describe("Team Reports - Comprehensive Suite", () => {
   test.beforeEach(async ({ page }) => {
     orchestrator = new TestOrchestrator(page);
 
-    // Set extended timeouts for complex interactions
-    page.setDefaultNavigationTimeout(30000);
-    page.setDefaultTimeout(20000);
+    // Set extended timeouts for complex interactions (match global config)
+    page.setDefaultNavigationTimeout(45000);
+    page.setDefaultTimeout(30000);
   });
 
   test.describe("Page Loading and Navigation", () => {
@@ -23,10 +23,11 @@ test.describe("Team Reports - Comprehensive Suite", () => {
 
       // Test with starter tier (should have access)
       await orchestrator.userManager.loginAs("starter");
-      await page.goto("/team/reports", { waitUntil: "networkidle" });
-
-      // Verify page loads correctly
-      await expect(page.locator("h1")).toContainText("Team Reports");
+      // Navigate and wait for DOM content
+      await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
+      // Wait for main heading to ensure client-side rendering completed
+      await page.locator("h1").waitFor({ state: "visible", timeout: 30000 });
+      await expect(page.locator("h1")).toContainText("Team Reports", { timeout: 30000 });
       await expect(page.locator("text=Create, manage, and share SEO performance reports")).toBeVisible();
 
       // Verify navigation elements
@@ -50,7 +51,8 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       console.log("⬅️ Testing back navigation...");
 
       await orchestrator.userManager.loginAs("agency");
-      await page.goto("/team/reports", { waitUntil: "networkidle" });
+      await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
+      await expect(page.locator("button", { hasText: "Back to Team" })).toBeVisible({ timeout: 20000 });
 
       const backButton = page.locator("button", { hasText: "Back to Team" });
       await expect(backButton).toBeVisible();
@@ -68,7 +70,8 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       console.log("➕ Testing comprehensive report creation...");
 
       await orchestrator.userManager.loginAs("agency");
-      await page.goto("/team/reports", { waitUntil: "networkidle" });
+      await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
+      await expect(page.locator("button", { hasText: "New Report" })).toBeVisible({ timeout: 20000 });
 
       // Open create dialog
       const newReportButton = page.locator("button", { hasText: "New Report" });
@@ -119,7 +122,8 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       console.log("📝 Testing form validation...");
 
       await orchestrator.userManager.loginAs("starter");
-      await page.goto("/team/reports", { waitUntil: "networkidle" });
+      await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
+      await expect(page.locator("[role=dialog]")).toBeHidden({ timeout: 20000 });
 
       // Open create dialog
       await page.locator("button", { hasText: "New Report" }).click();
@@ -138,7 +142,8 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       console.log("⏰ Testing scheduled report creation...");
 
       await orchestrator.userManager.loginAs("enterprise");
-      await page.goto("/team/reports", { waitUntil: "networkidle" });
+      await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
+      await expect(page.locator("#title")).toBeHidden({ timeout: 20000 });
 
       // Open create dialog
       await page.locator("button", { hasText: "New Report" }).click();
@@ -176,7 +181,8 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       console.log("📋 Testing report display and data...");
 
       await orchestrator.userManager.loginAs("enterprise");
-      await page.goto("/team/reports", { waitUntil: "networkidle" });
+      await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
+      await expect(page.locator("#scheduledDate")).toBeHidden({ timeout: 20000 });
 
       // Should display mock reports
       await expect(page.locator("text=Monthly SEO Performance Report")).toBeVisible();
@@ -211,7 +217,8 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       console.log("⚙️ Testing report dropdown menu...");
 
       await orchestrator.userManager.loginAs("agency");
-      await page.goto("/team/reports", { waitUntil: "networkidle" });
+      await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
+      await expect(page.locator("text=Monthly SEO Performance Report")).toBeVisible({ timeout: 30000 });
 
       // Find first report dropdown button
       const dropdownButton = page.locator("button").filter({ has: page.locator("svg") }).first();
@@ -231,7 +238,8 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       console.log("⬇️ Testing report download...");
 
       await orchestrator.userManager.loginAs("enterprise");
-      await page.goto("/team/reports", { waitUntil: "networkidle" });
+      await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
+      await expect(page.locator("button").filter({ has: page.locator("svg") }).first()).toBeVisible({ timeout: 20000 });
 
       // Find first report and open dropdown
       const firstReport = page.locator('.hover\\:shadow-lg').first();
@@ -252,7 +260,8 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       console.log("🗑️ Testing report deletion...");
 
       await orchestrator.userManager.loginAs("enterprise");
-      await page.goto("/team/reports", { waitUntil: "networkidle" });
+      await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
+      await expect(page.locator('.hover\\:shadow-lg').first()).toBeVisible({ timeout: 30000 });
 
       // Create a test report first
       await page.locator("button", { hasText: "New Report" }).click();
@@ -281,7 +290,8 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       console.log("🔍 Testing report search functionality...");
 
       await orchestrator.userManager.loginAs("starter");
-      await page.goto("/team/reports", { waitUntil: "networkidle" });
+      await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
+      await expect(page.locator("text=Report to Delete")).toBeHidden({ timeout: 30000 });
 
       // Search for specific report
       const searchInput = page.locator("input[placeholder*='Search reports']");
@@ -302,7 +312,8 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       console.log("🎯 Testing type filtering...");
 
       await orchestrator.userManager.loginAs("agency");
-      await page.goto("/team/reports", { waitUntil: "networkidle" });
+      await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
+      await expect(page.locator("input[placeholder*='Search reports']")).toBeVisible({ timeout: 20000 });
 
       // Filter by Monthly type
       const typeFilter = page.locator("select, [role=combobox]").filter({ hasText: "All Types" }).first();
@@ -320,7 +331,8 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       console.log("⚡ Testing status filtering...");
 
       await orchestrator.userManager.loginAs("enterprise");
-      await page.goto("/team/reports", { waitUntil: "networkidle" });
+      await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
+      await expect(page.locator("select, [role=combobox]")).toBeVisible({ timeout: 20000 });
 
       // Filter by Published status
       const statusFilter = page.locator("select, [role=combobox]").filter({ hasText: "All Statuses" }).first();
@@ -338,7 +350,8 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       console.log("📭 Testing empty state display...");
 
       await orchestrator.userManager.loginAs("starter");
-      await page.goto("/team/reports", { waitUntil: "networkidle" });
+      await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
+      await expect(page.locator("text=No reports found")).toBeHidden({ timeout: 20000 });
 
       // Search for non-existent report
       const searchInput = page.locator("input[placeholder*='Search reports']");
@@ -357,7 +370,8 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       console.log("🏷️ Testing content section display...");
 
       await orchestrator.userManager.loginAs("agency");
-      await page.goto("/team/reports", { waitUntil: "networkidle" });
+      await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
+      await expect(page.locator("text=Content Sections")).toBeVisible({ timeout: 20000 });
 
       // Check for content section indicators
       await expect(page.locator("text=Content Sections")).toBeVisible();
@@ -375,7 +389,8 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       console.log("👥 Testing recipient display...");
 
       await orchestrator.userManager.loginAs("enterprise");
-      await page.goto("/team/reports", { waitUntil: "networkidle" });
+      await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
+      await expect(page.locator("text=Recipients")).toBeVisible({ timeout: 20000 });
 
       // Check for recipient information
       await expect(page.locator("text=Recipients")).toBeVisible();
@@ -391,7 +406,8 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       console.log("⏰ Testing schedule information display...");
 
       await orchestrator.userManager.loginAs("agency");
-      await page.goto("/team/reports", { waitUntil: "networkidle" });
+      await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
+      await expect(page.locator(".bg-blue-500", { hasText: "Scheduled" })).toBeVisible({ timeout: 20000 });
 
       // Look for scheduled reports and their schedule info
       const scheduledBadge = page.locator(".bg-blue-500", { hasText: "Scheduled" });
@@ -412,7 +428,8 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       await page.setViewportSize({ width: 375, height: 667 });
 
       await orchestrator.userManager.loginAs("agency");
-      await page.goto("/team/reports", { waitUntil: "networkidle" });
+      await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
+      await page.locator("h1").waitFor({ state: "visible", timeout: 30000 });
 
       // Verify responsive layout
       await expect(page.locator("h1")).toBeVisible();
@@ -443,7 +460,9 @@ test.describe("Team Reports - Comprehensive Suite", () => {
       await orchestrator.userManager.loginAs("starter");
 
       const startTime = Date.now();
-      await page.goto("/team/reports", { waitUntil: "networkidle" });
+      await page.goto("/team/reports", { waitUntil: "domcontentloaded" });
+      // Wait for a representative element indicating client render finished
+      await expect(page.locator('.grid .hover\\:shadow-lg').first()).toBeVisible({ timeout: 30000 });
       const loadTime = Date.now() - startTime;
 
       // Should load within 5 seconds

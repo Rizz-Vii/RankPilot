@@ -314,9 +314,9 @@ export class AIDevAutomation extends EventEmitter {
             throw new Error(`Test plan ${testPlanId} not found`);
         }
 
-        const testResults = await this.executePerformanceTests(testPlan);
-        const regressionAnalysis = await this.analyzePerformanceRegression(testResults);
-        const recommendations = await this.generatePerformanceRecommendations(testResults, regressionAnalysis);
+        const testResults = this.executePerformanceTests(testPlan);
+        const regressionAnalysis = this.analyzePerformanceRegression(testResults);
+        const recommendations = this.generatePerformanceRecommendations(testResults, regressionAnalysis);
 
         const result = {
             test_results: testResults,
@@ -511,7 +511,7 @@ export class AIDevAutomation extends EventEmitter {
         };
     }
 
-    private async executePerformanceTests(testPlan: TestPlan): Promise<PerformanceTestResult[]> {
+    private executePerformanceTests(testPlan: TestPlan): PerformanceTestResult[] {
         const results: PerformanceTestResult[] = [];
 
         for (const suite of testPlan.test_suites) {
@@ -532,7 +532,7 @@ export class AIDevAutomation extends EventEmitter {
         return results;
     }
 
-    private async analyzePerformanceRegression(testResults: PerformanceTestResult[]): Promise<RegressionItem[]> {
+    private analyzePerformanceRegression(testResults: PerformanceTestResult[]): RegressionItem[] {
         return testResults.map(result => ({
             metric: result.metric,
             current_value: result.value,
@@ -542,7 +542,7 @@ export class AIDevAutomation extends EventEmitter {
         }));
     }
 
-    private async generatePerformanceRecommendations(testResults: PerformanceTestResult[], regressionAnalysis: RegressionItem[]): Promise<PerformanceRecommendation[]> {
+    private generatePerformanceRecommendations(testResults: PerformanceTestResult[], regressionAnalysis: RegressionItem[]): PerformanceRecommendation[] {
         const recommendations: PerformanceRecommendation[] = [];
 
         const failedTests = testResults.filter(r => !r.passed);

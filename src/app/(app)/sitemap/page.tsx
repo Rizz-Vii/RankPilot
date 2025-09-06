@@ -52,6 +52,11 @@ const sitemapSections = [
     icon: <BarChart3 className="h-5 w-5" />,
     links: [
       {
+        name: "Voice Agent",
+        href: "/voice",
+        description: "Call prospects and auto-book appointments (feature gated)",
+      },
+      {
         name: "Link Analysis",
         href: "/link-view",
         description: "Analyze backlink quality and opportunities",

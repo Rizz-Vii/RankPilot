@@ -1,6 +1,8 @@
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import crypto from 'crypto';
 import { NextResponse, type NextRequest } from 'next/server';
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 // NOTE: Global collection 'invites_index' provides O(1) inviteId -> teamId mapping.
 // Cleanup: scripts/cleanup-invites.ts prunes accepted/expired invites and orphan index docs.
 

@@ -16,6 +16,7 @@ async function globalSetup(config: FullConfig) {
   const page = await context.newPage();
 
   try {
+    const apiOnly = process.env.API_TESTS_ONLY === '1';
     // Use TEST_BASE_URL if available, otherwise fall back to localhost
     const baseUrl = process.env.TEST_BASE_URL || "http://localhost:3000";
     console.log(`🌐 Warming up / ensuring server at ${baseUrl}...`);
@@ -74,7 +75,7 @@ async function globalSetup(config: FullConfig) {
       }
     }
 
-    // Wait for the server to be ready and warm up key pages
+    // Wait for the server to be ready and warm up key pages (or API only readiness)
     const maxRetries = 15; // allow a bit more time after on-demand spawn
     let retries = 0;
 
@@ -83,71 +84,78 @@ async function globalSetup(config: FullConfig) {
 
     while (retries < maxRetries) {
       try {
-        console.log(
-          `📡 Attempting to connect (${retries + 1}/${maxRetries})...`
-        );
+        console.log(`📡 Attempting to connect (${retries + 1}/${maxRetries})...`);
 
-        // For deployed sites, use a simpler wait condition
-        const waitCondition = isDeployedSite ? "domcontentloaded" : "networkidle";
-        const timeout = isDeployedSite ? 15000 : 30000;
-
-        // Try to load the homepage
-        const response = await page.goto(baseUrl, {
-          waitUntil: waitCondition,
-          timeout: timeout,
-        });
-
-        console.log(`🔍 Response status: ${response?.status()}, URL: ${response?.url()}`);
-
-        if (response?.ok()) {
+        if (apiOnly) {
+          // For API-only tests, probe a simple health endpoint instead of rendering pages
+          const controller = new AbortController();
+          const timeout = isDeployedSite ? 10000 : 12000;
+          const t = setTimeout(() => controller.abort(), timeout);
+          const resp = await fetch(`${baseUrl}/api/health`, { signal: controller.signal }).catch(() => undefined);
+          clearTimeout(t);
+          if (resp?.ok) {
+            console.log("✅ API server is ready!");
+            break;
+          }
+        } else {
+          // For full runs, ensure homepage is renderable
+          const waitCondition = "domcontentloaded";
+          const timeout = isDeployedSite ? 15000 : 25000;
+          const response = await page.goto(baseUrl, { waitUntil: waitCondition, timeout });
+          console.log(`🔍 Response status: ${response?.status()}, URL: ${response?.url()}`);
+          if (response?.ok()) {
           console.log("✅ Server is ready!");
 
-          // Pre-compile critical pages to speed up tests
-          // For deployed sites, only warm the homepage to avoid routing issues
-          const pagesToWarm = isDeployedSite ? ["/"] : ["/", "/login", "/dashboard"];
+            // Pre-compile critical pages to speed up tests
+            // For deployed sites, only warm the homepage to avoid routing issues
+            const pagesToWarm = isDeployedSite ? ["/"] : ["/", "/login", "/dashboard"];
 
-          console.log("🔥 Pre-compiling critical pages...");
-          for (const path of pagesToWarm) {
+            console.log("🔥 Pre-compiling critical pages...");
+            for (const path of pagesToWarm) {
+              try {
+                console.log(`   - Warming ${path}...`);
+                await page.goto(`${baseUrl}${path}`, {
+                  waitUntil: "domcontentloaded",
+                  timeout: 10000, // Shorter timeout for warming
+                });
+                // Wait explicitly for visible root (main or typical data-testid roots)
+                await page.locator('main, [data-testid], #root').first().waitFor({ state: 'visible', timeout: 8000 }).catch(() => { });
+                // Shorter delay for deployed sites
+                await page.waitForTimeout(isDeployedSite ? 1000 : 1500);
+              } catch {
+                console.log(
+                  `   ⚠️  ${path} not available (this is OK if not implemented yet)`
+                );
+              }
+            }
+
+            // Attempt programmatic login once to persist authenticated storage for later tests
             try {
-              console.log(`   - Warming ${path}...`);
-              await page.goto(`${baseUrl}${path}`, {
-                waitUntil: "domcontentloaded",
-                timeout: 10000, // Shorter timeout for warming
-              });
-              // Shorter delay for deployed sites
-              await page.waitForTimeout(isDeployedSite ? 1000 : 2000);
-            } catch {
-              console.log(
-                `   ⚠️  ${path} not available (this is OK if not implemented yet)`
-              );
+              const loginPage = await context.newPage();
+              await loginPage.goto(`${baseUrl}/login`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+              await loginPage.fill('#email', process.env.TEST_ADMIN_EMAIL || 'admin@rankpilot.com');
+              await loginPage.fill('#password', process.env.TEST_ADMIN_PASSWORD || 'admin123');
+              await Promise.all([
+                loginPage.waitForURL(/dashboard|finance|app/, { timeout: 20000 }).catch(() => { }),
+                loginPage.press('#password', 'Enter')
+              ]);
+              await loginPage.waitForTimeout(1000);
+              const storagePath = process.env.PLAYWRIGHT_STORAGE || 'test-results/.auth/admin.json';
+              const fs = await import('fs');
+              const path = await import('path');
+              const dir = path.dirname(storagePath);
+              if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+              }
+              await context.storageState({ path: storagePath });
+              console.log(`🗄️  Saved authenticated storage state to ${storagePath}`);
+              await loginPage.close();
+            } catch (e) {
+              console.warn('⚠️  Auth storage state capture failed (continuing):', e instanceof Error ? e.message : e);
             }
+            console.log("🎯 Server warmup complete!");
+            break;
           }
-
-          // Attempt programmatic login once to persist authenticated storage for later tests
-          try {
-            const loginPage = await context.newPage();
-            await loginPage.goto(`${baseUrl}/login`, { waitUntil: 'domcontentloaded', timeout: 15000 });
-            await loginPage.fill('#email', process.env.TEST_ADMIN_EMAIL || 'admin@rankpilot.com');
-            await loginPage.fill('#password', process.env.TEST_ADMIN_PASSWORD || 'admin123');
-            await Promise.all([
-              loginPage.waitForURL(/dashboard|finance|app/, { timeout: 20000 }).catch(() => { }),
-              loginPage.press('#password', 'Enter')
-            ]);
-            await loginPage.waitForTimeout(1000);
-            const storagePath = process.env.PLAYWRIGHT_STORAGE || 'test-results/.auth/admin.json';
-            const fs = await import('fs');
-            const path = await import('path');
-            const dir = path.dirname(storagePath);
-            if (!fs.existsSync(dir)) {
-              fs.mkdirSync(dir, { recursive: true });
-            }
-            await context.storageState({ path: storagePath });
-            console.log(`🗄️  Saved authenticated storage state to ${storagePath}`);
-            await loginPage.close();
-          } catch (e) {
-            console.warn('⚠️  Auth storage state capture failed (continuing):', e instanceof Error ? e.message : e);
-          }
-          console.log("🎯 Server warmup complete!");
 
           // Seed minimal kpiDaily doc (only if Firestore emulator or dev; silently ignore errors)
           try {
@@ -165,7 +173,12 @@ async function globalSetup(config: FullConfig) {
         retries++;
         const delay = isDeployedSite ? 2000 : 3000; // Shorter delay for deployed sites
         console.log(`❌ Connection failed (${error}), retrying in ${delay / 1000} seconds...`);
-        await page.waitForTimeout(delay);
+        // When API-only, we don't need a browser page to wait; fall back to simple delay
+        if (apiOnly) {
+          await new Promise(r => setTimeout(r, delay));
+        } else {
+          await page.waitForTimeout(delay);
+        }
       }
     }
 

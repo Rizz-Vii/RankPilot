@@ -6,6 +6,7 @@ import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { PT_Sans, Space_Grotesk } from "next/font/google";
 import { cookies, headers as reqHeaders } from "next/headers";
+import Script from "next/script";
 import type React from "react";
 
 export const metadata: Metadata = {
@@ -122,7 +123,7 @@ export default async function RootLayout({
   // Align with Next's standard header key to ensure consistency with CSP
   // Use nonce only in production to avoid hydration mismatches in dev tooling
   const hdrs = await reqHeaders();
-  const headerNonce = hdrs.get('x-nextjs-csp-nonce') ?? hdrs.get('x-rp-csp-nonce') ?? undefined;
+  const headerNonce = hdrs.get('x-nextjs-csp-nonce') ?? hdrs.get('x-nonce') ?? hdrs.get('x-rp-csp-nonce') ?? undefined;
   const cspNonce = process.env.NODE_ENV === 'production' ? headerNonce : undefined;
   return (
     <html lang={htmlLang} dir={htmlDir} suppressHydrationWarning className={`h-full ${ptSans.variable} ${spaceGrotesk.variable}`}>
@@ -131,18 +132,18 @@ export default async function RootLayout({
       </head>
       {/* Deterministic ordering: base -> flags -> lang -> theme */}
       <body suppressHydrationWarning className={bodyClass}>
-        <script
-          suppressHydrationWarning
-          // Inline no-flash script: reconstructs class list deterministically (same ordering) before React hydrates
+        <Script
+          id="no-flash"
+          strategy="beforeInteractive"
+          nonce={cspNonce}
           dangerouslySetInnerHTML={{
-            __html: `(()=>{try{var DEV=location.hostname==='localhost';function log(){if(DEV){try{console.debug.apply(console,arguments);}catch{}}}var b=document.body,de=document.documentElement;function toTriplet(color){try{if(!color||typeof color!=='string')return '210 10% 50%';var m=color.match(/^hsla?\\(([^)]+)\\)$/i);if(m){var inner=m[1].replace(/\\\//g,' ').trim();var p=inner.split(/[\\s,]+/).filter(Boolean);var h=parseFloat(p[0]);var s=parseFloat(p[1]);var l=parseFloat(p[2]);if(isFinite(h)&&isFinite(s)&&isFinite(l))return h+' '+s+'% '+l+'%';}
+            __html: `(()=>{try{var DEV=location.hostname==='localhost';function log(){if(DEV){try{console.debug.apply(console,arguments);}catch{}}}var b=document.body,de=document.documentElement;function toTriplet(color){try{if(!color||typeof color!=='string')return '210 10% 50%';var m=color.match(/^hsla?\\(([^)]+)\\)$/i);if(m){var inner=m[1].replace(/\\\\/g,' ').trim();var p=inner.split(/[\\s,]+/).filter(Boolean);var h=parseFloat(p[0]);var s=parseFloat(p[1]);var l=parseFloat(p[2]);if(isFinite(h)&&isFinite(s)&&isFinite(l))return h+' '+s+'% '+l+'%';}
 var m2=color.match(/^rgba?\\(([^)]+)\\)$/i);if(m2){var parts=m2[1].split(',').map(function(s){return parseFloat(s.trim());});if(parts.length>=3&&parts.slice(0,3).every(isFinite)){var r=parts[0]/255,g=parts[1]/255,bl=parts[2]/255;var max=Math.max(r,g,bl),min=Math.min(r,g,bl);var h2=0,s2=0,l2=(max+min)/2;if(max!==min){var d=max-min;s2=l2>0.5?d/(2-max-min):d/(max+min);switch(max){case r:h2=(g-bl)/d+(g<bl?6:0);break;case g:h2=(bl-r)/d+2;break;default:h2=(r-g)/d+4;}h2*=60;}return h2+' '+(s2*100)+'% '+(l2*100)+'%';}}
-var m3=color.match(/^#([0-9a-fA-F]{6})$/);if(m3){var hx=m3[1];var r2=parseInt(hx.slice(0,2),16)/255,g2=parseInt(hx.slice(2,4),16)/255,b2=parseInt(hx.slice(4,6),16)/255;var max2=Math.max(r2,g2,b2),min2=Math.min(r2,g2,b2);var h3=0,s3=0,l3=(max2+min2)/2;if(max2!==min2){var d2=max2-min2;s3=l3>0.5?d2/(2-max2-min2):d2/(max2+min2);switch(max2){case r2:h3=(g2-b2)/d2+(g2<b2?6:0);break;case g2:h3=(b2-r2)/d2+2;break;default:h3=(r2-g2)/d2+4;}h3*=60;}return h3+' '+(s3*100)+'% '+(l3*100)+'%';}
+var m3=color.match(/^#([0-9a-fA-F]{6})$/);if(m3){var hx=m3[1];var r2=parseInt(hx.slice(0,2),16)/255,g2=parseInt(hx.slice(2,4),16)/255,b2=parseInt(hx.slice(4,6),16)/255;var max2=Math.max(r2,g2,b2),min2=Math.min(r2,g2,b2);var h3=0,s3=0,l3=(max2+min2)/2;if(max2!==min2){var d2=max2-min2;s3=l3>0.5?d2/(2-max2-min2):d2/(max2+max2);switch(max2){case r2:h3=(g2-b2)/d2+(g2<b2?6:0);break;case g2:h3=(b2-r2)/d2+2;break;default:h3=(r2-g2)/d2+4;}h3*=60;}return h3+' '+(s3*100)+'% '+(l3*100)+'%';}
 return '210 10% 50%';}catch{return '210 10% 50%';}}
 function applyCustomColors(cc){try{if(!cc||typeof cc!=='object')return;var r=de; if(cc.primary&&typeof cc.primary==='string'){r.style.setProperty('--color-primary',cc.primary);r.style.setProperty('--primary',toTriplet(cc.primary));}if(cc.secondary&&typeof cc.secondary==='string'){r.style.setProperty('--color-secondary',cc.secondary);r.style.setProperty('--secondary',toTriplet(cc.secondary));}if(cc.accent&&typeof cc.accent==='string'){r.style.setProperty('--color-accent',cc.accent);r.style.setProperty('--accent',toTriplet(cc.accent));}}catch{}}
 function rebuild(data){if(!b||!de)return;var lang=de.lang||'en';var desired=(data&&(data.highContrast?'high-contrast':data.theme))||'dark';var flags=[];if(data&&data.reducedMotion)flags.push('reduced-motion');if(data&&data.colorBlind)flags.push('colorblind-support');var darkOn=(desired==='dark'&&!((data&&data.highContrast)));var cls=['font-body','antialiased','h-full'].concat(flags,'lang-'+lang,'theme-'+desired,(darkOn?'dark':''));var next=cls.filter(Boolean).join(' ');if(b.className!==next){b.className=next;log('body class sync:',next);} if(data&&data.customColors){applyCustomColors(data.customColors);} }function read(){var data=null;/* cookie */var cm=document.cookie.match(/(?:^|; )rp_theme=([^;]+)/);if(cm){try{data=JSON.parse(decodeURIComponent(cm[1]));}catch(e){log('cookie parse fail',e);} }if(!data||!data.customColors){try{var ls=localStorage.getItem('rankpilot-theme-preferences');if(ls){var p=JSON.parse(ls);var autoMode=p.mode==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p.mode;data=Object.assign({},data||{}, {theme:(p.highContrast?'high-contrast':autoMode), reducedMotion:p.reducedMotion, colorBlind:p.colorBlindnessSupport, highContrast:p.highContrast, customColors:p.customColors});}else{data=Object.assign({},{theme:'dark'});} }catch(e){log('ls parse fail',e); data=Object.assign({},{theme:'dark'});} }/* language cookie */var lcMatch=document.cookie.match(/(?:^|; )rp_lang=([^;]+)/);if(lcMatch){var lc=decodeURIComponent(lcMatch[1]).toLowerCase();if(/^[a-z]{2}$/.test(lc)){if(!de.lang||de.lang!==lc)de.lang=lc;var rtl=['ar','he'];de.dir=rtl.includes(lc)?'rtl':'ltr';}}return data;}function apply(){var d=read();rebuild(d);}apply();}catch(e){}})();`
           }}
-          nonce={cspNonce}
         />
         {/* Centralized PWA initializer: unregister SWs when PWA is disabled */}
         <PWAInit />

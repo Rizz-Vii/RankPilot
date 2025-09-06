@@ -369,40 +369,7 @@ export const managementItems: NavItem[] = [
     requiredTier: "enterprise",
     feature: "marketing_dashboard",
   },
-  // Admin link now in Management group
-  {
-    title: "Admin",
-    href: "/adminonly",
-    icon: Shield,
-    description: "Administrative controls and user management",
-    adminOnly: true,
-
-  },
-  {
-    title: "Observability",
-    href: "/admin/observability",
-    icon: BarChart3,
-    description: "System KPIs & runtime metrics (provenance, latency, AI cost)",
-    adminOnly: true,
-  },
-  {
-    title: "Events",
-    href: "/admin/events",
-    icon: Activity,
-    description: "Event Backbone explorer (admin-only)",
-    adminOnly: true,
-    feature: "observability",
-  },
-  {
-    title: "Integration Hub",
-    href: "/integration-hub",
-    icon: Layers,
-    description: "Enterprise Integration Hub (demo)",
-    adminOnly: true,
-    requiredTier: "enterprise",
-    feature: "integration_hub",
-    badge: "Demo",
-  },
+  // Admin-only items were moved to dedicated Admin group below
 ];
 
 // User Navigation - Profile only (no Settings duplication)
@@ -540,6 +507,49 @@ export const navGroups: NavGroup[] = [
     defaultExpanded: false,
     collapsible: true,
   },
+  // Admin group: visible only to admin users (items gated via adminOnly)
+  {
+    title: "Admin",
+    icon: Shield,
+    id: "admin",
+    description: "Administration & Observability",
+    items: [
+      {
+        title: "Admin",
+        href: "/adminonly",
+        icon: Shield,
+        description: "Administrative controls and user management",
+        adminOnly: true,
+      },
+      {
+        title: "Observability",
+        href: "/admin/observability",
+        icon: BarChart3,
+        description: "System KPIs & runtime metrics (provenance, latency, AI cost)",
+        adminOnly: true,
+      },
+      {
+        title: "Events",
+        href: "/admin/events",
+        icon: Activity,
+        description: "Event Backbone explorer (admin-only)",
+        adminOnly: true,
+        feature: "observability",
+      },
+      {
+        title: "Integration Hub",
+        href: "/integration-hub",
+        icon: Layers,
+        description: "Enterprise Integration Hub (demo)",
+        adminOnly: true,
+        requiredTier: "enterprise",
+        feature: "integration_hub",
+        badge: "Demo",
+      },
+    ],
+    defaultExpanded: false,
+    collapsible: true,
+  },
   // NOTE: Removed "Account & Settings" group - Profile now standalone, Settings at bottom
 ];
 
@@ -570,8 +580,10 @@ export const getVisibleNavGroups = (
     .map((group) => {
       const processedItems = group.items
         .map((item) => {
-          // Admin restriction
+          // Admin restriction and privileges
           if (item.adminOnly && !isAdmin) return null;
+          // Admins see everything unlocked
+          if (isAdmin) return { ...item, disabled: false };
           if (!item.requiredTier) return { ...item, disabled: false };
           if (!userTier) {
             return includeLocked
@@ -605,6 +617,8 @@ export const getVisibleNavItems = (
   return flatNavItems
     .map((item) => {
       if (item.adminOnly && !isAdmin) return null;
+      // Admins see everything unlocked
+      if (isAdmin) return { ...item, disabled: false };
       if (!item.requiredTier) return { ...item, disabled: false };
       if (!userTier) return includeLocked ? { ...item, disabled: true } : null;
       const userIndex = TIER_HIERARCHY.indexOf(userTier as SubscriptionTier);

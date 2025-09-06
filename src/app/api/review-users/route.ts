@@ -1,7 +1,9 @@
 import { extractErrorMessage } from '@/lib/errors/extract-error-message';
-import { adminDb } from "@/lib/firebase-admin";
+import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { handleCors } from '@/lib/http/cors';
 import { NextResponse } from "next/server";
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 // Local interfaces to provide structure for analysis objects (avoid explicit any)
@@ -69,9 +71,36 @@ function getExpectedQuotasForTier(tier: string): Record<string, number> {
   return quotaMap[tier] || quotaMap.free;
 }
 
-export async function GET(request: Request): Promise<NextResponse> {
+export async function GET(request: Request): Promise<Response> {
   try {
-    console.log("🔍 Starting comprehensive user data review...");
+    // CORS support (GET/OPTIONS) and auth gate
+    const cors = handleCors(request as unknown as Request, { allowMethods: ['GET', 'OPTIONS'] });
+    if ((cors as unknown as { preflight?: Response }).preflight) return (cors as unknown as { preflight: Response }).preflight;
+
+    // Authorization: require Firebase ID token with admin privileges
+    const authHeader = (request.headers as unknown as Headers).get('authorization') || (request.headers as unknown as Headers).get('Authorization');
+    if (!authHeader?.toLowerCase().startsWith('bearer ')) {
+      return NextResponse.json({ success: false, error: 'auth_required' }, { status: 401, headers: cors.headers });
+    }
+    const idToken = authHeader.replace(/^Bearer\s+/i, '');
+    let uid = '';
+    try {
+      const decoded = await adminAuth.verifyIdToken(idToken);
+      uid = decoded.uid;
+      const isAdminClaim = Boolean((decoded as unknown as { [k: string]: unknown }).admin === true);
+      if (!isAdminClaim) {
+        // Optional: fall back to checking user record custom claims
+        const rec = await adminAuth.getUser(uid).catch(() => null);
+        const cc = rec?.customClaims || {};
+        if (!(cc as Record<string, unknown>)['admin']) {
+          return NextResponse.json({ success: false, error: 'forbidden' }, { status: 403, headers: cors.headers });
+        }
+      }
+    } catch {
+      return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401, headers: cors.headers });
+    }
+
+    console.log("🔍 Starting comprehensive user data review...", { by: uid });
 
     const usersSnapshot = await adminDb.collection("users").get();
     const userAnalysis: UserAnalysisItem[] = [];
@@ -80,7 +109,8 @@ export async function GET(request: Request): Promise<NextResponse> {
     const url = new URL(request.url);
     const pageParam = parseInt(url.searchParams.get('page') || '1', 10);
     const sizeParam = parseInt(url.searchParams.get('pageSize') || '25', 10);
-    const pageSize = Number.isFinite(sizeParam) ? Math.min(Math.max(sizeParam, 1), 100) : 25;
+    const pageSize = Number.isFinite(sizeParam) ? Math.min(Math.max(sizeParam, 1), 50) : 25; // hard-cap to 50 for safety
+    const light = url.searchParams.get('light') === '1'; // skip heavy subcollection scans when enabled
     const page = Number.isFinite(pageParam) ? Math.max(pageParam, 1) : 1;
     const totalUsers = usersSnapshot.size;
     const start = (page - 1) * pageSize;
@@ -89,93 +119,73 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     for (const userDoc of pageDocs) {
       const userId = userDoc.id;
-    const userData = userDoc.data() as Record<string, unknown>;
+      const userData = userDoc.data() as Record<string, unknown>;
 
-      // Get user's activities
-    const activitiesSnapshot = await adminDb
-      .collection("users")
-      .doc(userId)
-      .collection("activities")
-      .get();
-      const activities: ActivityRecord[] = [];
-
-      for (const activityDoc of activitiesSnapshot.docs) {
-        const activityData = activityDoc.data();
-        activities.push({
+      // Get user's activities (lightweight: limit to 10 to avoid heavy reads)
+      const activitiesCol = adminDb.collection("users").doc(userId).collection("activities");
+      const activitiesSnapshot = await activitiesCol.orderBy('timestamp', 'desc').limit(light ? 3 : 10).get();
+      const activities: ActivityRecord[] = activitiesSnapshot.docs.map((activityDoc) => {
+        const activityData = activityDoc.data() as Record<string, unknown>;
+        const typeStr = typeof activityData.type === 'string' ? activityData.type : 'unknown';
+        return {
           id: activityDoc.id,
-          type: activityData.type || "unknown",
+          type: typeStr,
           timestamp: activityData.timestamp,
           data: activityData,
-        });
-      }
+        } as ActivityRecord;
+      });
 
-      // Get user's keywords
-    const keywordsSnapshot = await adminDb
-      .collection("users")
-      .doc(userId)
-      .collection("keywords")
-      .get();
-      const keywords: Array<Record<string, unknown>> = [];
-
-      for (const keywordDoc of keywordsSnapshot.docs) {
+      // Get user's keywords (limit sample to reduce load)
+      const keywordsSnapshot = await adminDb
+        .collection("users").doc(userId).collection("keywords")
+        .orderBy('createdAt', 'desc').limit(light ? 3 : 10).get();
+      const keywords: Array<Record<string, unknown>> = keywordsSnapshot.docs.map((keywordDoc) => {
         const keywordData = keywordDoc.data();
-        keywords.push({
+        return {
           id: keywordDoc.id,
-          keyword: keywordData.keyword || "",
+          keyword: (keywordData as Record<string, unknown>)['keyword'] || "",
           data: keywordData,
-        });
-      }
+        };
+      });
 
-      // Get user's competitors
-    const competitorsSnapshot = await adminDb
-      .collection("users")
-      .doc(userId)
-      .collection("competitors")
-      .get();
-      const competitors: Array<Record<string, unknown>> = [];
-
-      for (const compDoc of competitorsSnapshot.docs) {
+      // Get user's competitors (limited sample)
+      const competitorsSnapshot = await adminDb
+        .collection("users").doc(userId).collection("competitors")
+        .orderBy('createdAt', 'desc').limit(light ? 3 : 10).get();
+      const competitors: Array<Record<string, unknown>> = competitorsSnapshot.docs.map((compDoc) => {
         const compData = compDoc.data();
-        competitors.push({
+        return {
           id: compDoc.id,
-          domain: compData.domain || "",
+          domain: (compData as Record<string, unknown>)['domain'] || "",
           data: compData,
-        });
-      }
+        };
+      });
 
-      // Get user's content analyses
-    const contentSnapshot = await adminDb
-      .collection("users")
-      .doc(userId)
-      .collection("content-analyses")
-      .get();
-      const contentAnalyses: Array<Record<string, unknown>> = [];
-
-      for (const contentDoc of contentSnapshot.docs) {
+      // Get user's content analyses (limited sample)
+      const contentSnapshot = await adminDb
+        .collection("users").doc(userId).collection("content-analyses")
+        .orderBy('createdAt', 'desc').limit(light ? 3 : 10).get();
+      const contentAnalyses: Array<Record<string, unknown>> = contentSnapshot.docs.map((contentDoc) => {
         const contentData = contentDoc.data();
-        contentAnalyses.push({
+        return {
           id: contentDoc.id,
-          url: contentData.url || "",
+          url: (contentData as Record<string, unknown>)['url'] || "",
           data: contentData,
-        });
-      }
+        };
+      });
 
-      // Get user's achievements
-    const achievementsSnapshot = await adminDb
-      .collection("users")
-      .doc(userId)
-      .collection("achievements")
-      .get();
-      const achievements: Array<Record<string, unknown>> = [];
-
-      for (const achDoc of achievementsSnapshot.docs) {
+      // Get user's achievements (limited sample)
+      const achievementsSnapshot = await adminDb
+        .collection("users").doc(userId).collection("achievements")
+        .orderBy('createdAt', 'desc').limit(light ? 3 : 10).get();
+      const achievements: Array<Record<string, unknown>> = achievementsSnapshot.docs.map((achDoc) => {
         const achData = achDoc.data();
-        achievements.push({
+        return {
           id: achDoc.id,
-          type: achData.type || "",
+          type: (achData as Record<string, unknown>)['type'] || "",
           data: achData,
-        });
-      }
+        };
+      });
 
       // Analyze subscription tier consistency
     const subscriptionTier = typeof userData.subscriptionTier === 'string' && userData.subscriptionTier.length > 0
@@ -366,6 +376,7 @@ export async function GET(request: Request): Promise<NextResponse> {
         'X-Result-Page': String(page),
         'X-Result-PageSize': String(pageSize),
         'X-Result-Returned': String(userAnalysis.length),
+        ...cors.headers,
       }
     });
   } catch (error) {
@@ -379,4 +390,10 @@ export async function GET(request: Request): Promise<NextResponse> {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS(request: Request): Promise<Response> {
+  const cors = handleCors(request as unknown as Request, { allowMethods: ['GET', 'OPTIONS'] });
+  if ((cors as unknown as { preflight?: Response }).preflight) return (cors as unknown as { preflight: Response }).preflight;
+  return new Response(null, { status: 204, headers: cors.headers });
 }

@@ -3,8 +3,8 @@
  * Part of the NeuroSEO™ Suite for RankPilot
  */
 
-import type { Browser, Page } from "playwright";
-import { chromium } from "playwright";
+import type { Browser, Page } from '@playwright/test';
+import { chromium } from '@playwright/test';
 import * as urlMod from "url";
 import type { CrawlerTask } from './types';
 
@@ -61,6 +61,15 @@ export interface CrawlResult {
   };
   robotsAllowed?: boolean;
   fromCache?: boolean;
+  /**
+   * Crawler-level provenance to support explainability and public knowledge docs.
+   * Minimal and privacy-safe: link texts/URLs, first heading, and sample missing-alt images.
+   */
+  provenance?: {
+    firstH1?: string;
+    externalAnchors: Array<{ href: string; text: string }>;
+    missingAltSamples: string[];
+  };
 }
 
 // Local diagnostics and error stats (in-module only)
@@ -91,6 +100,11 @@ export class NeuralCrawler {
   public robotsCache: Map<string, { fetched: number; rules: RobotsRules; }> = new Map();
   private static DEFAULT_CACHE_TTL = 10 * 60 * 1000; // 10 min
   static ROBOTS_TTL = 60 * 60 * 1000; // 1 hour (public for helper access)
+  // Lightweight task queue for background crawling
+  private queue: Array<{ task: CrawlerTask; resolve: (r: CrawlResult) => void; reject: (e: unknown) => void }> = [];
+  private active = 0;
+  private readonly maxConcurrent = 2;
+  private queuedUrls = new Set<string>();
 
   async initialize(): Promise<void> {
     if (!this.browser) {
@@ -197,6 +211,19 @@ export class NeuralCrawler {
         performance: derivePerformanceMetrics(technicalData),
         robotsAllowed: true,
         fromCache: false,
+        provenance: {
+          firstH1: Array.isArray(technicalData.headings?.h1) && technicalData.headings.h1.length > 0
+            ? technicalData.headings.h1[0]
+            : undefined,
+          externalAnchors: (technicalData.links || [])
+            .filter((l: { href: string; text: string; isExternal: boolean }) => l.isExternal && /^https?:\/\//.test(l.href))
+            .slice(0, 12)
+            .map((l: { href: string; text: string }) => ({ href: l.href, text: l.text })),
+          missingAltSamples: (technicalData.images || [])
+            .filter((img: { src: string; alt: string }) => !img.alt || img.alt.trim().length === 0)
+            .slice(0, 5)
+            .map((img: { src: string }) => img.src),
+        }
       };
       this.cache.set(url, { timestamp: Date.now(), result, ttl });
       return result;
@@ -511,6 +538,33 @@ export class NeuralCrawler {
   }
 
   scheduleTask(task: CrawlerTask): void {
+    // Deduplicate by URL
+    if (this.queuedUrls.has(task.url)) return;
+    this.queuedUrls.add(task.url);
+    // Return a promise to allow consumers to await in future extension (not used currently)
+    const p = new Promise<CrawlResult>((resolve, reject) => {
+      this.queue.push({ task, resolve, reject });
+      void this.drainQueue();
+    });
+    // Fire-and-forget until consumers adopt the promise
+    void p.then(() => { /* noop */ }).catch(() => { /* noop */ });
+  }
+
+  private async drainQueue() {
+    while (this.active < this.maxConcurrent && this.queue.length > 0) {
+      const item = this.queue.shift();
+      if (!item) break;
+      this.active++;
+      try {
+        const result = await this.crawl(item.task.url, { cacheTtlMs: NeuralCrawler.DEFAULT_CACHE_TTL });
+        item.resolve(result);
+      } catch (e) {
+        item.reject(e);
+      } finally {
+        this.active--;
+        this.queuedUrls.delete(item.task.url);
+      }
+    }
   }
 
 }

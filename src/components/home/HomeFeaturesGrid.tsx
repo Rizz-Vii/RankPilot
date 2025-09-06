@@ -90,7 +90,7 @@ export function HomeFeaturesGrid() {
     const [hoveredIdx, setHoveredIdx] = React.useState<number | null>(null);
     return (
         <LazyMotion features={domAnimation} strict>
-            <section id="features" className="section-gap max-w-6xl w-full text-left" aria-labelledby="features-heading">
+            <section id="platform-features" className="section-gap max-w-6xl w-full text-left" aria-labelledby="features-heading">
                 <h2 id="features-heading" className="sr-only">Platform Feature Modules</h2>
                 <ul className="grid md:grid-cols-3 gap-8 list-none p-0 m-0" role="list">
                     {features.map((item, i) => (

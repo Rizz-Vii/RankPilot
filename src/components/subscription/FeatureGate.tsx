@@ -1,17 +1,17 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { useSubscription } from "@/hooks/useSubscription";
-import { TIER_HIERARCHY } from "@/lib/access-control";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useSubscription } from "@/hooks/useSubscription";
+import { TIER_HIERARCHY } from "@/lib/access-control";
 import { Lock, Zap } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 interface FeatureGateProps {
   children?: ReactNode;
@@ -99,14 +99,14 @@ export function FeatureGate({
   }
 
   if (!showUpgrade || !children) {
-    return null;
+    return <div data-testid="feature-gate-denied" />;
   }
 
   // Default upgrade prompt
   const tierLabel = getTierLabel(requiredTier);
 
   return (
-    <Card className="border-dashed border-2 border-muted-foreground/25">
+    <Card data-testid="upgrade-banner" className="border-dashed border-2 border-muted-foreground/25">
       <CardContent className="flex flex-col items-center justify-center py-8 text-center">
         <div className="rounded-full bg-muted p-3 mb-4">
           <Lock className="h-6 w-6 text-muted-foreground" />
@@ -152,7 +152,7 @@ export function UsageLimit({
 
   if (atLimit) {
     return (
-      <Card className="border-warning/30 bg-warning/10">
+      <Card data-testid="upgrade-banner" className="border-warning/30 bg-warning/10">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-2">
             <Lock className="h-4 w-4 text-warning-foreground" />
@@ -180,7 +180,7 @@ export function UsageLimit({
   if (showWarning && usagePercentage >= warningThreshold && !subscription?.isUnlimited) {
     return (
       <div className="space-y-4">
-        <Card className="border-warning/30 bg-warning/10">
+        <Card data-testid="upgrade-banner" className="border-warning/30 bg-warning/10">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>

@@ -54,6 +54,26 @@ Optional:
 
 ## Automation Recipes – Cron support (subset)
 
+## Telephony (Twilio) setup
+
+To enable real outbound/inbound calls:
+
+- Set these in `.env.local` (server-only):
+  - `TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+  - `TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+  - `TWILIO_FROM_NUMBER=+1XXXXXXXXXX` (E.164)
+  - `PUBLIC_BASE_URL=http://localhost:3000` (for webhooks in dev)
+
+Webhooks:
+
+- Inbound voice: `POST {PUBLIC_BASE_URL}/api/voice/twilio/inbound`
+- Status callbacks: `POST {PUBLIC_BASE_URL}/api/voice/twilio/status`
+
+Notes:
+
+- If Twilio env vars aren’t set, outbound API will still book the appointment but log `twilio.not_configured`.
+- Status callbacks create/update docs in `voice_calls` with `callSid` and latest `status`.
+
 The scheduler supports a minimal, deterministic subset of cron for recipe schedules:
 
 - Aliases: `@daily` (00:00 UTC next day), `@hourly` (top of next hour)
@@ -149,6 +169,23 @@ Autorun flow per iteration:
 3. Enqueue new tasks into delegation queue.
 4. Process queue (requires `OPENAI_API_KEY`).
 
+## API: /api/verify-captcha
+
+Server route to verify Google reCAPTCHA tokens.
+
+- Method: POST
+- Body: { token: string }
+- Success: 200 { success: true }
+- Failure: 400 { error: 'captcha_verification_failed', details?: string[] }
+- Upstream error: status passthrough with { error: 'captcha_provider_error' }
+
+Environment variables:
+- RECAPTCHA_SECRET_KEY (server-only, required in non-test envs)
+- NEXT_PUBLIC_RECAPTCHA_SITE_KEY (client, optional; controls whether UI renders captcha)
+
+Notes:
+- In test/CI, Register form skips captcha checks and component tests use a mock.
+- Structured responses include provenance for observability.
 
 Key environment variables:
 

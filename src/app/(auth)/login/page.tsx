@@ -4,15 +4,15 @@
 import LoadingScreen from "@/components/ui/loading-screen";
 import { useAuth } from "@/context/AuthContext";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
-import { auth, db } from "@/lib/firebase";
+import { auth } from "@/lib/firebase";
 import { EnhancedAuthService } from "@/lib/services/enhanced-auth.service";
 import { safeErrorMessage } from "@/lib/utils";
 import {
+  GithubAuthProvider,
   GoogleAuthProvider,
   signInWithEmailAndPassword,
   signInWithPopup,
 } from "firebase/auth";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -115,23 +115,23 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      const userDocRef = doc(db, "users", user.uid);
-      const docSnap = await getDoc(userDocRef);
-      if (!docSnap.exists()) {
-        await setDoc(userDocRef, {
-          email: user.email,
-          displayName: user.displayName,
-          role: "user",
-          createdAt: serverTimestamp(),
-        });
-      }
+      await signInWithPopup(auth, provider);
       // Redirection is handled by the useEffect hook after auth state updates
     } catch (error: unknown) {
       setErrors({
         form: safeErrorMessage(error) || "Google sign-in failed. Please try again.",
+      });
+    }
+  };
+
+  const handleGithubSignIn = async () => {
+    const provider = new GithubAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      // Redirection is handled by the useEffect hook after auth state updates
+    } catch (error: unknown) {
+      setErrors({
+        form: safeErrorMessage(error) || "GitHub sign-in failed. Please try again.",
       });
     }
   };
@@ -225,14 +225,26 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <button
-          onClick={() => { void handleGoogleSignIn(); }}
-          className="w-full inline-flex items-center justify-center py-2 border border-input rounded-lg shadow-sm bg-card text-sm font-medium text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background"
-          disabled={loading}
-        >
-          <GoogleIcon />
-          Sign in with Google
-        </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <button
+            onClick={() => { void handleGoogleSignIn(); }}
+            className="w-full inline-flex items-center justify-center py-2 border border-input rounded-lg shadow-sm bg-card text-sm font-medium text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background"
+            disabled={loading}
+          >
+            <GoogleIcon />
+            Google
+          </button>
+          <button
+            onClick={() => { void handleGithubSignIn(); }}
+            className="w-full inline-flex items-center justify-center py-2 border border-input rounded-lg shadow-sm bg-card text-sm font-medium text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background"
+            disabled={loading}
+            aria-label="Sign in with GitHub"
+          >
+            {/* Simple GitHub mark */}
+            <svg className="mr-2 h-4 w-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.01.08-2.1 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.09.16 1.9.08 2.1.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.92-.01 2.18 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" /></svg>
+            GitHub
+          </button>
+        </div>
 
   <p className="text-center text-sm text-muted-foreground">New here? <Link href="/register" className="text-primary hover:underline">Create an account</Link></p>
       </div>

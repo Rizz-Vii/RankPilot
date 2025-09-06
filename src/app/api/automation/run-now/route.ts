@@ -1,6 +1,8 @@
 import { adminDb } from '@/lib/firebase-admin';
 import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
 import { NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 // Dynamic imports used to minimize cold route bundle size
 // (Ensure these modules are only loaded when needed)
 import { fetchRewriteSourceContents } from '@/lib/automation/content-fetch';
@@ -64,8 +66,6 @@ export const POST = withProvenance(async function POST(req: Request): Promise<Ne
         const snap = await ref.get();
         if (!snap.exists) return NextResponse.json(enforceProvenance({ success: false, error: 'Not found', provenance: 'synthetic' }, { path: 'automation/run-now', note: 'not_found' }), { status: 404 });
         const data = snap.data() as AutomationRecipeDoc;
-        const { NeuroSEOSuite } = await import('@/lib/neuroseo');
-        const suite = new NeuroSEOSuite();
         const actions: string[] = Array.isArray(data.actions) ? data.actions : [];
         const actionResults: ActionResult[] = [];
         const started = new Date();
@@ -73,6 +73,8 @@ export const POST = withProvenance(async function POST(req: Request): Promise<Ne
             const cfgRaw = data.actionConfigs?.[action];
             const cfg = cfgObject(cfgRaw);
             if (action === 'runNeuroSEOAnalysis') {
+                const { NeuroSEOSuite } = await import('@/lib/neuroseo');
+                const suite = new NeuroSEOSuite();
                 const urls = strArray(cfg?.urls, ['https://example.com']);
                 const keywords = strArray(cfg?.keywords, ['example']);
                 await suite.runAnalysis({ urls, targetKeywords: keywords, analysisType: 'comprehensive', userPlan: 'agency', userId: data.userId });

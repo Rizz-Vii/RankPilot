@@ -55,3 +55,11 @@ Rollback: Remove helper export and test file; no side effects (helper unused in 
 - Promoted Phase 3 to Active Focus per `.github/copilot-instructions.md` and `PROJECT_EXECUTION_PLAN.md`.
 - Deferred residual Phase 2 items to avoid scope creep: two-agent loop hardening (non-UI), server-dependent rate-limit validators, optional local-only sampler persistence shim.
 - Governance unchanged: provenance enforcement intact; no UI or schema changes.
+
+### 04-09-2025 (Voice Agent Cleanup Hardening)
+
+- fix(voice): Update `cleanupExpiredHolds` to query by `status=='held'` then filter expired in-memory, avoiding composite index requirements; add defensive error handling.
+- test(e2e): Verified `testing/e2e/voice/cleanup-expired-holds.spec.ts` passes; inbound create and hold E2E remain green.
+- chore: Ran `npm run typecheck` and `npm run test:unit` to validate no regressions.
+
+Rollback: Revert `src/lib/voice/holds-cleanup.ts` to previous query with `heldUntil <= now` and remove try/catch wrapper.

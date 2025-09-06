@@ -20,10 +20,12 @@ async function run() {
     const inviteEmail = `invitee_${Date.now()}@example.com`;
     // 1. Create invite
     const create = await request('POST', '/api/team/invite', { email: inviteEmail, role: 'member' }, ownerToken);
-    if (create.status !== 200 || !create.json.inviteId || !create.json.token) {
+    // response.json is typed as unknown in some environments; coerce to any for this test script
+    const createBody = create.json as any;
+    if (create.status !== 200 || !createBody?.inviteId || !createBody?.token) {
         console.error('FAIL create invite', create.status, create.json); process.exit(1);
     }
-    const inviteId = create.json.inviteId; const token = create.json.token;
+    const inviteId = createBody.inviteId; const token = createBody.token;
     // 2. Duplicate attempt
     const dup = await request('POST', '/api/team/invite', { email: inviteEmail, role: 'member' }, ownerToken);
     if (dup.status !== 409) { console.error('FAIL duplicate guard expected 409 got', dup.status); process.exit(1); }

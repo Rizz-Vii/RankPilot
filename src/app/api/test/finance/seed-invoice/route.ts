@@ -46,10 +46,13 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         const amountParam = url.searchParams.get('amount');
         const statusParam = url.searchParams.get('status');
         const useTeam = url.searchParams.get('team') === '1';
+        // Optional deterministic period override (non-prod only): period=YYYY-MM
+        const periodParam = url.searchParams.get('period');
+        const periodOverride = (periodParam && /^\d{4}-\d{2}$/.test(periodParam)) ? periodParam : undefined;
         const amount = amountParam ? Math.max(1, Number(amountParam)) : Math.floor(50 + Math.random() * 200);
         const status = statusParam === 'draft' ? 'draft' : 'paid';
         const now = new Date();
-        const period = now.toISOString().slice(0, 7); // YYYY-MM
+        const period = periodOverride || now.toISOString().slice(0, 7); // YYYY-MM
         interface InvoiceDoc {
             userId?: string;
             period: string;
@@ -78,7 +81,7 @@ export const POST = withProvenance(async function POST(req: NextRequest) {
         if (useTeam && teamId) { doc.teamId = teamId; }
         if (status === 'paid') doc.paidAt = now;
         await adminDb.collection('financeInvoices').add(doc);
-        const okBody = enforceProvenance({ ok: true, period, status, amount }, { path: 'test/finance/seed-invoice', note: 'seeded' });
+        const okBody = enforceProvenance({ ok: true, period, status, amount, deterministic: Boolean(periodOverride) }, { path: 'test/finance/seed-invoice', note: 'seeded' });
         return NextResponse.json(okBody);
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e);

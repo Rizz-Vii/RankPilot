@@ -73,8 +73,22 @@ try {
 
 export async function rateLimit(req: NextRequest) {
   try {
+    // Allow internal monitoring/crawl probes when a signed header matches env token
+    // This provides a safe escape hatch for automated production route checks without
+    // weakening general rate limits. Set CRAWL_PROBE_TOKEN in the environment and
+    // send header: x-probe-token: <token> from the crawler.
+    const probeHeader = req.headers.get('x-probe-token');
+    if (process.env.CRAWL_PROBE_TOKEN && probeHeader === process.env.CRAWL_PROBE_TOKEN) {
+      return NextResponse.next();
+    }
     // Ignore CORS preflight requests
     if (req.method === 'OPTIONS') {
+      return NextResponse.next();
+    }
+    // Exempt lightweight health probes from rate limiting to avoid noisy 429s
+    // These endpoints are polled by monitors and UIs and are intentionally cheap.
+    const path = req.nextUrl.pathname || '';
+    if (path === '/api/health' || path === '/api/health/simple' || path.startsWith('/api/health/')) {
       return NextResponse.next();
     }
     const logger = getLogger('middleware.rate-limit');

@@ -1,11 +1,11 @@
 "use client";
 
-import React from "react";
-import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Scale, FileText } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { FileText, Scale, Shield } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
@@ -17,6 +17,8 @@ const fadeIn = {
 };
 
 export default function TermsClient() {
+  const [lastUpdated, setLastUpdated] = useState<string>("");
+  useEffect(() => { setLastUpdated(new Date().toLocaleDateString()); }, []);
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Hero */}
@@ -50,7 +52,9 @@ export default function TermsClient() {
               </Link>
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground mt-4">Last updated: {new Date().toLocaleDateString()}</p>
+          <p className="text-sm text-muted-foreground mt-4" suppressHydrationWarning>
+            Last updated: {lastUpdated || '—'}
+          </p>
         </div>
       </motion.section>
 

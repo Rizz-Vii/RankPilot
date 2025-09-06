@@ -10,7 +10,7 @@ export default defineConfig({
         ["line"],
     ],
     use: {
-        baseURL: "https://rankpilot-h3jpc--performance-testing-mw0cwov5.web.app",
+        baseURL: process.env.PLAYWRIGHT_BASE_URL || process.env.TEST_BASE_URL || "https://rankpilot-h3jpc--performance-testing-mw0cwov5.web.app",
         trace: "retain-on-failure",
         screenshot: "only-on-failure",
         video: "retain-on-failure",
@@ -37,7 +37,7 @@ export default defineConfig({
         },
     ],
 
-    // Global setup for testing environment
-    globalSetup: require.resolve("./testing/load-testing/global-setup-testing.ts"),
-    globalTeardown: require.resolve("./testing/load-testing/global-teardown.ts"),
+    // Global setup/teardown: reuse main to avoid missing files
+    globalSetup: require.resolve("./testing/specs/main/global-setup.ts"),
+    globalTeardown: require.resolve("./testing/specs/main/global-teardown.ts"),
 });

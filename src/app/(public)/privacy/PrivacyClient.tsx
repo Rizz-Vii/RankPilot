@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
-import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
+import { motion } from "framer-motion";
 import { Shield } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
@@ -11,6 +11,10 @@ const fadeIn = {
 };
 
 export default function PrivacyClient() {
+  const [lastUpdated, setLastUpdated] = useState<string>("");
+  useEffect(() => {
+    setLastUpdated(new Date().toLocaleDateString());
+  }, []);
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       <motion.section className="pt-32 pb-10 px-4" initial="hidden" animate="visible" variants={fadeIn} custom={0}>
@@ -19,7 +23,9 @@ export default function PrivacyClient() {
             <Shield className="h-10 w-10 text-primary" />
           </div>
           <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-2">Privacy Policy</h1>
-          <p className="text-sm text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</p>
+          <p className="text-sm text-muted-foreground" suppressHydrationWarning>
+            Last updated: {lastUpdated || '—'}
+          </p>
         </div>
       </motion.section>
 
