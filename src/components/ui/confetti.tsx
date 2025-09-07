@@ -69,7 +69,8 @@ export function Confetti({
       <style jsx>{`
         @keyframes confetti-fall {
           to {
-            transform: translateY(100vh) rotate(360deg);
+            /* Use dynamic viewport to avoid iOS URL bar jump */
+            transform: translateY(100dvh) rotate(360deg);
             opacity: 0;
           }
         }

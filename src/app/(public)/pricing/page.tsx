@@ -13,7 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { conversionFunnel, trackPaymentEvents } from "@/lib/analytics";
 import { STRIPE_PLANS, type PlanType } from "@/lib/stripe";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
 	Check,
 	CreditCard,
@@ -166,6 +166,12 @@ function PricingContent() {
 	const searchParams = useSearchParams();
 	const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
 
+	// Motion density controls
+	const prefersReducedMotion = useReducedMotion();
+	const isMobile = typeof window !== "undefined" ? window.matchMedia("(max-width: 640px)").matches : false;
+	const baseDuration = prefersReducedMotion || isMobile ? 0.35 : 0.6;
+	const baseDelayStep = prefersReducedMotion || isMobile ? 0.05 : 0.1;
+
 	// Initialize preselected plan from query (?plan=starter|agency|enterprise)
 	const initFromQueryOnce = useRef(false);
 	useEffect(() => {
@@ -204,12 +210,14 @@ function PricingContent() {
 	};
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+		<div className="min-h-[100dvh] sm:min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
 			<div className="max-w-7xl mx-auto px-4 py-16">
 				{/* Header */}
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
-					animate={{ opacity: 1, y: 0 }}
+					whileInView={{ opacity: 1, y: 0 }}
+					viewport={{ once: true, margin: "-20% 0px -10% 0px" }}
+					transition={{ duration: baseDuration }}
 					className="text-center mb-16"
 				>
 					<div className="flex items-center justify-center gap-3 mb-4">
@@ -260,8 +268,9 @@ function PricingContent() {
 						<motion.div
 							key={plan.id}
 							initial={{ opacity: 0, y: 20 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ delay: index * 0.1 }}
+							whileInView={{ opacity: 1, y: 0 }}
+							viewport={{ once: true, margin: "-10% 0px -10% 0px" }}
+							transition={{ delay: index * baseDelayStep, duration: baseDuration }}
 							className="relative"
 						>
 							{plan.badge && (
@@ -389,8 +398,9 @@ function PricingContent() {
 				{/* Feature Comparison */}
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ delay: 0.4 }}
+					whileInView={{ opacity: 1, y: 0 }}
+					viewport={{ once: true }}
+					transition={{ delay: 4 * baseDelayStep, duration: baseDuration }}
 				>
 					<Card>
 						<CardHeader className="text-center">
@@ -451,8 +461,9 @@ function PricingContent() {
 				{/* FAQ Section */}
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ delay: 0.6 }}
+					whileInView={{ opacity: 1, y: 0 }}
+					viewport={{ once: true }}
+					transition={{ delay: 6 * baseDelayStep, duration: baseDuration }}
 					className="mt-16 text-center"
 				>
 					<h2 className="text-2xl font-bold mb-8">
@@ -518,8 +529,9 @@ function PricingContent() {
 				{/* CTA Section */}
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ delay: 0.8 }}
+					whileInView={{ opacity: 1, y: 0 }}
+					viewport={{ once: true }}
+					transition={{ delay: 8 * baseDelayStep, duration: baseDuration }}
 					className="mt-16 text-center"
 				>
 					<Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-primary/20">

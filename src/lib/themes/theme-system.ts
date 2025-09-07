@@ -53,6 +53,8 @@ export const lightTheme: ThemeTokens = {
 
         destructive: 'hsl(0 84.2% 60.2%)',
         destructiveForeground: 'hsl(210 40% 98%)',
+        error: 'hsl(0 84.2% 60.2%)',
+        errorForeground: 'hsl(210 40% 98%)',
         success: 'hsl(142.1 76.2% 36.3%)',
         successForeground: 'hsl(355.7 100% 97.3%)',
         warning: 'hsl(32.5 95% 44%)',
@@ -159,6 +161,8 @@ export const darkTheme: ThemeTokens = {
 
         destructive: 'hsl(0 62.8% 30.6%)',
         destructiveForeground: 'hsl(210 40% 98%)',
+        error: 'hsl(0 72% 51%)',
+        errorForeground: 'hsl(210 40% 98%)',
         success: 'hsl(142.1 70.6% 45.3%)',
         successForeground: 'hsl(144.9 80.4% 10%)',
         warning: 'hsl(32.5 85% 54%)',
@@ -197,6 +201,8 @@ export const highContrastTheme: ThemeTokens = {
 
         destructive: 'hsl(0 100% 25%)',
         destructiveForeground: 'hsl(0 0% 100%)',
+        error: 'hsl(0 100% 25%)',
+        errorForeground: 'hsl(0 0% 100%)',
         success: 'hsl(120 100% 20%)',
         successForeground: 'hsl(0 0% 100%)',
         warning: 'hsl(45 100% 30%)',
@@ -400,6 +406,7 @@ export class ThemeSystem {
         };
 
         // Colors (dual naming: --color-* full CSS color; --* HSL triplet)
+        // Includes extended tokens like info/infoForeground and error/errorForeground
         Object.entries(tokens.colors).forEach(([k, v]) => setColorPair(k, v));
 
         // Typography sizes

@@ -1,9 +1,8 @@
 "use client";
-import React from "react";
-import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Cookie, Shield, Settings, Eye, Users, Clock } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { Clock, Cookie, Eye, Settings, Shield, Users } from "lucide-react";
 
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
@@ -98,7 +97,7 @@ const dataProcessing = [
 
 export default function CookiesPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+    <div className="min-h-[100dvh] sm:min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Hero Section */}
       <motion.section
         className="pt-32 pb-16 px-4"

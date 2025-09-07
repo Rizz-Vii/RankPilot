@@ -86,13 +86,7 @@ export default function SiteHeader() {
 
   return (
     <>
-      {/* Skip to main content for screen readers */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 z-[100] bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium"
-      >
-        Skip to main content
-      </a>
+      {/* Skip link is rendered at layout level to be SSR-visible */}
 
   <TooltipProvider delayDuration={200}>
   <motion.header

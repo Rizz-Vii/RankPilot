@@ -1,17 +1,16 @@
 "use client";
-import React from "react";
-import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion } from "framer-motion";
 import {
-  MapPin,
+  Brain,
   Clock,
+  Code,
+  MapPin,
+  TrendingUp,
   Users,
   Zap,
-  Brain,
-  Code,
-  TrendingUp,
 } from "lucide-react";
 
 const fadeIn = {
@@ -115,7 +114,7 @@ const benefits = [
 
 export default function CareersPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+    <div className="min-h-[100dvh] sm:min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Hero Section */}
       <motion.section
         className="pt-32 pb-16 px-4"

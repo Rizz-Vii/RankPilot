@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { AppLogo, AppName } from "@/constants/nav";
-import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { AnimatePresence, motion } from "framer-motion";
+import { Menu, X } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 const drawerVariants = {
   closed: { x: "-100%" },
@@ -61,6 +61,7 @@ export default function AuthMobileNav() {
         className="md:hidden h-12 w-12 min-h-[48px] min-w-[48px]"
         aria-label="Toggle mobile menu"
         aria-expanded={isOpen}
+        aria-controls="auth-mobile-drawer"
         data-testid="auth-mobile-menu"
       >
         <Menu className="h-6 w-6" />
@@ -87,7 +88,9 @@ export default function AuthMobileNav() {
               exit="closed"
               variants={drawerVariants}
               className="fixed left-0 top-0 h-full w-80 bg-white z-50 md:hidden shadow-2xl"
-              data-testid="auth-drawer"
+              id="auth-mobile-drawer"
+              data-testid="auth-drawer mobile-drawer"
+              data-state={isOpen ? 'open' : 'closed'}
               role="dialog"
               aria-modal="true"
               aria-label="Mobile navigation menu"

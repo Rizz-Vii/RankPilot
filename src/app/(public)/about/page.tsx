@@ -1,19 +1,18 @@
 "use client";
-import React from "react";
-import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Target, Brain, Zap, Globe, Award } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion, useReducedMotion } from "framer-motion";
+import { Award, Brain, Globe, Target, Users, Zap } from "lucide-react";
 import Link from "next/link";
 
-const fadeIn = {
+const makeFadeIn = (duration: number, step: number) => ({
   hidden: { opacity: 0, y: 30 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.15, duration: 0.6 },
+    transition: { delay: i * step, duration },
   }),
-};
+});
 
 const teamMembers = [
   {
@@ -62,13 +61,19 @@ const values = [
 ];
 
 export default function AboutPage() {
+  const prefersReducedMotion = useReducedMotion();
+  const isMobile = typeof window !== "undefined" ? window.matchMedia("(max-width: 640px)").matches : false;
+  const duration = prefersReducedMotion || isMobile ? 0.35 : 0.6;
+  const step = prefersReducedMotion || isMobile ? 0.08 : 0.15;
+  const fadeIn = makeFadeIn(duration, step);
   return (
-  <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+    <div className="min-h-[100dvh] sm:min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Hero Section */}
       <motion.section
         className="pt-32 pb-16 px-4"
         initial="hidden"
-        animate="visible"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-20% 0px -10% 0px" }}
         variants={fadeIn}
         custom={0}
       >
@@ -98,7 +103,8 @@ export default function AboutPage() {
       <motion.section
         className="pb-16 px-4"
         initial="hidden"
-        animate="visible"
+        whileInView="visible"
+        viewport={{ once: true }}
         variants={fadeIn}
         custom={1}
       >
@@ -135,7 +141,8 @@ export default function AboutPage() {
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
-            animate="visible"
+            whileInView="visible"
+            viewport={{ once: true }}
             variants={fadeIn}
             custom={2}
             className="text-center mb-12"
@@ -153,7 +160,8 @@ export default function AboutPage() {
               <motion.div
                 key={value.title}
                 initial="hidden"
-                animate="visible"
+                whileInView="visible"
+                viewport={{ once: true }}
                 variants={fadeIn}
                 custom={index + 3}
               >
@@ -180,7 +188,8 @@ export default function AboutPage() {
       <motion.section
         className="pb-16 px-4"
         initial="hidden"
-        animate="visible"
+        whileInView="visible"
+        viewport={{ once: true }}
         variants={fadeIn}
         custom={7}
       >
@@ -198,7 +207,8 @@ export default function AboutPage() {
               <motion.div
                 key={member.name}
                 initial="hidden"
-                animate="visible"
+                whileInView="visible"
+                viewport={{ once: true }}
                 variants={fadeIn}
                 custom={index + 8}
               >
@@ -224,7 +234,8 @@ export default function AboutPage() {
       <motion.section
         className="pb-16 px-4"
         initial="hidden"
-        animate="visible"
+        whileInView="visible"
+        viewport={{ once: true }}
         variants={fadeIn}
         custom={11}
       >

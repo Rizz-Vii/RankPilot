@@ -595,7 +595,7 @@ export function EnhancedMobileNav({
       aria-label="Mobile navigation"
     >
       <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-muted-foreground/25" />
-      <div className="max-h-[62vh] overflow-y-auto overscroll-contain pr-1 -mr-1 focus:outline-none" tabIndex={-1}>
+      <div className="max-h-[62dvh] sm:max-h-[62vh] overflow-y-auto overscroll-contain pr-1 -mr-1 focus:outline-none" tabIndex={-1}>
         <EnhancedAppNav
           userTier={userTier}
           isAdmin={isAdmin}

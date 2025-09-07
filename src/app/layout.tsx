@@ -46,6 +46,10 @@ export function generateViewport() {
   return {
     width: "device-width",
     initialScale: 1,
+    // Enable full-bleed layout on iOS Safari for safe-area env() support
+    viewportFit: "cover" as const,
+    // Ask browsers to resize content area when interactive widgets (e.g., keyboard) appear
+    interactiveWidget: "resizes-content" as const,
     // Prefer dynamic themeColor to match light/dark; keep brand fallback
     themeColor: [
       // Use concrete colors (no CSS vars) for browser status bar compatibility

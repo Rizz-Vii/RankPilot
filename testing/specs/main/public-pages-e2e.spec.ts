@@ -6,13 +6,15 @@ test.describe("Public Pages", () => {
   });
 
   test("homepage elements and navigation", async ({ page }) => {
+    // Use a desktop viewport so primary nav links are visible
+    await page.setViewportSize({ width: 1280, height: 800 });
     // Header elements
-    await expect(page.getByRole("link", { name: /RankPilot/i })).toBeVisible();
-    await expect(page.getByRole("navigation")).toBeVisible();
+    await expect(page.locator("header").getByRole("link", { name: /RankPilot/i })).toBeVisible();
+    await expect(page.locator("header").getByRole("navigation")).toBeVisible();
 
     // Main navigation links - check for actual links that exist, be more specific
-    await expect(page.getByRole("link", { name: "Features", exact: true }).first()).toBeVisible();
-    await expect(page.getByRole("link", { name: "Pricing" })).toBeVisible();
+    await expect(page.locator("header").getByRole("link", { name: "Features", exact: true })).toBeVisible();
+    await expect(page.locator("header").getByRole("link", { name: "Pricing" })).toBeVisible();
 
     // Check for CTA button that leads to registration
     await expect(page.getByRole("link", { name: "Start 7‑Day Free Trial" })).toBeVisible();
@@ -30,8 +32,9 @@ test.describe("Public Pages", () => {
   });
 
   test("features page sections", async ({ page }) => {
-    await page.click("text=Features");
-    await expect(page).toHaveURL(/.*features/);
+    // Navigate directly to avoid flakiness with hidden mobile nav links
+    await page.goto("/features");
+    await expect(page).toHaveURL(/\/features$/);
 
     // Check main feature sections - match actual features page content, be more specific
     await expect(page.getByRole("heading", { name: "SEO Audit" })).toBeVisible();

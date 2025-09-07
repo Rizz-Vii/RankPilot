@@ -1,11 +1,14 @@
 {
   "recommendations": [
     "bradlc.vscode-tailwindcss",
+    "GitHub.vscode-github-actions",
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
     "github.copilot",
     "github.copilot-chat",
+    "humao.rest-client",
     "ms-playwright.playwright",
+    "ms-vscode-remote.remote-containers",
     "hbenl.vscode-mocha-test-adapter",
     "eamodio.gitlens",
     "yoavbls.pretty-ts-errors",
@@ -16,6 +19,7 @@
     "ms-azuretools.vscode-docker",
     "redhat.vscode-yaml",
     "mikestead.dotenv",
-    "DavidAnson.vscode-markdownlint"
+    "DavidAnson.vscode-markdownlint",
+    "streetsidesoftware.code-spell-checker"
   ]
 }

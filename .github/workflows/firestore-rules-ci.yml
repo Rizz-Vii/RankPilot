@@ -1,0 +1,50 @@
+name: Firestore Rules Tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  rules-tests:
+    name: Firestore rules via short-lived emulator
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start Firestore emulator (background)
+        run: |
+          npx firebase-tools@13.35.0 emulators:start --only firestore --project demo-rules --import=./artifacts --export-on-exit --quit-on-idle-timeout=10000 &
+          echo $! > emulator.pid
+        env:
+          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
+
+      - name: Wait for emulator to be ready
+        run: |
+          for i in {1..30}; do
+            nc -z 127.0.0.1 8080 && echo "Emulator ready" && exit 0
+            sleep 1
+          done
+          echo "Emulator failed to start" && exit 1
+
+      - name: Run rules unit tests
+        run: FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npm run test:unit:firebase
+
+      - name: Stop emulator
+        if: always()
+        run: |
+          if [ -f emulator.pid ]; then kill $(cat emulator.pid) || true; fi

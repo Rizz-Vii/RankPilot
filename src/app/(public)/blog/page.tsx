@@ -1,14 +1,14 @@
+import {
+  ArrowRight,
+  BarChart,
+  Bot,
+  Calendar,
+  Target,
+  TrendingUp,
+  User,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  Calendar,
-  User,
-  ArrowRight,
-  TrendingUp,
-  Bot,
-  BarChart,
-  Target,
-} from "lucide-react";
 
 export const metadata: Metadata = {
   title: "SEO Blog | RankPilot",
@@ -80,7 +80,7 @@ export default function BlogPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-[100dvh] sm:min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="container mx-auto px-4 py-12">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">

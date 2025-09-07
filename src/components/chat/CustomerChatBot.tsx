@@ -15,6 +15,7 @@ import { canAccessTier, type SubscriptionTier } from '@/lib/access-control';
 import { extractRpMeta } from '@/lib/chat/rpMeta';
 import { auth, storage } from '@/lib/firebase';
 import { useIsMobile } from '@/lib/mobile-responsive-utils';
+import { fetchSSE } from '@/lib/sse/adapter';
 import { cn } from '@/lib/utils';
 import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -610,14 +611,15 @@ Try one of these to start:
                 setStreaming(true);
                 const controller = new AbortController();
                 streamAbortRef.current = controller;
-                const streamRes = await fetch('/api/chat/customer/stream', {
+                const streamRes = await fetchSSE('/api/chat/customer/stream', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`,
                     },
                     body: JSON.stringify({ message: messageToSend, sessionId: sessionId || undefined, url: currentUrl }),
-                    signal: controller.signal
+                    signal: controller.signal,
+                    timeoutMs: 60000,
                 });
                 if (streamRes.ok && streamRes.headers.get('content-type')?.includes('text/event-stream')) {
                     usedStreaming = true;
@@ -1015,10 +1017,11 @@ Try one of these to start:
             whileHover={reducedMotion ? undefined : { scale: 1.05 }}
             whileTap={reducedMotion ? undefined : { scale: 0.95 }}
             className={cn(
-                "fixed z-50",
-                isMobile ? 'bottom-4 right-4' : 'bottom-6 right-6',
+                "fixed z-[70]",
+                isMobile ? 'right-4' : 'bottom-6 right-6',
                 className
             )}
+            style={isMobile ? { bottom: 'calc(env(safe-area-inset-bottom) + 1rem)' } : undefined}
         >
             <Button
                 onClick={() => setIsOpen(true)}
@@ -1048,7 +1051,7 @@ Try one of these to start:
             exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: 20 }}
             transition={reducedMotion ? { duration: 0.05 } : { duration: 0.2 }}
             className={cn(
-                'fixed z-50 bg-white rounded-2xl shadow-2xl border border-border overflow-hidden',
+                'fixed z-[70] bg-card rounded-2xl shadow-2xl border border-border overflow-hidden',
                 isMobile ? 'bottom-0 right-0 left-0 mx-auto w-full max-w-[520px] mb-0' : 'bottom-6 right-6 w-96',
                 isMinimized && 'h-auto'
             )}
@@ -1243,7 +1246,7 @@ Try one of these to start:
                                 </div>
                             </div>
                         )}
-                        <div className={cn('border-t border-border bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60', isMobile ? 'p-3' : 'p-4')}>
+                        <div className={cn('border-t border-border bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60', isMobile ? 'p-3' : 'p-4')} style={isMobile ? { paddingBottom: 'calc(env(safe-area-inset-bottom) + 0px)' } : undefined}>
                             <div className={cn('flex gap-2 items-center', isMobile && 'gap-1')}>
                                 {/* Attachment buttons */}
                                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />

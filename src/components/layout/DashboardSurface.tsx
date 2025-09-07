@@ -1,7 +1,7 @@
 "use client";
-import React from 'react';
 import type { SuiteAccent } from '@/context/SuiteAccentContext';
 import { cn } from '@/lib/utils';
+import React from 'react';
 
 type SurfaceVariant = 'default' | 'subtle' | 'elevated';
 
@@ -36,7 +36,7 @@ export function DashboardSurface({ as: Tag = 'div', className, children, fullHei
         variantClasses,
         suiteClasses,
         'transition-colors',
-        fullHeight && 'min-h-[calc(100vh-8rem)]',
+        fullHeight && 'min-h-[calc(100dvh-8rem)] sm:min-h-[calc(100vh-8rem)]',
         bleed && '-mx-4 md:mx-0',
         className
       )}

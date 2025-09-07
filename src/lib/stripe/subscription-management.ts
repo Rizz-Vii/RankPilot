@@ -2,6 +2,7 @@
 // File: src/lib/stripe/subscription-management.ts
 
 import Stripe from 'stripe';
+import { STRIPE_PLANS, type PlanType } from './tiers';
 
 function getStripe(): Stripe {
     const key = process.env.STRIPE_SECRET_KEY;
@@ -15,62 +16,25 @@ type StripeSubLike = {
 };
 
 // RankPilot Subscription Tiers Configuration
-export const RANKPILOT_TIERS = {
-    free: {
-        name: 'Free Tier',
-        price: 0,
-        priceId: null, // No Stripe price for free tier
-        features: {
-            neuroSeoQueries: 10,
-            competitors: 1,
-            users: 1,
-            support: 'community'
-        }
-    },
-    starter: {
-        name: 'Starter Tier',
-        price: 29,
-        priceId: 'price_1RqFwc2fkoCQ0GTp8wygbgXh', // Your actual Stripe Price ID
-        features: {
-            neuroSeoQueries: 100,
-            competitors: 5,
-            users: 1,
-            support: 'email'
-        }
-    },
-    agency: {
-        name: 'Agency Tier',
-        price: 99,
-        priceId: 'price_1RqGKB2fkoCQ0GTpqLKUkyV5', // ← NEW REAL PRICE ID
-        features: {
-            neuroSeoQueries: 500,
-            competitors: 25,
-            users: 5,
-            support: 'priority'
-        }
-    },
-    enterprise: {
-        name: 'Enterprise Tier',
-        price: 299,
-        priceId: 'price_1RqGKB2fkoCQ0GTpwGQlzI4e', // ← NEW REAL PRICE ID
-        features: {
-            neuroSeoQueries: -1, // Unlimited
-            competitors: -1, // Unlimited
-            users: -1, // Unlimited
-            support: 'dedicated'
-        }
-    }
+// Adapter for backwards compatibility to older callers in this file
+type TierKey = PlanType | 'free';
+type MinimalTier = { priceId: string | null; features: Record<string, unknown> };
+const RANKPILOT_TIERS: Record<TierKey, MinimalTier> = {
+    free: { priceId: null, features: {} },
+    starter: { priceId: STRIPE_PLANS.starter.priceId.monthly, features: {} },
+    agency: { priceId: STRIPE_PLANS.agency.priceId.monthly, features: {} },
+    enterprise: { priceId: STRIPE_PLANS.enterprise.priceId.monthly, features: {} },
 };
 
 // Create Checkout Session for RankPilot
 export async function createCheckoutSession(
     userId: string,
-    tier: keyof typeof RANKPILOT_TIERS,
+    tier: PlanType | 'free',
     userEmail: string,
     successUrl: string,
     cancelUrl: string
 ) {
-    const tierConfig = RANKPILOT_TIERS[tier];
+    const tierConfig = RANKPILOT_TIERS[tier as TierKey];
 
     if (!tierConfig.priceId) {
         throw new Error(`${tier} tier does not require Stripe checkout`);
@@ -81,7 +45,7 @@ export async function createCheckoutSession(
         payment_method_types: ['card'],
         line_items: [
             {
-                price: tierConfig.priceId,
+                price: tierConfig.priceId!,
                 quantity: 1,
             },
         ],
@@ -97,11 +61,7 @@ export async function createCheckoutSession(
         },
         subscription_data: {
             trial_period_days: tier === 'starter' ? 14 : tier === 'agency' ? 14 : 30,
-            metadata: {
-                userId,
-                tier,
-                features: JSON.stringify(tierConfig.features)
-            }
+            metadata: { userId, tier },
         },
         allow_promotion_codes: true,
         billing_address_collection: 'auto',
@@ -139,9 +99,9 @@ export async function handleSubscriptionSuccess(sessionId: string) {
 // Upgrade/Downgrade subscription
 export async function updateSubscription(
     subscriptionId: string,
-    newTier: keyof typeof RANKPILOT_TIERS
+    newTier: PlanType
 ) {
-    const tierConfig = RANKPILOT_TIERS[newTier];
+    const tierConfig = RANKPILOT_TIERS[newTier as TierKey];
 
     if (!tierConfig.priceId) {
         throw new Error('Cannot update to free tier via Stripe');
@@ -158,10 +118,7 @@ export async function updateSubscription(
             },
         ],
         proration_behavior: 'create_prorations',
-        metadata: {
-            tier: newTier,
-            features: JSON.stringify(tierConfig.features)
-        }
+        metadata: { tier: newTier }
     });
 }
 

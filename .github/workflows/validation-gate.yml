@@ -59,6 +59,13 @@ jobs:
       - name: AI adapter latency unit
         run: npm run -s test:unit:ai-adapter:latency
 
+      - name: Lighthouse budget gate (performance env)
+        env:
+          PERFORMANCE_URL: https://rankpilot-h3jpc--performance-testing-mw0cwov5.web.app
+        run: |
+          echo "🔎 Running Lighthouse CI budget gate against performance environment"
+          npm run -s lighthouse:audit
+
       - name: Upload dev server log on failure
         if: failure()
         uses: actions/upload-artifact@v4

@@ -8,8 +8,12 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return isAuthenticated() && (
+        // Prefer custom claim when present
+        (request.auth.token.admin == true) ||
+        // Fallback to user document role flag
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
     }
 
     function isOwner(userId) {

@@ -3,6 +3,11 @@ import { getFirestore } from "firebase-admin/firestore";
 // No global options here; use index.ts for setGlobalOptions
 import { onRequest } from "firebase-functions/v2/https";
 import Stripe from "stripe";
+import {
+  getPriceId,
+  type BillingInterval,
+  type PlanType,
+} from "./lib/billing/tiers.js";
 
 // Initialize Firebase Admin if not already initialized
 if (!getApps().length) {
@@ -32,26 +37,19 @@ export const createCheckoutSession = onRequest(
   { cors: true, secrets: ["STRIPE_SECRET_KEY"], region: "australia-southeast1" },
   async (request, response) => {
     try {
-      const { planId, billingInterval, userId } = request.body;
+  const { planId, billingInterval, userId } = request.body as {
+    planId?: PlanType;
+    billingInterval?: BillingInterval;
+    userId?: string;
+  };
 
       if (!planId || !billingInterval || !userId) {
         response.status(400).json({ error: "Missing required parameters" });
         return;
       }
 
-      // Price mapping - Replace with your actual Stripe Price IDs
-      const priceMap: Record<string, Record<string, string>> = {
-        starter: {
-          monthly: "price_starter_monthly",
-          yearly: "price_starter_yearly",
-        },
-        agency: {
-          monthly: "price_agency_monthly",
-          yearly: "price_agency_yearly",
-        },
-      };
-
-      const priceId = priceMap[planId]?.[billingInterval];
+  const priceId =
+    planId && billingInterval ? getPriceId(planId, billingInterval) : null;
       if (!priceId) {
         response
           .status(400)

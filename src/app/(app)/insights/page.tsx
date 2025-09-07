@@ -24,6 +24,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAuth } from "@/context/AuthContext";
+import { fetchSSE } from "@/lib/sse/adapter";
 import { motion } from "framer-motion";
 import { AlertTriangle, ArrowRight, Lightbulb, Radio, RefreshCw } from "lucide-react";
 import Link from "next/link";
@@ -245,7 +246,12 @@ export default function InsightsPage() {
     abortRef.current = controller;
     try {
       const token = await user.getIdToken();
-      const resp = await fetch('/api/insights/stream', { headers: { 'Authorization': `Bearer ${token}` }, signal: controller.signal });
+      // Use hardened SSE adapter (timeout + merged abort signal)
+      const resp = await fetchSSE('/api/insights/stream', {
+        headers: { 'Authorization': `Bearer ${token}` },
+        signal: controller.signal,
+        timeoutMs: 45000,
+      });
       if (!resp.ok || !resp.body) { throw new Error('Stream init failed'); }
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();

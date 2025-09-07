@@ -1,28 +1,27 @@
 "use client";
-import React from "react";
-import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { motion, useReducedMotion } from "framer-motion";
 import {
-  HelpCircle,
-  Search,
   Book,
-  MessageCircle,
-  Mail,
-  Phone,
   Clock,
+  HelpCircle,
+  Mail,
+  MessageCircle,
+  Phone,
+  Search,
   Users,
 } from "lucide-react";
 
-const fadeIn = {
+const makeFadeIn = (duration: number, step: number) => ({
   hidden: { opacity: 0, y: 30 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.15, duration: 0.6 },
+    transition: { delay: i * step, duration },
   }),
-};
+});
 
 const faqCategories = [
   {
@@ -115,13 +114,19 @@ const supportChannels = [
 ];
 
 export default function HelpPage() {
+  const prefersReducedMotion = useReducedMotion();
+  const isMobile = typeof window !== "undefined" ? window.matchMedia("(max-width: 640px)").matches : false;
+  const duration = prefersReducedMotion || isMobile ? 0.35 : 0.6;
+  const step = prefersReducedMotion || isMobile ? 0.08 : 0.15;
+  const fadeIn = makeFadeIn(duration, step);
   return (
-  <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+    <div className="min-h-[100dvh] sm:min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Hero Section */}
       <motion.section
         className="pt-32 pb-16 px-4"
         initial="hidden"
-        animate="visible"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-20% 0px -10% 0px" }}
         variants={fadeIn}
         custom={0}
       >
@@ -160,7 +165,8 @@ export default function HelpPage() {
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
-            animate="visible"
+            whileInView="visible"
+            viewport={{ once: true }}
             variants={fadeIn}
             custom={1}
             className="text-center mb-12"
@@ -178,7 +184,8 @@ export default function HelpPage() {
               <motion.div
                 key={channel.title}
                 initial="hidden"
-                animate="visible"
+                whileInView="visible"
+                viewport={{ once: true }}
                 variants={fadeIn}
                 custom={index + 2}
               >
@@ -211,7 +218,8 @@ export default function HelpPage() {
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
-            animate="visible"
+            whileInView="visible"
+            viewport={{ once: true }}
             variants={fadeIn}
             custom={5}
             className="text-center mb-12"
@@ -229,7 +237,8 @@ export default function HelpPage() {
               <motion.div
                 key={category.title}
                 initial="hidden"
-                animate="visible"
+                whileInView="visible"
+                viewport={{ once: true }}
                 variants={fadeIn}
                 custom={categoryIndex + 6}
               >
@@ -270,7 +279,8 @@ export default function HelpPage() {
       <motion.section
         className="pb-16 px-4"
         initial="hidden"
-        animate="visible"
+        whileInView="visible"
+        viewport={{ once: true }}
         variants={fadeIn}
         custom={9}
       >

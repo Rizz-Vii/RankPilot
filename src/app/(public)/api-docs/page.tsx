@@ -1,17 +1,16 @@
 "use client";
-import React from "react";
-import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion } from "framer-motion";
 import {
-  Code2,
-  Key,
-  Zap,
-  Shield,
   Book,
+  Code2,
   ExternalLink,
+  Key,
   Play,
+  Shield,
+  Zap,
 } from "lucide-react";
 
 const fadeIn = {
@@ -102,7 +101,7 @@ print(analysis.results)`,
 
 export default function ApiDocsPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+    <div className="min-h-[100dvh] sm:min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Hero Section */}
       <motion.section
         className="pt-32 pb-16 px-4"

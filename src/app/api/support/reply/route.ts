@@ -2,6 +2,7 @@ import { adminDb } from '@/lib/firebase-admin';
 import { noStoreHeaders } from '@/lib/http/cache';
 import { handleCors } from '@/lib/http/cors';
 import { getLogger } from '@/lib/logging/app-logger';
+import { withAdmin } from '@/lib/middleware/with-admin';
 import * as admin from 'firebase-admin';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
@@ -34,9 +35,9 @@ function getTransport() {
     } as unknown as nodemailer.Transporter;
 }
 
-export async function POST(req: NextRequest): Promise<Response> {
+export const POST = withAdmin(async (req: NextRequest) => {
     const cors = handleCors(req, { allowMethods: ['POST', 'OPTIONS'] });
-    if ('preflight' in cors) return cors.preflight as Response;
+    if ('preflight' in cors) return cors.preflight as Response as unknown as NextResponse;
     try {
         const body = await req.json();
         const parsed = replySchema.safeParse(body);
@@ -99,7 +100,7 @@ export async function POST(req: NextRequest): Promise<Response> {
             { status: 500, headers: { ...noStoreHeaders(), ...cors.headers } }
         );
     }
-}
+}, { path: 'support/reply', extraHeaders: (req) => ({ ...handleCors(req, { allowMethods: ['POST', 'OPTIONS'] }).headers, ...noStoreHeaders() }), unauthorizedMessage: 'Unauthorized', forbiddenMessage: 'Forbidden' });
 
 export async function OPTIONS(req: NextRequest): Promise<Response> {
     const cors = handleCors(req, { allowMethods: ['POST', 'OPTIONS'] });

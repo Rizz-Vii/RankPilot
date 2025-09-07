@@ -13,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthContext';
 import { auth, storage } from '@/lib/firebase';
+import { fetchSSE } from '@/lib/sse/adapter';
 import { cn } from '@/lib/utils';
 import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -241,14 +242,15 @@ What would you like to analyze today?`,
                 setStreaming(true);
                 const controller = new AbortController();
                 streamAbortRef.current = controller;
-                const streamRes = await fetch('/api/chat/admin/stream', {
+                const streamRes = await fetchSSE('/api/chat/admin/stream', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`,
                     },
                     body: JSON.stringify({ message: messageToSend, sessionId: sessionId || undefined }),
-                    signal: controller.signal
+                    signal: controller.signal,
+                    timeoutMs: 60000,
                 });
                 if (streamRes.ok && streamRes.headers.get('content-type')?.includes('text/event-stream')) {
                     usedStreaming = true;

@@ -1,1 +1,41 @@
-{"image":"mcr.microsoft.com/devcontainers/universal:2"}
+{
+  "name": "RankPilot Dev",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
+  "remoteUser": "node",
+  "containerEnv": {
+    "NEXT_TELEMETRY_DISABLED": "1"
+  },
+  "features": {},
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "bradlc.vscode-tailwindcss",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "github.copilot",
+        "github.copilot-chat",
+        "ms-playwright.playwright",
+        "hbenl.vscode-mocha-test-adapter",
+        "eamodio.gitlens",
+        "yoavbls.pretty-ts-errors",
+        "wix.vscode-import-cost",
+        "usernamehw.errorlens",
+        "Gruntfuggly.todo-tree",
+        "mhutchie.git-graph",
+        "ms-azuretools.vscode-docker",
+        "redhat.vscode-yaml",
+        "mikestead.dotenv",
+        "DavidAnson.vscode-markdownlint"
+      ],
+      "settings": {
+        "task.allowAutomaticTasks": "on"
+      }
+    }
+  },
+  "forwardPorts": [3000, 4000],
+  "portsAttributes": {
+    "3000": { "label": "Next.js Dev Server" },
+    "4000": { "label": "Local API/Functions" }
+  },
+  "postCreateCommand": "npm ci"
+}

@@ -15,11 +15,8 @@ export const revalidate = 3600; // 1 hour
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <main
-        id="main-content"
-        className="flex-grow flex flex-col items-center px-4 py-12 text-foreground"
-      >
+    <div className="flex flex-col min-h-[100dvh] sm:min-h-screen bg-background">
+      <main className="flex-grow flex flex-col items-center px-4 py-12 text-foreground">
         {/* Hero with language selector */}
         <div className="w-full max-w-6xl flex flex-col items-stretch gap-4">
           {/* Client-only hero loaded lazily to avoid blocking server stream */}
@@ -208,7 +205,9 @@ function PricingCard({
       </CardContent>
       <CardFooter>
         <Button className="w-full" asChild>
-          <Link href={`/pricing?plan=${planParam}`}>Choose Plan</Link>
+          <Link href={`/pricing?plan=${planParam}`} aria-label={`Choose ${title} plan`}>
+            Choose Plan
+          </Link>
         </Button>
       </CardFooter>
     </Card>

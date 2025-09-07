@@ -10,7 +10,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
     ArrowRight,
     HelpCircle,
@@ -22,14 +22,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-const fadeIn = {
+const makeFadeIn = (duration: number, step: number) => ({
     hidden: { opacity: 0, y: 30 },
     visible: (i: number) => ({
         opacity: 1,
         y: 0,
-        transition: { delay: i * 0.1, duration: 0.6 },
+        transition: { delay: i * step, duration },
     }),
-};
+});
 
 const faqCategories = [
     {
@@ -119,14 +119,20 @@ const faqCategories = [
 ];
 
 export default function FAQPage() {
+    const prefersReducedMotion = useReducedMotion();
+    const isMobile = typeof window !== "undefined" ? window.matchMedia("(max-width: 640px)").matches : false;
+    const duration = prefersReducedMotion || isMobile ? 0.35 : 0.6;
+    const step = prefersReducedMotion || isMobile ? 0.06 : 0.1;
+    const fadeIn = makeFadeIn(duration, step);
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-[100dvh] sm:min-h-screen bg-background">
             {/* Hero Section */}
             <section className="py-24 px-4">
                 <div className="max-w-4xl mx-auto text-center">
                     <motion.div
                         initial="hidden"
-                        animate="visible"
+                        whileInView="visible"
+                        viewport={{ once: true, margin: "-20% 0px -10% 0px" }}
                         variants={fadeIn}
                         custom={0}
                     >
@@ -163,7 +169,8 @@ export default function FAQPage() {
                         <motion.div
                             key={category.title}
                             initial="hidden"
-                            animate="visible"
+                            whileInView="visible"
+                            viewport={{ once: true, margin: "-10% 0px -10% 0px" }}
                             variants={fadeIn}
                             custom={categoryIndex + 1}
                             className="mb-16"
@@ -199,7 +206,8 @@ export default function FAQPage() {
                 <div className="max-w-4xl mx-auto text-center">
                     <motion.div
                         initial="hidden"
-                        animate="visible"
+                        whileInView="visible"
+                        viewport={{ once: true }}
                         variants={fadeIn}
                         custom={5}
                     >
@@ -231,7 +239,8 @@ export default function FAQPage() {
                 <div className="max-w-6xl mx-auto">
                     <motion.div
                         initial="hidden"
-                        animate="visible"
+                        whileInView="visible"
+                        viewport={{ once: true }}
                         variants={fadeIn}
                         custom={6}
                         className="text-center mb-12"

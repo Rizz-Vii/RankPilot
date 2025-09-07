@@ -499,7 +499,7 @@ export default function TeamChatPage() {
 
   return (
     <FeatureGate feature="team_management" requiredTier="agency" showUpgrade>
-      <main className="container mx-auto py-4 sm:py-6 flex flex-col h-[calc(100vh-6rem)] overscroll-contain">
+      <main className="container mx-auto py-4 sm:py-6 flex flex-col h-[calc(100dvh-6rem)] overscroll-contain">
         <ToolPageHeader
           title="Team Chat"
           description="Real-time collaboration and communication"

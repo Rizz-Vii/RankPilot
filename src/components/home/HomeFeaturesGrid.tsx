@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import type { Variants } from "framer-motion";
 import { LazyMotion, domAnimation, m } from "framer-motion";
 import { Brain, Coins, LineChart, Link2, Rocket, TrendingUp, Users2, Workflow, Zap } from "lucide-react";
+import Image from "next/image";
 import React from "react";
 
 type FeatureTitle =
@@ -74,7 +75,16 @@ const iconAnimations: Record<FeatureTitle, Variants> = {
     },
 };
 
-const features: Array<{ title: FeatureTitle; desc: string; icon: React.ComponentType<{ className?: string }>; detailedDescription: string; }> = [
+type FeatureItem = {
+    title: FeatureTitle;
+    desc: string;
+    icon: React.ComponentType<{ className?: string }>;
+    detailedDescription: string;
+    imageSrc?: string;
+    imageAlt?: string;
+};
+
+const features: FeatureItem[] = [
     { title: "Keyword Intelligence", desc: "Intent clustering • Opportunity scoring • SERP feature deltas • Competitive gap surfacing.", icon: TrendingUp, detailedDescription: "Advanced embedding & transformer pipelines map searcher intent clusters, uncover adjacent demand, and score expansion vectors. Automatic SERP feature tracking + competitive gap delta streams feed always-fresh content briefs and rank defense intelligence." },
     { title: "Competitor Tracking", desc: "Live competitor graph: content velocity, backlink momentum, authority & visibility share shifts.", icon: Rocket, detailedDescription: "We continuously profile competitor inventories—tracking publishing cadence, link acquisition slope, SERP volatility pockets and authority concentration. Receive proactive alerts when emerging entrants threaten share or when defensive refresh windows open." },
     { title: "NeuroSemantic Engine", desc: "Entity graphing • topical coverage gaps • semantic depth scoring.", icon: Brain, detailedDescription: "Maps your domain's semantic surface area vs. market demand, revealing entity gaps, internal linking reinforcement vectors and latent topic clusters to accelerate authoritative depth construction." },
@@ -113,17 +123,37 @@ export function HomeFeaturesGrid() {
                                                     {item.title}
                                                 </CardTitle>
                                                 <div className="w-[90px] h-10 flex items-center justify-center overflow-visible" aria-hidden="true">
-                                                    <m.span
-                                                        variants={iconAnimations[item.title]}
-                                                        initial="initial"
-                                                        animate={hoveredIdx === i ? "hover" : "animate"}
-                                                        className="text-primary"
-                                                        style={{ display: "inline-block" }}
-                                                    >
-                                                        <item.icon className="h-6 w-6" />
-                                                    </m.span>
+                                                    {(() => {
+                                                        const IconComponent: React.ComponentType<{ className?: string }> = item.icon;
+                                                        return (
+                                                            <m.span
+                                                                variants={iconAnimations[item.title]}
+                                                                initial="initial"
+                                                                animate={hoveredIdx === i ? "hover" : "animate"}
+                                                                className="text-primary"
+                                                                style={{ display: "inline-block" }}
+                                                            >
+                                                                <IconComponent className="h-6 w-6" />
+                                                            </m.span>
+                                                        );
+                                                    })()}
                                                 </div>
                                             </CardHeader>
+                                            {/* Example marketing illustration slot (optimized) */}
+                                            {/* If an illustration URL exists on item, use next/image for optimization */}
+                                            {typeof item.imageSrc === 'string' && item.imageSrc.length > 0 && (
+                                                <div className="mb-3">
+                                                    <Image
+                                                        src={item.imageSrc}
+                                                        alt={item.imageAlt || `${item.title} illustration`}
+                                                        width={640}
+                                                        height={360}
+                                                        sizes="(max-width: 768px) 100vw, 33vw"
+                                                        className="w-full h-auto rounded-md"
+                                                        priority={false}
+                                                    />
+                                                </div>
+                                            )}
                                             <CardContent>
                                                 <p className="text-muted-foreground text-sm leading-relaxed">{item.desc}</p>
                                             </CardContent>
@@ -133,7 +163,10 @@ export function HomeFeaturesGrid() {
                                 <DialogContent>
                                     <DialogHeader>
                                         <DialogTitle className="flex items-center gap-2 font-headline text-2xl">
-                                            <item.icon className="h-6 w-6 text-primary" />
+                                            {(() => {
+                                                const IconComponent: React.ComponentType<{ className?: string }> = item.icon;
+                                                return <IconComponent className="h-6 w-6 text-primary" />;
+                                            })()}
                                             {item.title}
                                         </DialogTitle>
                                         <DialogDescription className="pt-4 font-body text-base leading-relaxed">

@@ -107,7 +107,13 @@ export async function POST(req: NextRequest) {
                         : `<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n  <Say voice="${sayVoice}" language="${sayLanguage}">${prosodyOpen}${sayText}${prosodyClose}</Say>\n</Response>`;
                     if (interactive) {
                         const prompt = sayBase ? ` ${sayBase} ` : '';
-                        twiml = `<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n  <Gather input="speech dtmf" numDigits="1" timeout="5">\n    <Say voice="${sayVoice}" language="${sayLanguage}">${prosodyOpen}${prompt}Press 1 if interested, or say 'yes'.${prosodyClose}</Say>\n  </Gather>\n  <Say voice="${sayVoice}" language="${sayLanguage}">Thank you. Goodbye.</Say>\n</Response>`;
+                        const actionUrl = process.env.PUBLIC_BASE_URL ? `${process.env.PUBLIC_BASE_URL}/api/voice/twilio/gather` : undefined;
+                        // Use action if base URL configured, else inline fallback
+                        if (actionUrl) {
+                            twiml = `<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n  <Gather input="speech dtmf" numDigits="1" timeout="5" action="${actionUrl}" method="POST">\n    <Say voice="${sayVoice}" language="${sayLanguage}">${prosodyOpen}${prompt}Press 1 if interested, or say 'yes'.${prosodyClose}</Say>\n  </Gather>\n  <Say voice="${sayVoice}" language="${sayLanguage}">Thank you. Goodbye.</Say>\n</Response>`;
+                        } else {
+                            twiml = `<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n  <Gather input="speech dtmf" numDigits="1" timeout="5">\n    <Say voice="${sayVoice}" language="${sayLanguage}">${prosodyOpen}${prompt}Press 1 if interested, or say 'yes'.${prosodyClose}</Say>\n  </Gather>\n  <Say voice="${sayVoice}" language="${sayLanguage}">Thank you. Goodbye.</Say>\n</Response>`;
+                        }
                     }
 
                     for (const to of recipients) {
@@ -115,9 +121,7 @@ export async function POST(req: NextRequest) {
                             to,
                             from: fromNumber,
                             twiml,
-                            statusCallback: process.env.PUBLIC_BASE_URL
-                                ? `${process.env.PUBLIC_BASE_URL}/api/voice/twilio/status`
-                                : undefined,
+                            statusCallback: process.env.PUBLIC_BASE_URL ? `${process.env.PUBLIC_BASE_URL}/api/voice/twilio/status` : undefined,
                             statusCallbackMethod: 'POST',
                             statusCallbackEvent: ['queued', 'initiated', 'ringing', 'answered', 'completed'] as string[],
                         } as unknown as Parameters<typeof twilio.calls.create>[0]);

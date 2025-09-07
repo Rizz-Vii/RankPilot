@@ -682,7 +682,7 @@ export function OutreachForm() {
                                 </div>
                             ))
                         ) : (
-                            <div className="rounded-md border p-3 text-xs">No call results returned.</div>
+                                <div className="rounded-md border p-3 text-xs">No call results returned.</div>
                         )}
                     </div>
                 </div>
@@ -695,10 +695,21 @@ export function OutreachForm() {
                         {(Object.values(liveCalls) as CallLive[]).map((c) => (
                             <div key={c.id} className="border-b border-border/50 py-1">
                                 <div><span className="font-medium">{c.to}</span> — {c.status || 'unknown'}</div>
-                                {c.lastEventAt && (<div className="text-muted-foreground">Updated {new Date(c.lastEventAt).toLocaleTimeString()}</div>)}
-                                {c.recording?.url && (
-                                    <audio className="mt-1 w-full" controls src={String(c.recording.url)} />
-                                )}
+                                {c.lastEventAt && (<div className="text-muted-foreground">Updated {new Date(c.lastEventAt).toLocaleString()}</div>)}
+                                {(() => {
+                                    type WithGather = CallLive & { gather?: { digits?: string; speechResult?: string } };
+                                    const gc = c as WithGather;
+                                    const resp = gc?.gather?.digits || gc?.gather?.speechResult;
+                                    return resp ? (
+                                        <div className="text-muted-foreground">Response: {String(resp)}</div>
+                                    ) : null;
+                                })()}
+                                {(() => {
+                                    const rec = c.recording as { url?: string | null } | null | undefined;
+                                    return rec?.url ? (
+                                        <audio className="mt-1 w-full" controls src={String(rec.url)} />
+                                    ) : null;
+                                })()}
                             </div>
                         ))}
                     </div>

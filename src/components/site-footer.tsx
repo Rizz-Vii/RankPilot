@@ -103,7 +103,7 @@ export default function SiteFooter() {
       <Button
         onClick={scrollToTop}
         size="icon"
-        className="absolute -top-6 right-6 rounded-full shadow-lg"
+        className="absolute -top-6 left-6 sm:left-auto sm:right-6 rounded-full shadow-lg"
         aria-label="Scroll to top"
       >
         <ChevronUp className="h-4 w-4" />

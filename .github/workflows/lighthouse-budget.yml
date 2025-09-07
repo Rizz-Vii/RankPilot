@@ -1,0 +1,40 @@
+name: 🏁 Lighthouse Budget Gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  lhci:
+    name: Lighthouse CI (budgets)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Run Lighthouse CI
+        env:
+          PERFORMANCE_URL: ${{ vars.PERFORMANCE_URL || '' }}
+        run: |
+          echo "Target base: ${PERFORMANCE_URL:-default performance env}"
+          npm run lighthouse:audit
+
+      - name: Upload LHCI artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-ci
+          path: |
+            ./lighthouse-report.html
+            ./lighthouse-report.json

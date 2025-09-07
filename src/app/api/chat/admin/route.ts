@@ -2,10 +2,10 @@
  * RankPilot Admin Chatbot API Route
  * Verifies auth and proxies to Firebase Functions HTTPS endpoint
  */
-
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { adminDb } from '@/lib/firebase-admin';
 import { recordError, recordRateLimitRejection, recordRouteLatency } from '@/lib/metrics/unified-metrics';
-import { enforceProvenance, withProvenance } from '@/lib/middleware/provenance';
+import { enforceProvenance } from '@/lib/middleware/provenance';
+import { withAdmin } from '@/lib/middleware/with-admin';
 import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
@@ -27,7 +27,7 @@ interface ChatResponse {
     };
 }
 
-export const POST = withProvenance(async function POST(request: NextRequest) {
+export const POST = withAdmin(async function POST(request: NextRequest, admin) {
     const nreq = request;
     const start = Date.now();
     try {
@@ -43,25 +43,10 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
             );
         }
 
-        // Get user from authentication header
-        const authHeader = nreq.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json(
-                { error: 'Authentication required: missing Bearer token' },
-                { status: 401 }
-            );
-        }
-
-        const idToken = authHeader.split(' ')[1];
-        let uid: string;
-        try {
-            const decoded = await adminAuth.verifyIdToken(idToken);
-            uid = decoded.uid;
-        } catch {
-            recordError('chat/admin', '4xx_user');
-            recordRouteLatency('chat/admin', Date.now() - start);
-            return NextResponse.json(enforceProvenance({ error: 'Invalid or expired token. Try reloading to refresh your session.', provenance: 'synthetic' }, { path: 'chat/admin' }), { status: 401 });
-        }
+        // Extract ID token (validated by withAdmin) for upstream Functions call
+        const hdr = nreq.headers.get('authorization') || nreq.headers.get('Authorization');
+        const idToken = hdr?.replace(/^Bearer\s+/i, '') || '';
+        const uid = admin.uid;
 
         // Optional team-aware rate limiting (when user has teamId)
         try {
@@ -176,25 +161,15 @@ export const POST = withProvenance(async function POST(request: NextRequest) {
 }, { path: 'chat/admin' });
 
 // GET endpoint for admin chat history
-export const GET = withProvenance(async function GET(request: NextRequest) {
+export const GET = withAdmin(async function GET(request: NextRequest, admin) {
     const nreq = request;
     const start = Date.now();
     try {
         const { searchParams } = new URL(nreq.url);
         const sessionId = searchParams.get('sessionId');
         const limit = parseInt(searchParams.get('limit') || '20');
-
-        // Get user from authentication
-        const authHeader = nreq.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            recordError('chat/admin', '4xx_user');
-            recordRouteLatency('chat/admin', Date.now() - start);
-            return NextResponse.json(enforceProvenance({ error: 'Authentication required', provenance: 'synthetic' }, { path: 'chat/admin' }), { status: 401 });
-        }
-
-        const idToken = authHeader.split(' ')[1];
-        const decoded = await adminAuth.verifyIdToken(idToken);
-        const uid = decoded.uid;
+        // Admin already validated, get uid for doc path
+        const uid = admin.uid;
 
         const collectionName = 'adminChats';
 

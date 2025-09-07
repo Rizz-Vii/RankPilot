@@ -16,6 +16,7 @@ import { fetchRecentSalesMetricsSnapshots } from '@/lib/services/sales-automatio
 import { useEffect, useState } from 'react';
 import { NewSequenceModal } from '../../_parts/new-sequence-modal';
 import { OutreachForm } from '../OutreachForm';
+import { VoiceCallHistory } from '../VoiceCallHistory';
 
 export function SalesOutreachClient() {
     const { data } = useMockDomainMetrics('sales', true);
@@ -141,6 +142,9 @@ export function SalesOutreachClient() {
                 <p className="text-sm text-muted-foreground mb-4">Configure voice, tone, speed, script, recipients, and caller ID.</p>
                 <OutreachForm />
             </section>
+
+            {/* Call History */}
+            <VoiceCallHistory />
 
             <div>
                 <ProvenanceLegend />

@@ -2,30 +2,36 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { FileText, Scale, Shield } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-const fadeIn = {
+const makeFadeIn = (duration: number, step: number) => ({
   hidden: { opacity: 0, y: 30 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.15, duration: 0.6 },
+    transition: { delay: i * step, duration },
   }),
-};
+});
 
 export default function TermsClient() {
   const [lastUpdated, setLastUpdated] = useState<string>("");
   useEffect(() => { setLastUpdated(new Date().toLocaleDateString()); }, []);
+  const prefersReducedMotion = useReducedMotion();
+  const isMobile = typeof window !== "undefined" ? window.matchMedia("(max-width: 640px)").matches : false;
+  const duration = prefersReducedMotion || isMobile ? 0.35 : 0.6;
+  const step = prefersReducedMotion || isMobile ? 0.08 : 0.15;
+  const fadeIn = makeFadeIn(duration, step);
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+    <div className="min-h-[100dvh] sm:min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Hero */}
       <motion.section
         className="pt-32 pb-16 px-4"
         initial="hidden"
-        animate="visible"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-20% 0px -10% 0px" }}
         variants={fadeIn}
         custom={0}
       >
@@ -41,13 +47,13 @@ export default function TermsClient() {
             transparent and easy to understand.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
-              <Link href="/privacy">
+            <Button asChild size="lg" className="bg-primary hover:bg-primary/90" aria-label="View Privacy Policy">
+              <Link href="/privacy" aria-label="View Privacy Policy">
                 <FileText className="mr-2 h-5 w-5" /> View Privacy Policy
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="/contact">
+            <Button asChild variant="outline" size="lg" aria-label="Contact Legal">
+              <Link href="/contact" aria-label="Contact Legal">
                 <Scale className="mr-2 h-5 w-5" /> Contact Legal
               </Link>
             </Button>
@@ -58,8 +64,14 @@ export default function TermsClient() {
         </div>
       </motion.section>
 
-      {/* Content */}
-      <section className="pb-16 px-4">
+      <motion.section
+        className="pb-16 px-4"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        variants={fadeIn}
+        custom={5}
+      >
         <div className="max-w-4xl mx-auto">
           <Card>
             <CardContent className="p-8">
@@ -144,13 +156,13 @@ export default function TermsClient() {
             <CardContent className="p-8 text-center">
               <h3 className="text-2xl font-bold mb-4">Questions About Our Terms?</h3>
         <p className="text-muted-foreground mb-6">Contact our team and we'll be happy to help.</p>
-              <Button asChild variant="secondary" size="lg">
-                <Link href="mailto:legal@rankpilot.com">legal@rankpilot.com</Link>
+              <Button asChild variant="secondary" size="lg" aria-label="Email legal@rankpilot.com">
+                <Link href="mailto:legal@rankpilot.com" aria-label="Email legal@rankpilot.com">legal@rankpilot.com</Link>
               </Button>
             </CardContent>
           </Card>
         </div>
-      </section>
+      </motion.section>
     </div>
   );
 }

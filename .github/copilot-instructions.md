@@ -177,4 +177,10 @@ npm run typecheck     # TS only
 - `.github/instructions/agent-playbooks.md`
 - `.github/instructions/copilot-delta-guide.md`
 
+### Master execution prompt
+
+For a single, non-interactive prompt that hardens billing, webhooks, Firestore rules, a11y/performance, and CI—use:
+
+- `.github/prompts/copilot-master-execution.md`
+
 Remember: This is a production SaaS platform. Quality, security, and user experience are paramount. When in doubt, follow established patterns and ask for clarification.

@@ -1,27 +1,55 @@
 "use client";
-import React from "react";
-import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion, useReducedMotion } from "framer-motion";
 import {
-  Shield,
-  Lock,
-  Eye,
-  Server,
-  FileCheck,
-  Users,
   AlertTriangle,
   CheckCircle,
+  Eye,
+  FileCheck,
+  Lock,
+  Server,
+  Shield,
+  Users,
 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
-const fadeIn = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.15, duration: 0.6 },
-  }),
-};
+// Motion helpers with reduced-motion + mobile-aware tuning
+function useFadeInVariants() {
+  const reduceMotion = useReducedMotion();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 640);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  return useMemo(() => {
+    // If user prefers reduced motion, keep subtle, fast fades without movement
+    if (reduceMotion) {
+      return {
+        hidden: { opacity: 0 },
+        visible: (i: number) => ({
+          opacity: 1,
+          transition: { delay: Math.min(i * 0.05, 0.3), duration: 0.25 },
+        }),
+      } as const;
+    }
+    // On mobile, shorten duration and spacing to avoid jank; still animate
+    const baseDuration = isMobile ? 0.35 : 0.6;
+    const baseDelay = isMobile ? 0.08 : 0.15;
+    return {
+      hidden: { opacity: 0, y: 24 },
+      visible: (i: number) => ({
+        opacity: 1,
+        y: 0,
+        transition: { delay: i * baseDelay, duration: baseDuration },
+      }),
+    } as const;
+  }, [reduceMotion, isMobile]);
+}
 
 const securityFeatures = [
   {
@@ -114,13 +142,16 @@ const dataHandling = [
 ];
 
 export default function SecurityPage() {
+  const fadeIn = useFadeInVariants();
+  const viewport = { once: true, amount: 0.2 } as const;
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+    <div className="min-h-[100dvh] sm:min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Hero Section */}
       <motion.section
         className="pt-32 pb-16 px-4"
         initial="hidden"
-        animate="visible"
+        whileInView="visible"
+        viewport={viewport}
         variants={fadeIn}
         custom={0}
       >
@@ -139,11 +170,15 @@ export default function SecurityPage() {
             industry-leading compliance standards.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-primary hover:bg-primary/90">
+            <Button
+              size="lg"
+              className="bg-primary hover:bg-primary/90"
+              aria-label="View third-party security report"
+            >
               <FileCheck className="mr-2 h-5 w-5" />
               View Security Report
             </Button>
-            <Button variant="outline" size="lg">
+            <Button variant="outline" size="lg" aria-label="Report a security vulnerability">
               <AlertTriangle className="mr-2 h-5 w-5" />
               Report Vulnerability
             </Button>
@@ -152,16 +187,17 @@ export default function SecurityPage() {
       </motion.section>
 
       {/* Security Features */}
-      <section className="pb-16 px-4">
+      <section className="pb-16 px-4" role="region" aria-labelledby="security-features-heading">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
-            animate="visible"
+            whileInView="visible"
+            viewport={viewport}
             variants={fadeIn}
             custom={1}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-foreground mb-4">
+            <h2 id="security-features-heading" className="text-3xl font-bold text-foreground mb-4">
               Security Features
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -175,7 +211,8 @@ export default function SecurityPage() {
               <motion.div
                 key={feature.title}
                 initial="hidden"
-                animate="visible"
+                whileInView="visible"
+                viewport={viewport}
                 variants={fadeIn}
                 custom={index + 2}
               >
@@ -197,16 +234,17 @@ export default function SecurityPage() {
       </section>
 
       {/* Compliance */}
-      <section className="pb-16 px-4">
+      <section className="pb-16 px-4" role="region" aria-labelledby="compliance-heading">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
-            animate="visible"
+            whileInView="visible"
+            viewport={viewport}
             variants={fadeIn}
             custom={8}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-foreground mb-4">
+            <h2 id="compliance-heading" className="text-3xl font-bold text-foreground mb-4">
               Compliance & Certifications
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -219,7 +257,8 @@ export default function SecurityPage() {
               <motion.div
                 key={item.title}
                 initial="hidden"
-                animate="visible"
+                whileInView="visible"
+                viewport={viewport}
                 variants={fadeIn}
                 custom={index + 9}
               >
@@ -254,16 +293,17 @@ export default function SecurityPage() {
       </section>
 
       {/* Data Handling */}
-      <section className="pb-16 px-4">
+      <section className="pb-16 px-4" role="region" aria-labelledby="data-handling-heading">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
-            animate="visible"
+            whileInView="visible"
+            viewport={viewport}
             variants={fadeIn}
             custom={13}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-foreground mb-4">
+            <h2 id="data-handling-heading" className="text-3xl font-bold text-foreground mb-4">
               Data Handling & Retention
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -276,18 +316,19 @@ export default function SecurityPage() {
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full">
+                  <caption className="sr-only">Data handling categories, retention, encryption, and access controls</caption>
                   <thead>
                     <tr className="border-b border-border bg-muted/30">
-                      <th className="text-left p-4 font-semibold">
+                      <th scope="col" className="text-left p-4 font-semibold">
                         Data Category
                       </th>
-                      <th className="text-left p-4 font-semibold">
+                      <th scope="col" className="text-left p-4 font-semibold">
                         Retention Period
                       </th>
-                      <th className="text-left p-4 font-semibold">
+                      <th scope="col" className="text-left p-4 font-semibold">
                         Encryption
                       </th>
-                      <th className="text-left p-4 font-semibold">
+                      <th scope="col" className="text-left p-4 font-semibold">
                         Access Control
                       </th>
                     </tr>
@@ -297,7 +338,8 @@ export default function SecurityPage() {
                       <motion.tr
                         key={item.category}
                         initial="hidden"
-                        animate="visible"
+                        whileInView="visible"
+                        viewport={viewport}
                         variants={fadeIn}
                         custom={index + 14}
                         className="border-b border-border hover:bg-muted/30"
@@ -320,7 +362,8 @@ export default function SecurityPage() {
       <motion.section
         className="pb-16 px-4"
         initial="hidden"
-        animate="visible"
+        whileInView="visible"
+        viewport={viewport}
         variants={fadeIn}
         custom={18}
       >
@@ -334,7 +377,7 @@ export default function SecurityPage() {
                 requirements.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button variant="secondary" size="lg">
+                <Button variant="secondary" size="lg" aria-label="Contact the security team">
                   <Shield className="mr-2 h-5 w-5" />
                   Contact Security Team
                 </Button>
@@ -342,6 +385,7 @@ export default function SecurityPage() {
                   variant="outline"
                   size="lg"
                   className="border-transparent bg-white text-primary hover:bg-white/90"
+                  aria-label="Download the security datasheet"
                 >
                   <FileCheck className="mr-2 h-5 w-5" />
                   Download Security Datasheet

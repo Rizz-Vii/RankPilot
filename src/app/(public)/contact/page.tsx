@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   CheckCircle,
   HelpCircle,
@@ -21,7 +21,7 @@ import {
   Phone,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -75,6 +75,40 @@ const supportChannels = [
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Motion helpers with reduced-motion + mobile-aware tuning
+  const reduceMotion = useReducedMotion();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 640);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const fadeIn = useMemo(() => {
+    if (reduceMotion) {
+      return {
+        hidden: { opacity: 0 },
+        visible: (i: number) => ({
+          opacity: 1,
+          transition: { delay: Math.min(i * 0.05, 0.3), duration: 0.25 },
+        }),
+      } as const;
+    }
+    const baseDuration = isMobile ? 0.35 : 0.6;
+    const baseDelay = isMobile ? 0.08 : 0.15;
+    return {
+      hidden: { opacity: 0, y: 24 },
+      visible: (i: number) => ({
+        opacity: 1,
+        y: 0,
+        transition: { delay: i * baseDelay, duration: baseDuration },
+      }),
+    } as const;
+  }, [reduceMotion, isMobile]);
+
+  const viewport = { once: true, amount: 0.2 } as const;
 
   const {
     register,
@@ -117,12 +151,15 @@ export default function ContactPage() {
   const submitHandler = (e: React.FormEvent) => { void handleSubmit(onSubmit)(e); };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-[100dvh] sm:min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="max-w-7xl mx-auto px-4 py-16">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewport}
+          variants={fadeIn}
+          custom={0}
           className="text-center mb-16"
         >
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -136,7 +173,13 @@ export default function ContactPage() {
 
         <div className="grid lg:grid-cols-2 gap-8 mb-16">
           {/* Contact Form */}
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+            variants={fadeIn}
+            custom={1}
+          >
             <Card>
               <CardHeader>
                 <CardTitle>Send us a Message</CardTitle>
@@ -145,17 +188,17 @@ export default function ContactPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={submitHandler} className="space-y-4">
+                <form onSubmit={submitHandler} className="space-y-4" role="form" aria-describedby="contact-form-status">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="name">Name</Label>
-                      <Input id="name" placeholder="Your full name" {...register("name")} className={errors.name ? "border-destructive" : ""} />
-                      {errors.name && <p className="text-sm text-destructive-foreground mt-1">{errors.name.message}</p>}
+                      <Input id="name" placeholder="Your full name" aria-invalid={!!errors.name} aria-describedby={errors.name ? "name-error" : undefined} {...register("name")} className={errors.name ? "border-destructive" : ""} />
+                      {errors.name && <p id="name-error" className="text-sm text-destructive-foreground mt-1">{errors.name.message}</p>}
                     </div>
                     <div>
                       <Label htmlFor="email">Email</Label>
-                      <Input id="email" type="email" placeholder="you@example.com" {...register("email")} className={errors.email ? "border-destructive" : ""} />
-                      {errors.email && <p className="text-sm text-destructive-foreground mt-1">{errors.email.message}</p>}
+                      <Input id="email" type="email" placeholder="you@example.com" aria-invalid={!!errors.email} aria-describedby={errors.email ? "email-error" : undefined} {...register("email")} className={errors.email ? "border-destructive" : ""} />
+                      {errors.email && <p id="email-error" className="text-sm text-destructive-foreground mt-1">{errors.email.message}</p>}
                     </div>
                   </div>
 
@@ -163,6 +206,8 @@ export default function ContactPage() {
                     <Label htmlFor="category">Category</Label>
                     <select
                       id="category"
+                      aria-invalid={!!errors.category}
+                      aria-describedby={errors.category ? "category-error" : undefined}
                       {...register("category")}
                       className={`w-full rounded-md border border-input bg-background px-3 py-2 text-sm ${errors.category ? "border-destructive" : ""}`}
                     >
@@ -171,19 +216,19 @@ export default function ContactPage() {
                         <option key={category.value} value={category.value}>{category.label}</option>
                       ))}
                     </select>
-                    {errors.category && <p className="text-sm text-destructive-foreground mt-1">{errors.category.message}</p>}
+                    {errors.category && <p id="category-error" className="text-sm text-destructive-foreground mt-1">{errors.category.message}</p>}
                   </div>
 
                   <div>
                     <Label htmlFor="subject">Subject</Label>
-                    <Input id="subject" placeholder="How can we help?" {...register("subject")} className={errors.subject ? "border-destructive" : ""} />
-                    {errors.subject && <p className="text-sm text-destructive-foreground mt-1">{errors.subject.message}</p>}
+                    <Input id="subject" placeholder="How can we help?" aria-invalid={!!errors.subject} aria-describedby={errors.subject ? "subject-error" : undefined} {...register("subject")} className={errors.subject ? "border-destructive" : ""} />
+                    {errors.subject && <p id="subject-error" className="text-sm text-destructive-foreground mt-1">{errors.subject.message}</p>}
                   </div>
 
                   <div>
                     <Label htmlFor="message">Message</Label>
-                    <Textarea id="message" rows={5} {...register("message")} className={errors.message ? "border-destructive" : ""} placeholder="Please describe your issue or question in detail..." />
-                    {errors.message && <p className="text-sm text-destructive-foreground mt-1">{errors.message.message}</p>}
+                    <Textarea id="message" rows={5} aria-invalid={!!errors.message} aria-describedby={errors.message ? "message-error" : undefined} {...register("message")} className={errors.message ? "border-destructive" : ""} placeholder="Please describe your issue or question in detail..." />
+                    {errors.message && <p id="message-error" className="text-sm text-destructive-foreground mt-1">{errors.message.message}</p>}
                   </div>
 
                   <Button type="submit" className="w-full" disabled={!isValid || isSubmitting}>
@@ -199,13 +244,23 @@ export default function ContactPage() {
                       </>
                     )}
                   </Button>
+                  <p id="contact-form-status" role="status" aria-live="polite" className="sr-only">
+                    {isSubmitting ? "Submitting" : errors ? "Form has validation errors" : "Ready"}
+                  </p>
                 </form>
               </CardContent>
             </Card>
           </motion.div>
 
           {/* Support Channels */}
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="space-y-6">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+            variants={fadeIn}
+            custom={2}
+            className="space-y-6"
+          >
             <Card>
               <CardHeader>
                 <CardTitle>Support Channels</CardTitle>
@@ -213,7 +268,15 @@ export default function ContactPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {supportChannels.map((channel, index) => (
-                  <div key={index} className="p-4 border rounded-lg">
+                  <motion.div
+                    key={index}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={viewport}
+                    variants={fadeIn}
+                    custom={index + 3}
+                    className="p-4 border rounded-lg"
+                  >
                     <div className="flex items-start gap-4">
                       <div className="p-2 bg-primary/10 text-primary rounded-lg">{channel.icon}</div>
                       <div className="flex-1">
@@ -235,7 +298,7 @@ export default function ContactPage() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </CardContent>
             </Card>
@@ -278,7 +341,14 @@ export default function ContactPage() {
         </div>
 
         {/* Enterprise Contact */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="mt-16">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewport}
+          variants={fadeIn}
+          custom={supportChannels.length + 4}
+          className="mt-16"
+        >
           <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-primary/20">
             <CardContent className="p-8 text-center">
               <div className="flex items-center justify-center gap-3 mb-4">

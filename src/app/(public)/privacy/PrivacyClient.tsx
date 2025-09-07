@@ -16,7 +16,7 @@ export default function PrivacyClient() {
     setLastUpdated(new Date().toLocaleDateString());
   }, []);
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+    <div className="min-h-[100dvh] sm:min-h-screen bg-gradient-to-br from-background to-muted">
       <motion.section className="pt-32 pb-10 px-4" initial="hidden" animate="visible" variants={fadeIn} custom={0}>
         <div className="max-w-4xl mx-auto text-center">
           <div className="p-4 bg-primary/10 rounded-2xl inline-flex mb-4">

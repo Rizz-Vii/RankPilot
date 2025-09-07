@@ -250,12 +250,16 @@ export const adminChatHandler = onCall(
         throw new HttpsError("permission-denied", "Invalid user ID");
       }
 
-      // Verify admin access
-      const userDoc = await db.collection("users").doc(uid).get();
-      const userData = userDoc.data() as Record<string, unknown> | undefined;
-
-      const tier = (userData?.subscriptionTier as string | undefined) || "free";
-      if (!userData || !["admin", "enterprise"].includes(tier)) {
+      // Verify admin access using custom claim or user role for consistency with Firestore/API
+      const token = request.auth.token as Record<string, unknown> | undefined;
+      const hasAdminClaim = Boolean(token && token["admin"] === true);
+      let isAdminUser = hasAdminClaim;
+      if (!isAdminUser) {
+        const userDoc = await db.collection("users").doc(uid).get();
+        const role = (userDoc.data() as { role?: string } | undefined)?.role;
+        if (role === 'admin') isAdminUser = true;
+      }
+      if (!isAdminUser) {
         throw new HttpsError("permission-denied", "Admin access required");
       }
 
@@ -266,7 +270,9 @@ export const adminChatHandler = onCall(
 
       // Fetch admin context data
       const chatContext = await getChatContext(uid, true);
-      const adminContext = await getAdminContext(tier);
+      const userDoc = await db.collection("users").doc(uid).get();
+      const userTier = ((userDoc.data() as { subscriptionTier?: string } | undefined)?.subscriptionTier) || 'admin';
+      const adminContext = await getAdminContext(userTier);
 
       // Build admin system prompt
       const systemPrompt = buildAdminSystemPrompt(chatContext, adminContext);
@@ -329,7 +335,7 @@ export const adminChatHandler = onCall(
 
       // Save admin conversation
       await saveConversation(uid, currentSessionId, message, aiResponse, "admin", {
-        adminLevel: userData.subscriptionTier,
+        adminLevel: userTier,
         systemMetrics: adminContext.systemMetrics,
       });
 

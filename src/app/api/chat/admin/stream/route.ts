@@ -1,9 +1,10 @@
 import { fallbackOneShot } from '@/lib/ai/aiClient';
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { adminDb } from '@/lib/firebase-admin';
 import type { SSEClient } from '@/lib/http/sse';
 import { sse } from '@/lib/http/sse';
 import { recordError, recordFallback, recordRateLimitRejection, recordRouteLatency } from '@/lib/metrics/unified-metrics';
 import { enforceProvenance, enforceProvenanceOnChunk } from '@/lib/middleware/provenance';
+import { withAdmin } from '@/lib/middleware/with-admin';
 import { enforceTeamRateLimit, TeamRateLimitError } from '@/lib/rate-limit/team-rate-limit';
 import { FieldValue } from 'firebase-admin/firestore';
 import { NextResponse, type NextRequest } from 'next/server';
@@ -19,18 +20,10 @@ function estimateTokens(text: string): number {
     return Math.ceil(words * 1.3);
 }
 
-export async function POST(req: NextRequest): Promise<Response> {
+export const POST = withAdmin(async (req: NextRequest, admin) => {
     const start = Date.now();
     try {
-        const authHeader = req.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            recordError('chat/admin/stream', '4xx_user');
-            recordRouteLatency('chat/admin/stream', Date.now() - start);
-            return new Response('Unauthorized', { status: 401 });
-        }
-        const idToken = authHeader.split(' ')[1];
-        const decoded = await adminAuth.verifyIdToken(idToken);
-        const uid = decoded.uid;
+        const uid = admin.uid;
 
         const body = await req.json().catch(() => ({}));
         const { message, sessionId } = body as { message?: string; sessionId?: string };
@@ -171,7 +164,7 @@ export async function POST(req: NextRequest): Promise<Response> {
             })();
             return;
         };
-        return sse(req, onClient, { heartbeatMs: 15000 });
+        return sse(req, onClient, { heartbeatMs: 15000 }) as unknown as NextResponse;
     } catch (e: unknown) {
         recordError('chat/admin/stream', '5xx_server');
         recordRouteLatency('chat/admin/stream', Date.now() - start);
@@ -181,4 +174,4 @@ export async function POST(req: NextRequest): Promise<Response> {
             { status: 500 }
         );
     }
-}
+}, { path: 'chat/admin/stream' });

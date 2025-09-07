@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function CompetitorAnalysisBlogPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-[100dvh] sm:min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="container mx-auto px-4 py-12 max-w-4xl">
       <Link
         href="/blog"

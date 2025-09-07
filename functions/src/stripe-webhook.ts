@@ -2,6 +2,11 @@ import { getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { onRequest } from "firebase-functions/v2/https";
 import Stripe from "stripe";
+import {
+  hasProcessedEvent,
+  recordProcessedEvent,
+  writeEvidence,
+} from "./lib/billing/idempotency.js";
 import { upsertFinanceInvoice } from './lib/billing/invoice-upsert.js';
 
 // Initialize Firebase Admin if not already initialized
@@ -59,10 +64,15 @@ export const stripeWebhook = onRequest(
 
     try {
       // Prefer the raw, unparsed body for signature verification
-      const rawBody: Buffer | undefined = (req as unknown as { rawBody?: Buffer }).rawBody;
-      const payload: Buffer | string = rawBody ?? (req.body as unknown as string | Buffer);
+      const rawBody: Buffer | undefined = (
+        req as unknown as { rawBody?: Buffer }
+      ).rawBody;
+      const payload: Buffer | string =
+        rawBody ?? (req.body as unknown as string | Buffer);
       if (!rawBody) {
-        console.warn("⚠️ req.rawBody missing; falling back to req.body. Ensure raw body is available to verify Stripe signatures safely.");
+        console.warn(
+          "⚠️ req.rawBody missing; falling back to req.body. Ensure raw body is available to verify Stripe signatures safely."
+        );
       }
       // Verify webhook signature
       event = getStripe().webhooks.constructEvent(payload, sig, webhookSecret);
@@ -74,6 +84,20 @@ export const stripeWebhook = onRequest(
     }
 
     console.log("📨 Processing event:", event.type);
+
+    // Idempotency: short-circuit if already handled
+    try {
+      const processed = await hasProcessedEvent(db, event.id);
+      if (processed) {
+        console.log("♻️ Duplicate event ignored", event.id);
+        res.json({ received: true, duplicate: true });
+        return;
+      }
+    } catch (e) {
+      console.warn("⚠️ Idempotency check failed; proceeding defensively", {
+        error: (e as Error)?.message,
+      });
+    }
 
     try {
       // Handle the event
@@ -132,6 +156,54 @@ export const stripeWebhook = onRequest(
           console.log(`📋 Unhandled event type: ${event.type}`);
       }
 
+      // Mark processed and write evidence
+      try {
+        await recordProcessedEvent(db, event.id);
+      } catch (e) {
+        console.warn("⚠️ recordProcessedEvent failed", {
+          eventId: event.id,
+          error: (e as Error)?.message,
+        });
+      }
+      try {
+        const rawObj = event.data?.object as unknown;
+        const obj: Record<string, unknown> | undefined =
+          rawObj && typeof rawObj === "object"
+            ? (rawObj as Record<string, unknown>)
+            : undefined;
+        const subscriptionId =
+          typeof obj?.["subscription"] === "string"
+            ? (obj["subscription"] as string)
+            : undefined;
+        const customerId =
+          typeof obj?.["customer"] === "string"
+            ? (obj["customer"] as string)
+            : undefined;
+        const invoiceId =
+          typeof obj?.["id"] === "string" &&
+          String(event.type).startsWith("invoice.")
+            ? (obj["id"] as string)
+            : undefined;
+        const status =
+          typeof obj?.["status"] === "string"
+            ? (obj["status"] as string)
+            : undefined;
+        const requestId = (event.request as { id?: string } | null)?.id || null;
+        await writeEvidence(db, {
+          eventId: event.id,
+          type: event.type,
+          subscriptionId,
+          customerId,
+          invoiceId,
+          status,
+          requestId,
+        });
+      } catch (e) {
+        console.warn("⚠️ evidence write failed", {
+          eventId: event.id,
+          error: (e as Error)?.message,
+        });
+      }
       console.log("✅ Event processed successfully");
       res.json({ received: true });
     } catch (error) {

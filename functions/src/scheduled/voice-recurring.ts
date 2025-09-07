@@ -106,6 +106,7 @@ export const processVoiceRecurring = scheduler.onSchedule(
         schedule: 'every 15 minutes',
         timeZone: 'Etc/UTC',
         region: 'australia-southeast1',
+        secrets: ['PUBLIC_BASE_URL'],
     },
     async () => { await processVoiceRecurringTick(); }
 );

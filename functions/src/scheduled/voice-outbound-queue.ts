@@ -53,6 +53,10 @@ function buildTwiml(opts: { sayText: string; voice: string; language: string; ra
         return `<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n  <Play>${recordingUrl}</Play>\n</Response>`;
     }
     if (interactive) {
+        const actionUrl = process.env.PUBLIC_BASE_URL ? `${process.env.PUBLIC_BASE_URL}/api/voice/twilio/gather` : undefined;
+        if (actionUrl) {
+            return `<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n  <Gather input="speech dtmf" numDigits="1" timeout="5" action="${actionUrl}" method="POST">\n    <Say voice="${voice}" language="${language}">${prosodyOpen}${sayText} Press 1 if interested, or say 'yes'.${prosodyClose}</Say>\n  </Gather>\n  <Say voice="${voice}" language="${language}">Thank you. Goodbye.</Say>\n</Response>`;
+        }
         return `<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n  <Gather input="speech dtmf" numDigits="1" timeout="5">\n    <Say voice="${voice}" language="${language}">${prosodyOpen}${sayText} Press 1 if interested, or say 'yes'.${prosodyClose}</Say>\n  </Gather>\n  <Say voice="${voice}" language="${language}">Thank you. Goodbye.</Say>\n</Response>`;
     }
     return `<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n  <Say voice="${voice}" language="${language}">${prosodyOpen}${sayText}${prosodyClose}</Say>\n</Response>`;
@@ -86,7 +90,8 @@ export async function processVoiceOutboundQueueTick(injectedDb?: ReturnType<type
     let fromDefault: string | undefined;
     try {
         const twilioMod = await import('twilio');
-        const TwilioCtor = (twilioMod as { Twilio?: TwilioCtor }).Twilio;
+        // Support both named Twilio export and default export shape
+        const TwilioCtor = (twilioMod as { Twilio?: TwilioCtor }).Twilio || (twilioMod as unknown as { default?: TwilioCtor }).default as TwilioCtor | undefined;
         const sid = process.env.TWILIO_ACCOUNT_SID;
         const token = process.env.TWILIO_AUTH_TOKEN;
         if (sid && token && TwilioCtor) twilioClient = new TwilioCtor(sid, token);
@@ -179,6 +184,14 @@ export const processVoiceOutboundQueue = scheduler.onSchedule(
         schedule: 'every 1 minutes',
         timeZone: 'Etc/UTC',
         region: 'australia-southeast1',
+        // Ensure Twilio env and PUBLIC_BASE_URL are mounted in runtime
+        secrets: [
+            'TWILIO_ACCOUNT_SID',
+            'TWILIO_AUTH_TOKEN',
+            'TWILIO_FROM_NUMBER',
+            'PUBLIC_BASE_URL',
+            'TWILIO_TEST_MODE'
+        ],
     },
     async () => { await processVoiceOutboundQueueTick(); }
 );

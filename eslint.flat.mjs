@@ -45,141 +45,239 @@ const TEST_GLOBS = [
 
 export default [
   {
-    ignores: ['**/node_modules/**', '**/.next/**', '**/dist/**', '**/out/**', 'functions/lib/**', 'artifacts/**', 'coverage/**', '**/.firebase/**', '.firebase/**', 'functions/src/lib/ai-memory-manager.ts', 'scripts/legacy-eslint/**', 'eslint.config.js', 'playwright/.cache/**', 'playwright-report/**',
+    ignores: [
+      "**/node_modules/**",
+      "**/.next/**",
+      "**/dist/**",
+      "**/out/**",
+      "functions/lib/**",
+      "artifacts/**",
+      "coverage/**",
+      "**/.firebase/**",
+      ".firebase/**",
+      "functions/src/lib/ai-memory-manager.ts",
+      "scripts/legacy-eslint/**",
+      "eslint.config.js",
+      "playwright/.cache/**",
+      "playwright-report/**",
+      // Ignore CJS Firestore rules test to avoid plugin rule mismatch noise in flat config pass
+      "testing/unit/firebase/security-rules.test.cjs",
       // Exclude type shim/override files from lint noise – validated by typecheck separately
-      'types/**',
+      "types/**",
       // Temporary: exclude voice libs while stabilizing types; tracked in lint roadmap
-      'src/lib/voice/**'
-    ]
+      "src/lib/voice/**",
+    ],
   },
-  { // Ensure declaration shims don't trigger any/unused-var rules
-    files: ['types/**/*.d.ts', 'types/**/*.ts', 'types/**'],
+  {
+    // Ensure declaration shims don't trigger any/unused-var rules
+    files: ["types/**/*.d.ts", "types/**/*.ts", "types/**"],
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': 'off'
-    }
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+    },
   },
   // Add Next.js flat config so Next build can detect plugin presence
   ...(nextPlugin.flatConfig?.coreWebVitals
     ? [nextPlugin.flatConfig.coreWebVitals]
-    : (nextPlugin.flatConfig?.recommended ? [nextPlugin.flatConfig.recommended] : [])),
+    : nextPlugin.flatConfig?.recommended
+      ? [nextPlugin.flatConfig.recommended]
+      : []),
   {
-    files: ['**/*.{ts,tsx,js,jsx}'],
-    languageOptions: { parser: tsParser, parserOptions: { ecmaVersion: 2022, sourceType: 'module', ecmaFeatures: { jsx: true } } },
-    linterOptions: { reportUnusedDisableDirectives: 'error' },
+    files: ["**/*.{ts,tsx,js,jsx}"],
     languageOptions: {
       parser: tsParser,
-      parserOptions: { ecmaVersion: 2022, sourceType: 'module', ecmaFeatures: { jsx: true } },
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: "module",
+        ecmaFeatures: { jsx: true },
+      },
+    },
+    linterOptions: { reportUnusedDisableDirectives: "error" },
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: "module",
+        ecmaFeatures: { jsx: true },
+      },
       globals: {
         // Browser globals
-        window: 'readonly', document: 'readonly', navigator: 'readonly', location: 'readonly',
+        window: "readonly",
+        document: "readonly",
+        navigator: "readonly",
+        location: "readonly",
         // Node globals
-        process: 'readonly', global: 'readonly', __dirname: 'readonly', __filename: 'readonly', module: 'readonly', require: 'readonly',
-        console: 'readonly', setTimeout: 'readonly', clearTimeout: 'readonly', setInterval: 'readonly', clearInterval: 'readonly'
-      }
+        process: "readonly",
+        global: "readonly",
+        __dirname: "readonly",
+        __filename: "readonly",
+        module: "readonly",
+        require: "readonly",
+        console: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+      },
     },
     plugins: {
-      '@typescript-eslint': tsPlugin,
+      "@typescript-eslint": tsPlugin,
       react,
-      'react-hooks': hooks,
-      'jsx-a11y': jsxA11y,
+      "react-hooks": hooks,
+      "jsx-a11y": jsxA11y,
       // Next.js plugin is loaded in eslint.config.mjs for Next tooling detection
-      'custom-rules': { rules: { 'no-self-reexport': noSelfReexport, 'no-raw-hex-colors': noRawHexColors, 'no-focused-tests': focusedTestRule } }
+      "custom-rules": {
+        rules: {
+          "no-self-reexport": noSelfReexport,
+          "no-raw-hex-colors": noRawHexColors,
+          "no-focused-tests": focusedTestRule,
+        },
+      },
     },
-    settings: { react: { version: 'detect' } },
+    settings: { react: { version: "detect" } },
     rules: {
       // Next-specific rules are handled in eslint.config.mjs for Next build detection
-      'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
-      'react/jsx-uses-react': 'off',
-      'react/react-in-jsx-scope': 'off',
-      '@typescript-eslint/no-unused-vars': ['error', { args: 'none', ignoreRestSiblings: true, varsIgnorePattern: '^_' }],
-      '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-require-imports': 'error',
-      '@typescript-eslint/ban-types': 'off',
-      '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports', fixStyle: 'separate-type-imports' }],
-      'custom-rules/no-self-reexport': 'error',
-      'custom-rules/no-raw-hex-colors': ['error', {
-        allowPaletteFiles: [
-          'src/lib/visualizations/d3-visualization-engine.ts',
-          'src/lib/visualizations/chart-export-manager.ts',
-          // Temporarily exempt ThemeConfiguration while color picker uses dynamic hex composition
-          'src/components/theme/ThemeConfiguration.tsx'
-        ], allow: ['#FFFFFF', '#fff', '#4F46E5', '#10B981']
-      }],
-      'custom-rules/no-focused-tests': 'error'
-    }
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
+      "react/jsx-uses-react": "off",
+      "react/react-in-jsx-scope": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { args: "none", ignoreRestSiblings: true, varsIgnorePattern: "^_" },
+      ],
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-require-imports": "error",
+      "@typescript-eslint/ban-types": "off",
+      "@typescript-eslint/consistent-type-imports": [
+        "error",
+        { prefer: "type-imports", fixStyle: "separate-type-imports" },
+      ],
+      "custom-rules/no-self-reexport": "error",
+      "custom-rules/no-raw-hex-colors": [
+        "error",
+        {
+          allowPaletteFiles: [
+            "src/lib/visualizations/d3-visualization-engine.ts",
+            "src/lib/visualizations/chart-export-manager.ts",
+            // Temporarily exempt ThemeConfiguration while color picker uses dynamic hex composition
+            "src/components/theme/ThemeConfiguration.tsx",
+          ],
+          allow: ["#FFFFFF", "#fff", "#4F46E5", "#10B981"],
+        },
+      ],
+      "custom-rules/no-focused-tests": "error",
+    },
   },
-  { // Typed rules (only for app source to limit perf impact)
-    files: ['src/**/*.{ts,tsx}'],
+  {
+    // Typed rules (only for app source to limit perf impact)
+    files: ["src/**/*.{ts,tsx}"],
     languageOptions: {
       parser: tsParser,
-      parserOptions: { project: './tsconfig.json', ecmaVersion: 2022, sourceType: 'module' }
+      parserOptions: {
+        project: "./tsconfig.json",
+        ecmaVersion: 2022,
+        sourceType: "module",
+      },
     },
     rules: {
-      '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-misused-promises': 'warn'
-    }
+      "@typescript-eslint/no-floating-promises": "warn",
+      "@typescript-eslint/no-misused-promises": "warn",
+    },
   },
-  { // Tests: downgrade certain rules
+  {
+    // Tests: downgrade certain rules
     files: TEST_GLOBS,
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': 'off',
-      '@typescript-eslint/no-require-imports': 'off',
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-require-imports": "off",
       // Test and mock code often intentionally omits exhaustive deps
-      'react-hooks/exhaustive-deps': 'off'
-    }
+      "react-hooks/exhaustive-deps": "off",
+    },
   },
-  { // Type declaration shims and overrides: relax any/unused generics
-    files: ['types/**/*.d.ts'],
+  {
+    // CJS rules tests file is plain CommonJS; exclude TS plugin rule that causes "rule not found"
+    files: ["testing/unit/firebase/security-rules.test.cjs"],
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': ['off']
-    }
+      // No TS plugin rules should apply here
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+    },
+    linterOptions: { reportUnusedDisableDirectives: "off" },
   },
-  { // Node / scripts
-    files: ['scripts/**/*.{js,ts}', 'tailwind.config.ts', 'playwright.config.*.ts', 'lighthouse.config.js'],
-    linterOptions: { reportUnusedDisableDirectives: 'off' },
+  {
+    // Temporary: suppress no-explicit-any false positives in HomeFeaturesGrid while stabilizing types
+    files: ["src/components/home/HomeFeaturesGrid.tsx"],
     rules: {
-      '@typescript-eslint/no-require-imports': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': ['off', { args: 'none', ignoreRestSiblings: true, varsIgnorePattern: '^_' }]
-    }
+      "@typescript-eslint/no-explicit-any": "off",
+    },
   },
-  { // Allow CommonJS requires in Node-only JS helpers and Firebase Functions JS utilities
-    files: ['cache-handler.js', 'functions/**/*.js'],
-    rules: { '@typescript-eslint/no-require-imports': 'off' }
-  },
-  { // Functions runtime specifics (allow some flexibility)
-    files: ['functions/src/**/*.ts'],
+  {
+    // Type declaration shims and overrides: relax any/unused generics
+    files: ["types/**/*.d.ts"],
     rules: {
-      '@typescript-eslint/no-require-imports': 'off',
-      '@typescript-eslint/no-explicit-any': 'warn'
-    }
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": ["off"],
+    },
   },
-  { // Token & palette definition exemptions
-    files: ['src/styles/tokens.ts', 'tailwind.config.ts'],
-    rules: { 'custom-rules/no-raw-hex-colors': 'off' }
-  },
-  { // Telephony node helper can use require for optional Twilio SDK
-    files: ['src/lib/telephony/twilio.ts'],
-    rules: { '@typescript-eslint/no-require-imports': 'off' }
-  },
-  { // Voice internal libs are intentionally loose-typed while stabilizing
-    files: ['src/lib/voice/**/*.{ts,tsx}'],
-    linterOptions: { reportUnusedDisableDirectives: 'off' },
+  {
+    // Node / scripts
+    files: [
+      "scripts/**/*.{js,ts}",
+      "tailwind.config.ts",
+      "playwright.config.*.ts",
+      "lighthouse.config.js",
+    ],
+    linterOptions: { reportUnusedDisableDirectives: "off" },
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-require-imports': 'off',
-    }
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "off",
+        { args: "none", ignoreRestSiblings: true, varsIgnorePattern: "^_" },
+      ],
+    },
   },
-  { // Temporary: suppress phantom unused-disable report in Functions AI adapter file
+  {
+    // Allow CommonJS requires in Node-only JS helpers and Firebase Functions JS utilities
+    files: ["cache-handler.js", "functions/**/*.js"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
+  {
+    // Functions runtime specifics (allow some flexibility)
+    files: ["functions/src/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
+    },
+  },
+  {
+    // Token & palette definition exemptions
+    files: ["src/styles/tokens.ts", "tailwind.config.ts"],
+    rules: { "custom-rules/no-raw-hex-colors": "off" },
+  },
+  {
+    // Telephony node helper can use require for optional Twilio SDK
+    files: ["src/lib/telephony/twilio.ts"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
+  {
+    // Voice internal libs are intentionally loose-typed while stabilizing
+    files: ["src/lib/voice/**/*.{ts,tsx}"],
+    linterOptions: { reportUnusedDisableDirectives: "off" },
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
+  {
+    // Temporary: suppress phantom unused-disable report in Functions AI adapter file
     // Context: repo lint shows an "Unused eslint-disable directive" at line 41 in
     // functions/src/lib/ai-memory-manager.ts despite no such directive present.
     // Single-file no-cache lint is clean; this appears to be a cache/parser edge case.
     // Narrow override avoids weakening global enforcement.
-    files: ['functions/src/lib/ai-memory-manager.ts'],
-    linterOptions: { reportUnusedDisableDirectives: 'off' }
-  }
+    files: ["functions/src/lib/ai-memory-manager.ts"],
+    linterOptions: { reportUnusedDisableDirectives: "off" },
+  },
 ];

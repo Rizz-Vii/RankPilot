@@ -2,12 +2,13 @@ name: 🔄 Workflow Orchestrator - Status Dashboard
 
 on:
   workflow_run:
-    workflows: 
+    workflows:
       - "🚀 Dev Stage - Workshop Instant Preview"
       - "🧪 Preview Stage - Validation & Testing"
       - "⚡ Dev Stage - Performance Optimization"
       - "🎯 Main Hub - Performance to Deployment-Ready Promotion"
       - "🎯 Integration Stage - Deployment-Ready to Staging Auto-Deploy"
+      - "ci-sse-adapter-node20"
     types: [requested, in_progress, completed]
 
 env:
@@ -17,7 +18,7 @@ jobs:
   workflow-status:
     name: 📊 Workflow Status Monitor
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: 📋 Log Workflow Status
         run: |
@@ -30,7 +31,7 @@ jobs:
           echo "🕐 Started: ${{ github.event.workflow_run.created_at }}"
           echo "🔗 URL: ${{ github.event.workflow_run.html_url }}"
           echo ""
-          
+
           # Determine next step based on current workflow
           case "${{ github.event.workflow_run.name }}" in
             "🚀 Dev Stage - Workshop Instant Preview")
@@ -75,7 +76,7 @@ jobs:
           echo "3. Ensure Firebase project permissions are correct"
           echo "4. Check for any package.json or dependency issues"
           echo "5. Verify Playwright configurations are valid"
-          
+
           # Set failure status for monitoring
           exit 1
 
@@ -83,20 +84,20 @@ jobs:
     name: 🏥 Pipeline Health Check
     runs-on: ubuntu-latest
     if: always()
-    
+
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
-      
+
       - name: 🔍 Validate Workflow Configuration
         run: |
           echo "🔍 PIPELINE HEALTH CHECK"
           echo "========================"
-          
+
           # Check for common workflow issues
           echo "📋 Validating workflow files..."
           find .github/workflows -name "*.yml" -exec echo "✓ {}" \;
-          
+
           # Check for package.json test scripts
           echo "📋 Validating test scripts..."
           if grep -q "test:lean-critical" package.json; then
@@ -104,17 +105,17 @@ jobs:
           else
             echo "⚠️ Lean critical tests not found"
           fi
-          
+
           if grep -q "test:lean-mobile" package.json; then
-            echo "✅ Lean mobile tests configured"  
+            echo "✅ Lean mobile tests configured"
           else
             echo "⚠️ Lean mobile tests not found"
           fi
-          
+
           # Check for Playwright configurations
           echo "📋 Validating Playwright configs..."
           ls playwright.config*.ts | head -5 | while read config; do
             echo "✓ $config"
           done
-          
+
           echo "✅ Pipeline health check completed"

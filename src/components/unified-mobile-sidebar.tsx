@@ -17,7 +17,7 @@ import React, { useEffect, useState } from "react";
 // Unified navigation items for all layouts
 const publicNavigationItems = [
   { title: "Home", href: "/" },
-  { title: "Features", href: "/#features" },
+  { title: "Features", href: "/features" },
   { title: "Pricing", href: "/#pricing" },
   { title: "FAQ", href: "/#faq" },
   { title: "Documentation", href: "/docs" },
@@ -90,7 +90,9 @@ export default function UnifiedMobileSidebar({
             className
           )}
           aria-label="Toggle mobile menu"
+          aria-haspopup="dialog"
           aria-expanded={isOpen}
+          aria-controls={`${mode}-mobile-drawer`}
           data-testid={`${mode}-mobile-menu`}
         >
           <Menu className="h-6 w-6" />
@@ -100,14 +102,17 @@ export default function UnifiedMobileSidebar({
       <SheetContent
         side="left"
         className="w-80 p-0 bg-sidebar text-sidebar-foreground border-sidebar-border"
-        data-testid={`${mode}-sidebar`}
+        id={`${mode}-mobile-drawer`}
+        data-testid="mobile-drawer"
+        data-state={isOpen ? 'open' : 'closed'}
         role="dialog"
         aria-modal="true"
-        aria-label="Mobile navigation menu"
+        aria-labelledby={`${mode}-mobile-drawer-title`}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-sidebar-border bg-sidebar shrink-0">
+            <h2 id={`${mode}-mobile-drawer-title`} className="sr-only">Mobile navigation menu</h2>
             <Link
               href={mode === "app" ? "/dashboard" : "/"}
               className="flex items-center gap-2"

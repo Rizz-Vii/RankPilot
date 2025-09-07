@@ -1,6 +1,7 @@
 import { extractErrorMessage } from '@/lib/errors/extract-error-message';
-import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { adminDb } from "@/lib/firebase-admin";
 import { handleCors } from '@/lib/http/cors';
+import { withAdmin } from '@/lib/middleware/with-admin';
 import { NextResponse } from "next/server";
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -71,35 +72,13 @@ function getExpectedQuotasForTier(tier: string): Record<string, number> {
   return quotaMap[tier] || quotaMap.free;
 }
 
-export async function GET(request: Request): Promise<Response> {
+export const GET = withAdmin(async (request: Request, admin) => {
   try {
-    // CORS support (GET/OPTIONS) and auth gate
+    // CORS support (GET/OPTIONS)
     const cors = handleCors(request as unknown as Request, { allowMethods: ['GET', 'OPTIONS'] });
-    if ((cors as unknown as { preflight?: Response }).preflight) return (cors as unknown as { preflight: Response }).preflight;
+    if ((cors as unknown as { preflight?: Response }).preflight) return (cors as unknown as { preflight: Response }).preflight as unknown as NextResponse;
 
-    // Authorization: require Firebase ID token with admin privileges
-    const authHeader = (request.headers as unknown as Headers).get('authorization') || (request.headers as unknown as Headers).get('Authorization');
-    if (!authHeader?.toLowerCase().startsWith('bearer ')) {
-      return NextResponse.json({ success: false, error: 'auth_required' }, { status: 401, headers: cors.headers });
-    }
-    const idToken = authHeader.replace(/^Bearer\s+/i, '');
-    let uid = '';
-    try {
-      const decoded = await adminAuth.verifyIdToken(idToken);
-      uid = decoded.uid;
-      const isAdminClaim = Boolean((decoded as unknown as { [k: string]: unknown }).admin === true);
-      if (!isAdminClaim) {
-        // Optional: fall back to checking user record custom claims
-        const rec = await adminAuth.getUser(uid).catch(() => null);
-        const cc = rec?.customClaims || {};
-        if (!(cc as Record<string, unknown>)['admin']) {
-          return NextResponse.json({ success: false, error: 'forbidden' }, { status: 403, headers: cors.headers });
-        }
-      }
-    } catch {
-      return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401, headers: cors.headers });
-    }
-
+    const uid = admin.uid;
     console.log("🔍 Starting comprehensive user data review...", { by: uid });
 
     const usersSnapshot = await adminDb.collection("users").get();
@@ -390,7 +369,7 @@ export async function GET(request: Request): Promise<Response> {
       { status: 500 }
     );
   }
-}
+}, { path: 'review-users', extraHeaders: (req) => ({ ...(handleCors(req as unknown as Request, { allowMethods: ['GET', 'OPTIONS'] }).headers || {}) }) });
 
 export async function OPTIONS(request: Request): Promise<Response> {
   const cors = handleCors(request as unknown as Request, { allowMethods: ['GET', 'OPTIONS'] });

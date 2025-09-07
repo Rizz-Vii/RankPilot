@@ -3,6 +3,7 @@
  * Chat completion: OpenAI (primary) -> Gemini (secondary) -> static failure message.
  * Embeddings: OpenAI only (to preserve a single consistent vector space for similarity search).
  */
+import { recordLlmUsage } from '@/lib/analytics/llm';
 import OpenAI from 'openai';
 
 // Gemini response typings
@@ -32,6 +33,7 @@ function getGeminiKey() { return process.env.GEMINI_API_KEY || process.env.GOOGL
 export async function chatComplete(opts: { messages: ChatMessage[]; maxTokens?: number; temperature?: number; }): Promise<string> {
     const { messages, maxTokens = 800, temperature = 0.2 } = opts;
     const work = async (): Promise<string> => {
+        const t0 = Date.now();
         const openaiKey = getOpenAIKey();
         if (openaiKey) {
             try {
@@ -43,8 +45,9 @@ export async function chatComplete(opts: { messages: ChatMessage[]; maxTokens?: 
                     temperature,
                 });
                 const txt = completion.choices?.[0]?.message?.content || '';
+                recordLlmUsage('openai', !!txt, Date.now() - t0);
                 if (txt) return txt;
-            } catch {/* fall through */ }
+            } catch { recordLlmUsage('openai', false, Date.now() - t0); /* fall through */ }
         }
         const geminiKey = getGeminiKey();
         if (geminiKey) {
@@ -66,9 +69,11 @@ export async function chatComplete(opts: { messages: ChatMessage[]; maxTokens?: 
                 const first = json.candidates && json.candidates[0];
                 const parts = first?.content?.parts || [];
                 const text = parts.map(p => p?.text || '').join('');
+                recordLlmUsage('gemini', !!text, Date.now() - t0);
                 if (text) return text;
-            } catch {/* ignore */ }
+            } catch { recordLlmUsage('gemini', false, Date.now() - t0); }
         }
+        recordLlmUsage('fallback', false, Date.now() - t0);
         return 'Unable to generate a response at this time.';
     };
 

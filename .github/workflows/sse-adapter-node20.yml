@@ -1,0 +1,40 @@
+name: ci-sse-adapter-node20
+
+on:
+  pull_request:
+    paths:
+      - "src/lib/sse/**"
+      - "testing/unit/sse/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/sse-adapter-node20.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "src/lib/sse/**"
+      - "testing/unit/sse/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/sse-adapter-node20.yml"
+  workflow_dispatch: {}
+
+jobs:
+  sse-adapter-tests-node20:
+    name: SSE adapter (Node 20)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.15.1"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run SSE adapter unit tests (Node 20)
+        run: npm run test:unit:sse:node20

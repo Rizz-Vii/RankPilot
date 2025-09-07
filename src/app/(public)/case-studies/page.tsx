@@ -1,27 +1,51 @@
 "use client";
-import React from "react";
-import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion, useReducedMotion } from "framer-motion";
 import {
+  ArrowRight,
+  Award,
+  Brain,
+  Clock,
   TrendingUp,
   Users,
-  Clock,
-  Award,
-  ArrowRight,
-  Brain,
   Zap,
 } from "lucide-react";
 
-const fadeIn = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.15, duration: 0.6 },
-  }),
-};
+import { useEffect, useMemo, useState } from "react";
+
+function useFadeInVariants() {
+  const reduceMotion = useReducedMotion();
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 640);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  return useMemo(() => {
+    if (reduceMotion) {
+      return {
+        hidden: { opacity: 0 },
+        visible: (i: number) => ({
+          opacity: 1,
+          transition: { delay: Math.min(i * 0.05, 0.3), duration: 0.25 },
+        }),
+      } as const;
+    }
+    const baseDuration = isMobile ? 0.35 : 0.6;
+    const baseDelay = isMobile ? 0.08 : 0.15;
+    return {
+      hidden: { opacity: 0, y: 24 },
+      visible: (i: number) => ({
+        opacity: 1,
+        y: 0,
+        transition: { delay: i * baseDelay, duration: baseDuration },
+      }),
+    } as const;
+  }, [reduceMotion, isMobile]);
+}
 
 const caseStudies = [
   {
@@ -158,13 +182,16 @@ const successMetrics = [
 ];
 
 export default function CaseStudiesPage() {
+  const fadeIn = useFadeInVariants();
+  const viewport = { once: true, amount: 0.2 } as const;
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+    <div className="min-h-[100dvh] sm:min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Hero Section */}
       <motion.section
         className="pt-32 pb-16 px-4"
         initial="hidden"
-        animate="visible"
+        whileInView="visible"
+        viewport={viewport}
         variants={fadeIn}
         custom={0}
       >
@@ -189,19 +216,23 @@ export default function CaseStudiesPage() {
       </motion.section>
 
       {/* Success Metrics */}
-      <section className="pb-16 px-4">
+      <section className="pb-16 px-4" role="region" aria-labelledby="success-metrics-heading">
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-4 gap-6">
             {successMetrics.map((metric, index) => (
               <motion.div
                 key={metric.label}
                 initial="hidden"
-                animate="visible"
+                whileInView="visible"
+                viewport={viewport}
                 variants={fadeIn}
                 custom={index + 1}
               >
                 <Card className="text-center hover:shadow-lg transition-shadow duration-300">
                   <CardContent className="p-6">
+                    {index === 0 && (
+                      <h2 id="success-metrics-heading" className="sr-only">Success Metrics</h2>
+                    )}
                     <div className="w-12 h-12 bg-primary/10 rounded-lg mx-auto mb-4 flex items-center justify-center">
                       <metric.icon className="h-6 w-6 text-primary" />
                     </div>
@@ -223,16 +254,17 @@ export default function CaseStudiesPage() {
       </section>
 
       {/* Case Studies */}
-      <section className="pb-16 px-4">
+      <section className="pb-16 px-4" role="region" aria-labelledby="success-stories-heading">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
-            animate="visible"
+            whileInView="visible"
+            viewport={viewport}
             variants={fadeIn}
             custom={5}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold text-foreground mb-4">
+            <h2 id="success-stories-heading" className="text-3xl font-bold text-foreground mb-4">
               Success Stories
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -246,7 +278,8 @@ export default function CaseStudiesPage() {
               <motion.div
                 key={study.title}
                 initial="hidden"
-                animate="visible"
+                whileInView="visible"
+                viewport={viewport}
                 variants={fadeIn}
                 custom={index + 6}
               >
@@ -335,7 +368,7 @@ export default function CaseStudiesPage() {
                     </div>
 
                     <div className="mt-6 pt-6 border-t border-border">
-                      <Button variant="outline" className="w-full group">
+                      <Button variant="outline" className="w-full group" aria-label={`Read full case study: ${study.title}`}>
                         Read Full Case Study
                         <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                       </Button>
@@ -352,14 +385,15 @@ export default function CaseStudiesPage() {
       <motion.section
         className="pb-16 px-4"
         initial="hidden"
-        animate="visible"
+        whileInView="visible"
+        viewport={viewport}
         variants={fadeIn}
         custom={10}
       >
         <div className="max-w-4xl mx-auto">
-  <Card className="bg-gradient-to-r from-primary to-accent text-white">
+          <Card className="bg-gradient-to-r from-primary to-accent text-white" role="region" aria-labelledby="cta-success-heading">
             <CardContent className="p-12 text-center">
-              <h2 className="text-3xl font-bold mb-6">
+              <h2 id="cta-success-heading" className="text-3xl font-bold mb-6">
                 Ready to Write Your Success Story?
               </h2>
         <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">

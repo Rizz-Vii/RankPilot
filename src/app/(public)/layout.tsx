@@ -15,9 +15,16 @@ export default function PublicLayout({
   return (
     <AuthProvider>
       <HydrationProvider>
-        <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col min-h-[100dvh] sm:min-h-screen">
+          {/* Skip link for keyboard users */}
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only fixed top-2 left-2 z-50 bg-primary text-primary-foreground px-3 py-2 rounded shadow"
+          >
+            Skip to main content
+          </a>
           <SiteHeader />
-          <main className="flex-grow">{children}</main>
+          <main id="main-content" role="main" className="flex-grow">{children}</main>
         </div>
       </HydrationProvider>
     </AuthProvider>
